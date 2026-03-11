@@ -158,6 +158,52 @@ ResearchTask {
 - Wintermute is architecturally just Seldon at meta-scale: same engine, different scope, artifact types are cross-project references
 - Two or three running Seldon instances will make the cross-project requirements obvious rather than speculative
 
+### AD-009: Database as Context Architecture
+
+**Decision:** The graph database is the persistent context store that replaces the LLM context window for cross-session state. Agents are stateless consumers of precisely-scoped graph slices. The context window is working memory, not storage.
+
+**Rationale:**
+- LLM context windows are ephemeral, lossy, fixed-size, and expensive to fill
+- A graph database is persistent, lossless, unbounded, precisely queryable, and cheap
+- Stuffing full project context into every prompt causes drift, dilution, and compression artifacts
+- Each agent gets exactly the subgraph it needs — precision over completeness
+- Retrieval quality (graph query design) determines agent output quality
+- The linking layer (relationship edges) carries context that would otherwise require prose explanation, saving tokens and eliminating ambiguity
+
+**Implications:**
+- `seldon briefing` is a graph query, not "read the last handoff file"
+- `seldon closeout` is a graph write, not "create a markdown file"
+- `seldon context generate` produces CC task files with precisely-scoped graph slices
+- The graph query patterns need the same rigor as the agent prompts — retrieval quality is the chokepoint
+
+**Reference:** `docs/design/2026-03-10_database_as_context_architecture.md`
+
+### AD-010: Collective Architecture — Stateless Agents, Persistent Graph
+
+**Decision:** The system follows a collective/colony architecture where individual agents (CC sessions, subagents) are stateless, disposable workers. The graph holds all state. Agents are spawned, receive a context slice, do work, write back, and terminate. No agent holds state that isn't in the graph.
+
+**Rationale (from direct experience with context window limitations):**
+- CC sessions lose context through compaction and drift in long conversations
+- Session handoffs in markdown are lossy and require human effort to maintain
+- The 2026-03-10 context generation experiment proved a graph can auto-generate CC tasks with the right context slice (48 nodes, 70 edges, ~6,380 tokens for a DATA step parser task)
+- Parallel decomposition via graph partitioning enables horizontal scaling — each agent works on a small subgraph independently
+
+**Required Properties (Non-Functional Requirements):**
+
+1. **Atomic writes** — no partial graph updates. A write succeeds fully or not at all.
+2. **Validation on write** — schema + referential integrity checks before any mutation commits to the event log.
+3. **Crash recovery** — any agent can die at any point. Graph state is always consistent. Work units are re-dispatchable from the last valid state.
+4. **Event-sourced history** — full replay capability from the JSONL event log. Point-in-time recovery. Branch from any prior state.
+5. **Stateless agents** — no agent holds state that isn't in the graph. Any agent can be replaced by any other agent given the same context slice.
+6. **Idempotent operations** — re-running a task on the same input produces the same output. Safe to retry after failure.
+
+**Scaling properties:**
+- Horizontal: more artifacts/variables = more work units, same context size per unit
+- Vertical: richness of node interconnectedness provides retrieval depth without blowing context budgets
+- Parallel: independent work units (no shared inputs) can be dispatched simultaneously; topological sort on the DAG determines sequencing for dependent units
+
+**Reference:** `docs/design/2026-03-10_parallel_decomposition_via_graph.md`
+
 ---
 
 ## 2. Implementation Priorities
@@ -256,6 +302,17 @@ ResearchTask {
 - Dedup to mother core only for genuinely duplicated entities
 - Central_library repo is the manual prototype of this pattern
 - The "Unicron" model: doesn't consume projects, connects them. Consumption (dedup) only on confirmed duplication.
+
+### PL-012: Graph-Partitioned Parallel Agent Dispatch
+
+- Decompose large pipelines into work units via graph partitioning (each DataStep/PROC = one work unit)
+- Auto-generate context slices per work unit via subgraph extraction
+- Dispatch to parallel CC sessions or subagents
+- Write-back with atomic validation; re-dispatch on failure
+- Topological sort on DAG for sequencing dependent work units
+- **Trigger:** After Seldon CLI engine (Tier 1) is operational and context generation experiment is validated on real tasks
+- **Note:** PL-011 is reserved for AST-Based Code Graph Analysis (`docs/decisions/PL-011_ast_code_graph_analysis.md`)
+- **Reference:** `docs/design/2026-03-10_parallel_decomposition_via_graph.md`
 
 ---
 
