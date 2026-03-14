@@ -4,6 +4,7 @@
 handoffs/
 cc_tasks/
 tmp/
+.worktrees/
 
 # Private notes (unredacted, strategic, not for public)
 notes/
