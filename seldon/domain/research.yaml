@@ -1,0 +1,109 @@
+domain: research
+version: "0.1"
+
+artifact_types:
+  - Result
+  - Figure
+  - PaperSection
+  - Citation
+  - ResearchTask
+  - LabNotebookEntry
+  - Script
+  - DataFile
+  - SRS_Requirement
+  - PipelineRun
+
+relationship_types:
+  cites:
+    from_types: [PaperSection, Figure]
+    to_types: [Result, Citation]
+  generated_by:
+    from_types: [Result, Figure]
+    to_types: [Script]
+  computed_from:
+    from_types: [Result]
+    to_types: [DataFile]
+  implements:
+    from_types: [Script]
+    to_types: [SRS_Requirement]
+  blocks:
+    from_types: [ResearchTask]
+    to_types: [Result, PaperSection, Figure]
+  depends_on:
+    from_types: [ResearchTask]
+    to_types: [Result, DataFile, Script]
+  validates:
+    from_types: [Result]
+    to_types: [Result]
+  produced_by:
+    from_types: [DataFile]
+    to_types: [PipelineRun]
+  contains:
+    from_types: [Figure]
+    to_types: [Result]
+
+state_machines:
+  Result:
+    proposed: [verified, rejected]
+    verified: [published, stale]
+    published: [stale]
+    stale: [verified]
+    rejected: []
+
+  ResearchTask:
+    proposed: [accepted, rejected]
+    accepted: [in_progress]
+    in_progress: [completed, blocked]
+    completed: [verified]
+    blocked: [in_progress]
+    verified: []
+    rejected: []
+
+  Script:
+    proposed: [active, deprecated]
+    active: [deprecated, stale]
+    deprecated: []
+    stale: [active]
+
+  DataFile:
+    proposed: [registered]
+    registered: [stale]
+    stale: [registered]
+
+  PaperSection:
+    proposed: [draft, review]
+    draft: [review, stale]
+    review: [published, draft]
+    published: [stale]
+    stale: [draft]
+
+  Figure:
+    proposed: [draft, review]
+    draft: [review, stale]
+    review: [published, draft]
+    published: [stale]
+    stale: [draft]
+
+  Citation:
+    proposed: [verified]
+    verified: [stale]
+    stale: [verified]
+
+  LabNotebookEntry:
+    proposed: [finalized]
+    finalized: []
+
+  SRS_Requirement:
+    proposed: [accepted, rejected]
+    accepted: [implemented, stale]
+    implemented: [verified]
+    verified: [stale]
+    stale: [accepted]
+    rejected: []
+
+  PipelineRun:
+    proposed: [running]
+    running: [completed, failed]
+    completed: [stale]
+    failed: [proposed]
+    stale: []
