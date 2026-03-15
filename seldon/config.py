@@ -51,12 +51,25 @@ def load_project_config(project_dir: Optional[Path] = None) -> dict:
 
 
 def get_neo4j_driver(config: dict):
-    """Create and return a Neo4j driver from project config + env variables."""
+    """Create and return a Neo4j driver from project config + env variables.
+
+    Suppresses GQL notification noise via driver-level config (5.7+).
+    Falls back gracefully on older drivers.
+    """
     from neo4j import GraphDatabase
     uri = config["neo4j"]["uri"]
     username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
-    return GraphDatabase.driver(uri, auth=(username, password))
+
+    extra_kwargs = {}
+    try:
+        from neo4j import NotificationMinimumSeverity
+        extra_kwargs["notifications_min_severity"] = NotificationMinimumSeverity.OFF
+        extra_kwargs["warn_notification_severity"] = NotificationMinimumSeverity.OFF
+    except ImportError:
+        pass  # older driver, live with the noise
+
+    return GraphDatabase.driver(uri, auth=(username, password), **extra_kwargs)
 
 
 def start_session(project_dir: Optional[Path] = None) -> str:

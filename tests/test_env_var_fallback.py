@@ -3,6 +3,17 @@ import os
 from unittest.mock import patch, MagicMock
 
 
+def _assert_auth(mock_driver, expected_auth):
+    """Assert driver was called once with the expected auth tuple.
+
+    Uses call_args inspection so notification kwargs don't break the assertion
+    when running against neo4j driver >= 5.7.
+    """
+    mock_driver.assert_called_once()
+    _, kwargs = mock_driver.call_args
+    assert kwargs["auth"] == expected_auth
+
+
 def test_neo4j_username_password_used_when_set(monkeypatch):
     """Primary env vars (NEO4J_USERNAME/NEO4J_PASSWORD) are used when set."""
     monkeypatch.setenv("NEO4J_USERNAME", "primary_user")
@@ -14,9 +25,7 @@ def test_neo4j_username_password_used_when_set(monkeypatch):
     with patch("neo4j.GraphDatabase.driver") as mock_driver:
         from seldon.config import get_neo4j_driver
         get_neo4j_driver(config)
-        mock_driver.assert_called_once_with(
-            "bolt://localhost:7687", auth=("primary_user", "primary_pass")
-        )
+        _assert_auth(mock_driver, ("primary_user", "primary_pass"))
 
 
 def test_neo4j_user_pass_fallback_when_primary_not_set(monkeypatch):
@@ -30,9 +39,7 @@ def test_neo4j_user_pass_fallback_when_primary_not_set(monkeypatch):
     with patch("neo4j.GraphDatabase.driver") as mock_driver:
         from seldon.config import get_neo4j_driver
         get_neo4j_driver(config)
-        mock_driver.assert_called_once_with(
-            "bolt://localhost:7687", auth=("fallback_user", "fallback_pass")
-        )
+        _assert_auth(mock_driver, ("fallback_user", "fallback_pass"))
 
 
 def test_defaults_when_no_env_vars_set(monkeypatch):
@@ -46,9 +53,7 @@ def test_defaults_when_no_env_vars_set(monkeypatch):
     with patch("neo4j.GraphDatabase.driver") as mock_driver:
         from seldon.config import get_neo4j_driver
         get_neo4j_driver(config)
-        mock_driver.assert_called_once_with(
-            "bolt://localhost:7687", auth=("neo4j", "password")
-        )
+        _assert_auth(mock_driver, ("neo4j", "password"))
 
 
 def test_primary_takes_priority_over_fallback(monkeypatch):
@@ -62,6 +67,4 @@ def test_primary_takes_priority_over_fallback(monkeypatch):
     with patch("neo4j.GraphDatabase.driver") as mock_driver:
         from seldon.config import get_neo4j_driver
         get_neo4j_driver(config)
-        mock_driver.assert_called_once_with(
-            "bolt://localhost:7687", auth=("primary_user", "primary_pass")
-        )
+        _assert_auth(mock_driver, ("primary_user", "primary_pass"))

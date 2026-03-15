@@ -61,7 +61,14 @@ def init_command(project_name: str):
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
 
     try:
-        driver = GraphDatabase.driver(uri, auth=(username, password))
+        extra_kwargs = {}
+        try:
+            from neo4j import NotificationMinimumSeverity
+            extra_kwargs["notifications_min_severity"] = NotificationMinimumSeverity.OFF
+            extra_kwargs["warn_notification_severity"] = NotificationMinimumSeverity.OFF
+        except ImportError:
+            pass
+        driver = GraphDatabase.driver(uri, auth=(username, password), **extra_kwargs)
 
         # Create database
         with driver.session(database="system") as session:
