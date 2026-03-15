@@ -15,9 +15,11 @@ from seldon.core.graph import create_indexes
 @click.argument("project_name")
 def init_command(project_name: str):
     """Initialize a new Seldon project in the current directory."""
+    from dotenv import load_dotenv
     from neo4j import GraphDatabase
 
     project_dir = Path.cwd()
+    load_dotenv(project_dir / ".env", override=False)
     slug = slugify(project_name)
     database = f"seldon-{slug}"
     events_path = "seldon_events.jsonl"
@@ -55,7 +57,16 @@ def init_command(project_name: str):
     seldon_dir = project_dir / ".seldon"
     seldon_dir.mkdir(exist_ok=True)
 
-    # 4. Connect to Neo4j and set up project database
+    # 4a. Create .env template if not present
+    env_file = project_dir / ".env"
+    if not env_file.exists():
+        env_file.write_text(
+            "# Neo4j credentials\n"
+            "# NEO4J_USERNAME=neo4j\n"
+            "# NEO4J_PASSWORD=password\n"
+        )
+
+    # 5. Connect to Neo4j and set up project database
     uri = "bolt://localhost:7687"
     username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
@@ -94,3 +105,4 @@ def init_command(project_name: str):
     click.echo(f"  Events:     {events_path}")
     click.echo(f"  Config:     seldon.yaml")
     click.echo(f"  {neo4j_status}")
+    click.echo(f"  Note: add .env to your .gitignore (credentials live there)")

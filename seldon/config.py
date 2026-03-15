@@ -37,9 +37,17 @@ def slugify(name: str) -> str:
 def load_project_config(project_dir: Optional[Path] = None) -> dict:
     """
     Load seldon.yaml from the given directory (or cwd if not specified).
+    Also loads .env from the same directory if present (override=False so
+    shell env vars always win).
     Raises FileNotFoundError if seldon.yaml does not exist.
     """
+    from dotenv import load_dotenv
+
     base = Path(project_dir) if project_dir else Path.cwd()
+
+    # Load .env from project directory (no-op if file doesn't exist)
+    load_dotenv(base / ".env", override=False)
+
     config_path = base / "seldon.yaml"
     if not config_path.exists():
         raise FileNotFoundError(
