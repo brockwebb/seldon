@@ -98,12 +98,42 @@ def test_briefing_incomplete_provenance_query(
 
     with neo4j_driver.session(database=NEO4J_DB) as session:
         records = session.run(
-            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) RETURN r"
+            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) "
+            "AND NOT (r)-[:DERIVED_FROM]->() RETURN r"
         ).data()
 
     no_script_ids = {dict(r["r"])["artifact_id"] for r in records}
     assert result_no_script in no_script_ids
     assert result_with_script not in no_script_ids
+
+
+def test_briefing_derived_from_satisfies_provenance(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """A Result with DERIVED_FROM link is NOT flagged as incomplete provenance."""
+    result_id = _make_result(project_dir, neo4j_driver, domain_config, 3.32)
+    notebook_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="LabNotebookEntry",
+        properties={"summary": "analytical derivation"}, actor="human", authority="accepted",
+    )
+
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config,
+        from_id=result_id, to_id=notebook_id,
+        from_type="Result", to_type="LabNotebookEntry",
+        rel_type="derived_from", actor="human", authority="accepted",
+    )
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        records = session.run(
+            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) "
+            "AND NOT (r)-[:DERIVED_FROM]->() RETURN r"
+        ).data()
+
+    incomplete_ids = {dict(r["r"])["artifact_id"] for r in records}
+    assert result_id not in incomplete_ids
 
 
 # ── closeout ──────────────────────────────────────────────────────────────────
