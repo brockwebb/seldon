@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
 import re
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -54,3 +57,46 @@ def get_neo4j_driver(config: dict):
     username = os.getenv("NEO4J_USERNAME", "neo4j")
     password = os.getenv("NEO4J_PASSWORD", "password")
     return GraphDatabase.driver(uri, auth=(username, password))
+
+
+def start_session(project_dir: Optional[Path] = None) -> str:
+    """
+    Generate a session UUID, write to .seldon/current_session.json, return session_id.
+    Overwrites any existing session file.
+    """
+    base = Path(project_dir) if project_dir else Path.cwd()
+    seldon_dir = base / ".seldon"
+    seldon_dir.mkdir(exist_ok=True)
+    session_id = str(uuid.uuid4())
+    session_file = seldon_dir / "current_session.json"
+    data = {
+        "session_id": session_id,
+        "started_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    with open(session_file, "w") as f:
+        json.dump(data, f)
+    return session_id
+
+
+def get_current_session(project_dir: Optional[Path] = None) -> Optional[str]:
+    """Return the active session_id, or None if no session file exists."""
+    data = get_current_session_data(project_dir)
+    return data["session_id"] if data else None
+
+
+def get_current_session_data(project_dir: Optional[Path] = None) -> Optional[dict]:
+    """Return full session dict (session_id, started_at), or None if no session."""
+    base = Path(project_dir) if project_dir else Path.cwd()
+    session_file = base / ".seldon" / "current_session.json"
+    if not session_file.exists():
+        return None
+    with open(session_file) as f:
+        return json.load(f)
+
+
+def end_session(project_dir: Optional[Path] = None) -> None:
+    """Delete the current session file. No-op if no session is active."""
+    base = Path(project_dir) if project_dir else Path.cwd()
+    session_file = base / ".seldon" / "current_session.json"
+    if session_file.exists():
+        session_file.unlink()
