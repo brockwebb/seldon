@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from neo4j import Driver
 
@@ -21,6 +21,7 @@ def create_artifact(
     properties: Dict[str, Any],
     actor: str,
     authority: str,
+    session_id: Optional[str] = None,
 ) -> str:
     """
     Validate, write JSONL event, then write Neo4j node.
@@ -43,6 +44,7 @@ def create_artifact(
             "from_state": None,
             "to_state": initial_state,
         },
+        session_id=session_id,
     )
     append_event(project_dir, event)
 
@@ -66,6 +68,7 @@ def update_artifact(
     properties: Dict[str, Any],
     actor: str,
     authority: str,
+    session_id: Optional[str] = None,
 ) -> None:
     """Write JSONL event then update Neo4j node properties."""
     event = make_event(
@@ -76,6 +79,7 @@ def update_artifact(
             "artifact_id": artifact_id,
             "properties": properties,
         },
+        session_id=session_id,
     )
     append_event(project_dir, event)
 
@@ -94,6 +98,7 @@ def transition_state(
     new_state: str,
     actor: str,
     authority: str,
+    session_id: Optional[str] = None,
 ) -> None:
     """Validate transition, write JSONL event, then update Neo4j state."""
     validate_transition(domain_config, artifact_type, current_state, new_state)
@@ -108,6 +113,7 @@ def transition_state(
             "from_state": current_state,
             "to_state": new_state,
         },
+        session_id=session_id,
     )
     append_event(project_dir, event)
 
@@ -127,6 +133,7 @@ def create_link(
     rel_type: str,
     actor: str,
     authority: str,
+    session_id: Optional[str] = None,
 ) -> None:
     """Validate relationship, write JSONL event, then create Neo4j relationship."""
     validate_relationship(domain_config, rel_type, from_type, to_type)
@@ -143,6 +150,7 @@ def create_link(
             "rel_type": rel_type,
             "properties": {},
         },
+        session_id=session_id,
     )
     append_event(project_dir, event)
 
