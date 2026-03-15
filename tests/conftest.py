@@ -54,8 +54,17 @@ def _neo4j_reachable() -> bool:
 
 @pytest.fixture(scope="session")
 def neo4j_available():
-    """Session-scoped check. Skip entire test session if Neo4j is not running."""
+    """
+    Session-scoped check. Behavior when Neo4j is unreachable:
+    - NEO4J_PASSWORD is explicitly set → FAIL (you configured credentials, Neo4j is expected up)
+    - NEO4J_PASSWORD not set → SKIP (CI / no Neo4j environment, graceful degradation)
+    """
     if not _neo4j_reachable():
+        if os.getenv("NEO4J_PASSWORD"):
+            pytest.fail(
+                "Neo4j not reachable but NEO4J_PASSWORD is set — is Neo4j running? "
+                f"(URI: {os.getenv('NEO4J_URI', 'bolt://localhost:7687')})"
+            )
         pytest.skip("Neo4j not reachable — skipping Neo4j tests")
     return True
 
