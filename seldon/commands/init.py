@@ -57,8 +57,8 @@ def init_command(project_name: str):
 
     # 4. Connect to Neo4j and set up project database
     uri = "bolt://localhost:7687"
-    username = os.getenv("NEO4J_USERNAME", "neo4j")
-    password = os.getenv("NEO4J_PASSWORD", "password")
+    username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
+    password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
 
     try:
         driver = GraphDatabase.driver(uri, auth=(username, password))

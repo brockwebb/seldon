@@ -54,8 +54,8 @@ def get_neo4j_driver(config: dict):
     """Create and return a Neo4j driver from project config + env variables."""
     from neo4j import GraphDatabase
     uri = config["neo4j"]["uri"]
-    username = os.getenv("NEO4J_USERNAME", "neo4j")
-    password = os.getenv("NEO4J_PASSWORD", "password")
+    username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
+    password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
     return GraphDatabase.driver(uri, auth=(username, password))
 
 
