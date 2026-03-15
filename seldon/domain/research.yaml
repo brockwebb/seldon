@@ -41,6 +41,9 @@ relationship_types:
   contains:
     from_types: [Figure]
     to_types: [Result]
+  derived_from:
+    from_types: [Result]
+    to_types: [LabNotebookEntry, Citation, Result]
 
 state_machines:
   Result:

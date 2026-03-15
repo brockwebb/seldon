@@ -49,9 +49,10 @@ def briefing_command():
         # 2. Stale results
         stale = get_stale_artifacts(session)
 
-        # 3. Incomplete provenance: Results with no GENERATED_BY Script
+        # 3. Incomplete provenance: Results with no GENERATED_BY Script and no DERIVED_FROM source
         no_script_records = session.run(
-            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) RETURN r"
+            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) "
+            "AND NOT (r)-[:DERIVED_FROM]->() RETURN r"
         ).data()
         no_script = [dict(r["r"]) for r in no_script_records]
 
