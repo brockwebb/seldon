@@ -8,6 +8,7 @@ from seldon.commands.link import link_group
 from seldon.commands.result import result_group
 from seldon.commands.task import task_group
 from seldon.commands.session import briefing_command, closeout_command
+from seldon.commands.paper import paper_group
 
 
 @click.group()
@@ -26,3 +27,4 @@ main.add_command(result_group, name="result")
 main.add_command(task_group, name="task")
 main.add_command(briefing_command, name="briefing")
 main.add_command(closeout_command, name="closeout")
+main.add_command(paper_group, name="paper")

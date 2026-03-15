@@ -21,6 +21,8 @@ No engine yet. The skills in `.claude/skills/` ARE Seldon at this stage. The eng
 | `result-register` | Computation produces a citable result | `/result-register` |
 | `task-track` | Work item must survive across sessions | `/task-track` |
 | `research` | Writing lab notebook entries, lit notes, citations | `/research` |
+| `paper audit`  | After writing/editing prose | `seldon paper audit paper/sections/*.md` |
+| `paper build`  | Assembling manuscript       | `seldon paper build` |
 
 ## Session Protocol
 
@@ -52,6 +54,26 @@ No engine yet. The skills in `.claude/skills/` ARE Seldon at this stage. The eng
 ## Guaranteed Properties (-ilities)
 
 Recoverability, Scalability, Composability, Auditability, Reproducibility, Resilience, Evolvability. See `README.md` for definitions.
+
+## Paper Authoring
+
+Seldon tracks paper manuscripts as graph-connected artifacts. Section prose uses reference tokens that resolve against the graph at build time.
+
+**Reference syntax:**
+- `{{result:NAME:value}}` — resolves to a verified Result's value
+- `{{result:NAME:units}}` — resolves to units
+- `{{figure:NAME:path}}` — resolves to figure file path
+- `{{cite:NAME:bibtex_key}}` — resolves to BibTeX key
+
+**Never write literal numbers for research results.** Use `{{result:NAME:value}}`. The build step resolves them from the graph — this prevents drift.
+
+**QC tiers:**
+- Tier 1 (structural): Build fails if references are missing, stale, or unverified. Always runs.
+- Tier 2 (prose quality): Sentence length, paragraph length, formatting. Flags violations.
+- Tier 3 (style): Banned words, clichés, repetition. Informational.
+
+**Config files:** `paper/paper_qc_config.yaml` (Tier 2), `paper/paper_style_config.yaml` (Tier 3)
+**Conventions:** `paper/conventions.md` — READ before writing any prose.
 
 ## Architecture Decisions
 
