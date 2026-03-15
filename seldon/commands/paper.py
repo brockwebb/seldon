@@ -49,14 +49,8 @@ def paper_audit(files, tier, qc_config_path, style_config_path):
             raise SystemExit(1)
 
     # Load configs
-    qc_config = load_qc_config(
-        Path(qc_config_path) if qc_config_path else None,
-        project_dir,
-    )
-    style_config = load_style_config(
-        Path(style_config_path) if style_config_path else None,
-        project_dir,
-    )
+    qc_config = load_qc_config(Path(qc_config_path) if qc_config_path else None)
+    style_config = load_style_config(Path(style_config_path) if style_config_path else None)
 
     run_tier2_checks = tier in (None, "2")
     run_tier3_checks = tier in (None, "3")
@@ -72,9 +66,9 @@ def paper_audit(files, tier, qc_config_path, style_config_path):
             tier3_violations.extend(run_tier3(text, style_config, filename=str(path)))
 
     if run_tier2_checks:
-        click.echo(format_violations(tier2_violations, tier=2))
+        click.echo(format_violations(tier2_violations, "TIER 2: Prose Quality"))
     if run_tier3_checks:
-        click.echo(format_violations(tier3_violations, tier=3))
+        click.echo(format_violations(tier3_violations, "TIER 3: Style Preferences"))
 
     # Exit 1 if any Tier 2 violations
     if run_tier2_checks and tier2_violations:
