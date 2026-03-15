@@ -24,7 +24,7 @@ relationship_types:
     from_types: [Result]
     to_types: [DataFile]
   implements:
-    from_types: [Script]
+    from_types: [Script, Result]
     to_types: [SRS_Requirement]
   blocks:
     from_types: [ResearchTask]

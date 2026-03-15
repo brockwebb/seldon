@@ -120,6 +120,18 @@ def transition_state(
     with driver.session(database=database) as session:
         graph.change_state(session, artifact_id, new_state)
 
+    # Auto-propagate staleness downstream when an artifact goes stale
+    if new_state == "stale":
+        from seldon.core.staleness import propagate_staleness
+        propagate_staleness(
+            driver=driver,
+            database=database,
+            project_dir=project_dir,
+            domain_config=domain_config,
+            artifact_id=artifact_id,
+            session_id=session_id,
+        )
+
 
 def create_link(
     project_dir: Path,
