@@ -71,8 +71,6 @@
 - Cross-project connections are a separate concern (see Parking Lot PL-003)
 - Portability: the entire project state is a directory of files in the repo
 
-**AD-004-PATCH-001 (2026-03-14):** Per-project Neo4j database + JSONL event store. NetworkX dropped as projection target. See CC Task 3 (`cc_tasks/2026-03-14_neo4j_pivot.md`) for full rationale.
-
 ### AD-005: Standard Interface Contract (update/retrieve)
 
 **Decision:** All Seldon components interact through a standard `general_update()` / `general_retrieve()` interface contract, inspired by ALMA's memory design abstraction.
@@ -128,6 +126,8 @@ PaperSection -> cites -> Figure -> contains -> Result -> generated_by -> Script 
 
 **Enforcement:** If a number doesn't exist in the registry with status >= `verified`, the system should flag citation attempts. No more "91.2% (source: some chat thread from February)."
 
+**External validation (2026-03-14):** Apple's Saga KG platform (Ilyas et al., SIGMOD 2022) tracks provenance per-fact at industrial scale — same pattern, validates the approach. See PL-011.
+
 ### AD-007: Task Completion Tracking as First-Class Artifact Type
 
 **Decision:** Research action items (backfill records, re-run scripts, verify counts) are first-class artifacts with state machines, not prose in handoff documents.
@@ -160,52 +160,6 @@ ResearchTask {
 - The `central_library` repo was created from frustration with siloed knowledge — that frustration IS the requirements document, but it emerged from use
 - Wintermute is architecturally just Seldon at meta-scale: same engine, different scope, artifact types are cross-project references
 - Two or three running Seldon instances will make the cross-project requirements obvious rather than speculative
-
-### AD-009: Database as Context Architecture
-
-**Decision:** The graph database is the persistent context store that replaces the LLM context window for cross-session state. Agents are stateless consumers of precisely-scoped graph slices. The context window is working memory, not storage.
-
-**Rationale:**
-- LLM context windows are ephemeral, lossy, fixed-size, and expensive to fill
-- A graph database is persistent, lossless, unbounded, precisely queryable, and cheap
-- Stuffing full project context into every prompt causes drift, dilution, and compression artifacts
-- Each agent gets exactly the subgraph it needs — precision over completeness
-- Retrieval quality (graph query design) determines agent output quality
-- The linking layer (relationship edges) carries context that would otherwise require prose explanation, saving tokens and eliminating ambiguity
-
-**Implications:**
-- `seldon briefing` is a graph query, not "read the last handoff file"
-- `seldon closeout` is a graph write, not "create a markdown file"
-- `seldon context generate` produces CC task files with precisely-scoped graph slices
-- The graph query patterns need the same rigor as the agent prompts — retrieval quality is the chokepoint
-
-**Reference:** `docs/design/2026-03-10_database_as_context_architecture.md`
-
-### AD-010: Collective Architecture — Stateless Agents, Persistent Graph
-
-**Decision:** The system follows a collective/colony architecture where individual agents (CC sessions, subagents) are stateless, disposable workers. The graph holds all state. Agents are spawned, receive a context slice, do work, write back, and terminate. No agent holds state that isn't in the graph.
-
-**Rationale (from direct experience with context window limitations):**
-- CC sessions lose context through compaction and drift in long conversations
-- Session handoffs in markdown are lossy and require human effort to maintain
-- The 2026-03-10 context generation experiment proved a graph can auto-generate CC tasks with the right context slice (48 nodes, 70 edges, ~6,380 tokens for a DATA step parser task)
-- Parallel decomposition via graph partitioning enables horizontal scaling — each agent works on a small subgraph independently
-
-**Required Properties (Non-Functional Requirements):**
-
-1. **Atomic writes** — no partial graph updates. A write succeeds fully or not at all.
-2. **Validation on write** — schema + referential integrity checks before any mutation commits to the event log.
-3. **Crash recovery** — any agent can die at any point. Graph state is always consistent. Work units are re-dispatchable from the last valid state.
-4. **Event-sourced history** — full replay capability from the JSONL event log. Point-in-time recovery. Branch from any prior state.
-5. **Stateless agents** — no agent holds state that isn't in the graph. Any agent can be replaced by any other agent given the same context slice.
-6. **Idempotent operations** — re-running a task on the same input produces the same output. Safe to retry after failure.
-
-**Scaling properties:**
-- Horizontal: more artifacts/variables = more work units, same context size per unit
-- Vertical: richness of node interconnectedness provides retrieval depth without blowing context budgets
-- Parallel: independent work units (no shared inputs) can be dispatched simultaneously; topological sort on the DAG determines sequencing for dependent units
-
-**Reference:** `docs/design/2026-03-10_parallel_decomposition_via_graph.md`
 
 ---
 
@@ -269,14 +223,14 @@ ResearchTask {
 - Eliminates human transcription step (the exact failure mode: Claude computes number in-conversation, human copies to flat file, number drifts)
 - Script emits structured JSON → Seldon `general_update()` ingests it → Result artifact created with full provenance
 - **Pattern:** The script itself is the update event source, not a human writing prose after the fact
-- **Update 2026-03-14:** Karpathy's autoresearch loop (https://github.com/karpathy/autoresearch) is the drone template for this. Stateless experiment loop (hypothesis → code → train → evaluate → iterate) that emits structured results. Integration point: `general_update()` at experiment completion, `general_retrieve()` at hypothesis generation. Drones start from the frontier of verified knowledge, not from zero. See PL-013.
+- **Update 2026-03-14:** Karpathy's autoresearch loop (https://github.com/karpathy/autoresearch) is the drone template for this. Stateless experiment loop (hypothesis → code → train → evaluate → iterate) that emits structured results. Integration point: `general_update()` at experiment completion, `general_retrieve()` at hypothesis generation. Drones start from the frontier of verified knowledge, not from zero. See PL-012.
 
 ### PL-005: Drift Detection on Downstream Citations
 - When a script re-runs and produces different numbers, every downstream citation flagged as stale
 - Graph traversal: Result changed → find all PaperSection/Figure nodes that cite it → mark as needs_review
 - Same pattern as ANTS relationship invalidation — upstream change propagates to dependents
 - Prevents the "was it 91.2% or 91.6%?" problem structurally
-- **Update 2026-03-14:** Yu et al. (2026) frame this as a memory consistency problem — causal consistency in their vocabulary. When a Result changes, all citing PaperSections need invalidation. The consistency model question (eventual? causal? session?) is worth thinking about explicitly for Wintermute's cross-project edges. Ref: arXiv:2603.10062. See PL-014.
+- **Update 2026-03-14:** Yu et al. (2026) frame this as a memory consistency problem — causal consistency in their vocabulary. When a Result changes, all citing PaperSections need invalidation. The consistency model question (eventual? causal? session?) is worth thinking about explicitly for Wintermute's cross-project edges. Ref: arXiv:2603.10062
 
 ### PL-006: Meta-Learning Memory Designs (ALMA-Inspired, Long-Term)
 - ALMA's meta-learning loop (sample → reflect → implement → evaluate → archive) could optimize retrieval strategies
@@ -316,63 +270,51 @@ ResearchTask {
 - **Type-scoped subgraph extraction**: Don't link against the whole graph — scope entity linking to the entity type's neighborhood. Directly addresses the retrieval precision problem (73% graph captured for scoped task in SAS context generation experiment).
 - **Fact-level provenance**: Every fact carries provenance annotations. Finer granularity than entity-level. Validates AD-006 Result Registry design.
 - **Incremental view maintenance**: Specialized KG views per use case — maps to PL-003 specialist retrieval profiles.
-- **Ref:** Ilyas, I. F., et al. (2022). arXiv:2204.07309, SIGMOD 2022. Follow-up: "Growing and Serving Large Open-domain Knowledge Graphs" (Ilyas et al., SIGMOD 2023) added graph embeddings for fact ranking/verification.
+- **Ref:** arXiv:2204.07309, SIGMOD 2022. Follow-up: "Growing and Serving Large Open-domain Knowledge Graphs" (Ilyas et al., SIGMOD 2023) added graph embeddings for fact ranking/verification.
 - **Trigger:** Wintermute rebuild phase. Extract patterns, don't adopt framework.
 
-### PL-013: Autoresearch Drones as Seldon Colony Workers (NEW 2026-03-14)
+### PL-012: Autoresearch Drones as Seldon Colony Workers (NEW 2026-03-14)
 - Karpathy's autoresearch loop (https://github.com/karpathy/autoresearch, 25k★) is a stateless experiment drone: hypothesis → code → train → evaluate → iterate until convergence.
 - **Seldon integration**: Drones are disposable (colony architecture). Seldon is the queen's mind. Drone writes structured JSON on completion → `general_update()` ingests as Result + Script + DataFile artifacts. Next drone gets `general_retrieve()` briefing before generating hypothesis.
 - **Value-add over bare autoresearch**: Without the graph, the loop rediscovers dead ends across sessions. With the graph, each drone starts from the frontier of verified knowledge. Hill-climbing with a map, not amnesia.
 - **Application**: SAS conversion pipeline experiments, pragmatics paper analysis automation, any domain where the hypothesis-experiment-evaluate loop applies.
 - **Don't build a custom framework.** When ready, point Karpathy's loop (or minimal adaptation) at Seldon's interface contract.
-- **Ref:** Karpathy, A. (2026). *autoresearch* [Software]. GitHub. https://github.com/karpathy/autoresearch
 - **Trigger:** After Seldon Tier 2 (result registry + task tracking) is operational.
 
-### PL-014: RLM-Style REPL Retrieval for general_retrieve() (NEW 2026-03-14)
+### PL-013: RLM-Style REPL Retrieval for general_retrieve() (NEW 2026-03-14)
 - Recursive Language Models (Zhang & Khattab, MIT OASYS lab, arXiv:2512.24601) treat context as a REPL variable rather than stuffing it into the prompt. The model writes code to inspect, filter, traverse, and recursively sub-query its own context.
-- **Seldon application**: Instead of pre-computing what context a specialist agent needs via `general_retrieve()`, give the agent a REPL handle to the Neo4j graph and let it programmatically traverse/query/filter. The agent writes its own retrieval strategy at runtime via Cypher queries.
+- **Seldon application**: Instead of pre-computing what context a specialist agent needs via `general_retrieve()`, give the agent a REPL handle to the NetworkX graph and let it programmatically traverse/query/filter. The agent writes its own retrieval strategy at runtime.
 - **Why this matters**: The SAS context generation experiment showed naive traversal captured 73% of the graph for a scoped task. That's a cache over-fetch problem. RLM-style programmatic access lets the agent pull exactly what it needs via graph queries, not pre-computed slices.
 - **Tradeoff**: Works well for read-heavy tasks (analysis, search). Less clear for write-heavy tasks where the agent modifies the graph it's reasoning about. Seldon agents do both.
-- **Pattern**: `general_retrieve()` returns a Neo4j session + Cypher API, not a pre-serialized context dump. The agent writes its own retrieval strategy at runtime.
-- **Ref:** Zhang, A., & Khattab, O. (2026). arXiv:2512.24601. Blog: https://alexzhang13.github.io/blog/2025/rlm/
+- **Pattern**: `general_retrieve()` returns a graph handle + query API, not a pre-serialized context dump. The agent calls `graph.neighbors()`, `nx.shortest_path()`, `graph.subgraph()` etc. inside its reasoning loop.
+- **Ref:** arXiv:2512.24601, https://alexzhang13.github.io/blog/2025/rlm/
 - **Trigger:** After basic `general_retrieve()` with pre-computed slices proves the pattern, then experiment with REPL-style dynamic retrieval.
 
-### PL-015: Multi-Agent Memory Consistency Model (NEW 2026-03-14)
+### PL-014: Multi-Agent Memory Consistency Model (NEW 2026-03-14)
 - Yu et al. (2026, UCSD) frame multi-agent memory as a computer architecture problem — shared vs. distributed paradigms, cache sharing protocols, memory access control, and critically: consistency models.
 - **Seldon relevance**: Per-project isolation (AD-004) is distributed memory. Wintermute cross-project edges are the shared layer. The consistency question: when Project A updates a shared concept, when/how does Project B see it?
 - **Staleness propagation (PL-005)** is causal consistency — downstream dependents must see upstream changes. This is well-defined within a single project graph. Cross-project staleness (via Wintermute) needs an explicit consistency model.
 - **Protocol gaps they identify**: (1) cache sharing across agents (how does one agent's cached reasoning become available to another?), and (2) structured memory access control (permissions, scope, granularity). Both relevant to PL-003 specialist retrieval profiles.
 - **Caveat**: Position paper, no concrete protocols. The computer architecture analogy is suggestive but potentially misleading — hardware memory has well-defined semantics (addresses, bytes, atomic ops). Agent memory is semantic, probabilistic, non-deterministic.
-- **Ref:** Yu, Z., et al. (2026). arXiv:2603.10062. SIGARCH blog: https://www.sigarch.org/multi-agent-memory-from-a-computer-architecture-perspective-visions-and-challenges-ahead/
+- **Ref:** arXiv:2603.10062, SIGARCH blog post Jan 2026
 - **Trigger:** When Wintermute cross-project edges are being designed. Not before.
 
-### PL-016: Lightpanda for LeStat Foraging (NEW 2026-03-14)
+### PL-015: Lightpanda for LeStat Foraging (NEW 2026-03-14)
 - Lightpanda (https://github.com/lightpanda-io/lightpanda, 14k★) — headless browser built natively for agent use, not a Chromium wrapper. Claims 11x faster, 9x less memory.
 - **LeStat application**: JS-heavy sites that block simple scraping. Currently planned to use Hermes Agent's built-in browser tools. Lightpanda could be a lighter, faster alternative.
 - **Evaluate against**: crawl4ai (current preferred scraper), Hermes Agent browser tools, trafilatura (for simple cases).
 - **Trigger:** LeStat Phase 1-2 when building foraging skills.
-
-### PL-012: Graph-Partitioned Parallel Agent Dispatch
-
-- Decompose large pipelines into work units via graph partitioning (each DataStep/PROC = one work unit)
-- Auto-generate context slices per work unit via subgraph extraction
-- Dispatch to parallel CC sessions or subagents
-- Write-back with atomic validation; re-dispatch on failure
-- Topological sort on DAG for sequencing dependent work units
-- **Trigger:** After Seldon CLI engine (Tier 1) is operational and context generation experiment is validated on real tasks
-- **Note:** PL-011 is reserved for AST-Based Code Graph Analysis (`docs/decisions/PL-011_ast_code_graph_analysis.md`)
-- **Reference:** `docs/design/2026-03-10_parallel_decomposition_via_graph.md`
 
 ---
 
 ## 4. References
 
 - Xiong, Y., Hu, S., & Clune, J. (2026). Learning to continually learn via meta-learning agentic memory designs. *Preprint.* arXiv:2602.07755v1
-- Yu, Z., et al. (2026). Multi-agent memory from a computer architecture perspective. *Preprint.* arXiv:2603.10062
-- Ilyas, I. F., et al. (2022). Saga: A platform for continuous construction and serving of knowledge at scale. *Proceedings of the ACM on Management of Data (SIGMOD 2022)*. https://doi.org/10.1145/3514221.3526052
-- Zhang, A., & Khattab, O. (2026). Recursive language models. *Preprint.* arXiv:2512.24601
-- Karpathy, A. (2026). *autoresearch* [Software]. GitHub. https://github.com/karpathy/autoresearch
-- Random Labs. (2026). *Slate technical report*. https://randomlabs.ai/blog/slate
+- Yu, Z. et al. (2026). Multi-Agent Memory from a Computer Architecture Perspective. *Preprint.* arXiv:2603.10062. SIGARCH blog: https://www.sigarch.org/multi-agent-memory-from-a-computer-architecture-perspective-visions-and-challenges-ahead/
+- Ilyas, I.F. et al. (2022). Saga: A Platform for Continuous Construction and Serving of Knowledge At Scale. *SIGMOD 2022.* arXiv:2204.07309. Apple ML: https://machinelearning.apple.com/research/continuous-construction
+- Zhang, A. & Khattab, O. (2026). Recursive Language Models. *Preprint.* arXiv:2512.24601. Blog: https://alexzhang13.github.io/blog/2025/rlm/
+- Karpathy, A. (2026). autoresearch. https://github.com/karpathy/autoresearch
+- Random Labs. (2026). Slate technical report. https://randomlabs.ai/blog/slate — Concepts: Knowledge Overhang, Expressivity, Thread Weaving.
 - ANTS v0.4: https://github.com/brockwebb/ai-native-traceability-system
 - Seldon scaffold: https://github.com/brockwebb/seldon
 - Wintermute: https://github.com/brockwebb/wintermute
@@ -391,18 +333,20 @@ ResearchTask {
 
 ---
 
-## 6. Eval Session Triage — 2026-03-14
+## 6. Eval Session Log (2026-03-14)
 
-| Source | Disposition | Action |
-|--------|-------------|--------|
-| Yu et al. arXiv:2603.10062 | Validates direction | → PL-015 |
-| Ilyas et al. arXiv:2204.07309 (Saga) | **Steal patterns** | → PL-011 |
-| Random Labs / Slate | Validates PL-003 | → PL-003 update |
-| Zhang & Khattab arXiv:2512.24601 (RLM) | **Actionable** | → PL-014 |
-| Karpathy autoresearch | **Drone template** | → PL-013 |
-| msitarzewski/agency-agents | Skip | Prompt library, no architecture |
-| daveswift.com OpenClaw+Obsidian | Skip | Market validation only |
-| hyperspaceai/agi + Autoquant | Skip | Crypto compute marketplace |
+Papers/repos evaluated this session with disposition:
+
+| Source | Disposition | Key Takeaway |
+|--------|-------------|--------------|
+| Yu et al. arXiv:2603.10062 (Multi-Agent Memory) | Validates direction, doesn't advance implementation | Consistency model vocabulary useful; no concrete protocols to adopt. → PL-014 |
+| Ilyas et al. arXiv:2204.07309 (Saga/Apple KG) | **Steal patterns for Wintermute** | Hybrid batch-incremental, NERD Entity View, type-scoped subgraph extraction. → PL-011 |
+| Random Labs / Slate | Validates PL-003 pattern | Strategic/tactical separation, Knowledge Overhang concept. → PL-003 update |
+| Zhang & Khattab arXiv:2512.24601 (RLM) | **Actionable for general_retrieve()** | REPL-as-context instead of pre-computed slices. → PL-013 |
+| Karpathy autoresearch | **Drone template for colony architecture** | Stateless experiment loop + Seldon graph = hill-climbing with a map. → PL-012 |
+| msitarzewski/agency-agents | Not relevant | Prompt library, no architecture. Star count reflects demand for personas. |
+| daveswift.com OpenClaw+Obsidian | Not relevant | Market validation that persistent memory is unsolved. |
+| hyperspaceai/agi | Not relevant | Crypto-adjacent compute marketplace. Autoquant rediscovered textbook quant. |
 
 ---
 

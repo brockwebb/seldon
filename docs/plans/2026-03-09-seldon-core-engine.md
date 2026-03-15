@@ -1,3 +1,5 @@
+> **SUPERSEDED** by `docs/plans/2026-03-14-seldon-core-engine-neo4j.md` (NetworkX replaced with Neo4j, 2026-03-14)
+
 # Seldon Core Engine Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
