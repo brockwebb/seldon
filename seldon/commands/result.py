@@ -7,7 +7,7 @@ import click
 
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import create_artifact, create_link, transition_state
-from seldon.core.graph import get_artifact, get_artifacts_by_type, get_artifacts_by_state, get_provenance_chain, get_stale_artifacts, get_dependents
+from seldon.core.graph import get_artifact, get_artifacts_by_type, get_artifacts_by_state, get_provenance_chain, get_stale_artifacts, get_dependents, find_artifact_by_property
 from seldon.domain.loader import load_domain_config
 
 
@@ -29,9 +29,12 @@ def result_group():
 @click.option("--description", default="", help="Human-readable description")
 @click.option("--script-id", default=None, help="UUID of Script that generated this result")
 @click.option("--data-ids", default=None, help="Comma-separated UUIDs of DataFile inputs")
+@click.option("--script-name", default=None, help="Name of Script artifact (resolved by 'name' property)")
+@click.option("--script-path", default=None, help="Path of Script artifact (resolved by 'path' property)")
+@click.option("--data-name", default=None, help="Comma-separated names of DataFile artifacts")
 @click.option("--requirement-id", default=None, help="UUID of SRS_Requirement this implements")
 @click.option("--input-hash", default=None, help="SHA256 hash of input data")
-def result_register(value, units, description, script_id, data_ids, requirement_id, input_hash):
+def result_register(value, units, description, script_id, data_ids, script_name, script_path, data_name, requirement_id, input_hash):
     """Register a new Result artifact with optional provenance links."""
     config = load_project_config()
     project_dir = Path.cwd()
@@ -39,6 +42,38 @@ def result_register(value, units, description, script_id, data_ids, requirement_
     domain_config = _get_domain_config(config)
     database = config["neo4j"]["database"]
     session_id = get_current_session(project_dir)
+
+    # Resolve script reference: --script-id takes priority, then --script-name, then --script-path
+    resolved_script_id = script_id
+    if resolved_script_id is None and script_name:
+        with driver.session(database=database) as sess:
+            node = find_artifact_by_property(sess, "Script", "name", script_name)
+        if node is None:
+            click.echo(f"Warning: no Script with name='{script_name}' found. Skipping link.", err=True)
+        else:
+            resolved_script_id = node["artifact_id"]
+
+    if resolved_script_id is None and script_path:
+        with driver.session(database=database) as sess:
+            node = find_artifact_by_property(sess, "Script", "path", script_path)
+        if node is None:
+            click.echo(f"Warning: no Script with path='{script_path}' found. Skipping link.", err=True)
+        else:
+            resolved_script_id = node["artifact_id"]
+
+    # Resolve data_name → additional data_ids
+    resolved_data_names: list[str] = []
+    if data_name:
+        for dname in data_name.split(","):
+            dname = dname.strip()
+            if not dname:
+                continue
+            with driver.session(database=database) as sess:
+                node = find_artifact_by_property(sess, "DataFile", "name", dname)
+            if node is None:
+                click.echo(f"Warning: no DataFile with name='{dname}' found. Skipping link.", err=True)
+            else:
+                resolved_data_names.append(node["artifact_id"])
 
     props = {
         "value": value,
@@ -61,16 +96,16 @@ def result_register(value, units, description, script_id, data_ids, requirement_
 
         links_created = []
 
-        if script_id:
+        if resolved_script_id:
             create_link(
                 project_dir=project_dir, driver=driver, database=database,
                 domain_config=domain_config,
-                from_id=result_id, to_id=script_id,
+                from_id=result_id, to_id=resolved_script_id,
                 from_type="Result", to_type="Script",
                 rel_type="generated_by", actor="human", authority="accepted",
                 session_id=session_id,
             )
-            links_created.append(f"GENERATED_BY {script_id[:8]}...")
+            links_created.append(f"GENERATED_BY {resolved_script_id[:8]}...")
 
         if data_ids:
             for data_id in data_ids.split(","):
@@ -85,6 +120,17 @@ def result_register(value, units, description, script_id, data_ids, requirement_
                         session_id=session_id,
                     )
                     links_created.append(f"COMPUTED_FROM {data_id[:8]}...")
+
+        for data_id in resolved_data_names:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=result_id, to_id=data_id,
+                from_type="Result", to_type="DataFile",
+                rel_type="computed_from", actor="human", authority="accepted",
+                session_id=session_id,
+            )
+            links_created.append(f"COMPUTED_FROM {data_id[:8]}... (by name)")
 
         if requirement_id:
             create_link(

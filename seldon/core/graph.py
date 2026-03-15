@@ -231,6 +231,64 @@ def graph_stats(session: Session) -> Dict[str, Any]:
     }
 
 
+ALLOWED_LOOKUP_PROPERTIES = {"name", "path", "description"}
+
+
+def find_artifact_by_property(
+    session: Session,
+    artifact_type: str,
+    property_name: str,
+    property_value: str,
+) -> Optional[Dict[str, Any]]:
+    """Find a single artifact by type and a unique property value.
+
+    Returns the artifact dict, or None if not found.
+    Raises ValueError if multiple matches found.
+    Raises ValueError if property_name is not in ALLOWED_LOOKUP_PROPERTIES.
+    """
+    if property_name not in ALLOWED_LOOKUP_PROPERTIES:
+        raise ValueError(
+            f"Cannot search by property '{property_name}'. "
+            f"Allowed: {ALLOWED_LOOKUP_PROPERTIES}"
+        )
+    cypher = (
+        f"MATCH (a:Artifact:{artifact_type}) "
+        f"WHERE a.{property_name} = $value "
+        f"RETURN a"
+    )
+    records = session.run(cypher, value=property_value).data()
+    if len(records) == 0:
+        return None
+    if len(records) > 1:
+        raise ValueError(
+            f"Multiple {artifact_type} artifacts with {property_name}='{property_value}'. "
+            f"Use --script-id with the exact UUID."
+        )
+    return dict(records[0]["a"])
+
+
+def find_any_artifact_by_name(
+    session: Session,
+    name: str,
+) -> Optional[Dict[str, Any]]:
+    """Find any artifact by its 'name' property across all types.
+
+    Returns the artifact dict, or None if not found.
+    Raises ValueError if multiple matches found.
+    """
+    records = session.run(
+        "MATCH (a:Artifact) WHERE a.name = $name RETURN a",
+        name=name,
+    ).data()
+    if len(records) == 0:
+        return None
+    if len(records) > 1:
+        raise ValueError(
+            f"Multiple artifacts with name='{name}'. Use --from-id with the exact UUID."
+        )
+    return dict(records[0]["a"])
+
+
 def create_indexes(session: Session) -> None:
     """Create indexes on Artifact nodes. Called once during `seldon init`."""
     session.run(
