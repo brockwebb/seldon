@@ -1,0 +1,157 @@
+# Paper Style Configuration — Preferences & Blacklists (Tier 3)
+# These are informational: reported for awareness, never block the build.
+# Override per-paper by copying to paper/ directory and editing.
+
+# --- Banned Words ---
+# Words that should never appear in academic prose (with rare exceptions).
+banned_words:
+  always:
+    - "novel"              # Everything is novel to someone. Say what makes it different.
+    - "utilize"            # Just say "use"
+    - "leverage"           # Not a verb in scientific writing
+    - "robust"             # Meaningless without specifics — robust to what?
+    - "notably"            # Self-congratulatory; let the result speak
+    - "remarkably"         # Same
+    - "strikingly"         # Same
+    - "importantly"        # Same
+    - "interestingly"      # If it's interesting, the reader will notice
+    - "clearly"            # If it's clear, you don't need to say so
+    - "obviously"          # Condescending and usually wrong
+    - "significant"        # Ambiguous — statistical significance or practical?
+    - "impactful"          # Not a real word in most style guides
+    - "synergy"            # Corporate jargon
+    - "holistic"           # Vague
+    - "paradigm"           # Overused to meaninglessness
+    - "cutting-edge"       # Marketing, not science
+    - "state-of-the-art"   # Acceptable only when citing specific SOTA benchmarks
+    - "groundbreaking"     # Let reviewers decide
+    - "transformative"     # Same
+    - "unprecedented"      # Almost never true
+    - "comprehensive"      # Usually overclaims scope
+
+  # Paper-specific additions (add per project)
+  paper_specific: []
+
+# --- Banned Phrases ---
+# Throat-clearing, hedging stacks, and academic filler.
+banned_phrases:
+  always:
+    # Throat-clearing
+    - "it is important to note"
+    - "it is important to note that"
+    - "it is worth noting"
+    - "it is worth noting that"
+    - "it should be noted"
+    - "it should be noted that"
+    - "it bears mentioning"
+    - "we would like to point out"
+    - "it is interesting to note"
+    
+    # Filler / padding
+    - "in order to"                     # Just say "to"
+    - "the fact that"                   # Delete and restructure
+    - "for the purpose of"             # Just say "to" or "for"
+    - "in terms of"                     # Usually deletable
+    - "with respect to"                 # Usually "about" or "for"
+    - "on the other hand"              # Fine occasionally; flag for awareness
+    - "at the end of the day"          # Cliché
+    - "it goes without saying"         # Then don't say it
+    - "needless to say"                # Same
+    - "as a matter of fact"            # Just state the fact
+    
+    # Nominalizations (noun forms where verbs exist)
+    - "provides an explanation of"     # → "explains"
+    - "exhibits a difference from"     # → "differs from"
+    - "makes a contribution to"        # → "contributes to"
+    - "provides a demonstration of"    # → "demonstrates"
+    - "conducts an analysis of"        # → "analyzes"
+    - "performs an evaluation of"      # → "evaluates"
+    - "achieves an improvement in"     # → "improves"
+    
+    # Hedging stacks (one hedge OK, stacking not)
+    - "may potentially"
+    - "could possibly"
+    - "might perhaps"
+    - "appears to possibly"
+    - "seems to suggest that it may"
+
+  # Paper-specific additions
+  paper_specific: []
+
+# --- Cliché Patterns ---
+# Regex patterns for common academic and general clichés.
+# Uses Python re syntax. Case-insensitive matching recommended.
+cliche_patterns:
+  - "\\bpaves the way\\b"
+  - "\\bsheds light on\\b"
+  - "\\btip of the iceberg\\b"
+  - "\\bgame.?changer\\b"
+  - "\\bparadigm shift\\b"
+  - "\\bdouble.?edged sword\\b"
+  - "\\bseamless(ly)?\\b"
+  - "\\bopen(s)? the door\\b"
+  - "\\bbridges? the gap\\b"
+  - "\\bfills? a? gap\\b"
+  - "\\bin (a |the )?nutshell\\b"
+  - "\\bat the forefront\\b"
+  - "\\bthe elephant in the room\\b"
+  - "\\blow.?hanging fruit\\b"
+  - "\\bmove the needle\\b"
+  - "\\bunlock(s|ing)? (the )?potential\\b"
+  - "\\bpush(es|ing)? the boundar(y|ies)\\b"
+  - "\\braise(s|d)? the bar\\b"
+  - "\\bstand(s)? on the shoulders\\b"
+  - "\\btwo sides of the (same )?coin\\b"
+
+# --- Repetition Detection ---
+# Flag when the same non-trivial word appears too frequently in nearby paragraphs.
+repetition_detection:
+  window_paragraphs: 3           # Check N consecutive paragraphs
+  flag_repeated_non_trivial_words: true
+  min_word_length: 6             # Don't flag short common words
+  min_occurrences: 3             # Flag if word appears this many times in window
+  
+  # Technical terms that legitimately repeat (add per-project)
+  exclude:
+    - "entropy"
+    - "fitness"
+    - "convergence"
+    - "symbolic"
+    - "regression"
+    - "evaluation"
+    - "terminal"
+    - "attractor"
+
+# --- Self-Congratulation Detector ---
+# Emphasis adverbs that make claims sound more impressive than warranted.
+self_congratulation:
+  flag_words:
+    - "very"
+    - "extremely"
+    - "highly"
+    - "incredibly"
+    - "tremendously"
+    - "dramatically"
+    - "vastly"
+    - "overwhelmingly"
+    - "profoundly"
+  
+  # Exception: OK in reported speech or when modifying a measured quantity
+  # ("highly correlated, r=0.95" is fine)
+  context_exceptions:
+    - "statistical_modifier"     # e.g., "highly significant (p < 0.001)"
+
+# --- Nominalization Patterns ---
+# Common noun-form → verb-form substitutions to flag.
+# Format: "noun phrase" → suggested replacement
+nominalizations:
+  "make a decision": "decide"
+  "provide assistance": "assist" 
+  "give consideration to": "consider"
+  "have a preference for": "prefer"
+  "make an assumption": "assume"
+  "reach a conclusion": "conclude"
+  "take into consideration": "consider"
+  "make a comparison": "compare"
+  "perform a calculation": "calculate"
+  "carry out an investigation": "investigate"
