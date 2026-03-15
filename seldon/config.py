@@ -60,15 +60,21 @@ def get_neo4j_driver(config: dict):
 
 
 def start_session(project_dir: Optional[Path] = None) -> str:
-    """
-    Generate a session UUID, write to .seldon/current_session.json, return session_id.
-    Overwrites any existing session file.
-    """
+    """Start a session. If one already exists, return its ID without overwriting."""
     base = Path(project_dir) if project_dir else Path.cwd()
     seldon_dir = base / ".seldon"
     seldon_dir.mkdir(exist_ok=True)
-    session_id = str(uuid.uuid4())
     session_file = seldon_dir / "current_session.json"
+
+    # If session already active, return existing
+    if session_file.exists():
+        with open(session_file) as f:
+            data = json.load(f)
+        if "session_id" in data:
+            return data["session_id"]
+
+    # Otherwise create new
+    session_id = str(uuid.uuid4())
     data = {
         "session_id": session_id,
         "started_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
