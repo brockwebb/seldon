@@ -1,7 +1,7 @@
 """
 Neo4j graph layer tests.
 Requires a running Neo4j instance. Tests are SKIPPED (not failed) if Neo4j is unreachable.
-Uses dedicated `seldon_test` database.
+Uses dedicated `seldon-test` database.
 """
 import uuid
 import pytest
@@ -32,7 +32,7 @@ def make_id():
 
 def test_create_artifact_double_label(neo4j_driver, clean_test_db):
     artifact_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {
             "artifact_id": artifact_id,
             "state": "proposed",
@@ -48,7 +48,7 @@ def test_create_artifact_double_label(neo4j_driver, clean_test_db):
 
 def test_create_artifact_generic_match(neo4j_driver, clean_test_db):
     artifact_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Script", {
             "artifact_id": artifact_id,
             "state": "proposed",
@@ -64,7 +64,7 @@ def test_create_artifact_generic_match(neo4j_driver, clean_test_db):
 
 def test_update_artifact(neo4j_driver, clean_test_db):
     artifact_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": artifact_id, "state": "proposed"})
         update_artifact(session, artifact_id, {"value": 0.99, "description": "updated"})
         result = session.run(
@@ -79,7 +79,7 @@ def test_update_artifact(neo4j_driver, clean_test_db):
 
 def test_change_state(neo4j_driver, clean_test_db):
     artifact_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": artifact_id, "state": "proposed"})
         change_state(session, artifact_id, "verified")
         result = session.run(
@@ -94,7 +94,7 @@ def test_change_state(neo4j_driver, clean_test_db):
 def test_create_link(neo4j_driver, clean_test_db):
     result_id = make_id()
     script_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": result_id, "state": "proposed"})
         create_artifact(session, "Script", {"artifact_id": script_id, "state": "proposed"})
         create_link(session, result_id, script_id, "GENERATED_BY", {})
@@ -108,7 +108,7 @@ def test_create_link(neo4j_driver, clean_test_db):
 def test_remove_link(neo4j_driver, clean_test_db):
     result_id = make_id()
     script_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": result_id, "state": "proposed"})
         create_artifact(session, "Script", {"artifact_id": script_id, "state": "proposed"})
         create_link(session, result_id, script_id, "GENERATED_BY", {})
@@ -124,7 +124,7 @@ def test_remove_link(neo4j_driver, clean_test_db):
 
 def test_get_artifact_exists(neo4j_driver, clean_test_db):
     artifact_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": artifact_id, "state": "proposed"})
         artifact = get_artifact(session, artifact_id)
     assert artifact is not None
@@ -132,7 +132,7 @@ def test_get_artifact_exists(neo4j_driver, clean_test_db):
 
 
 def test_get_artifact_missing_returns_none(neo4j_driver, clean_test_db):
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         result = get_artifact(session, "nonexistent-id")
     assert result is None
 
@@ -140,7 +140,7 @@ def test_get_artifact_missing_returns_none(neo4j_driver, clean_test_db):
 # ── get_artifacts_by_type / state ─────────────────────────────────────────────
 
 def test_get_artifacts_by_type(neo4j_driver, clean_test_db):
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         for _ in range(3):
             create_artifact(session, "Result", {"artifact_id": make_id(), "state": "proposed"})
         create_artifact(session, "Script", {"artifact_id": make_id(), "state": "proposed"})
@@ -149,7 +149,7 @@ def test_get_artifacts_by_type(neo4j_driver, clean_test_db):
 
 
 def test_get_artifacts_by_state(neo4j_driver, clean_test_db):
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": make_id(), "state": "proposed"})
         create_artifact(session, "Result", {"artifact_id": make_id(), "state": "stale"})
         create_artifact(session, "Script", {"artifact_id": make_id(), "state": "proposed"})
@@ -163,7 +163,7 @@ def test_get_neighbors(neo4j_driver, clean_test_db):
     result_id = make_id()
     script_id = make_id()
     data_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": result_id, "state": "proposed"})
         create_artifact(session, "Script", {"artifact_id": script_id, "state": "proposed"})
         create_artifact(session, "DataFile", {"artifact_id": data_id, "state": "proposed"})
@@ -180,7 +180,7 @@ def test_get_provenance_chain(neo4j_driver, clean_test_db):
     section_id = make_id()
     result_id = make_id()
     script_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "PaperSection", {"artifact_id": section_id, "state": "proposed"})
         create_artifact(session, "Result", {"artifact_id": result_id, "state": "proposed"})
         create_artifact(session, "Script", {"artifact_id": script_id, "state": "proposed"})
@@ -199,7 +199,7 @@ def test_get_dependents(neo4j_driver, clean_test_db):
     script_id = make_id()
     result1_id = make_id()
     result2_id = make_id()
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Script", {"artifact_id": script_id, "state": "proposed"})
         create_artifact(session, "Result", {"artifact_id": result1_id, "state": "proposed"})
         create_artifact(session, "Result", {"artifact_id": result2_id, "state": "proposed"})
@@ -214,7 +214,7 @@ def test_get_dependents(neo4j_driver, clean_test_db):
 # ── graph_stats ───────────────────────────────────────────────────────────────
 
 def test_graph_stats(neo4j_driver, clean_test_db):
-    with neo4j_driver.session(database="seldon_test") as session:
+    with neo4j_driver.session(database="seldon-test") as session:
         create_artifact(session, "Result", {"artifact_id": make_id(), "state": "proposed"})
         create_artifact(session, "Result", {"artifact_id": make_id(), "state": "verified"})
         create_artifact(session, "Script", {"artifact_id": make_id(), "state": "proposed"})

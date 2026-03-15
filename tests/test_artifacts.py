@@ -15,7 +15,7 @@ from seldon.core.state import InvalidStateTransition
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
-NEO4J_DB = "seldon_test"
+NEO4J_DB = "seldon-test"
 
 
 @pytest.fixture

@@ -27,18 +27,24 @@ def sample_artifact_id():
 
 # ── Neo4j fixtures ────────────────────────────────────────────────────────────
 
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
-TEST_DATABASE = "seldon_test"
+TEST_DATABASE = "seldon-test"
+
+
+def _neo4j_creds():
+    return (
+        os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+        os.getenv("NEO4J_USERNAME", "neo4j"),
+        os.getenv("NEO4J_PASSWORD", "password"),
+    )
 
 
 def _neo4j_reachable() -> bool:
     """Return True if Neo4j is reachable, False otherwise."""
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
-        with driver.session(database="system") as session:
+        uri, username, password = _neo4j_creds()
+        driver = GraphDatabase.driver(uri, auth=(username, password))
+        with driver.session() as session:
             session.run("RETURN 1")
         driver.close()
         return True
@@ -58,11 +64,12 @@ def neo4j_available():
 def neo4j_driver(neo4j_available):
     """Session-scoped Neo4j driver connected to the test instance."""
     from neo4j import GraphDatabase
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+    uri, username, password = _neo4j_creds()
+    driver = GraphDatabase.driver(uri, auth=(username, password))
 
     # Ensure seldon_test database exists
     with driver.session(database="system") as session:
-        session.run(f"CREATE DATABASE {TEST_DATABASE} IF NOT EXISTS")
+        session.run(f"CREATE DATABASE `{TEST_DATABASE}` IF NOT EXISTS")
 
     yield driver
     driver.close()

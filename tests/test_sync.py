@@ -13,7 +13,7 @@ from seldon.core.sync import (
 
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon_test"
+NEO4J_DB = "seldon-test"
 
 
 def sample_create_event(artifact_type="Result"):

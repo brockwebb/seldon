@@ -19,7 +19,7 @@ def init_command(project_name: str):
 
     project_dir = Path.cwd()
     slug = slugify(project_name)
-    database = f"seldon_{slug}"
+    database = f"seldon-{slug}"
     events_path = "seldon_events.jsonl"
 
     # 1. Create seldon.yaml
@@ -65,7 +65,7 @@ def init_command(project_name: str):
 
         # Create database
         with driver.session(database="system") as session:
-            session.run(f"CREATE DATABASE `{database}` IF NOT EXISTS")
+            session.run(f"CREATE DATABASE `{database}` IF NOT EXISTS WAIT")
 
         # Create indexes and meta node on project database
         with driver.session(database=database) as session:

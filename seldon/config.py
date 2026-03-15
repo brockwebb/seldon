@@ -25,9 +25,9 @@ def slugify(name: str) -> str:
         "Test 123!" → "test_123"
     """
     slug = name.lower()
-    slug = re.sub(r"[\s]+", "_", slug)
-    slug = re.sub(r"[^a-z0-9_-]", "", slug)
-    slug = slug.strip("-_")
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"[^a-z0-9-]", "", slug)
+    slug = slug.strip("-")
     return slug
 
 
