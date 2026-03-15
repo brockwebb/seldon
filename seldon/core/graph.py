@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -251,6 +252,8 @@ def find_artifact_by_property(
             f"Cannot search by property '{property_name}'. "
             f"Allowed: {ALLOWED_LOOKUP_PROPERTIES}"
         )
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', artifact_type):
+        raise ValueError(f"Invalid artifact_type: '{artifact_type}'")
     cypher = (
         f"MATCH (a:Artifact:{artifact_type}) "
         f"WHERE a.{property_name} = $value "

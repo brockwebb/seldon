@@ -4,7 +4,7 @@ from pathlib import Path
 
 import click
 
-from seldon.config import load_project_config, get_neo4j_driver
+from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import create_link as do_create_link
 from seldon.core.graph import get_artifact, find_artifact_by_property, find_any_artifact_by_name
 from seldon.domain.loader import load_domain_config
@@ -105,6 +105,7 @@ def link_create(from_id, rel_type, to_id, from_id_opt, to_id_opt, from_name, to_
             rel_type=resolved_rel.lower(),
             actor=actor,
             authority=authority,
+            session_id=get_current_session(project_dir),
         )
         click.echo(f"Created link: {resolved_from} -[{resolved_rel.upper()}]-> {resolved_to}")
     except ValueError as e:

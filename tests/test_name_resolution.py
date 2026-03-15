@@ -12,10 +12,6 @@ class TestFindArtifactByProperty:
         return session
 
     def test_returns_artifact_when_found(self):
-        node = MagicMock()
-        node.__getitem__ = lambda self, key: {"artifact_id": "abc-123", "name": "test_script"}[key]
-        node.items = lambda self: [("artifact_id", "abc-123"), ("name", "test_script")]
-
         session = MagicMock()
         session.run.return_value.data.return_value = [{"a": {"artifact_id": "abc-123", "name": "test_script"}}]
 
