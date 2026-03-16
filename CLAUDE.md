@@ -6,18 +6,24 @@ The queen of the colony. Persistent graph intelligence that decomposes research 
 
 See `README.md` for full vision and architectural properties.
 
-## Current State: Phase A (Skills + Conventions)
+## Current State
 
-No engine yet. The skills in `.claude/skills/` ARE Seldon at this stage. The engine (NetworkX + JSONL + CLI) gets built when the markdown pattern hits limits.
+Working engine: Neo4j graph + JSONL event store + CLI. 266 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
 
-**Proof-of-concept project:** `sas_graph_code_conversion/`
+## Environment
+
+**Neo4j credentials are in `.env`.** CC: you have the password. Load it with `dotenv` or read `.env` directly. Do NOT skip Neo4j-dependent tests. Do NOT ask for the password. If tests fail with auth errors, run: `source .env && pytest tests/ -v` or pass `NEO4J_PASSWORD` explicitly.
+
+**Database:** Each project gets its own Neo4j database. Seldon self-dogfood uses `seldon-seldon-self`. Leibniz-pi uses its own database per `seldon.yaml`.
+
+**Python:** Seldon is pip-installed in the active environment. `seldon` CLI is available on PATH.
 
 ## Skills
 
 | Skill | When | Invoke |
 |-------|------|--------|
-| `briefing` | Session start | `/briefing` |
-| `closeout` | Session end | `/closeout` |
+| `briefing` | Session start | `/briefing` or `seldon briefing` |
+| `closeout` | Session end | `/closeout` or `seldon closeout` |
 | `result-register` | Computation produces a citable result | `/result-register` |
 | `task-track` | Work item must survive across sessions | `/task-track` |
 | `research` | Writing lab notebook entries, lit notes, citations | `/research` |
@@ -25,6 +31,7 @@ No engine yet. The skills in `.claude/skills/` ARE Seldon at this stage. The eng
 | `paper build`  | Assembling manuscript       | `seldon paper build` |
 | `docs check`   | Verify documentation completeness | `seldon docs check` |
 | `docs generate`| Project docs from graph     | `seldon docs generate` |
+| `go`           | Orient any Claude instance   | `seldon go` |
 
 ## Session Protocol
 
@@ -87,4 +94,4 @@ Every public function gets a docstring (Args/Returns/Raises). Every module gets 
 
 ## Architecture Decisions
 
-`docs/design/seldon_architectural_decisions.md` — AD-001 through AD-013.
+`docs/design/seldon_architectural_decisions.md` — AD-001 through AD-014.
