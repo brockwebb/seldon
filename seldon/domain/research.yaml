@@ -143,6 +143,57 @@ artifact_types:
         required: true
         description: "What the requirement specifies"
 
+  AgentRole:
+    properties:
+      name:
+        required: true
+        description: "Role identifier (e.g., verifier, methods, red_team)"
+      display_name:
+        required: true
+        description: "Human-readable role name"
+      system_prompt:
+        required: true
+        description: "Full system prompt for a CC worker assuming this role"
+      responsibilities:
+        category: documentation
+        description: "What this role is responsible for"
+      retrieval_profile:
+        category: documentation
+        description: "What graph context this role needs"
+      cli_tools:
+        category: documentation
+        description: "Which seldon CLI commands this role uses"
+      checks_performed:
+        category: documentation
+        description: "What this role verifies or validates"
+      does_not_do:
+        category: documentation
+        description: "Explicit boundaries"
+
+  Workflow:
+    properties:
+      name:
+        required: true
+        description: "Workflow identifier"
+      display_name:
+        required: true
+        description: "Human-readable workflow name"
+      description:
+        required: true
+        description: "What this workflow accomplishes"
+      trigger:
+        category: documentation
+        description: "When to use this workflow"
+      decomposition_strategy:
+        category: documentation
+        description: "How the leader decomposes the directive"
+      success_criteria:
+        category: documentation
+        description: "How to verify completion"
+      notes:
+        category: documentation
+        description: "Lessons learned, caveats"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -174,6 +225,12 @@ relationship_types:
   derived_from:
     from_types: [Result]
     to_types: [LabNotebookEntry, Citation, Result]
+  includes_role:
+    from_types: [Workflow]
+    to_types: [AgentRole]
+  leads:
+    from_types: [AgentRole]
+    to_types: [Workflow]
 
 state_machines:
   Result:
@@ -240,3 +297,17 @@ state_machines:
     completed: [stale]
     failed: [proposed]
     stale: []
+
+  AgentRole:
+    proposed: [active, rejected]
+    active: [deprecated, stale]
+    deprecated: []
+    stale: [active]
+    rejected: []
+
+  Workflow:
+    proposed: [active, rejected]
+    active: [deprecated, stale]
+    deprecated: []
+    stale: [active]
+    rejected: []
