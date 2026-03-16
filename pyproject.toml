@@ -8,6 +8,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     "click>=8.0",
+    "mcp>=1.0",
     "neo4j>=5.7",
     "python-dotenv>=1.0",
     "pydantic>=2.0",
@@ -16,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 seldon = "seldon.cli:main"
+seldon-mcp = "seldon.mcp_server:main"
 
 [project.optional-dependencies]
 dev = [
