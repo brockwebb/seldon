@@ -12,6 +12,7 @@ from seldon.core.artifacts import create_artifact
 from seldon.core.events import read_events
 from seldon.core.graph import graph_stats, get_stale_artifacts
 from seldon.domain.loader import load_domain_config
+from seldon.commands.docs import run_docs_check
 
 
 def _get_domain_config(config: dict):
@@ -58,6 +59,14 @@ def briefing_command():
 
         # 4. Graph stats
         stats = graph_stats(session)
+
+    # 5. Documentation completeness (separate driver session for re-use)
+    domain_config = _get_domain_config(config)
+    driver2 = get_neo4j_driver(config)
+    try:
+        docs_data = run_docs_check(driver2, database, domain_config)
+    finally:
+        driver2.close()
 
     driver.close()
 
@@ -106,6 +115,19 @@ def briefing_command():
             click.echo(f"  ⚠ {rid}...  value={val}  {desc}  (no linked Script)")
     else:
         click.echo("  (none)")
+
+    total_a = docs_data["total_artifacts"]
+    fully_a = docs_data["fully_documented"]
+    doc_pct = int(fully_a / total_a * 100) if total_a else 0
+    click.echo(f"\nDOCUMENTATION: {fully_a}/{total_a} artifacts fully documented ({doc_pct}%)")
+    # Highlight types with most gaps
+    gap_counts = {
+        atype: len(td["incomplete"])
+        for atype, td in docs_data["by_type"].items()
+        if td["incomplete"]
+    }
+    for atype, gap_n in sorted(gap_counts.items(), key=lambda x: -x[1])[:2]:
+        click.echo(f"  ⚠ {gap_n} {atype} artifact{'s' if gap_n != 1 else ''} missing docs")
 
     click.echo(f"\nGRAPH: {stats['total_nodes']} artifacts, {stats['total_relationships']} relationships")
     click.echo(f"{border}\n")
