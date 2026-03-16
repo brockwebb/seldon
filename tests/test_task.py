@@ -31,7 +31,8 @@ def _make_result(project_dir, driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={}, actor="human", authority="accepted",
+        properties={"value": 1.0, "units": "score", "description": "test result"},
+        actor="human", authority="accepted",
     )
 
 

@@ -23,7 +23,8 @@ def _make_result(project_dir, neo4j_driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={}, actor="human", authority="accepted",
+        properties={"value": 1.0, "units": "score", "description": "test result"},
+        actor="human", authority="accepted",
     )
 
 
@@ -31,7 +32,8 @@ def _make_section(project_dir, neo4j_driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="PaperSection",
-        properties={}, actor="human", authority="accepted",
+        properties={"name": "test_section", "title": "Test Section"},
+        actor="human", authority="accepted",
     )
 
 

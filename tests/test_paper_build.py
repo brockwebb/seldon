@@ -53,7 +53,7 @@ def test_resolve_references_substitutes_value(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={"name": "test_result", "value": 42.0},
+        properties={"name": "test_result", "value": 42.0, "units": "score", "description": "test result"},
         actor="human",
         authority="accepted",
     )
@@ -114,7 +114,7 @@ def test_resolve_references_si02_stale(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={"name": "stale_result", "value": 1.0},
+        properties={"name": "stale_result", "value": 1.0, "units": "score", "description": "stale result"},
         actor="human",
         authority="accepted",
     )
@@ -166,7 +166,7 @@ def test_resolve_references_si03_proposed(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={"name": "proposed_result", "value": 7.5},
+        properties={"name": "proposed_result", "value": 7.5, "units": "score", "description": "proposed result"},
         actor="human",
         authority="accepted",
     )

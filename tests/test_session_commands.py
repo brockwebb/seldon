@@ -32,7 +32,8 @@ def _make_result(project_dir, driver, domain_config, value=0.5):
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={"value": value}, actor="human", authority="accepted",
+        properties={"value": value, "units": "score", "description": "test result"},
+        actor="human", authority="accepted",
     )
 
 
@@ -40,7 +41,8 @@ def _make_script(project_dir, driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Script",
-        properties={}, actor="human", authority="accepted",
+        properties={"name": "test_script", "path": "scripts/test.py"},
+        actor="human", authority="accepted",
     )
 
 
@@ -147,7 +149,8 @@ def test_closeout_creates_lab_notebook_entry(
     create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={"value": 0.5}, actor="human", authority="accepted",
+        properties={"value": 0.5, "units": "score", "description": "test result"},
+        actor="human", authority="accepted",
         session_id=session_id,
     )
 
@@ -177,7 +180,8 @@ def test_closeout_session_event_count(
         create_artifact(
             project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
             domain_config=domain_config, artifact_type="Result",
-            properties={"value": 0.1}, actor="human", authority="accepted",
+            properties={"value": 0.1, "units": "score", "description": "test result"},
+            actor="human", authority="accepted",
             session_id=session_id,
         )
 
@@ -206,7 +210,8 @@ def test_events_tagged_with_session_id(
     create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={"value": 0.5}, actor="human", authority="accepted",
+        properties={"value": 0.5, "units": "score", "description": "test result"},
+        actor="human", authority="accepted",
         session_id=session_id,
     )
 

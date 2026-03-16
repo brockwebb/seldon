@@ -12,10 +12,28 @@ class RelationshipConfig(BaseModel):
     to_types: List[str]
 
 
+class PropertyDef(BaseModel):
+    """Definition of a single property on an artifact type."""
+    description: str = ""
+    required: bool = False
+    category: str = "documentation"
+
+    @model_validator(mode="after")
+    def set_category_from_required(self) -> "PropertyDef":
+        if self.required:
+            self.category = "required"
+        return self
+
+
+class ArtifactTypeConfig(BaseModel):
+    """Schema for an artifact type including its property definitions."""
+    properties: Dict[str, PropertyDef] = {}
+
+
 class DomainConfig(BaseModel):
     domain: str
     version: str
-    artifact_types: List[str]
+    artifact_types: Dict[str, ArtifactTypeConfig]
     relationship_types: Dict[str, RelationshipConfig]
     state_machines: Dict[str, Dict[str, List[str]]]
 
@@ -34,6 +52,28 @@ class DomainConfig(BaseModel):
         if sm is None:
             return "proposed"
         return next(iter(sm))
+
+    def get_required_properties(self, artifact_type: str) -> List[str]:
+        """Return names of required properties for this artifact type."""
+        type_config = self.artifact_types.get(artifact_type)
+        if type_config is None:
+            return []
+        return [name for name, prop in type_config.properties.items() if prop.required]
+
+    def get_documentation_properties(self, artifact_type: str) -> List[str]:
+        """Return names of documentation (non-required) properties for this artifact type."""
+        type_config = self.artifact_types.get(artifact_type)
+        if type_config is None:
+            return []
+        return [name for name, prop in type_config.properties.items()
+                if prop.category == "documentation"]
+
+    def get_all_schema_properties(self, artifact_type: str) -> Dict[str, PropertyDef]:
+        """Return all property definitions for this artifact type."""
+        type_config = self.artifact_types.get(artifact_type)
+        if type_config is None:
+            return {}
+        return dict(type_config.properties)
 
 
 def load_domain_config(config_path: Path) -> DomainConfig:

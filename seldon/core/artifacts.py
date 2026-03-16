@@ -30,6 +30,14 @@ def create_artifact(
     """
     validate_artifact_type(domain_config, artifact_type)
 
+    # Validate required properties
+    required = domain_config.get_required_properties(artifact_type)
+    missing = [r for r in required if r not in properties or not str(properties[r]).strip()]
+    if missing:
+        raise ValueError(
+            f"Missing required properties for {artifact_type}: {', '.join(missing)}"
+        )
+
     artifact_id = str(uuid.uuid4())
     initial_state = domain_config.get_initial_state(artifact_type)
 

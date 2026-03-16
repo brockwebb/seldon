@@ -2,16 +2,146 @@ domain: research
 version: "0.1"
 
 artifact_types:
-  - Result
-  - Figure
-  - PaperSection
-  - Citation
-  - ResearchTask
-  - LabNotebookEntry
-  - Script
-  - DataFile
-  - SRS_Requirement
-  - PipelineRun
+  Script:
+    properties:
+      name:
+        required: true
+        description: "Human-readable script name"
+      path:
+        required: true
+        description: "Filesystem path relative to project root"
+      description:
+        category: documentation
+        description: "What this script does (1-2 sentences)"
+      inputs:
+        category: documentation
+        description: "Input data files or parameters"
+      outputs:
+        category: documentation
+        description: "What the script produces"
+      parameters:
+        category: documentation
+        description: "Configurable parameters and their defaults"
+      usage:
+        category: documentation
+        description: "How to run: command, arguments, environment"
+      dependencies:
+        category: documentation
+        description: "Required packages, data files, other scripts"
+
+  Result:
+    properties:
+      value:
+        required: true
+        description: "The numeric or categorical result value"
+      units:
+        required: true
+        description: "Units of measurement"
+      description:
+        required: true
+        description: "What this result measures"
+      interpretation:
+        category: documentation
+        description: "What the value means in context"
+      methodology_note:
+        category: documentation
+        description: "Brief note on how it was computed"
+
+  DataFile:
+    properties:
+      name:
+        required: true
+        description: "Filename"
+      path:
+        required: true
+        description: "Filesystem path relative to project root"
+      format:
+        category: documentation
+        description: "File format (CSV, JSON, JSONL, etc.)"
+      schema_description:
+        category: documentation
+        description: "Columns/fields and their meanings"
+      provenance_description:
+        category: documentation
+        description: "How this data was produced or obtained"
+      row_count:
+        category: documentation
+        description: "Number of records (approximate is fine)"
+
+  Figure:
+    properties:
+      name:
+        required: true
+        description: "Figure identifier (e.g., fig_1_convergence)"
+      description:
+        required: true
+        description: "What the figure shows"
+      interpretation:
+        category: documentation
+        description: "Key takeaway from this figure"
+      data_source:
+        category: documentation
+        description: "Which DataFiles/Results this figure renders"
+
+  PipelineRun:
+    properties:
+      script_id:
+        required: true
+        description: "Artifact ID of the Script that was run"
+      run_timestamp:
+        required: true
+        description: "When the run started"
+      environment:
+        category: documentation
+        description: "Python version, OS, key package versions"
+      runtime:
+        category: documentation
+        description: "Wall-clock time"
+      reproduction_command:
+        category: documentation
+        description: "Exact command to reproduce this run"
+
+  PaperSection:
+    properties:
+      name:
+        required: true
+        description: "Section identifier"
+      title:
+        required: true
+        description: "Section title"
+      file_path:
+        category: documentation
+        description: "Path to the section markdown file"
+
+  Citation:
+    properties:
+      key:
+        required: true
+        description: "BibTeX key"
+      title:
+        required: true
+        description: "Paper/source title"
+
+  ResearchTask:
+    properties:
+      description:
+        required: true
+        description: "What needs to be done"
+
+  LabNotebookEntry:
+    properties:
+      summary:
+        required: true
+        description: "Session summary"
+
+  SRS_Requirement:
+    properties:
+      requirement_id:
+        required: true
+        description: "Formal requirement identifier (e.g., FR-001)"
+      description:
+        required: true
+        description: "What the requirement specifies"
 
 relationship_types:
   cites:

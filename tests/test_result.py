@@ -20,10 +20,12 @@ def domain_config():
 
 
 def _make_result(project_dir, driver, domain_config, **props):
+    defaults = {"value": 1.0, "units": "score", "description": "test result"}
+    defaults.update(props)
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties=props, actor="human", authority="accepted",
+        properties=defaults, actor="human", authority="accepted",
     )
 
 
@@ -31,7 +33,8 @@ def _make_script(project_dir, driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Script",
-        properties={}, actor="human", authority="accepted",
+        properties={"name": "test_script", "path": "scripts/test.py"},
+        actor="human", authority="accepted",
     )
 
 
@@ -39,7 +42,8 @@ def _make_datafile(project_dir, driver, domain_config):
     return create_artifact(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="DataFile",
-        properties={}, actor="human", authority="accepted",
+        properties={"name": "test_data", "path": "data/test.csv"},
+        actor="human", authority="accepted",
     )
 
 

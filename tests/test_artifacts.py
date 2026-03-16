@@ -17,6 +17,9 @@ pytestmark = pytest.mark.usefixtures("neo4j_available")
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 NEO4J_DB = "seldon-test"
 
+RESULT_PROPS = {"value": 0.912, "units": "accuracy", "description": "test result"}
+SCRIPT_PROPS = {"name": "test_script", "path": "scripts/test.py"}
+
 
 @pytest.fixture
 def domain_config():
@@ -34,7 +37,7 @@ def test_create_artifact_writes_jsonl_and_neo4j(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={"value": 0.912, "units": "accuracy"},
+        properties=RESULT_PROPS,
         actor="human",
         authority="accepted",
     )
@@ -79,12 +82,29 @@ def test_create_artifact_returns_artifact_id(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Script",
-        properties={},
+        properties=SCRIPT_PROPS,
         actor="ai",
         authority="proposed",
     )
     assert artifact_id is not None
     uuid.UUID(artifact_id)  # must be valid UUID
+
+
+def test_create_artifact_missing_required_raises(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    with pytest.raises(ValueError, match="Missing required properties"):
+        create_artifact(
+            project_dir=project_dir,
+            driver=neo4j_driver,
+            database=NEO4J_DB,
+            domain_config=domain_config,
+            artifact_type="Result",
+            properties={"value": 1.0},  # missing units and description
+            actor="human",
+            authority="accepted",
+        )
+    assert event_count(project_dir) == 0
 
 
 # ── update_artifact ───────────────────────────────────────────────────────────
@@ -98,7 +118,7 @@ def test_update_artifact_writes_jsonl_and_neo4j(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={"value": 0.5},
+        properties={"value": 0.5, "units": "score", "description": "test result"},
         actor="human",
         authority="accepted",
     )
@@ -131,7 +151,7 @@ def test_transition_state_valid(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={},
+        properties=RESULT_PROPS,
         actor="human",
         authority="accepted",
     )
@@ -165,7 +185,7 @@ def test_transition_state_invalid_raises_before_write(
         database=NEO4J_DB,
         domain_config=domain_config,
         artifact_type="Result",
-        properties={},
+        properties=RESULT_PROPS,
         actor="human",
         authority="accepted",
     )
@@ -196,12 +216,12 @@ def test_create_link_valid(
     result_id = create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={}, actor="human", authority="accepted",
+        properties=RESULT_PROPS, actor="human", authority="accepted",
     )
     script_id = create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Script",
-        properties={}, actor="human", authority="accepted",
+        properties=SCRIPT_PROPS, actor="human", authority="accepted",
     )
     create_link(
         project_dir=project_dir,
@@ -234,12 +254,12 @@ def test_create_link_invalid_relationship_raises_before_write(
     result_id = create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Result",
-        properties={}, actor="human", authority="accepted",
+        properties=RESULT_PROPS, actor="human", authority="accepted",
     )
     script_id = create_artifact(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
         domain_config=domain_config, artifact_type="Script",
-        properties={}, actor="human", authority="accepted",
+        properties=SCRIPT_PROPS, actor="human", authority="accepted",
     )
     initial_count = event_count(project_dir)
 
