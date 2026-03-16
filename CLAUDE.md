@@ -23,6 +23,8 @@ No engine yet. The skills in `.claude/skills/` ARE Seldon at this stage. The eng
 | `research` | Writing lab notebook entries, lit notes, citations | `/research` |
 | `paper audit`  | After writing/editing prose | `seldon paper audit paper/sections/*.md` |
 | `paper build`  | Assembling manuscript       | `seldon paper build` |
+| `docs check`   | Verify documentation completeness | `seldon docs check` |
+| `docs generate`| Project docs from graph     | `seldon docs generate` |
 
 ## Session Protocol
 
@@ -75,6 +77,14 @@ Seldon tracks paper manuscripts as graph-connected artifacts. Section prose uses
 **Config files:** `paper/paper_qc_config.yaml` (Tier 2), `paper/paper_style_config.yaml` (Tier 3)
 **Conventions:** `paper/conventions.md` — READ before writing any prose.
 
+## Documentation Standards
+
+Every artifact in the Seldon graph has documentation properties defined in the domain config (`research.yaml`). Required properties are enforced at creation time. Documentation properties are tracked for completeness.
+
+Run `seldon docs check` to see documentation gaps. Run `seldon docs generate` to produce reference documentation from the graph.
+
+Every public function gets a docstring (Args/Returns/Raises). Every module gets a top-level docstring. Every CLI command has useful `--help` text. When registering artifacts via `seldon artifact create`, include all required properties and as many documentation properties as reasonable.
+
 ## Architecture Decisions
 
-`docs/design/seldon_architectural_decisions.md` — AD-001 through AD-010.
+`docs/design/seldon_architectural_decisions.md` — AD-001 through AD-013.

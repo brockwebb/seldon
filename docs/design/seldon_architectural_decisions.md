@@ -406,4 +406,18 @@ ResearchTask {
 
 ---
 
+### AD-013: Documentation as Traceability
+
+**Decision:** Artifact documentation completeness is tracked in the graph the same way provenance and state are tracked. `DomainConfig.artifact_types` is extended from a flat list to a property schema dict, with properties classified as `required` (enforced at creation) or `documentation` (advisory, checked by `seldon docs check`). Generated documentation files are projections of graph data, not hand-maintained registries.
+
+**Full spec:** `docs/design/AD-013_documentation_as_traceability.md`
+
+**Key choices:**
+- Required properties validated at `artifact create` time — no silent omission
+- Documentation properties advisory only — `seldon docs check` reports gaps, never blocks
+- `seldon docs generate` produces 5 reference files from graph queries (not templates)
+- `seldon briefing` shows documentation health summary line
+
+---
+
 *This document will evolve as implementation proceeds. Parking lot items are not commitments — they're preserved ideas awaiting the right moment.*
