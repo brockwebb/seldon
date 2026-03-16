@@ -140,7 +140,7 @@ def _get_project_state_section(project_dir: str) -> str:
     except FileNotFoundError:
         return "## Project State\n\n*No seldon.yaml found — project state unavailable.*"
     except Exception:
-        return "## Project State\n\n*Neo4j unavailable or query failed — project state unavailable.*"
+        return "## Project State\n\n*Seldon graph not available. Project may not be initialized.*"
 
 
 def assemble_go_context(
