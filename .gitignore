@@ -6,6 +6,7 @@ cc_tasks/
 tmp/
 .worktrees/
 .claude/
+.seldon/
 
 # Private notes (unredacted, strategic, not for public)
 notes/

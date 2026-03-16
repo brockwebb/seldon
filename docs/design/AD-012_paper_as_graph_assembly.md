@@ -393,7 +393,7 @@ state_machines:
 ### Paper Subcommand Group
 
 ```
-seldon paper init <name>              # Scaffold paper directory + register sections
+seldon paper init <n>              # Scaffold paper directory + register sections
 seldon paper build                    # Reference resolution + assembly + QC
 seldon paper audit                    # Run all QC checks without building
 seldon paper audit --tier 1           # Structural integrity only
@@ -409,9 +409,9 @@ seldon paper perturbation-report      # Show broken/weakened edges from recent c
 ### Claim Management
 
 ```
-seldon claim create --section <name> --paragraph <n> --statement "..." --type finding
+seldon claim create --section <n> --paragraph <n> --statement "..." --type finding
 seldon claim link --from <claim_id> --rel assumes --to <claim_id>
-seldon claim inventory --section <name>    # Show claims for a section
+seldon claim inventory --section <n>    # Show claims for a section
 seldon claim inventory --all               # Full paper claim inventory
 ```
 
@@ -456,38 +456,25 @@ Pipeline:
 
 ## 10. Implementation Plan
 
-### Phase 1: QC Config Files (Now — No Code Required)
+### Phase 1: QC Config Files — COMPLETE
 
-Write the YAML config files for the leibniz-pi paper. These are immediately useful even without automation — they codify decisions.
+- [x] `paper_qc_config.yaml` — prose rules
+- [x] `paper_style_config.yaml` — banned words, clichés, repetition rules
+- [x] General `conventions.md` — human-readable writing rules
 
-- [ ] `paper_qc_config.yaml` — prose rules (sentence length, paragraph length, etc.)
-- [ ] `paper_style_config.yaml` — banned words, clichés, repetition rules
-- [ ] General `conventions.md` — human-readable writing rules (extends pragmatics template)
+### Phase 2: Prose QC + Style Checks — COMPLETE (215 tests)
 
-### Phase 2: Style/Prose QC Agent (1-2 sessions)
+- [x] `seldon paper audit` — Tier 2 + Tier 3 checks via CLI
+- [x] All PQ-01 through PQ-07 checks implemented
+- [x] All SP-01 through SP-06 checks implemented
+- [x] Config loading with template fallback
 
-A standalone Python script that reads markdown files and applies Tier 2 + Tier 3 checks. No graph dependency. Pure text analysis.
+### Phase 3: Build Pipeline with Reference Resolution — COMPLETE (215 tests)
 
-- [ ] Sentence length checker
-- [ ] Paragraph length checker
-- [ ] Banned word/phrase scanner
-- [ ] Cliché pattern matcher
-- [ ] Repetition detector (sliding window)
-- [ ] Em dash / inline bold detector
-- [ ] CLI: `seldon paper audit --tier 2 --tier 3` or standalone `paper_qc.py`
-
-This is high-value/low-effort. Regex + counting. Usable on any markdown file, not just Seldon-managed papers.
-
-### Phase 3: Build Pipeline with Reference Resolution (1-2 sessions)
-
-Implement AD-011's `seldon paper build` with Tier 1 structural checks.
-
-- [ ] Reference resolution parser (`{{result:NAME:value}}` → graph lookup)
-- [ ] Stale/missing/unverified detection
-- [ ] BibTeX cross-reference check
-- [ ] Figure file existence check
-- [ ] Assembly into .qmd
-- [ ] Quarto render integration
+- [x] `seldon paper build` — reference resolution + Tier 1 structural checks
+- [x] SI-01 through SI-03, SI-07, SI-08 implemented
+- [x] Assembly into .qmd with Quarto render integration
+- [x] `--skip-qc`, `--strict`, `--no-render` flags
 
 ### Phase 4: Argument Skeleton + Claim Inventory (2-3 sessions)
 
@@ -551,6 +538,45 @@ Do NOT use embeddings for:
 - Replacing explicit edge types. Embeddings are fuzzy; the paper's logical structure must be precise.
 
 If/when embedding-based redundancy detection is implemented, it's a Tier 3 check (informational, never blocks build).
+
+---
+
+## 14. TEVV Mapping (NIST AI RMF Alignment)
+
+The tiered QC system maps directly to the NIST AI Risk Management Framework's Test, Evaluation, Verification, and Validation (TEVV) functions. This is not accidental — the paper assembly pipeline is a TEVV system for documents.
+
+| TEVV Function | Seldon Paper Equivalent | When |
+|---------------|------------------------|------|
+| **Test** | Tier 2 + Tier 3 QC checks (prose rules, banned words, clichés) | `seldon paper audit` — the test suite for documents |
+| **Verification** | Tier 1 structural integrity (references resolve, results verified, no broken ASSUMES edges) | `seldon paper build` — are we building the thing right? |
+| **Validation** | Argument coverage check (every ArgumentClaim has SUPPORTS edges, no orphan sections) | Does the paper actually make the argument it claims to? |
+| **Evaluation** | Human review of argument quality, voice, scientific validity | The judgment tasks the system preserves for the scientist |
+
+The key insight: **Verification and Test are automatable. Validation is partially automatable (structural completeness is checkable, argument quality is not). Evaluation is inherently human.** The system automates what it can and surfaces the rest.
+
+### PL-011: PostToolUse Hook for Continuous Verification
+
+A Claude Code PostToolUse hook that runs `seldon paper audit` automatically after any markdown file edit in `paper/sections/` would shift Verification from batch (at commit time) to continuous (at edit time). This is the "fail early" principle applied to prose — catch convention violations immediately rather than accumulating them for a batch review.
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "seldon paper audit --tier 2 $(echo $TOOL_FILE | grep -q 'paper/sections' && echo $TOOL_FILE || echo '/dev/null') 2>&1 | tail -5 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Trigger:** When paper writing workflow is proven and audit is fast enough to run inline without disrupting flow. Not before.
 
 ---
 

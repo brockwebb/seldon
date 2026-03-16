@@ -1,0 +1,10 @@
+event_store:
+  path: seldon_events.jsonl
+neo4j:
+  database: seldon-seldon-self
+  uri: bolt://localhost:7687
+project:
+  created_at: '2026-03-16T00:55:34.088334Z'
+  domain: research
+  name: seldon-self
+  slug: seldon-self
