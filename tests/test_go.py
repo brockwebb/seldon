@@ -115,6 +115,7 @@ def test_go_json_output_has_expected_keys(tmp_path):
         "project_context",
         "latest_handoff",
         "project_state",
+        "agent_roles",
         "available_commands",
     }
     assert expected_keys == set(data.keys())
@@ -126,3 +127,33 @@ def test_go_json_output_has_expected_keys(tmp_path):
     assert result.exit_code == 0, result.output
     parsed = json.loads(result.output)
     assert expected_keys == set(parsed.keys())
+
+
+# ---------------------------------------------------------------------------
+# Test 8: assemble_go_context includes Agent Roles section when roles exist
+# ---------------------------------------------------------------------------
+
+def test_go_includes_agent_roles_when_roles_exist(monkeypatch, tmp_path):
+    """assemble_go_context includes Agent Roles section when _get_agent_roles_section returns content."""
+    from seldon.commands import go as go_module
+
+    fake_roles_section = "## Agent Roles\n\n### Test Role\nYou are a test role."
+    monkeypatch.setattr(go_module, "_get_agent_roles_section", lambda project_dir: fake_roles_section)
+
+    result = go_module.assemble_go_context(project_dir=str(tmp_path))
+    assert "## Agent Roles" in result
+    assert "Test Role" in result
+
+
+# ---------------------------------------------------------------------------
+# Test 9: assemble_go_context omits Agent Roles section when function returns None
+# ---------------------------------------------------------------------------
+
+def test_go_omits_agent_roles_when_none(monkeypatch, tmp_path):
+    """assemble_go_context omits Agent Roles section when _get_agent_roles_section returns None."""
+    from seldon.commands import go as go_module
+
+    monkeypatch.setattr(go_module, "_get_agent_roles_section", lambda project_dir: None)
+
+    result = go_module.assemble_go_context(project_dir=str(tmp_path))
+    assert "## Agent Roles" not in result

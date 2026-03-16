@@ -117,6 +117,100 @@ def _format_project_state(briefing_data: dict) -> str:
     return "\n".join(lines)
 
 
+def _get_agent_roles_section(project_dir: str) -> Optional[str]:
+    """Return formatted Agent Roles and Workflows section, or None if unavailable."""
+    try:
+        config = load_project_config(project_dir)
+        driver = get_neo4j_driver(config)
+        database = config["neo4j"]["database"]
+
+        try:
+            with driver.session(database=database) as session:
+                role_records = session.run(
+                    "MATCH (r:AgentRole {state: 'active'}) RETURN r ORDER BY r.name"
+                ).data()
+                roles = [dict(r["r"]) for r in role_records]
+
+                workflow_records = session.run(
+                    "MATCH (w:Workflow {state: 'active'}) RETURN w ORDER BY w.name"
+                ).data()
+                workflows = [dict(r["w"]) for r in workflow_records]
+
+                workflow_roles: dict[str, list[str]] = {}
+                for wf in workflows:
+                    wf_id = wf["artifact_id"]
+                    linked = session.run(
+                        "MATCH (w:Workflow {artifact_id: $id})-[:INCLUDES_ROLE]->(r:AgentRole) "
+                        "RETURN r.display_name as name ORDER BY r.name",
+                        id=wf_id,
+                    ).data()
+                    workflow_roles[wf_id] = [r["name"] for r in linked]
+        finally:
+            driver.close()
+
+        if not roles and not workflows:
+            return None
+
+        lines: list[str] = []
+
+        if roles:
+            lines.append("## Agent Roles")
+            lines.append("")
+            for role in roles:
+                display_name = role.get("display_name") or role.get("name", "Unknown")
+                lines.append(f"### {display_name}")
+                system_prompt = role.get("system_prompt")
+                if system_prompt:
+                    lines.append(system_prompt)
+                    lines.append("")
+                responsibilities = role.get("responsibilities")
+                if responsibilities:
+                    lines.append(f"**Responsibilities:** {responsibilities}")
+                retrieval_profile = role.get("retrieval_profile")
+                if retrieval_profile:
+                    lines.append(f"**Retrieval:** {retrieval_profile}")
+                cli_tools = role.get("cli_tools")
+                if cli_tools:
+                    lines.append(f"**CLI tools:** {cli_tools}")
+                does_not_do = role.get("does_not_do")
+                if does_not_do:
+                    lines.append(f"**Boundaries:** {does_not_do}")
+                lines.append("")
+
+        if workflows:
+            lines.append("---")
+            lines.append("")
+            lines.append("## Workflows")
+            lines.append("")
+            for wf in workflows:
+                display_name = wf.get("display_name") or wf.get("name", "Unknown")
+                lines.append(f"### {display_name}")
+                trigger = wf.get("trigger")
+                if trigger:
+                    lines.append(f"**Trigger:** {trigger}")
+                wf_id = wf["artifact_id"]
+                role_names = workflow_roles.get(wf_id, [])
+                if role_names:
+                    lines.append(f"**Roles:** {', '.join(role_names)}")
+                decomposition_strategy = wf.get("decomposition_strategy")
+                if decomposition_strategy:
+                    lines.append("**Decomposition:**")
+                    lines.append(decomposition_strategy)
+                success_criteria = wf.get("success_criteria")
+                if success_criteria:
+                    lines.append(f"**Success criteria:** {success_criteria}")
+                lines.append("")
+
+        # Strip trailing blank lines and return
+        while lines and lines[-1] == "":
+            lines.pop()
+
+        return "\n".join(lines)
+
+    except Exception:
+        return None
+
+
 def _get_project_state_section(project_dir: str) -> str:
     """Return formatted project state section, degrading gracefully on any error."""
     try:
@@ -178,7 +272,12 @@ def assemble_go_context(
     # Section 5 — Project State
     sections.append(_get_project_state_section(project_dir))
 
-    # Section 6 — Available Commands (always)
+    # Section 6 — Agent Roles (optional — omit if no roles exist)
+    agent_roles = _get_agent_roles_section(project_dir)
+    if agent_roles is not None:
+        sections.append(agent_roles)
+
+    # Section 7 — Available Commands (always)
     sections.append(_AVAILABLE_COMMANDS_SECTION)
 
     return "\n\n---\n\n".join(sections)
@@ -219,6 +318,9 @@ def assemble_go_context_as_dict(
     # Project State
     project_state = _get_project_state_section(project_dir)
 
+    # Agent Roles
+    agent_roles = _get_agent_roles_section(project_dir)
+
     # Available Commands
     available_commands = _AVAILABLE_COMMANDS_SECTION
 
@@ -228,6 +330,7 @@ def assemble_go_context_as_dict(
         "project_context": project_context,
         "latest_handoff": latest_handoff,
         "project_state": project_state,
+        "agent_roles": agent_roles,
         "available_commands": available_commands,
     }
 
