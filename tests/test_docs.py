@@ -28,6 +28,7 @@ def test_artifact_types_has_all_types(research_config):
     expected = {
         "Script", "Result", "DataFile", "Figure", "PipelineRun",
         "PaperSection", "Citation", "ResearchTask", "LabNotebookEntry", "SRS_Requirement",
+        "AgentRole", "Workflow",
     }
     assert set(research_config.artifact_types.keys()) == expected
 
