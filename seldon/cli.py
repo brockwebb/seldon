@@ -10,6 +10,7 @@ from seldon.commands.task import task_group
 from seldon.commands.session import briefing_command, closeout_command
 from seldon.commands.paper import paper_group
 from seldon.commands.docs import docs_group
+from seldon.commands.go import go_command
 
 
 @click.group()
@@ -30,3 +31,4 @@ main.add_command(briefing_command, name="briefing")
 main.add_command(closeout_command, name="closeout")
 main.add_command(paper_group, name="paper")
 main.add_command(docs_group, name="docs")
+main.add_command(go_command, name="go")

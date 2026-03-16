@@ -21,17 +21,10 @@ def _get_domain_config(config: dict):
     return load_domain_config(domain_yaml)
 
 
-@click.command("briefing")
-def briefing_command():
-    """Load working memory: open tasks, stale results, incomplete provenance."""
-    config = load_project_config()
-    project_dir = Path.cwd()
-    driver = get_neo4j_driver(config)
-    database = config["neo4j"]["database"]
-    project_name = config["project"]["name"]
-
-    start_session(project_dir)
-
+def get_briefing_data(driver, database: str, domain_config=None) -> dict:
+    """Query graph for briefing data. Returns dict with keys:
+    open_tasks, stale_artifacts, incomplete_provenance, docs_health, graph_stats
+    """
     with driver.session(database=database) as session:
         # 1. Open tasks
         open_task_records = session.run(
@@ -61,14 +54,40 @@ def briefing_command():
         stats = graph_stats(session)
 
     # 5. Documentation completeness (separate driver session for re-use)
-    domain_config = _get_domain_config(config)
-    driver2 = get_neo4j_driver(config)
-    try:
-        docs_data = run_docs_check(driver2, database, domain_config)
-    finally:
-        driver2.close()
+    if domain_config is not None:
+        docs_data = run_docs_check(driver, database, domain_config)
+    else:
+        docs_data = {"total_artifacts": 0, "fully_documented": 0, "by_type": {}}
 
+    return {
+        "open_tasks": open_tasks,
+        "stale_artifacts": stale,
+        "incomplete_provenance": no_script,
+        "docs_health": docs_data,
+        "graph_stats": stats,
+    }
+
+
+@click.command("briefing")
+def briefing_command():
+    """Load working memory: open tasks, stale results, incomplete provenance."""
+    config = load_project_config()
+    project_dir = Path.cwd()
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    project_name = config["project"]["name"]
+
+    start_session(project_dir)
+
+    domain_config = _get_domain_config(config)
+    data = get_briefing_data(driver, database, domain_config)
     driver.close()
+
+    open_tasks = data["open_tasks"]
+    stale = data["stale_artifacts"]
+    no_script = data["incomplete_provenance"]
+    docs_data = data["docs_health"]
+    stats = data["graph_stats"]
 
     width = 50
     border = "═" * width
