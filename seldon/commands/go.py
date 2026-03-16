@@ -60,8 +60,11 @@ def _read_latest_handoff(project_dir: str) -> Optional[str]:
     handoffs_dir = Path(project_dir) / "handoffs"
     if not handoffs_dir.exists():
         return None
-    files = sorted(handoffs_dir.iterdir(), key=lambda f: f.name, reverse=True)
-    files = [f for f in files if f.is_file()]
+    files = sorted(
+        (f for f in handoffs_dir.iterdir() if f.is_file()),
+        key=lambda f: f.name,
+        reverse=True,
+    )
     if not files:
         return None
     return files[0].read_text()
@@ -232,8 +235,7 @@ def assemble_go_context_as_dict(
 @click.command("go")
 @click.option("--brief", is_flag=True, default=False, help="Skip system CLAUDE.md.")
 @click.option("--json", "output_json", is_flag=True, default=False, help="JSON output.")
-@click.pass_context
-def go_command(ctx, brief, output_json):
+def go_command(brief, output_json):
     """Orient an AI agent: engineering standards, project context, open tasks, commands."""
     project_dir = str(Path.cwd())
 
