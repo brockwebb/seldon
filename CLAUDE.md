@@ -8,7 +8,7 @@ See `README.md` for full vision and architectural properties.
 
 ## Current State
 
-Working engine: Neo4j graph + JSONL event store + CLI. 269 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
+Working engine: Neo4j graph + JSONL event store + CLI. 275 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
 
 ## Environment
 
