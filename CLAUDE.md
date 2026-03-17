@@ -8,7 +8,7 @@ See `README.md` for full vision and architectural properties.
 
 ## Current State
 
-Working engine: Neo4j graph + JSONL event store + CLI. 266 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
+Working engine: Neo4j graph + JSONL event store + CLI. 269 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
 
 ## Environment
 
@@ -17,6 +17,8 @@ Working engine: Neo4j graph + JSONL event store + CLI. 266 tests passing. Domain
 **Database:** Each project gets its own Neo4j database. Seldon self-dogfood uses `seldon-seldon-self`. Leibniz-pi uses its own database per `seldon.yaml`.
 
 **Python:** Seldon is pip-installed in the active environment. `seldon` CLI is available on PATH.
+
+**MCP default project:** Set `SELDON_DEFAULT_PROJECT=/path/to/project` in the `seldon-mcp` env block in `claude_desktop_config.json`. When `seldon_go` is called without `project_dir`, it falls back to this path if it contains `seldon.yaml`.
 
 ## Skills
 

@@ -237,11 +237,22 @@ def _get_project_state_section(project_dir: str) -> str:
         return "## Project State\n\n*Seldon graph not available. Project may not be initialized.*"
 
 
+def _resolve_project_dir(project_dir: str) -> str:
+    """Resolve project_dir, falling back to SELDON_DEFAULT_PROJECT if project_dir is '.'."""
+    if project_dir != ".":
+        return project_dir
+    env_path = os.environ.get("SELDON_DEFAULT_PROJECT")
+    if env_path and (Path(env_path) / "seldon.yaml").exists():
+        return env_path
+    return project_dir
+
+
 def assemble_go_context(
     project_dir: str = ".",
     brief: bool = False,
 ) -> str:
     """Assemble full orientation context for an AI consumer."""
+    project_dir = _resolve_project_dir(project_dir)
     sections = []
 
     # Section 1 — Role Directive (always)
@@ -288,6 +299,7 @@ def assemble_go_context_as_dict(
     brief: bool = False,
 ) -> dict:
     """Assemble orientation context as a structured dict for JSON output."""
+    project_dir = _resolve_project_dir(project_dir)
     # Role
     role = _ROLE_SECTION
 

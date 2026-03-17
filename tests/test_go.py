@@ -157,3 +157,52 @@ def test_go_omits_agent_roles_when_none(monkeypatch, tmp_path):
 
     result = go_module.assemble_go_context(project_dir=str(tmp_path))
     assert "## Agent Roles" not in result
+
+
+# ---------------------------------------------------------------------------
+# Test 10: SELDON_DEFAULT_PROJECT env var used when project_dir is "."
+# ---------------------------------------------------------------------------
+
+def test_go_default_project_from_env(tmp_path, monkeypatch):
+    """When project_dir is '.', SELDON_DEFAULT_PROJECT env var is used if it contains seldon.yaml."""
+    project_dir = tmp_path / "myproject"
+    project_dir.mkdir()
+    (project_dir / "seldon.yaml").write_text("project:\n  name: test\n")
+    unique_token = "MY_DEFAULT_PROJECT_TOKEN_XYZ"
+    (project_dir / "CLAUDE.md").write_text(f"# Project\n\n{unique_token}")
+
+    monkeypatch.setenv("SELDON_DEFAULT_PROJECT", str(project_dir))
+    result = assemble_go_context(project_dir=".")
+    assert unique_token in result
+
+
+# ---------------------------------------------------------------------------
+# Test 11: Explicit project_dir overrides SELDON_DEFAULT_PROJECT
+# ---------------------------------------------------------------------------
+
+def test_go_explicit_project_dir_overrides_env(tmp_path, monkeypatch):
+    """An explicit project_dir (not '.') takes precedence over SELDON_DEFAULT_PROJECT."""
+    env_project = tmp_path / "env_project"
+    env_project.mkdir()
+    (env_project / "seldon.yaml").write_text("project:\n  name: env\n")
+    (env_project / "CLAUDE.md").write_text("ENV_PROJECT_CONTENT")
+
+    explicit_project = tmp_path / "explicit_project"
+    explicit_project.mkdir()
+    (explicit_project / "CLAUDE.md").write_text("EXPLICIT_PROJECT_CONTENT")
+
+    monkeypatch.setenv("SELDON_DEFAULT_PROJECT", str(env_project))
+    result = assemble_go_context(project_dir=str(explicit_project))
+    assert "EXPLICIT_PROJECT_CONTENT" in result
+    assert "ENV_PROJECT_CONTENT" not in result
+
+
+# ---------------------------------------------------------------------------
+# Test 12: Invalid SELDON_DEFAULT_PROJECT degrades gracefully
+# ---------------------------------------------------------------------------
+
+def test_go_invalid_env_path_degrades_gracefully(tmp_path, monkeypatch):
+    """Invalid or missing SELDON_DEFAULT_PROJECT falls back to '.' without crashing."""
+    monkeypatch.setenv("SELDON_DEFAULT_PROJECT", str(tmp_path / "nonexistent"))
+    result = assemble_go_context(project_dir=".")
+    assert "## Role" in result
