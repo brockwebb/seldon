@@ -1,0 +1,9 @@
+{
+  "name": "seldon",
+  "description": "Seldon research operating system — skills for paper authoring, result provenance, session protocol, and graph-backed traceability",
+  "version": "1.0.0",
+  "author": {
+    "name": "Brock Webb"
+  },
+  "repository": "https://github.com/brockwebb/seldon"
+}

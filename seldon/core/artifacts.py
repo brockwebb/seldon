@@ -176,3 +176,32 @@ def create_link(
 
     with driver.session(database=database) as session:
         graph.create_link(session, from_id, to_id, rel_type.upper(), {})
+
+
+def remove_link(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    from_id: str,
+    to_id: str,
+    rel_type: str,
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+) -> None:
+    """Write JSONL event then delete Neo4j relationship."""
+    event = make_event(
+        event_type="link_removed",
+        actor=actor,
+        authority=authority,
+        payload={
+            "from_id": from_id,
+            "to_id": to_id,
+            "rel_type": rel_type,
+        },
+        session_id=session_id,
+    )
+    append_event(project_dir, event)
+
+    with driver.session(database=database) as session:
+        graph.remove_link(session, from_id, to_id, rel_type.upper())

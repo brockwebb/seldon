@@ -1,7 +1,7 @@
 # Seldon — Architectural Decisions & Vision
 
 **Date:** 2026-02-21
-**Updated:** 2026-03-14 — New insights from eval session (multi-agent memory, Saga KG, RLM, Slate)
+**Updated:** 2026-03-16 — New insights from eval session (multi-agent memory, Saga KG, RLM, Slate)
 **Status:** Draft — Captures brainstorming decisions and future vision
 **Context:** Synthesized from multiple design conversations about ANTS evolution, research workflow failures, and the ALMA paper analysis.
 
@@ -352,6 +352,19 @@ ResearchTask {
 - **Evaluate against**: crawl4ai (current preferred scraper), Hermes Agent browser tools, trafilatura (for simple cases).
 - **Trigger:** LeStat Phase 1-2 when building foraging skills.
 
+### PL-017: Skill Relation Graph Vocabulary (SkillNet-Informed)
+
+- When `~/.wintermute/skills/` grows beyond flat file discovery, formalize inter-skill relationships using typed edges. Adopt SkillNet's four relation types as starting vocabulary:
+  - `similar_to`: functional equivalence / redundancy detection
+  - `compose_with`: output→input chaining (pipeline construction)
+  - `depend_on`: prerequisite resolution (safe execution ordering)
+  - `belong_to`: hierarchy / sub-component abstraction
+- Implementation must follow Seldon patterns: event-sourced edge creation, authority model (AI proposes relations from skill metadata, edges start as proposed, verified through execution), CLI-driven (AD-003). SkillNet infers edges via embedding similarity + LLM judgment — all their edges are epistemically "proposed" with no verification mechanism. Our edges earn their status.
+- Reference framing: "Skills are how memory becomes executable and workflows become flexible" — captures the Seldon retrieve/update contract and the Wintermute v1 failure mode (dead database without execution structure).
+- **Prior art:** Liang et al. (2026), "SkillNet: Create, Evaluate, and Connect AI Skills." arXiv:2603.04448
+- **Trigger:** 50+ skills in Wintermute skills directory, where Claude Code can no longer hold full inventory in context and keyword-based discovery starts missing valid `compose_with` chains.
+- **Not before:** Seldon core engine (Tier 1) running and at least one project-level instance producing data.
+
 ### PL-012: Graph-Partitioned Parallel Agent Dispatch
 
 - Decompose large pipelines into work units via graph partitioning (each DataStep/PROC = one work unit)
@@ -372,6 +385,7 @@ ResearchTask {
 - Ilyas, I. F., et al. (2022). Saga: A platform for continuous construction and serving of knowledge at scale. *Proceedings of the ACM on Management of Data (SIGMOD 2022)*. https://doi.org/10.1145/3514221.3526052
 - Zhang, A., & Khattab, O. (2026). Recursive language models. *Preprint.* arXiv:2512.24601
 - Karpathy, A. (2026). *autoresearch* [Software]. GitHub. https://github.com/karpathy/autoresearch
+- Liang, Y., et al. (2026). SkillNet: Create, Evaluate, and Connect AI Skills. *Preprint.* arXiv:2603.04448
 - Random Labs. (2026). *Slate technical report*. https://randomlabs.ai/blog/slate
 - ANTS v0.4: https://github.com/brockwebb/ai-native-traceability-system
 - Seldon scaffold: https://github.com/brockwebb/seldon

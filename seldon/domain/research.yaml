@@ -112,6 +112,9 @@ artifact_types:
       file_path:
         category: documentation
         description: "Path to the section markdown file"
+      content_hash:
+        category: documentation
+        description: "SHA-256 hash of file content at last sync"
 
   Citation:
     properties:

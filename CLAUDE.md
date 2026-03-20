@@ -8,7 +8,7 @@ See `README.md` for full vision and architectural properties.
 
 ## Current State
 
-Working engine: Neo4j graph + JSONL event store + CLI. 275 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014).
+Working engine: Neo4j graph + JSONL event store + CLI. 290+ tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014). Paper sync for iterative editing workflow. Paper foundations workflow (glossary, keyword index, evidence map).
 
 ## Environment
 
@@ -30,6 +30,8 @@ Working engine: Neo4j graph + JSONL event store + CLI. 275 tests passing. Domain
 | `task-track` | Work item must survive across sessions | `/task-track` |
 | `research` | Writing lab notebook entries, lit notes, citations | `/research` |
 | `paper audit`  | After writing/editing prose | `seldon paper audit paper/sections/*.md` |
+| `paper sync`   | **After any edit to section files** | `seldon paper sync` |
+| `paper register` | Register section files as graph artifacts | `seldon paper register --all` |
 | `paper build`  | Assembling manuscript       | `seldon paper build` |
 | `docs check`   | Verify documentation completeness | `seldon docs check` |
 | `docs generate`| Project docs from graph     | `seldon docs generate` |
@@ -40,6 +42,42 @@ Working engine: Neo4j graph + JSONL event store + CLI. 275 tests passing. Domain
 1. **Start**: `/briefing` — reads handoffs, surfaces open tasks, identifies critical path
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
 3. **End**: `/closeout` — structured handoff, commit
+
+## Paper Editing Workflow
+
+**The loop is: edit → sync → build.** This is mandatory, not optional.
+
+After ANY edit to `paper/sections/*.md` — whether manual prose edits, CC tasks that rename result references, or anything that changes section file content:
+
+```bash
+python paper/check_glossary.py       # check terms + regenerate keyword index
+seldon paper sync                    # reconcile graph with disk (hashes, edges, state)
+seldon paper build --no-render       # verify references still resolve
+```
+
+`paper sync` computes content hashes, updates `cites` edges for changed `{{result:...}}` references, and transitions modified sections to `stale` if they were in `review` or `published` state. Without sync, the graph doesn't know your edits happened and provenance edges go stale silently.
+
+`paper register --all` is the initial setup step — run once to create PaperSection artifacts for all section files. After that, sync handles updates.
+
+`--dry-run` on either command to preview without writing.
+
+## Paper Foundations Phase
+
+Before iterative editing of sections, establish the constraint surface. This reduces drift, terminological inconsistency, and whack-a-mole fixing across sections. Constraint propagation: reduce degrees of freedom before searching the solution space.
+
+**Foundation files (in `paper/`):**
+
+1. **`glossary.md`** — Controlled vocabulary. Every technical term with definition, correct usage, and banned synonyms. All sections must conform. Machine-checkable via `check_glossary.py`.
+
+2. **`keyword_index.md`** — Auto-generated concordance. Shows which glossary terms appear in which sections. Run `python paper/check_glossary.py` to regenerate and check for banned synonym violations. Zero tokens needed.
+
+3. **`evidence_map.md`** — Which results support which claims, which figures visualize which data, which scripts produced what. The human-readable provenance reference.
+
+4. **`conventions.md`** — Style and terminology rules (already exists). Paper-specific rules section covers term usage.
+
+**Recommended writing order:** Conclusion first (backwards from reader order, forwards from argument logic). Establish claims → evidence that supports them → methods that produced the evidence → background/framing → intro → abstract last. Each layer constrains the next.
+
+**The glossary and evidence map ensure that whatever order you write in, terminology and results stay consistent.** Any section that uses an undefined term or an unregistered result is a detectable violation.
 
 ## Key Directories
 
