@@ -420,6 +420,38 @@ ResearchTask {
 
 ---
 
+### AD-017: Central Validity Ontology
+
+**Decision:** The canonical validity ontology (SFV terminology, sub-dimensions, threat taxonomy) lives in the main Seldon repo (`ontology/validity/`), not in individual project repos. Project-level instances query Neo4j for canonical terms rather than maintaining local copies.
+
+**Full spec:** `docs/design/AD-017_central_validity_ontology.md`
+
+**Key choices:**
+- Markdown in `seldon/ontology/validity/` is the human-readable, version-controlled initialization source
+- Neo4j (shared namespace: `:ValidityTerm`, `:Threat`, `:SubDimension` nodes) is the runtime source
+- Projects inherit terms through graph queries; they don't own or copy definitions
+- Countermeasure for SFV T1 (Semantic Drift) and T5 (State Discontinuity)
+- Requires an ingestion script to populate graph from markdown (separate task)
+- Migration of existing project-level definitions is forward-looking; existing papers not modified
+
+---
+
+### AD-016: Paper QC Severity Tiers
+
+**Decision:** Replace the Tier 2 / Tier 3 classification with three semantically distinct tiers — Critical (build-blocking), Substantive (flagged loudly, non-blocking), and Administrative (budget-based, non-blocking). All rules live in a single per-project `paper/paper_qc_config.yaml`. Administrative rules use explicit budgets rather than binary bans.
+
+**Full spec:** `docs/design/AD-016_paper_qc_severity_tiers.md`
+
+**Key choices:**
+- Critical: unresolved references, glossary violations, missing captions — build fails
+- Substantive: sentence length, hedge stacking, ambiguous pronouns, misframing phrases — warnings
+- Administrative: em-dashes, banned words, clichés, repetition — budget counts
+- `--strict` makes Substantive also block; `--pedantic` makes everything block
+- No global config yet — all rules are project-level; global defaults are a future enhancement
+- `paper_style_config.yaml` is deprecated when projects migrate to unified format
+
+---
+
 ### AD-013: Documentation as Traceability
 
 **Decision:** Artifact documentation completeness is tracked in the graph the same way provenance and state are tracked. `DomainConfig.artifact_types` is extended from a flat list to a property schema dict, with properties classified as `required` (enforced at creation) or `documentation` (advisory, checked by `seldon docs check`). Generated documentation files are projections of graph data, not hand-maintained registries.
