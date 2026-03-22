@@ -2,5 +2,261 @@
 % Format: APA 7th Edition (BibTeX)
 % Add new entries alphabetically by citation key
 %
-% Convention: citation_key = AuthorYear or AuthorYearKeyword
-% Example: Webb2026traceability, Asimov1951foundation
+% Convention: citation_key = AuthorYearKeyword (personal authors)
+%             citation_key = abbreviationyearkeyword (institutional authors — match existing convention)
+% Example: Webb2026traceability, fcsm2020
+%
+% PURPOSE: Global citation catalog for all Seldon-tracked projects.
+% Vocabulary files and ontology documents cite from this catalog.
+% If a source updates (e.g., NIST AI RMF 2.0), grep the key to find blast radius.
+%
+% Sources consolidated from:
+%   central_library/crosswalks/fcsm_nist/references.bib
+%   census-mcp-server/paper/references.bib
+% New entries added for validity vocabulary (ShadishCookCampbell2002,
+%   CronbachMeehl1955, Hirstein2005, Groves2009, Webb2026ai4stats)
+
+% ═══════════════════════════════════════════════════════════════
+% Framework Documents (NIST, FCSM, OMB)
+% ═══════════════════════════════════════════════════════════════
+
+@techreport{fcsm2020,
+  author      = {{Federal Committee on Statistical Methodology}},
+  title       = {A Framework for Data Quality},
+  number      = {FCSM 20-04},
+  institution = {Federal Committee on Statistical Methodology},
+  year        = {2020},
+  month       = sep,
+  url         = {https://nces.ed.gov/fcsm/pdf/FCSM.20.04_A_Framework_for_Data_Quality.pdf}
+}
+
+@techreport{fcsm2025,
+  author      = {{Federal Committee on Statistical Methodology}},
+  title       = {{AI}-Ready Federal Statistical Data: An Extension of Communicating Data Quality},
+  number      = {FCSM 25-03},
+  institution = {Federal Committee on Statistical Methodology},
+  year        = {2025},
+  url         = {https://statspolicy.gov/assets/fcsm/files/docs/FCSM.25.03_AI-Ready-Extension-Data-Quality.pdf}
+}
+
+@techreport{ncses2025,
+  author      = {{National Center for Science and Engineering Statistics}},
+  title       = {Measuring Large Language Model Understanding of Federal Statistical Data},
+  number      = {RFS MLMU-25},
+  institution = {National Science Foundation, America's DataHub Consortium},
+  year        = {2025},
+  url         = {https://www.americasdatahub.org/rfs-mlmu-25/}
+}
+
+@techreport{nist2023airm,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {Artificial Intelligence Risk Management Framework ({AI RMF} 1.0)},
+  number      = {NIST AI 100-1},
+  institution = {National Institute of Standards and Technology},
+  year        = {2023},
+  month       = jan,
+  doi         = {10.6028/NIST.AI.100-1},
+  url         = {https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf}
+}
+
+@online{nist2023crosswalks,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {Crosswalks to the {NIST} Artificial Intelligence Risk Management Framework ({AI RMF} 1.0)},
+  year        = {2023},
+  url         = {https://www.nist.gov/itl/ai-risk-management-framework/crosswalks-nist-artificial-intelligence-risk-management-framework},
+  urldate     = {2026-02-21},
+  note        = {As of February 2026, lists twelve crosswalk mappings to international standards, regulatory frameworks, and national AI governance bodies}
+}
+
+@online{nist2023playbook,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {{AI RMF} Playbook},
+  year        = {2023},
+  url         = {https://airc.nist.gov/airmf-resources/playbook/},
+  urldate     = {2026-02-21},
+  note        = {Companion resource to AI RMF 1.0 providing suggested actions for each function, category, and subcategory}
+}
+
+@techreport{nist2024genai,
+  author      = {{National Institute of Standards and Technology}},
+  title       = {Artificial Intelligence Risk Management Framework: Generative {AI} Profile},
+  number      = {NIST AI 600-1},
+  institution = {National Institute of Standards and Technology},
+  year        = {2024},
+  month       = jul,
+  doi         = {10.6028/NIST.AI.600-1},
+  url         = {https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf},
+  note        = {Companion profile to AI RMF 1.0 addressing risks specific to generative AI, including confabulation}
+}
+
+% ═══════════════════════════════════════════════════════════════
+% Statutes and Regulations
+% ═══════════════════════════════════════════════════════════════
+
+@techreport{obama2009ogd,
+  author      = {{Executive Office of the President}},
+  title       = {Open Government Directive},
+  institution = {Office of Management and Budget},
+  number      = {M-10-06},
+  year        = {2009},
+  month       = dec,
+  url         = {https://obamawhitehouse.archives.gov/open/documents/open-government-directive}
+}
+
+@misc{eo13642,
+  author      = {{Executive Office of the President}},
+  title       = {Executive Order 13642: Making Open and Machine Readable the New Default for Government Information},
+  year        = {2013},
+  month       = may,
+  url         = {https://obamawhitehouse.archives.gov/the-press-office/2013/05/09/executive-order-making-open-and-machine-readable-new-default-government-}
+}
+
+@misc{iqa2000,
+  title       = {Information Quality Act},
+  howpublished = {Section 515 of the Treasury and General Government Appropriations Act for Fiscal Year 2001, {P.L.}\ 106-554},
+  year        = {2000},
+  note        = {Codified as 44 U.S.C.\ §3516 note}
+}
+
+@misc{naiia2020,
+  title       = {National Artificial Intelligence Initiative Act of 2020},
+  howpublished = {Division {E} of the William M.\ (Mac) Thornberry National Defense Authorization Act for Fiscal Year 2021, {P.L.}\ 116-283},
+  year        = {2021},
+  note        = {Codified at 15 U.S.C.\ §§9401--9462}
+}
+
+@misc{omb_directive4,
+  author      = {{Office of Management and Budget}},
+  title       = {Statistical Policy Directive No.\ 4: Release and Dissemination of Statistical Products Produced by Federal Statistical Agencies},
+  year        = {2008},
+  month       = mar,
+  howpublished = {73 FR 12132},
+  url         = {https://www.federalregister.gov/documents/2008/03/07/E8-4570/statistical-policy-directive-no-4-release-and-dissemination-of-statistical-products-produced-by}
+}
+
+@misc{open_gov_data2018,
+  title       = {{OPEN} Government Data Act},
+  howpublished = {Title {II} of the Foundations for Evidence-Based Policymaking Act of 2018, {P.L.}\ 115-435},
+  year        = {2019},
+  note        = {Codified at 44 U.S.C.\ §§3501 note, 3520A, and other sections}
+}
+
+% ═══════════════════════════════════════════════════════════════
+% Foundational Methodology (Validity, Survey Methods, Psychometrics)
+% ═══════════════════════════════════════════════════════════════
+
+@article{CronbachMeehl1955,
+  author  = {Cronbach, Lee J. and Meehl, Paul E.},
+  title   = {Construct validity in psychological tests},
+  journal = {Psychological Bulletin},
+  volume  = {52},
+  number  = {4},
+  pages   = {281--302},
+  year    = {1955},
+  doi     = {10.1037/h0040957},
+  note    = {Origin of construct validity concept; foundational for reliability vs validity distinction}
+}
+
+@book{Groves2009,
+  author    = {Groves, Robert M. and Fowler, Floyd J. and Couper, Mick P. and Lepkowski, James M. and Singer, Eleanor and Tourangeau, Roger},
+  title     = {Survey Methodology},
+  edition   = {2nd},
+  publisher = {Wiley},
+  year      = {2009},
+  series    = {Wiley Series in Survey Methodology},
+  note      = {Canonical reference for Total Survey Error framework}
+}
+
+@book{Hirstein2005,
+  author    = {Hirstein, William},
+  title     = {Brain Fiction: Self-Deception and the Riddle of Confabulation},
+  publisher = {MIT Press},
+  year      = {2005},
+  address   = {Cambridge, MA},
+  note      = {Clinical neuropsychology origin of confabulation term; basis for distinguishing confabulation from hallucination in AI context}
+}
+
+@book{kahneman2021,
+  author    = {Kahneman, Daniel and Sibony, Olivier and Sunstein, Cass R.},
+  title     = {Noise: A Flaw in Human Judgment},
+  publisher = {Little, Brown Spark},
+  year      = {2021}
+}
+
+@incollection{morris1938,
+  author    = {Morris, Charles W.},
+  title     = {Foundations of the Theory of Signs},
+  booktitle = {International Encyclopedia of Unified Science},
+  editor    = {Neurath, Otto and Carnap, Rudolf and Morris, Charles},
+  volume    = {1},
+  number    = {2},
+  publisher = {University of Chicago Press},
+  year      = {1938}
+}
+
+@book{ShadishCookCampbell2002,
+  author    = {Shadish, William R. and Cook, Thomas D. and Campbell, Donald T.},
+  title     = {Experimental and Quasi-Experimental Designs for Generalized Causal Inference},
+  publisher = {Houghton Mifflin},
+  year      = {2002},
+  address   = {Boston},
+  note      = {Canonical reference for construct, internal, external, and statistical conclusion validity}
+}
+
+% ═══════════════════════════════════════════════════════════════
+% AI/ML Methodology and Governance
+% ═══════════════════════════════════════════════════════════════
+
+@article{edge2024graphrag,
+  author    = {Edge, Darren and Trinh, Ha and Cheng, Newman and Bradley, Joshua and Chao, Alex and Mody, Apurva and Truitt, Steven and Larson, Jonathan},
+  title     = {From Local to Global: A Graph {RAG} Approach to Query-Focused Summarization},
+  journal   = {arXiv preprint},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2404.16130}
+}
+
+@inproceedings{lewis2020rag,
+  author    = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and K\"uttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rockt\"aschel, Tim and Riedel, Sebastian and Kiela, Douwe},
+  title     = {Retrieval-Augmented Generation for Knowledge-Intensive {NLP} Tasks},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020},
+  doi       = {10.48550/arXiv.2005.11401},
+  url       = {https://arxiv.org/abs/2005.11401}
+}
+
+@inproceedings{zheng2023judging,
+  author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
+  title     = {Judging {LLM}-as-a-Judge with {MT-Bench} and {Chatbot Arena}},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2306.05685}
+}
+
+% ═══════════════════════════════════════════════════════════════
+% Webb (Own Published Work)
+% ═══════════════════════════════════════════════════════════════
+
+@online{Webb2026ai4stats,
+  author = {Webb, Brock},
+  title  = {{AI} for Official Statistics},
+  year   = {2026},
+  url    = {https://brockwebb.github.io/ai4stats/},
+  note   = {Chapter 20 introduces State Fidelity Validity (SFV) framework}
+}
+
+@misc{Webb2025censusmcp,
+  author       = {Webb, Brock},
+  title        = {open-census-mcp-server: An Open-Source {MCP} Server for {U.S.} Census Bureau Data},
+  year         = {2025},
+  url          = {https://github.com/brockwebb/open-census-mcp-server},
+  howpublished = {\url{https://github.com/brockwebb/open-census-mcp-server}}
+}
+
+@online{Webb2026crosswalk,
+  author = {Webb, Brock},
+  title  = {When {AI} Enters Federal Statistics: A Crosswalk Between Data Quality and {AI} Trustworthiness Frameworks},
+  year   = {2026},
+  doi    = {10.5281/zenodo.18766095},
+  url    = {https://zenodo.org/records/18766095},
+  note   = {Preprint. Project-level .bib files may reference this key as webb2026crosswalk (lowercase).}
+}
