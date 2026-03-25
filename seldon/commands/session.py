@@ -53,7 +53,16 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
         # 4. Graph stats
         stats = graph_stats(session)
 
-    # 5. Documentation completeness (separate driver session for re-use)
+        # 5. Citation health
+        total_sections = session.run(
+            "MATCH (s:Artifact:PaperSection) RETURN count(s) AS n"
+        ).single()["n"]
+        cited_sections = session.run(
+            "MATCH (s:Artifact:PaperSection)-[:CITES]->(:Artifact:Citation) "
+            "RETURN count(DISTINCT s) AS n"
+        ).single()["n"]
+
+    # 6. Documentation completeness (separate driver session for re-use)
     if domain_config is not None:
         docs_data = run_docs_check(driver, database, domain_config)
     else:
@@ -65,6 +74,10 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
         "incomplete_provenance": no_script,
         "docs_health": docs_data,
         "graph_stats": stats,
+        "citation_health": {
+            "total_sections": total_sections,
+            "cited_sections": cited_sections,
+        },
     }
 
 
@@ -147,6 +160,15 @@ def briefing_command():
     }
     for atype, gap_n in sorted(gap_counts.items(), key=lambda x: -x[1])[:2]:
         click.echo(f"  ⚠ {gap_n} {atype} artifact{'s' if gap_n != 1 else ''} missing docs")
+
+    citation_health = data["citation_health"]
+    total_s = citation_health["total_sections"]
+    cited_s = citation_health["cited_sections"]
+    if total_s > 0:
+        cite_pct = int(cited_s / total_s * 100)
+        uncited = total_s - cited_s
+        suffix = f"  ⚠ {uncited} uncited" if uncited > 0 else "  ✓ all cited"
+        click.echo(f"\nCITATIONS: {cited_s}/{total_s} sections have ≥1 cite edge ({cite_pct}%){suffix}")
 
     click.echo(f"\nGRAPH: {stats['total_nodes']} artifacts, {stats['total_relationships']} relationships")
     click.echo(f"{border}\n")
