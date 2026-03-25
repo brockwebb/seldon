@@ -32,6 +32,9 @@ prose_rules:
   # Pronoun clarity
   flag_ambiguous_pronouns: true  # "This" or "It" opening a sentence without clear antecedent
 
+  # Citation coverage
+  min_cite_tokens: 1             # Min {{cite:...}} tokens per section; 0 disables
+
 # Formatting rules for non-prose elements
 formatting_rules:
   italic_run_in_heads: true      # APA Level 4: "*Label.* Prose continues..."

@@ -350,6 +350,8 @@ _AMBIGUOUS_PRONOUN_RE = re.compile(
     re.IGNORECASE,
 )
 
+_CITE_TOKEN_RE = re.compile(r'\{\{cite:[^:}]+:[^}]+\}\}')
+
 
 def check_PQ_07(lines: List[str], config: dict, filename: str = "<string>") -> List[Violation]:
     """PQ-07: Flag sentences starting with 'This' or 'It' followed by a verb."""
@@ -552,6 +554,24 @@ def check_SP_06(lines: List[str], config: dict, filename: str = "<string>") -> L
     return violations
 
 
+def check_PQ_08(lines: List[str], config: dict, filename: str = "<string>") -> List[Violation]:
+    """PQ-08: Flag sections with fewer {{cite:...}} tokens than the configured minimum."""
+    threshold = config["prose_rules"].get("min_cite_tokens", 1)
+    if threshold <= 0:
+        return []
+    text = "\n".join(lines)
+    count = len(_CITE_TOKEN_RE.findall(text))
+    if count < threshold:
+        return [Violation(
+            check_id="PQ-08",
+            file=filename,
+            line=1,
+            message=f"Section has {count} citation token{'s' if count != 1 else ''} (min {threshold})",
+            text=f"{{{{cite:...}}}} tokens found: {count}",
+        )]
+    return []
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -568,6 +588,7 @@ def run_tier2(text: str, qc_config: dict, filename: str = "<string>") -> List[Vi
         check_PQ_05,
         check_PQ_06,
         check_PQ_07,
+        check_PQ_08,
     ):
         violations.extend(check_fn(lines, qc_config, filename))
     return violations

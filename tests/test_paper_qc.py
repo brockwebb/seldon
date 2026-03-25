@@ -15,6 +15,7 @@ from seldon.paper.qc import (
     check_PQ_05,
     check_PQ_06,
     check_PQ_07,
+    check_PQ_08,
     check_SP_01,
     check_SP_02,
     check_SP_03,
@@ -649,6 +650,58 @@ class TestRunTier2:
         text = "This is **very important** prose text."
         violations = run_tier2(text, QC_CONFIG)
         assert any(v.check_id == "PQ-03" for v in violations)
+
+
+# ---------------------------------------------------------------------------
+# PQ-08: Citation coverage
+# ---------------------------------------------------------------------------
+
+def _qc_cite(min_cite_tokens=1):
+    return {"prose_rules": {"min_cite_tokens": min_cite_tokens}}
+
+
+class TestCheckPQ08:
+    def test_no_cite_tokens_flags_violation(self):
+        lines = ["# Introduction", "", "Some prose without any citation references."]
+        violations = check_PQ_08(lines, _qc_cite(1))
+        assert len(violations) == 1
+        assert violations[0].check_id == "PQ-08"
+        assert "0 citation tokens" in violations[0].message
+
+    def test_one_cite_token_satisfies_threshold_of_one(self):
+        lines = ["# Introduction", "", "We build on prior work {{cite:Smith2020:bibtex_key}}."]
+        violations = check_PQ_08(lines, _qc_cite(1))
+        assert violations == []
+
+    def test_below_threshold_reports_count(self):
+        lines = ["# Methods", "", "One cite {{cite:Jones2019:key}} but threshold is two."]
+        violations = check_PQ_08(lines, _qc_cite(2))
+        assert len(violations) == 1
+        assert "1 citation token" in violations[0].message
+        assert "min 2" in violations[0].message
+
+    def test_threshold_zero_disables_check(self):
+        lines = ["# Results", "", "No citations here at all."]
+        violations = check_PQ_08(lines, _qc_cite(0))
+        assert violations == []
+
+    def test_multiple_cites_in_section(self):
+        lines = [
+            "# Discussion",
+            "",
+            "See {{cite:A2020:key}} and {{cite:B2021:key}} for background.",
+        ]
+        violations = check_PQ_08(lines, _qc_cite(2))
+        assert violations == []
+
+    def test_run_tier2_includes_pq08(self):
+        """run_tier2 surfaces PQ-08 when section has no citations."""
+        text = "# Section\n\nProse with no cite tokens at all."
+        config = {"prose_rules": {"min_cite_tokens": 1, "max_sentence_words": 35,
+                                  "min_paragraph_sentences": 1, "max_paragraph_sentences": 8,
+                                  "no_semicolons_over_words": 20}}
+        violations = run_tier2(text, config)
+        assert any(v.check_id == "PQ-08" for v in violations)
 
 
 class TestRunTier3:
