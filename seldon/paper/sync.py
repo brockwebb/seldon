@@ -49,6 +49,8 @@ class SyncResult:
     refs_removed: list = field(default_factory=list)
     state_changed: bool = False
     artifact_id: Optional[str] = None
+    suspected_oob: bool = False   # True when review/published section changed without --auto-stale
+    prior_state: Optional[str] = None  # State before the hash change, for diagnostic output
 
 
 def compute_file_hash(path: Path) -> str:
@@ -247,6 +249,7 @@ def sync_section(
 
     current_state = artifact.get("state", "proposed")
     state_changed_would = current_state in STALE_ON_EDIT and auto_stale
+    suspected_oob = current_state in STALE_ON_EDIT and not auto_stale
 
     if not dry_run:
         for ref_key in added_refs:
@@ -312,6 +315,8 @@ def sync_section(
         refs_removed=removed_refs,
         state_changed=state_changed_would,
         artifact_id=artifact["artifact_id"],
+        suspected_oob=suspected_oob,
+        prior_state=current_state,
     )
 
 

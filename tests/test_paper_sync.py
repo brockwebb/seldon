@@ -496,3 +496,143 @@ def test_sync_auto_stale_transitions_published_section(
 
     node = get_artifact(neo4j_driver.session(database=NEO4J_DB), artifact_id)
     assert node["state"] == "stale"
+
+
+# ---------------------------------------------------------------------------
+# OOB (out-of-band) edit detection — integration tests, require Neo4j
+# ---------------------------------------------------------------------------
+
+@needs_neo4j
+class TestSuspectedOOB:
+    """SyncResult.suspected_oob is set when a review/published section changes
+    without --auto-stale, indicating the edit may have happened outside a CC task."""
+
+    def _create_section_at_state(
+        self, project_dir, driver, domain_config, name, target_state, file_path, old_hash
+    ) -> str:
+        artifact_id = _create_paper_section(
+            project_dir, driver, domain_config,
+            name=name, title=name.replace("_", " ").title(),
+            file_path=file_path, content_hash=old_hash,
+        )
+        state_path = {
+            "draft": [("proposed", "draft")],
+            "review": [("proposed", "draft"), ("draft", "review")],
+            "published": [("proposed", "draft"), ("draft", "review"), ("review", "published")],
+        }
+        for from_s, to_s in state_path.get(target_state, []):
+            transition_state(
+                project_dir=project_dir, driver=driver, database=NEO4J_DB,
+                domain_config=domain_config, artifact_id=artifact_id,
+                artifact_type="PaperSection", current_state=from_s,
+                new_state=to_s, actor="human", authority="accepted",
+            )
+        return artifact_id
+
+    def test_review_section_changed_sets_suspected_oob(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+    ):
+        path = _make_section(paper_dir, "01_intro.md", "# Intro\n\nOriginal content.")
+        old_hash = compute_file_hash(path)
+        artifact_id = self._create_section_at_state(
+            project_dir, neo4j_driver, domain_config, "01_intro", "review", path, old_hash
+        )
+        path.write_text("# Intro\n\nEdited content here.")
+        artifact = {"artifact_id": artifact_id, "name": "01_intro",
+                    "content_hash": old_hash, "state": "review"}
+
+        result = sync_section(
+            driver=neo4j_driver, database=NEO4J_DB,
+            project_dir=project_dir, domain_config=domain_config,
+            section_path=path, artifact=artifact,
+            dry_run=True, auto_stale=False,
+        )
+
+        assert result.suspected_oob is True
+        assert result.prior_state == "review"
+
+    def test_published_section_changed_sets_suspected_oob(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+    ):
+        path = _make_section(paper_dir, "02_methods.md", "# Methods\n\nOriginal methods.")
+        old_hash = compute_file_hash(path)
+        artifact_id = self._create_section_at_state(
+            project_dir, neo4j_driver, domain_config, "02_methods", "published", path, old_hash
+        )
+        path.write_text("# Methods\n\nModified methods.")
+        artifact = {"artifact_id": artifact_id, "name": "02_methods",
+                    "content_hash": old_hash, "state": "published"}
+
+        result = sync_section(
+            driver=neo4j_driver, database=NEO4J_DB,
+            project_dir=project_dir, domain_config=domain_config,
+            section_path=path, artifact=artifact,
+            dry_run=True, auto_stale=False,
+        )
+
+        assert result.suspected_oob is True
+        assert result.prior_state == "published"
+
+    def test_auto_stale_suppresses_suspected_oob(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+    ):
+        path = _make_section(paper_dir, "03_results.md", "# Results\n\nOriginal.")
+        old_hash = compute_file_hash(path)
+        artifact_id = self._create_section_at_state(
+            project_dir, neo4j_driver, domain_config, "03_results", "review", path, old_hash
+        )
+        path.write_text("# Results\n\nModified results.")
+        artifact = {"artifact_id": artifact_id, "name": "03_results",
+                    "content_hash": old_hash, "state": "review"}
+
+        result = sync_section(
+            driver=neo4j_driver, database=NEO4J_DB,
+            project_dir=project_dir, domain_config=domain_config,
+            section_path=path, artifact=artifact,
+            dry_run=True, auto_stale=True,
+        )
+
+        assert result.suspected_oob is False
+
+    def test_draft_section_changed_does_not_set_oob(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+    ):
+        path = _make_section(paper_dir, "04_discussion.md", "# Discussion\n\nOriginal.")
+        old_hash = compute_file_hash(path)
+        artifact_id = self._create_section_at_state(
+            project_dir, neo4j_driver, domain_config, "04_discussion", "draft", path, old_hash
+        )
+        path.write_text("# Discussion\n\nModified draft content.")
+        artifact = {"artifact_id": artifact_id, "name": "04_discussion",
+                    "content_hash": old_hash, "state": "draft"}
+
+        result = sync_section(
+            driver=neo4j_driver, database=NEO4J_DB,
+            project_dir=project_dir, domain_config=domain_config,
+            section_path=path, artifact=artifact,
+            dry_run=True, auto_stale=False,
+        )
+
+        assert result.suspected_oob is False
+
+    def test_unchanged_section_never_sets_oob(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+    ):
+        path = _make_section(paper_dir, "05_conclusion.md", "# Conclusion\n\nFinal thoughts.")
+        current_hash = compute_file_hash(path)
+        artifact_id = self._create_section_at_state(
+            project_dir, neo4j_driver, domain_config, "05_conclusion", "published",
+            path, current_hash
+        )
+        artifact = {"artifact_id": artifact_id, "name": "05_conclusion",
+                    "content_hash": current_hash, "state": "published"}
+
+        result = sync_section(
+            driver=neo4j_driver, database=NEO4J_DB,
+            project_dir=project_dir, domain_config=domain_config,
+            section_path=path, artifact=artifact,
+            dry_run=True, auto_stale=False,
+        )
+
+        assert result.status == "unchanged"
+        assert result.suspected_oob is False

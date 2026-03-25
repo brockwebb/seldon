@@ -152,6 +152,12 @@ def paper_sync(register_untracked, dry_run, auto_stale):
             detail = f" ({', '.join(parts)})" if parts else ""
             prefix = "[dry-run] " if dry_run else ""
             click.echo(f"  {name_col} {prefix}UPDATED{detail}")
+            if r.suspected_oob:
+                click.echo(
+                    f"  {'':>{col_width}} ⚠ SUSPECTED OUT-OF-BAND EDIT "
+                    f"(section was '{r.prior_state}') — was this change tracked via a CC task?",
+                    err=True,
+                )
 
     click.echo()
     summary_parts = []
