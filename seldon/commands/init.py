@@ -11,6 +11,36 @@ from seldon.config import slugify
 from seldon.core.graph import create_indexes
 
 
+_BOOTSTRAP_TASKS = [
+    "SETUP-01: Establish .bib file and add {{cite:...}} tokens from chapter 1 onward",
+    "SETUP-02: Lock section structure (all PaperSections accepted) before any section enters draft",
+    "SETUP-03: Validate build pipeline on 2-3 section prototype before scaling to full manuscript",
+    "SETUP-04: Verify deploy workflow fires on first push; smoke-test the rendered output",
+    "SETUP-05: Decide which build artifacts are tracked vs. gitignored before first commit",
+]
+
+
+def _create_bootstrap_tasks(driver, database: str, project_dir: Path) -> None:
+    """Create standard setup ResearchTask artifacts in the project graph."""
+    from seldon.domain.loader import load_domain_config
+    from seldon.core.artifacts import create_artifact
+
+    domain_yaml = Path(__file__).parent.parent / "domain" / "research.yaml"
+    domain_config = load_domain_config(domain_yaml)
+
+    for description in _BOOTSTRAP_TASKS:
+        create_artifact(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            artifact_type="ResearchTask",
+            properties={"description": description},
+            actor="seldon",
+            authority="accepted",
+        )
+
+
 @click.command("init")
 @click.argument("project_name")
 def init_command(project_name: str):
@@ -94,8 +124,10 @@ def init_command(project_name: str):
                 now=datetime.now(timezone.utc).isoformat(),
             )
 
+        _create_bootstrap_tasks(driver, database, project_dir)
+
         driver.close()
-        neo4j_status = f"Neo4j database '{database}' created with indexes."
+        neo4j_status = f"Neo4j database '{database}' created with indexes. 5 setup tasks created."
     except Exception as e:
         neo4j_status = f"Warning: Neo4j setup failed: {e}"
 
