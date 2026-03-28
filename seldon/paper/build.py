@@ -282,7 +282,7 @@ def resolve_references(
 # ---------------------------------------------------------------------------
 
 def _compute_xref_lookups(
-    session, database: str
+    session,
 ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     """
     Compute name-keyed display-string lookups for figures, tables, and sections.
@@ -290,17 +290,22 @@ def _compute_xref_lookups(
     Calls the numbering module to derive display strings from graph position, then
     converts artifact_id keys to name keys via build_name_lookup.
 
+    The ``database`` parameter was removed: the three numbering functions document
+    their own ``database`` argument as unused (queries run via the already-open
+    session's database affinity), so forwarding it from the call site was dead
+    plumbing.  An empty string is passed to satisfy their current signatures.
+
     Args:
-        session: Active Neo4j session.
-        database: Neo4j database name (passed through for API consistency).
+        session: Active Neo4j session (already bound to the correct database).
 
     Returns:
         Tuple of (figure_by_name, table_by_name, section_by_name), each mapping
         artifact name → display string (e.g., {"fig_one": "1", "intro": "Section 1"}).
     """
-    figure_numbers = compute_figure_numbers(session, database)
-    table_numbers = compute_table_numbers(session, database)
-    section_display = compute_section_display(session, database)
+    # The database argument is unused by these functions (see numbering.py docstrings).
+    figure_numbers = compute_figure_numbers(session, "")
+    table_numbers = compute_table_numbers(session, "")
+    section_display = compute_section_display(session, "")
     return build_name_lookup(session, figure_numbers, table_numbers, section_display)
 
 
@@ -363,7 +368,7 @@ def build_paper(
         artifacts = load_named_artifacts(driver, database)
         with driver.session(database=database) as session:
             figure_by_name, table_by_name, section_by_name = _compute_xref_lookups(
-                session, database
+                session
             )
     finally:
         driver.close()

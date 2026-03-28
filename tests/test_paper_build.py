@@ -449,6 +449,10 @@ def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
         "project": {"name": "test", "domain": "research"},
         "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
     })
+    monkeypatch.setattr(
+        "seldon.paper.build._compute_xref_lookups",
+        lambda session: ({}, {}, {}),
+    )
 
     output_path = paper_dir / "paper.qmd"
     from seldon.paper.build import build_paper
@@ -515,7 +519,7 @@ def _make_xref_build_env(tmp_path, section_text, monkeypatch, xref_lookups=None)
     # Patch _compute_xref_lookups so tests don't need real graph data
     monkeypatch.setattr(
         "seldon.paper.build._compute_xref_lookups",
-        lambda session, database: xref_lookups,
+        lambda session: xref_lookups,
     )
 
     return paper_dir / "paper.qmd"
@@ -638,6 +642,10 @@ def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
         "project": {"name": "test", "domain": "research"},
         "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
     })
+    monkeypatch.setattr(
+        "seldon.paper.build._compute_xref_lookups",
+        lambda session: ({}, {}, {}),
+    )
 
     output_path = paper_dir / "paper.qmd"
     from seldon.paper.build import build_paper
