@@ -244,4 +244,6 @@ def closeout_command(summary):
     click.echo(f"LINKS:       {len(links)}")
     click.echo(f"\nSUMMARY: \"{summary}\"")
     click.echo(f"\nLogged as LabNotebookEntry: {entry_id}")
+    click.echo(f"{border}")
+    click.echo(f"Tip: Run `seldon verify` to check project integrity before committing.")
     click.echo(f"{border}\n")
