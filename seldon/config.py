@@ -11,6 +11,9 @@ from typing import Optional
 import yaml
 
 
+ONTOLOGY_MASTER_DB = "seldon-ontology"
+
+
 def slugify(name: str) -> str:
     """
     Convert a project name to a valid slug.
@@ -127,3 +130,28 @@ def end_session(project_dir: Optional[Path] = None) -> None:
     session_file = base / ".seldon" / "current_session.json"
     if session_file.exists():
         session_file.unlink()
+
+
+def get_shared_ontology_source(config: dict) -> Optional[Path]:
+    """Return resolved path to vocabulary file from shared_ontology config, or None.
+
+    Reads shared_ontology.source (base directory) and shared_ontology.vocabularies[0]
+    (filename) from the project config and returns their joined path.
+    """
+    shared = config.get("shared_ontology")
+    if not shared:
+        return None
+    source = shared.get("source", "")
+    vocabs = shared.get("vocabularies", [])
+    if not source or not vocabs:
+        return None
+    return Path(source) / vocabs[0]
+
+
+def get_ontology_driver(config: dict):
+    """Get a Neo4j driver for ontology connections.
+
+    Reuses get_neo4j_driver credentials since the master ontology lives
+    on the same Neo4j instance as project databases.
+    """
+    return get_neo4j_driver(config)

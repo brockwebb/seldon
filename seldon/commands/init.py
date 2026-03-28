@@ -101,6 +101,7 @@ def init_command(project_name: str):
     username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
 
+    ontology_status = None
     try:
         extra_kwargs = {}
         try:
@@ -126,6 +127,23 @@ def init_command(project_name: str):
 
         _create_bootstrap_tasks(driver, database, project_dir)
 
+        # If shared_ontology is configured, auto-sync from master
+        from seldon.config import load_project_config
+        config_loaded = load_project_config(project_dir)
+        if "shared_ontology" in config_loaded:
+            try:
+                from seldon.commands.ontology import _do_sync
+                result = _do_sync(driver, database, project_dir, config_loaded)
+                ontology_status = (
+                    f"Shared ontology synced "
+                    f"(epoch {result['epoch']}, {result['terms']} terms)."
+                )
+            except Exception as e:
+                ontology_status = (
+                    f"Warning: ontology sync failed "
+                    f"(master may not be populated): {e}"
+                )
+
         driver.close()
         neo4j_status = f"Neo4j database '{database}' created with indexes. 5 setup tasks created."
     except Exception as e:
@@ -137,4 +155,6 @@ def init_command(project_name: str):
     click.echo(f"  Events:     {events_path}")
     click.echo(f"  Config:     seldon.yaml")
     click.echo(f"  {neo4j_status}")
+    if ontology_status:
+        click.echo(f"  {ontology_status}")
     click.echo(f"  Note: add .env to your .gitignore (credentials live there)")
