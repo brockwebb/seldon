@@ -12,6 +12,13 @@ from pathlib import Path
 from typing import Optional
 
 from seldon.config import load_project_config, get_neo4j_driver
+from seldon.paper.numbering import (
+    compute_figure_numbers,
+    compute_table_numbers,
+    compute_section_display,
+    build_name_lookup,
+    resolve_xref_tokens,
+)
 from seldon.paper.qc import (
     run_tier2,
     run_tier3,
@@ -271,6 +278,33 @@ def resolve_references(
 
 
 # ---------------------------------------------------------------------------
+# XREF lookup helpers
+# ---------------------------------------------------------------------------
+
+def _compute_xref_lookups(
+    session, database: str
+) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    """
+    Compute name-keyed display-string lookups for figures, tables, and sections.
+
+    Calls the numbering module to derive display strings from graph position, then
+    converts artifact_id keys to name keys via build_name_lookup.
+
+    Args:
+        session: Active Neo4j session.
+        database: Neo4j database name (passed through for API consistency).
+
+    Returns:
+        Tuple of (figure_by_name, table_by_name, section_by_name), each mapping
+        artifact name → display string (e.g., {"fig_one": "1", "intro": "Section 1"}).
+    """
+    figure_numbers = compute_figure_numbers(session, database)
+    table_numbers = compute_table_numbers(session, database)
+    section_display = compute_section_display(session, database)
+    return build_name_lookup(session, figure_numbers, table_numbers, section_display)
+
+
+# ---------------------------------------------------------------------------
 # Build pipeline
 # ---------------------------------------------------------------------------
 
@@ -323,10 +357,14 @@ def build_paper(
         section_files = []
         abstract_text = None
 
-    # 4. Load artifacts from graph
+    # 4. Load artifacts from graph and compute XREF lookup tables
     driver = get_neo4j_driver(config)
     try:
         artifacts = load_named_artifacts(driver, database)
+        with driver.session(database=database) as session:
+            figure_by_name, table_by_name, section_by_name = _compute_xref_lookups(
+                session, database
+            )
     finally:
         driver.close()
 
@@ -340,6 +378,10 @@ def build_paper(
 
     for section_file in section_files:
         text = section_file.read_text(encoding="utf-8")
+        # XREF pre-pass: resolve {{figure:NAME}}, {{table:NAME}}, {{section:NAME}} tokens
+        # before the result/figure/cite {{type:name:field}} pass below.
+        # Unknown names are left as-is (no crash, no error recorded here).
+        text = resolve_xref_tokens(text, figure_by_name, table_by_name, section_by_name)
         resolved, errors = resolve_references(
             text=text,
             artifacts=artifacts,
