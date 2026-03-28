@@ -360,3 +360,146 @@ def test_resolve_references_si08_figure_exists(tmp_path):
     )
     assert resolved == "Path: figures/fig1.png"
     assert not errors
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: abstract extraction and frontmatter injection (no Neo4j)
+# ---------------------------------------------------------------------------
+
+from seldon.paper.build import (
+    _extract_abstract_text,
+    _inject_abstract_into_frontmatter,
+    _build_minimal_frontmatter,
+)
+
+
+def test_extract_abstract_text_strips_heading(tmp_path):
+    """# Abstract heading is removed; body text is returned stripped."""
+    f = tmp_path / "00_abstract.md"
+    f.write_text("# Abstract\n\nThis is the abstract body.\n")
+    result = _extract_abstract_text(f)
+    assert result == "This is the abstract body."
+    assert "# Abstract" not in result
+
+
+def test_extract_abstract_text_strips_multiple_heading_lines(tmp_path):
+    """Multiple leading heading lines (e.g., ## Abstract) are all stripped."""
+    f = tmp_path / "00_abstract.md"
+    f.write_text("# Abstract\n## Subtitle\n\nBody text.\n")
+    result = _extract_abstract_text(f)
+    assert result == "Body text."
+
+
+def test_extract_abstract_text_no_heading(tmp_path):
+    """File without a heading returns body text unchanged."""
+    f = tmp_path / "00_abstract.md"
+    f.write_text("Body text without heading.\n")
+    result = _extract_abstract_text(f)
+    assert result == "Body text without heading."
+
+
+def test_inject_abstract_into_frontmatter_inserts_before_closing():
+    """Abstract block is inserted before the closing --- of frontmatter."""
+    frontmatter = "---\ntitle: Test\n---"
+    result = _inject_abstract_into_frontmatter(frontmatter, "My abstract.")
+    assert "abstract: |" in result
+    assert "  My abstract." in result
+    # Must still end with ---
+    assert result.strip().endswith("---")
+    # Title must still be present
+    assert "title: Test" in result
+
+
+def test_inject_abstract_multiline_indented():
+    """Multiline abstract lines are each indented by 2 spaces."""
+    frontmatter = "---\ntitle: Test\n---"
+    abstract = "Line one.\nLine two."
+    result = _inject_abstract_into_frontmatter(frontmatter, abstract)
+    assert "  Line one." in result
+    assert "  Line two." in result
+
+
+def test_build_minimal_frontmatter_wraps_in_delimiters():
+    """Minimal frontmatter starts and ends with --- even with no existing frontmatter."""
+    result = _build_minimal_frontmatter("Abstract text.")
+    assert result.startswith("---")
+    assert result.strip().endswith("---")
+    assert "abstract: |" in result
+    assert "  Abstract text." in result
+
+
+def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
+    """00_abstract.md content does not appear in the assembled section body."""
+    (tmp_path / "seldon.yaml").write_text(
+        "project:\n  name: test\n  domain: research\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "event_store:\n  path: seldon_events.jsonl\n"
+    )
+    paper_dir = tmp_path / "paper"
+    sections_dir = paper_dir / "sections"
+    sections_dir.mkdir(parents=True)
+
+    (sections_dir / "00_abstract.md").write_text("# Abstract\n\nMy abstract text.\n")
+    (sections_dir / "01_intro.md").write_text("## Introduction\n\nSection body.\n")
+
+    mock_driver = MagicMock()
+    mock_driver.session.return_value.__enter__.return_value.run.return_value.data.return_value = []
+    monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
+    monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
+        "project": {"name": "test", "domain": "research"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+    })
+
+    output_path = paper_dir / "paper.qmd"
+    from seldon.paper.build import build_paper
+    build_paper(
+        project_dir=tmp_path,
+        paper_dir=paper_dir,
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    assembled = output_path.read_text()
+    # Abstract heading must NOT appear as a section
+    assert "# Abstract" not in assembled
+    # Abstract text must appear in frontmatter abstract field
+    assert "abstract: |" in assembled
+    assert "My abstract text." in assembled
+    # Regular section must still be present
+    assert "## Introduction" in assembled
+
+
+def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
+    """If 00_abstract.md does not exist, build behaves as before (no abstract: in output)."""
+    (tmp_path / "seldon.yaml").write_text(
+        "project:\n  name: test\n  domain: research\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "event_store:\n  path: seldon_events.jsonl\n"
+    )
+    paper_dir = tmp_path / "paper"
+    sections_dir = paper_dir / "sections"
+    sections_dir.mkdir(parents=True)
+    (sections_dir / "01_intro.md").write_text("## Introduction\n\nBody.\n")
+
+    mock_driver = MagicMock()
+    mock_driver.session.return_value.__enter__.return_value.run.return_value.data.return_value = []
+    monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
+    monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
+        "project": {"name": "test", "domain": "research"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+    })
+
+    output_path = paper_dir / "paper.qmd"
+    from seldon.paper.build import build_paper
+    build_paper(
+        project_dir=tmp_path,
+        paper_dir=paper_dir,
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    assembled = output_path.read_text()
+    assert "abstract:" not in assembled
+    assert "## Introduction" in assembled

@@ -37,6 +37,61 @@ REFTYPE_TO_TYPE = {v: k for k, v in TYPE_TO_REFTYPE.items()}
 
 
 # ---------------------------------------------------------------------------
+# Abstract extraction
+# ---------------------------------------------------------------------------
+
+def _extract_abstract_text(abstract_path: Path) -> str:
+    """
+    Read 00_abstract.md and return plain text with the heading stripped.
+
+    Strips any leading line that is a markdown heading (starts with '#').
+    Strips leading and trailing whitespace from the result.
+    Returns empty string if file is empty after stripping.
+    """
+    raw = abstract_path.read_text(encoding="utf-8")
+    lines = raw.splitlines()
+    # Drop lines that are purely a markdown heading at the start of the file
+    while lines and lines[0].startswith("#"):
+        lines.pop(0)
+    return "\n".join(lines).strip()
+
+
+def _inject_abstract_into_frontmatter(frontmatter_content: str, abstract_text: str) -> str:
+    """
+    Inject an abstract: block scalar into an existing YAML frontmatter string.
+
+    frontmatter_content must be a string starting with '---' and ending with '---'.
+    The abstract is inserted before the closing '---' delimiter.
+    Lines of abstract_text are indented by 2 spaces for the YAML block scalar.
+    """
+    # Build YAML block scalar: "abstract: |\n  line1\n  line2"
+    indented_lines = []
+    for line in abstract_text.split("\n"):
+        indented_lines.append(f"  {line}" if line.strip() else "")
+    abstract_block = "abstract: |\n" + "\n".join(indented_lines).rstrip()
+
+    content = frontmatter_content.rstrip()
+    if content.endswith("---"):
+        # Insert before closing ---
+        body = content[:-3].rstrip()
+        separator = "\n" if body else ""
+        return f"---{separator}\n{abstract_block}\n---" if not body else f"{body}\n{abstract_block}\n---"
+    else:
+        # No closing --- found — append and close
+        return f"{content}\n{abstract_block}\n---"
+
+
+def _build_minimal_frontmatter(abstract_text: str) -> str:
+    """
+    Build a minimal YAML frontmatter block containing only the abstract.
+
+    Used when no frontmatter.yml exists but 00_abstract.md does.
+    Returns a complete '---...---' block.
+    """
+    return _inject_abstract_into_frontmatter("---", abstract_text)
+
+
+# ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
 
@@ -257,9 +312,16 @@ def build_paper(
     if paper_dir is None:
         paper_dir = project_dir / "paper"
 
-    # 3. Discover sections
+    # 3. Discover sections (00_abstract.md is excluded from the body)
     sections_dir = paper_dir / "sections"
-    section_files = sorted(sections_dir.glob("*.md")) if sections_dir.exists() else []
+    if sections_dir.exists():
+        all_section_files = sorted(sections_dir.glob("*.md"))
+        section_files = [f for f in all_section_files if f.name != "00_abstract.md"]
+        abstract_path = sections_dir / "00_abstract.md"
+        abstract_text: Optional[str] = _extract_abstract_text(abstract_path) if abstract_path.exists() else None
+    else:
+        section_files = []
+        abstract_text = None
 
     # 4. Load artifacts from graph
     driver = get_neo4j_driver(config)
@@ -314,9 +376,14 @@ def build_paper(
     parts: list[str] = []
 
     frontmatter_path = paper_dir / "frontmatter.yml"
-    if frontmatter_path.exists():
-        frontmatter_content = frontmatter_path.read_text(encoding="utf-8").rstrip()
-        parts.append(frontmatter_content)
+    if abstract_text:
+        if frontmatter_path.exists():
+            raw_frontmatter = frontmatter_path.read_text(encoding="utf-8").rstrip()
+            parts.append(_inject_abstract_into_frontmatter(raw_frontmatter, abstract_text))
+        else:
+            parts.append(_build_minimal_frontmatter(abstract_text))
+    elif frontmatter_path.exists():
+        parts.append(frontmatter_path.read_text(encoding="utf-8").rstrip())
 
     for _fname, resolved_text in resolved_sections:
         parts.append(resolved_text.rstrip())
