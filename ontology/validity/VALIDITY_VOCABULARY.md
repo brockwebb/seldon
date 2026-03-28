@@ -2,7 +2,7 @@
 
 **Maintained in:** `seldon/ontology/validity/`
 **Per:** AD-017 (Central Validity Ontology)
-**Last updated:** 2026-03-22
+**Last updated:** 2026-03-28
 
 ---
 
@@ -35,6 +35,14 @@ All BibTeX entries are maintained in `seldon/docs/references/references.bib`.
 **State Fidelity Validity (SFV):** The degree to which an AI-assisted research or analytic pipeline preserves the accuracy and integrity of its accumulated internal state (decisions, terminology, methodology, and intermediate findings) across sequential operations, such that inferences at step N remain warranted by the actual history of steps 1 through N-1, rather than by degraded, distorted, confabulated, or selectively retained versions of that history. [Webb-2026a]
 
 **Abbreviation:** SFV (always capitalized, no periods)
+
+### Core Construct: Context Window
+
+**Context window**
+: The mutable content that accumulates during pipeline operation: conversation history, decisions, terminology, parameters, and intermediate findings. Combined with fixed model weights, this forms the composite instrument. Distinguished from "token limit," which refers to the fixed capacity constraint of the model's input. Industry usage of "context window" is ambiguous (applied to both the content and the capacity); this vocabulary disambiguates by reserving "context window" for the content and "token limit" for the capacity.
+: Abbreviation: none. Do not abbreviate.
+: Do not write: "context buffer" (technically correct in CS terms but not field-standard; no industry source uses this as a term of art), "memory" (implies persistence that context windows do not inherently have).
+: Note: The field's terminological instability around this component is itself notable. As of early 2026, no standard term has converged. This vocabulary grounds usage for Seldon-tracked projects while acknowledging ongoing drift. See T1 (Semantic Drift) for the general phenomenon.
 
 ### Sub-dimensions
 
@@ -89,7 +97,7 @@ Note: These map loosely to the severity scale above but use language suited to p
 
 1. **Validity, not reliability.** State degradation alters what is being measured and how. A pipeline can reliably produce the same corrupted provenance. That is validity failure, not reliability failure. [Webb-2026a]
 
-2. **The instrument is (fixed weights + mutable context buffer).** The context window IS the instrument. Its content determines what the pipeline "knows" and how it operates. State fidelity is whether that instrument maintained integrity. [Webb-2026a]
+2. **The instrument is (fixed weights + mutable context window).** The context window IS the instrument. Its content determines what the pipeline "knows" and how it operates. State fidelity is whether that instrument maintained integrity. [Webb-2026a]
 
 3. **Latent threat.** Unlike a bad survey question (visible in the instrument), state degradation is invisible until it biases output. Structurally easy to miss. [Webb-2026a]
 
@@ -194,6 +202,7 @@ Distinguished from:
 | Execution Fidelity Validity | "Execution" reads as procedural, not epistemic |
 | Temporal State Validity | Collision risk with longitudinal validity concepts |
 | Operational Context Validity | "Context" creates confusion with psychometric context validity |
+| Context buffer | Technically correct (CS buffer semantics) but not field-standard; no industry source uses this term of art as of 2026. Replaced by "context window" with disambiguation from "token limit." |
 
 [Webb-2026a]
 
@@ -243,13 +252,24 @@ Presenting procedural correspondences without qualification as construct equival
 
 ## Related Terms (Defined Elsewhere)
 
-| Term | Brief Meaning | Canonical Source |
-|------|---------------|-----------------|
-| Context window | The token buffer containing the system's current operative state — the literal instrument in LLM pipelines | Not a metaphor in SFV; it is the physical substrate of state |
-| Compaction | Automated summarization/truncation of context to fit window limits | Distinct from intentional summarization by a researcher |
-| Handoff document | Explicit serialization of accumulated state for session continuity | Engineering countermeasure to T5; see Seldon session protocol |
-| State | The accumulated working context: decisions made, terms defined, methods chosen, intermediate findings recorded | Use precisely; do not conflate with database state or application state |
-| Fidelity | Faithfulness of the operative state to the actual history of decisions | Use precisely; do not conflate with audio/signal fidelity |
+**Context window**
+: The mutable content that accumulates during pipeline operation — the literal instrument in LLM pipelines (combined with fixed model weights). See Core Construct entry above for full definition and disambiguation from "token limit."
+
+**Token limit**
+: The fixed maximum capacity of a model's input, measured in tokens. An architectural constraint, not a mutable quantity. Distinguished from "context window," which refers to the content within the limit. Industry sources sometimes use "context window" to mean the token limit; this vocabulary does not.
+
+**Compaction**
+: Automated summarization/truncation of context to fit window limits. Distinct from intentional summarization by a researcher.
+
+**Handoff document**
+: Explicit serialization of accumulated state for session continuity. Engineering countermeasure to T5; see Seldon session protocol.
+
+**State**
+: The accumulated working context: decisions made, terms defined, methods chosen, intermediate findings recorded. In LLM pipelines, state is embodied in the context window. "Accumulated state" and "context window content" are near-synonyms; "state" emphasizes the semantic content, "context window" emphasizes the technical substrate.
+: Use precisely; do not conflate with database state or application state.
+
+**Fidelity**
+: Faithfulness of the operative state to the actual history of decisions. Use precisely; do not conflate with audio/signal fidelity.
 
 ---
 
