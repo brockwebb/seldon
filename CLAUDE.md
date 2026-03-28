@@ -36,6 +36,9 @@ Working engine: Neo4j graph + JSONL event store + CLI. 290+ tests passing. Domai
 | `docs check`   | Verify documentation completeness | `seldon docs check` |
 | `docs generate`| Project docs from graph     | `seldon docs generate` |
 | `go`           | Orient any Claude instance   | `seldon go` |
+| `ontology ingest` | After updating VALIDITY_VOCABULARY.md | `seldon ontology ingest` (writes to master) |
+| `ontology sync`   | Pull latest vocabulary into project | `seldon ontology sync` (reads from master) |
+| `ontology list`   | Check inherited terms | `seldon ontology list [--master]` |
 
 ## Session Protocol
 
@@ -135,3 +138,12 @@ Every public function gets a docstring (Args/Returns/Raises). Every module gets 
 ## Architecture Decisions
 
 `docs/design/seldon_architectural_decisions.md` — AD-001 through AD-014.
+AD-017: Central Validity Ontology — `docs/design/AD-017_central_validity_ontology.md`
+
+## Shared Ontology
+
+The validity vocabulary is centralized in `seldon-ontology` (master Neo4j database).
+Projects hold read-only replicas synced via `seldon ontology sync`.
+All writes go to master via `seldon ontology ingest`.
+Projects cannot create or modify OntologyTerm artifacts locally.
+Project-specific terms link to shared terms via `references_ontology` relationships.
