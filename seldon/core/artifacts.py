@@ -38,6 +38,21 @@ def create_artifact(
             f"Missing required properties for {artifact_type}: {', '.join(missing)}"
         )
 
+    # Write protection for OntologyTerm in project databases
+    if artifact_type == "OntologyTerm":
+        from seldon.config import load_project_config
+        try:
+            config = load_project_config(project_dir)
+            shared = config.get("shared_ontology", {})
+            if shared.get("inheritance") == "read-only":
+                raise ValueError(
+                    "OntologyTerm artifacts are inherited from the shared ontology and cannot be "
+                    "created directly in this project. Use `seldon ontology sync` to pull from master, "
+                    "or add terms to the canonical vocabulary via CC task and `seldon ontology ingest`."
+                )
+        except FileNotFoundError:
+            pass  # No seldon.yaml — allow (e.g., when init is running for master DB itself)
+
     artifact_id = str(uuid.uuid4())
     initial_state = domain_config.get_initial_state(artifact_type)
 
@@ -79,6 +94,23 @@ def update_artifact(
     session_id: Optional[str] = None,
 ) -> None:
     """Write JSONL event then update Neo4j node properties."""
+    # Write protection for OntologyTerm in project databases
+    from seldon.config import load_project_config
+    try:
+        config = load_project_config(project_dir)
+        shared = config.get("shared_ontology", {})
+        if shared.get("inheritance") == "read-only":
+            # Look up the artifact type to check if it's OntologyTerm
+            with driver.session(database=database) as session:
+                artifact = graph.get_artifact(session, artifact_id)
+            if artifact and artifact.get("artifact_type") == "OntologyTerm":
+                raise ValueError(
+                    "OntologyTerm artifacts are read-only in this project and cannot be updated directly. "
+                    "Use `seldon ontology sync` to pull updates from master."
+                )
+    except FileNotFoundError:
+        pass  # No seldon.yaml — allow
+
     event = make_event(
         event_type="artifact_updated",
         actor=actor,
