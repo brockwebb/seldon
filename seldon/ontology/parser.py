@@ -77,6 +77,8 @@ class ParsedVocabulary:
 # Helpers
 # ---------------------------------------------------------------------------
 
+__all__ = ["parse_vocabulary", "ParsedTerm", "ParsedRelationship", "ParsedVocabulary"]
+
 _NAMESPACE = "ontology:validity"
 
 _BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
@@ -197,7 +199,7 @@ def _parse_sub_dimensions(lines: list[str]) -> list[ParsedTerm]:
 
     # Find the ### Sub-dimensions heading
     for i, line in enumerate(lines):
-        if line.strip() == "### Sub-dimensions":
+        if line.strip().lower() == "### sub-dimensions":
             # Advance to the table (skip blank lines)
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
@@ -230,7 +232,7 @@ def _parse_threats(lines: list[str]) -> list[ParsedTerm]:
     terms: list[ParsedTerm] = []
 
     for i, line in enumerate(lines):
-        if line.strip() == "### Threat Taxonomy":
+        if line.strip().lower() == "### threat taxonomy":
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
                 j += 1
@@ -262,7 +264,7 @@ def _parse_severity(lines: list[str]) -> list[ParsedTerm]:
     terms: list[ParsedTerm] = []
 
     for i, line in enumerate(lines):
-        if line.strip() == "### Severity Scale":
+        if line.strip().lower() == "### severity scale":
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
                 j += 1
@@ -338,7 +340,7 @@ def _parse_key_arguments(lines: list[str]) -> list[ParsedTerm]:
     # Find the heading
     start = None
     for i, line in enumerate(lines):
-        if line.strip() == "### Key Arguments":
+        if line.strip().lower() == "### key arguments":
             start = i + 1
             break
 
@@ -410,7 +412,7 @@ def _parse_countermeasures(lines: list[str]) -> list[ParsedTerm]:
     terms: list[ParsedTerm] = []
 
     for i, line in enumerate(lines):
-        if line.strip() == "### Engineering Countermeasures":
+        if line.strip().lower() == "### engineering countermeasures":
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
                 j += 1
@@ -447,7 +449,7 @@ def _parse_metrics(lines: list[str]) -> list[ParsedTerm]:
     terms: list[ParsedTerm] = []
 
     for i, line in enumerate(lines):
-        if line.strip() == "### Operationalization Metrics":
+        if line.strip().lower() == "### operationalization metrics":
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
                 j += 1
@@ -492,7 +494,7 @@ def _parse_classical_validity(lines: list[str]) -> list[ParsedTerm]:
     # Find section start
     start = None
     for i, line in enumerate(lines):
-        if line.strip() == "## Classical Validity Types":
+        if line.strip().lower() == "## classical validity types":
             start = i + 1
             break
 
@@ -545,7 +547,7 @@ def _parse_terminology_decisions(lines: list[str]) -> list[ParsedTerm]:
     # Find section start
     start = None
     for i, line in enumerate(lines):
-        if line.strip() == "## Key Terminology Decisions":
+        if line.strip().lower() == "## key terminology decisions":
             start = i + 1
             break
 
@@ -570,7 +572,7 @@ def _parse_terminology_decisions(lines: list[str]) -> list[ParsedTerm]:
             # Extract rejected terms from the "Terms Considered and Rejected" table
             rejected_terms: list[str] = []
             for k, tl in enumerate(lines):
-                if tl.strip() == "### Terms Considered and Rejected":
+                if tl.strip().lower() == "### terms considered and rejected":
                     tj = k + 1
                     while tj < len(lines) and not lines[tj].strip().startswith("|"):
                         tj += 1
@@ -598,7 +600,7 @@ def _parse_terminology_decisions(lines: list[str]) -> list[ParsedTerm]:
         line = lines[i].strip()
         if line.startswith("## ") and i > start:
             break
-        if line.strip() == "### Reliability vs. Validity Distinction":
+        if line.strip().lower() == "### reliability vs. validity distinction":
             # Collect everything from here until next ### or ## section
             parts: list[str] = []
             j = i + 1
@@ -741,7 +743,7 @@ def _parse_related_terms(lines: list[str]) -> list[ParsedTerm]:
     terms: list[ParsedTerm] = []
 
     for i, line in enumerate(lines):
-        if line.strip() == "## Related Terms (Defined Elsewhere)":
+        if line.strip().lower() == "## related terms (defined elsewhere)":
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith("|"):
                 j += 1
@@ -919,6 +921,23 @@ def parse_vocabulary(path: Path | str) -> ParsedVocabulary:
         + boilerplate
         + related
     )
+
+    # Guard: fail loudly if any mandatory category is missing entirely,
+    # which indicates a section heading mismatch or corrupted vocabulary file.
+    _EXPECTED_MINIMUMS = {
+        "sub_dimension": 1,
+        "threat": 1,
+        "countermeasure": 1,
+        "metric": 1,
+        "classical_validity": 1,
+    }
+    by_category = {cat: sum(1 for t in all_terms if t.category == cat) for cat in _EXPECTED_MINIMUMS}
+    for cat, minimum in _EXPECTED_MINIMUMS.items():
+        if by_category.get(cat, 0) < minimum:
+            raise ValueError(
+                f"Expected at least {minimum} term(s) in category '{cat}', got "
+                f"{by_category.get(cat, 0)}. Check section headings in {path}."
+            )
 
     relationships = _build_relationships(
         sfv_term=sfv_term,
