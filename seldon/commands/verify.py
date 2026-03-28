@@ -159,7 +159,7 @@ def check_ontology_freshness(driver, database: str, config: dict) -> CheckResult
             result = session.run(
                 "MATCH (m:_OntologyMeta) RETURN m.epoch AS epoch"
             ).single()
-            master_epoch = result["epoch"] if result else 0
+            master_epoch = (result["epoch"] if result else None) or 0
     except Exception as exc:
         return CheckResult(
             name="Ontology",
@@ -170,9 +170,9 @@ def check_ontology_freshness(driver, database: str, config: dict) -> CheckResult
     # Query local replica epoch
     with driver.session(database=database) as session:
         result = session.run(
-            "MATCH (m:_OntologyReplicaMeta) RETURN m.epoch AS epoch"
+            "MATCH (m:_OntologyReplicaMeta) RETURN m.last_epoch AS epoch"
         ).single()
-        local_epoch = result["epoch"] if result else 0
+        local_epoch = (result["epoch"] if result else None) or 0
 
     if master_epoch > local_epoch:
         return CheckResult(
