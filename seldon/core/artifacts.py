@@ -27,6 +27,10 @@ def create_artifact(
     Validate, write JSONL event, then write Neo4j node.
 
     Returns the new artifact_id.
+
+    Raises:
+        ValueError: If artifact_type is "OntologyTerm" and the project has shared_ontology.inheritance
+            configured as "read-only", or if required properties are missing.
     """
     validate_artifact_type(domain_config, artifact_type)
 
@@ -93,7 +97,13 @@ def update_artifact(
     authority: str,
     session_id: Optional[str] = None,
 ) -> None:
-    """Write JSONL event then update Neo4j node properties."""
+    """
+    Write JSONL event then update Neo4j node properties.
+
+    Raises:
+        ValueError: If attempting to update an OntologyTerm artifact in a project with
+            shared_ontology.inheritance configured as "read-only".
+    """
     # Write protection for OntologyTerm in project databases
     from seldon.config import load_project_config
     try:
