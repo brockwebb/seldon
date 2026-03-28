@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -152,14 +153,17 @@ def _seldon_repo_dir() -> Path:
 
 
 def _term_to_props(term, epoch: int, content_hash: str) -> Dict[str, Any]:
-    """Convert a ParsedTerm to a Neo4j properties dict."""
+    """Convert a ParsedTerm to a Neo4j properties dict.
+
+    Does not set source_vocabulary — callers must set it directly, since it
+    depends on the actual file path used at call time (not stored on the term).
+    """
     props = {
         "term_id": term.term_id,
         "name": term.name,
         "definition": term.definition,
         "category": term.category,
         "namespace": term.namespace,
-        "source_vocabulary": term.extra.get("source_vocabulary", ""),
         "content_hash": content_hash,
         "epoch": epoch,
         "state": "active",
@@ -196,17 +200,25 @@ def _do_sync(
         Dict with keys: epoch, terms, new, updated, deprecated.
 
     Raises:
-        click.ClickException: If shared_ontology config is missing or
-            master DB is not populated.
+        RuntimeError: If shared_ontology config is missing, inheritance mode is
+            unsupported, master DB is not populated, or a relationship type from
+            master contains unsafe characters.
     """
+    from seldon.core.graph import change_state, create_artifact, update_artifact
+
     shared = config.get("shared_ontology")
     if not shared:
-        raise click.ClickException(
+        raise RuntimeError(
             "No shared_ontology section in seldon.yaml. "
             "Cannot sync without ontology configuration."
         )
 
     inheritance = shared.get("inheritance", "read-only")
+    if inheritance != "read-only":
+        raise RuntimeError(
+            f"Unsupported inheritance mode: {inheritance!r}. "
+            "Only 'read-only' is currently supported."
+        )
 
     # Read master epoch
     try:
@@ -215,14 +227,16 @@ def _do_sync(
                 "MATCH (m:_OntologyMeta {key: 'master'}) RETURN m.epoch AS epoch"
             ).single()
             if result is None:
-                raise click.ClickException(
+                raise RuntimeError(
                     f"No _OntologyMeta node in {ONTOLOGY_MASTER_DB}. "
                     "Run `seldon ontology ingest` first."
                 )
             master_epoch = result["epoch"]
+    except RuntimeError:
+        raise
     except Exception as e:
         if "database does not exist" in str(e).lower():
-            raise click.ClickException(
+            raise RuntimeError(
                 f"Database {ONTOLOGY_MASTER_DB} does not exist. "
                 "Run `seldon ontology ingest` first."
             )
@@ -281,21 +295,18 @@ def _do_sync(
             if term_id not in project_terms:
                 # New term -- create with same artifact_id as master
                 props.setdefault("created_at", _now_iso())
-                from seldon.core.graph import create_artifact
                 create_artifact(session, "OntologyTerm", props)
                 new_count += 1
             else:
                 # Existing term -- check if content changed
                 if props.get("content_hash") != project_terms[term_id].get("content_hash"):
                     props["updated_at"] = _now_iso()
-                    from seldon.core.graph import update_artifact
                     update_artifact(session, props["artifact_id"], props)
                     updated_count += 1
 
         # Deprecate project terms not in master
         for term_id, proj_term in project_terms.items():
             if term_id not in master_terms and proj_term.get("state") != "deprecated":
-                from seldon.core.graph import change_state
                 change_state(session, proj_term["artifact_id"], "deprecated")
                 deprecated_count += 1
 
@@ -304,6 +315,10 @@ def _do_sync(
             from_id = rel["from_id"]
             to_id = rel["to_id"]
             rel_type = rel["rel_type"]
+            # Guard against Cypher injection: rel_type comes from Neo4j type()
+            # and is interpolated into the query string, so validate it first.
+            if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', rel_type):
+                raise RuntimeError(f"Invalid relationship type from master: {rel_type!r}")
             # Use MERGE to avoid duplicates
             cypher = (
                 f"MATCH (a:Artifact:OntologyTerm {{term_id: $from_id}}), "
@@ -340,7 +355,6 @@ def _do_sync(
     )
     append_event(project_dir, event)
 
-    total_terms = new_count + updated_count
     return {
         "epoch": master_epoch,
         "terms": len(master_terms),
@@ -400,6 +414,8 @@ def ingest_command(dry_run: bool):
         click.echo("No changes written.")
         return
 
+    from seldon.core.graph import create_artifact, update_artifact
+
     driver = _get_neo4j_driver()
     try:
         _ensure_master_db(driver)
@@ -431,7 +447,6 @@ def ingest_command(dry_run: bool):
                     props["artifact_id"] = str(uuid.uuid4())
                     props["source_vocabulary"] = str(vocab_path)
                     props["created_at"] = _now_iso()
-                    from seldon.core.graph import create_artifact
                     create_artifact(session, "OntologyTerm", props)
                     new_count += 1
 
@@ -440,7 +455,6 @@ def ingest_command(dry_run: bool):
                     update_props = _term_to_props(term, new_epoch, content_hash)
                     update_props["source_vocabulary"] = str(vocab_path)
                     update_props["updated_at"] = _now_iso()
-                    from seldon.core.graph import update_artifact
                     update_artifact(session, existing["artifact_id"], update_props)
                     updated_count += 1
 
@@ -515,20 +529,6 @@ def sync_command(dry_run: bool):
     load_dotenv(project_dir / ".env", override=False)
 
     config = load_project_config(project_dir)
-    shared = config.get("shared_ontology")
-    if not shared:
-        raise click.ClickException(
-            "No shared_ontology section in seldon.yaml. "
-            "Add shared_ontology configuration to enable ontology sync."
-        )
-
-    inheritance = shared.get("inheritance", "read-only")
-    if inheritance != "read-only":
-        raise click.ClickException(
-            f"Unsupported inheritance mode: {inheritance}. "
-            "Only 'read-only' is currently supported."
-        )
-
     database = config["neo4j"]["database"]
     driver = _get_neo4j_driver()
 
@@ -582,7 +582,10 @@ def sync_command(dry_run: bool):
             click.echo("No changes written.")
             return
 
-        result = _do_sync(driver, database, project_dir, config)
+        try:
+            result = _do_sync(driver, database, project_dir, config)
+        except RuntimeError as e:
+            raise click.ClickException(str(e))
 
         if result.get("up_to_date"):
             click.echo(f"Already up to date at epoch {result['epoch']}.")

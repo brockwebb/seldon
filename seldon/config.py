@@ -146,12 +146,3 @@ def get_shared_ontology_source(config: dict) -> Optional[Path]:
     if not source or not vocabs:
         return None
     return Path(source) / vocabs[0]
-
-
-def get_ontology_driver(config: dict):
-    """Get a Neo4j driver for ontology connections.
-
-    Reuses get_neo4j_driver credentials since the master ontology lives
-    on the same Neo4j instance as project databases.
-    """
-    return get_neo4j_driver(config)
