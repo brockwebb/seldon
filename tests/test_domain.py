@@ -15,7 +15,7 @@ def test_load_domain_config(research_config):
     assert research_config.version == "0.1"
     assert "Result" in research_config.artifact_types
     assert "ResearchTask" in research_config.artifact_types
-    assert len(research_config.artifact_types) == 12  # dict with 12 keys
+    assert len(research_config.artifact_types) == 13  # dict with 13 keys (OntologyTerm added in AD-017)
 
 
 def test_validate_artifact_type_valid(research_config):

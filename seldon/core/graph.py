@@ -232,7 +232,7 @@ def graph_stats(session: Session) -> Dict[str, Any]:
     }
 
 
-ALLOWED_LOOKUP_PROPERTIES = {"name", "path", "description"}
+ALLOWED_LOOKUP_PROPERTIES = {"name", "path", "description", "term_id"}
 
 
 def find_artifact_by_property(

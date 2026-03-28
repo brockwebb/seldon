@@ -197,6 +197,39 @@ artifact_types:
         category: documentation
         description: "Lessons learned, caveats"
 
+  OntologyTerm:
+    properties:
+      term_id:
+        required: true
+        description: "Namespaced identifier (e.g., 'ontology:validity:SFV')"
+      name:
+        required: true
+        description: "Human-readable term name"
+      definition:
+        required: true
+        description: "Canonical definition text"
+      category:
+        required: true
+        description: "Term category (e.g., 'framework', 'sub_dimension', 'threat', 'severity', 'metric', 'countermeasure', 'classical_validity', 'terminology_decision', 'related_term')"
+      source_vocabulary:
+        required: true
+        description: "Source vocabulary path (e.g., 'validity/VALIDITY_VOCABULARY.md')"
+      citations:
+        category: documentation
+        description: "Source citation keys (e.g., '[Webb-2026a]')"
+      namespace:
+        category: documentation
+        description: "Ontology namespace (e.g., 'ontology:validity')"
+      inheritance:
+        category: documentation
+        description: "Inheritance mode on replicas: always 'read-only'"
+      content_hash:
+        category: documentation
+        description: "SHA-256 of the definition text for change detection"
+      epoch:
+        category: documentation
+        description: "Master epoch at which this term was created or last updated"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -234,6 +267,24 @@ relationship_types:
   leads:
     from_types: [AgentRole]
     to_types: [Workflow]
+  defines_sub_dimension:
+    from_types: [OntologyTerm]
+    to_types: [OntologyTerm]
+  defines_threat:
+    from_types: [OntologyTerm]
+    to_types: [OntologyTerm]
+  addresses_threat:
+    from_types: [OntologyTerm]
+    to_types: [OntologyTerm]
+  measures_threat:
+    from_types: [OntologyTerm]
+    to_types: [OntologyTerm]
+  precondition_for:
+    from_types: [OntologyTerm]
+    to_types: [OntologyTerm]
+  references_ontology:
+    from_types: [PaperSection, ResearchTask, LabNotebookEntry]
+    to_types: [OntologyTerm]
 
 state_machines:
   Result:
@@ -314,3 +365,9 @@ state_machines:
     deprecated: []
     stale: [active]
     rejected: []
+
+  OntologyTerm:
+    proposed: [active]
+    active: [stale, deprecated]
+    stale: [active]
+    deprecated: []
