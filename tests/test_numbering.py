@@ -172,6 +172,68 @@ def test_table_numbering_flat(neo4j_driver, project_dir, domain_config, clean_te
     assert numbers[tbl_id] == "1"
 
 
+def test_table_numbering_chaptered(neo4j_driver, project_dir, domain_config, clean_test_db):
+    """With chapters (depth=0): tables numbered {chapter}.{n} within chapter."""
+    from seldon.paper.numbering import compute_table_numbers
+
+    ch2_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "chapter_02", "title": "Methods", "depth": 0, "sequence": 2},
+        actor="human", authority="accepted",
+    )
+    ch3_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "chapter_03", "title": "Results", "depth": 0, "sequence": 3},
+        actor="human", authority="accepted",
+    )
+    sec21_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "sec_2_1", "title": "Setup", "depth": 1, "sequence": 1},
+        actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=ch2_id, to_id=sec21_id,
+        from_type="PaperSection", to_type="PaperSection",
+        rel_type="contains_section", actor="human", authority="accepted",
+    )
+
+    tbl_ch2_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Table",
+        properties={"name": "tbl_setup", "caption": "Experimental setup parameters"},
+        actor="human", authority="accepted",
+    )
+    tbl_ch3_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Table",
+        properties={"name": "tbl_results", "caption": "Results comparison"},
+        actor="human", authority="accepted",
+    )
+
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=tbl_ch2_id, to_id=sec21_id,
+        from_type="Table", to_type="PaperSection",
+        rel_type="appears_in", actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=tbl_ch3_id, to_id=ch3_id,
+        from_type="Table", to_type="PaperSection",
+        rel_type="appears_in", actor="human", authority="accepted",
+    )
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        numbers = compute_table_numbers(session, NEO4J_DB)
+
+    assert numbers[tbl_ch2_id] == "2.1"
+    assert numbers[tbl_ch3_id] == "3.1"
+
+
 # ---------------------------------------------------------------------------
 # Unit tests: resolve_xref_tokens (no Neo4j, but pytestmark applies)
 # ---------------------------------------------------------------------------
