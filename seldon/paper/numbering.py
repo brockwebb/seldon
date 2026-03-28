@@ -15,6 +15,7 @@ Public API:
 from __future__ import annotations
 
 import re
+import warnings
 
 from neo4j import Session
 
@@ -41,7 +42,15 @@ def _assign_numbers(records: list[dict]) -> dict[str, str]:
     if has_chapters:
         chapter_counters: dict[int, int] = {}
         for r in records:
-            ch = r["chapter_seq"] if r["chapter_seq"] is not None else 0
+            ch = r["chapter_seq"]
+            if ch is None:
+                warnings.warn(
+                    f"Artifact {r['artifact_id']} has no chapter ancestor in a chaptered document;"
+                    " skipping numbering.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                continue
             chapter_counters[ch] = chapter_counters.get(ch, 0) + 1
             result[r["artifact_id"]] = f"{ch}.{chapter_counters[ch]}"
     else:
@@ -130,6 +139,23 @@ def compute_section_display(session: Session, database: str) -> dict[str, str]:
                parent.sequence AS parent_seq,
                grandparent.sequence AS gp_seq
     """).data()
+
+    # Deduplicate: a section with multiple CONTAINS_SECTION parents produces multiple rows.
+    # Warn and keep only the first occurrence of each artifact_id.
+    seen_ids: set[str] = set()
+    deduped: list[dict] = []
+    for r in records:
+        aid = r["artifact_id"]
+        if aid in seen_ids:
+            warnings.warn(
+                f"Section {aid} has multiple parent sections; using first match.",
+                UserWarning,
+                stacklevel=2,
+            )
+        else:
+            seen_ids.add(aid)
+            deduped.append(r)
+    records = deduped
 
     result: dict[str, str] = {}
     for r in records:
