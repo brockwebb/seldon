@@ -73,15 +73,24 @@ artifact_types:
       name:
         required: true
         description: "Figure identifier (e.g., fig_1_convergence)"
+      caption:
+        required: true
+        description: "Figure caption text"
       description:
         required: true
         description: "What the figure shows"
+      figure_number:
+        category: documentation
+        description: "Display number (e.g., '2.3' for Chapter 2, Figure 3) — computed from graph position at build time"
       interpretation:
         category: documentation
         description: "Key takeaway from this figure"
       data_source:
         category: documentation
         description: "Which DataFiles/Results this figure renders"
+      file_path:
+        category: documentation
+        description: "Path to the generated figure file"
 
   Table:
     properties:
@@ -136,6 +145,12 @@ artifact_types:
       content_hash:
         category: documentation
         description: "SHA-256 hash of file content at last sync"
+      sequence:
+        category: documentation
+        description: "Ordering within parent (1, 2, 3...). Determines document order and figure/table numbering."
+      depth:
+        category: documentation
+        description: "Hierarchy depth: 0 = chapter/top-level, 1 = section, 2 = subsection"
 
   Citation:
     properties:

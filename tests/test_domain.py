@@ -147,3 +147,26 @@ def test_table_state_machine(research_config):
     assert "published" in sm["review"]
     assert "stale" in sm["published"]
     assert "draft" in sm["stale"]
+
+
+# ---------------------------------------------------------------------------
+# PaperSection and Figure property extension tests (AD-018 Part A)
+# ---------------------------------------------------------------------------
+
+
+def test_papersection_has_sequence_property(research_config):
+    """PaperSection has a sequence property for document ordering."""
+    props = research_config.get_all_schema_properties("PaperSection")
+    assert "sequence" in props
+
+
+def test_papersection_has_depth_property(research_config):
+    """PaperSection has a depth property: 0=chapter, 1=section, 2=subsection."""
+    props = research_config.get_all_schema_properties("PaperSection")
+    assert "depth" in props
+
+
+def test_figure_has_caption_property(research_config):
+    """Figure has caption as a required property."""
+    required = research_config.get_required_properties("Figure")
+    assert "caption" in required
