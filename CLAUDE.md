@@ -8,13 +8,13 @@ See `README.md` for full vision and architectural properties.
 
 ## Current State
 
-Working engine: Neo4j graph + JSONL event store + CLI. 290+ tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014). Paper sync for iterative editing workflow. Paper foundations workflow (glossary, keyword index, evidence map).
+Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014). Paper sync for iterative editing workflow. Paper foundations workflow (glossary, keyword index, evidence map). Shared ontology with master/replica inheritance (AD-017): `seldon-ontology` master DB with 51 terms, epoch-based sync to project replicas.
 
 ## Environment
 
 **Neo4j credentials are in `.env`.** CC: you have the password. Load it with `dotenv` or read `.env` directly. Do NOT skip Neo4j-dependent tests. Do NOT ask for the password. If tests fail with auth errors, run: `source .env && pytest tests/ -v` or pass `NEO4J_PASSWORD` explicitly.
 
-**Database:** Each project gets its own Neo4j database. Seldon self-dogfood uses `seldon-seldon-self`. Leibniz-pi uses its own database per `seldon.yaml`.
+**Database:** Each project gets its own Neo4j database. Seldon self-dogfood uses `seldon-seldon-self`. Leibniz-pi uses its own database per `seldon.yaml`. Shared ontology uses `seldon-ontology` (master — never modified by project-level commands).
 
 **Python:** Seldon is pip-installed in the active environment. `seldon` CLI is available on PATH.
 
@@ -91,6 +91,7 @@ Before iterative editing of sections, establish the constraint surface. This red
 | `handoffs/` | Session handoff notes (gitignored) |
 | `cc_tasks/` | Claude Code task files (gitignored) |
 | `output/results/` | Registered results as YAML |
+| `ontology/` | Shared ontology definitions (validity vocabulary) |
 
 **Seldon repo:** `/Users/brock/Documents/GitHub/seldon/`
 **SAS conversion repo:** `/Users/brock/Documents/GitHub/sas_graph_code_conversion/`
