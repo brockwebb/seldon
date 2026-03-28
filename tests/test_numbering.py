@@ -308,6 +308,90 @@ def test_figure_numbering_mixed_chaptered(neo4j_driver, project_dir, domain_conf
 # Unit tests: resolve_xref_tokens (no Neo4j dependency)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.usefixtures("neo4j_available")
+def test_figure_numbering_deduplicates_multiple_appears_in(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """A figure with APPEARS_IN edges to two sections must appear exactly once in the result."""
+    import warnings
+    from seldon.paper.numbering import compute_figure_numbers
+
+    # Chapter with depth=0, sequence=2
+    ch2_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "chapter_02", "title": "Methods", "depth": 0, "sequence": 2},
+        actor="human", authority="accepted",
+    )
+    # Two sections under the chapter
+    sec_a_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "sec_2_1", "title": "Section 2.1", "depth": 1, "sequence": 1},
+        actor="human", authority="accepted",
+    )
+    sec_b_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="PaperSection",
+        properties={"name": "sec_2_2", "title": "Section 2.2", "depth": 1, "sequence": 2},
+        actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=ch2_id, to_id=sec_a_id,
+        from_type="PaperSection", to_type="PaperSection",
+        rel_type="contains_section", actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=ch2_id, to_id=sec_b_id,
+        from_type="PaperSection", to_type="PaperSection",
+        rel_type="contains_section", actor="human", authority="accepted",
+    )
+
+    # One figure with APPEARS_IN edges to BOTH sections
+    fig_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Figure",
+        properties={"name": "fig_multi", "caption": "Multi-section figure", "description": "Appears in two sections"},
+        actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=fig_id, to_id=sec_a_id,
+        from_type="Figure", to_type="PaperSection",
+        rel_type="appears_in", actor="human", authority="accepted",
+    )
+    create_link(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, from_id=fig_id, to_id=sec_b_id,
+        from_type="Figure", to_type="PaperSection",
+        rel_type="appears_in", actor="human", authority="accepted",
+    )
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            numbers = compute_figure_numbers(session, NEO4J_DB)
+
+    # Figure must appear exactly once in the result
+    assert fig_id in numbers, f"Expected {fig_id} in numbers, got: {numbers}"
+    assert list(numbers.keys()).count(fig_id) == 1, "artifact_id appears more than once as a key"
+
+    # Number must be 2.1 (chapter 2, first figure)
+    assert numbers[fig_id] == "2.1", f"Expected '2.1', got '{numbers[fig_id]}'"
+
+    # A warning must have been emitted for the duplicate
+    warning_messages = [str(w.message) for w in caught]
+    assert any(fig_id in msg for msg in warning_messages), (
+        f"Expected warning mentioning {fig_id}, got: {warning_messages}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: resolve_xref_tokens (no Neo4j dependency)
+# ---------------------------------------------------------------------------
+
 def test_resolve_xref_tokens_figure():
     """{{figure:NAME}} resolves to 'Figure 2.1'."""
     from seldon.paper.numbering import resolve_xref_tokens

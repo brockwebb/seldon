@@ -36,6 +36,23 @@ def _assign_numbers(records: list[dict]) -> dict[str, str]:
         - "1", "2", "3" for flat papers (no chapters)
         - "2.1", "2.2", "3.1" for chaptered documents
     """
+    # Deduplicate: an artifact with APPEARS_IN edges to multiple sections produces
+    # multiple rows. Warn and keep only the first occurrence of each artifact_id.
+    seen_ids: set[str] = set()
+    deduped: list[dict] = []
+    for r in records:
+        aid = r["artifact_id"]
+        if aid in seen_ids:
+            warnings.warn(
+                f"Artifact {aid} has multiple APPEARS_IN edges; using first match for numbering.",
+                UserWarning,
+                stacklevel=2,
+            )
+        else:
+            seen_ids.add(aid)
+            deduped.append(r)
+    records = deduped
+
     has_chapters = any(r["chapter_seq"] is not None for r in records)
 
     result: dict[str, str] = {}
