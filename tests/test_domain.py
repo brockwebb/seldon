@@ -96,3 +96,27 @@ def test_includes_role_relationship_exists(research_config):
 def test_leads_relationship_exists(research_config):
     """leads relationship type is registered."""
     assert "leads" in research_config.relationship_types
+
+
+# ---------------------------------------------------------------------------
+# OntologyTerm domain config tests (AD-017)
+# ---------------------------------------------------------------------------
+
+
+def test_ontology_term_required_properties(research_config):
+    """OntologyTerm requires term_id, name, definition, category, source_vocabulary."""
+    required = research_config.get_required_properties("OntologyTerm")
+    for prop in ["term_id", "name", "definition", "category", "source_vocabulary"]:
+        assert prop in required, f"'{prop}' should be required for OntologyTerm"
+
+
+def test_ontology_term_state_machine(research_config):
+    """OntologyTerm state machine: proposed -> active -> deprecated are valid transitions."""
+    sm = research_config.state_machines["OntologyTerm"]
+    assert "active" in sm["proposed"]
+    assert "deprecated" in sm["active"]
+
+
+def test_references_ontology_relationship_exists(research_config):
+    """references_ontology is a registered relationship type."""
+    assert "references_ontology" in research_config.relationship_types
