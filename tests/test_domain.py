@@ -15,7 +15,7 @@ def test_load_domain_config(research_config):
     assert research_config.version == "0.1"
     assert "Result" in research_config.artifact_types
     assert "ResearchTask" in research_config.artifact_types
-    assert len(research_config.artifact_types) == 13  # dict with 13 keys (OntologyTerm added in AD-017)
+    assert len(research_config.artifact_types) == 14  # Table added in AD-018
 
 
 def test_validate_artifact_type_valid(research_config):
@@ -120,3 +120,30 @@ def test_ontology_term_state_machine(research_config):
 def test_references_ontology_relationship_exists(research_config):
     """references_ontology is a registered relationship type."""
     assert "references_ontology" in research_config.relationship_types
+
+
+# ---------------------------------------------------------------------------
+# Table artifact type tests (AD-018 Part A)
+# ---------------------------------------------------------------------------
+
+
+def test_table_artifact_type_exists(research_config):
+    """Table is a valid artifact type in domain config."""
+    assert "Table" in research_config.artifact_types
+
+
+def test_table_required_properties(research_config):
+    """Table requires name and caption."""
+    required = research_config.get_required_properties("Table")
+    assert "name" in required
+    assert "caption" in required
+
+
+def test_table_state_machine(research_config):
+    """Table state machine: proposed → draft → review → published → stale transitions valid."""
+    sm = research_config.state_machines["Table"]
+    assert "draft" in sm["proposed"]
+    assert "review" in sm["draft"]
+    assert "published" in sm["review"]
+    assert "stale" in sm["published"]
+    assert "draft" in sm["stale"]
