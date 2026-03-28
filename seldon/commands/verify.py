@@ -160,11 +160,11 @@ def check_ontology_freshness(driver, database: str, config: dict) -> CheckResult
                 "MATCH (m:_OntologyMeta) RETURN m.epoch AS epoch"
             ).single()
             master_epoch = result["epoch"] if result else 0
-    except Exception:
+    except Exception as exc:
         return CheckResult(
             name="Ontology",
             symbol="warn",
-            summary="Could not query master ontology DB — skipping",
+            summary=f"Could not query master ontology DB — {exc}",
         )
 
     # Query local replica epoch
@@ -501,21 +501,31 @@ def check_unregistered_files(
 # Fix actions
 # ---------------------------------------------------------------------------
 
-def _fix_file_hashes(project_dir: Path) -> None:
+def _fix_file_hashes(project_dir: Path, quiet: bool = False) -> None:
     """Run seldon paper sync to update hashes."""
+    kwargs = {}
+    if quiet:
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
     subprocess.run(
         [sys.executable, "-m", "seldon", "paper", "sync"],
         check=True,
         cwd=str(project_dir),
+        **kwargs,
     )
 
 
-def _fix_ontology(project_dir: Path) -> None:
+def _fix_ontology(project_dir: Path, quiet: bool = False) -> None:
     """Run seldon ontology sync to pull latest vocabulary."""
+    kwargs = {}
+    if quiet:
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
     subprocess.run(
         [sys.executable, "-m", "seldon", "ontology", "sync"],
         check=True,
         cwd=str(project_dir),
+        **kwargs,
     )
 
 
@@ -646,7 +656,7 @@ def _apply_fixes(
             if not quiet:
                 click.echo(f"  Fixing: {r.name}...")
             try:
-                check_names_to_fix[r.name](project_dir)
+                check_names_to_fix[r.name](project_dir, quiet=quiet)
             except subprocess.CalledProcessError as exc:
                 if not quiet:
                     click.echo(f"  Fix failed for {r.name}: {exc}", err=True)

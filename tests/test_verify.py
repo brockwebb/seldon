@@ -261,39 +261,125 @@ def test_verify_fix_registers_files(neo4j_driver, project_dir, domain_config, cl
 
 
 # ---------------------------------------------------------------------------
-# Test 7: --quiet exit codes (no output)
+# Test 7: --quiet exit codes (no output) — three separate cases
 # ---------------------------------------------------------------------------
 
-def test_verify_quiet_exit_codes(neo4j_driver, project_dir, domain_config, clean_test_db):
-    """Test exit codes: 0 for clean, 1 for warnings, 2 for issues — with no output in quiet mode."""
-    from click.testing import CliRunner
+def _mock_config_and_driver(neo4j_driver):
+    """Return (mock_config_value, mock_driver_value) for patching verify_command."""
+    return (
+        {
+            "project": {"name": "test-project", "domain": "research"},
+            "neo4j": {"uri": "bolt://localhost:7687", "database": NEO4J_DB},
+        },
+        neo4j_driver,
+    )
+
+
+def _invoke_quiet(runner, neo4j_driver, project_dir):
+    """Invoke verify_command --quiet with mocked config/driver/cwd. Returns CliRunner result."""
     from seldon.commands.verify import verify_command
 
-    # Write a seldon.yaml so load_project_config works
-    seldon_yaml = project_dir / "seldon.yaml"
-    seldon_yaml.write_text(
-        "project:\n  name: test-project\n  domain: research\n"
-        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n",
-        encoding="utf-8",
+    cfg, drv = _mock_config_and_driver(neo4j_driver)
+    with patch("seldon.commands.verify.load_project_config") as mock_config, \
+         patch("seldon.commands.verify.get_neo4j_driver") as mock_driver, \
+         patch("seldon.commands.verify.Path") as mock_path_cls:
+        # Make Path.cwd() return the fixture project_dir; all other Path calls
+        # must still behave normally, so we forward __call__ to the real Path.
+        from pathlib import Path as RealPath
+        mock_path_cls.cwd.return_value = project_dir
+        mock_path_cls.side_effect = RealPath
+        mock_config.return_value = cfg
+        mock_driver.return_value = drv
+        with patch.object(neo4j_driver, "close"):
+            return runner.invoke(verify_command, ["--quiet"])
+
+
+def test_verify_quiet_exit_code_0(neo4j_driver, project_dir, domain_config, clean_test_db):
+    """Clean project with --quiet: exit code 0 and no output."""
+    from click.testing import CliRunner
+
+    # Register one section so there are no unregistered files
+    sections_dir = project_dir / "paper" / "sections"
+    sections_dir.mkdir(parents=True)
+    _make_section(
+        neo4j_driver, project_dir, domain_config,
+        "chapter_01",
+        str(sections_dir / "chapter-01.md"),
+        "# Introduction\nSome content.\n",
     )
 
     runner = CliRunner()
+    result = _invoke_quiet(runner, neo4j_driver, project_dir)
 
-    # Clean project — exit 0 (or 1 if stale/blocking found, but we cleaned the DB)
-    with patch("seldon.commands.verify.load_project_config") as mock_config, \
-         patch("seldon.commands.verify.get_neo4j_driver") as mock_driver:
-        mock_config.return_value = {
-            "project": {"name": "test-project", "domain": "research"},
-            "neo4j": {"uri": "bolt://localhost:7687", "database": NEO4J_DB},
-        }
-        mock_driver.return_value = neo4j_driver
-
-        # Patch driver.close to be a no-op (we reuse the session-scoped driver)
-        with patch.object(neo4j_driver, "close"):
-            result = runner.invoke(verify_command, ["--quiet"])
-
-    # With a clean DB: exit code should be 0
     assert result.exit_code == 0
+    assert result.output == ""
+
+
+def test_verify_quiet_exit_code_1(neo4j_driver, project_dir, domain_config, clean_test_db):
+    """Stale artifact with --quiet: exit code 1 and no output."""
+    from click.testing import CliRunner
+
+    # Create a stale artifact (warning condition)
+    result_id = create_artifact(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_type="Result",
+        properties={
+            "name": "metric_quiet_warn",
+            "value": 0.42,
+            "units": "fraction",
+            "description": "Metric for quiet-mode warning test",
+        },
+        actor="test",
+        authority="accepted",
+    )
+    transition_state(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_id=result_id,
+        artifact_type="Result",
+        current_state="proposed",
+        new_state="verified",
+        actor="test",
+        authority="accepted",
+    )
+    transition_state(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_id=result_id,
+        artifact_type="Result",
+        current_state="verified",
+        new_state="stale",
+        actor="test",
+        authority="accepted",
+    )
+
+    runner = CliRunner()
+    result = _invoke_quiet(runner, neo4j_driver, project_dir)
+
+    assert result.exit_code == 1
+    assert result.output == ""
+
+
+def test_verify_quiet_exit_code_2(neo4j_driver, project_dir, domain_config, clean_test_db):
+    """Unregistered file in tracked directory with --quiet: exit code 2 and no output."""
+    from click.testing import CliRunner
+
+    # Create a tracked directory with an unregistered file (issue condition)
+    sections_dir = project_dir / "paper" / "sections"
+    sections_dir.mkdir(parents=True)
+    (sections_dir / "orphan-section.md").write_text("# Orphan\nNo artifact.\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = _invoke_quiet(runner, neo4j_driver, project_dir)
+
+    assert result.exit_code == 2
     assert result.output == ""
 
 
