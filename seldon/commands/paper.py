@@ -366,7 +366,7 @@ def paper_impact_command(artifact_name, depth):
 
     ARTIFACT_NAME is the 'name' property of any artifact in the graph.
 
-    Traverses all outgoing relationships up to --depth hops and displays a tree
+    Traverses all incoming dependency edges up to --depth hops and displays a tree
     of affected artifacts plus a blast-radius summary by type.
     """
     from seldon.core.graph import find_any_artifact_by_name
@@ -377,7 +377,11 @@ def paper_impact_command(artifact_name, depth):
 
     try:
         with driver.session(database=database) as session:
-            artifact = find_any_artifact_by_name(session, artifact_name)
+            try:
+                artifact = find_any_artifact_by_name(session, artifact_name)
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                raise SystemExit(1)
             if artifact is None:
                 click.echo(
                     f"Error: no artifact with name='{artifact_name}' found.", err=True

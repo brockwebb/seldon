@@ -143,6 +143,7 @@ def test_impact_shows_direct_dependents(
     assert result.exit_code == 0, result.output
     assert "chapter_02" in result.output
     assert "PaperSection" in result.output
+    assert "cites" in result.output
 
 
 def test_impact_shows_transitive(
@@ -189,6 +190,7 @@ def test_impact_shows_transitive(
     assert result.exit_code == 0, result.output
     assert "fig_containing_result" in result.output
     assert "Figure" in result.output
+    assert "contains" in result.output
     assert "section_with_figure" in result.output
     assert "PaperSection" in result.output
 
