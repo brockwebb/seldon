@@ -170,3 +170,55 @@ def test_figure_has_caption_property(research_config):
     """Figure has caption as a required property."""
     required = research_config.get_required_properties("Figure")
     assert "caption" in required
+
+
+# ---------------------------------------------------------------------------
+# New relationship type tests (AD-018 Part A)
+# ---------------------------------------------------------------------------
+
+
+def test_contains_section_relationship(research_config):
+    """contains_section: PaperSection → PaperSection (document hierarchy)."""
+    assert "contains_section" in research_config.relationship_types
+    rel = research_config.relationship_types["contains_section"]
+    assert "PaperSection" in rel.from_types
+    assert "PaperSection" in rel.to_types
+
+
+def test_appears_in_relationship(research_config):
+    """appears_in: Figure or Table → PaperSection."""
+    assert "appears_in" in research_config.relationship_types
+    rel = research_config.relationship_types["appears_in"]
+    assert "Figure" in rel.from_types
+    assert "Table" in rel.from_types
+    assert "PaperSection" in rel.to_types
+
+
+def test_references_figure_relationship(research_config):
+    """references_figure: PaperSection → Figure."""
+    assert "references_figure" in research_config.relationship_types
+    rel = research_config.relationship_types["references_figure"]
+    assert "PaperSection" in rel.from_types
+    assert "Figure" in rel.to_types
+
+
+def test_references_table_relationship(research_config):
+    """references_table: PaperSection → Table."""
+    assert "references_table" in research_config.relationship_types
+    rel = research_config.relationship_types["references_table"]
+    assert "PaperSection" in rel.from_types
+    assert "Table" in rel.to_types
+
+
+def test_tabulates_relationship(research_config):
+    """tabulates: Table → Result."""
+    assert "tabulates" in research_config.relationship_types
+    rel = research_config.relationship_types["tabulates"]
+    assert "Table" in rel.from_types
+    assert "Result" in rel.to_types
+
+
+def test_generated_by_includes_table(research_config):
+    """Table can be the source of a generated_by relationship."""
+    rel = research_config.relationship_types["generated_by"]
+    assert "Table" in rel.from_types

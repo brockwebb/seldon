@@ -271,7 +271,7 @@ relationship_types:
     from_types: [PaperSection, Figure]
     to_types: [Result, Citation]
   generated_by:
-    from_types: [Result, Figure]
+    from_types: [Result, Figure, Table]
     to_types: [Script]
   computed_from:
     from_types: [Result]
@@ -321,6 +321,26 @@ relationship_types:
   references_ontology:
     from_types: [PaperSection, ResearchTask, LabNotebookEntry]
     to_types: [OntologyTerm]
+
+  contains_section:
+    from_types: [PaperSection]
+    to_types: [PaperSection]
+
+  appears_in:
+    from_types: [Figure, Table]
+    to_types: [PaperSection]
+
+  references_figure:
+    from_types: [PaperSection]
+    to_types: [Figure]
+
+  references_table:
+    from_types: [PaperSection]
+    to_types: [Table]
+
+  tabulates:
+    from_types: [Table]
+    to_types: [Result]
 
 state_machines:
   Result:
