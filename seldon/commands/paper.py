@@ -230,6 +230,175 @@ def paper_register(files, register_all):
     click.echo(f"\nRegistered {registered}, skipped {skipped}.")
 
 
+def _get_downstream_tree(session, root_id: str, max_depth: int) -> dict:
+    """
+    BFS reverse traversal from root_id: find all artifacts that depend on it.
+
+    "Impact" of an artifact = everything that points to it (directly or transitively).
+    An edge ``dependent -[REL]-> target`` means ``dependent`` depends on ``target``.
+    So to find impact of ``root``, we walk incoming edges — what points to root,
+    then what points to those, and so on.
+
+    Returns a dict:
+        {
+            "nodes": {artifact_id: {"artifact": {...}, "rel_type": str,
+                                    "parent_id": str, "depth": int}},
+            "root_children": [artifact_id, ...]   # direct dependents of root
+        }
+
+    Nodes reachable via multiple paths are de-duplicated (first path wins).
+    "parent_id" here means "the node this dependent was reached from" — the node
+    *closer to the root* in the reverse-traversal tree.
+    """
+    from collections import deque
+
+    visited: dict = {}  # artifact_id -> node data
+    queue: deque = deque()
+
+    def _query_incoming(node_id: str):
+        """Return list of (dependent_artifact_dict, rel_type_str) pointing to node_id."""
+        records = session.run(
+            "MATCH (dep:Artifact)-[r]->(a:Artifact {artifact_id: $id}) "
+            "RETURN dep, type(r) AS rel",
+            id=node_id,
+        ).data()
+        return [(dict(rec["dep"]), rec["rel"].lower()) for rec in records]
+
+    # Seed: direct dependents of root (depth 1)
+    for dep, rel in _query_incoming(root_id):
+        dep_id = dep["artifact_id"]
+        if dep_id not in visited:
+            visited[dep_id] = {
+                "artifact": dep,
+                "rel_type": rel,
+                "parent_id": root_id,
+                "depth": 1,
+            }
+            queue.append((dep_id, 1))
+
+    # BFS for transitive dependents
+    while queue:
+        current_id, depth = queue.popleft()
+        if depth >= max_depth:
+            continue
+        for dep, rel in _query_incoming(current_id):
+            dep_id = dep["artifact_id"]
+            # Avoid root (cycles) and already-visited nodes
+            if dep_id != root_id and dep_id not in visited:
+                visited[dep_id] = {
+                    "artifact": dep,
+                    "rel_type": rel,
+                    "parent_id": current_id,
+                    "depth": depth + 1,
+                }
+                queue.append((dep_id, depth + 1))
+
+    root_children = [nid for nid, n in visited.items() if n["parent_id"] == root_id]
+
+    return {"nodes": visited, "root_children": root_children}
+
+
+def _render_tree(tree: dict, root_name: str) -> list[str]:
+    """Render the impact tree as ASCII-art lines."""
+    nodes = tree["nodes"]
+    root_children = tree["root_children"]
+
+    lines = [f"Impact analysis for: {root_name}"]
+
+    def _render_children(child_ids, prefix=""):
+        for i, cid in enumerate(child_ids):
+            is_last = (i == len(child_ids) - 1)
+            node = nodes[cid]
+            artifact = node["artifact"]
+            connector = "└──" if is_last else "├──"
+            a_type = artifact.get("artifact_type", "Artifact")
+            name = artifact.get("name", cid[:8])
+            rel = node["rel_type"]
+            state = artifact.get("state", "")
+            state_str = f" → {state.upper()}" if state else ""
+            lines.append(f"  {prefix}{connector} {a_type}: {name} ({rel}){state_str}")
+
+            # Recurse into children
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            child_ids_of_node = [
+                nid for nid, n in nodes.items()
+                if n["parent_id"] == cid
+            ]
+            _render_children(child_ids_of_node, child_prefix)
+
+    _render_children(root_children)
+    return lines
+
+
+def _blast_radius_summary(tree: dict) -> str:
+    """Produce a 'Blast radius: N sections, M figures, ...' summary line."""
+    nodes = tree["nodes"]
+    if not nodes:
+        return "Blast radius: 0 dependents"
+
+    counts: dict[str, int] = {}
+    for node in nodes.values():
+        a_type = node["artifact"].get("artifact_type", "Artifact")
+        counts[a_type] = counts.get(a_type, 0) + 1
+
+    type_labels = {
+        "PaperSection": "section",
+        "Figure": "figure",
+        "Table": "table",
+        "Result": "result",
+        "Script": "script",
+    }
+    parts = []
+    for a_type, count in sorted(counts.items()):
+        label = type_labels.get(a_type, a_type.lower())
+        plural = "s" if count != 1 else ""
+        parts.append(f"{count} {label}{plural}")
+
+    return f"Blast radius: {', '.join(parts)}"
+
+
+@paper_group.command("impact")
+@click.argument("artifact_name")
+@click.option("--depth", default=10, show_default=True,
+              help="Maximum traversal depth.")
+def paper_impact_command(artifact_name, depth):
+    """Show downstream impact of an artifact — what would be affected if it changed.
+
+    ARTIFACT_NAME is the 'name' property of any artifact in the graph.
+
+    Traverses all incoming dependency edges up to --depth hops and displays a tree
+    of affected artifacts plus a blast-radius summary by type.
+    """
+    from seldon.core.graph import find_any_artifact_by_name
+
+    config = load_project_config()
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+
+    try:
+        with driver.session(database=database) as session:
+            try:
+                artifact = find_any_artifact_by_name(session, artifact_name)
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                raise SystemExit(1)
+            if artifact is None:
+                click.echo(
+                    f"Error: no artifact with name='{artifact_name}' found.", err=True
+                )
+                raise SystemExit(1)
+
+            tree = _get_downstream_tree(session, artifact["artifact_id"], max_depth=depth)
+    finally:
+        driver.close()
+
+    lines = _render_tree(tree, artifact_name)
+    for line in lines:
+        click.echo(line)
+    click.echo()
+    click.echo(_blast_radius_summary(tree))
+
+
 @paper_group.command("build")
 @click.option("--skip-qc", is_flag=True, default=False,
               help="Skip Tier 2 and Tier 3 QC. Tier 1 structural checks always run.")

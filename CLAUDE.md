@@ -39,12 +39,14 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `ontology ingest` | After updating VALIDITY_VOCABULARY.md | `seldon ontology ingest` (writes to master) |
 | `ontology sync`   | Pull latest vocabulary into project | `seldon ontology sync` (reads from master) |
 | `ontology list`   | Check inherited terms | `seldon ontology list [--master]` |
+| `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
+| `paper impact`    | Check blast radius of a change | `seldon paper impact <name>` |
 
 ## Session Protocol
 
 1. **Start**: `/briefing` — reads handoffs, surfaces open tasks, identifies critical path
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
-3. **End**: `/closeout` — structured handoff, commit
+3. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
 
 ## Paper Editing Workflow
 

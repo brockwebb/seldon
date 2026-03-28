@@ -73,15 +73,45 @@ artifact_types:
       name:
         required: true
         description: "Figure identifier (e.g., fig_1_convergence)"
+      caption:
+        required: true
+        description: "Figure caption text"
       description:
         required: true
         description: "What the figure shows"
+      figure_number:
+        category: documentation
+        description: "Display number (e.g., '2.3' for Chapter 2, Figure 3) — computed from graph position at build time"
       interpretation:
         category: documentation
         description: "Key takeaway from this figure"
       data_source:
         category: documentation
         description: "Which DataFiles/Results this figure renders"
+      file_path:
+        category: documentation
+        description: "Path to the generated figure file"
+
+  Table:
+    properties:
+      name:
+        required: true
+        description: "Table identifier (e.g., 'table_comparison_results')"
+      caption:
+        required: true
+        description: "Table caption text"
+      table_number:
+        category: documentation
+        description: "Display number (e.g., '5.1' for Chapter 5, Table 1) — computed from graph position at build time"
+      generating_script:
+        category: documentation
+        description: "Name of Script artifact that produces this table"
+      data_sources:
+        category: documentation
+        description: "DataFile artifacts that feed this table"
+      file_path:
+        category: documentation
+        description: "Path to generated table file if applicable"
 
   PipelineRun:
     properties:
@@ -115,6 +145,12 @@ artifact_types:
       content_hash:
         category: documentation
         description: "SHA-256 hash of file content at last sync"
+      sequence:
+        category: documentation
+        description: "Ordering within parent (1, 2, 3...). Determines document order and figure/table numbering."
+      depth:
+        category: documentation
+        description: "Hierarchy depth: 0 = chapter/top-level, 1 = section, 2 = subsection"
 
   Citation:
     properties:
@@ -235,7 +271,7 @@ relationship_types:
     from_types: [PaperSection, Figure]
     to_types: [Result, Citation]
   generated_by:
-    from_types: [Result, Figure]
+    from_types: [Result, Figure, Table]
     to_types: [Script]
   computed_from:
     from_types: [Result]
@@ -286,6 +322,26 @@ relationship_types:
     from_types: [PaperSection, ResearchTask, LabNotebookEntry]
     to_types: [OntologyTerm]
 
+  contains_section:
+    from_types: [PaperSection]
+    to_types: [PaperSection]
+
+  appears_in:
+    from_types: [Figure, Table]
+    to_types: [PaperSection]
+
+  references_figure:
+    from_types: [PaperSection]
+    to_types: [Figure]
+
+  references_table:
+    from_types: [PaperSection]
+    to_types: [Table]
+
+  tabulates:
+    from_types: [Table]
+    to_types: [Result]
+
 state_machines:
   Result:
     proposed: [verified, rejected]
@@ -322,6 +378,13 @@ state_machines:
     stale: [draft]
 
   Figure:
+    proposed: [draft, review]
+    draft: [review, stale]
+    review: [published, draft]
+    published: [stale]
+    stale: [draft]
+
+  Table:
     proposed: [draft, review]
     draft: [review, stale]
     review: [published, draft]

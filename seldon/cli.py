@@ -12,6 +12,7 @@ from seldon.commands.paper import paper_group
 from seldon.commands.docs import docs_group
 from seldon.commands.go import go_command
 from seldon.commands.ontology import ontology_group
+from seldon.commands.verify import verify_command
 
 
 @click.group()
@@ -34,3 +35,4 @@ main.add_command(paper_group, name="paper")
 main.add_command(docs_group, name="docs")
 main.add_command(go_command, name="go")
 main.add_command(ontology_group, name="ontology")
+main.add_command(verify_command, name="verify")

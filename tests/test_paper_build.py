@@ -449,6 +449,10 @@ def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
         "project": {"name": "test", "domain": "research"},
         "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
     })
+    monkeypatch.setattr(
+        "seldon.paper.build._compute_xref_lookups",
+        lambda session: ({}, {}, {}),
+    )
 
     output_path = paper_dir / "paper.qmd"
     from seldon.paper.build import build_paper
@@ -470,6 +474,155 @@ def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
     assert "## Introduction" in assembled
 
 
+# ---------------------------------------------------------------------------
+# Unit tests: XREF token resolution in build_paper (no Neo4j)
+# ---------------------------------------------------------------------------
+
+def _make_xref_build_env(tmp_path, section_text, monkeypatch, xref_lookups=None):
+    """
+    Set up a minimal build environment for XREF token tests.
+
+    Creates seldon.yaml, a single section file with `section_text`, and
+    monkeypatches get_neo4j_driver / load_project_config / _compute_xref_lookups
+    so no real Neo4j is needed.
+
+    Args:
+        tmp_path: pytest tmp_path fixture.
+        section_text: Markdown text to write into 01_intro.md.
+        monkeypatch: pytest monkeypatch fixture.
+        xref_lookups: Optional (figure_by_name, table_by_name, section_by_name) tuple.
+                      Defaults to three empty dicts when not provided.
+
+    Returns:
+        output_path (Path) for the assembled .qmd file.
+    """
+    if xref_lookups is None:
+        xref_lookups = ({}, {}, {})
+
+    (tmp_path / "seldon.yaml").write_text(
+        "project:\n  name: test\n  domain: research\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "event_store:\n  path: seldon_events.jsonl\n"
+    )
+    paper_dir = tmp_path / "paper"
+    sections_dir = paper_dir / "sections"
+    sections_dir.mkdir(parents=True)
+    (sections_dir / "01_intro.md").write_text(section_text)
+
+    mock_driver = MagicMock()
+    mock_driver.session.return_value.__enter__.return_value.run.return_value.data.return_value = []
+    monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
+    monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
+        "project": {"name": "test", "domain": "research"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+    })
+    # Patch _compute_xref_lookups so tests don't need real graph data
+    monkeypatch.setattr(
+        "seldon.paper.build._compute_xref_lookups",
+        lambda session: xref_lookups,
+    )
+
+    return paper_dir / "paper.qmd"
+
+
+def test_build_paper_resolves_figure_token(tmp_path, monkeypatch):
+    """{{figure:fig_one}} in a section resolves to 'Figure 1' in the output."""
+    from seldon.paper.build import build_paper
+
+    output_path = _make_xref_build_env(
+        tmp_path,
+        section_text="See {{figure:fig_one}} for details.\n",
+        monkeypatch=monkeypatch,
+        xref_lookups=({"fig_one": "1"}, {}, {}),
+    )
+
+    build_paper(
+        project_dir=tmp_path,
+        paper_dir=tmp_path / "paper",
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    assembled = output_path.read_text()
+    assert "Figure 1" in assembled
+    assert "{{figure:fig_one}}" not in assembled
+
+
+def test_build_paper_resolves_table_token(tmp_path, monkeypatch):
+    """{{table:tbl_one}} in a section resolves to 'Table 1' in the output."""
+    from seldon.paper.build import build_paper
+
+    output_path = _make_xref_build_env(
+        tmp_path,
+        section_text="Results shown in {{table:tbl_one}}.\n",
+        monkeypatch=monkeypatch,
+        xref_lookups=({}, {"tbl_one": "1"}, {}),
+    )
+
+    build_paper(
+        project_dir=tmp_path,
+        paper_dir=tmp_path / "paper",
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    assembled = output_path.read_text()
+    assert "Table 1" in assembled
+    assert "{{table:tbl_one}}" not in assembled
+
+
+def test_build_paper_resolves_section_token(tmp_path, monkeypatch):
+    """{{section:intro}} in a section resolves to its display string in the output."""
+    from seldon.paper.build import build_paper
+
+    output_path = _make_xref_build_env(
+        tmp_path,
+        section_text="As described in {{section:intro}}, the method is clear.\n",
+        monkeypatch=monkeypatch,
+        xref_lookups=({}, {}, {"intro": "Section 1"}),
+    )
+
+    build_paper(
+        project_dir=tmp_path,
+        paper_dir=tmp_path / "paper",
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    assembled = output_path.read_text()
+    assert "Section 1" in assembled
+    assert "{{section:intro}}" not in assembled
+
+
+def test_build_paper_unknown_xref_passthrough(tmp_path, monkeypatch):
+    """{{figure:nonexistent}} for an unknown name passes through unchanged (no crash)."""
+    from seldon.paper.build import build_paper
+
+    output_path = _make_xref_build_env(
+        tmp_path,
+        section_text="See {{figure:nonexistent}} for details.\n",
+        monkeypatch=monkeypatch,
+        xref_lookups=({}, {}, {}),  # empty lookups — name not found
+    )
+
+    exit_code = build_paper(
+        project_dir=tmp_path,
+        paper_dir=tmp_path / "paper",
+        output_path=output_path,
+        skip_qc=True,
+        no_render=True,
+    )
+
+    # Build must succeed (XREF unknown is not a fatal error at build time)
+    assert exit_code == 0
+    assembled = output_path.read_text()
+    # Token must be preserved as-is
+    assert "{{figure:nonexistent}}" in assembled
+
+
 def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
     """If 00_abstract.md does not exist, build behaves as before (no abstract: in output)."""
     (tmp_path / "seldon.yaml").write_text(
@@ -489,6 +642,10 @@ def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
         "project": {"name": "test", "domain": "research"},
         "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
     })
+    monkeypatch.setattr(
+        "seldon.paper.build._compute_xref_lookups",
+        lambda session: ({}, {}, {}),
+    )
 
     output_path = paper_dir / "paper.qmd"
     from seldon.paper.build import build_paper
