@@ -419,9 +419,16 @@ def sync_section(
             artifact_id=artifact["artifact_id"],
         )
 
-    # Hash changed — reconcile references
+    # Hash changed — reconcile references and subsections
     text = section_path.read_text()
-    current_refs = scan_references(text)
+    parent_depth = artifact.get("depth") or 0
+    subsections = _parse_subsections(
+        section_path, artifact.get("name", section_path.stem), parent_depth
+    )
+    has_subsections = len(subsections) > 0
+
+    # When subsections exist, references are tracked at subsection level
+    current_refs = set() if has_subsections else scan_references(text)
     existing_edges = _get_cites_edges(driver, database, artifact["artifact_id"])
     existing_ref_keys = set(existing_edges.keys())
 
@@ -488,6 +495,18 @@ def sync_section(
                 actor=actor,
                 authority="accepted",
             )
+
+        _sync_subsections(
+            driver=driver,
+            database=database,
+            project_dir=project_dir,
+            domain_config=domain_config,
+            parent_artifact=artifact,
+            subsections=subsections,
+            dry_run=dry_run,
+            auto_stale=auto_stale,
+            actor=actor,
+        )
 
     return SyncResult(
         filename=filename,

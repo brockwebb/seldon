@@ -935,3 +935,79 @@ def test_sync_subsections_deprecated_not_double_deprecated(
                       dry_run=False, actor="human")
 
     assert event_count(project_dir) == events_after_first_deprecation
+
+
+# ── sync_section → _sync_subsections integration tests ─────────────────────
+
+
+@needs_neo4j
+def test_sync_section_creates_subsections_on_update(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """sync_section creates subsection nodes when ## headings are present."""
+    content_v1 = "# Results\n\nIntro text."
+    path = _make_section(paper_dir, "05_results.md", content_v1)
+    old_hash = compute_file_hash(path)
+
+    artifact_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash=old_hash,
+    )
+    from seldon.core.artifacts import update_artifact
+    update_artifact(project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+                    artifact_id=artifact_id, properties={"depth": 0}, actor="human", authority="accepted")
+
+    # Edit file to add ## headings
+    path.write_text(
+        "# Results\n\n"
+        "## Discovery Rates\n\nContent A.\n\n"
+        "## Attractors\n\nContent B."
+    )
+    artifact = {"artifact_id": artifact_id, "name": "05_results",
+                "content_hash": old_hash, "state": "draft", "depth": 0}
+
+    result = sync_section(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, section_path=path, artifact=artifact,
+    )
+
+    assert result.status == "updated"
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    assert "05_results:discovery_rates" in artifacts
+    assert "05_results:attractors" in artifacts
+
+
+@needs_neo4j
+def test_sync_section_with_subsections_skips_parent_cites(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """When ## headings exist, result tokens in subsections do NOT create parent-level CITES edges."""
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Section A\n\nSee {{result:metric_a:value}}."
+    )
+    old_hash = compute_file_hash(path)
+
+    artifact_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash="stale_hash",  # Force update
+    )
+    _create_result(project_dir, neo4j_driver, domain_config, "metric_a")
+
+    artifact = {"artifact_id": artifact_id, "name": "05_results",
+                "content_hash": "stale_hash", "state": "draft", "depth": 0}
+
+    sync_section(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, section_path=path, artifact=artifact,
+    )
+
+    # No CITES edge from the parent section
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        parent_cites = session.run(
+            "MATCH (s:Artifact {artifact_id: $id})-[:CITES]->(t) RETURN t.name AS name",
+            id=artifact_id,
+        ).data()
+    assert parent_cites == []
