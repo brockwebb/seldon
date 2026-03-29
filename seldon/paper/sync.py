@@ -496,17 +496,17 @@ def sync_section(
                 authority="accepted",
             )
 
-        _sync_subsections(
-            driver=driver,
-            database=database,
-            project_dir=project_dir,
-            domain_config=domain_config,
-            parent_artifact=artifact,
-            subsections=subsections,
-            dry_run=dry_run,
-            auto_stale=auto_stale,
-            actor=actor,
-        )
+    _sync_subsections(
+        driver=driver,
+        database=database,
+        project_dir=project_dir,
+        domain_config=domain_config,
+        parent_artifact=artifact,
+        subsections=subsections,
+        dry_run=dry_run,
+        auto_stale=auto_stale,
+        actor=actor,
+    )
 
     return SyncResult(
         filename=filename,

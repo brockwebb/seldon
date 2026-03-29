@@ -1011,3 +1011,31 @@ def test_sync_section_with_subsections_skips_parent_cites(
             id=artifact_id,
         ).data()
     assert parent_cites == []
+
+
+@needs_neo4j
+def test_sync_section_dry_run_no_subsections_created(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """sync_section with dry_run=True does not create subsection nodes."""
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Discovery Rates\n\nContent A."
+    )
+    artifact_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash="stale_hash",
+    )
+    artifact = {"artifact_id": artifact_id, "name": "05_results",
+                "content_hash": "stale_hash", "state": "draft", "depth": 0}
+
+    sync_section(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, section_path=path, artifact=artifact,
+        dry_run=True,
+    )
+
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    # Only the parent should exist, no subsection nodes
+    assert "05_results:discovery_rates" not in artifacts
