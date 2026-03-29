@@ -4,11 +4,13 @@ Paper sync module — reconciles PaperSection files on disk with graph state.
 Run after editing section markdown files to:
 - Detect content changes via SHA-256 hash comparison
 - Update CITES edges for added/removed {{result:...}} and {{cite:...}} references
+- Create REFERENCES_FIGURE / REFERENCES_TABLE edges from subsection tokens
 - Transition states to stale when content changes (review/published → stale)
 - Register untracked section files as new PaperSection artifacts
 
-Note: {{figure:...}} references are scanned but not tracked as CITES edges because
-the domain config restricts cites to_types to [Result, Citation].
+Note: At the parent section level, only result/cite references are tracked as CITES
+edges. Figure and table references are tracked as REFERENCES_FIGURE / REFERENCES_TABLE
+edges at the subsection level (## headings).
 """
 from __future__ import annotations
 
@@ -169,6 +171,124 @@ def _get_existing_subsections(driver, database: str, parent_id: str) -> dict:
     return {dict(r["c"])["name"]: dict(r["c"]) for r in records}
 
 
+def _create_token_edges(
+    driver, database, project_dir, domain_config, sub_id, tokens, actor,
+):
+    """Create CITES, REFERENCES_FIGURE, and REFERENCES_TABLE edges from subsection tokens."""
+    # CITES edges for result and cite tokens
+    for ref_name in tokens["results"]:
+        target = _find_artifact_by_name(driver, database, ref_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Result",
+                rel_type="cites", actor=actor, authority="accepted",
+            )
+    for ref_name in tokens["cites"]:
+        target = _find_artifact_by_name(driver, database, ref_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Citation",
+                rel_type="cites", actor=actor, authority="accepted",
+            )
+    # REFERENCES_FIGURE edges for figure tokens
+    for fig_name in tokens["figures"]:
+        target = _find_artifact_by_name(driver, database, fig_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Figure",
+                rel_type="references_figure", actor=actor, authority="accepted",
+            )
+    # REFERENCES_TABLE edges for table tokens
+    for tbl_name in tokens["tables"]:
+        target = _find_artifact_by_name(driver, database, tbl_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Table",
+                rel_type="references_table", actor=actor, authority="accepted",
+            )
+
+
+def _reconcile_token_edges(
+    driver, database, project_dir, domain_config, sub_id, tokens, actor,
+):
+    """Reconcile CITES, REFERENCES_FIGURE, and REFERENCES_TABLE edges for an updated subsection."""
+    # --- CITES edges (results + cites) ---
+    existing_cites = _get_cites_edges(driver, database, sub_id)
+    new_result_refs = {f"result:{r}" for r in tokens["results"]}
+    new_cite_refs = {f"cite:{c}" for c in tokens["cites"]}
+    new_cites_refs = new_result_refs | new_cite_refs
+
+    for ref_key in sorted(new_cites_refs - set(existing_cites.keys())):
+        ref_type, ref_name = ref_key.split(":", 1)
+        target = _find_artifact_by_name(driver, database, ref_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type=CITES_REF_TYPES[ref_type],
+                rel_type="cites", actor=actor, authority="accepted",
+            )
+    for ref_key in sorted(set(existing_cites.keys()) - new_cites_refs):
+        remove_link(
+            project_dir=project_dir, driver=driver, database=database,
+            from_id=sub_id, to_id=existing_cites[ref_key],
+            rel_type="cites", actor=actor, authority="accepted",
+        )
+
+    # --- REFERENCES_FIGURE edges ---
+    existing_figs = _get_ref_edges(driver, database, sub_id, "references_figure")
+    new_figs = set(tokens["figures"])
+    for fig_name in sorted(new_figs - set(existing_figs.keys())):
+        target = _find_artifact_by_name(driver, database, fig_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Figure",
+                rel_type="references_figure", actor=actor, authority="accepted",
+            )
+    for fig_name in sorted(set(existing_figs.keys()) - new_figs):
+        remove_link(
+            project_dir=project_dir, driver=driver, database=database,
+            from_id=sub_id, to_id=existing_figs[fig_name],
+            rel_type="references_figure", actor=actor, authority="accepted",
+        )
+
+    # --- REFERENCES_TABLE edges ---
+    existing_tbls = _get_ref_edges(driver, database, sub_id, "references_table")
+    new_tbls = set(tokens["tables"])
+    for tbl_name in sorted(new_tbls - set(existing_tbls.keys())):
+        target = _find_artifact_by_name(driver, database, tbl_name)
+        if target is not None:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=sub_id, to_id=target["artifact_id"],
+                from_type="PaperSection", to_type="Table",
+                rel_type="references_table", actor=actor, authority="accepted",
+            )
+    for tbl_name in sorted(set(existing_tbls.keys()) - new_tbls):
+        remove_link(
+            project_dir=project_dir, driver=driver, database=database,
+            from_id=sub_id, to_id=existing_tbls[tbl_name],
+            rel_type="references_table", actor=actor, authority="accepted",
+        )
+
+
 def _sync_subsections(
     driver,
     database: str,
@@ -208,6 +328,12 @@ def _sync_subsections(
                     actor=actor,
                     authority="accepted",
                 )
+                # Reconcile token-based edges for updated subsection
+                _reconcile_token_edges(
+                    driver=driver, database=database, project_dir=project_dir,
+                    domain_config=domain_config, sub_id=existing[name]["artifact_id"],
+                    tokens=sub["tokens"], actor=actor,
+                )
         else:
             if not dry_run:
                 sub_id = create_artifact(
@@ -238,6 +364,12 @@ def _sync_subsections(
                     rel_type="contains_section",
                     actor=actor,
                     authority="accepted",
+                )
+                # Create token-based edges from new subsection
+                _create_token_edges(
+                    driver=driver, database=database, project_dir=project_dir,
+                    domain_config=domain_config, sub_id=sub_id,
+                    tokens=sub["tokens"], actor=actor,
                 )
 
     # Deprecate subsections no longer in the file
@@ -302,6 +434,23 @@ def _get_cites_edges(driver: Driver, database: str, artifact_id: str) -> dict:
                 edges[f"{ref_type}:{target_name}"] = r["target_id"]
                 break
     return edges
+
+
+def _get_ref_edges(driver: Driver, database: str, artifact_id: str, rel_type: str) -> dict:
+    """
+    Return existing outgoing edges of a given relationship type from a PaperSection.
+
+    Returns dict keyed by target name → target artifact_id.
+    """
+    neo4j_rel = rel_type.upper()
+    with driver.session(database=database) as session:
+        records = session.run(
+            f"MATCH (s:Artifact {{artifact_id: $id}})-[:{neo4j_rel}]->(t:Artifact) "
+            "RETURN t.artifact_id AS target_id, t.name AS target_name",
+            id=artifact_id,
+        ).data()
+
+    return {r["target_name"]: r["target_id"] for r in records if r.get("target_name")}
 
 
 def _find_artifact_by_name(driver: Driver, database: str, name: str) -> Optional[dict]:

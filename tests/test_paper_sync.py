@@ -1039,3 +1039,85 @@ def test_sync_section_dry_run_no_subsections_created(
     artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
     # Only the parent should exist, no subsection nodes
     assert "05_results:discovery_rates" not in artifacts
+
+
+# ── Subsection token edge tests ──────────────────────────────────────────────
+
+
+@needs_neo4j
+def test_sync_subsections_creates_cites_edges(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """Subsection with {{result:NAME:field}} gets a CITES edge to that Result."""
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Discovery Rates\n\nSee {{result:metric_a:value}}."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    result_id = _create_result(project_dir, neo4j_driver, domain_config, "metric_a")
+    parent_artifact = {"artifact_id": parent_id, "name": "05_results",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    _sync_subsections(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, parent_artifact=parent_artifact,
+        subsections=_parse_subsections(path, "05_results", 0),
+        dry_run=False, actor="human",
+    )
+
+    subsection_artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    sub_id = subsection_artifacts["05_results:discovery_rates"]["artifact_id"]
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        rel = session.run(
+            "MATCH (s:Artifact {artifact_id: $sid})-[:CITES]->(t:Artifact {artifact_id: $tid}) RETURN t",
+            sid=sub_id, tid=result_id,
+        ).single()
+    assert rel is not None
+
+
+@needs_neo4j
+def test_sync_subsections_creates_references_figure_edge(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """Subsection with {{figure:NAME}} gets a REFERENCES_FIGURE edge to that Figure."""
+    from seldon.core.artifacts import create_artifact as _create_artifact
+
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Figures\n\nSee {{figure:fig2_plot}}."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    fig_id = _create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Figure",
+        properties={"name": "fig2_plot", "caption": "Test figure", "description": "A test fig"},
+        actor="human", authority="accepted",
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "05_results",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    _sync_subsections(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, parent_artifact=parent_artifact,
+        subsections=_parse_subsections(path, "05_results", 0),
+        dry_run=False, actor="human",
+    )
+
+    subsection_artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    sub_id = subsection_artifacts["05_results:figures"]["artifact_id"]
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        rel = session.run(
+            "MATCH (s:Artifact {artifact_id: $sid})-[:REFERENCES_FIGURE]->(t:Artifact {artifact_id: $tid}) RETURN t",
+            sid=sub_id, tid=fig_id,
+        ).single()
+    assert rel is not None
