@@ -188,6 +188,19 @@ def test_parse_subsections_extracts_xref_tokens(tmp_path):
     assert result[1]["tokens"]["tables"] == []
 
 
+def test_parse_subsections_separates_cite_from_result_tokens(tmp_path):
+    """Cite tokens are stored under 'cites', not 'results'."""
+    f = tmp_path / "methods.md"
+    f.write_text(
+        "# Methods\n\n## Section A\n\n"
+        "See {{result:metric_a:value}} and {{cite:smith_2023:bibtex_key}}."
+    )
+    result = _parse_subsections(f, "03_methods", 0)
+    assert result[0]["tokens"]["results"] == ["metric_a"]
+    assert result[0]["tokens"]["cites"] == ["smith_2023"]
+    assert "smith_2023" not in result[0]["tokens"]["results"]
+
+
 def test_parse_subsections_content_hash_differs_per_section(tmp_path):
     """Each subsection has a content hash computed from its own text range."""
     f = tmp_path / "results.md"

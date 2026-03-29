@@ -115,13 +115,16 @@ def _parse_subsections(file_path: Path, parent_name: str, parent_depth: int) -> 
 
         content_hash = hashlib.sha256(body_text.encode("utf-8")).hexdigest()
 
-        # Extract result tokens (type:name from REFERENCE_PATTERN)
+        # Extract result and cite tokens from REFERENCE_PATTERN matches
         result_names = []
+        cite_names = []
         for m in REFERENCE_PATTERN.finditer(body_text):
-            if m.group(1) in CITES_REF_TYPES:
-                name = m.group(2)
-                if name not in result_names:
-                    result_names.append(name)
+            ref_type = m.group(1)
+            name = m.group(2)
+            if ref_type == "result" and name not in result_names:
+                result_names.append(name)
+            elif ref_type == "cite" and name not in cite_names:
+                cite_names.append(name)
 
         # Extract figure and table tokens (XREF_PATTERN: {{figure:NAME}} etc.)
         figure_names = []
@@ -142,6 +145,7 @@ def _parse_subsections(file_path: Path, parent_name: str, parent_depth: int) -> 
             "content_hash": content_hash,
             "tokens": {
                 "results": result_names,
+                "cites": cite_names,
                 "figures": figure_names,
                 "tables": table_names,
             },
