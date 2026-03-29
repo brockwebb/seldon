@@ -12,26 +12,63 @@ from seldon.domain.loader import load_domain_config
 
 
 _ROLE_SECTION = """\
-## Role
+## Role & Behavioral Contract
 
-You are orienting to a Seldon-managed project. Your job is to design, plan, and produce CC task files — not write code directly. All implementation work goes through CC tasks conforming to the standards below. If you need to write code, write a CC task spec that tells Claude Code how to write the code.
+You are orienting to a Seldon-managed project.
 
-CC task files go in `cc_tasks/` with naming convention `YYYY-MM-DD_<descriptive_slug>.md`."""
+### If You Are a Desktop Session (Claude Desktop, claude.ai)
+
+- You design, plan, review, and produce CC task specs. You do NOT write project files directly.
+- If you are about to create or modify a tracked file (anything in book/, paper/, sections/, or any file registered as a Seldon artifact), STOP. Write a CC task instead.
+- The only files you may write directly: CC tasks (in cc_tasks/), handoffs (in handoffs/), and design notes (in docs/).
+- CC task files go in `cc_tasks/` with naming convention `YYYY-MM-DD_<descriptive_slug>.md`.
+- CC task files are immutable once written. If changes are needed, write a new file or get explicit permission.
+
+### If You Are a CC Session (Claude Code)
+
+- Execute the CC task you were given.
+- After any edit to section/chapter files, run `seldon verify` before reporting completion.
+- `seldon verify --fix` handles automatic fixes (file sync, ontology sync, file registration).
+- Report any issues that `--fix` cannot resolve.
+
+### All Sessions
+
+- Start with `seldon go` (this command) to orient.
+- End with `seldon closeout` for session handoff, then `seldon verify` before commit.
+- Never write literal numbers for research results — use `{{result:NAME:value}}`.
+- Never hardcode figure/table numbers — use `{{figure:NAME}}` and `{{table:NAME}}`.
+- The graph is the source of truth, not files. Files are projections of graph state."""
 
 _AVAILABLE_COMMANDS_SECTION = """\
 ## Available Seldon Commands
 
-- `seldon status` — project overview
+### Session
+- `seldon go` — orient to project (this command)
 - `seldon briefing` — detailed session briefing
 - `seldon closeout` — end session, log notebook entry
-- `seldon artifact create/list` — manage artifacts
+- `seldon verify [--fix] [--quiet]` — **run before every commit**: checks file integrity, ontology freshness, glossary, references, stale artifacts, unregistered files
+
+### Artifacts & Links
+- `seldon artifact create/list/update` — manage artifacts
 - `seldon link create/list` — manage relationships
 - `seldon result register/verify/list/trace` — result registry
 - `seldon task create/list/update` — task tracking
+
+### Paper/Book
+- `seldon paper sync` — reconcile graph with files on disk (content hashes, subsection parsing, reference edges)
+- `seldon paper build [--no-render]` — resolve `{{result:...}}`, `{{figure:...}}`, `{{table:...}}` tokens and assemble
+- `seldon paper audit` — prose quality checks (Tier 2/3)
+- `seldon paper impact <name>` — blast radius: what's affected if this artifact changes
+
+### Ontology
+- `seldon ontology ingest` — parse vocabulary markdown, write to master (seldon-ontology)
+- `seldon ontology sync` ��� pull latest vocabulary from master into this project
+- `seldon ontology list [--category] [--verbose] [--master]` — show inherited terms
+
+### Documentation
 - `seldon docs check` — documentation completeness
 - `seldon docs generate` — project reference docs from graph
-- `seldon paper audit` — prose quality checks
-- `seldon paper build` — reference resolution + assembly"""
+- `seldon status` — project overview"""
 
 
 def _read_system_standards() -> Optional[str]:

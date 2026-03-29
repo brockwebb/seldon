@@ -44,7 +44,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 
 ## Session Protocol
 
-1. **Start**: `/briefing` — reads handoffs, surfaces open tasks, identifies critical path
+1. **Start**: `seldon go` or `/briefing` — orient to project, read handoff, surface open tasks
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
 3. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
 
