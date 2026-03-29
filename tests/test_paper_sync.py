@@ -855,3 +855,83 @@ def test_sync_subsections_updated_content_changes_hash(
 
     artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
     assert artifacts["03_methods:setup"]["content_hash"] == new_hash
+
+
+@needs_neo4j
+def test_sync_subsections_removed_heading_deprecated(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """A ## heading removed from a file marks its subsection artifact as deprecated."""
+    path = _make_section(
+        paper_dir, "03_methods.md",
+        "# Methods\n\n## Setup\n\nContent.\n\n## Teardown\n\nContent."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="03_methods", title="Methods",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "03_methods",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    # First sync — creates both subsections
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=_parse_subsections(path, "03_methods", 0),
+                      dry_run=False, actor="human")
+
+    # Remove "## Teardown" from file
+    path.write_text("# Methods\n\n## Setup\n\nContent.")
+
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=_parse_subsections(path, "03_methods", 0),
+                      dry_run=False, actor="human")
+
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    # Setup still present
+    assert "03_methods:setup" in artifacts
+    # Teardown deprecated
+    teardown = artifacts.get("03_methods:teardown")
+    assert teardown is not None
+    assert teardown.get("deprecated") is True
+
+
+@needs_neo4j
+def test_sync_subsections_deprecated_not_double_deprecated(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """A subsection already deprecated is not re-deprecated on subsequent syncs."""
+    path = _make_section(
+        paper_dir, "03_methods.md",
+        "# Methods\n\n## Setup\n\nContent.\n\n## Teardown\n\nContent."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="03_methods", title="Methods",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "03_methods",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    # First sync
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=_parse_subsections(path, "03_methods", 0),
+                      dry_run=False, actor="human")
+
+    # Remove Teardown
+    path.write_text("# Methods\n\n## Setup\n\nContent.")
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=_parse_subsections(path, "03_methods", 0),
+                      dry_run=False, actor="human")
+    events_after_first_deprecation = event_count(project_dir)
+
+    # Third sync — teardown still absent, should not produce new events
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=_parse_subsections(path, "03_methods", 0),
+                      dry_run=False, actor="human")
+
+    assert event_count(project_dir) == events_after_first_deprecation
