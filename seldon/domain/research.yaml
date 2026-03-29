@@ -345,6 +345,18 @@ relationship_types:
     from_types: [Table]
     to_types: [Result]
 
+  context_for:
+    from_types: [DataFile, Citation, LabNotebookEntry, PaperSection]
+    to_types: [PaperSection, DataFile]
+
+  cross_references:
+    from_types: [PaperSection]
+    to_types: [PaperSection]
+
+  supports:
+    from_types: [Result, Citation, DataFile, Figure, Table]
+    to_types: [PaperSection]
+
 state_machines:
   Result:
     proposed: [verified, rejected]
