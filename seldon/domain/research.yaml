@@ -151,6 +151,9 @@ artifact_types:
       depth:
         category: documentation
         description: "Hierarchy depth: 0 = chapter/top-level, 1 = section, 2 = subsection"
+      section_type:
+        category: documentation
+        description: "Type of section: 'chapter', 'section', 'frontmatter', 'backmatter', 'appendix'. Determines numbering behavior. Defaults to 'chapter' for depth=0, 'section' for depth>0."
 
   Citation:
     properties:
