@@ -17,6 +17,7 @@ from seldon.paper.sync import (
     sync_section,
     sync_all,
     _parse_subsections,
+    _sync_subsections,
 )
 
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
@@ -725,3 +726,119 @@ class TestSuspectedOOB:
 
         assert result.status == "unchanged"
         assert result.suspected_oob is False
+
+
+# ── Subsection sync integration tests ────────────────────────────────────────
+
+@needs_neo4j
+def test_sync_subsections_creates_nodes(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """_sync_subsections creates PaperSection nodes for each parsed subsection."""
+    path = _make_section(
+        paper_dir, "03_methods.md",
+        "# Methods\n\n## Experimental Setup\n\nContent A.\n\n## Data Collection\n\nContent B."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="03_methods", title="Methods",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    from seldon.core.artifacts import update_artifact
+    update_artifact(project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+                    artifact_id=parent_id, properties={"depth": 0}, actor="human", authority="accepted")
+
+    parent_artifact = {"artifact_id": parent_id, "name": "03_methods",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+    subsections = _parse_subsections(path, "03_methods", 0)
+
+    _sync_subsections(
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        project_dir=project_dir,
+        domain_config=domain_config,
+        parent_artifact=parent_artifact,
+        subsections=subsections,
+        dry_run=False,
+        actor="human",
+    )
+
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    assert "03_methods:experimental_setup" in artifacts
+    assert "03_methods:data_collection" in artifacts
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        rels = session.run(
+            "MATCH (p:Artifact {artifact_id: $pid})-[:CONTAINS_SECTION]->(c:Artifact) "
+            "RETURN c.name AS name ORDER BY c.sequence",
+            pid=parent_id,
+        ).data()
+    names = [r["name"] for r in rels]
+    assert names == ["03_methods:experimental_setup", "03_methods:data_collection"]
+
+
+@needs_neo4j
+def test_sync_subsections_unchanged_is_noop(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """Calling _sync_subsections twice with same content creates no duplicate artifacts."""
+    path = _make_section(
+        paper_dir, "03_methods.md",
+        "# Methods\n\n## Setup\n\nContent here."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="03_methods", title="Methods",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "03_methods",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+    subsections = _parse_subsections(path, "03_methods", 0)
+
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=subsections, dry_run=False, actor="human")
+
+    events_after_first = event_count(project_dir)
+
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=subsections, dry_run=False, actor="human")
+
+    assert event_count(project_dir) == events_after_first
+
+
+@needs_neo4j
+def test_sync_subsections_updated_content_changes_hash(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """When subsection text changes, its content_hash is updated in the graph."""
+    path = _make_section(
+        paper_dir, "03_methods.md",
+        "# Methods\n\n## Setup\n\nOriginal content."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="03_methods", title="Methods",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "03_methods",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    subsections_v1 = _parse_subsections(path, "03_methods", 0)
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=subsections_v1, dry_run=False, actor="human")
+    old_hash = subsections_v1[0]["content_hash"]
+
+    path.write_text("# Methods\n\n## Setup\n\nEdited content.")
+    subsections_v2 = _parse_subsections(path, "03_methods", 0)
+    new_hash = subsections_v2[0]["content_hash"]
+    assert old_hash != new_hash
+
+    _sync_subsections(driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+                      domain_config=domain_config, parent_artifact=parent_artifact,
+                      subsections=subsections_v2, dry_run=False, actor="human")
+
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    assert artifacts["03_methods:setup"]["content_hash"] == new_hash

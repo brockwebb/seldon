@@ -150,6 +150,107 @@ def _parse_subsections(file_path: Path, parent_name: str, parent_depth: int) -> 
     return subsections
 
 
+def _get_existing_subsections(driver, database: str, parent_id: str) -> dict:
+    """
+    Return existing subsection artifacts linked to parent via CONTAINS_SECTION.
+
+    Returns dict keyed by subsection name → artifact dict (all node properties).
+    """
+    with driver.session(database=database) as session:
+        records = session.run(
+            "MATCH (p:Artifact {artifact_id: $pid})-[:CONTAINS_SECTION]->(c:Artifact) "
+            "RETURN c",
+            pid=parent_id,
+        ).data()
+    return {dict(r["c"])["name"]: dict(r["c"]) for r in records}
+
+
+def _sync_subsections(
+    driver,
+    database: str,
+    project_dir: Path,
+    domain_config,
+    parent_artifact: dict,
+    subsections: list[dict],
+    dry_run: bool = False,
+    auto_stale: bool = False,
+    actor: str = "human",
+) -> None:
+    """
+    Create, update, or deprecate subsection PaperSection nodes based on parsed headings.
+
+    - New subsections are created and linked via contains_section.
+    - Existing unchanged subsections (same content_hash) are skipped.
+    - Existing changed subsections have their content_hash updated.
+    - Subsections present in graph but absent from file are marked deprecated.
+    """
+    parent_id = parent_artifact["artifact_id"]
+    existing = _get_existing_subsections(driver, database, parent_id)
+    parsed_names = {s["name"] for s in subsections}
+
+    for sub in subsections:
+        name = sub["name"]
+        if name in existing:
+            stored_hash = existing[name].get("content_hash")
+            if stored_hash == sub["content_hash"]:
+                continue  # Unchanged — skip
+            if not dry_run:
+                update_artifact(
+                    project_dir=project_dir,
+                    driver=driver,
+                    database=database,
+                    artifact_id=existing[name]["artifact_id"],
+                    properties={"content_hash": sub["content_hash"]},
+                    actor=actor,
+                    authority="accepted",
+                )
+        else:
+            if not dry_run:
+                sub_id = create_artifact(
+                    project_dir=project_dir,
+                    driver=driver,
+                    database=database,
+                    domain_config=domain_config,
+                    artifact_type="PaperSection",
+                    properties={
+                        "name": name,
+                        "title": sub["title"],
+                        "sequence": sub["sequence"],
+                        "depth": sub["depth"],
+                        "content_hash": sub["content_hash"],
+                    },
+                    actor=actor,
+                    authority="accepted",
+                )
+                create_link(
+                    project_dir=project_dir,
+                    driver=driver,
+                    database=database,
+                    domain_config=domain_config,
+                    from_id=parent_id,
+                    to_id=sub_id,
+                    from_type="PaperSection",
+                    to_type="PaperSection",
+                    rel_type="contains_section",
+                    actor=actor,
+                    authority="accepted",
+                )
+
+    # Deprecate subsections no longer in the file
+    for name, artifact in existing.items():
+        if name not in parsed_names and not artifact.get("deprecated"):
+            if not dry_run:
+                update_artifact(
+                    project_dir=project_dir,
+                    driver=driver,
+                    database=database,
+                    artifact_id=artifact["artifact_id"],
+                    properties={"deprecated": True},
+                    actor=actor,
+                    authority="accepted",
+                )
+
+
 def get_paper_section_artifacts(driver: Driver, database: str) -> dict:
     """
     Load all PaperSection artifacts from the graph.
