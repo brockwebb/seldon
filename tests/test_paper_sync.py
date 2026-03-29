@@ -16,6 +16,7 @@ from seldon.paper.sync import (
     get_paper_section_artifacts,
     sync_section,
     sync_all,
+    _parse_subsections,
 )
 
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
@@ -116,6 +117,94 @@ def test_scan_references_deduplicates():
     text = "{{result:acc:value}} and again {{result:acc:units}}."
     refs = scan_references(text)
     assert refs == {"result:acc"}
+
+
+def test_parse_subsections_empty_file(tmp_path):
+    """File with no ## headings returns empty list."""
+    f = tmp_path / "intro.md"
+    f.write_text("# Introduction\n\nSome prose without subheadings.")
+    result = _parse_subsections(f, "01_introduction", 0)
+    assert result == []
+
+
+def test_parse_subsections_single_heading(tmp_path):
+    """Single ## heading produces one subsection."""
+    f = tmp_path / "methods.md"
+    f.write_text("# Methods\n\n## Experimental Setup\n\nSome content here.")
+    result = _parse_subsections(f, "03_methods", 0)
+    assert len(result) == 1
+    sub = result[0]
+    assert sub["name"] == "03_methods:experimental_setup"
+    assert sub["title"] == "Experimental Setup"
+    assert sub["sequence"] == 1
+    assert sub["depth"] == 1
+    assert isinstance(sub["content_hash"], str) and len(sub["content_hash"]) == 64
+
+
+def test_parse_subsections_multiple_headings(tmp_path):
+    """Multiple ## headings produce correctly sequenced subsections."""
+    f = tmp_path / "results.md"
+    f.write_text(
+        "# Results\n\n"
+        "## Discovery Rates\n\nContent A.\n\n"
+        "## Wrong-Limit Attractors\n\nContent B.\n\n"
+        "## Parsimony Effects\n\nContent C."
+    )
+    result = _parse_subsections(f, "05_results", 0)
+    assert len(result) == 3
+    assert result[0]["name"] == "05_results:discovery_rates"
+    assert result[1]["name"] == "05_results:wrong_limit_attractors"
+    assert result[2]["name"] == "05_results:parsimony_effects"
+    assert [s["sequence"] for s in result] == [1, 2, 3]
+    assert all(s["depth"] == 1 for s in result)
+
+
+def test_parse_subsections_extracts_result_tokens(tmp_path):
+    """Tokens in each subsection's range are attributed to that subsection."""
+    f = tmp_path / "results.md"
+    f.write_text(
+        "# Results\n\n"
+        "## Section A\n\nSee {{result:metric_a:value}} here.\n\n"
+        "## Section B\n\nSee {{result:metric_b:value}} here."
+    )
+    result = _parse_subsections(f, "05_results", 0)
+    assert result[0]["tokens"]["results"] == ["metric_a"]
+    assert result[1]["tokens"]["results"] == ["metric_b"]
+
+
+def test_parse_subsections_extracts_xref_tokens(tmp_path):
+    """Figure and table tokens are attributed to the correct subsection."""
+    f = tmp_path / "results.md"
+    f.write_text(
+        "# Results\n\n"
+        "## Figures Section\n\nSee {{figure:fig2_plot}} and {{table:table_5}}.\n\n"
+        "## Other\n\nPlain text."
+    )
+    result = _parse_subsections(f, "05_results", 0)
+    assert result[0]["tokens"]["figures"] == ["fig2_plot"]
+    assert result[0]["tokens"]["tables"] == ["table_5"]
+    assert result[1]["tokens"]["figures"] == []
+    assert result[1]["tokens"]["tables"] == []
+
+
+def test_parse_subsections_content_hash_differs_per_section(tmp_path):
+    """Each subsection has a content hash computed from its own text range."""
+    f = tmp_path / "results.md"
+    f.write_text(
+        "# Results\n\n"
+        "## Section A\n\nContent unique to A.\n\n"
+        "## Section B\n\nContent unique to B."
+    )
+    result = _parse_subsections(f, "05_results", 0)
+    assert result[0]["content_hash"] != result[1]["content_hash"]
+
+
+def test_parse_subsections_slugify_special_chars(tmp_path):
+    """Heading text with special characters is slugified correctly."""
+    f = tmp_path / "methods.md"
+    f.write_text("# Methods\n\n## GP-Based Search: Results & Analysis\n\nContent.")
+    result = _parse_subsections(f, "03_methods", 0)
+    assert result[0]["name"] == "03_methods:gp_based_search_results_analysis"
 
 
 # ── Integration tests (Neo4j required) ────────────────────────────────────────

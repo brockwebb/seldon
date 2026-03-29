@@ -13,6 +13,7 @@ the domain config restricts cites to_types to [Result, Citation].
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -29,6 +30,7 @@ from seldon.core.artifacts import (
 )
 from seldon.domain.loader import DomainConfig
 from seldon.paper.build import REFERENCE_PATTERN
+from seldon.paper.numbering import XREF_PATTERN
 
 
 # Ref types trackable as CITES edges from PaperSection
@@ -72,6 +74,80 @@ def scan_references(text: str) -> set:
         if ref_type in CITES_REF_TYPES:
             refs.add(f"{ref_type}:{name}")
     return refs
+
+
+def _slugify_heading(text: str) -> str:
+    """Convert a heading string to a lowercase underscore slug."""
+    slug = re.sub(r"[^a-z0-9]+", "_", text.lower())
+    return slug.strip("_")
+
+
+def _parse_subsections(file_path: Path, parent_name: str, parent_depth: int) -> list[dict]:
+    """
+    Parse ## headings from a section file into structured subsection dicts.
+
+    Returns list of dicts with keys:
+        name, title, sequence, depth, content_hash, tokens (results/figures/tables)
+
+    Only ## headings are parsed. ### and deeper are ignored.
+    Files with no ## headings return [].
+    """
+    text = file_path.read_text(encoding="utf-8")
+    lines = text.splitlines(keepends=True)
+
+    # Find line indices of all ## headings (not ### or deeper)
+    heading_lines = []
+    for i, line in enumerate(lines):
+        if re.match(r"^## [^#]", line):
+            heading_lines.append(i)
+
+    if not heading_lines:
+        return []
+
+    subsections = []
+    for i, start_idx in enumerate(heading_lines):
+        end_idx = heading_lines[i + 1] if i + 1 < len(heading_lines) else len(lines)
+        seq = i + 1
+        heading_text = lines[start_idx].lstrip("#").strip()
+        # Hash includes the heading line: heading renames trigger subsection updates
+        body_lines = lines[start_idx:end_idx]
+        body_text = "".join(body_lines)
+
+        content_hash = hashlib.sha256(body_text.encode("utf-8")).hexdigest()
+
+        # Extract result tokens (type:name from REFERENCE_PATTERN)
+        result_names = []
+        for m in REFERENCE_PATTERN.finditer(body_text):
+            if m.group(1) in CITES_REF_TYPES:
+                name = m.group(2)
+                if name not in result_names:
+                    result_names.append(name)
+
+        # Extract figure and table tokens (XREF_PATTERN: {{figure:NAME}} etc.)
+        figure_names = []
+        table_names = []
+        for m in XREF_PATTERN.finditer(body_text):
+            token_type = m.group(1)
+            name = m.group(2)
+            if token_type == "figure" and name not in figure_names:
+                figure_names.append(name)
+            elif token_type == "table" and name not in table_names:
+                table_names.append(name)
+
+        subsections.append({
+            "name": f"{parent_name}:{_slugify_heading(heading_text)}",
+            "title": heading_text,
+            "sequence": seq,
+            "depth": parent_depth + 1,
+            "content_hash": content_hash,
+            "tokens": {
+                "results": result_names,
+                "figures": figure_names,
+                "tables": table_names,
+            },
+        })
+
+    return subsections
 
 
 def get_paper_section_artifacts(driver: Driver, database: str) -> dict:
