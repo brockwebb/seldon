@@ -1121,3 +1121,67 @@ def test_sync_subsections_creates_references_figure_edge(
             sid=sub_id, tid=fig_id,
         ).single()
     assert rel is not None
+
+
+@needs_neo4j
+def test_sync_subsections_reconciles_removed_figure_ref(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """When a figure reference is removed from a subsection, the REFERENCES_FIGURE edge is deleted."""
+    from seldon.core.artifacts import create_artifact as _create_artifact
+
+    # Initial file with a figure reference
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Figures\n\nSee {{figure:fig2_plot}}."
+    )
+    parent_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash=compute_file_hash(path),
+    )
+    fig_id = _create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Figure",
+        properties={"name": "fig2_plot", "caption": "Test", "description": "Test fig"},
+        actor="human", authority="accepted",
+    )
+    parent_artifact = {"artifact_id": parent_id, "name": "05_results",
+                       "content_hash": compute_file_hash(path), "state": "draft", "depth": 0}
+
+    # First sync — creates subsection with REFERENCES_FIGURE edge
+    _sync_subsections(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, parent_artifact=parent_artifact,
+        subsections=_parse_subsections(path, "05_results", 0),
+        dry_run=False, actor="human",
+    )
+
+    # Verify edge exists
+    subsection_artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    sub_id = subsection_artifacts["05_results:figures"]["artifact_id"]
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        edge = session.run(
+            "MATCH (s:Artifact {artifact_id: $sid})-[:REFERENCES_FIGURE]->(t) RETURN t",
+            sid=sub_id,
+        ).single()
+    assert edge is not None
+
+    # Edit file to remove figure reference
+    path.write_text("# Results\n\n## Figures\n\nNo more figure here.")
+
+    # Second sync — should remove the edge
+    _sync_subsections(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, parent_artifact=parent_artifact,
+        subsections=_parse_subsections(path, "05_results", 0),
+        dry_run=False, actor="human",
+    )
+
+    # Verify edge is gone
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        edge = session.run(
+            "MATCH (s:Artifact {artifact_id: $sid})-[:REFERENCES_FIGURE]->(t) RETURN t",
+            sid=sub_id,
+        ).single()
+    assert edge is None

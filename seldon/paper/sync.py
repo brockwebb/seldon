@@ -39,6 +39,9 @@ from seldon.paper.numbering import XREF_PATTERN
 # (domain config: cites from_types=[PaperSection, Figure], to_types=[Result, Citation])
 CITES_REF_TYPES = {"result": "Result", "cite": "Citation"}
 
+# Relationship types allowed for f-string interpolation in _get_ref_edges
+_ALLOWED_REL_TYPES = {"references_figure", "references_table"}
+
 # States that should auto-transition to stale when content changes
 STALE_ON_EDIT = {"review", "published"}
 
@@ -442,6 +445,8 @@ def _get_ref_edges(driver: Driver, database: str, artifact_id: str, rel_type: st
 
     Returns dict keyed by target name → target artifact_id.
     """
+    if rel_type not in _ALLOWED_REL_TYPES:
+        raise ValueError(f"Unsupported rel_type: {rel_type!r}")
     neo4j_rel = rel_type.upper()
     with driver.session(database=database) as session:
         records = session.run(
