@@ -1185,3 +1185,65 @@ def test_sync_subsections_reconciles_removed_figure_ref(
             sid=sub_id,
         ).single()
     assert edge is None
+
+
+# ── End-to-end lifecycle test ────────────────────────────────────────────────
+
+
+@needs_neo4j
+def test_sync_all_with_subsections_full_lifecycle(
+    neo4j_driver, project_dir, domain_config, clean_test_db, paper_dir
+):
+    """
+    Full lifecycle: file with ## headings is synced via sync_all.
+    First sync creates subsections. Second sync (unchanged) is a no-op.
+    Third sync (content edited) updates subsection hash.
+    """
+    from seldon.core.artifacts import update_artifact
+
+    path = _make_section(
+        paper_dir, "05_results.md",
+        "# Results\n\n## Discovery Rates\n\nOriginal A.\n\n## Attractors\n\nOriginal B."
+    )
+    section_id = _create_paper_section(
+        project_dir, neo4j_driver, domain_config,
+        name="05_results", title="Results",
+        file_path=path, content_hash="stale_so_first_sync_triggers",
+    )
+    update_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        artifact_id=section_id, properties={"depth": 0},
+        actor="human", authority="accepted",
+    )
+
+    # First sync — triggers update, creates subsections
+    results = sync_all(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, paper_dir=paper_dir,
+    )
+    assert results[0].status == "updated"
+
+    artifacts = get_paper_section_artifacts(neo4j_driver, NEO4J_DB)
+    assert "05_results:discovery_rates" in artifacts
+    assert "05_results:attractors" in artifacts
+
+    # Second sync — hash now matches, nothing changes
+    results2 = sync_all(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, paper_dir=paper_dir,
+    )
+    assert results2[0].status == "unchanged"
+
+    events_before_edit = event_count(project_dir)
+
+    # Edit first subsection content
+    path.write_text(
+        "# Results\n\n## Discovery Rates\n\nEdited content.\n\n## Attractors\n\nOriginal B."
+    )
+    results3 = sync_all(
+        driver=neo4j_driver, database=NEO4J_DB, project_dir=project_dir,
+        domain_config=domain_config, paper_dir=paper_dir,
+    )
+    assert results3[0].status == "updated"
+    # New events were written (hash update for parent + subsection)
+    assert event_count(project_dir) > events_before_edit
