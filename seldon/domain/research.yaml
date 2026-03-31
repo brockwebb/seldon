@@ -269,6 +269,30 @@ artifact_types:
         category: documentation
         description: "Master epoch at which this term was created or last updated"
 
+  Issue:
+    properties:
+      description:
+        required: true
+        description: "What the issue is — the problem statement"
+      issue_type:
+        required: true
+        description: "Category of problem. Values: factual_error, citation_gap, unsupported_claim, terminology_inconsistency, internal_contradiction, missing_content, stale_content, structural_flow, style_formatting"
+      importance:
+        required: true
+        description: "Eisenhower importance axis (intrinsic, rarely changes). Values: high, medium, low"
+      urgency:
+        required: true
+        description: "Eisenhower urgency axis (contextual, changes with workflow). Values: high, medium, low"
+      detection_method:
+        required: true
+        description: "How the issue was found. Values: automated_check, audit, incidental, build_failure"
+      target:
+        required: true
+        description: "What needs to change to resolve it. Values: content, citation, terminology, data, structure"
+      resolution_notes:
+        category: documentation
+        description: "What was done to resolve the issue — captured at resolution time"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -356,6 +380,22 @@ relationship_types:
   supports:
     from_types: [Result, Citation, DataFile, Figure, Table]
     to_types: [PaperSection]
+
+  affects:
+    from_types: [Issue]
+    to_types: [PaperSection]
+
+  blocked_by:
+    from_types: [Issue]
+    to_types: [Issue]
+
+  related_issue:
+    from_types: [Issue]
+    to_types: [Issue]
+
+  resolved_by:
+    from_types: [Issue]
+    to_types: [ResearchTask]
 
 state_machines:
   Result:
@@ -449,3 +489,11 @@ state_machines:
     active: [stale, deprecated]
     stale: [active]
     deprecated: []
+
+  Issue:
+    open: [in_progress, resolved, wont_fix]
+    in_progress: [resolved, blocked, open]
+    blocked: [in_progress, open]
+    resolved: [verified, open]
+    verified: []
+    wont_fix: [open]
