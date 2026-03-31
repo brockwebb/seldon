@@ -53,6 +53,7 @@ _AVAILABLE_COMMANDS_SECTION = """\
 - `seldon link create/list` — manage relationships
 - `seldon result register/verify/list/trace` — result registry
 - `seldon task create/list/update` — task tracking
+- `seldon issue create/list/update/show/summary` — issue tracking (Eisenhower 3×3)
 
 ### Paper/Book
 - `seldon paper sync` — reconcile graph with files on disk (content hashes, subsection parsing, reference edges)
