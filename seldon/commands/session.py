@@ -152,6 +152,11 @@ def briefing_command():
     fully_a = docs_data["fully_documented"]
     doc_pct = int(fully_a / total_a * 100) if total_a else 0
     click.echo(f"\nDOCUMENTATION: {fully_a}/{total_a} artifacts fully documented ({doc_pct}%)")
+    sys_total = docs_data.get("system_total", 0)
+    sys_present = docs_data.get("system_present", 0)
+    if sys_total and sys_present < sys_total:
+        sys_pct = int(sys_present / sys_total * 100)
+        click.echo(f"  ⚠ System properties: {sys_present}/{sys_total} ({sys_pct}%) — run sync commands")
     # Highlight types with most gaps
     gap_counts = {
         atype: len(td["incomplete"])

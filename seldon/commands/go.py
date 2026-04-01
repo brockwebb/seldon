@@ -145,6 +145,11 @@ def _format_project_state(briefing_data: dict) -> str:
     doc_pct = int(fully_a / total_a * 100) if total_a else 0
     lines.append("")
     lines.append(f"**Documentation:** {fully_a}/{total_a} artifacts fully documented ({doc_pct}%)")
+    sys_total = docs.get("system_total", 0)
+    sys_present = docs.get("system_present", 0)
+    if sys_total and sys_present < sys_total:
+        sys_pct = int(sys_present / sys_total * 100)
+        lines.append(f"**⚠ System properties:** {sys_present}/{sys_total} ({sys_pct}%) — run sync commands")
 
     lines.append("")
     lines.append(

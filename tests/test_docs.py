@@ -98,6 +98,49 @@ def test_get_documentation_properties_unknown_type(research_config):
     assert research_config.get_documentation_properties("Nonexistent") == []
 
 
+# ── get_system_properties ────────────────────────────────────────────────────
+
+def test_get_system_properties_paper_section(research_config):
+    sys_props = research_config.get_system_properties("PaperSection")
+    assert "content_hash" in sys_props
+    assert "sequence" in sys_props
+    assert "depth" in sys_props
+    assert "file_path" in sys_props
+    assert "section_type" in sys_props
+    assert "name" not in sys_props  # required, not system
+    assert "title" not in sys_props  # required, not system
+
+
+def test_get_system_properties_excludes_documentation(research_config):
+    """System properties are NOT included in get_documentation_properties."""
+    doc_props = research_config.get_documentation_properties("PaperSection")
+    sys_props = research_config.get_system_properties("PaperSection")
+    assert not set(doc_props) & set(sys_props), "system and documentation categories must not overlap"
+
+
+def test_get_system_properties_ontology_term(research_config):
+    sys_props = research_config.get_system_properties("OntologyTerm")
+    assert "namespace" in sys_props
+    assert "inheritance" in sys_props
+    assert "content_hash" in sys_props
+    assert "epoch" in sys_props
+
+
+def test_get_system_properties_figure(research_config):
+    sys_props = research_config.get_system_properties("Figure")
+    assert "figure_number" in sys_props
+    assert "caption" not in sys_props  # required
+
+
+def test_get_system_properties_table(research_config):
+    sys_props = research_config.get_system_properties("Table")
+    assert "table_number" in sys_props
+
+
+def test_get_system_properties_unknown_type(research_config):
+    assert research_config.get_system_properties("Nonexistent") == []
+
+
 # ── get_all_schema_properties ────────────────────────────────────────────────
 
 def test_get_all_schema_properties(research_config):

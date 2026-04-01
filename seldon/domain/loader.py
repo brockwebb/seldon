@@ -68,6 +68,14 @@ class DomainConfig(BaseModel):
         return [name for name, prop in type_config.properties.items()
                 if prop.category == "documentation"]
 
+    def get_system_properties(self, artifact_type: str) -> List[str]:
+        """Return names of system-managed (auto-populated) properties for this artifact type."""
+        type_config = self.artifact_types.get(artifact_type)
+        if type_config is None:
+            return []
+        return [name for name, prop in type_config.properties.items()
+                if prop.category == "system"]
+
     def get_all_schema_properties(self, artifact_type: str) -> Dict[str, PropertyDef]:
         """Return all property definitions for this artifact type."""
         type_config = self.artifact_types.get(artifact_type)

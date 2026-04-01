@@ -47,6 +47,8 @@ def run_docs_check(
         "required_present": 0,
         "doc_total": 0,
         "doc_present": 0,
+        "system_total": 0,
+        "system_present": 0,
     }
 
     types_to_check = (
@@ -59,6 +61,7 @@ def run_docs_check(
         for atype in types_to_check:
             doc_props = domain_config.get_documentation_properties(atype)
             req_props = domain_config.get_required_properties(atype)
+            sys_props = domain_config.get_system_properties(atype)
 
             records = session.run(
                 f"MATCH (a:Artifact:{atype}) RETURN a"
@@ -68,7 +71,7 @@ def run_docs_check(
             if not artifacts and not doc_props:
                 continue
 
-            type_result = {"complete": [], "incomplete": []}
+            type_result = {"complete": [], "incomplete": [], "system_gaps": []}
 
             for artifact in artifacts:
                 result["total_artifacts"] += 1
@@ -79,7 +82,7 @@ def run_docs_check(
                     if rp in artifact and str(artifact[rp]).strip():
                         result["required_present"] += 1
 
-                # Documentation properties
+                # Documentation properties (human-authored)
                 missing_doc = []
                 for dp in doc_props:
                     result["doc_total"] += 1
@@ -88,15 +91,26 @@ def run_docs_check(
                     else:
                         missing_doc.append(dp)
 
+                # System properties (auto-populated)
+                missing_sys = []
+                for sp in sys_props:
+                    result["system_total"] += 1
+                    if sp in artifact and str(artifact[sp]).strip():
+                        result["system_present"] += 1
+                    else:
+                        missing_sys.append(sp)
+
                 name = _artifact_display_name(artifact)
                 if missing_doc:
                     type_result["incomplete"].append({"name": name, "missing": missing_doc})
                 else:
                     type_result["complete"].append(name)
-                    if not missing_doc:
-                        result["fully_documented"] += 1
+                    result["fully_documented"] += 1
 
-            if type_result["complete"] or type_result["incomplete"]:
+                if missing_sys:
+                    type_result["system_gaps"].append({"name": name, "missing": missing_sys})
+
+            if type_result["complete"] or type_result["incomplete"] or type_result["system_gaps"]:
                 result["by_type"][atype] = type_result
 
     return result
@@ -136,8 +150,8 @@ def docs_check(artifact_type, strict, threshold, output_json):
     fully = data["fully_documented"]
     doc_total = data["doc_total"]
     doc_present = data["doc_present"]
-    req_total = data["required_total"]
-    req_present = data["required_present"]
+    sys_total = data["system_total"]
+    sys_present = data["system_present"]
 
     if total == 0:
         click.echo("No artifacts found.")
@@ -160,12 +174,18 @@ def docs_check(artifact_type, strict, threshold, output_json):
 
     pct = int(fully / total * 100) if total else 0
     click.echo(f"SUMMARY: {fully}/{total} artifacts fully documented ({pct}%)")
-    if req_total:
-        req_pct = int(req_present / req_total * 100)
-        click.echo(f"  Required properties: {req_present}/{req_total} complete ({req_pct}%)")
     if doc_total:
         doc_pct = int(doc_present / doc_total * 100)
         click.echo(f"  Documentation properties: {doc_present}/{doc_total} complete ({doc_pct}%)")
+
+    if sys_total:
+        sys_pct = int(sys_present / sys_total * 100)
+        if sys_pct < 100:
+            click.echo(f"\nSYSTEM PROPERTIES: {sys_present}/{sys_total} complete ({sys_pct}%)")
+            for atype, type_data in sorted(data["by_type"].items()):
+                for item in type_data.get("system_gaps", []):
+                    missing_str = ", ".join(item["missing"])
+                    click.echo(f"  ⚠ {atype}/{item['name']} — missing: {missing_str}")
     click.echo("")
 
     if strict and has_gaps:

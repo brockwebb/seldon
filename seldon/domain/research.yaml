@@ -80,7 +80,7 @@ artifact_types:
         required: true
         description: "What the figure shows"
       figure_number:
-        category: documentation
+        category: system
         description: "Display number (e.g., '2.3' for Chapter 2, Figure 3) — computed from graph position at build time"
       interpretation:
         category: documentation
@@ -101,7 +101,7 @@ artifact_types:
         required: true
         description: "Table caption text"
       table_number:
-        category: documentation
+        category: system
         description: "Display number (e.g., '5.1' for Chapter 5, Table 1) — computed from graph position at build time"
       generating_script:
         category: documentation
@@ -140,19 +140,19 @@ artifact_types:
         required: true
         description: "Section title"
       file_path:
-        category: documentation
+        category: system
         description: "Path to the section markdown file"
       content_hash:
-        category: documentation
+        category: system
         description: "SHA-256 hash of file content at last sync"
       sequence:
-        category: documentation
+        category: system
         description: "Ordering within parent (1, 2, 3...). Determines document order and figure/table numbering."
       depth:
-        category: documentation
+        category: system
         description: "Hierarchy depth: 0 = chapter/top-level, 1 = section, 2 = subsection"
       section_type:
-        category: documentation
+        category: system
         description: "Type of section: 'chapter', 'section', 'frontmatter', 'backmatter', 'appendix'. Determines numbering behavior. Defaults to 'chapter' for depth=0, 'section' for depth>0."
 
   Citation:
@@ -257,16 +257,16 @@ artifact_types:
         category: documentation
         description: "Source citation keys (e.g., '[Webb-2026a]')"
       namespace:
-        category: documentation
+        category: system
         description: "Ontology namespace (e.g., 'ontology:validity')"
       inheritance:
-        category: documentation
+        category: system
         description: "Inheritance mode on replicas: always 'read-only'"
       content_hash:
-        category: documentation
+        category: system
         description: "SHA-256 of the definition text for change detection"
       epoch:
-        category: documentation
+        category: system
         description: "Master epoch at which this term was created or last updated"
 
   Issue:
