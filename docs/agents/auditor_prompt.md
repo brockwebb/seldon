@@ -39,6 +39,26 @@ Per `##`-level section:
 
 For key terms, check against the project's ontology (provided in context). If a term is used that contradicts or diverges from the canonical definition: finding type = `terminology_inconsistency`
 
+## Cross-Section Impact Identification
+
+For EVERY finding, consider: does resolving this finding affect any other section?
+
+Examples of cross-section impact:
+- A terminology inconsistency here means the same term may be wrong in other sections that use it
+- A factual correction here may contradict a claim made in a different section
+- A concept introduced here is referenced downstream — changing it cascades
+- A citation gap here may also be a citation gap in another section that makes the same claim
+
+For each cross-section impact identified:
+- Name the affected section
+- State why it's affected
+- State what kind of audit the affected section needs (terminology_check, factual_consistency, citation_check, or full_audit)
+- Assign priority (high if the impact could introduce an error; medium if it's consistency maintenance; low if it's style/framing)
+
+These become tracked ResearchTask artifacts so nothing falls through the cracks.
+
+**ALWAYS check for cross-section impacts.** A finding with no cascading impact is fine — but you must explicitly consider it for every finding. Missing a cascade creates drift.
+
 ## Output Format
 
 Produce YAML. No prose preamble, no commentary. Just the structured output.
@@ -58,6 +78,7 @@ audit:
     conjectures_in_empirical: N
     thin_sections: N
     terminology_issues: N
+    cross_section_impacts: N
 
   sections:
     - heading: "[## heading text]"
@@ -74,6 +95,17 @@ audit:
           routing: "auto_search | needs_author | auto_fix | null"
           notes: "[additional context for the finding]"
           suggested_query: "[Perplexity search query, if citation_gap]"
+          cascading_impacts:
+            - affected_section: "[section name or file path]"
+              reason: "[why this finding affects that section]"
+              audit_type: "terminology_check | factual_consistency | citation_check | full_audit"
+
+  cascading_audit_tasks:
+    - target_section: "[section name or file path]"
+      triggered_by: "[finding reference — paragraph N, finding type]"
+      audit_type: "terminology_check | factual_consistency | citation_check | full_audit"
+      reason: "[why this section needs auditing]"
+      priority: "high | medium | low"
 ```
 
 ## Routing Rules
@@ -85,6 +117,7 @@ audit:
 | `unsupported_claim` (conjecture in empirical) | `needs_author` | Author promotes with evidence or deletes |
 | `missing_content` | `needs_author` | Author decides: expand, scope as secondary, or cut |
 | `terminology_inconsistency` | `auto_fix` | Generate glossary fix |
+| Cross-section impact identified | — | Create ResearchTask for downstream section audit |
 
 ## Rules
 
@@ -93,3 +126,4 @@ audit:
 - When in doubt between fact and judgment, classify as fact. False positives (flagging a judgment as a missing citation) are cheaper than false negatives (missing an unsourced factual claim).
 - Common knowledge does not need citation. "Machine learning uses training data" is common knowledge. "Fine-tuning costs dropped 10x since 2024" is not.
 - Code blocks, admonition structural text, and headers are not assertions. Skip them.
+- ALWAYS check for cross-section impacts. A finding with no cascading impact is fine — but you must explicitly consider it for every finding. Missing a cascade creates drift.

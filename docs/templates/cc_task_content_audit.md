@@ -14,7 +14,10 @@
 3. Read the target file: `[PATH TO FILE]`
 4. Read `bibliography.md` or equivalent for existing citation context.
 5. Execute the audit per the auditor prompt. Output YAML to `audits/[filename]_content_audit.yaml`.
-6. Extract all `citation_gap` findings into a Perplexity verification file at `audits/[filename]_perplexity_queries.md`.
+6. Run `seldon paper impact [SECTION_ARTIFACT_ID]` to understand this section's blast radius in the graph.
+7. Extract all `citation_gap` findings into a Perplexity verification file at `audits/[filename]_perplexity_queries.md`.
+8. For each entry in `cascading_audit_tasks` in the output YAML: create a ResearchTask artifact via `seldon task create` with description referencing the source finding, the target section, and the audit type needed.
+   Example: `seldon task create --description "Audit [target_section]: [audit_type] — triggered by [source finding] in [this section]. Reason: [reason]"`
 
 ## Output Files
 
