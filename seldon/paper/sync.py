@@ -679,19 +679,24 @@ def sync_all(
     database: str,
     project_dir: Path,
     domain_config: DomainConfig,
-    paper_dir: Path,
+    paper_dir: Path = None,
     dry_run: bool = False,
     auto_stale: bool = False,
     register_untracked: bool = False,
     actor: str = "human",
+    sections_dir: Path = None,
 ) -> list:
     """
     Discover section files and sync each against graph state.
 
-    Sections are discovered from paper_dir/sections/*.md.
+    Section files are discovered from sections_dir/*.md.
+    If sections_dir is not provided, falls back to paper_dir/sections/.
     Returns list of SyncResult for all sections found.
     """
-    sections_dir = paper_dir / "sections"
+    if sections_dir is None:
+        if paper_dir is None:
+            return []
+        sections_dir = paper_dir / "sections"
     if not sections_dir.exists():
         return []
 

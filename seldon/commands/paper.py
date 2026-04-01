@@ -97,11 +97,12 @@ def paper_sync(register_untracked, dry_run, auto_stale):
     and optionally transitions changed sections to stale. Run after editing sections.
     """
     from seldon.paper.sync import sync_all
+    from seldon.config import get_sections_dir
 
     project_dir = Path.cwd()
-    paper_dir = project_dir / "paper"
-
     config = load_project_config()
+    sections_dir = get_sections_dir(config, project_dir)
+
     driver = get_neo4j_driver(config)
     domain_config = _get_domain_config(config)
     database = config["neo4j"]["database"]
@@ -112,7 +113,7 @@ def paper_sync(register_untracked, dry_run, auto_stale):
             database=database,
             project_dir=project_dir,
             domain_config=domain_config,
-            paper_dir=paper_dir,
+            sections_dir=sections_dir,
             dry_run=dry_run,
             auto_stale=auto_stale,
             register_untracked=register_untracked,
@@ -121,7 +122,7 @@ def paper_sync(register_untracked, dry_run, auto_stale):
         driver.close()
 
     if not results:
-        click.echo("No section files found in paper/sections/.")
+        click.echo(f"No section files found in {sections_dir}.")
         return
 
     click.echo("PAPER SYNC REPORT")
@@ -175,16 +176,17 @@ def paper_sync(register_untracked, dry_run, auto_stale):
 @paper_group.command("register")
 @click.argument("files", nargs=-1, type=click.Path(exists=True))
 @click.option("--all", "register_all", is_flag=True, default=False,
-              help="Register all section files in paper/sections/.")
+              help="Register all section files from configured sections directory.")
 def paper_register(files, register_all):
     """Register section files as PaperSection artifacts.
 
     Creates PaperSection artifacts with name, title, file_path, and content_hash.
     Skips files that already have a PaperSection artifact.
 
-    Provide FILE paths explicitly, or use --all to discover paper/sections/*.md.
+    Provide FILE paths explicitly, or use --all to discover *.md in the sections directory.
     """
     from seldon.paper.sync import get_paper_section_artifacts, _register_section
+    from seldon.config import get_sections_dir
 
     project_dir = Path.cwd()
     config = load_project_config()
@@ -194,7 +196,7 @@ def paper_register(files, register_all):
 
     try:
         if register_all:
-            sections_dir = project_dir / "paper" / "sections"
+            sections_dir = get_sections_dir(config, project_dir)
             if not sections_dir.exists():
                 click.echo(f"Error: {sections_dir} does not exist.", err=True)
                 raise SystemExit(1)

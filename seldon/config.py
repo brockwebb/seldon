@@ -132,6 +132,26 @@ def end_session(project_dir: Optional[Path] = None) -> None:
         session_file.unlink()
 
 
+def get_sections_dir(config: dict, project_dir: Optional[Path] = None) -> Path:
+    """Return the directory containing section/chapter files for this project.
+
+    Resolution order:
+    1. seldon.yaml paths.sections (explicit override)
+    2. seldon.yaml paths.book (book-style projects like ai-workflow-design)
+    3. Default: paper/sections/ (standard paper layout)
+
+    Returns an absolute Path (resolved against project_dir).
+    """
+    base = Path(project_dir) if project_dir else Path.cwd()
+    paths = config.get("paths", {})
+
+    if paths.get("sections"):
+        return base / paths["sections"]
+    if paths.get("book"):
+        return base / paths["book"]
+    return base / "paper" / "sections"
+
+
 def get_shared_ontology_source(config: dict) -> Optional[Path]:
     """Return resolved path to vocabulary file from shared_ontology config, or None.
 

@@ -66,11 +66,17 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _tracked_content_dirs(project_dir: Path) -> list[Path]:
+def _tracked_content_dirs(project_dir: Path, config: dict = None) -> list[Path]:
     """Return content directories that should be scanned for unregistered files.
 
-    Checks for paper/sections/ and book/ under project_dir.
+    Uses get_sections_dir from config if available, otherwise falls back
+    to checking paper/sections/ and book/ under project_dir.
     """
+    if config is not None:
+        from seldon.config import get_sections_dir
+        sections = get_sections_dir(config, project_dir)
+        return [sections] if sections.exists() and sections.is_dir() else []
+
     candidates = [
         project_dir / "paper" / "sections",
         project_dir / "book",
@@ -429,10 +435,10 @@ def check_blocking_tasks(driver, database: str) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 def check_unregistered_files(
-    driver, database: str, project_dir: Path
+    driver, database: str, project_dir: Path, config: dict = None
 ) -> CheckResult:
     """Find .md files in tracked directories that have no corresponding artifact."""
-    tracked_dirs = _tracked_content_dirs(project_dir)
+    tracked_dirs = _tracked_content_dirs(project_dir, config)
     if not tracked_dirs:
         return CheckResult(
             name="Unregistered files",
@@ -632,7 +638,7 @@ def _run_all_checks(
         check_references(driver, database, project_dir),
         check_stale_artifacts(driver, database),
         check_blocking_tasks(driver, database),
-        check_unregistered_files(driver, database, project_dir),
+        check_unregistered_files(driver, database, project_dir, config),
     ]
 
 
