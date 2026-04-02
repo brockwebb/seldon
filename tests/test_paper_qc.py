@@ -16,6 +16,7 @@ from seldon.paper.qc import (
     check_PQ_06,
     check_PQ_07,
     check_PQ_08,
+    check_PQ_09,
     check_SP_01,
     check_SP_02,
     check_SP_03,
@@ -42,17 +43,23 @@ STYLE_CONFIG = load_style_config()
 # ---------------------------------------------------------------------------
 
 def _qc(
-    max_sentence_words=35,
+    max_sentence_words=30,
+    warn_sentence_words=25,
     min_paragraph_sentences=2,
     max_paragraph_sentences=8,
     no_semicolons_over_words=20,
+    staccato_consecutive=3,
+    staccato_word_threshold=8,
 ):
     return {
         "prose_rules": {
             "max_sentence_words": max_sentence_words,
+            "warn_sentence_words": warn_sentence_words,
             "min_paragraph_sentences": min_paragraph_sentences,
             "max_paragraph_sentences": max_paragraph_sentences,
             "no_semicolons_over_words": no_semicolons_over_words,
+            "staccato_consecutive": staccato_consecutive,
+            "staccato_word_threshold": staccato_word_threshold,
         }
     }
 
@@ -194,43 +201,63 @@ class TestSplitParagraphs:
 # ---------------------------------------------------------------------------
 
 class TestPQ01:
-    def test_pq01_long_sentence_fires(self):
-        # 40-word sentence
+    def test_pq01b_long_sentence_fires(self):
+        # 40-word sentence — exceeds max (30)
         sentence = " ".join(["word"] * 40) + "."
         text = f"This is an intro. {sentence} This is the end."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert any(v.check_id == "PQ-01b" for v in violations)
 
     def test_pq01_short_sentence_clean(self):
-        # 20-word sentence — should not fire
+        # 20-word sentence — should not fire warning or violation
         sentence = " ".join(["word"] * 20) + "."
         text = f"{sentence} Another sentence follows here."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert not any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30, warn_sentence_words=25))
+        assert not violations
 
-    def test_pq01_exactly_at_limit_clean(self):
-        sentence = " ".join(["word"] * 35) + "."
+    def test_pq01b_exactly_at_limit_clean(self):
+        sentence = " ".join(["word"] * 30) + "."
         text = f"{sentence} Second sentence."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert not any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert not any(v.check_id == "PQ-01b" for v in violations)
 
-    def test_pq01_one_over_limit_fires(self):
-        sentence = " ".join(["word"] * 36) + "."
+    def test_pq01b_one_over_limit_fires(self):
+        sentence = " ".join(["word"] * 31) + "."
         text = f"{sentence} Second sentence."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert any(v.check_id == "PQ-01b" for v in violations)
 
     def test_pq01_code_block_skipped(self):
         long_sentence = " ".join(["word"] * 40) + "."
         text = f"```\n{long_sentence}\n```\n\nShort sentence. Another short sentence."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert not any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert not violations
 
     def test_pq01_line_number_accurate(self):
         text = "Short sentence.\n\nShort again.\n\n" + " ".join(["word"] * 40) + "."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
         assert violations
-        assert violations[0].line == 5
+
+    def test_pq01a_warning_fires_at_26_words(self):
+        sentence = " ".join(["word"] * 26) + "."
+        text = f"{sentence} Second sentence."
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30, warn_sentence_words=25))
+        assert any(v.check_id == "PQ-01a" for v in violations)
+        assert not any(v.check_id == "PQ-01b" for v in violations)
+
+    def test_pq01a_no_warning_at_24_words(self):
+        sentence = " ".join(["word"] * 24) + "."
+        text = f"{sentence} Second sentence."
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30, warn_sentence_words=25))
+        assert not violations
+
+    def test_pq01_warn_default_fallback(self):
+        """warn_sentence_words absent from config → defaults to 25."""
+        config = {"prose_rules": {"max_sentence_words": 30}}
+        sentence = " ".join(["word"] * 26) + "."
+        text = f"{sentence} Second sentence."
+        violations = check_PQ_01(text.splitlines(), config)
+        assert any(v.check_id == "PQ-01a" for v in violations)
 
 
 # ---------------------------------------------------------------------------
@@ -615,14 +642,14 @@ class TestSkipping:
         # Long sentence inside code block should not trigger PQ-01
         long_sentence = " ".join(["word"] * 40) + "."
         text = f"```\n{long_sentence}\n```\n\nShort sentence. Another one here."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert not any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert not violations
 
     def test_frontmatter_long_sentence_skipped(self):
         long_sentence = " ".join(["word"] * 40) + "."
         text = f"---\ntitle: {long_sentence}\n---\n\nShort sentence. Another one here."
-        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=35))
-        assert not any(v.check_id == "PQ-01" for v in violations)
+        violations = check_PQ_01(text.splitlines(), _qc(max_sentence_words=30))
+        assert not violations
 
 
 # ---------------------------------------------------------------------------
@@ -639,7 +666,7 @@ class TestRunTier2:
         sentence = " ".join(["word"] * 40) + "."
         text = f"{sentence} Short second sentence."
         violations = run_tier2(text, QC_CONFIG)
-        assert any(v.check_id == "PQ-01" for v in violations)
+        assert any(v.check_id == "PQ-01b" for v in violations)
 
     def test_run_tier2_detects_em_dash(self):
         text = "The result — surprising — was confirmed."
@@ -797,3 +824,45 @@ class TestRealConfigSpotChecks:
         text = "The model may potentially improve with more data."
         violations = run_tier3(text, STYLE_CONFIG)
         assert any(v.check_id == "SP-02" for v in violations)
+
+
+# ---------------------------------------------------------------------------
+# PQ-09: Staccato detection
+# ---------------------------------------------------------------------------
+
+class TestPQ09:
+    def test_pq09_three_short_sentences_fires(self):
+        """3 consecutive sentences under 8 words triggers PQ-09."""
+        text = "Training runs end. Test sets close. Context windows shut. This is a longer sentence that breaks the staccato."
+        violations = check_PQ_09(text.splitlines(), _qc(staccato_consecutive=3, staccato_word_threshold=8))
+        assert any(v.check_id == "PQ-09" for v in violations)
+
+    def test_pq09_two_short_sentences_clean(self):
+        """2 consecutive short sentences (below threshold of 3) does NOT fire."""
+        text = "Training runs end. Test sets close. This is a much longer sentence that breaks the pattern entirely."
+        violations = check_PQ_09(text.splitlines(), _qc(staccato_consecutive=3, staccato_word_threshold=8))
+        assert not any(v.check_id == "PQ-09" for v in violations)
+
+    def test_pq09_short_with_long_between_clean(self):
+        """3 short sentences interrupted by a long one does NOT fire."""
+        text = "Runs end. This sentence is quite long and breaks the consecutive run of short ones. Sets close. Windows shut."
+        violations = check_PQ_09(text.splitlines(), _qc(staccato_consecutive=3, staccato_word_threshold=8))
+        assert not any(v.check_id == "PQ-09" for v in violations)
+
+    def test_pq09_run_at_end_of_paragraph(self):
+        """Staccato run at the end of a paragraph (no trailing long sentence) fires."""
+        text = "This is a normal opening sentence. Runs end. Sets close. Windows shut."
+        violations = check_PQ_09(text.splitlines(), _qc(staccato_consecutive=3, staccato_word_threshold=8))
+        assert any(v.check_id == "PQ-09" for v in violations)
+
+    def test_pq09_leibniz_example(self):
+        """The motivating example from the CC task fires PQ-09."""
+        text = "Training runs end. Test sets have boundaries. Context windows close."
+        violations = check_PQ_09(text.splitlines(), _qc(staccato_consecutive=3, staccato_word_threshold=8))
+        assert any(v.check_id == "PQ-09" for v in violations)
+
+    def test_pq09_run_tier2_includes_pq09(self):
+        """run_tier2 includes PQ-09 in its checks."""
+        text = "Training runs end. Test sets close. Context windows shut. This is a longer sentence that follows."
+        violations = run_tier2(text, QC_CONFIG)
+        assert any(v.check_id == "PQ-09" for v in violations)

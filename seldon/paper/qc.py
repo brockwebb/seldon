@@ -183,7 +183,8 @@ def _para_start_line(full_text: str, para_text: str) -> int:
 # ---------------------------------------------------------------------------
 
 def check_PQ_01(lines: List[str], config: dict, filename: str = "<string>") -> List[Violation]:
-    """PQ-01: Flag sentences exceeding max_sentence_words."""
+    """PQ-01: Flag sentences by word count. PQ-01a = warning (25-30), PQ-01b = violation (>30)."""
+    warn_words = config["prose_rules"].get("warn_sentence_words", 25)
     max_words = config["prose_rules"]["max_sentence_words"]
     text = "\n".join(lines)
     stripped = _strip_skipped_regions(text)
@@ -193,14 +194,23 @@ def check_PQ_01(lines: List[str], config: dict, filename: str = "<string>") -> L
         for sentence in _split_sentences(para):
             word_count = len(sentence.split())
             if word_count > max_words:
-                # Find the line number of this sentence in the original text.
                 idx = stripped.find(sentence)
                 lineno = _line_number_of(stripped, idx) if idx != -1 else 1
                 violations.append(Violation(
-                    check_id="PQ-01",
+                    check_id="PQ-01b",
                     file=filename,
                     line=lineno,
                     message=f"Sentence too long ({word_count} words, max {max_words})",
+                    text=_truncate(sentence),
+                ))
+            elif word_count > warn_words:
+                idx = stripped.find(sentence)
+                lineno = _line_number_of(stripped, idx) if idx != -1 else 1
+                violations.append(Violation(
+                    check_id="PQ-01a",
+                    file=filename,
+                    line=lineno,
+                    message=f"Sentence approaching limit ({word_count} words, warning at {warn_words})",
                     text=_truncate(sentence),
                 ))
     return violations
@@ -572,12 +582,60 @@ def check_PQ_08(lines: List[str], config: dict, filename: str = "<string>") -> L
     return []
 
 
+def check_PQ_09(lines: List[str], config: dict, filename: str = "<string>") -> List[Violation]:
+    """PQ-09: Flag staccato prose — N+ consecutive short sentences."""
+    consecutive_threshold = config["prose_rules"].get("staccato_consecutive", 3)
+    word_threshold = config["prose_rules"].get("staccato_word_threshold", 8)
+    text = "\n".join(lines)
+    stripped = _strip_skipped_regions(text)
+    violations: List[Violation] = []
+
+    for para in _split_paragraphs(stripped):
+        sentences = _split_sentences(para)
+        run_length = 0
+        run_start_sentence = None
+
+        for sentence in sentences:
+            word_count = len(sentence.split())
+            if word_count < word_threshold:
+                if run_length == 0:
+                    run_start_sentence = sentence
+                run_length += 1
+            else:
+                if run_length >= consecutive_threshold:
+                    idx = stripped.find(run_start_sentence)
+                    lineno = _line_number_of(stripped, idx) if idx != -1 else 1
+                    violations.append(Violation(
+                        check_id="PQ-09",
+                        file=filename,
+                        line=lineno,
+                        message=f"Staccato: {run_length} consecutive sentences under {word_threshold} words",
+                        text=_truncate(run_start_sentence),
+                    ))
+                run_length = 0
+                run_start_sentence = None
+
+        # Check at end of paragraph
+        if run_length >= consecutive_threshold and run_start_sentence:
+            idx = stripped.find(run_start_sentence)
+            lineno = _line_number_of(stripped, idx) if idx != -1 else 1
+            violations.append(Violation(
+                check_id="PQ-09",
+                file=filename,
+                line=lineno,
+                message=f"Staccato: {run_length} consecutive sentences under {word_threshold} words",
+                text=_truncate(run_start_sentence),
+            ))
+
+    return violations
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
 def run_tier2(text: str, qc_config: dict, filename: str = "<string>") -> List[Violation]:
-    """Run all PQ-01..PQ-07 checks. Returns combined violations."""
+    """Run all PQ-01..PQ-09 checks. Returns combined violations."""
     lines = text.splitlines()
     violations: List[Violation] = []
     for check_fn in (
@@ -589,6 +647,7 @@ def run_tier2(text: str, qc_config: dict, filename: str = "<string>") -> List[Vi
         check_PQ_06,
         check_PQ_07,
         check_PQ_08,
+        check_PQ_09,
     ):
         violations.extend(check_fn(lines, qc_config, filename))
     return violations

@@ -4,7 +4,12 @@
 
 prose_rules:
   # Sentence constraints
-  max_sentence_words: 35
+  warn_sentence_words: 25    # 25-30 words: warning (PQ-01a)
+  max_sentence_words: 30     # >30 words: violation (PQ-01b)
+
+  # Staccato detection — consecutive short sentences
+  staccato_consecutive: 3      # Flag when N+ consecutive sentences are under the threshold
+  staccato_word_threshold: 8   # Sentences under this word count trigger staccato check
   
   # Paragraph constraints
   min_paragraph_sentences: 2
