@@ -199,18 +199,51 @@ def check_ontology_freshness(driver, database: str, config: dict) -> CheckResult
 # Check 3: Glossary compliance
 # ---------------------------------------------------------------------------
 
-def check_glossary(project_dir: Path) -> CheckResult:
-    """Run glossary check if paper/glossary.md exists."""
-    glossary_path = project_dir / "paper" / "glossary.md"
-    if not glossary_path.exists():
+def _find_glossary(project_dir: Path, config: dict = None) -> Path | None:
+    """Locate glossary.md using config paths, then conventional fallbacks."""
+    if config:
+        for key in ("paper", "book"):
+            content_dir = config.get("paths", {}).get(key)
+            if content_dir:
+                candidate = project_dir / content_dir / "glossary.md"
+                if candidate.exists():
+                    return candidate
+
+    for candidate in [
+        project_dir / "paper" / "glossary.md",
+        project_dir / "book" / "glossary.md",
+    ]:
+        if candidate.exists():
+            return candidate
+
+    return None
+
+
+def _find_check_script(project_dir: Path, glossary_path: Path) -> Path | None:
+    """Locate check_glossary.py near the glossary or at fallback locations."""
+    candidates = [
+        glossary_path.parent / "check_glossary.py",
+        project_dir / "paper" / "check_glossary.py",
+        project_dir / "check_glossary.py",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def check_glossary(project_dir: Path, config: dict = None) -> CheckResult:
+    """Run glossary check — resolves glossary path from config, then fallbacks."""
+    glossary_path = _find_glossary(project_dir, config)
+    if glossary_path is None:
         return CheckResult(
             name="Glossary",
-            symbol="pass",
+            symbol="warn",
             summary="No glossary file found — skipping",
         )
 
-    check_script = project_dir / "paper" / "check_glossary.py"
-    if not check_script.exists():
+    check_script = _find_check_script(project_dir, glossary_path)
+    if check_script is None:
         return CheckResult(
             name="Glossary",
             symbol="pass",
@@ -232,8 +265,8 @@ def check_glossary(project_dir: Path) -> CheckResult:
             summary=f"Glossary check failed to run: {exc}",
         )
 
+    rel_path = glossary_path.relative_to(project_dir)
     if result.returncode != 0:
-        # Extract violation lines from output
         violations = [
             line.strip()
             for line in (result.stdout + result.stderr).splitlines()
@@ -243,14 +276,14 @@ def check_glossary(project_dir: Path) -> CheckResult:
         return CheckResult(
             name="Glossary",
             symbol="fail",
-            summary=f"{count} violation{'s' if count != 1 else ''} found",
-            details=violations[:10],  # cap detail output
+            summary=f"{count} violation{'s' if count != 1 else ''} found ({rel_path})",
+            details=violations[:10],
         )
 
     return CheckResult(
         name="Glossary",
         symbol="pass",
-        summary="No violations",
+        summary=f"No violations ({rel_path})",
     )
 
 
@@ -634,7 +667,7 @@ def _run_all_checks(
     return [
         check_file_hashes(driver, database, project_dir),
         check_ontology_freshness(driver, database, config),
-        check_glossary(project_dir),
+        check_glossary(project_dir, config=config),
         check_references(driver, database, project_dir),
         check_stale_artifacts(driver, database),
         check_blocking_tasks(driver, database),
