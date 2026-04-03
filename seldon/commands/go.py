@@ -27,6 +27,7 @@ You are orienting to a Seldon-managed project.
 ### If You Are a CC Session (Claude Code)
 
 - Execute the CC task you were given.
+- After completing the task, run `seldon cc complete <task-filepath>` to record it in the graph.
 - After any edit to section/chapter files, run `seldon verify` before reporting completion.
 - `seldon verify --fix` handles automatic fixes (file sync, ontology sync, file registration).
 - Report any issues that `--fix` cannot resolve.
@@ -54,6 +55,7 @@ _AVAILABLE_COMMANDS_SECTION = """\
 - `seldon result register/verify/list/trace` — result registry
 - `seldon task create/list/update` — task tracking
 - `seldon issue create/list/update/show/summary` — issue tracking (Eisenhower 3×3)
+- `seldon cc complete <filepath>` — record a CC task as completed (run after each task)
 
 ### Paper/Book
 - `seldon paper sync` — reconcile graph with files on disk (content hashes, subsection parsing, reference edges)
@@ -106,6 +108,46 @@ def _read_latest_handoff(project_dir: str) -> Optional[str]:
     if not files:
         return None
     return files[0].read_text()
+
+
+def _get_handoff_reconciliation(project_dir: str, handoff_text: str) -> Optional[str]:
+    """Query completed CC tasks and annotate any mentioned in the handoff.
+
+    Returns a markdown reconciliation section, or None if nothing to annotate.
+    """
+    try:
+        config = load_project_config(project_dir)
+        driver = get_neo4j_driver(config)
+        database = config["neo4j"]["database"]
+
+        try:
+            with driver.session(database=database) as session:
+                records = session.run(
+                    "MATCH (t:Artifact:ResearchTask) "
+                    "WHERE t.source_file STARTS WITH 'cc_tasks/' AND t.state = 'completed' "
+                    "RETURN t.source_file AS source_file, t.completed_at AS completed_at, "
+                    "t.name AS name"
+                ).data()
+        finally:
+            driver.close()
+
+        matches = []
+        for r in records:
+            source_file = r.get("source_file", "")
+            filename = Path(source_file).name
+            if filename in handoff_text or source_file in handoff_text:
+                completed_at = r.get("completed_at", "")[:19] if r.get("completed_at") else "?"
+                matches.append(f"- ✓ {source_file} — COMPLETED [{completed_at}Z]")
+
+        if not matches:
+            return None
+
+        lines = ["### Handoff Reconciliation (from graph)", ""]
+        lines.extend(matches)
+        return "\n".join(lines)
+
+    except Exception:
+        return None
 
 
 def _format_project_state(briefing_data: dict) -> str:
@@ -332,7 +374,11 @@ def assemble_go_context(
     if handoff is None:
         sections.append("## Latest Handoff\n\n*No handoffs found.*")
     else:
-        sections.append(f"## Latest Handoff\n\n{handoff}")
+        handoff_section = f"## Latest Handoff\n\n{handoff}"
+        reconciliation = _get_handoff_reconciliation(project_dir, handoff)
+        if reconciliation:
+            handoff_section += f"\n\n{reconciliation}"
+        sections.append(handoff_section)
 
     # Section 5 — Project State
     sections.append(_get_project_state_section(project_dir))

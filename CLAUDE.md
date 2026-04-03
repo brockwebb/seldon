@@ -41,12 +41,16 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `ontology list`   | Check inherited terms | `seldon ontology list [--master]` |
 | `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
 | `paper impact`    | Check blast radius of a change | `seldon paper impact <name>` |
+| `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
 
 ## Session Protocol
 
 1. **Start**: `seldon go` or `/briefing` — orient to project, read handoff, surface open tasks
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
-3. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
+3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
+4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
+
+Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. If a task must survive across sessions, create a graph artifact.
 
 ## Paper Editing Workflow
 
