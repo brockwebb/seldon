@@ -23,7 +23,8 @@ def _get_domain_config(config: dict):
 
 def get_briefing_data(driver, database: str, domain_config=None) -> dict:
     """Query graph for briefing data. Returns dict with keys:
-    open_tasks, stale_artifacts, incomplete_provenance, docs_health, graph_stats
+    open_tasks, stale_artifacts, incomplete_provenance, docs_health, graph_stats,
+    citation_health, open_issues
     """
     with driver.session(database=database) as session:
         # 1. Open tasks
@@ -62,7 +63,18 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             "RETURN count(DISTINCT s) AS n"
         ).single()["n"]
 
-    # 6. Documentation completeness (separate driver session for re-use)
+        # 6. Open issues
+        open_issue_records = session.run(
+            "MATCH (i:Artifact:Issue) WHERE i.state IN ['open', 'in_progress'] "
+            "RETURN i.importance AS importance, i.urgency AS urgency, "
+            "i.name AS name, i.id AS id, i.state AS state "
+            "ORDER BY "
+            "CASE i.importance WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 END, "
+            "CASE i.urgency WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 END"
+        ).data()
+        open_issues = [dict(r) for r in open_issue_records]
+
+    # 7. Documentation completeness (separate driver session for re-use)
     if domain_config is not None:
         docs_data = run_docs_check(driver, database, domain_config)
     else:
@@ -78,6 +90,7 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             "total_sections": total_sections,
             "cited_sections": cited_sections,
         },
+        "open_issues": open_issues,
     }
 
 
@@ -174,6 +187,16 @@ def briefing_command():
         uncited = total_s - cited_s
         suffix = f"  ⚠ {uncited} uncited" if uncited > 0 else "  ✓ all cited"
         click.echo(f"\nCITATIONS: {cited_s}/{total_s} sections have ≥1 cite edge ({cite_pct}%){suffix}")
+
+    open_issues = data.get("open_issues", [])
+    do_now = [i for i in open_issues if i.get("importance") == "high" and i.get("urgency") == "high"]
+    issue_count = len(open_issues)
+    do_now_count = len(do_now)
+    click.echo(f"\nOPEN ISSUES: {issue_count} ({do_now_count} DO NOW)")
+    for issue in do_now:
+        name = issue.get("name", "?")
+        state = issue.get("state", "?")
+        click.echo(f"  ⚡ [{state}] {name}")
 
     click.echo(f"\nGRAPH: {stats['total_nodes']} artifacts, {stats['total_relationships']} relationships")
     click.echo(f"{border}\n")

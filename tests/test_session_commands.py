@@ -376,3 +376,58 @@ class TestCitationHealthBriefing:
         ch = data["citation_health"]
         assert ch["total_sections"] == 2
         assert ch["cited_sections"] == 1
+
+
+# ── issue awareness in briefing ──────────────────────────────────────────────
+
+def _make_issue(project_dir, driver, domain_config, name, importance, urgency, state="open"):
+    aid = create_artifact(
+        project_dir=project_dir, driver=driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Issue",
+        properties={
+            "name": name,
+            "description": name,
+            "importance": importance,
+            "urgency": urgency,
+        },
+        actor="human", authority="accepted",
+    )
+    if state != "open":
+        transition_state(driver=driver, database=NEO4J_DB, artifact_id=aid, new_state=state,
+                         actor="human")
+    return aid
+
+
+def test_briefing_no_issues_returns_empty_list(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """Project with no issues — open_issues is empty list."""
+    data = get_briefing_data(neo4j_driver, NEO4J_DB, domain_config)
+    assert data["open_issues"] == []
+
+
+def test_briefing_issues_open_and_in_progress_included(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """open and in_progress issues appear; resolved does not."""
+    _make_issue(project_dir, neo4j_driver, domain_config, "Open issue", "high", "high", "open")
+    _make_issue(project_dir, neo4j_driver, domain_config, "In progress", "medium", "low", "in_progress")
+    _make_issue(project_dir, neo4j_driver, domain_config, "Resolved", "low", "low", "resolved")
+
+    data = get_briefing_data(neo4j_driver, NEO4J_DB, domain_config)
+    names = [i["name"] for i in data["open_issues"]]
+    assert "Open issue" in names
+    assert "In progress" in names
+    assert "Resolved" not in names
+
+
+def test_briefing_do_now_issues_sorted_first(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """high/high issues sort before medium/medium in open_issues list."""
+    _make_issue(project_dir, neo4j_driver, domain_config, "Low priority", "low", "low")
+    _make_issue(project_dir, neo4j_driver, domain_config, "Critical blocker", "high", "high")
+
+    data = get_briefing_data(neo4j_driver, NEO4J_DB, domain_config)
+    names = [i["name"] for i in data["open_issues"]]
+    assert names.index("Critical blocker") < names.index("Low priority")

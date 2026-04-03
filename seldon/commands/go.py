@@ -151,6 +151,17 @@ def _format_project_state(briefing_data: dict) -> str:
         sys_pct = int(sys_present / sys_total * 100)
         lines.append(f"**⚠ System properties:** {sys_present}/{sys_total} ({sys_pct}%) — run sync commands")
 
+    open_issues = briefing_data.get("open_issues", [])
+    do_now = [i for i in open_issues if i.get("importance") == "high" and i.get("urgency") == "high"]
+    issue_count = len(open_issues)
+    do_now_count = len(do_now)
+    lines.append("")
+    lines.append(f"**Open Issues:** {issue_count} ({do_now_count} in DO NOW quadrant)")
+    for issue in do_now:
+        name = issue.get("name", "?")
+        state = issue.get("state", "?")
+        lines.append(f"- ⚡ [{state}] {name}")
+
     lines.append("")
     lines.append(
         f"**Graph:** {stats.get('total_nodes', 0)} nodes, "
