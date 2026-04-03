@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from seldon.commands.cc import _find_existing, _walk_to_completed, _name_from_filepath
+from seldon.commands.cc import _find_existing, _walk_to_completed, _name_from_filepath, _extract_description
 from seldon.commands.go import _get_handoff_reconciliation
 from seldon.core.artifacts import create_artifact
 from seldon.domain.loader import load_domain_config
@@ -149,3 +149,36 @@ def test_go_reconciliation_no_noise_when_clean(
     handoff_text = "## Summary\nDid some work today. No CC tasks mentioned here.\n"
     result = _get_handoff_reconciliation(str(project_dir), handoff_text)
     assert result is None
+
+
+def test_cc_register_creates_proposed_task(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """cc_register creates a ResearchTask in proposed state with source_file set."""
+    cc_file = project_dir / "cc_tasks" / "2026-04-03_register_me.md"
+    cc_file.parent.mkdir(parents=True, exist_ok=True)
+    cc_file.write_text("# CC Task: Register Me\n\nRegister this task.\n")
+
+    rel_path = "cc_tasks/2026-04-03_register_me.md"
+
+    artifact_id = create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="ResearchTask",
+        properties={
+            "description": _extract_description(cc_file),
+            "name": _name_from_filepath(rel_path),
+            "source_file": rel_path,
+        },
+        actor="cc", authority="accepted",
+    )
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        rec = session.run(
+            "MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t",
+            id=artifact_id,
+        ).single()
+
+    node = dict(rec["t"])
+    assert node["state"] == "proposed"
+    assert node["source_file"] == rel_path
+    assert node["name"] == "register me"

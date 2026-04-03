@@ -23,6 +23,7 @@ You are orienting to a Seldon-managed project.
 - The only files you may write directly: CC tasks (in cc_tasks/), handoffs (in handoffs/), and design notes (in docs/).
 - CC task files go in `cc_tasks/` with naming convention `YYYY-MM-DD_<descriptive_slug>.md`.
 - CC task files are immutable once written. If changes are needed, write a new file or get explicit permission.
+- For trivial housekeeping (creating tasks, closing stale items, marking CC tasks complete), use MCP tools directly: `seldon_task_create`, `seldon_task_update`, `seldon_issue_create`, `seldon_cc_complete`, `seldon_cc_register`, `seldon_query`.
 
 ### If You Are a CC Session (Claude Code)
 
@@ -71,7 +72,18 @@ _AVAILABLE_COMMANDS_SECTION = """\
 ### Documentation
 - `seldon docs check` — documentation completeness
 - `seldon docs generate` — project reference docs from graph
-- `seldon status` — project overview"""
+- `seldon status` — project overview
+
+### MCP Tools (Desktop sessions)
+- `seldon_go(project_dir, brief)` — orient to project
+- `seldon_task_create(description, project_dir, blocks)` — create ResearchTask
+- `seldon_task_update(task_id, state, project_dir, note)` — update task state
+- `seldon_task_list(project_dir, state_filter, brief)` — list tasks by state
+- `seldon_issue_create(name, description, importance, urgency, project_dir)` — create Issue
+- `seldon_issue_update(issue_id, project_dir, state, importance, urgency)` — update Issue
+- `seldon_cc_complete(filepath, project_dir, note)` — mark CC task completed
+- `seldon_cc_register(filepath, project_dir)` — register CC task as proposed
+- `seldon_query(cypher, project_dir)` — read-only Cypher query"""
 
 
 def _read_system_standards() -> Optional[str]:

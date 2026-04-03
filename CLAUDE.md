@@ -42,6 +42,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
 | `paper impact`    | Check blast radius of a change | `seldon paper impact <name>` |
 | `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
+| `cc register`     | When writing a new CC task | `seldon cc register <task-filepath>` |
 
 ## Session Protocol
 
@@ -50,7 +51,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
 4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
 
-Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. If a task must survive across sessions, create a graph artifact.
+Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. Desktop sessions can create tasks and issues via MCP tools (`seldon_task_create`, `seldon_issue_create`). If a task must survive across sessions, create a graph artifact.
 
 ## Paper Editing Workflow
 

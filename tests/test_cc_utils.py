@@ -6,6 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from seldon.commands.cc import _name_from_filepath, _extract_description
+from seldon.mcp_server import _WRITE_PATTERN
 
 
 class TestNameFromFilepath:
@@ -43,3 +44,29 @@ class TestExtractDescription:
         f.write_text("# H\n\n" + "x" * 300 + "\n")
         result = _extract_description(f)
         assert len(result) == 200
+
+
+class TestQueryWritePattern:
+    def test_rejects_create(self):
+        assert _WRITE_PATTERN.search("CREATE (n:Foo)")
+
+    def test_rejects_merge(self):
+        assert _WRITE_PATTERN.search("MERGE (n:Foo {id: '1'})")
+
+    def test_rejects_set(self):
+        assert _WRITE_PATTERN.search("MATCH (n) SET n.x = 1")
+
+    def test_rejects_delete(self):
+        assert _WRITE_PATTERN.search("MATCH (n) DELETE n")
+
+    def test_rejects_remove(self):
+        assert _WRITE_PATTERN.search("MATCH (n) REMOVE n.prop")
+
+    def test_rejects_detach(self):
+        assert _WRITE_PATTERN.search("MATCH (n) DETACH DELETE n")
+
+    def test_allows_match(self):
+        assert not _WRITE_PATTERN.search("MATCH (n) RETURN n")
+
+    def test_allows_return_with_where(self):
+        assert not _WRITE_PATTERN.search("MATCH (n) WHERE n.x > 0 RETURN n.x")

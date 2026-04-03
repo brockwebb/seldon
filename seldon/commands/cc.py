@@ -167,3 +167,71 @@ def cc_complete(filepath, note):
         click.echo(f"  state: completed")
     finally:
         driver.close()
+
+
+@cc_group.command("register")
+@click.argument("filepath")
+def cc_register(filepath):
+    """Register a CC task file as a proposed ResearchTask in the graph.
+
+    Use at task creation time to track the task before execution.
+    Running twice on the same file warns instead of creating a duplicate.
+
+    FILEPATH is relative to project root or absolute.
+    """
+    project_dir = Path.cwd()
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    domain_config = _get_domain_config(config)
+    session_id = get_current_session(project_dir)
+
+    task_path = Path(filepath)
+    if not task_path.is_absolute():
+        task_path = project_dir / task_path
+
+    if not task_path.exists():
+        click.echo(f"Error: file not found: {filepath}", err=True)
+        driver.close()
+        raise SystemExit(1)
+
+    try:
+        rel_path = str(task_path.relative_to(project_dir))
+    except ValueError:
+        rel_path = str(task_path)
+
+    existing_id = _find_existing(driver, database, rel_path)
+    if existing_id:
+        click.echo(
+            f"Warning: CC task already registered (id: {existing_id[:8]}...). "
+            "No duplicate created.",
+            err=True,
+        )
+        driver.close()
+        raise SystemExit(0)
+
+    name = _name_from_filepath(rel_path)
+    description = _extract_description(task_path)
+
+    try:
+        artifact_id = create_artifact(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            artifact_type="ResearchTask",
+            properties={
+                "description": description,
+                "name": name,
+                "source_file": rel_path,
+            },
+            actor="cc",
+            authority="accepted",
+            session_id=session_id,
+        )
+        click.echo(f"Registered: {name}")
+        click.echo(f"  source_file: {rel_path}")
+        click.echo(f"  id: {artifact_id[:8]}...")
+        click.echo(f"  state: proposed")
+    finally:
+        driver.close()
