@@ -86,6 +86,8 @@ seldon paper sync                    # reconcile graph with disk (hashes, edges,
 seldon paper build --no-render       # verify references still resolve
 ```
 
+For CC tasks, append `seldon verify --strict` to the cycle. If it exits non-zero, fix Tier A violations before state transition or commit.
+
 `paper sync` computes content hashes, updates `cites` edges for changed `{{result:...}}` references, and transitions modified sections to `stale` if they were in `review` or `published` state. Without sync, the graph doesn't know your edits happened and provenance edges go stale silently.
 
 `paper register --all` is the initial setup step — run once to create PaperSection artifacts for all section files. After that, sync handles updates.

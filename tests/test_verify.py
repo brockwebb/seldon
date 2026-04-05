@@ -422,3 +422,118 @@ def test_verify_detects_unresolvable_references(
     result = check_references(neo4j_driver, NEO4J_DB, project_dir)
     assert result.symbol == "fail"
     assert "nonexistent_metric" in result.summary
+
+
+# ---------------------------------------------------------------------------
+# Test: --strict mode exit code logic (pure unit — no Neo4j needed)
+# ---------------------------------------------------------------------------
+
+class TestStrictMode:
+    """Strict-mode exit code tests — mock CheckResult lists, no database."""
+
+    def _invoke_strict(self, runner, mock_results):
+        """Invoke verify_command --strict with mocked check results."""
+        from click.testing import CliRunner
+        from unittest.mock import patch, MagicMock
+        from seldon.commands.verify import verify_command
+
+        fake_config = {
+            "project": {"name": "test", "domain": "research"},
+            "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+        }
+        fake_driver = MagicMock()
+        fake_driver.close = MagicMock()
+
+        with patch("seldon.commands.verify.load_project_config", return_value=fake_config), \
+             patch("seldon.commands.verify.get_neo4j_driver", return_value=fake_driver), \
+             patch("seldon.commands.verify._run_all_checks", return_value=mock_results), \
+             patch("seldon.commands.verify.Path") as mock_path_cls:
+            from pathlib import Path as RealPath
+            mock_path_cls.cwd.return_value = RealPath("/tmp")
+            mock_path_cls.side_effect = RealPath
+            return runner.invoke(verify_command, ["--strict"])
+
+    def test_strict_exits_0_when_only_tier_b_warn(self):
+        """--strict exits 0 when only advisory (Tier B) findings exist."""
+        from click.testing import CliRunner
+        from seldon.commands.verify import CheckResult
+
+        mock_results = [
+            CheckResult(name="File hashes", symbol="pass", summary="OK"),
+            CheckResult(name="Ontology", symbol="pass", summary="OK"),
+            CheckResult(name="Glossary", symbol="pass", summary="OK"),
+            CheckResult(name="References", symbol="pass", summary="OK"),
+            CheckResult(name="Stale artifacts", symbol="warn", summary="2 stale"),
+            CheckResult(name="Blocking tasks", symbol="warn", summary="1 blocker"),
+            CheckResult(name="Unregistered files", symbol="pass", summary="OK"),
+        ]
+        result = self._invoke_strict(CliRunner(), mock_results)
+        assert result.exit_code == 0
+
+    def test_strict_exits_2_on_tier_a_file_hash_fail(self):
+        """--strict exits 2 when File hashes (Tier A) fails."""
+        from click.testing import CliRunner
+        from seldon.commands.verify import CheckResult
+
+        mock_results = [
+            CheckResult(name="File hashes", symbol="fail", summary="1 out of sync"),
+            CheckResult(name="Ontology", symbol="pass", summary="OK"),
+            CheckResult(name="Glossary", symbol="pass", summary="OK"),
+            CheckResult(name="References", symbol="pass", summary="OK"),
+            CheckResult(name="Stale artifacts", symbol="pass", summary="OK"),
+            CheckResult(name="Blocking tasks", symbol="pass", summary="OK"),
+            CheckResult(name="Unregistered files", symbol="pass", summary="OK"),
+        ]
+        result = self._invoke_strict(CliRunner(), mock_results)
+        assert result.exit_code == 2
+
+    def test_strict_exits_2_on_ontology_fail(self):
+        """--strict exits 2 when Ontology (Tier A) drifts."""
+        from click.testing import CliRunner
+        from seldon.commands.verify import CheckResult
+
+        mock_results = [
+            CheckResult(name="File hashes", symbol="pass", summary="OK"),
+            CheckResult(name="Ontology", symbol="fail", summary="epoch 1 vs master 3"),
+            CheckResult(name="Glossary", symbol="pass", summary="OK"),
+            CheckResult(name="References", symbol="pass", summary="OK"),
+            CheckResult(name="Stale artifacts", symbol="warn", summary="1 stale"),
+            CheckResult(name="Blocking tasks", symbol="pass", summary="OK"),
+            CheckResult(name="Unregistered files", symbol="pass", summary="OK"),
+        ]
+        result = self._invoke_strict(CliRunner(), mock_results)
+        assert result.exit_code == 2
+
+    def test_default_mode_unchanged_warn_exits_1(self):
+        """Default mode (no --strict): advisory warn still exits 1."""
+        from click.testing import CliRunner
+        from unittest.mock import patch, MagicMock
+        from seldon.commands.verify import verify_command, CheckResult
+
+        mock_results = [
+            CheckResult(name="File hashes", symbol="pass", summary="OK"),
+            CheckResult(name="Ontology", symbol="pass", summary="OK"),
+            CheckResult(name="Glossary", symbol="pass", summary="OK"),
+            CheckResult(name="References", symbol="pass", summary="OK"),
+            CheckResult(name="Stale artifacts", symbol="warn", summary="1 stale"),
+            CheckResult(name="Blocking tasks", symbol="pass", summary="OK"),
+            CheckResult(name="Unregistered files", symbol="pass", summary="OK"),
+        ]
+
+        fake_config = {
+            "project": {"name": "test", "domain": "research"},
+            "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+        }
+        fake_driver = MagicMock()
+        fake_driver.close = MagicMock()
+
+        with patch("seldon.commands.verify.load_project_config", return_value=fake_config), \
+             patch("seldon.commands.verify.get_neo4j_driver", return_value=fake_driver), \
+             patch("seldon.commands.verify._run_all_checks", return_value=mock_results), \
+             patch("seldon.commands.verify.Path") as mock_path_cls:
+            from pathlib import Path as RealPath
+            mock_path_cls.cwd.return_value = RealPath("/tmp")
+            mock_path_cls.side_effect = RealPath
+            runner = CliRunner()
+            result = runner.invoke(verify_command, [])
+        assert result.exit_code == 1

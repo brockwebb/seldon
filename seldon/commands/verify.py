@@ -7,9 +7,13 @@ open blocking tasks, and unregistered files. Reports issues with
 actionable remediation guidance.
 
 Exit codes:
-    0 — all clean
-    1 — warnings only (stale artifacts, open blocking tasks)
-    2 — issues found (hash mismatch, ontology drift, unresolvable refs, unregistered files)
+    Default mode:
+        0 — all clean
+        1 — warnings only (stale artifacts, open blocking tasks)
+        2 — issues found (hash mismatch, ontology drift, unresolvable refs, unregistered files)
+    Strict mode (--strict):
+        0 — no Tier A violations (advisory findings may exist)
+        2 — Tier A violations found (file hashes, ontology, glossary, references, unregistered files)
 """
 from __future__ import annotations
 
@@ -49,6 +53,17 @@ SYMBOL_MAP = {
     "warn": "\u26a0",   # ⚠
     "fail": "\u2717",   # ✗
 }
+
+# Checks whose failures block under --strict mode.
+# Advisory checks (stale artifacts, blocking tasks) are always reported
+# but never block.
+TIER_A_CHECKS = frozenset({
+    "File hashes",
+    "Ontology",
+    "Glossary",
+    "References",
+    "Unregistered files",
+})
 
 
 # ---------------------------------------------------------------------------
@@ -618,13 +633,17 @@ def _fix_unregistered_files(
               help="Auto-resolve fixable issues (file sync, ontology sync, register files).")
 @click.option("--quiet", is_flag=True, default=False,
               help="Suppress all output; communicate only via exit code.")
-def verify_command(fix, quiet):
+@click.option("--strict", is_flag=True, default=False,
+              help="Exit non-zero only on Tier A (mechanical) violations. "
+                   "Advisory findings are reported but do not affect exit code.")
+def verify_command(fix, quiet, strict):
     """Run 7 integrity checks on the current Seldon project.
 
     Checks file hashes, ontology freshness, glossary compliance, reference
     resolution, stale artifacts, blocking tasks, and unregistered files.
 
     Exit codes: 0 = clean, 1 = warnings only, 2 = issues found.
+    Use --strict to gate only on mechanical (Tier A) violations.
     """
     project_dir = Path.cwd()
     config = load_project_config(project_dir)
@@ -646,18 +665,29 @@ def verify_command(fix, quiet):
 
     # Output
     if not quiet:
-        _print_report(project_name, results)
+        _print_report(project_name, results, strict=strict)
 
     # Exit code
-    has_fail = any(r.symbol == "fail" for r in results)
-    has_warn = any(r.symbol == "warn" for r in results)
-
-    if has_fail:
-        raise SystemExit(2)
-    elif has_warn:
-        raise SystemExit(1)
+    if strict:
+        # Only Tier A failures are blocking
+        tier_a_fail = any(
+            r.symbol == "fail" and r.name in TIER_A_CHECKS
+            for r in results
+        )
+        if tier_a_fail:
+            raise SystemExit(2)
+        else:
+            raise SystemExit(0)
     else:
-        raise SystemExit(0)
+        # Default behavior: any fail → 2, any warn → 1, else 0
+        has_fail = any(r.symbol == "fail" for r in results)
+        has_warn = any(r.symbol == "warn" for r in results)
+        if has_fail:
+            raise SystemExit(2)
+        elif has_warn:
+            raise SystemExit(1)
+        else:
+            raise SystemExit(0)
 
 
 def _run_all_checks(
@@ -715,7 +745,9 @@ def _apply_fixes(
     return _run_all_checks(driver, database, config, project_dir)
 
 
-def _print_report(project_name: str, results: list[CheckResult]) -> None:
+def _print_report(
+    project_name: str, results: list[CheckResult], strict: bool = False
+) -> None:
     """Print the formatted verification report."""
     click.echo(f"\nseldon verify \u2014 {project_name}\n")
 
@@ -745,4 +777,15 @@ def _print_report(project_name: str, results: list[CheckResult]) -> None:
         if fixable:
             msg += " Run `seldon verify --fix` to auto-resolve fixable issues."
         click.echo(f"  {msg}")
+
+    if strict:
+        advisory = sum(
+            1 for r in results
+            if r.symbol in ("fail", "warn") and r.name not in TIER_A_CHECKS
+        )
+        if advisory:
+            click.echo(
+                f"  Strict mode: {advisory} advisory finding{'s' if advisory != 1 else ''} "
+                "reported but not blocking."
+            )
     click.echo()
