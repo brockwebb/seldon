@@ -30,12 +30,29 @@ def _name_from_filepath(filepath: str) -> str:
     return stem.replace("_", " ")
 
 
+_METADATA_RE = re.compile(
+    r"^\*\*(?:Date|Project|Priority|Reference|Context|Status|Relates to|Provenance)\b",
+    re.IGNORECASE,
+)
+
+
 def _extract_description(filepath: Path) -> str:
-    """Extract first non-blank, non-header line from a CC task file."""
+    """Extract first substantive line from a CC task file.
+
+    Skips blank lines, markdown headers (#), horizontal rules (---),
+    and bold metadata lines (**Date:**, **Project:**, etc.).
+    """
     for line in filepath.read_text().splitlines():
         stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            return stripped[:200]
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            continue
+        if stripped.startswith("---"):
+            continue
+        if _METADATA_RE.match(stripped):
+            continue
+        return stripped[:200]
     return filepath.name
 
 

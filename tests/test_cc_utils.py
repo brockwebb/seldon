@@ -45,6 +45,29 @@ class TestExtractDescription:
         result = _extract_description(f)
         assert len(result) == 200
 
+    def test_skips_date_metadata_line(self, tmp_path):
+        f = tmp_path / "task.md"
+        f.write_text("# Title\n\n**Date:** 2026-04-05\n**Project:** seldon\n\nActual goal.")
+        assert _extract_description(f) == "Actual goal."
+
+    def test_skips_all_metadata_before_content(self, tmp_path):
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "**Date:** 2026-04-05\n"
+            "**Project:** seldon\n"
+            "**Priority:** HIGH\n"
+            "\n---\n\n"
+            "## Goal\n\n"
+            "Fix the thing.\n"
+        )
+        assert _extract_description(f) == "Fix the thing."
+
+    def test_skips_horizontal_rule(self, tmp_path):
+        f = tmp_path / "task.md"
+        f.write_text("# Title\n\n---\n\nFirst real content.\n")
+        assert _extract_description(f) == "First real content."
+
 
 class TestQueryWritePattern:
     def test_rejects_create(self):
