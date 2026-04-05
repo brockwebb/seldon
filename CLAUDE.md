@@ -68,6 +68,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 
 1. **Start**: `seldon go` or `/briefing` — orient to project, read handoff, surface open tasks
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
+   **CC task contracts:** Complex CC tasks (3+ deliverables, schema + code changes, new test files, or tasks where the spec says "check whether X exists and handle accordingly") should include a `## Success Contract` section in the task file or produce a separate `cc_tasks/<date>_<name>_contract.md` before execution begins. The contract lists deliverables, verification commands with expected results, scope boundaries, and assumptions. Simple tasks (single-function fixes, doc updates, file registration) do not need contracts. Template: `docs/templates/cc_task_contract.md`.
 3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
 4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
 

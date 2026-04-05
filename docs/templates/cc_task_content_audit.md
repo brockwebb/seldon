@@ -29,3 +29,7 @@
 - Edit the audited file
 - Create Issue artifacts (that's Phase 2 automation)
 - Run seldon paper audit (that's AD-016 prose QC, separate concern)
+
+## Success Contract (Optional)
+
+For complex audit runs spanning multiple chapters or requiring coordination across multiple agents, fill out a success contract before execution. See `docs/templates/cc_task_contract.md` for the template. Simple single-chapter audits do not need a contract.
