@@ -31,6 +31,7 @@ def test_artifact_types_has_all_types(research_config):
         "AgentRole", "Workflow", "OntologyTerm",  # OntologyTerm added in AD-017
         "Table",  # Table added in AD-018
         "Issue",  # Issue artifact type
+        "ArchitecturalDecision", "DesignNote",  # design documentation types
     }
     assert set(research_config.artifact_types.keys()) == expected
 

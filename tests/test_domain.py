@@ -15,7 +15,7 @@ def test_load_domain_config(research_config):
     assert research_config.version == "0.1"
     assert "Result" in research_config.artifact_types
     assert "ResearchTask" in research_config.artifact_types
-    assert len(research_config.artifact_types) == 15  # Issue added
+    assert len(research_config.artifact_types) == 17  # ArchitecturalDecision + DesignNote added
 
 
 def test_validate_artifact_type_valid(research_config):

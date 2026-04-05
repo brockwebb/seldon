@@ -314,6 +314,54 @@ artifact_types:
         category: documentation
         description: "What was done to resolve the issue — captured at resolution time"
 
+  ArchitecturalDecision:
+    properties:
+      name:
+        required: true
+        description: "AD identifier (e.g., AD-017)"
+      title:
+        required: true
+        description: "Human-readable title"
+      path:
+        required: true
+        description: "Filesystem path relative to project root"
+      description:
+        required: true
+        description: "One-sentence summary of the decision"
+      rationale:
+        category: documentation
+        description: "Why this decision was made — key reasoning"
+      alternatives_considered:
+        category: documentation
+        description: "Options that were evaluated and rejected"
+      supersedes:
+        category: documentation
+        description: "AD identifier(s) this decision replaces, if any"
+      constraints:
+        category: documentation
+        description: "What this decision constrains or requires downstream"
+
+  DesignNote:
+    properties:
+      name:
+        required: true
+        description: "Short identifier (e.g., semantic_anchoring_and_narrative_logic)"
+      title:
+        required: true
+        description: "Human-readable title"
+      path:
+        required: true
+        description: "Filesystem path relative to project root"
+      description:
+        required: true
+        description: "One-sentence summary of what this note analyzes or proposes"
+      note_type:
+        required: true
+        description: "Category of note. Values: pattern_proposal, architecture_gap, lessons_learned, calibration_report, workflow_design, reference"
+      provenance:
+        category: documentation
+        description: "Source or trigger for this analysis (e.g., paper reference, observed failure mode)"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -326,7 +374,7 @@ relationship_types:
     to_types: [DataFile]
   implements:
     from_types: [Script, Result]
-    to_types: [SRS_Requirement]
+    to_types: [SRS_Requirement, ArchitecturalDecision]
   blocks:
     from_types: [ResearchTask]
     to_types: [Result, PaperSection, Figure]
@@ -367,7 +415,7 @@ relationship_types:
     from_types: [OntologyTerm]
     to_types: [OntologyTerm]
   references_ontology:
-    from_types: [PaperSection, ResearchTask, LabNotebookEntry]
+    from_types: [PaperSection, ResearchTask, LabNotebookEntry, DesignNote, ArchitecturalDecision]
     to_types: [OntologyTerm]
 
   contains_section:
@@ -421,6 +469,14 @@ relationship_types:
   resolved_by:
     from_types: [Issue]
     to_types: [ResearchTask]
+
+  informs:
+    from_types: [DesignNote]
+    to_types: [ArchitecturalDecision]
+
+  supersedes:
+    from_types: [ArchitecturalDecision]
+    to_types: [ArchitecturalDecision]
 
 state_machines:
   Result:
@@ -522,3 +578,16 @@ state_machines:
     resolved: [verified, open]
     verified: []
     wont_fix: [open]
+
+  ArchitecturalDecision:
+    proposed: [accepted, rejected]
+    accepted: [superseded, stale]
+    superseded: []
+    stale: [accepted]
+    rejected: []
+
+  DesignNote:
+    proposed: [active]
+    active: [stale, deprecated]
+    stale: [active]
+    deprecated: []
