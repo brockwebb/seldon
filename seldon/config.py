@@ -153,7 +153,7 @@ def get_sections_dir(config: dict, project_dir: Optional[Path] = None) -> Path:
 
 
 def get_shared_ontology_source(config: dict) -> Optional[Path]:
-    """Return resolved path to vocabulary file from shared_ontology config, or None.
+    """Return resolved path to first vocabulary file from shared_ontology config, or None.
 
     Reads shared_ontology.source (base directory) and shared_ontology.vocabularies[0]
     (filename) from the project config and returns their joined path.
@@ -166,3 +166,19 @@ def get_shared_ontology_source(config: dict) -> Optional[Path]:
     if not source or not vocabs:
         return None
     return Path(source) / vocabs[0]
+
+
+def get_shared_ontology_sources(config: dict) -> list[Path]:
+    """Return resolved paths to all vocabulary files from shared_ontology config.
+
+    Reads shared_ontology.source (base directory) and shared_ontology.vocabularies
+    (list of filenames) from the project config. Returns all paths that exist on disk.
+    """
+    shared = config.get("shared_ontology")
+    if not shared:
+        return []
+    source = shared.get("source", "")
+    vocabs = shared.get("vocabularies", [])
+    if not source or not vocabs:
+        return []
+    return [Path(source) / v for v in vocabs]

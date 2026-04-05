@@ -92,7 +92,7 @@ def test_task_list_filters(
     neo4j_driver, project_dir, domain_config, clean_test_db
 ):
     """seldon_task_list with 'open' filter includes proposed, excludes completed."""
-    from seldon.commands.cc import _walk_to_completed
+    from seldon.core.artifacts import walk_to_completed
 
     _write_seldon_yaml(project_dir)
 
@@ -111,9 +111,10 @@ def test_task_list_filters(
         properties={"description": "Done task", "source_file": "cc_tasks/done.md"},
         actor="test", authority="accepted",
     )
-    _walk_to_completed(
+    walk_to_completed(
         project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
-        domain_config=domain_config, artifact_id=completed_id, session_id=None,
+        domain_config=domain_config, artifact_id=completed_id,
+        current_state="proposed", session_id=None,
     )
 
     result = seldon_task_list(project_dir=str(project_dir), state_filter="open")

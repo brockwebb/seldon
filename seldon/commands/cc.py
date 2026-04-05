@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
-from seldon.core.artifacts import create_artifact, transition_state
+from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
 from seldon.domain.loader import load_domain_config
 
 
@@ -49,34 +49,14 @@ def _find_existing(driver, database: str, rel_path: str) -> str | None:
     return record["id"] if record else None
 
 
-def _walk_to_completed(
-    project_dir: Path,
-    driver,
-    database: str,
-    domain_config,
-    artifact_id: str,
-    session_id: str | None,
-) -> None:
-    """Advance a ResearchTask through proposed→accepted→in_progress→completed."""
-    transitions = [
-        ("proposed", "accepted"),
-        ("accepted", "in_progress"),
-        ("in_progress", "completed"),
-    ]
-    for current, new in transitions:
-        transition_state(
-            project_dir=project_dir,
-            driver=driver,
-            database=database,
-            domain_config=domain_config,
-            artifact_id=artifact_id,
-            artifact_type="ResearchTask",
-            current_state=current,
-            new_state=new,
-            actor="cc",
-            authority="accepted",
-            session_id=session_id,
-        )
+def _get_artifact_state(driver, database: str, artifact_id: str) -> str | None:
+    """Return the current state of an artifact, or None if not found."""
+    with driver.session(database=database) as session:
+        record = session.run(
+            "MATCH (t:Artifact {artifact_id: $aid}) RETURN t.state AS state",
+            aid=artifact_id,
+        ).single()
+    return record["state"] if record else None
 
 
 @click.group("cc")
@@ -119,16 +99,55 @@ def cc_complete(filepath, note):
     except ValueError:
         rel_path = str(task_path)
 
-    # Duplicate guard
+    # Duplicate guard — state-aware
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
+        current_state = _get_artifact_state(driver, database, existing_id)
+
+        if current_state == "completed":
+            click.echo(
+                f"Warning: CC task already completed (id: {existing_id[:8]}...). "
+                "No action taken.",
+                err=True,
+            )
+            driver.close()
+            raise SystemExit(0)
+
+        # Pre-registered task — walk it to completed
+        name = _name_from_filepath(rel_path)
         click.echo(
-            f"Warning: CC task already recorded as completed (id: {existing_id[:8]}...). "
-            "No duplicate created.",
-            err=True,
+            f"Found pre-registered task (id: {existing_id[:8]}..., state: {current_state}). "
+            "Walking to completed."
         )
-        driver.close()
-        raise SystemExit(0)
+        completed_at = datetime.now(timezone.utc).isoformat()
+        try:
+            update_artifact(
+                project_dir=project_dir,
+                driver=driver,
+                database=database,
+                artifact_id=existing_id,
+                properties={"completed_at": completed_at},
+                actor="cc",
+                authority="accepted",
+                session_id=session_id,
+            )
+            walk_to_completed(
+                project_dir=project_dir,
+                driver=driver,
+                database=database,
+                domain_config=domain_config,
+                artifact_id=existing_id,
+                current_state=current_state,
+                actor="cc",
+                session_id=session_id,
+            )
+            click.echo(f"Completed: {name}")
+            click.echo(f"  source_file: {rel_path}")
+            click.echo(f"  id: {existing_id[:8]}...")
+            click.echo(f"  state: completed")
+        finally:
+            driver.close()
+        return
 
     name = _name_from_filepath(rel_path)
     description = note if note else _extract_description(task_path)
@@ -152,12 +171,14 @@ def cc_complete(filepath, note):
             session_id=session_id,
         )
 
-        _walk_to_completed(
+        walk_to_completed(
             project_dir=project_dir,
             driver=driver,
             database=database,
             domain_config=domain_config,
             artifact_id=artifact_id,
+            current_state="proposed",
+            actor="cc",
             session_id=session_id,
         )
 

@@ -308,6 +308,11 @@ def test_verify_quiet_exit_code_0(neo4j_driver, project_dir, domain_config, clea
         "# Introduction\nSome content.\n",
     )
 
+    # Create a glossary file so the glossary check passes (no check script = skip gracefully)
+    glossary_dir = project_dir / "paper"
+    glossary_dir.mkdir(parents=True, exist_ok=True)
+    (glossary_dir / "glossary.md").write_text("```{glossary}\n```\n")
+
     runner = CliRunner()
     result = _invoke_quiet(runner, neo4j_driver, project_dir)
 

@@ -110,34 +110,38 @@ def _increment_epoch(driver) -> int:
         return result["epoch"]
 
 
-def _resolve_vocabulary_path() -> Path:
-    """Find the vocabulary file using config or env var.
+def _resolve_vocabulary_paths() -> list[Path]:
+    """Find all vocabulary files using env var override or project config.
 
     Resolution order:
-    1. Project seldon.yaml shared_ontology.source + vocabularies[0]
-    2. SELDON_ONTOLOGY_PATH env var
+    1. SELDON_ONTOLOGY_PATH env var — explicit override, single file, takes
+       precedence over config (used in tests and CI scripts).
+    2. Project seldon.yaml shared_ontology.source + vocabularies (all entries)
     3. Error with instructions
+
+    Returns list of existing vocabulary paths in config order.
     """
-    from seldon.config import get_shared_ontology_source, load_project_config
+    from seldon.config import get_shared_ontology_sources, load_project_config
 
-    # Try project config first
-    try:
-        config = load_project_config()
-        vocab_path = get_shared_ontology_source(config)
-        if vocab_path and vocab_path.exists():
-            return vocab_path
-    except FileNotFoundError:
-        pass
-
-    # Try env var
+    # Env var override takes precedence — enables test isolation and CI use
     env_path = os.getenv("SELDON_ONTOLOGY_PATH")
     if env_path:
         p = Path(env_path)
         if p.exists():
-            return p
+            return [p]
         raise click.ClickException(
             f"SELDON_ONTOLOGY_PATH points to non-existent file: {env_path}"
         )
+
+    # Fall back to project config (all vocabulary entries)
+    try:
+        config = load_project_config()
+        all_paths = get_shared_ontology_sources(config)
+        existing = [p for p in all_paths if p.exists()]
+        if existing:
+            return existing
+    except FileNotFoundError:
+        pass
 
     raise click.ClickException(
         "Cannot locate vocabulary file. Either:\n"
@@ -145,6 +149,27 @@ def _resolve_vocabulary_path() -> Path:
         "shared_ontology.source + vocabularies\n"
         "  2. Set SELDON_ONTOLOGY_PATH=/path/to/VALIDITY_VOCABULARY.md"
     )
+
+
+def _resolve_vocabulary_path() -> Path:
+    """Find the first vocabulary file using config or env var (backwards compat)."""
+    paths = _resolve_vocabulary_paths()
+    return paths[0]
+
+
+def _parse_vocabulary_file(vocab_path: Path):
+    """Dispatch to the correct parser based on filename.
+
+    Returns ParsedVocabulary from whichever parser matches the file.
+    """
+    from seldon.ontology.parser import parse_vocabulary
+
+    filename = vocab_path.name.upper()
+    if "PRACTITIONER" in filename:
+        from seldon.ontology.practitioner_parser import parse_practitioner_vocabulary
+        return parse_practitioner_vocabulary(vocab_path)
+    else:
+        return parse_vocabulary(vocab_path)
 
 
 def _seldon_repo_dir() -> Path:
@@ -383,34 +408,46 @@ def ontology_group():
 @ontology_group.command("ingest")
 @click.option("--dry-run", is_flag=True, help="Parse and report without writing.")
 def ingest_command(dry_run: bool):
-    """Parse vocabulary file and write terms to the master ontology database.
+    """Parse vocabulary files and write terms to the master ontology database.
 
+    Reads all vocabulary files configured in seldon.yaml shared_ontology.vocabularies.
     Writes to the shared seldon-ontology database only. Never touches
     project databases. Use `seldon ontology sync` to pull into a project.
     """
     from dotenv import load_dotenv
     load_dotenv(override=False)
 
-    from seldon.ontology.parser import parse_vocabulary
+    vocab_paths = _resolve_vocabulary_paths()
 
-    vocab_path = _resolve_vocabulary_path()
-    click.echo(f"Parsing vocabulary: {vocab_path}")
+    # Parse all vocabulary files up front so we fail before touching Neo4j
+    all_parsed = []
+    for vocab_path in vocab_paths:
+        click.echo(f"Parsing vocabulary: {vocab_path}")
+        parsed = _parse_vocabulary_file(vocab_path)
+        click.echo(
+            f"  Parsed {len(parsed.terms)} terms, "
+            f"{len(parsed.relationships)} relationships "
+            f"(file hash: {parsed.content_hash[:12]}...)"
+        )
+        all_parsed.append((vocab_path, parsed))
 
-    parsed = parse_vocabulary(vocab_path)
-    click.echo(
-        f"  Parsed {len(parsed.terms)} terms, "
-        f"{len(parsed.relationships)} relationships "
-        f"(file hash: {parsed.content_hash[:12]}...)"
-    )
+    total_terms = sum(len(p.terms) for _, p in all_parsed)
+    total_rels = sum(len(p.relationships) for _, p in all_parsed)
+    if len(all_parsed) > 1:
+        click.echo(
+            f"Total: {total_terms} terms, {total_rels} relationships "
+            f"across {len(all_parsed)} files."
+        )
 
     if dry_run:
         click.echo("\n[DRY RUN] Would write to master database:")
         by_cat: Dict[str, int] = {}
-        for t in parsed.terms:
-            by_cat[t.category] = by_cat.get(t.category, 0) + 1
+        for _, parsed in all_parsed:
+            for t in parsed.terms:
+                by_cat[t.category] = by_cat.get(t.category, 0) + 1
         for cat, count in sorted(by_cat.items()):
             click.echo(f"  {cat}: {count} terms")
-        click.echo(f"  Relationships: {len(parsed.relationships)}")
+        click.echo(f"  Relationships: {total_rels}")
         click.echo("No changes written.")
         return
 
@@ -421,15 +458,16 @@ def ingest_command(dry_run: bool):
         _ensure_master_db(driver)
         _ensure_master_indexes(driver)
 
-        current_epoch = _get_or_create_master_meta(driver)
+        _get_or_create_master_meta(driver)
         new_epoch = _increment_epoch(driver)
 
         new_count = 0
         updated_count = 0
         unchanged_count = 0
+        rel_created = 0
 
         with driver.session(database=ONTOLOGY_MASTER_DB) as session:
-            # Build lookup of existing terms
+            # Build lookup of existing terms (across all vocabularies)
             existing_records = session.run(
                 "MATCH (a:Artifact:OntologyTerm) RETURN a"
             ).data()
@@ -437,49 +475,50 @@ def ingest_command(dry_run: bool):
                 dict(r["a"])["term_id"]: dict(r["a"]) for r in existing_records
             }
 
-            for term in parsed.terms:
-                content_hash = _term_content_hash(term)
-                existing = existing_by_term_id.get(term.term_id)
+            for vocab_path, parsed in all_parsed:
+                for term in parsed.terms:
+                    content_hash = _term_content_hash(term)
+                    existing = existing_by_term_id.get(term.term_id)
 
-                if existing is None:
-                    # New term -- create
-                    props = _term_to_props(term, new_epoch, content_hash)
-                    props["artifact_id"] = str(uuid.uuid4())
-                    props["source_vocabulary"] = str(vocab_path)
-                    props["created_at"] = _now_iso()
-                    create_artifact(session, "OntologyTerm", props)
-                    new_count += 1
+                    if existing is None:
+                        # New term -- create
+                        props = _term_to_props(term, new_epoch, content_hash)
+                        props["artifact_id"] = str(uuid.uuid4())
+                        props["source_vocabulary"] = str(vocab_path)
+                        props["created_at"] = _now_iso()
+                        create_artifact(session, "OntologyTerm", props)
+                        new_count += 1
 
-                elif existing.get("content_hash") != content_hash:
-                    # Changed -- update
-                    update_props = _term_to_props(term, new_epoch, content_hash)
-                    update_props["source_vocabulary"] = str(vocab_path)
-                    update_props["updated_at"] = _now_iso()
-                    update_artifact(session, existing["artifact_id"], update_props)
-                    updated_count += 1
+                    elif existing.get("content_hash") != content_hash:
+                        # Changed -- update
+                        update_props = _term_to_props(term, new_epoch, content_hash)
+                        update_props["source_vocabulary"] = str(vocab_path)
+                        update_props["updated_at"] = _now_iso()
+                        update_artifact(session, existing["artifact_id"], update_props)
+                        updated_count += 1
 
-                else:
-                    # Unchanged
-                    unchanged_count += 1
+                    else:
+                        # Unchanged
+                        unchanged_count += 1
 
-            # Create relationships using MERGE
-            rel_created = 0
-            for rel in parsed.relationships:
-                cypher = (
-                    f"MATCH (a:Artifact:OntologyTerm {{term_id: $from_id}}), "
-                    f"(b:Artifact:OntologyTerm {{term_id: $to_id}}) "
-                    f"MERGE (a)-[r:{rel.rel_type.upper()}]->(b) "
-                    f"ON CREATE SET r.created_at = $now "
-                    f"RETURN r"
-                )
-                result = session.run(
-                    cypher,
-                    from_id=rel.from_term_id,
-                    to_id=rel.to_term_id,
-                    now=_now_iso(),
-                ).single()
-                if result:
-                    rel_created += 1
+            # Create relationships for all vocabularies using MERGE
+            for _, parsed in all_parsed:
+                for rel in parsed.relationships:
+                    cypher = (
+                        f"MATCH (a:Artifact:OntologyTerm {{term_id: $from_id}}), "
+                        f"(b:Artifact:OntologyTerm {{term_id: $to_id}}) "
+                        f"MERGE (a)-[r:{rel.rel_type.upper()}]->(b) "
+                        f"ON CREATE SET r.created_at = $now "
+                        f"RETURN r"
+                    )
+                    result = session.run(
+                        cypher,
+                        from_id=rel.from_term_id,
+                        to_id=rel.to_term_id,
+                        now=_now_iso(),
+                    ).single()
+                    if result:
+                        rel_created += 1
 
         # Write event to Seldon repo's event store
         repo_dir = _seldon_repo_dir()
@@ -489,13 +528,12 @@ def ingest_command(dry_run: bool):
             authority="accepted",
             payload={
                 "master_epoch": new_epoch,
-                "source_file": str(vocab_path),
-                "source_hash": parsed.content_hash,
+                "source_files": [str(p) for p, _ in all_parsed],
                 "new_terms": new_count,
                 "updated_terms": updated_count,
                 "unchanged_terms": unchanged_count,
                 "relationships_created": rel_created,
-                "total_terms": len(parsed.terms),
+                "total_terms": total_terms,
             },
         )
         append_event(repo_dir, event)

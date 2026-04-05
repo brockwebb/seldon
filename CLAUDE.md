@@ -8,7 +8,7 @@ See `README.md` for full vision and architectural properties.
 
 ## Current State
 
-Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation. Agent role + workflow definitions in graph (AD-014). Paper sync for iterative editing workflow. Paper foundations workflow (glossary, keyword index, evidence map). Shared ontology with master/replica inheritance (AD-017): `seldon-ontology` master DB with 51 terms, epoch-based sync to project replicas.
+Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain config with property schemas (AD-013). Paper assembly pipeline (AD-012). Documentation-as-traceability infrastructure. `seldon go` MCP server for Desktop orientation with project management MCP tools (AD-021). Agent role + workflow definitions in graph (AD-014). Paper sync for iterative editing workflow. Paper foundations workflow (glossary, keyword index, evidence map). Shared ontology with master/replica inheritance (AD-017): `seldon-ontology` master DB with 51 terms, epoch-based sync to project replicas.
 
 ## Environment
 
@@ -40,9 +40,29 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `ontology sync`   | Pull latest vocabulary into project | `seldon ontology sync` (reads from master) |
 | `ontology list`   | Check inherited terms | `seldon ontology list [--master]` |
 | `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
-| `paper impact`    | Check blast radius of a change | `seldon paper impact <name>` |
+| `paper impact`    | Check blast radius of a change | `seldon paper impact <n>` |
+| `paper context`   | Structured context for drafting/revision | `seldon paper context <section-name> [--format yaml\|text]` |
 | `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
 | `cc register`     | When writing a new CC task | `seldon cc register <task-filepath>` |
+
+## MCP Tools (Desktop Housekeeping)
+
+Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping via MCP without writing CC tasks. All tools are project-scoped via `project_dir` — they resolve the database from `seldon.yaml`, bypassing the neo4j-mcp single-database limitation.
+
+| Tool | Use |
+|------|-----|
+| `seldon_go` | Orient to project |
+| `seldon_task_create` | Create a ResearchTask |
+| `seldon_task_update` | Single state transition |
+| `seldon_task_close` | Walk any task to `completed` in one call |
+| `seldon_task_list` | List tasks by state filter |
+| `seldon_issue_create` | Create Issue (Eisenhower 3×3) |
+| `seldon_issue_update` | Update Issue state/priority |
+| `seldon_cc_complete` | Mark CC task file as completed |
+| `seldon_cc_register` | Register CC task file as proposed |
+| `seldon_query` | Read-only Cypher against project graph |
+
+`seldon_query` is read-only — write operations (CREATE, MERGE, SET, DELETE, REMOVE) are rejected. Use the typed tools for mutations.
 
 ## Session Protocol
 
@@ -147,6 +167,7 @@ Every public function gets a docstring (Args/Returns/Raises). Every module gets 
 
 `docs/design/seldon_architectural_decisions.md` — AD-001 through AD-014.
 AD-017: Central Validity Ontology — `docs/design/AD-017_central_validity_ontology.md`
+AD-021: Session Continuity Fidelity — `docs/design/AD-021_session_continuity_fidelity.md`
 
 ## Shared Ontology
 

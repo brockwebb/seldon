@@ -389,12 +389,18 @@ def _make_issue(project_dir, driver, domain_config, name, importance, urgency, s
             "description": name,
             "importance": importance,
             "urgency": urgency,
+            "issue_type": "factual_error",
+            "detection_method": "incidental",
+            "target": "content",
         },
         actor="human", authority="accepted",
     )
     if state != "open":
-        transition_state(driver=driver, database=NEO4J_DB, artifact_id=aid, new_state=state,
-                         actor="human")
+        transition_state(
+            project_dir=project_dir, driver=driver, database=NEO4J_DB,
+            domain_config=domain_config, artifact_id=aid, artifact_type="Issue",
+            current_state="open", new_state=state, actor="human", authority="accepted",
+        )
     return aid
 
 

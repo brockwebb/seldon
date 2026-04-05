@@ -196,9 +196,17 @@ def create_link(
     actor: str,
     authority: str,
     session_id: Optional[str] = None,
+    rel_properties: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Validate relationship, write JSONL event, then create Neo4j relationship."""
+    """Validate relationship, write JSONL event, then create Neo4j relationship.
+
+    Args:
+        rel_properties: Optional properties to set on the relationship itself
+            (e.g., topic and strength for `assumes` edges).
+    """
     validate_relationship(domain_config, rel_type, from_type, to_type)
+
+    props = rel_properties or {}
 
     event = make_event(
         event_type="link_created",
@@ -210,14 +218,75 @@ def create_link(
             "from_type": from_type,
             "to_type": to_type,
             "rel_type": rel_type,
-            "properties": {},
+            "properties": props,
         },
         session_id=session_id,
     )
     append_event(project_dir, event)
 
     with driver.session(database=database) as session:
-        graph.create_link(session, from_id, to_id, rel_type.upper(), {})
+        graph.create_link(session, from_id, to_id, rel_type.upper(), props)
+
+
+def walk_to_completed(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    domain_config,
+    artifact_id: str,
+    current_state: str,
+    actor: str = "cc",
+    session_id: Optional[str] = None,
+) -> list[str]:
+    """Walk a ResearchTask from current_state to completed.
+
+    State-aware: skips transitions for states already passed. Raises ValueError
+    if current_state is not on a known path to completed.
+
+    Args:
+        current_state: The artifact's current state in the graph.
+        actor: Actor string written to events ('cc' or 'desktop').
+
+    Returns:
+        List of 'from → to' transition strings performed.
+
+    Raises:
+        ValueError: If current_state has no known path to completed.
+    """
+    path_to_completed: Dict[str, list[str]] = {
+        "proposed": ["accepted", "in_progress", "completed"],
+        "accepted": ["in_progress", "completed"],
+        "in_progress": ["completed"],
+        "completed": [],
+        "blocked": ["in_progress", "completed"],
+    }
+
+    steps = path_to_completed.get(current_state)
+    if steps is None:
+        raise ValueError(
+            f"Cannot walk ResearchTask to completed from state '{current_state}'"
+        )
+
+    transitions = []
+    state = current_state
+    for next_state in steps:
+        transition_state(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            artifact_id=artifact_id,
+            artifact_type="ResearchTask",
+            current_state=state,
+            new_state=next_state,
+            actor=actor,
+            authority="accepted",
+            session_id=session_id,
+        )
+        transitions.append(f"{state} → {next_state}")
+        state = next_state
+
+    return transitions
 
 
 def remove_link(

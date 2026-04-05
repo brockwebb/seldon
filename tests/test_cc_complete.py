@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from seldon.commands.cc import _find_existing, _walk_to_completed, _name_from_filepath, _extract_description
+from seldon.commands.cc import _find_existing, _name_from_filepath, _extract_description
+from seldon.core.artifacts import walk_to_completed as _walk_to_completed
 from seldon.commands.go import _get_handoff_reconciliation
 from seldon.core.artifacts import create_artifact
 from seldon.domain.loader import load_domain_config
@@ -41,7 +42,8 @@ def _make_completed_task(project_dir, driver, domain_config, rel_path, name=None
     )
     _walk_to_completed(
         project_dir=project_dir, driver=driver, database=NEO4J_DB,
-        domain_config=domain_config, artifact_id=artifact_id, session_id=None,
+        domain_config=domain_config, artifact_id=artifact_id,
+        current_state="proposed", session_id=None,
     )
     return artifact_id
 

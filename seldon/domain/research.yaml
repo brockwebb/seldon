@@ -154,6 +154,27 @@ artifact_types:
       section_type:
         category: system
         description: "Type of section: 'chapter', 'section', 'frontmatter', 'backmatter', 'appendix'. Determines numbering behavior. Defaults to 'chapter' for depth=0, 'section' for depth>0."
+      core_argument:
+        category: documentation
+        description: "1-2 sentence thesis — what this section argues, not what it covers"
+      claims:
+        category: documentation
+        description: "Key falsifiable assertions established (list of strings)"
+      terminology_defined:
+        category: documentation
+        description: "Terms defined or given specific meaning. Each entry: 'term: definition' (list of strings)"
+      forward_promises:
+        category: documentation
+        description: "Topics promised to downstream sections. Each entry: 'chapter-NN: topic' (list of strings)"
+      open_threads:
+        category: documentation
+        description: "Topics acknowledged but deferred (list of strings)"
+      anchor_date:
+        category: system
+        description: "ISO date when anchor properties were last populated"
+      anchor_source:
+        category: system
+        description: "How anchors were generated (e.g., 'AD-020 run 005', 'direct read', 'manual')"
 
   Citation:
     properties:
@@ -374,6 +395,10 @@ relationship_types:
     to_types: [PaperSection, DataFile]
 
   cross_references:
+    from_types: [PaperSection]
+    to_types: [PaperSection]
+
+  assumes:
     from_types: [PaperSection]
     to_types: [PaperSection]
 

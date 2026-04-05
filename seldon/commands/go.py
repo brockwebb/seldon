@@ -23,7 +23,7 @@ You are orienting to a Seldon-managed project.
 - The only files you may write directly: CC tasks (in cc_tasks/), handoffs (in handoffs/), and design notes (in docs/).
 - CC task files go in `cc_tasks/` with naming convention `YYYY-MM-DD_<descriptive_slug>.md`.
 - CC task files are immutable once written. If changes are needed, write a new file or get explicit permission.
-- For trivial housekeeping (creating tasks, closing stale items, marking CC tasks complete), use MCP tools directly: `seldon_task_create`, `seldon_task_update`, `seldon_issue_create`, `seldon_cc_complete`, `seldon_cc_register`, `seldon_query`.
+- For trivial housekeeping (creating tasks, closing stale items, marking CC tasks complete), use MCP tools directly: `seldon_task_create`, `seldon_task_update`, `seldon_task_close`, `seldon_issue_create`, `seldon_cc_complete`, `seldon_cc_register`, `seldon_query`.
 
 ### If You Are a CC Session (Claude Code)
 
@@ -62,11 +62,12 @@ _AVAILABLE_COMMANDS_SECTION = """\
 - `seldon paper sync` — reconcile graph with files on disk (content hashes, subsection parsing, reference edges)
 - `seldon paper build [--no-render]` — resolve `{{result:...}}`, `{{figure:...}}`, `{{table:...}}` tokens and assemble
 - `seldon paper audit` — prose quality checks (Tier 2/3)
-- `seldon paper impact <name>` — blast radius: what's affected if this artifact changes
+- `seldon paper impact <n>` — blast radius: what's affected if this artifact changes
+- `seldon paper context <section-name> [--format yaml|text]` — structured context for drafting/revision (anchor props, assumes, cross-refs, siblings)
 
 ### Ontology
 - `seldon ontology ingest` — parse vocabulary markdown, write to master (seldon-ontology)
-- `seldon ontology sync` ��� pull latest vocabulary from master into this project
+- `seldon ontology sync` — pull latest vocabulary from master into this project
 - `seldon ontology list [--category] [--verbose] [--master]` — show inherited terms
 
 ### Documentation
@@ -77,7 +78,8 @@ _AVAILABLE_COMMANDS_SECTION = """\
 ### MCP Tools (Desktop sessions)
 - `seldon_go(project_dir, brief)` — orient to project
 - `seldon_task_create(description, project_dir, blocks)` — create ResearchTask
-- `seldon_task_update(task_id, state, project_dir, note)` — update task state
+- `seldon_task_update(task_id, state, project_dir, note)` — single state transition
+- `seldon_task_close(task_id, project_dir, note)` — walk task to completed in one call
 - `seldon_task_list(project_dir, state_filter, brief)` — list tasks by state
 - `seldon_issue_create(name, description, importance, urgency, project_dir)` — create Issue
 - `seldon_issue_update(issue_id, project_dir, state, importance, urgency)` — update Issue

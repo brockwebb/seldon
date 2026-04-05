@@ -56,6 +56,54 @@ def _resolve_artifact_id(driver, database: str, id_prefix: str) -> str | None:
     return None
 
 
+def _walk_task_to_completed(
+    project_dir: Path,
+    driver,
+    database: str,
+    domain_config,
+    artifact_id: str,
+    current_state: str,
+) -> list[str]:
+    """Walk a ResearchTask from current_state to completed.
+
+    Returns list of transitions performed.
+    """
+    from seldon.core.artifacts import transition_state
+
+    # Define the happy path to completed
+    path_to_completed = {
+        "proposed": ["accepted", "in_progress", "completed"],
+        "accepted": ["in_progress", "completed"],
+        "in_progress": ["completed"],
+        "completed": [],
+        "blocked": ["in_progress", "completed"],
+    }
+
+    steps = path_to_completed.get(current_state)
+    if steps is None:
+        raise ValueError(f"Cannot close from state '{current_state}'")
+
+    transitions = []
+    state = current_state
+    for next_state in steps:
+        transition_state(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            artifact_id=artifact_id,
+            artifact_type="ResearchTask",
+            current_state=state,
+            new_state=next_state,
+            actor="desktop",
+            authority="accepted",
+        )
+        transitions.append(f"{state} → {next_state}")
+        state = next_state
+
+    return transitions
+
+
 # ---------------------------------------------------------------------------
 # seldon_go (existing)
 # ---------------------------------------------------------------------------
@@ -139,7 +187,7 @@ def seldon_task_update(
     project_dir: str = ".",
     note: str = "",
 ) -> str:
-    """Update a ResearchTask's state.
+    """Update a ResearchTask's state (single transition).
 
     Args:
         task_id: Artifact ID (full UUID or prefix)
@@ -179,6 +227,60 @@ def seldon_task_update(
             f"  {current_state} → {state}"
             + (f"\n  note: {note}" if note else "")
         )
+    finally:
+        driver.close()
+
+
+@mcp.tool()
+def seldon_task_close(
+    task_id: str,
+    project_dir: str = ".",
+    note: str = "",
+) -> str:
+    """Close a ResearchTask by walking it from current state to completed in one call.
+
+    Handles the full state machine path (proposed→accepted→in_progress→completed)
+    regardless of current state. Use this instead of multiple seldon_task_update
+    calls when bulk-closing tasks.
+
+    Args:
+        task_id: Artifact ID (full UUID or prefix)
+        project_dir: Path to project root
+        note: Optional note explaining why the task is being closed
+    """
+    from seldon.core.graph import get_artifact
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    p = Path(project_dir)
+
+    try:
+        full_id = _resolve_artifact_id(driver, database, task_id)
+        if full_id is None:
+            return f"Error: artifact '{task_id}' not found or ambiguous."
+
+        with driver.session(database=database) as session:
+            node = get_artifact(session, full_id)
+        if node is None:
+            return f"Error: artifact '{task_id}' not found."
+
+        current_state = node.get("state", "")
+        desc = (node.get("description") or "")[:60]
+
+        if current_state == "completed":
+            return f"Already completed: {full_id[:8]}... — {desc}"
+
+        transitions = _walk_task_to_completed(
+            project_dir=p, driver=driver, database=database,
+            domain_config=domain_config, artifact_id=full_id,
+            current_state=current_state,
+        )
+
+        result = f"Closed: {full_id[:8]}... — {desc}\n  path: {' → '.join(t.split(' → ')[1] for t in transitions)}"
+        if note:
+            result += f"\n  note: {note}"
+        return result
+    except ValueError as exc:
+        return f"Error: {exc}"
     finally:
         driver.close()
 
@@ -248,17 +350,29 @@ def seldon_task_list(
 def seldon_issue_create(
     name: str,
     description: str,
+    issue_type: str = "factual_error",
+    detection_method: str = "incidental",
+    target: str = "content",
     importance: str = "medium",
     urgency: str = "medium",
     project_dir: str = ".",
 ) -> str:
-    """Create an Issue in the project graph (Eisenhower 3×3 priority matrix).
+    """Create an Issue artifact for a research production quality problem.
+
+    Issues track problems found in research outputs: factual errors, citation
+    gaps, unsupported claims, terminology inconsistencies, stale content, etc.
+    Issues are NOT for software bugs or feature requests — use CC tasks for those.
 
     Args:
-        name: Issue name (short identifier)
-        description: Issue description
-        importance: high, medium, or low
-        urgency: high, medium, or low
+        name: Short identifier for the issue
+        description: The problem statement — what's wrong
+        issue_type: Category of problem. Values: factual_error, citation_gap,
+            unsupported_claim, terminology_inconsistency, internal_contradiction,
+            missing_content, stale_content, structural_flow, style_formatting
+        detection_method: How found. Values: automated_check, audit, incidental, build_failure
+        target: What needs to change. Values: content, citation, terminology, data, structure
+        importance: Eisenhower importance (high, medium, low)
+        urgency: Eisenhower urgency (high, medium, low)
         project_dir: Path to project root
     """
     from seldon.core.artifacts import create_artifact
@@ -268,6 +382,9 @@ def seldon_issue_create(
     p = Path(project_dir)
 
     try:
+        validate_issue_enum("issue_type", issue_type)
+        validate_issue_enum("detection_method", detection_method)
+        validate_issue_enum("target", target)
         validate_issue_enum("importance", importance)
         validate_issue_enum("urgency", urgency)
     except ValueError as exc:
@@ -281,6 +398,9 @@ def seldon_issue_create(
             properties={
                 "name": name,
                 "description": description,
+                "issue_type": issue_type,
+                "detection_method": detection_method,
+                "target": target,
                 "importance": importance,
                 "urgency": urgency,
             },
@@ -290,6 +410,7 @@ def seldon_issue_create(
         return (
             f"Created Issue: {artifact_id[:8]}...\n"
             f"  name: {name}\n"
+            f"  type: {issue_type} / detected: {detection_method} / target: {target}\n"
             f"  priority: {importance}/{urgency} ({quadrant})\n"
             f"  state: open"
         )
@@ -389,10 +510,9 @@ def seldon_cc_complete(
         note: Optional description override (default: auto-extracted from file)
     """
     from seldon.commands.cc import (
-        _find_existing, _walk_to_completed,
-        _name_from_filepath, _extract_description,
+        _find_existing, _name_from_filepath, _extract_description,
     )
-    from seldon.core.artifacts import create_artifact
+    from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
     from datetime import datetime, timezone
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
@@ -413,8 +533,41 @@ def seldon_cc_complete(
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
-        driver.close()
-        return f"Warning: CC task already recorded as completed (id: {existing_id[:8]}...). No duplicate created."
+        # State-aware duplicate guard
+        from seldon.core.graph import get_artifact
+        with driver.session(database=database) as sess:
+            node = get_artifact(sess, existing_id)
+        current_state = node.get("state") if node else None
+
+        if current_state == "completed":
+            driver.close()
+            return f"Warning: CC task already completed (id: {existing_id[:8]}...). No action taken."
+
+        # Pre-registered task — walk it to completed
+        name = _name_from_filepath(rel_path)
+        completed_at = datetime.now(timezone.utc).isoformat()
+        try:
+            update_artifact(
+                project_dir=p, driver=driver, database=database,
+                artifact_id=existing_id,
+                properties={"completed_at": completed_at},
+                actor="desktop", authority="accepted",
+            )
+            transitions = _walk_task_to_completed(
+                project_dir=p, driver=driver, database=database,
+                domain_config=domain_config, artifact_id=existing_id,
+                current_state=current_state,
+            )
+            path_str = " → ".join(t.split(" → ")[1] for t in transitions) if transitions else "completed"
+            return (
+                f"Completed pre-registered task: {name}\n"
+                f"  source_file: {rel_path}\n"
+                f"  id: {existing_id[:8]}...\n"
+                f"  path: {path_str}\n"
+                f"  state: completed"
+            )
+        finally:
+            driver.close()
 
     name = _name_from_filepath(rel_path)
     description = note if note else _extract_description(task_path)
@@ -432,9 +585,10 @@ def seldon_cc_complete(
             },
             actor="desktop", authority="accepted",
         )
-        _walk_to_completed(
+        walk_to_completed(
             project_dir=p, driver=driver, database=database,
-            domain_config=domain_config, artifact_id=artifact_id, session_id=None,
+            domain_config=domain_config, artifact_id=artifact_id,
+            current_state="proposed", actor="desktop",
         )
         return (
             f"Recorded: {name}\n"

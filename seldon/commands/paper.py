@@ -401,6 +401,49 @@ def paper_impact_command(artifact_name, depth):
     click.echo(_blast_radius_summary(tree))
 
 
+@paper_group.command("context")
+@click.argument("section_name")
+@click.option("--format", "output_format", type=click.Choice(["text", "yaml"]),
+              default="text", show_default=True,
+              help="Output format: human-readable text or machine-readable YAML.")
+def paper_context_command(section_name, output_format):
+    """Show structured context for drafting or revising a section.
+
+    Queries the graph for SECTION_NAME and outputs its semantic anchor properties,
+    assumes/assumed-by relationships, cross-references, and sibling sections.
+    """
+    from seldon.paper.context import get_section_context, format_context_text, format_context_yaml
+
+    config = load_project_config()
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+
+    try:
+        ctx = get_section_context(driver, database, section_name)
+    finally:
+        driver.close()
+
+    if ctx is None:
+        click.echo(
+            f"Error: no PaperSection with name='{section_name}' found in graph.", err=True
+        )
+        raise SystemExit(1)
+
+    section = ctx["section"]
+    has_anchors = bool(section.get("core_argument") or section.get("claims"))
+    if not has_anchors:
+        click.echo(
+            f"Note: No anchor properties set for '{section_name}'. "
+            "Run anchor population first to fill core_argument and claims.",
+            err=True,
+        )
+
+    if output_format == "yaml":
+        click.echo(format_context_yaml(ctx))
+    else:
+        click.echo(format_context_text(ctx))
+
+
 @paper_group.command("build")
 @click.option("--skip-qc", is_flag=True, default=False,
               help="Skip Tier 2 and Tier 3 QC. Tier 1 structural checks always run.")
