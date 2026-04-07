@@ -16,6 +16,11 @@
    ```
 3. Project has Seldon initialized (`seldon.yaml` exists)
 4. `audits/` directory exists at project root
+5. **Run directory created before lead audits begin.** Check `ls -d audits/run-*/`, determine the next run ID, and create:
+   ```bash
+   mkdir -p audits/run-{NNN}_{YYYY-MM-DD}
+   ```
+   All output from the lead and all cascade checkers must go into this directory. The lead writes the `run_manifest.yaml` after all gates complete.
 
 ## Invocation
 
