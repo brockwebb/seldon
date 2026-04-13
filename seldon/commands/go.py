@@ -24,6 +24,7 @@ You are orienting to a Seldon-managed project.
 - CC task files go in `cc_tasks/` with naming convention `YYYY-MM-DD_<descriptive_slug>.md`.
 - CC task files are immutable once written. If changes are needed, write a new file or get explicit permission.
 - For trivial housekeeping (creating tasks, closing stale items, marking CC tasks complete), use MCP tools directly: `seldon_task_create`, `seldon_task_update`, `seldon_task_close`, `seldon_issue_create`, `seldon_cc_complete`, `seldon_cc_register`, `seldon_query`.
+- You do NOT perform prose audits, glossary checks, cross-reference scans, or any compliance verification directly (no grep substitutes, no container-side scripts). These are `seldon verify`, `seldon paper audit`, and `seldon paper sync` responsibilities — CLI tools that run on the user's machine via CC. If an audit is needed, write a CC task whose first step invokes the appropriate Seldon CLI tools. Findings go into the graph as Issues/ResearchTasks, not as prose in chat.
 
 ### If You Are a CC Session (Claude Code)
 
