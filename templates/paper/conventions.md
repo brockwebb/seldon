@@ -54,6 +54,31 @@ reference for authors and AI editors.
 
 ---
 
+## Registration
+
+### Register after stable {#register-after-stable}
+
+Register section files as `PaperSection` artifacts when prose is **structurally
+stable** — not at drafting time, not after every style finding closes.
+
+**Structurally stable** means:
+- Addendum-compliance findings are closed
+- Tier 2/3 structural findings (long sentences, paragraph shape, section
+  closings, missing citations) are resolved
+- Citation verification completed or remaining items tracked as blocking tasks
+
+**Does NOT block registration:** style-level findings (inline bold policy,
+vocabulary repetition, minor punctuation), one stubborn unresolved citation
+out of many (track as blocker task, register section as incomplete-but-known).
+
+Registering drafts poisons the graph with content hashes that change every
+pass. Waiting for all findings to close means registration never happens.
+Register when the section *says* what it will say, even if style continues.
+
+Check registration gap: `seldon paper status`
+
+---
+
 ## Paper-Specific Rules
 
 *Add project-specific terminology, framing, and vocabulary rules below.*
