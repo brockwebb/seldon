@@ -23,7 +23,8 @@
 | `nist2023airm` | NIST AI RMF 1.0 | crosswalk paper, census-mcp paper, validity vocabulary |
 | `nist2023crosswalks` | NIST AI RMF Crosswalks resource page | crosswalk paper |
 | `nist2023playbook` | NIST AI RMF Playbook | crosswalk paper |
-| `nist2024genai` | NIST AI 600-1 Generative AI Profile | crosswalk paper, validity vocabulary |
+| `nist2024genai` | NIST AI 600-1 Generative AI Profile | crosswalk paper, validity vocabulary, SFV paper |
+| `omb2025m2521` | OMB M-25-21: Accelerating Federal Use of AI | SFV paper |
 
 ### Statutes and Regulations
 
@@ -45,7 +46,9 @@
 | `Hirstein2005` | Brain Fiction (confabulation — clinical origin) | validity vocabulary, crosswalk paper |
 | `kahneman2021` | Noise: A Flaw in Human Judgment | census-mcp paper |
 | `morris1938` | Foundations of the Theory of Signs | census-mcp paper |
-| `ShadishCookCampbell2002` | Experimental and Quasi-Experimental Designs (classical validity types) | validity vocabulary |
+| `cohen1960coefficient` | Cohen's kappa (inter-rater agreement) | SFV paper |
+| `landis1977measurement` | Landis & Koch agreement benchmarks | SFV paper |
+| `ShadishCookCampbell2002` | Experimental and Quasi-Experimental Designs (classical validity types) | validity vocabulary, SFV paper |
 
 ### AI/ML Methodology and Governance
 
@@ -53,6 +56,13 @@
 |-----|-------------------|---------|
 | `edge2024graphrag` | GraphRAG (Microsoft) | census-mcp paper |
 | `lewis2020rag` | Retrieval-Augmented Generation (NeurIPS 2020) | census-mcp paper |
+| `bryan2025agentic` | MS AI Red Team: Agentic AI failure taxonomy | SFV paper |
+| `chen2026sweci` | SWE-CI: AI coding agent codebase maintenance | SFV paper, ai-workflow-design |
+| `gebru2021datasheets` | Datasheets for Datasets | SFV paper |
+| `mitchell2019model` | Model Cards for Model Reporting | SFV paper |
+| `openai2025agents` | OpenAI: A Practical Guide to Building Agents | SFV paper |
+| `schluntz2024agents` | Anthropic: Building Effective Agents | SFV paper |
+| `wiesinger2024agents` | Google: Agents whitepaper | SFV paper |
 | `zheng2023judging` | LLM-as-a-Judge / MT-Bench | census-mcp paper |
 
 ### Webb (Own Published Work)
@@ -61,7 +71,8 @@
 |-----|-------------------|---------|
 | `Webb2025censusmcp` | open-census-mcp-server (GitHub software) | census-mcp paper |
 | `Webb2026ai4stats` | AI for Official Statistics (SFV chapter) | validity vocabulary |
-| `Webb2026crosswalk` | FCSM/NIST crosswalk (Zenodo preprint) | crosswalk paper, census-mcp paper, validity vocabulary |
+| `Webb2026crosswalk` | FCSM/NIST crosswalk (Zenodo preprint) | crosswalk paper, census-mcp paper, validity vocabulary, SFV paper |
+| `Webb2026pragmatics` | Pragmatics: Deterministic Context Engineering (Zenodo) | SFV paper |
 
 ## Key Normalization Note
 
