@@ -250,13 +250,42 @@ Presenting procedural correspondences without qualification as construct equival
 
 ---
 
+## Core Instrument Terms
+
+**Accumulated state**
+: The content that has built up inside the context window over sequential operations: decisions, terminology, parameters, intermediate findings considered cumulatively. Use when emphasizing history across operations. Distinguished from operative state (which is accumulated state at a specific moment).
+: Do not write: "accumulated context" (conflates container with contents).
+
+**Operative state**
+: The accumulated state at a specific point in time, as actively referenced by the pipeline in a current operation. Use when emphasizing what the pipeline is currently operating on, especially at points of computation, reconciliation, or session boundaries.
+: Do not write: "current state" (too vague; does not convey the SFV-specific meaning of state the pipeline treats as authoritative at that moment).
+
+**Composite instrument**
+: The combination of fixed model weights plus mutable context window that constitutes the measurement instrument in an AI-assisted pipeline. Unlike classical instruments, it changes with every interaction.
+: Do not write: "the model" (incomplete; the instrument is model + context window, not model alone).
+
+**Token limit**
+: The fixed architectural constraint on context window size, measured in tokens. An architectural constraint, not a mutable quantity. Distinct from context window content.
+: Do not write: "context window size" (ambiguous with the content meaning of context window), "context length" (acceptable but less precise; prefer token limit).
+
+**Instrument stability assumption**
+: The shared assumption across all four classical validity types (construct, internal, external, statistical conclusion) that the measurement instrument is defined, stable, and consistent. SFV guards this assumption in AI-assisted pipelines, where the instrument (fixed weights + mutable context window) is not inherently stable.
+: Do not write: "instrument reliability" (SFV is a validity construct, not a reliability construct; the argument is that state degradation alters what is being measured, not just how consistently it is measured).
+
+---
+
+## Framework Terms (Cross-Cutting)
+
+**Bounded agency**
+: AI systems operate with constrained autonomy and persistent human oversight. AI provides analysis and recommendations; humans make consequential decisions and remain accountable. Contextual applications include AI-assisted research pipelines (section-level drafts and analyses), federal statistical applications (AI-assisted data processing and preliminary findings), and agentic frameworks (well-defined subtasks with defined scope and rollback capability).
+: Do not write: "human in the loop" (one specific level of bounded agency, not the general principle), "AI oversight" (ambiguous direction — who oversees whom?).
+
+---
+
 ## Related Terms (Defined Elsewhere)
 
 **Context window**
 : The mutable content that accumulates during pipeline operation — the literal instrument in LLM pipelines (combined with fixed model weights). See Core Construct entry above for full definition and disambiguation from "token limit."
-
-**Token limit**
-: The fixed maximum capacity of a model's input, measured in tokens. An architectural constraint, not a mutable quantity. Distinguished from "context window," which refers to the content within the limit. Industry sources sometimes use "context window" to mean the token limit; this vocabulary does not.
 
 **Compaction**
 : Automated summarization/truncation of context to fit window limits. Distinct from intentional summarization by a researcher.

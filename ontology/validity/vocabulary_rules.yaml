@@ -1,0 +1,189 @@
+# vocabulary_rules.yaml — Enforcement Rules for VALIDITY_VOCABULARY.md
+#
+# Machine-readable banned synonyms and exemptions for seldon verify glossary gate.
+# Companion file to VALIDITY_VOCABULARY.md. Human-readable definitions are in
+# the markdown file; enforcement rules live here.
+#
+# Per AD-017 (Central Validity Ontology) and the register-after-stable convention.
+# Migrated from sfv-paper/paper/check_glossary.py — 2026-04-17.
+#
+# Format:
+#   rules:
+#     "Term Name":
+#       banned:
+#         - phrase: "banned synonym"         # case-insensitive whole-word match
+#           reason: "why it's banned"        # optional; surfaced in error messages
+#       exemptions:
+#         - "context phrase"                 # suppress violation when this appears on the same line
+#                                            # case-insensitive substring match
+
+rules:
+
+  # ---------------------------------------------------------------------------
+  # Core Construct
+  # ---------------------------------------------------------------------------
+
+  "State Fidelity Validity":
+    banned:
+      - phrase: "Survey Fidelity Validity"
+        reason: "domain-locks the construct; SFV is about state, not surveys"
+      - phrase: "state fidelity"
+        reason: "lowercase; always capitalize as a proper construct name"
+      - phrase: "SF validity"
+        reason: "abbreviation is SFV, not SF validity"
+    exemptions:
+      - "state fidelity validity"   # suppress substring matches when full construct name is used
+      - "attempted mutation"        # suppress when citing a T1 incident by example
+
+  "Context window":
+    banned:
+      - phrase: "context buffer"
+        reason: "no industry source uses this as a term of art"
+      - phrase: "memory"
+        reason: "implies persistence that LLM context windows do not inherently have"
+    exemptions:
+      - "refers variously"          # suppress when cataloguing rejected field terms
+
+  "Accumulated state":
+    banned:
+      - phrase: "accumulated context"
+        reason: "conflates container with contents"
+
+  "Operative state":
+    banned:
+      - phrase: "current state"
+        reason: "too vague; does not convey the SFV-specific meaning of state the pipeline treats as authoritative"
+
+  "Token limit":
+    banned:
+      - phrase: "context window size"
+        reason: "ambiguous with the content meaning of context window"
+      - phrase: "context length"
+        reason: "acceptable but less precise; prefer token limit"
+
+  "Composite instrument":
+    banned:
+      - phrase: "the model"
+        reason: "incomplete; the instrument is model + context window, not model alone"
+    exemptions:
+      - "not the model alone"       # sentence explicitly contrasts model with composite instrument
+      - "model behavior"            # related work discussing model mechanics
+      - "model's claim"             # related work discussing confabulation
+      - "model outputs"             # related work discussing predictions
+
+  # ---------------------------------------------------------------------------
+  # Sub-Dimensions
+  # ---------------------------------------------------------------------------
+
+  "Terminological Consistency":
+    banned:
+      - phrase: "term stability"
+        reason: "Terminological Consistency is the canonical sub-dimension name"
+      - phrase: "vocabulary consistency"
+        reason: "Terminological Consistency is the canonical sub-dimension name"
+
+  "State Provenance":
+    banned:
+      - phrase: "decision provenance"
+        reason: "too narrow; State Provenance covers all state, not just decisions"
+
+  "Compression Fidelity":
+    banned:
+      - phrase: "compaction fidelity"
+        reason: "Compression Fidelity is the canonical sub-dimension name"
+      - phrase: "summary accuracy"
+        reason: "Compression Fidelity is the canonical sub-dimension name"
+
+  "Session Continuity":
+    banned:
+      - phrase: "session persistence"
+        reason: "Session Continuity is the canonical sub-dimension name"
+      - phrase: "context carryover"
+        reason: "Session Continuity is the canonical sub-dimension name"
+
+  "State Coherence":
+    banned:
+      - phrase: "internal consistency"
+        reason: "too generic; conflicts with classical psychometric usage"
+    exemptions:
+      - "not internal consistency"  # operationalization table contrasting detection approaches
+
+  # ---------------------------------------------------------------------------
+  # Threat Taxonomy
+  # ---------------------------------------------------------------------------
+
+  "T1: Semantic Drift":
+    banned:
+      - phrase: "terminology drift"
+        reason: "Semantic Drift is the correct threat name; Terminological Consistency (TC) is the sub-dimension it violates"
+      - phrase: "concept drift"
+        reason: "established ML term for data distribution shift; different phenomenon from T1"
+    exemptions:
+      - "concept drift, the change"  # related work citing the ML term to contrast with Semantic Drift
+
+  "T2: False State Injection":
+    banned:
+      - phrase: "hallucination"
+        reason: "use confabulation per NIST AI 600-1; hallucination implies perception"
+      - phrase: "false memory"
+        reason: "anthropomorphizes the system"
+    exemptions:
+      - "confabulation"             # preferred term for the phenomenon T2 describes
+
+  "T3: Compression Distortion":
+    banned:
+      - phrase: "information loss"
+        reason: "too generic; T3 is a specific structural property of automated summarization"
+      - phrase: "compaction error"
+        reason: "implies a bug; T3 is a structural property of summarization, not a defect"
+
+  "T4: State Supersession Failure":
+    banned:
+      - phrase: "parameter reversion"
+        reason: "describes one symptom, not the threat class"
+      - phrase: "stale state"
+        reason: "too vague"
+
+  "T5: State Discontinuity":
+    banned:
+      - phrase: "context loss"
+        reason: "too vague"
+      - phrase: "session reset"
+        reason: "implies intentional action; T5 is an inadvertent failure"
+
+  # ---------------------------------------------------------------------------
+  # Severity Scale
+  # ---------------------------------------------------------------------------
+
+  "Fatal":
+    banned:
+      - phrase: "critical"
+        reason: "conflicts with the three-tier QC system: critical/substantive/administrative"
+    exemptions:
+      - "critical information"      # plain English usage, not a severity level designation
+
+  # ---------------------------------------------------------------------------
+  # Framework Terms
+  # ---------------------------------------------------------------------------
+
+  "TEVV":
+    banned:
+      - phrase: "testing and evaluation"
+        reason: "incomplete; TEVV has four components (Test, Evaluate, Verify, Validate)"
+
+  "Bounded agency":
+    banned:
+      - phrase: "human in the loop"
+        reason: "one specific level of bounded agency, not the general principle"
+      - phrase: "AI oversight"
+        reason: "ambiguous direction — who oversees whom?"
+
+  "Confabulation":
+    banned:
+      - phrase: "hallucination"
+        reason: "implies perception; confabulation implies construction of false knowledge; per NIST AI 600-1"
+
+  "Instrument stability assumption":
+    banned:
+      - phrase: "instrument reliability"
+        reason: "SFV is a validity construct, not a reliability construct; the paper explicitly argues this distinction"

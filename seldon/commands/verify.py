@@ -27,9 +27,16 @@ from typing import Optional
 
 import click
 
-from seldon.config import load_project_config, get_neo4j_driver, ONTOLOGY_MASTER_DB
+from seldon.config import (
+    load_project_config,
+    get_neo4j_driver,
+    get_sections_dir,
+    get_shared_ontology_sources,
+    ONTOLOGY_MASTER_DB,
+)
 from seldon.domain.loader import load_domain_config
 from seldon.paper.build import REFERENCE_PATTERN
+from seldon.paper.glossary_check import find_vocabulary_rule_files, run_glossary_check
 from seldon.paper.numbering import XREF_PATTERN
 
 
@@ -215,7 +222,10 @@ def check_ontology_freshness(driver, database: str, config: dict) -> CheckResult
 # ---------------------------------------------------------------------------
 
 def _find_glossary(project_dir: Path, config: dict = None) -> Path | None:
-    """Locate glossary.md using config paths, then conventional fallbacks."""
+    """Locate glossary.md using config paths, then conventional fallbacks.
+
+    Used only for backward-compatibility when shared_ontology is not configured.
+    """
     if config:
         for key in ("paper", "book"):
             content_dir = config.get("paths", {}).get(key)
@@ -235,7 +245,10 @@ def _find_glossary(project_dir: Path, config: dict = None) -> Path | None:
 
 
 def _find_check_script(project_dir: Path, glossary_path: Path) -> Path | None:
-    """Locate check_glossary.py near the glossary or at fallback locations."""
+    """Locate check_glossary.py near the glossary or at fallback locations.
+
+    Used only for backward-compatibility when shared_ontology is not configured.
+    """
     candidates = [
         glossary_path.parent / "check_glossary.py",
         project_dir / "paper" / "check_glossary.py",
@@ -248,13 +261,64 @@ def _find_check_script(project_dir: Path, glossary_path: Path) -> Path | None:
 
 
 def check_glossary(project_dir: Path, config: dict = None) -> CheckResult:
-    """Run glossary check — resolves glossary path from config, then fallbacks."""
-    glossary_path = _find_glossary(project_dir, config)
+    """Run glossary compliance check.
+
+    Resolution order:
+    1. shared_ontology configured → read vocabulary_rules.yaml companions →
+       run built-in enforcement against section files. No local glossary needed.
+    2. shared_ontology not configured, local glossary.md found →
+       run project-local check_glossary.py (backward compat).
+    3. Neither → warn with remediation hint.
+    """
+    cfg = config or {}
+
+    # --- Path 1: shared_ontology (preferred) --------------------------------
+    vocab_paths = get_shared_ontology_sources(cfg)
+    if vocab_paths:
+        rule_paths = find_vocabulary_rule_files(vocab_paths)
+        if not rule_paths:
+            return CheckResult(
+                name="Glossary",
+                symbol="warn",
+                summary=(
+                    "shared_ontology configured but no vocabulary_rules.yaml found — "
+                    "add one alongside each vocabulary file to enable enforcement"
+                ),
+            )
+
+        sections_dir = get_sections_dir(cfg, project_dir)
+        section_paths = sorted(sections_dir.glob("*.md")) if sections_dir.exists() else []
+
+        # Write keyword index alongside sections if the directory exists
+        index_out = sections_dir.parent / "keyword_index.md" if sections_dir.exists() else None
+
+        count, messages = run_glossary_check(rule_paths, section_paths, index_out)
+        rule_labels = ", ".join(p.parent.name for p in rule_paths)
+
+        if count:
+            return CheckResult(
+                name="Glossary",
+                symbol="fail",
+                summary=f"{count} violation{'s' if count != 1 else ''} found ({rule_labels})",
+                details=messages[:10],
+            )
+        return CheckResult(
+            name="Glossary",
+            symbol="pass",
+            summary=f"No violations ({rule_labels})",
+        )
+
+    # --- Path 2: local glossary.md + check_glossary.py (backward compat) ---
+    glossary_path = _find_glossary(project_dir, cfg)
     if glossary_path is None:
         return CheckResult(
             name="Glossary",
             symbol="warn",
-            summary="No glossary file found — skipping",
+            summary=(
+                "No shared_ontology configured and no local glossary.md found — "
+                "vocabulary enforcement skipped. "
+                "Add shared_ontology to seldon.yaml to enable central enforcement."
+            ),
         )
 
     check_script = _find_check_script(project_dir, glossary_path)
@@ -758,6 +822,8 @@ def _print_report(
         sym = SYMBOL_MAP.get(r.symbol, "?")
         padded = r.name.ljust(max_name + 2)
         click.echo(f"  {sym} {padded}{r.summary}")
+        for detail in r.details:
+            click.echo(f"      {detail}")
 
     # Summary line
     issues = sum(1 for r in results if r.symbol == "fail")

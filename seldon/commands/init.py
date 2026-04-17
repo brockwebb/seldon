@@ -55,6 +55,15 @@ def init_command(project_name: str):
     events_path = "seldon_events.jsonl"
 
     # 1. Create seldon.yaml
+    # Resolve shared ontology source: SELDON_ONTOLOGY_PATH env var takes precedence,
+    # then derive from the installed package location (works for editable installs).
+    ontology_env = os.getenv("SELDON_ONTOLOGY_PATH")
+    if ontology_env:
+        ontology_source = str(Path(ontology_env))
+    else:
+        # seldon/commands/init.py → seldon/ → project root → ontology/
+        ontology_source = str(Path(__file__).parent.parent.parent / "ontology")
+
     config = {
         "project": {
             "name": project_name,
@@ -68,6 +77,13 @@ def init_command(project_name: str):
         },
         "event_store": {
             "path": events_path,
+        },
+        "shared_ontology": {
+            "source": ontology_source,
+            "vocabularies": [
+                "validity/VALIDITY_VOCABULARY.md",
+            ],
+            "inheritance": "read-only",
         },
     }
     config_path = project_dir / "seldon.yaml"
