@@ -52,6 +52,22 @@ Before auditing, gather context:
 3. Read `references.bib` or `bibliography.md` for existing citation context.
 4. Run `seldon paper impact <section_artifact_id>` if the section is registered, to understand blast radius.
 
+## Model Routing (AD-019 dual-model SPOF break)
+
+Before producing findings, determine which model is executing this audit:
+
+1. Check `$AUDIT_MODEL`. If set, use that model via the LiteLLM-compatible
+   endpoint. Format: `<provider>/<model>` (e.g. `gemini/gemini-2.5-flash`,
+   `openrouter/anthropic/claude-3.5-sonnet`, `openai/gpt-4.1-mini`).
+2. If unset, use the frontmatter default (`sonnet`).
+3. Record the actual model used in the run manifest under
+   `run_manifest.model`. This is the value the observability substrate and
+   the review_synthesis gate use to attribute findings.
+
+If `AUDIT_MODEL` is set but the corresponding API key is missing, FAIL the
+audit explicitly rather than falling back silently. Silent fallback defeats
+the SPOF break.
+
 ## Claim Classification Taxonomy
 
 Every substantive assertion gets one of three classifications:
