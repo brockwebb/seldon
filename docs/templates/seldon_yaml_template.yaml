@@ -1,0 +1,71 @@
+# Seldon Project Configuration Template
+# Copy to project root as seldon.yaml and customize.
+# See: AD-017 (ontology), AD-019 (audit), AD-020 (review pipeline)
+#
+# REQUIRED fields: event_store.path, neo4j.database, project.name, project.slug
+# All other fields are optional but recommended. Omitting paths, conventions, and
+# review config is the root cause of the T5 (State Discontinuity) incident on sfv-paper:
+# 11 sections drafted with zero inline citations, no audit gates run, no run manifest.
+
+event_store:
+  path: seldon_events.jsonl
+
+neo4j:
+  database: seldon-{project-slug}  # Must be unique per project. Pattern: seldon-{slug}
+  uri: bolt://localhost:7687
+
+project:
+  name: "{project-name}"           # Human-readable: "AI Workflow Design for Official Statistics"
+  slug: "{project-slug}"           # URL-safe: "ai-workflow-design"
+  domain: research                  # or: engineering
+  created_at: "{ISO timestamp}"     # e.g. "2026-04-13T00:00:00.000000Z"
+  description: "{one-line description of the project}"
+
+# Document locations — CC sessions use these to find files.
+# Add paths for every top-level content directory in the project.
+# Omitting paths means CC sessions have to guess or ask. Don't make them guess.
+paths:
+  cc_tasks: cc_tasks/
+  handoffs: handoffs/
+  # Add project-specific paths below:
+  # book: book/                    # For book projects
+  # paper: paper/                  # For paper projects
+  # docs: docs/                    # Working documents
+  # assets: assets/                # Figures, diagrams
+
+# Shared vocabulary (AD-017: Central Validity Ontology)
+# Projects hold read-only replicas synced from seldon-ontology master DB.
+# List every vocabulary your project needs. Missing vocabularies = missing terminology.
+# After adding a vocabulary here, run: seldon ontology sync
+shared_ontology:
+  source: /Users/brock/Documents/GitHub/seldon/ontology/
+  vocabularies:
+    - validity/VALIDITY_VOCABULARY.md
+    # Add as needed:
+    # - practitioner/PRACTITIONER_VOCABULARY.md
+  inheritance: read-only  # This project queries, does not own
+
+# Authoring conventions — what CC sessions must enforce.
+# CRITICAL: Citation conventions must be declared here. The sfv-paper T5 incident
+# resulted from a project with no citation conventions declared: 11 sections written
+# with zero inline citations because CC had no rules to enforce.
+conventions:
+  cc_task_naming: "YYYY-MM-DD_<descriptive_slug>.md"
+  handoff_naming: "YYYY-MM-DD_<descriptive_slug>.md"
+  # Citation conventions — fill in the project's format:
+  # citation_style: "MyST {cite:t}`key` for narrative, {cite:p}`key` for parenthetical"
+  # bibliography_path: "book/references.bib"
+  # no_bare_prose_citations: true  # Prohibit "Author (Year)" plain text; require role markup
+  prohibited_tools:
+    - "github:create_or_update_file"  # Always — Seldon-tracked repos use Filesystem MCP
+
+# Audit pipeline configuration (AD-019, AD-020)
+# Declare this section before running any audit. Document type drives gate calibration.
+# See docs/conventions/audit_pipeline.md for the full gate profile by document type.
+# review:
+#   document_type: "{academic_paper | book_chapter | blog_post | course_handout | policy_brief}"
+#   audience: "{stated audience — used to calibrate stress test persona}"
+#   chapter_pattern: "{structural pattern chapters follow, if applicable}"
+#   # Optional gate overrides:
+#   # skip_gates: [bloom_depth_check]
+#   # stress_test_persona: "Reviewer 2 at GECCO"

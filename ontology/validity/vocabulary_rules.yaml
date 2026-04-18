@@ -53,6 +53,8 @@ rules:
     banned:
       - phrase: "current state"
         reason: "too vague; does not convey the SFV-specific meaning of state the pipeline treats as authoritative"
+    exemptions:
+      - "current state of the art"  # standard English phrase, not SFV terminology
 
   "Token limit":
     banned:
@@ -70,6 +72,7 @@ rules:
       - "model behavior"            # related work discussing model mechanics
       - "model's claim"             # related work discussing confabulation
       - "model outputs"             # related work discussing predictions
+      - "Model Context Protocol"    # proper noun: Anthropic's MCP standard
 
   # ---------------------------------------------------------------------------
   # Sub-Dimensions
@@ -161,6 +164,7 @@ rules:
         reason: "conflicts with the three-tier QC system: critical/substantive/administrative"
     exemptions:
       - "critical information"      # plain English usage, not a severity level designation
+      - "mission-critical"          # plain English compound adjective
 
   # ---------------------------------------------------------------------------
   # Framework Terms
