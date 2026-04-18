@@ -35,6 +35,10 @@ output/
 #FS
 **/.DS_Store
 
+# Observability runtime state (per-machine, not version-controlled)
+# Scripts are in scripts/ and ARE tracked; only runtime data is excluded.
+# The launchd plist lives at ~/Library/LaunchAgents/ — not in this repo.
+
 # Exclude built vector databases (too large for git)
 data/vector_db/*
 !data/vector_db/.gitkeep
