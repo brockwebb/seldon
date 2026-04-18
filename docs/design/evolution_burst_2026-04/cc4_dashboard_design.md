@@ -227,11 +227,11 @@ CREATE INDEX IF NOT EXISTS idx_metrics_timestamp
 
 ### Panel Q-c: Dormant projects
 
-**Shows:** Table with project slug, last activity timestamp, days since last activity, and a dormant/active badge. Projects with > 14 days since last graph write are flagged dormant in red.
+**Shows:** Table with project slug, last activity timestamp, days since last activity, and an inactive/active badge. Projects with > 14 days since last graph write are labeled inactive (neutral — not a quality judgment).
 
 **Reads:** `project.days_since_activity`, `project.last_activity_ts` — latest snapshot.
 
-**Supports decisions:** Which projects are Phase C kill candidates? Dormant projects may indicate completed work (OK) or abandoned work (kill candidate). The table gives Brock the data; the Phase C kill/keep decision is manual.
+**Supports decisions:** Which projects haven't been touched recently and may warrant a check-in? Dormancy indicates only that nothing has touched the project in N days — not whether the project is healthy, paused, between-phases, or unstarted. Interpretation requires human context. The table surfaces the fact; Brock draws the conclusion. See CC4 Addendum A for the standing principle: projects are never kill candidates; kill scope is infrastructure and components only.
 
 ### Panel Q-d: Unremediated open issues
 

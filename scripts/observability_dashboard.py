@@ -280,8 +280,8 @@ HTML_PAGE = """<!DOCTYPE html>
     th { color: #8b949e; text-align: left; padding: 6px 8px;
          border-bottom: 1px solid #30363d; }
     td { padding: 5px 8px; border-bottom: 1px solid #21262d; }
-    tr.dormant td { color: #f85149; }
-    tr.active td { color: #3fb950; }
+    tr.dormant td { color: #8b949e; }
+    tr.active td { color: #e6edf3; }
     .badge { display: inline-block; padding: 1px 6px; border-radius: 10px;
              font-size: 0.75em; }
     .badge-red { background: #3d1c1c; color: #f85149; }
@@ -399,7 +399,7 @@ async function renderDormant() {
     const dormant = r.dormant;
     const cls = dormant ? 'dormant' : 'active';
     const badge = dormant
-      ? `<span class="badge badge-red">dormant >${d.dormant_threshold_days}d</span>`
+      ? `<span class="badge badge-gray">inactive >${d.dormant_threshold_days}d</span>`
       : `<span class="badge badge-green">active</span>`;
     const iso = r.last_activity_iso !== 'unknown'
       ? r.last_activity_iso.replace('T', ' ').substring(0, 16) + ' UTC'
