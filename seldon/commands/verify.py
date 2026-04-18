@@ -74,6 +74,82 @@ TIER_A_CHECKS = frozenset({
 
 
 # ---------------------------------------------------------------------------
+# Observability emission (AD-024)
+# ---------------------------------------------------------------------------
+
+def _emit_verify_metrics(
+    project_name: str,
+    results: list["CheckResult"],
+    strict: bool,
+) -> None:
+    """Emit one metric row per check to the observability substrate.
+
+    Best-effort: any exception is swallowed. Verify must never fail
+    because observability is down.
+
+    Metric names (dot-notation per AD-024 convention):
+      seldon.verify.check.status   — 0=pass, 1=warn, 2=fail
+      seldon.verify.run.tier_a_fail_count
+    Dimensions: {project, check_name, strict, tier_a}.
+    """
+    import json
+    import sqlite3
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    db_path = Path.home() / ".seldon-observability" / "metrics.db"
+    if not db_path.parent.exists():
+        return  # substrate not initialized on this host; skip silently
+
+    status_map = {"pass": 0, "warn": 1, "fail": 2}
+    ts = datetime.now(timezone.utc).isoformat()
+    tier_a_fail = sum(
+        1 for r in results if r.symbol == "fail" and r.name in TIER_A_CHECKS
+    )
+
+    try:
+        conn = sqlite3.connect(db_path, timeout=2.0)
+        try:
+            for r in results:
+                dims = {
+                    "project": project_name,
+                    "check_name": r.name,
+                    "strict": strict,
+                    "tier_a": r.name in TIER_A_CHECKS,
+                }
+                conn.execute(
+                    "INSERT INTO metrics(timestamp, metric_name, metric_value, "
+                    "scope, dimensions, collected_by) VALUES (?,?,?,?,?,?)",
+                    (
+                        ts,
+                        "seldon.verify.check.status",
+                        float(status_map.get(r.symbol, -1)),
+                        project_name,
+                        json.dumps(dims),
+                        "seldon_verify_v1",
+                    ),
+                )
+            conn.execute(
+                "INSERT INTO metrics(timestamp, metric_name, metric_value, "
+                "scope, dimensions, collected_by) VALUES (?,?,?,?,?,?)",
+                (
+                    ts,
+                    "seldon.verify.run.tier_a_fail_count",
+                    float(tier_a_fail),
+                    project_name,
+                    json.dumps({"project": project_name, "strict": strict}),
+                    "seldon_verify_v1",
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        # Never let observability break verify. Silent failure by design.
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -726,6 +802,9 @@ def verify_command(fix, quiet, strict):
             )
     finally:
         driver.close()
+
+    # AD-024: emit one row per check to observability substrate (best-effort)
+    _emit_verify_metrics(project_name, results, strict)
 
     # Output
     if not quiet:
