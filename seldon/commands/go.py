@@ -40,7 +40,9 @@ You are orienting to a Seldon-managed project.
 - End with `seldon closeout` for session handoff, then `seldon verify` before commit.
 - Never write literal numbers for research results — use `{{result:NAME:value}}`.
 - Never hardcode figure/table numbers — use `{{figure:NAME}}` and `{{table:NAME}}`.
-- The graph is the source of truth, not files. Files are projections of graph state."""
+- The graph is the source of truth, not files. Files are projections of graph state.
+- Before describing any workflow, process, or pipeline to the user, verify by reading the relevant convention document (docs/conventions/) or querying the graph. Never reconstruct a process from inference. If you don't know, say so.
+- Before asserting the state of a task, artifact, or run, query the graph first. Do not rely on memory or handoff text that may be stale."""
 
 _AVAILABLE_COMMANDS_SECTION = """\
 ## Available Seldon Commands
@@ -348,6 +350,113 @@ def _get_project_state_section(project_dir: str) -> str:
         return "## Project State\n\n*Seldon graph not available. Project may not be initialized.*"
 
 
+GATE_PROFILES: dict[str, dict] = {
+    "academic_paper": {
+        "gates": ["content_audit", "practitioner_stress_test", "bloom_depth_check", "secondary_sweep", "cascade_results", "review_synthesis"],
+        "skipped": [],
+    },
+    "book_chapter": {
+        "gates": ["content_audit", "practitioner_stress_test", "bloom_depth_check", "secondary_sweep", "cascade_results", "review_synthesis"],
+        "skipped": [],
+    },
+    "policy_brief": {
+        "gates": ["content_audit", "practitioner_stress_test", "secondary_sweep", "cascade_results", "review_synthesis"],
+        "skipped": ["bloom_depth_check"],
+    },
+    "blog_post": {
+        "gates": ["content_audit", "practitioner_stress_test", "secondary_sweep", "cascade_results", "review_synthesis"],
+        "skipped": ["bloom_depth_check"],
+    },
+    "course_handout": {
+        "gates": ["content_audit", "practitioner_stress_test", "bloom_depth_check", "secondary_sweep", "cascade_results", "review_synthesis"],
+        "skipped": [],
+    },
+}
+
+
+def _get_pipeline_section(project_dir: str) -> Optional[str]:
+    """Return Audit Pipeline section for seldon go output, or None on error."""
+    try:
+        import yaml
+
+        seldon_yaml = Path(project_dir) / "seldon.yaml"
+        if not seldon_yaml.exists():
+            return None
+
+        with open(seldon_yaml) as f:
+            config = yaml.safe_load(f)
+
+        review_cfg = config.get("review", {}) or {}
+        doc_type = review_cfg.get("document_type")
+
+        lines = ["## Audit Pipeline", ""]
+
+        if not doc_type:
+            lines.append("**Not configured.** Add `review.document_type` to seldon.yaml to enable.")
+            return "\n".join(lines)
+
+        lines.append(f"**Document type:** {doc_type}")
+
+        profile = GATE_PROFILES.get(doc_type)
+        if profile:
+            lines.append(f"**Gates:** {', '.join(profile['gates'])}")
+            if profile["skipped"]:
+                lines.append(f"**Skipped gates:** {', '.join(profile['skipped'])} ({doc_type})")
+        else:
+            lines.append(f"**Gates:** *(unknown profile for '{doc_type}' — update GATE_PROFILES)*")
+
+        # Agent definitions
+        agents_dir = Path(project_dir) / ".claude" / "agents"
+        auditor_ok = (agents_dir / "auditor.md").exists()
+        cascade_ok = (agents_dir / "cascade-checker.md").exists()
+        auditor_sym = "✓" if auditor_ok else "✗"
+        cascade_sym = "✓" if cascade_ok else "✗"
+        agent_line = f"**Agent definitions:** auditor.md {auditor_sym}, cascade-checker.md {cascade_sym}"
+        if not auditor_ok or not cascade_ok:
+            agent_line += " — see docs/conventions/audit_pipeline.md §7"
+        lines.append(agent_line)
+
+        # Latest audit run
+        audits_dir = Path(project_dir) / "audits"
+        if audits_dir.is_dir():
+            run_dirs = sorted(
+                [d for d in audits_dir.iterdir() if d.is_dir() and d.name.startswith("run-")],
+                key=lambda d: d.name,
+            )
+            if run_dirs:
+                latest = run_dirs[-1]
+                manifest_path = latest / "run_manifest.yaml"
+                verdict = "unknown"
+                if manifest_path.exists():
+                    with open(manifest_path) as f:
+                        manifest = yaml.safe_load(f) or {}
+                    # verdict may be top-level or nested under review_synthesis
+                    verdict = (
+                        manifest.get("verdict")
+                        or manifest.get("overall_verdict")
+                        or manifest.get("review_synthesis", {}).get("verdict", "unknown")
+                        if isinstance(manifest.get("review_synthesis"), dict)
+                        else manifest.get("review_synthesis", "unknown")
+                    )
+                    if not verdict or verdict == "unknown":
+                        # Try gates list
+                        gates = manifest.get("gates", [])
+                        for g in gates:
+                            if isinstance(g, dict) and g.get("gate") == "review_synthesis":
+                                verdict = g.get("verdict", "unknown")
+                                break
+                lines.append(f"**Last run:** {latest.name} — verdict: {verdict}")
+            else:
+                lines.append("**Last run:** *(none)*")
+        else:
+            lines.append("**Last run:** *(audits/ not found)*")
+
+        return "\n".join(lines)
+
+    except Exception:
+        return None
+
+
 def _resolve_project_dir(project_dir: str) -> str:
     """Resolve project_dir, falling back to SELDON_DEFAULT_PROJECT if project_dir is '.'."""
     if project_dir != ".":
@@ -397,6 +506,11 @@ def assemble_go_context(
 
     # Section 5 — Project State
     sections.append(_get_project_state_section(project_dir))
+
+    # Section 5.5 — Audit Pipeline
+    pipeline = _get_pipeline_section(project_dir)
+    if pipeline is not None:
+        sections.append(pipeline)
 
     # Section 6 — Agent Roles (optional — omit if no roles exist)
     agent_roles = _get_agent_roles_section(project_dir)
@@ -457,6 +571,7 @@ def assemble_go_context_as_dict(
         "project_context": project_context,
         "latest_handoff": latest_handoff,
         "project_state": project_state,
+        "audit_pipeline": _get_pipeline_section(project_dir),
         "agent_roles": agent_roles,
         "available_commands": available_commands,
     }

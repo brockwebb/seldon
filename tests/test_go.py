@@ -13,6 +13,7 @@ from click.testing import CliRunner
 from seldon.commands.go import (
     assemble_go_context,
     assemble_go_context_as_dict,
+    _get_pipeline_section,
 )
 from seldon.cli import main
 
@@ -115,6 +116,7 @@ def test_go_json_output_has_expected_keys(tmp_path):
         "project_context",
         "latest_handoff",
         "project_state",
+        "audit_pipeline",
         "agent_roles",
         "available_commands",
     }
@@ -206,3 +208,77 @@ def test_go_invalid_env_path_degrades_gracefully(tmp_path, monkeypatch):
     monkeypatch.setenv("SELDON_DEFAULT_PROJECT", str(tmp_path / "nonexistent"))
     result = assemble_go_context(project_dir=".")
     assert "## Role" in result
+
+
+# ---------------------------------------------------------------------------
+# Tests 13-17: _get_pipeline_section
+# ---------------------------------------------------------------------------
+
+def _write_seldon_yaml(path: Path, content: str) -> None:
+    (path / "seldon.yaml").write_text(content)
+
+
+def test_pipeline_section_policy_brief_gates(tmp_path):
+    """policy_brief profile lists correct gates and marks bloom_depth_check as skipped."""
+    _write_seldon_yaml(tmp_path, "project:\n  name: test\nreview:\n  document_type: policy_brief\n")
+    result = _get_pipeline_section(str(tmp_path))
+    assert result is not None
+    assert "policy_brief" in result
+    assert "content_audit" in result
+    assert "bloom_depth_check" in result  # appears in skipped line
+    assert "Skipped gates" in result
+
+
+def test_pipeline_section_not_configured(tmp_path):
+    """No review.document_type key → 'Not configured' message."""
+    _write_seldon_yaml(tmp_path, "project:\n  name: test\n")
+    result = _get_pipeline_section(str(tmp_path))
+    assert result is not None
+    assert "Not configured" in result
+
+
+def test_pipeline_section_no_seldon_yaml(tmp_path):
+    """No seldon.yaml → returns None (no section emitted)."""
+    result = _get_pipeline_section(str(tmp_path))
+    assert result is None
+
+
+def test_pipeline_section_agent_checkmarks(tmp_path):
+    """Agent files present → checkmarks; missing → ✗ with doc reference."""
+    _write_seldon_yaml(tmp_path, "project:\n  name: test\nreview:\n  document_type: academic_paper\n")
+
+    # No agents dir yet — both missing
+    result_missing = _get_pipeline_section(str(tmp_path))
+    assert "✗" in result_missing
+    assert "audit_pipeline.md" in result_missing
+
+    # Create agent files
+    agents_dir = tmp_path / ".claude" / "agents"
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "auditor.md").write_text("# Auditor")
+    (agents_dir / "cascade-checker.md").write_text("# Cascade")
+
+    result_present = _get_pipeline_section(str(tmp_path))
+    assert "✓" in result_present
+    assert "✗" not in result_present
+
+
+def test_pipeline_section_latest_run_surfaced(tmp_path):
+    """Latest run-* directory name appears in the pipeline section."""
+    _write_seldon_yaml(tmp_path, "project:\n  name: test\nreview:\n  document_type: academic_paper\n")
+    audits_dir = tmp_path / "audits"
+    audits_dir.mkdir()
+    (audits_dir / "run-001_2026-04-10").mkdir()
+    latest = audits_dir / "run-002_2026-04-17"
+    latest.mkdir()
+    (latest / "run_manifest.yaml").write_text("run_id: run-002\ndate: '2026-04-17'\n")
+
+    result = _get_pipeline_section(str(tmp_path))
+    assert "run-002_2026-04-17" in result
+
+
+def test_pipeline_behavioral_contract_rules_present():
+    """_ROLE_SECTION must contain both new verify-before-asserting rules."""
+    from seldon.commands.go import _ROLE_SECTION
+    assert "verify by reading the relevant convention document" in _ROLE_SECTION
+    assert "query the graph first" in _ROLE_SECTION
