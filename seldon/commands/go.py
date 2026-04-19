@@ -374,6 +374,61 @@ GATE_PROFILES: dict[str, dict] = {
 }
 
 
+_VERDICT_SEVERITY = {
+    "needs_revision": 0,
+    "conditional_pass": 1,
+    "conditionally_ready": 2,
+    "clean": 3,
+    "ready_to_ship": 4,
+    "ready_for_submission": 4,
+}
+
+
+def _extract_verdict(manifest: dict) -> str:
+    """Extract the run-level verdict from a run_manifest dict.
+
+    Checks in priority order:
+    1. Top-level ``verdict`` or ``overall_verdict``
+    2. ``paper_status`` (semantic status field used by some runs)
+    3. ``delta_summary.verdict`` (overall summary for delta runs)
+    4. Worst-case aggregate across ``chapters_audited[N].verdict``
+    5. ``"unknown"`` if nothing found
+    """
+    # 1. Top-level canonical fields
+    for key in ("verdict", "overall_verdict"):
+        v = manifest.get(key)
+        if v and isinstance(v, str):
+            return v
+
+    # 2. paper_status (semantic equivalent used by some manifests)
+    v = manifest.get("paper_status")
+    if v and isinstance(v, str):
+        return v
+
+    # 3. delta_summary.verdict
+    delta = manifest.get("delta_summary")
+    if isinstance(delta, dict):
+        v = delta.get("verdict")
+        if v and isinstance(v, str):
+            return v
+
+    # 4. Aggregate across chapters_audited per-chapter verdicts (worst-case)
+    chapters = manifest.get("chapters_audited", [])
+    if isinstance(chapters, list) and chapters:
+        chapter_verdicts = [
+            c.get("verdict") for c in chapters
+            if isinstance(c, dict) and c.get("verdict")
+        ]
+        if chapter_verdicts:
+            # Return the worst verdict by severity rank (lowest score = worst)
+            return min(
+                chapter_verdicts,
+                key=lambda v: _VERDICT_SEVERITY.get(v, 99),
+            )
+
+    return "unknown"
+
+
 def _get_pipeline_section(project_dir: str) -> Optional[str]:
     """Return Audit Pipeline section for seldon go output, or None on error."""
     try:
@@ -430,21 +485,7 @@ def _get_pipeline_section(project_dir: str) -> Optional[str]:
                 if manifest_path.exists():
                     with open(manifest_path) as f:
                         manifest = yaml.safe_load(f) or {}
-                    # verdict may be top-level or nested under review_synthesis
-                    verdict = (
-                        manifest.get("verdict")
-                        or manifest.get("overall_verdict")
-                        or manifest.get("review_synthesis", {}).get("verdict", "unknown")
-                        if isinstance(manifest.get("review_synthesis"), dict)
-                        else manifest.get("review_synthesis", "unknown")
-                    )
-                    if not verdict or verdict == "unknown":
-                        # Try gates list
-                        gates = manifest.get("gates", [])
-                        for g in gates:
-                            if isinstance(g, dict) and g.get("gate") == "review_synthesis":
-                                verdict = g.get("verdict", "unknown")
-                                break
+                    verdict = _extract_verdict(manifest)
                 lines.append(f"**Last run:** {latest.name} — verdict: {verdict}")
             else:
                 lines.append("**Last run:** *(none)*")

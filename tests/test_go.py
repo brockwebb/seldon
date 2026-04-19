@@ -277,6 +277,61 @@ def test_pipeline_section_latest_run_surfaced(tmp_path):
     assert "run-002_2026-04-17" in result
 
 
+def test_verdict_extraction_top_level(tmp_path):
+    """Top-level verdict field is returned directly."""
+    from seldon.commands.go import _extract_verdict
+    assert _extract_verdict({"verdict": "ready_to_ship"}) == "ready_to_ship"
+
+
+def test_verdict_extraction_paper_status(tmp_path):
+    """paper_status is used when no top-level verdict key exists."""
+    from seldon.commands.go import _extract_verdict
+    assert _extract_verdict({"paper_status": "ready_for_submission"}) == "ready_for_submission"
+
+
+def test_verdict_extraction_delta_summary(tmp_path):
+    """delta_summary.verdict is used when top-level verdict is absent."""
+    from seldon.commands.go import _extract_verdict
+    manifest = {
+        "run_id": "run-002",
+        "delta_summary": {"verdict": "conditionally_ready", "net_reduction": 28},
+    }
+    assert _extract_verdict(manifest) == "conditionally_ready"
+
+
+def test_verdict_extraction_chapters_worst_case(tmp_path):
+    """Worst-case chapter verdict returned when no run-level summary exists."""
+    from seldon.commands.go import _extract_verdict
+    manifest = {
+        "chapters_audited": [
+            {"chapter": "ch01", "verdict": "conditionally_ready"},
+            {"chapter": "ch02", "verdict": "needs_revision"},
+            {"chapter": "ch03", "verdict": "clean"},
+        ]
+    }
+    assert _extract_verdict(manifest) == "needs_revision"
+
+
+def test_verdict_extraction_missing(tmp_path):
+    """Returns 'unknown' when no verdict is found anywhere."""
+    from seldon.commands.go import _extract_verdict
+    assert _extract_verdict({"run_id": "run-001", "gates": []}) == "unknown"
+
+
+def test_pipeline_section_shows_verdict(tmp_path):
+    """Pipeline section renders the extracted verdict in the Last run line."""
+    _write_seldon_yaml(tmp_path, "project:\n  name: test\nreview:\n  document_type: academic_paper\n")
+    audits_dir = tmp_path / "audits"
+    audits_dir.mkdir()
+    latest = audits_dir / "run-003_2026-04-17"
+    latest.mkdir()
+    (latest / "run_manifest.yaml").write_text(
+        "run_id: run-003\ndate: '2026-04-17'\nverdict: ready_to_ship\n"
+    )
+    result = _get_pipeline_section(str(tmp_path))
+    assert "ready_to_ship" in result
+
+
 def test_pipeline_behavioral_contract_rules_present():
     """_ROLE_SECTION must contain both new verify-before-asserting rules."""
     from seldon.commands.go import _ROLE_SECTION
