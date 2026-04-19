@@ -54,19 +54,31 @@ Before auditing, gather context:
 
 ## Model Routing (AD-019 dual-model SPOF break)
 
-Before producing findings, determine which model is executing this audit:
+Before producing findings, determine which model is executing classification:
 
-1. Check `$AUDIT_MODEL`. If set, use that model via the LiteLLM-compatible
-   endpoint. Format: `<provider>/<model>` (e.g. `gemini/gemini-2.5-flash`,
-   `openrouter/anthropic/claude-3.5-sonnet`, `openai/gpt-4.1-mini`).
-2. If unset, use the frontmatter default (`sonnet`).
-3. Record the actual model used in the run manifest under
-   `run_manifest.model`. This is the value the observability substrate and
-   the review_synthesis gate use to attribute findings.
-
-If `AUDIT_MODEL` is set but the corresponding API key is missing, FAIL the
-audit explicitly rather than falling back silently. Silent fallback defeats
-the SPOF break.
+1. Run `echo "$AUDIT_MODEL"`.
+2. **If unset or empty:** classify assertions yourself, as before. Record
+   the frontmatter model name (`sonnet` by default) in the run manifest
+   under `run_manifest.model`.
+3. **If set:** do NOT classify assertions yourself. Instead, for each
+   section, shell out:
+   ```bash
+   seldon audit-dispatch \
+     --section <section_path> \
+     --gate content_audit \
+     --show-model \
+     > audits/run-<NNN>_<date>/<section>_content_audit.yaml 2>>audit_dispatch.log
+   ```
+   The resolved model prints to stderr; capture it in the run manifest.
+   Your job becomes orchestration: validating that the YAML is well-formed,
+   generating the Perplexity queries file from citation_gap findings,
+   and producing the cascading_audit_tasks list by reading what the alt
+   model produced. You do not re-classify.
+4. If `seldon audit-dispatch` exits non-zero (missing key, bad model
+   string), FAIL the audit explicitly. Do not fall back to in-agent
+   classification. Silent fallback defeats the SPOF break.
+5. Record the actual model used in the run manifest under
+   `run_manifest.model` exactly as printed by `--show-model`.
 
 ## Claim Classification Taxonomy
 

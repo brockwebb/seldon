@@ -16,6 +16,7 @@ from seldon.commands.verify import verify_command
 from seldon.commands.issue import issue_group
 from seldon.commands.cc import cc_group
 from seldon.commands.glossary import glossary_group
+from seldon.commands.audit_dispatch import audit_dispatch_command
 
 
 @click.group()
@@ -42,3 +43,4 @@ main.add_command(verify_command, name="verify")
 main.add_command(issue_group, name="issue")
 main.add_command(cc_group, name="cc")
 main.add_command(glossary_group, name="glossary")
+main.add_command(audit_dispatch_command, name="audit-dispatch")
