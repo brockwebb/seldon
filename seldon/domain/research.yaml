@@ -470,6 +470,10 @@ relationship_types:
     from_types: [Issue]
     to_types: [ResearchTask]
 
+  remediated_by:
+    from_types: [Issue]
+    to_types: [PaperSection, ResearchTask, ArchitecturalDecision, DesignNote, Figure, Table, Script]
+
   informs:
     from_types: [DesignNote]
     to_types: [ArchitecturalDecision]
