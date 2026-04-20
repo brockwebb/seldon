@@ -1,6 +1,7 @@
 """CC task completion tracking — seldon cc complete."""
 from __future__ import annotations
 
+import hashlib
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,11 @@ import click
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
 from seldon.domain.loader import load_domain_config
+
+
+def _file_hash(path: Path) -> str:
+    """Compute SHA-256 of file content."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _get_domain_config(config: dict):
@@ -76,6 +82,16 @@ def _get_artifact_state(driver, database: str, artifact_id: str) -> str | None:
     return record["state"] if record else None
 
 
+def _get_artifact_file_hash(driver, database: str, artifact_id: str) -> str | None:
+    """Return the file_hash of an artifact, or None if not set."""
+    with driver.session(database=database) as session:
+        record = session.run(
+            "MATCH (t:Artifact {artifact_id: $aid}) RETURN t.file_hash AS fh",
+            aid=artifact_id,
+        ).single()
+    return record["fh"] if record else None
+
+
 @click.group("cc")
 def cc_group():
     """CC task lifecycle commands."""
@@ -129,6 +145,30 @@ def cc_complete(filepath, note):
             )
             driver.close()
             raise SystemExit(0)
+
+        # Verify file immutability (hash check)
+        registered_hash = _get_artifact_file_hash(driver, database, existing_id)
+        if registered_hash is not None:
+            current_hash = _file_hash(task_path)
+            if current_hash != registered_hash:
+                click.echo(
+                    f"ERROR: Task file has been modified since registration.\n"
+                    f"  File: {rel_path}\n"
+                    f"  Registered hash: {registered_hash[:16]}...\n"
+                    f"  Current hash:    {current_hash[:16]}...\n"
+                    f"  Task immutability violated. If changes are needed, create an\n"
+                    f"  addendum file or a new superseding task. The original task file\n"
+                    f"  must not be modified after registration.",
+                    err=True,
+                )
+                driver.close()
+                raise SystemExit(1)
+        else:
+            click.echo(
+                "WARNING: Task has no registered file_hash. Skipping immutability check.\n"
+                "  Legacy tasks registered before hash enforcement are not verified.",
+                err=True,
+            )
 
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
@@ -250,6 +290,7 @@ def cc_register(filepath):
 
     name = _name_from_filepath(rel_path)
     description = _extract_description(task_path)
+    content_hash = _file_hash(task_path)
 
     try:
         artifact_id = create_artifact(
@@ -262,6 +303,7 @@ def cc_register(filepath):
                 "description": description,
                 "name": name,
                 "source_file": rel_path,
+                "file_hash": content_hash,
             },
             actor="cc",
             authority="accepted",

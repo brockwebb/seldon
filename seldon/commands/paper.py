@@ -669,3 +669,100 @@ def paper_glossary(fmt, output_path):
         click.echo(f"Written to {output_path}")
     else:
         click.echo(text)
+
+
+@paper_group.command("fix")
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--find", "find_text", required=True, help="Exact text to find.")
+@click.option("--replace", "replace_text", required=True, help="Replacement text (empty string for deletion).")
+@click.option("--confirm", is_flag=True, default=False, help="Skip confirmation prompt (auto-apply).")
+@click.option("--no-build", is_flag=True, default=False, help="Skip post-edit build cycle.")
+def paper_fix(file, find_text, replace_text, confirm, no_build):
+    """Apply a single mechanical fix to a section file with event capture.
+
+    Enforces single-match (find text must appear exactly once), shows a diff,
+    prompts for confirmation, captures the edit as an event, and optionally
+    runs the paper build cycle.
+    """
+    import subprocess
+    from datetime import datetime, timezone
+    from seldon.core.events import append_event, make_event
+
+    file_path = Path(file)
+    project_dir = Path.cwd()
+
+    content = file_path.read_text(encoding="utf-8")
+    count = content.count(find_text)
+
+    if count == 0:
+        click.echo(f"Error: Text not found in {file}.", err=True)
+        raise SystemExit(1)
+    if count > 1:
+        click.echo(
+            f"Error: Text appears {count} times in {file}. "
+            "Use a longer/more specific --find string to match exactly once.",
+            err=True,
+        )
+        raise SystemExit(1)
+
+    # Show diff context
+    idx = content.index(find_text)
+    lines = content.splitlines(keepends=True)
+    line_no = content[:idx].count("\n") + 1
+    start = max(0, line_no - 4)
+    end = min(len(lines), line_no + 3)
+
+    click.echo(f"\n--- {file} (line {line_no}) ---")
+    click.echo("BEFORE:")
+    for i in range(start, end):
+        prefix = ">> " if i + 1 == line_no else "   "
+        click.echo(f"  {prefix}{i + 1}: {lines[i].rstrip()}")
+
+    new_content = content.replace(find_text, replace_text, 1)
+    new_lines = new_content.splitlines(keepends=True)
+    click.echo("AFTER:")
+    for i in range(start, min(len(new_lines), end)):
+        prefix = ">> " if i + 1 == line_no else "   "
+        click.echo(f"  {prefix}{i + 1}: {new_lines[i].rstrip()}")
+
+    if not confirm:
+        if not click.confirm("\nApply this fix?", default=False):
+            click.echo("Aborted.")
+            raise SystemExit(0)
+
+    # Apply
+    file_path.write_text(new_content, encoding="utf-8")
+
+    # Capture event
+    try:
+        event = make_event(
+            event_type="paper_fix",
+            actor="human",
+            authority="accepted",
+            payload={
+                "file": str(file_path),
+                "find": find_text[:200],
+                "replace": replace_text[:200],
+                "diff_chars": len(replace_text) - len(find_text),
+            },
+        )
+        append_event(project_dir, event)
+    except Exception:
+        pass  # Event capture is best-effort
+
+    click.echo(f"Fixed: {file} — {abs(len(replace_text) - len(find_text))} characters changed.")
+
+    if not no_build:
+        click.echo("Running build cycle...")
+        # check_glossary.py
+        glossary_script = project_dir / "paper" / "check_glossary.py"
+        if glossary_script.exists():
+            subprocess.run(["python", str(glossary_script)], cwd=str(project_dir))
+        # seldon paper sync
+        subprocess.run(["seldon", "paper", "sync"], cwd=str(project_dir))
+        # seldon paper build --no-render
+        result = subprocess.run(
+            ["seldon", "paper", "build", "--no-render"],
+            cwd=str(project_dir),
+        )
+        click.echo(f"Build: {'clean' if result.returncode == 0 else 'failed'}")
