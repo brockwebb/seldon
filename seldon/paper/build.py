@@ -25,7 +25,9 @@ from seldon.paper.qc import (
     load_qc_config,
     load_style_config,
     Violation,
+    format_violations,
 )
+from seldon.paper.copyedit import load_copyedit_config, run_copyedit, parse_bib_keys
 
 
 # ---------------------------------------------------------------------------
@@ -408,6 +410,20 @@ def build_paper(
         return 1
 
     # 8. QC checks
+    # 8a. Tier 0: Copy Edit (always runs — not skipped by --skip-qc)
+    copyedit_violations: list[Violation] = []
+    try:
+        ce_config = load_copyedit_config()
+        bib_path = paper_dir / "references.bib"
+        bib_keys = parse_bib_keys(bib_path) if bib_path.exists() else None
+        for fname, resolved_text in resolved_sections:
+            copyedit_violations.extend(
+                run_copyedit(resolved_text, ce_config, fname, bib_keys=bib_keys)
+            )
+    except FileNotFoundError:
+        pass  # No copyedit config — skip silently
+
+    # 8b. Tier 2/3
     tier2_violations: list[Violation] = []
     tier3_violations: list[Violation] = []
 
@@ -459,6 +475,8 @@ def build_paper(
             print(f"WARNING: quarto render failed (exit code {e.returncode})")
 
     # 12. Print summary report
+    if copyedit_violations:
+        print(format_violations(copyedit_violations, "TIER 0: Copy Edit"))
     _print_report(
         ref_errors=all_ref_errors,
         tier2=tier2_violations,
@@ -468,7 +486,9 @@ def build_paper(
         strict=strict,
     )
 
-    # 13. Return code
+    # 13. Return code — CE violations are always blocking
+    if copyedit_violations:
+        return 1
     if strict and (tier2_violations or tier3_violations):
         return 1
     return 0

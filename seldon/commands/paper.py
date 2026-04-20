@@ -24,6 +24,11 @@ from seldon.paper.qc import (
     run_tier3,
     format_violations,
 )
+from seldon.paper.copyedit import (
+    load_copyedit_config,
+    parse_bib_keys,
+    run_copyedit,
+)
 from seldon.paper.build import build_paper
 
 
@@ -91,6 +96,75 @@ def paper_audit(files, tier, qc_config_path, style_config_path):
 
     # Exit 1 if any Tier 2 violations
     if run_tier2_checks and tier2_violations:
+        raise SystemExit(1)
+
+
+@paper_group.command("copyedit")
+@click.argument("files", nargs=-1, type=click.Path(exists=True))
+@click.option("--bib", default=None, type=click.Path(exists=True),
+              help="Path to references.bib for orphaned citation checks.")
+@click.option("--cross-file", is_flag=True, default=False,
+              help="Check for duplicates across files, not just within each file.")
+@click.option("--copyedit-config", default=None, type=click.Path(),
+              help="Override copyedit config path.")
+def paper_copyedit(files, bib, cross_file, copyedit_config):
+    """Check markdown for mechanical copy-edit defects (Tier 0).
+
+    Catches: duplicate sentences/paragraphs, orphaned references/citations,
+    formatting artifacts, heading hierarchy gaps, leftover markers.
+
+    FILES defaults to paper/sections/*.md relative to the current directory.
+    """
+    project_dir = Path.cwd()
+
+    # Resolve files
+    if files:
+        paths = [Path(f) for f in files]
+    else:
+        default_dir = project_dir / "paper" / "sections"
+        if not default_dir.exists():
+            click.echo(f"No files provided and {default_dir} does not exist.", err=True)
+            raise SystemExit(1)
+        paths = sorted(default_dir.glob("*.md"))
+        if not paths:
+            click.echo(f"No .md files found in {default_dir}.", err=True)
+            raise SystemExit(1)
+
+    config = load_copyedit_config(Path(copyedit_config) if copyedit_config else None)
+
+    # Parse bib keys if provided (or auto-detect)
+    bib_keys = None
+    if bib:
+        bib_keys = parse_bib_keys(Path(bib))
+    else:
+        auto_bib = project_dir / "paper" / "references.bib"
+        if auto_bib.exists():
+            bib_keys = parse_bib_keys(auto_bib)
+
+    # Build cross-file heading sections map
+    all_heading_sections: set[str] = set()
+    for p in paths:
+        import re as _re
+        fname_match = _re.match(r"(\d+)_", p.stem)
+        if fname_match:
+            all_heading_sections.add(str(int(fname_match.group(1))))
+
+    # Global sentence index for cross-file duplicate detection
+    global_sentences: dict[str, list[str]] | None = {} if cross_file else None
+
+    violations = []
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        violations.extend(run_copyedit(
+            text, config, filename=str(path),
+            bib_keys=bib_keys,
+            heading_sections=all_heading_sections,
+            global_sentences=global_sentences,
+        ))
+
+    click.echo(format_violations(violations, "TIER 0: Copy Edit"))
+
+    if violations:
         raise SystemExit(1)
 
 

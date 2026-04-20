@@ -1,0 +1,69 @@
+copyedit_rules:
+  # CE-01: Duplicate sentences
+  duplicate_sentence:
+    enabled: true
+    # Normalize before comparison: lowercase, collapse whitespace, strip punctuation
+    normalize: true
+    # Minimum sentence length (words) to consider — avoids flagging "Yes." as duplicate
+    min_words: 6
+
+  # CE-02: Duplicate paragraphs
+  duplicate_paragraph:
+    enabled: true
+    # Similarity threshold for near-duplicate (1.0 = exact only)
+    similarity_threshold: 0.9
+    min_words: 15
+
+  # CE-03: Near-duplicate phrases
+  near_duplicate_phrases:
+    enabled: true
+    ngram_size: 8           # Check 8-word n-grams
+    min_occurrences: 2      # Flag if same n-gram appears 2+ times
+    # Exclude common academic phrases that naturally repeat
+    exclude_patterns:
+      - "in this section we"
+      - "in the next section"
+      - "as described in section"
+      - "the rest of this"
+
+  # CE-04: Orphaned section references
+  orphaned_refs:
+    enabled: true
+    # Regex patterns to detect section references
+    ref_patterns:
+      - 'Section\s+(\d+)'
+      - 'see Section\s+(\d+)'
+      - 'in Section\s+(\d+)'
+
+  # CE-05: Orphaned citations
+  orphaned_citations:
+    enabled: true
+    # Patterns to extract citation keys
+    cite_patterns:
+      - '\{cite:[pt]\}`([^`]+)`'
+
+  # CE-06: Formatting artifacts
+  formatting:
+    enabled: true
+    checks:
+      - double_spaces           # Two or more consecutive spaces in prose
+      - repeated_punctuation    # ".." (not "..."), ",," etc.
+      - trailing_whitespace     # Whitespace at end of line
+      - non_breaking_spaces     # U+00A0
+      - mixed_quotes           # Straight and smart quotes in same file
+      - tab_characters          # Tabs in prose (not code blocks)
+
+  # CE-07: Heading hierarchy
+  heading_hierarchy:
+    enabled: true
+
+  # CE-08: Leftover markers
+  markers:
+    enabled: true
+    patterns:
+      - 'TODO'
+      - 'FIXME'
+      - 'XXX'
+      - 'HACK'
+      - 'PLACEHOLDER'
+      - 'TBD'
