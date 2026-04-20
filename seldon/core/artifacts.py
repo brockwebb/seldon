@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -10,6 +11,11 @@ from seldon.domain.loader import DomainConfig, validate_artifact_type, validate_
 from seldon.core.state import validate_transition
 from seldon.core.events import append_event, make_event
 from seldon.core import graph
+
+
+def _now_iso() -> str:
+    """ISO-8601 UTC timestamp for updated_at."""
+    return datetime.now(timezone.utc).isoformat()
 
 
 def create_artifact(
@@ -75,11 +81,14 @@ def create_artifact(
     )
     append_event(project_dir, event)
 
+    now = _now_iso()
     props = dict(properties)
     props["artifact_id"] = artifact_id
     props["state"] = initial_state
     props["authority"] = authority
     props["created_by"] = actor
+    props.setdefault("created_at", now)
+    props["updated_at"] = now
 
     with driver.session(database=database) as session:
         graph.create_artifact(session, artifact_type, props)
@@ -120,6 +129,9 @@ def update_artifact(
                 )
     except FileNotFoundError:
         pass  # No seldon.yaml — allow
+
+    properties = dict(properties)
+    properties["updated_at"] = _now_iso()
 
     event = make_event(
         event_type="artifact_updated",
@@ -169,6 +181,7 @@ def transition_state(
 
     with driver.session(database=database) as session:
         graph.change_state(session, artifact_id, new_state)
+        graph.update_artifact(session, artifact_id, {"updated_at": _now_iso()})
 
     # Auto-propagate staleness downstream when an artifact goes stale
     if new_state == "stale":

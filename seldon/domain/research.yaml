@@ -1,5 +1,14 @@
 domain: research
-version: "0.1"
+version: "0.2"
+
+# System properties set automatically on every artifact, regardless of type:
+#   artifact_id    — UUID, set at creation
+#   state          — domain-managed state machine value
+#   authority      — 'proposed' | 'accepted' (AI proposes, human accepts)
+#   created_at     — ISO-8601 UTC, set at creation
+#   created_by     — actor string, set at creation
+#   updated_at     — ISO-8601 UTC, set at every mutation (create, update, state change)
+# These are written by seldon/core/artifacts.py and never declared per-type.
 
 artifact_types:
   Script:

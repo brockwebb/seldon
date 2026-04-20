@@ -424,3 +424,114 @@ def test_artifact_show_displays_relationships(
     result = runner.invoke(main, ["artifact", "show", result_id])
     assert result.exit_code == 0, result.output
     assert "GENERATED_BY" in result.output
+
+
+# ── updated_at (75.3) ────────────────────────────────────────────────────────
+
+def test_create_artifact_sets_updated_at(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """75.3 — create_artifact writes updated_at."""
+    artifact_id = create_artifact(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_type="ResearchTask",
+        properties={"description": "test task"},
+        actor="test",
+        authority="accepted",
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        node = s.run(
+            "MATCH (a:Artifact {artifact_id: $id}) RETURN a.updated_at AS ts",
+            id=artifact_id,
+        ).single()
+    assert node["ts"] is not None
+
+
+def test_update_artifact_bumps_updated_at(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """75.3 — update_artifact refreshes updated_at."""
+    import time
+
+    artifact_id = create_artifact(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_type="ResearchTask",
+        properties={"description": "initial"},
+        actor="test",
+        authority="accepted",
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        t1 = s.run(
+            "MATCH (a:Artifact {artifact_id: $id}) RETURN a.updated_at AS ts",
+            id=artifact_id,
+        ).single()["ts"]
+
+    time.sleep(0.01)
+
+    update_artifact(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        artifact_id=artifact_id,
+        properties={"description": "updated"},
+        actor="test",
+        authority="accepted",
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        t2 = s.run(
+            "MATCH (a:Artifact {artifact_id: $id}) RETURN a.updated_at AS ts",
+            id=artifact_id,
+        ).single()["ts"]
+
+    assert t2 > t1
+
+
+def test_transition_state_bumps_updated_at(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    """75.3 — state transitions also bump updated_at."""
+    import time
+
+    artifact_id = create_artifact(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_type="ResearchTask",
+        properties={"description": "test task"},
+        actor="test",
+        authority="accepted",
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        t1 = s.run(
+            "MATCH (a:Artifact {artifact_id: $id}) RETURN a.updated_at AS ts",
+            id=artifact_id,
+        ).single()["ts"]
+
+    time.sleep(0.01)
+
+    transition_state(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_id=artifact_id,
+        artifact_type="ResearchTask",
+        current_state="proposed",
+        new_state="accepted",
+        actor="test",
+        authority="accepted",
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        t2 = s.run(
+            "MATCH (a:Artifact {artifact_id: $id}) RETURN a.updated_at AS ts",
+            id=artifact_id,
+        ).single()["ts"]
+
+    assert t2 > t1
