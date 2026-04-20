@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.brock.seldon-observability-dashboard</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/anaconda3/bin/python3</string>
+        <string>/Users/brock/Documents/GitHub/seldon/scripts/observability_dashboard.py</string>
+        <string>--port</string>
+        <string>8765</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/brock/.seldon-observability/dashboard.stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/brock/.seldon-observability/dashboard.stderr.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/brock/Documents/GitHub/seldon</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+</dict>
+</plist>
