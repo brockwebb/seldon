@@ -9,7 +9,8 @@ from seldon.core.graph import get_artifact, get_artifacts_by_type
 from seldon.core.events import read_events
 from seldon.config import start_session, end_session, get_current_session
 from seldon.commands.session import get_briefing_data
-from seldon.commands.init import _BOOTSTRAP_TASKS, _create_bootstrap_tasks
+from seldon.commands.init import _apply_template
+from seldon.templates.loader import load_template
 
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
@@ -223,28 +224,22 @@ def test_events_tagged_with_session_id(
     assert all_events[0]["session_id"] == session_id
 
 
-# ── init bootstrap tasks ──────────────────────────────────────────────────────
+# ── init bootstrap tasks (template-driven) ────────────────────────────────────
 
 class TestInitBootstrapTasks:
-    def test_bootstrap_tasks_list_has_five_entries(self):
-        assert len(_BOOTSTRAP_TASKS) == 5
+    """Legacy tests kept to guard the paper template's contract.
 
-    def test_bootstrap_task_ids_are_unique(self):
-        prefixes = [t.split(":")[0] for t in _BOOTSTRAP_TASKS]
-        assert len(set(prefixes)) == 5
+    Detailed template tests live in `tests/test_templates.py` and
+    `tests/test_init.py`; this class exercises the end-to-end seeding of the
+    paper template against the test graph.
+    """
 
-    def test_bootstrap_task_descriptions_cover_expected_topics(self):
-        combined = " ".join(_BOOTSTRAP_TASKS).lower()
-        assert "bib" in combined         # bibliography
-        assert "structure" in combined   # structure lock
-        assert "pipeline" in combined    # build pipeline
-        assert "deploy" in combined      # deploy verification
-        assert "artifact" in combined    # artifact tracking
-
-    def test_create_bootstrap_tasks_creates_five_research_tasks(
+    def test_paper_template_seeds_five_research_tasks(
         self, neo4j_driver, project_dir, domain_config, clean_test_db
     ):
-        _create_bootstrap_tasks(neo4j_driver, NEO4J_DB, project_dir)
+        _apply_template(
+            neo4j_driver, NEO4J_DB, project_dir, load_template("paper")
+        )
 
         with neo4j_driver.session(database=NEO4J_DB) as session:
             records = session.run(
@@ -253,10 +248,12 @@ class TestInitBootstrapTasks:
 
         assert len(records) == 5
 
-    def test_create_bootstrap_tasks_descriptions_start_with_setup_prefix(
+    def test_paper_template_descriptions_start_with_setup_prefix(
         self, neo4j_driver, project_dir, domain_config, clean_test_db
     ):
-        _create_bootstrap_tasks(neo4j_driver, NEO4J_DB, project_dir)
+        _apply_template(
+            neo4j_driver, NEO4J_DB, project_dir, load_template("paper")
+        )
 
         with neo4j_driver.session(database=NEO4J_DB) as session:
             descriptions = [
@@ -269,10 +266,12 @@ class TestInitBootstrapTasks:
         setup_prefixed = [d for d in descriptions if d.startswith("SETUP-")]
         assert len(setup_prefixed) == 5
 
-    def test_create_bootstrap_tasks_are_in_proposed_state(
+    def test_paper_template_tasks_are_in_proposed_state(
         self, neo4j_driver, project_dir, domain_config, clean_test_db
     ):
-        _create_bootstrap_tasks(neo4j_driver, NEO4J_DB, project_dir)
+        _apply_template(
+            neo4j_driver, NEO4J_DB, project_dir, load_template("paper")
+        )
 
         with neo4j_driver.session(database=NEO4J_DB) as session:
             states = [
@@ -283,6 +282,20 @@ class TestInitBootstrapTasks:
             ]
 
         assert all(s == "proposed" for s in states)
+
+    def test_blank_template_seeds_zero_tasks(
+        self, neo4j_driver, project_dir, domain_config, clean_test_db
+    ):
+        _apply_template(
+            neo4j_driver, NEO4J_DB, project_dir, load_template("blank")
+        )
+
+        with neo4j_driver.session(database=NEO4J_DB) as session:
+            count = session.run(
+                "MATCH (t:Artifact:ResearchTask) RETURN count(t) AS n"
+            ).single()["n"]
+
+        assert count == 0
 
 
 # ── citation health briefing ──────────────────────────────────────────────────

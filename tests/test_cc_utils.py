@@ -5,7 +5,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from seldon.commands.cc import _name_from_filepath, _extract_description
+from seldon.commands.cc import (
+    _name_from_filepath,
+    _extract_description,
+    _description_looks_like_metadata,
+    cc_register,
+)
 from seldon.mcp_server import _WRITE_PATTERN
 
 
@@ -67,6 +72,90 @@ class TestExtractDescription:
         f = tmp_path / "task.md"
         f.write_text("# Title\n\n---\n\nFirst real content.\n")
         assert _extract_description(f) == "First real content."
+
+    def test_skips_location_bold_metadata(self, tmp_path):
+        """Regression: **Location:** is not in the narrow allowlist but is metadata."""
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "**Location:** cc_tasks/foo.md\n"
+            "**Date:** 2026-04-21\n\n"
+            "Fix the metadata extractor.\n"
+        )
+        assert _extract_description(f) == "Fix the metadata extractor."
+
+    def test_skips_bare_location_metadata(self, tmp_path):
+        """Regression (the bug): `Location: foo.md` (no bold) was being taken as description."""
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "Location: cc_tasks/foo.md\n"
+            "Date: 2026-04-21\n\n"
+            "Fix the metadata extractor.\n"
+        )
+        assert _extract_description(f) == "Fix the metadata extractor."
+
+    def test_skips_unusual_metadata_keys(self, tmp_path):
+        """Keys outside the old allowlist (Severity, Target, Owner, Depends on, Estimate) are skipped."""
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "**Severity:** high\n"
+            "**Target:** 2026-05-01\n"
+            "**Owner:** brock\n"
+            "**Depends on:** AD-022\n"
+            "**Estimate:** 2h\n\n"
+            "Actual task description goes here.\n"
+        )
+        assert _extract_description(f) == "Actual task description goes here."
+
+    def test_metadata_only_file_falls_back_to_filename(self, tmp_path):
+        """File with only metadata → fallback to filename (caller emits warning)."""
+        f = tmp_path / "metadata_only.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "**Date:** 2026-04-21\n"
+            "**Location:** cc_tasks/x.md\n"
+            "**Severity:** high\n"
+        )
+        assert _extract_description(f) == "metadata_only.md"
+
+    def test_multiword_key_with_underscore(self, tmp_path):
+        """Keys with word chars like 'Due_date' or 'X-Ref' still recognized."""
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# CC Task\n\n"
+            "**Due date:** tomorrow\n"
+            "**X-Ref:** issue-42\n\n"
+            "Real description.\n"
+        )
+        assert _extract_description(f) == "Real description."
+
+
+class TestDescriptionLooksLikeMetadata:
+    def test_bold_metadata_line_detected(self):
+        assert _description_looks_like_metadata("**Date:** 2026-04-21")
+
+    def test_bare_metadata_line_detected(self):
+        assert _description_looks_like_metadata("Location: cc_tasks/foo.md")
+
+    def test_prose_sentence_not_flagged(self):
+        assert not _description_looks_like_metadata("Fix the metadata extractor.")
+
+    def test_sentence_with_midline_colon_not_flagged(self):
+        assert not _description_looks_like_metadata(
+            "The bug is that descriptions starting with metadata are truncated."
+        )
+
+    def test_empty_string_not_flagged(self):
+        assert not _description_looks_like_metadata("")
+
+
+class TestCCRegisterFlags:
+    def test_register_has_description_option(self):
+        """--description flag must exist on cc register, mirroring --note on cc complete."""
+        option_names = {param.name for param in cc_register.params}
+        assert "description" in option_names
 
 
 class TestQueryWritePattern:

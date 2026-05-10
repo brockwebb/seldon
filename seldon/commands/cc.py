@@ -36,17 +36,33 @@ def _name_from_filepath(filepath: str) -> str:
     return stem.replace("_", " ")
 
 
+# Structural match for any metadata-style line: optional `**`, a capitalized key
+# (words, spaces, `_`, `-`), a colon, optional closing `**`, then whitespace or
+# end-of-string. Intentionally key-agnostic so new metadata keys (Location,
+# Severity, Owner, Depends on, Estimate, …) are recognized without maintenance.
 _METADATA_RE = re.compile(
-    r"^\*\*(?:Date|Project|Priority|Reference|Context|Status|Relates to|Provenance)\b",
-    re.IGNORECASE,
+    r"^\*?\*?[A-Z][A-Za-z0-9 _-]{0,40}:\*?\*?(\s|$)",
 )
+
+
+def _description_looks_like_metadata(text: str) -> bool:
+    """Return True if text still looks like a metadata line.
+
+    Used as a defensive second layer after extraction — if the chosen
+    description matches the metadata pattern, emit a warning so the user
+    knows something went wrong with auto-extraction.
+    """
+    if not text:
+        return False
+    return bool(_METADATA_RE.match(text))
 
 
 def _extract_description(filepath: Path) -> str:
     """Extract first substantive line from a CC task file.
 
     Skips blank lines, markdown headers (#), horizontal rules (---),
-    and bold metadata lines (**Date:**, **Project:**, etc.).
+    and any metadata-style line (``**Key:**`` or bare ``Key:`` prefix).
+    Falls back to the filename if no substantive line is found.
     """
     for line in filepath.read_text().splitlines():
         stripped = line.strip()
@@ -60,6 +76,25 @@ def _extract_description(filepath: Path) -> str:
             continue
         return stripped[:200]
     return filepath.name
+
+
+def _warn_if_description_suspicious(filepath: Path, description: str) -> None:
+    """Emit a stderr warning when an auto-extracted description looks like metadata
+    or fell back to the filename. Does not fail the registration.
+    """
+    looks_bad = (
+        _description_looks_like_metadata(description)
+        or description == filepath.name
+    )
+    if not looks_bad:
+        return
+    click.echo(
+        "WARNING: extracted description may be metadata, not task description.\n"
+        f"  File: {filepath}\n"
+        f'  Extracted: "{description[:60]}..."\n'
+        "  Consider adding a description section or using --description to override.",
+        err=True,
+    )
 
 
 def _find_existing(driver, database: str, rel_path: str) -> str | None:
@@ -207,7 +242,11 @@ def cc_complete(filepath, note):
         return
 
     name = _name_from_filepath(rel_path)
-    description = note if note else _extract_description(task_path)
+    if note:
+        description = note
+    else:
+        description = _extract_description(task_path)
+        _warn_if_description_suspicious(task_path, description)
     completed_at = datetime.now(timezone.utc).isoformat()
 
     try:
@@ -249,7 +288,8 @@ def cc_complete(filepath, note):
 
 @cc_group.command("register")
 @click.argument("filepath")
-def cc_register(filepath):
+@click.option("--description", default=None, help="Override auto-extracted description")
+def cc_register(filepath, description):
     """Register a CC task file as a proposed ResearchTask in the graph.
 
     Use at task creation time to track the task before execution.
@@ -289,7 +329,9 @@ def cc_register(filepath):
         raise SystemExit(0)
 
     name = _name_from_filepath(rel_path)
-    description = _extract_description(task_path)
+    if description is None:
+        description = _extract_description(task_path)
+        _warn_if_description_suspicious(task_path, description)
     content_hash = _file_hash(task_path)
 
     try:

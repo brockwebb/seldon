@@ -371,6 +371,82 @@ artifact_types:
         category: documentation
         description: "Source or trigger for this analysis (e.g., paper reference, observed failure mode)"
 
+  BuildRun:
+    # Defined by AD-025 (DeerFlow as Build-Time Harness).
+    # Emitted by a bounded-build orchestrator at run completion.
+    # Schema doc: seldon/docs/architecture/build_run_event_schema.md
+    # JSON schema: seldon/schemas/build_run.json
+    properties:
+      run_id:
+        required: true
+        description: "Unique run identifier (uuid4)"
+      goal:
+        required: true
+        description: "The prompt or spec text that initiated the run"
+      goal_hash:
+        required: true
+        description: "SHA-256 of the goal text, hex lowercase, for dedup/audit"
+      plan_hash:
+        required: true
+        description: "SHA-256 of the orchestrator's planning-phase output"
+      ad_reference:
+        category: documentation
+        description: "AD that authorizes this run (e.g., AD-025)"
+      models_used:
+        required: true
+        description: "List of {provider, model, role, input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens, invocations, cost_usd}"
+      subagents:
+        category: documentation
+        description: "List of {name, role, invocations, cumulative_cost_usd} when the orchestrator runs subagent fan-out"
+      files_produced:
+        required: true
+        description: "List of {path, content_hash, commit_sha, artifact_type, bytes}"
+      validation_results:
+        category: documentation
+        description: "Object with seldon_verify (pass/fail/skipped), tests, lint, custom_checks"
+      started_at:
+        required: true
+        description: "ISO-8601 UTC timestamp"
+      completed_at:
+        required: true
+        description: "ISO-8601 UTC timestamp"
+      duration_seconds:
+        required: true
+        description: "Wallclock duration"
+      total_cost_usd:
+        required: true
+        description: "Sum across models_used[*].cost_usd"
+      terminal_reason:
+        required: true
+        description: "Outcome: success, cost_overrun, wallclock_overrun, invocation_overrun, error, manual_kill"
+      internal_trace_ref:
+        required: true
+        description: "Path or hash referencing the orchestrator's deep trace (e.g., DeerFlow state.db record)"
+      notes:
+        category: documentation
+        description: "Operator-facing free text"
+
+  GeneratedFile:
+    # Generic file produced by a BuildRun. Use this when a more specific
+    # Seldon artifact type (Script, AgentRole, ArchitecturalDecision, etc.)
+    # does not fit. The BuildRun's `produces` edge points here.
+    properties:
+      path:
+        required: true
+        description: "Absolute path to the produced file"
+      content_hash:
+        required: true
+        description: "SHA-256 of file contents at emission time"
+      bytes:
+        category: system
+        description: "File size in bytes"
+      role:
+        category: documentation
+        description: "Free-form role tag (e.g., persona_prompt, retrieval_contract, integration_glue)"
+      commit_sha:
+        category: system
+        description: "Git SHA if the file is committed; null if uncommitted"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -491,6 +567,14 @@ relationship_types:
     from_types: [ArchitecturalDecision]
     to_types: [ArchitecturalDecision]
 
+  produces:
+    # AD-025: BuildRun emits at completion with a list of produced artifacts.
+    # The projection creates `produces` edges from the BuildRun to each
+    # artifact whose type appears in the `files_produced[*].artifact_type`
+    # field. GeneratedFile is the catch-all when no more-specific type fits.
+    from_types: [BuildRun]
+    to_types: [GeneratedFile, Script, AgentRole, Workflow, ArchitecturalDecision, DesignNote, ResearchTask, OntologyTerm]
+
 state_machines:
   Result:
     proposed: [verified, rejected]
@@ -603,4 +687,23 @@ state_machines:
     proposed: [active]
     active: [stale, deprecated]
     stale: [active]
+    deprecated: []
+
+  BuildRun:
+    # AD-025: BuildRun is emitted as a terminal record. It does not transition
+    # through running/queued states inside Seldon — those live in the
+    # orchestrator's own state.db. By the time Seldon sees a BuildRun, the
+    # run is already finished. Distinguish success vs failure via
+    # `terminal_reason` and `validation_results.seldon_verify` rather than
+    # via the artifact state machine.
+    proposed: [completed, failed, archived]
+    completed: [archived, stale]
+    failed: [archived]
+    archived: []
+    stale: [archived]
+
+  GeneratedFile:
+    proposed: [active, stale]
+    active: [stale, deprecated]
+    stale: [active, deprecated]
     deprecated: []

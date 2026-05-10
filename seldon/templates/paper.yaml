@@ -1,0 +1,8 @@
+name: paper
+description: Research paper manuscript project — seeds standard setup tasks.
+bootstrap_tasks:
+  - description: "SETUP-01: Establish .bib file and add {{cite:...}} tokens from chapter 1 onward"
+  - description: "SETUP-02: Lock section structure (all PaperSections accepted) before any section enters draft"
+  - description: "SETUP-03: Validate build pipeline on 2-3 section prototype before scaling to full manuscript"
+  - description: "SETUP-04: Verify deploy workflow fires on first push; smoke-test the rendered output"
+  - description: "SETUP-05: Decide which build artifacts are tracked vs. gitignored before first commit"

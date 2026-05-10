@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seldon.local/schemas/build_run.json",
+  "title": "BuildRun event",
+  "description": "Provenance record emitted at the completion of a bounded-build orchestrator run, per AD-025. Single JSONL line appended to <project>/seldon_events.jsonl. Failed runs also emit; distinguish via terminal_reason and validation_results.seldon_verify.",
+  "type": "object",
+  "required": [
+    "event_type",
+    "schema_version",
+    "run_id",
+    "goal",
+    "goal_hash",
+    "plan_hash",
+    "models_used",
+    "files_produced",
+    "started_at",
+    "completed_at",
+    "duration_seconds",
+    "total_cost_usd",
+    "terminal_reason",
+    "internal_trace_ref"
+  ],
+  "properties": {
+    "event_type": {
+      "const": "build_run",
+      "description": "Event type discriminator for the JSONL event stream"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Semver-style schema version, e.g. \"1.0\""
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this run (uuid4)"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The prompt or spec text that initiated the run"
+    },
+    "goal_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the goal text, hex lowercase"
+    },
+    "plan_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the orchestrator's planning-phase output"
+    },
+    "ad_reference": {
+      "type": "string",
+      "pattern": "^AD-[0-9]{3}$",
+      "description": "Optional AD identifier authorizing this run"
+    },
+    "models_used": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "provider",
+          "model",
+          "role",
+          "input_tokens",
+          "output_tokens",
+          "invocations",
+          "cost_usd"
+        ],
+        "properties": {
+          "provider": { "type": "string" },
+          "model": { "type": "string" },
+          "role": {
+            "type": "string",
+            "description": "Role this model played: planner, implementer, validator, summarizer, etc."
+          },
+          "input_tokens": { "type": "integer", "minimum": 0 },
+          "output_tokens": { "type": "integer", "minimum": 0 },
+          "cache_creation_input_tokens": { "type": "integer", "minimum": 0, "default": 0 },
+          "cache_read_input_tokens": { "type": "integer", "minimum": 0, "default": 0 },
+          "invocations": { "type": "integer", "minimum": 1 },
+          "cost_usd": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "subagents": {
+      "type": "array",
+      "description": "Subagents spawned by the orchestrator. Optional — omit if no fan-out occurred.",
+      "items": {
+        "type": "object",
+        "required": ["name", "role", "invocations"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "invocations": { "type": "integer", "minimum": 1 },
+          "cumulative_cost_usd": { "type": ["number", "null"], "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "files_produced": {
+      "type": "array",
+      "description": "Files written or modified by the run. May be empty for failed runs that produced no artifacts.",
+      "items": {
+        "type": "object",
+        "required": ["path", "content_hash", "artifact_type"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "content_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "commit_sha": {
+            "type": ["string", "null"],
+            "pattern": "^[0-9a-f]{7,40}$|^$"
+          },
+          "artifact_type": {
+            "type": "string",
+            "description": "Seldon artifact type: GeneratedFile, Script, AgentRole, ArchitecturalDecision, DesignNote, etc."
+          },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "role": {
+            "type": "string",
+            "description": "Optional free-form role tag (e.g., persona_prompt, retrieval_contract, integration_glue). Maps to GeneratedFile.role in the Seldon domain config."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "validation_results": {
+      "type": "object",
+      "description": "Validation outcomes. Optional but strongly recommended.",
+      "properties": {
+        "seldon_verify": {
+          "type": "string",
+          "enum": ["pass", "fail", "skipped"]
+        },
+        "tests": { "type": "object" },
+        "lint": { "type": "object" },
+        "custom_checks": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the run began"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the run terminated (success or failure)"
+    },
+    "duration_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Wallclock duration"
+    },
+    "total_cost_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Sum across models_used[*].cost_usd"
+    },
+    "terminal_reason": {
+      "type": "string",
+      "enum": [
+        "success",
+        "cost_overrun",
+        "wallclock_overrun",
+        "invocation_overrun",
+        "error",
+        "manual_kill"
+      ],
+      "description": "Why the run ended"
+    },
+    "internal_trace_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path or hash referencing the orchestrator's deep trace (e.g., DeerFlow state.db row)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional operator-facing free text"
+    }
+  },
+  "additionalProperties": false
+}

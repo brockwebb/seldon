@@ -171,6 +171,15 @@ Every public function gets a docstring (Args/Returns/Raises). Every module gets 
 `docs/design/seldon_architectural_decisions.md` — AD-001 through AD-014.
 AD-017: Central Validity Ontology — `docs/design/AD-017_central_validity_ontology.md`
 AD-021: Session Continuity Fidelity — `docs/design/AD-021_session_continuity_fidelity.md`
+AD-026: `seldon init` Project Templates — `docs/design/AD-026_init_templates.md`
+
+## Project Templates
+
+`seldon init <name>` applies a project template (YAML under `seldon/templates/`).
+Default is `blank` (empty graph). Use `--template paper` for manuscript projects.
+`seldon init --list-templates` enumerates available templates. The chosen template
+is recorded at `project.template` in the generated `seldon.yaml`. Adding a new
+project type is a new YAML file, not a code change. See AD-026.
 
 ## Shared Ontology
 
