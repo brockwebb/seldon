@@ -45,7 +45,8 @@ def audit_dispatch_command(section, gate, system_prompt, max_tokens, show_model)
     """
     model = resolve_audit_model()
     if show_model:
-        click.echo(f"audit-dispatch model: {model}", err=True)
+        label = "claude --print (Max OAuth)" if model == "max" else model
+        click.echo(f"audit-dispatch model: {label}", err=True)
 
     text = section.read_text(encoding="utf-8")
     system = _system_prompt_for(gate, system_prompt)
