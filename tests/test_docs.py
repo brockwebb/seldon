@@ -33,6 +33,7 @@ def test_artifact_types_has_all_types(research_config):
         "Issue",  # Issue artifact type
         "ArchitecturalDecision", "DesignNote",  # design documentation types
         "BuildRun", "GeneratedFile",  # AD-025 build harness emission
+        "AuditRun", "AuditFinding",  # AD-020 audit pipeline ingest
     }
     assert set(research_config.artifact_types.keys()) == expected
 

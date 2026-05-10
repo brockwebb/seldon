@@ -665,6 +665,311 @@ def seldon_cc_register(
 
 
 # ---------------------------------------------------------------------------
+# Audit orchestration (AD-019 + AD-020 pipeline, Desktop entry point)
+# ---------------------------------------------------------------------------
+
+_VALID_GATES = (
+    "content_audit",
+    "practitioner_stress_test",
+    "argument_completeness",
+    "bloom_depth_check",
+    "secondary_sweep",
+)
+
+
+def _resolve_paper_root(project_dir: Path, config: dict) -> Path | None:
+    """Return absolute path to the paper root for this project, or None.
+
+    Resolution order:
+      1. `paths.paper` from seldon.yaml
+      2. `paths.sections` minus trailing 'sections/' segment
+      3. Common conventions: `sfv-paper/paper`, `paper`, `book`
+    """
+    paths = config.get("paths") or {}
+    if paths.get("paper"):
+        candidate = project_dir / paths["paper"]
+        if candidate.exists():
+            return candidate.resolve()
+    if paths.get("sections"):
+        sections = (project_dir / paths["sections"]).resolve()
+        if sections.name == "sections" and sections.parent.exists():
+            return sections.parent
+    for convention in ("sfv-paper/paper", "paper", "book"):
+        candidate = project_dir / convention
+        if candidate.exists():
+            return candidate.resolve()
+    return None
+
+
+def _next_run_id(audits_dir: Path) -> str:
+    """Return next sequential run-id (e.g. 'run-007') by scanning audits_dir.
+
+    Looks for any directory named `run-NNN_*` and picks max(NNN) + 1.
+    """
+    if not audits_dir.exists():
+        return "run-001"
+    pattern = re.compile(r"^run-(\d{3})(?:_|$)")
+    highest = 0
+    for child in audits_dir.iterdir():
+        if not child.is_dir():
+            continue
+        m = pattern.match(child.name)
+        if m:
+            highest = max(highest, int(m.group(1)))
+    return f"run-{highest + 1:03d}"
+
+
+@mcp.tool()
+def seldon_audit(
+    section: str,
+    project_dir: str = ".",
+    gates: str = "all",
+    audit_model: str = "",
+    run_id: str = "",
+) -> str:
+    """Run AD-020 audit pipeline gates against a paper section.
+
+    Creates an audits/run-NNN_<date>/ directory, dispatches each requested
+    gate through the configured AUDIT_MODEL (via litellm), writes the run
+    manifest, and returns a findings summary. Wraps seldon.paper.audit_dispatch
+    so Desktop threads can trigger audits without authoring a CC task.
+
+    Args:
+        section: Path to the section file. Absolute, or relative to project root.
+        project_dir: Path to project root (defaults to SELDON_DEFAULT_PROJECT).
+        gates: Comma-separated gate names, or "all" for the full sweep.
+            Valid gates: content_audit, practitioner_stress_test,
+            argument_completeness, bloom_depth_check, secondary_sweep.
+        audit_model: Override AUDIT_MODEL env var for this run. Empty = use env
+            var or fall back to audit_dispatch.DEFAULT_MODEL.
+        run_id: Override the auto-generated run-id (e.g. "run-006"). Empty =
+            auto-increment from existing runs in <paper_root>/audits/.
+    """
+    import datetime as _dt
+    import yaml as _yaml
+
+    # Resolve section file
+    try:
+        config, driver, database, domain_config, resolved_project_dir = _resolve_project(project_dir)
+    except Exception as exc:
+        return f"Error: cannot resolve project at {project_dir!r}: {exc}"
+    driver.close()  # this tool doesn't touch Neo4j
+
+    project_root = Path(resolved_project_dir).resolve()
+    section_path = Path(section)
+    if not section_path.is_absolute():
+        section_path = (project_root / section_path).resolve()
+    if not section_path.exists():
+        return f"Error: section file not found: {section_path}"
+
+    # Resolve paper root + audits dir
+    paper_root = _resolve_paper_root(project_root, config)
+    if paper_root is None:
+        return (
+            "Error: cannot resolve paper root for project. "
+            "Set `paths.paper` in seldon.yaml, or place sections under "
+            "'paper/', 'sfv-paper/paper/', or 'book/'."
+        )
+    audits_dir = paper_root / "audits"
+
+    # Resolve gates
+    if gates == "all":
+        gates_to_run = list(_VALID_GATES)
+    else:
+        requested = [g.strip() for g in gates.split(",") if g.strip()]
+        invalid = [g for g in requested if g not in _VALID_GATES]
+        if invalid:
+            return f"Error: unknown gate(s): {invalid}. Valid: {list(_VALID_GATES)}"
+        gates_to_run = requested
+
+    # Resolve run-id
+    today = _dt.date.today().isoformat()
+    rid = run_id or _next_run_id(audits_dir)
+    run_dir = audits_dir / f"{rid}_{today}"
+    section_slug = section_path.stem
+    section_run_dir = run_dir / section_slug
+    section_run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Import dispatch lazily so server startup doesn't require litellm
+    try:
+        from seldon.paper.audit_dispatch import dispatch, resolve_audit_model
+        from seldon.commands.audit_dispatch import _system_prompt_for, _user_prompt_for
+    except ImportError as exc:
+        return f"Error: audit dispatch unavailable ({exc}). Install litellm."
+
+    # Apply audit_model override if provided
+    original_audit_model_env = os.environ.get("AUDIT_MODEL")
+    if audit_model:
+        os.environ["AUDIT_MODEL"] = audit_model
+
+    section_text = section_path.read_text(encoding="utf-8")
+    gates_succeeded: list[str] = []
+    gates_failed: list[dict] = []
+
+    try:
+        resolved_model = resolve_audit_model()
+        for gate in gates_to_run:
+            try:
+                system = _system_prompt_for(gate, None)
+                user_prompt = _user_prompt_for(gate, section_path, section_text)
+                result_text = dispatch(
+                    prompt=user_prompt,
+                    system=system,
+                    temperature=0.2,
+                    max_tokens=8192,
+                )
+                (section_run_dir / f"{gate}.yaml").write_text(result_text, encoding="utf-8")
+                gates_succeeded.append(gate)
+            except Exception as exc:
+                gates_failed.append({"gate": gate, "error": str(exc)})
+    finally:
+        if audit_model:
+            if original_audit_model_env is None:
+                os.environ.pop("AUDIT_MODEL", None)
+            else:
+                os.environ["AUDIT_MODEL"] = original_audit_model_env
+
+    # Best-effort: parse top-level finding counts from each successful YAML
+    findings_summary: dict[str, int] = {}
+    for gate in gates_succeeded:
+        gate_file = section_run_dir / f"{gate}.yaml"
+        try:
+            parsed = _yaml.safe_load(gate_file.read_text(encoding="utf-8"))
+            if isinstance(parsed, dict):
+                if "findings_count" in parsed:
+                    findings_summary[gate] = int(parsed["findings_count"])
+                elif isinstance(parsed.get("findings"), list):
+                    findings_summary[gate] = len(parsed["findings"])
+                elif isinstance(parsed.get("questions"), list):
+                    findings_summary[gate] = len(parsed["questions"])
+        except Exception:
+            pass  # malformed YAML — leave gate out of summary; raw file still on disk
+
+    # Write run manifest
+    document_type = (config.get("project") or {}).get("document_type", "academic_paper")
+    manifest = {
+        "run_manifest": {
+            "run_id": rid,
+            "date": today,
+            "model": resolved_model,
+            "pipeline": "AD-019 + AD-020",
+            "document_type": document_type,
+            "sections_audited": [section_slug],
+            "gates_run": gates_succeeded,
+            "gates_failed": gates_failed,
+            "findings_summary": findings_summary,
+            "produced_by": "seldon_audit MCP tool",
+        }
+    }
+    manifest_path = run_dir / "run_manifest.yaml"
+    manifest_path.write_text(_yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+
+    # Build summary text
+    rel_run_dir = run_dir.relative_to(project_root) if run_dir.is_relative_to(project_root) else run_dir
+    gate_lines = [f"{g} ✓" for g in gates_succeeded]
+    for failed in gates_failed:
+        gate_lines.append(f"{failed['gate']} ✗ ({failed['error'][:60]})")
+    summary_lines = [
+        f"Audit {rid} complete: {section_slug}",
+        f"  Model: {resolved_model}",
+        f"  Gates: {', '.join(gate_lines) if gate_lines else '(none)'}",
+        f"  Output: {rel_run_dir}",
+    ]
+    if findings_summary:
+        total = sum(findings_summary.values())
+        per_gate = ", ".join(f"{g}={n}" for g, n in findings_summary.items())
+        summary_lines.append(f"  Findings: {total} total ({per_gate})")
+    return "\n".join(summary_lines)
+
+
+# ---------------------------------------------------------------------------
+# Audit ingest (AD-020 pipeline → graph)
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def seldon_audit_ingest(
+    run_dir: str,
+    project_dir: str = ".",
+    advance_states: bool = False,
+) -> str:
+    """Ingest an audit run directory into the project's Seldon graph.
+
+    Reads run_manifest.yaml plus per-gate YAML scorecards, creates an
+    AuditRun artifact plus AuditFinding artifacts for each parseable
+    finding, and wires `audited_in`, `has_finding`, `finding_in` edges.
+    Idempotent — re-ingesting the same run-id is a no-op.
+
+    Args:
+        run_dir: Path to the run directory (absolute or relative to project_dir).
+        project_dir: Path to project root.
+        advance_states: If True, advance PaperSection state from
+            proposed/draft/review → `audited` for sections that have no
+            open blocking/high findings in this run. Default False (safe
+            for backfill).
+    """
+    from seldon.paper import audit_ingest
+
+    try:
+        config, driver, database, domain_config, resolved_project_dir = _resolve_project(project_dir)
+    except Exception as exc:
+        return f"Error: cannot resolve project at {project_dir!r}: {exc}"
+
+    project_root = Path(resolved_project_dir).resolve()
+    rd = Path(run_dir)
+    if not rd.is_absolute():
+        rd = (project_root / rd).resolve()
+    if not rd.exists() or not rd.is_dir():
+        driver.close()
+        return f"Error: run directory not found: {rd}"
+
+    try:
+        plan = audit_ingest.plan_ingest(rd)
+    except FileNotFoundError as exc:
+        driver.close()
+        return f"Error: {exc}"
+
+    try:
+        summary = audit_ingest.write_ingest(
+            plan=plan,
+            project_dir=project_root,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            actor="desktop",
+            advance_states=advance_states,
+        )
+    finally:
+        driver.close()
+
+    if summary["action"] == "already_ingested":
+        return (
+            f"Run {plan.run_id} already ingested into {database}\n"
+            f"  existing artifact: {summary['existing_artifact_id'][:8]}..."
+        )
+
+    lines = [
+        f"Ingested {plan.run_id} into {database}:",
+        f"  AuditRun: {plan.run_id} ({plan.date}, {plan.model})",
+        f"  Layout: {plan.layout}",
+        f"  Sections in run: {summary['sections_total']} ({summary['sections_linked']} matched to graph)",
+        f"  Findings written: {summary['findings_written']}",
+    ]
+    if summary["sections_missing_in_graph"]:
+        miss = summary["sections_missing_in_graph"]
+        shown = ", ".join(miss[:5]) + (" ..." if len(miss) > 5 else "")
+        lines.append(f"  Sections without PaperSection nodes (no finding_in edges): {shown}")
+    if plan.gate_warnings:
+        lines.append(f"  Gate warnings: {len(plan.gate_warnings)}")
+        for w in plan.gate_warnings[:3]:
+            lines.append(f"    - {w}")
+    if advance_states:
+        advanced = [c for c in summary["state_changes"] if c["action"] == "advanced"]
+        skipped = [c for c in summary["state_changes"] if c["action"] == "skipped"]
+        lines.append(f"  State changes: {len(advanced)} advanced to audited, {len(skipped)} skipped (high-severity findings)")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Read-only Cypher query
 # ---------------------------------------------------------------------------
 

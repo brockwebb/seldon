@@ -447,6 +447,82 @@ artifact_types:
         category: system
         description: "Git SHA if the file is committed; null if uncommitted"
 
+  AuditRun:
+    # AD-019 + AD-020 audit pipeline run. Produced by `seldon_audit` MCP tool
+    # or by the auditor agent. Each run is a terminal record — by the time
+    # Seldon sees it, the audit has finished. State machine has a single
+    # `completed` state plus retirement states.
+    properties:
+      run_id:
+        required: true
+        description: "Sequential run identifier (e.g., 'run-003')"
+      date:
+        required: true
+        description: "ISO date the audit ran (YYYY-MM-DD)"
+      model:
+        required: true
+        description: "Resolved AUDIT_MODEL string (e.g., 'gemini/gemini-2.5-flash')"
+      pipeline:
+        category: documentation
+        description: "Pipeline lineage (e.g., 'AD-019 + AD-020')"
+      run_type:
+        category: documentation
+        description: "discovery | tevv_verification | dual_model_divergence"
+      run_dir:
+        category: documentation
+        description: "Relative path to the run directory inside the project"
+      document_type:
+        category: documentation
+        description: "academic_paper | book_chapter | technical_report"
+      gates_run:
+        category: documentation
+        description: "List of gates that completed successfully"
+      gates_failed:
+        category: documentation
+        description: "List of {gate, error} entries for gates that errored"
+      findings_summary:
+        category: documentation
+        description: "Top-level finding counts by severity or by gate"
+      sweep_synthesis:
+        category: documentation
+        description: "Brief synthesis text from sweep_synthesis.md if present"
+      notes:
+        category: documentation
+        description: "Free-form notes from the manifest"
+
+  AuditFinding:
+    # Single finding extracted from an audit gate's YAML output. The text
+    # may be a claim, a stress-test question, or a structural issue
+    # depending on the originating gate.
+    properties:
+      finding_id:
+        required: true
+        description: "Stable id from the gate YAML (e.g., 'CA-06-01', 'PST-06-03')"
+      finding_type:
+        required: true
+        description: "citation_gap | unsupported_claim | missing_content | terminology_inconsistency | stress_question | other"
+      severity:
+        required: true
+        description: "blocking | high | medium | low | cosmetic"
+      gate:
+        required: true
+        description: "Which gate produced it (content_audit, practitioner_stress_test, ...)"
+      text:
+        required: true
+        description: "Short finding text (claim / question / issue)"
+      section_slug:
+        category: documentation
+        description: "Section identifier the finding pertains to (e.g., '06_classical_crosswalk')"
+      classification:
+        category: documentation
+        description: "fact | judgment | conjecture (content_audit gate only)"
+      citation_status:
+        category: documentation
+        description: "cited | uncited | not_applicable (content_audit gate only)"
+      notes:
+        category: documentation
+        description: "Longer auditor commentary"
+
 relationship_types:
   cites:
     from_types: [PaperSection, Figure]
@@ -575,6 +651,24 @@ relationship_types:
     from_types: [BuildRun]
     to_types: [GeneratedFile, Script, AgentRole, Workflow, ArchitecturalDecision, DesignNote, ResearchTask, OntologyTerm]
 
+  audited_in:
+    # PaperSection participated in this AuditRun. Multiple AuditRun edges
+    # accumulate over time as the section is re-audited.
+    from_types: [PaperSection]
+    to_types: [AuditRun]
+
+  has_finding:
+    # AuditRun owns the AuditFinding artifacts it produced.
+    from_types: [AuditRun]
+    to_types: [AuditFinding]
+
+  finding_in:
+    # AuditFinding points to the PaperSection it pertains to (best-effort
+    # match by section slug → PaperSection.name; absent if the section
+    # has no graph artifact yet).
+    from_types: [AuditFinding]
+    to_types: [PaperSection]
+
 state_machines:
   Result:
     proposed: [verified, rejected]
@@ -604,9 +698,14 @@ state_machines:
     stale: [registered]
 
   PaperSection:
-    proposed: [draft, review]
-    draft: [review, stale]
-    review: [published, draft]
+    # AD-020: `audited` is reachable from any active editing state so that
+    # `seldon_audit_ingest` can mark sections that have completed an audit
+    # pass. From `audited`, sections return to revision (draft/review) or
+    # retire to stale.
+    proposed: [draft, review, audited]
+    draft: [review, audited, stale]
+    review: [published, draft, audited]
+    audited: [draft, review, stale]
     published: [stale]
     stale: [draft]
 
@@ -707,3 +806,22 @@ state_machines:
     active: [stale, deprecated]
     stale: [active, deprecated]
     deprecated: []
+
+  AuditRun:
+    # An AuditRun is created in `completed` state — by the time Seldon sees
+    # it the audit has finished. Retired runs go to `archived` (kept for
+    # provenance, not actively referenced) or `stale` (superseded by a
+    # newer run on the same sections).
+    proposed: [completed, archived]
+    completed: [archived, stale]
+    stale: [archived]
+    archived: []
+
+  AuditFinding:
+    # Findings are created as `open`. Resolution happens when the underlying
+    # issue is fixed in the section; `wont_fix` is for findings the team
+    # chooses to leave (e.g., scope-of-paper boundary).
+    proposed: [open]
+    open: [resolved, wont_fix]
+    resolved: [open]
+    wont_fix: [open]
