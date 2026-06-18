@@ -191,7 +191,10 @@ def seldon_task_update(
 
     Args:
         task_id: Artifact ID (full UUID or prefix)
-        state: New state (accepted, in_progress, completed, verified, blocked)
+        state: New state (accepted, in_progress, completed, verified, blocked,
+            superseded). superseded is a terminal state for a task overtaken
+            before it finished; reachable only from proposed/accepted/
+            in_progress/blocked, never from completed/verified.
         project_dir: Path to project root
         note: Optional note (currently logged but not stored separately)
     """

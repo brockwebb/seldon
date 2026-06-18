@@ -27,6 +27,30 @@ def test_valid_transition_research_task(domain_config):
     validate_transition(domain_config, "ResearchTask", "blocked", "in_progress")
 
 
+def test_research_task_superseded_valid_from_active_states(domain_config):
+    """superseded is reachable from every active, non-finished state."""
+    validate_transition(domain_config, "ResearchTask", "proposed", "superseded")
+    validate_transition(domain_config, "ResearchTask", "accepted", "superseded")
+    validate_transition(domain_config, "ResearchTask", "in_progress", "superseded")
+    validate_transition(domain_config, "ResearchTask", "blocked", "superseded")
+
+
+def test_research_task_superseded_forbidden_from_finished_states(domain_config):
+    """A finished task (completed/verified) must NOT be relabeled superseded —
+    that would corrupt the honest completion record."""
+    with pytest.raises(InvalidStateTransition):
+        validate_transition(domain_config, "ResearchTask", "completed", "superseded")
+    with pytest.raises(InvalidStateTransition):
+        validate_transition(domain_config, "ResearchTask", "verified", "superseded")
+
+
+def test_research_task_superseded_is_terminal(domain_config):
+    """superseded is terminal: no transition out of it is valid."""
+    with pytest.raises(InvalidStateTransition) as exc_info:
+        validate_transition(domain_config, "ResearchTask", "superseded", "in_progress")
+    assert "terminal" in str(exc_info.value).lower() or "no valid" in str(exc_info.value).lower()
+
+
 def test_invalid_transition_raises(domain_config):
     with pytest.raises(InvalidStateTransition) as exc_info:
         validate_transition(domain_config, "Result", "proposed", "published")
@@ -59,4 +83,4 @@ def test_invalid_state_transition_carries_valid_options(domain_config):
     """InvalidStateTransition.valid_transitions must be populated."""
     with pytest.raises(InvalidStateTransition) as exc_info:
         validate_transition(domain_config, "ResearchTask", "proposed", "completed")
-    assert exc_info.value.valid_transitions == ["accepted", "rejected"]
+    assert exc_info.value.valid_transitions == ["accepted", "rejected", "superseded"]

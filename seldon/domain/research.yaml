@@ -678,13 +678,19 @@ state_machines:
     rejected: []
 
   ResearchTask:
-    proposed: [accepted, rejected]
-    accepted: [in_progress]
-    in_progress: [completed, blocked]
+    # superseded (AD pattern): honest terminal for a task overtaken/obsoleted
+    # *before* it finishes. Reachable only from active, non-finished states.
+    # NOT reachable from completed/verified — relabeling a finished task would
+    # corrupt the honest completion record. See cc_tasks/2026-06-18_cc_task_
+    # researchtask_superseded_terminal.md.
+    proposed: [accepted, rejected, superseded]
+    accepted: [in_progress, superseded]
+    in_progress: [completed, blocked, superseded]
     completed: [verified]
-    blocked: [in_progress]
+    blocked: [in_progress, superseded]
     verified: []
     rejected: []
+    superseded: []
 
   Script:
     proposed: [active, deprecated]
