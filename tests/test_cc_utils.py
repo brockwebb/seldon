@@ -131,6 +131,50 @@ class TestExtractDescription:
         )
         assert _extract_description(f) == "Real description."
 
+    # --- H1-title extraction (kills the hard-wrap fragment class) ---
+    # Real cc_task files carry the subject in a "# CC Task: <subject>" H1,
+    # a single physical line immune to the wrapping that made prose
+    # extraction capture mid-sentence metadata continuations.
+
+    def test_cc_task_h1_is_the_description(self, tmp_path):
+        f = tmp_path / "2026-07-06_reply-ingest-crash-resilience.md"
+        f.write_text(
+            "# CC Task: Reply-Ingest Crash Resilience — IMAP EOF Must Not Lose a Reply\n"
+            "\n"
+            "**Created:** 2026-07-06\n"
+            "**Priority:** HIGH — reply-to-log is the PRIMARY logging interface; a crash class that\n"
+            "can silently drop a reply is data loss on the main write path.\n"
+        )
+        assert _extract_description(f) == (
+            "Reply-Ingest Crash Resilience — IMAP EOF Must Not Lose a Reply"
+        )
+
+    def test_cc_task_h1_with_TN_prefix(self, tmp_path):
+        f = tmp_path / "2026-06-27_vocab-T4-segment-vestige-retire.md"
+        f.write_text(
+            "# CC Task T4: Retire segment vestige columns (destructive — backup + verify)\n"
+            "\n"
+            "**Priority:** LOW\n"
+        )
+        assert _extract_description(f) == (
+            "Retire segment vestige columns (destructive — backup + verify)"
+        )
+
+    def test_wrapped_priority_value_never_captured(self, tmp_path):
+        """The exact bug: a **Priority:** value that hard-wraps to a second
+        physical line must not become the description — even on the fallback
+        path (non-CC-Task H1)."""
+        f = tmp_path / "task.md"
+        f.write_text(
+            "# Title\n"
+            "\n"
+            "**Priority:** HIGH — kills the whining email and ~$59/mo burn;\n"
+            "removes the iCloud-symlink fragility from all scheduled jobs.\n"
+            "\n"
+            "First real prose line.\n"
+        )
+        assert _extract_description(f) == "First real prose line."
+
 
 class TestDescriptionLooksLikeMetadata:
     def test_bold_metadata_line_detected(self):

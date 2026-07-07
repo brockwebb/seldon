@@ -44,6 +44,16 @@ _METADATA_RE = re.compile(
     r"^\*?\*?[A-Z][A-Za-z0-9 _-]{0,40}:\*?\*?(\s|$)",
 )
 
+# ATX H1 (`# <title>`). A markdown header is a single physical line by
+# construction, so a title-based description is immune to the hard-wrap
+# fragmenting that let prose extraction capture a mid-sentence metadata
+# continuation line as the "description".
+_H1_RE = re.compile(r"^#\s+(.+?)\s*$")
+
+# cc_task files carry the subject in a "CC Task: <subject>" or
+# "CC Task T4: <subject>" H1. Capture the subject after that boilerplate.
+_CC_TASK_TITLE_RE = re.compile(r"^CC Task(?:\s+\S+)?:\s*(.+)$", re.IGNORECASE)
+
 
 def _description_looks_like_metadata(text: str) -> bool:
     """Return True if text still looks like a metadata line.
@@ -58,23 +68,58 @@ def _description_looks_like_metadata(text: str) -> bool:
 
 
 def _extract_description(filepath: Path) -> str:
-    """Extract first substantive line from a CC task file.
+    """Extract a one-line description from a CC task file.
 
-    Skips blank lines, markdown headers (#), horizontal rules (---),
-    and any metadata-style line (``**Key:**`` or bare ``Key:`` prefix).
-    Falls back to the filename if no substantive line is found.
+    Strategy, in order:
+      1. The first ``# CC Task[ TN]: <subject>`` H1 — the subject after the
+         boilerplate prefix. An H1 is a single physical line, so this is
+         immune to the hard-wrap fragmenting that used to capture a wrapped
+         ``**Priority:**`` value's continuation line as the description.
+      2. Otherwise, the first substantive PARAGRAPH — consecutive prose lines
+         joined — skipping headers, horizontal rules, and whole metadata
+         blocks (a metadata line AND its hard-wrapped continuation lines).
+         Joining the paragraph means a wrapped summary is captured whole, and
+         skipping the continuation lines means a wrapped metadata value is
+         never mistaken for prose.
+      3. Otherwise, the filename.
     """
-    for line in filepath.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.startswith("#"):
-            continue
-        if stripped.startswith("---"):
+    lines = filepath.read_text().splitlines()
+
+    # 1. Prefer a "CC Task[ TN]: <subject>" H1 title.
+    for line in lines:
+        h1 = _H1_RE.match(line.strip())
+        if h1:
+            m = _CC_TASK_TITLE_RE.match(h1.group(1).strip())
+            if m and m.group(1).strip():
+                return m.group(1).strip()[:200]
+            break  # first H1 isn't a CC-Task title → fall through to prose
+
+    # 2. First substantive paragraph, metadata-block-aware.
+    i, n = 0, len(lines)
+    while i < n:
+        stripped = lines[i].strip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("---"):
+            i += 1
             continue
         if _METADATA_RE.match(stripped):
+            # Skip the whole metadata value, including hard-wrapped
+            # continuation lines, up to the next blank line — otherwise the
+            # second physical line of a wrapped **Priority:** becomes the
+            # "description" (the original fragment bug).
+            i += 1
+            while i < n and lines[i].strip():
+                i += 1
             continue
-        return stripped[:200]
+        # First real prose line — collect the wrapped paragraph whole.
+        para: list[str] = []
+        while i < n:
+            t = lines[i].strip()
+            if not t or t.startswith("#") or t.startswith("---"):
+                break
+            para.append(t)
+            i += 1
+        return " ".join(para)[:200]
+
     return filepath.name
 
 
