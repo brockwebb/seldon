@@ -122,3 +122,48 @@ class TestSpecHash:
     def test_file_with_no_findings_section_hashes_its_whole_content(self, tmp_path):
         p = _write(tmp_path, SPEC)
         assert _spec_hash(p) == _file_hash(_write(tmp_path, SPEC.rstrip(), "stripped.md"))
+
+
+class TestSpecTerminators:
+    """aa5c7b73's ruling: a task file has three lifecycles — spec (immutable),
+    ruling (new input after registration), findings (output). Only the spec is
+    hashed, so a ruling appended mid-flight does not break closure either."""
+
+    def test_ruling_heading_terminates_spec(self, tmp_path):
+        p = _write(tmp_path, SPEC + PLACEHOLDER)
+        before = _spec_hash(p)
+        p.write_text(SPEC + "\n## RULING\nDo it the other way.\n" + APPENDED,
+                     encoding="utf-8")
+        assert _spec_hash(p) == before
+
+    def test_addendum_heading_terminates_spec(self, tmp_path):
+        p = _write(tmp_path, SPEC + PLACEHOLDER)
+        before = _spec_hash(p)
+        p.write_text(SPEC + "\n## Addendum\nAlso this.\n", encoding="utf-8")
+        assert _spec_hash(p) == before
+
+    def test_explicit_spec_end_marker_wins_over_headings(self, tmp_path):
+        """The marker lets a task put the boundary where it wants — including
+        ABOVE a section that happens to be titled Findings."""
+        body = "# T\n\n## Steps\n1. go\n\n<!-- SPEC END -->\n## Notes\nfree\n"
+        p = _write(tmp_path, body)
+        before = _spec_hash(p)
+        p.write_text(body + "\n## Findings\nmore\n", encoding="utf-8")
+        assert _spec_hash(p) == before
+
+    def test_spec_edit_above_marker_still_refused(self, tmp_path):
+        body = "# T\n\n## Steps\n1. go\n\n<!-- SPEC END -->\n## Notes\nfree\n"
+        p = _write(tmp_path, body)
+        before = _spec_hash(p)
+        p.write_text(body.replace("1. go", "1. stop"), encoding="utf-8")
+        assert _spec_hash(p) != before
+
+    def test_ruling_and_findings_together_end_to_end(self, tmp_path):
+        """aa5c7b73 acceptance: register -> ruling appended -> findings appended
+        -> still closes."""
+        p = _write(tmp_path, SPEC + PLACEHOLDER)
+        at_registration = _spec_hash(p)
+        p.write_text(SPEC + "\n## RULING\nuse approach B\n", encoding="utf-8")
+        assert _spec_hash(p) == at_registration
+        p.write_text(SPEC + "\n## RULING\nuse approach B\n" + APPENDED, encoding="utf-8")
+        assert _spec_hash(p) == at_registration

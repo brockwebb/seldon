@@ -18,9 +18,21 @@ def _file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-# A markdown heading (any level) whose text begins with "Findings". Tolerant of
-# level, case, trailing punctuation and suffixes like "## Findings (2026-07-16, CC)".
-_FINDINGS_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s*findings\b", re.IGNORECASE)
+# Where the immutable SPEC ends and the append-only region begins.
+#
+# A task file has three lifecycles and only one is immutable:
+#   spec     — the agreement, frozen at registration; this is what the hash guards
+#   ruling   — new INPUT arriving after registration (deciding an already-posed
+#              question is not a goalpost move)
+#   findings — OUTPUT; cannot be part of the agreement, it does not exist yet
+#
+# Preferred terminator is the explicit marker; failing that, the first RULING /
+# Findings / ADDENDUM heading. Heading match is tolerant of level, case and
+# suffixes ("## Findings (2026-07-16, CC)").
+_SPEC_END_MARKER_RE = re.compile(r"^\s{0,3}<!--\s*SPEC\s+END\s*-->", re.IGNORECASE)
+_APPEND_HEADING_RE = re.compile(
+    r"^\s{0,3}#{1,6}\s*(findings|ruling|addendum)\b", re.IGNORECASE
+)
 
 # Marks artifacts whose file_hash covers the SPEC ONLY (everything above the
 # first Findings heading). Absent on artifacts registered before this scope
@@ -29,22 +41,29 @@ HASH_SCOPE_SPEC = "spec"
 
 
 def _split_spec(text: str) -> tuple[str, bool]:
-    """Split task-file text at the first Findings heading.
+    """Split task-file text at the end of the immutable spec region.
 
-    Returns ``(spec_text, had_findings)``. ``spec_text`` is everything ABOVE the
-    first Findings heading, right-stripped so that trailing blank lines before
-    the heading do not perturb the hash.
+    Returns ``(spec_text, had_terminator)``. ``spec_text`` is everything ABOVE
+    the terminator, right-stripped so trailing blank lines before it do not
+    perturb the hash.
+
+    An explicit ``<!-- SPEC END -->`` marker wins if present, so a task can put
+    the boundary exactly where it wants; otherwise the first RULING / Findings /
+    ADDENDUM heading terminates the spec.
 
     Why this exists: every task file in this project ends with "append findings
     under ## Findings", so hashing the whole file guarantees that a *correctly
     executed* task is hash-divergent by the time it is completed, and the
     sanctioned completion path can never succeed. Hashing the spec keeps the
-    real invariant — **the spec is immutable, findings are additive** — enforced,
-    instead of abandoning enforcement to make completion possible.
+    real invariant — **the spec is immutable, the append region is additive** —
+    enforced, instead of abandoning enforcement to make completion possible.
     """
     lines = text.splitlines(keepends=True)
     for i, line in enumerate(lines):
-        if _FINDINGS_HEADING_RE.match(line):
+        if _SPEC_END_MARKER_RE.match(line):
+            return "".join(lines[:i]).rstrip(), True
+    for i, line in enumerate(lines):
+        if _APPEND_HEADING_RE.match(line):
             return "".join(lines[:i]).rstrip(), True
     return text.rstrip(), False
 
