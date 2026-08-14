@@ -18,6 +18,47 @@ def _file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# A markdown heading (any level) whose text begins with "Findings". Tolerant of
+# level, case, trailing punctuation and suffixes like "## Findings (2026-07-16, CC)".
+_FINDINGS_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s*findings\b", re.IGNORECASE)
+
+# Marks artifacts whose file_hash covers the SPEC ONLY (everything above the
+# first Findings heading). Absent on artifacts registered before this scope
+# existed — those carry a whole-file hash and are handled as legacy below.
+HASH_SCOPE_SPEC = "spec"
+
+
+def _split_spec(text: str) -> tuple[str, bool]:
+    """Split task-file text at the first Findings heading.
+
+    Returns ``(spec_text, had_findings)``. ``spec_text`` is everything ABOVE the
+    first Findings heading, right-stripped so that trailing blank lines before
+    the heading do not perturb the hash.
+
+    Why this exists: every task file in this project ends with "append findings
+    under ## Findings", so hashing the whole file guarantees that a *correctly
+    executed* task is hash-divergent by the time it is completed, and the
+    sanctioned completion path can never succeed. Hashing the spec keeps the
+    real invariant — **the spec is immutable, findings are additive** — enforced,
+    instead of abandoning enforcement to make completion possible.
+    """
+    lines = text.splitlines(keepends=True)
+    for i, line in enumerate(lines):
+        if _FINDINGS_HEADING_RE.match(line):
+            return "".join(lines[:i]).rstrip(), True
+    return text.rstrip(), False
+
+
+def _spec_hash(path: Path) -> str:
+    """SHA-256 of the task file's SPEC section (above the first Findings heading).
+
+    Appending findings does not change this value; editing the spec does.
+    """
+    text = path.read_text(encoding="utf-8", errors="surrogateescape")
+    spec, _ = _split_spec(text)
+    return hashlib.sha256(spec.encode("utf-8", errors="surrogateescape")).hexdigest()
+
+
 def _get_domain_config(config: dict):
     domain_name = config["project"].get("domain", "research")
     domain_yaml = Path(__file__).parent.parent / "domain" / f"{domain_name}.yaml"
@@ -162,14 +203,24 @@ def _get_artifact_state(driver, database: str, artifact_id: str) -> str | None:
     return record["state"] if record else None
 
 
-def _get_artifact_file_hash(driver, database: str, artifact_id: str) -> str | None:
-    """Return the file_hash of an artifact, or None if not set."""
+def _get_artifact_file_hash(
+    driver, database: str, artifact_id: str
+) -> tuple[str | None, str | None]:
+    """Return ``(file_hash, hash_scope)`` for an artifact.
+
+    ``hash_scope`` is ``HASH_SCOPE_SPEC`` for artifacts registered with
+    spec-scoped hashing, and None for legacy artifacts whose stored hash covers
+    the whole file.
+    """
     with driver.session(database=database) as session:
         record = session.run(
-            "MATCH (t:Artifact {artifact_id: $aid}) RETURN t.file_hash AS fh",
+            "MATCH (t:Artifact {artifact_id: $aid}) "
+            "RETURN t.file_hash AS fh, t.hash_scope AS scope",
             aid=artifact_id,
         ).single()
-    return record["fh"] if record else None
+    if not record:
+        return None, None
+    return record["fh"], record["scope"]
 
 
 @click.group("cc")
@@ -226,19 +277,42 @@ def cc_complete(filepath, note):
             driver.close()
             raise SystemExit(0)
 
-        # Verify file immutability (hash check)
-        registered_hash = _get_artifact_file_hash(driver, database, existing_id)
+        # Verify SPEC immutability (hash check).
+        #
+        # The check is scoped to the spec — everything above the first Findings
+        # heading — so that appending findings, which every task file instructs
+        # the executor to do, does not make completion impossible. Editing the
+        # spec after registration is still refused.
+        registered_hash, hash_scope = _get_artifact_file_hash(driver, database, existing_id)
         if registered_hash is not None:
-            current_hash = _file_hash(task_path)
-            if current_hash != registered_hash:
+            current_hash = _spec_hash(task_path)
+            legacy = hash_scope != HASH_SCOPE_SPEC
+
+            ok = current_hash == registered_hash
+            if not ok and legacy:
+                # Pre-scope artifacts stored a WHOLE-FILE hash. An untouched
+                # legacy file still matches that way; accept it rather than
+                # refusing work that was never modified.
+                ok = _file_hash(task_path) == registered_hash
+
+            if not ok:
+                extra = ""
+                if legacy:
+                    extra = (
+                        "\n  NOTE: this task predates spec-scoped hashing, so its stored\n"
+                        "  hash covers the WHOLE file including the Findings placeholder.\n"
+                        "  If the spec is genuinely unedited and only findings were appended,\n"
+                        "  transition it by UUID instead: seldon task update <uuid> --state ..."
+                    )
                 click.echo(
-                    f"ERROR: Task file has been modified since registration.\n"
+                    f"ERROR: Task SPEC has been modified since registration.\n"
                     f"  File: {rel_path}\n"
                     f"  Registered hash: {registered_hash[:16]}...\n"
-                    f"  Current hash:    {current_hash[:16]}...\n"
-                    f"  Task immutability violated. If changes are needed, create an\n"
-                    f"  addendum file or a new superseding task. The original task file\n"
-                    f"  must not be modified after registration.",
+                    f"  Current spec hash: {current_hash[:16]}...\n"
+                    f"  Task immutability violated. Findings may be APPENDED under a\n"
+                    f"  '## Findings' heading; the spec above it must not change. If the\n"
+                    f"  spec needs changing, create an addendum file or a superseding task."
+                    f"{extra}",
                     err=True,
                 )
                 driver.close()
@@ -377,7 +451,10 @@ def cc_register(filepath, description):
     if description is None:
         description = _extract_description(task_path)
         _warn_if_description_suspicious(task_path, description)
-    content_hash = _file_hash(task_path)
+    # Hash the SPEC only. Findings are appended after execution by convention,
+    # so a whole-file hash would guarantee that every correctly-executed task is
+    # divergent at completion time.
+    content_hash = _spec_hash(task_path)
 
     try:
         artifact_id = create_artifact(
@@ -391,6 +468,7 @@ def cc_register(filepath, description):
                 "name": name,
                 "source_file": rel_path,
                 "file_hash": content_hash,
+                "hash_scope": HASH_SCOPE_SPEC,
             },
             actor="cc",
             authority="accepted",
