@@ -212,6 +212,7 @@ def _do_sync(
     database: str,
     project_dir: Path,
     config: dict,
+    emit_event: bool = True,
 ) -> Dict[str, Any]:
     """Pull OntologyTerms from master into a project database.
 
@@ -220,6 +221,9 @@ def _do_sync(
         database: Project database name.
         project_dir: Path to project root (for event store).
         config: Loaded seldon.yaml dict.
+        emit_event: Append an ``ontology_synced`` event on success. Set False
+            when called from event replay, which restores existing state rather
+            than recording a new fact — see seldon.core.sync._restore_ontology.
 
     Returns:
         Dict with keys: epoch, terms, new, updated, deprecated.
@@ -365,20 +369,27 @@ def _do_sync(
             epoch=master_epoch, now=_now_iso(),
         )
 
-    # Write sync event to project event store
-    event = make_event(
-        event_type="ontology_synced",
-        actor="seldon",
-        authority="accepted",
-        payload={
-            "master_epoch": master_epoch,
-            "new_terms": new_count,
-            "updated_terms": updated_count,
-            "deprecated_terms": deprecated_count,
-            "relationships_synced": rel_count,
-        },
-    )
-    append_event(project_dir, event)
+    # Write sync event to project event store.
+    #
+    # Suppressed when called from event replay (seldon rebuild). Replay restores
+    # ontology state by re-running this sync, and if it appended an event each
+    # time, every rebuild would grow the log by one ontology_synced event, which
+    # would in turn trigger another restore on the next rebuild. Restoring state
+    # is not a new fact about the project and must not be recorded as one.
+    if emit_event:
+        event = make_event(
+            event_type="ontology_synced",
+            actor="seldon",
+            authority="accepted",
+            payload={
+                "master_epoch": master_epoch,
+                "new_terms": new_count,
+                "updated_terms": updated_count,
+                "deprecated_terms": deprecated_count,
+                "relationships_synced": rel_count,
+            },
+        )
+        append_event(project_dir, event)
 
     return {
         "epoch": master_epoch,
