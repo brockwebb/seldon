@@ -153,6 +153,24 @@ def test_CE_06_double_space(config):
     assert any(viol.check_id == "CE-06" and "Double space" in viol.message for viol in v)
 
 
+def test_CE_06_reference_token_is_not_a_double_space(config):
+    """A {{...}} token surrounded by single spaces is not a double space.
+
+    Regression for the paper-build passthrough failure (cc_task
+    2026-09-02_paper_build_xref_passthrough_failure): _strip_skipped_regions
+    blanks tokens to same-length whitespace, which read as CE-06 double spaces.
+    """
+    text = "See {{figure:nonexistent}} for details."
+    v = check_CE_06(text, config, "test.md")
+    assert not any("Double space" in viol.message for viol in v)
+
+
+def test_CE_06_double_space_beside_token_still_flagged(config):
+    text = "See  {{figure:nonexistent}} for details."
+    v = check_CE_06(text, config, "test.md")
+    assert any(viol.check_id == "CE-06" and "Double space" in viol.message for viol in v)
+
+
 def test_CE_06_repeated_punctuation(config):
     text = "This is wrong.. because of the double period."
     v = check_CE_06(text, config, "test.md")

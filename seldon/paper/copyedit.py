@@ -286,6 +286,19 @@ def check_CE_05(
 # CE-06: Formatting artifacts
 # ---------------------------------------------------------------------------
 
+_REF_TOKEN_RE = re.compile(r"\{\{[^}]*\}\}")
+
+
+def _mask_reference_tokens(line: str) -> str:
+    """Replace every {{...}} token with a same-length run of a non-space sentinel.
+
+    Preserves column positions (unlike deleting the token) without turning the
+    token into whitespace (unlike _strip_skipped_regions), so whitespace checks
+    see the token as opaque text rather than as a gap.
+    """
+    return _REF_TOKEN_RE.sub(lambda m: "\x00" * len(m.group(0)), line)
+
+
 def check_CE_06(text: str, config: dict, filename: str) -> List[Violation]:
     """Flag mechanical formatting defects."""
     rules = config.get("copyedit_rules", {}).get("formatting", {})
@@ -300,8 +313,17 @@ def check_CE_06(text: str, config: dict, filename: str) -> List[Violation]:
     proc_lines = processed.splitlines()
 
     for i, (raw_line, proc_line) in enumerate(zip(lines, proc_lines), start=1):
-        # Double spaces (in processed text to avoid code blocks)
-        if "double_spaces" in checks and "  " in proc_line and proc_line.strip():
+        # Double spaces. `proc_line.strip()` skips lines that are entirely a
+        # blanked region (fenced code, frontmatter). The search itself runs on
+        # the raw line with {{...}} tokens masked to a non-space sentinel:
+        # _strip_skipped_regions blanks tokens to same-length whitespace, so an
+        # unresolved token such as "See {{figure:x}} for" would otherwise read
+        # as a double space (root-caused 2026-09-02, xref passthrough failure).
+        if (
+            "double_spaces" in checks
+            and proc_line.strip()
+            and "  " in _mask_reference_tokens(raw_line)
+        ):
             violations.append(Violation(
                 check_id="CE-06", file=filename, line=i,
                 message="Double space in prose",

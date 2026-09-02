@@ -12,7 +12,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 
 ## Environment
 
-**Neo4j credentials are in `.env`.** CC: you have the password. Load it with `dotenv` or read `.env` directly. Do NOT skip Neo4j-dependent tests. Do NOT ask for the password. If tests fail with auth errors, run: `source .env && pytest tests/ -v` or pass `NEO4J_PASSWORD` explicitly.
+**Neo4j credentials are in `.env`.** CC: you have the password. Load it with `dotenv` or read `.env` directly. Do NOT skip Neo4j-dependent tests. Do NOT ask for the password. Run the suite via python-dotenv: `python -m dotenv -f .env run -- python -m pytest tests/ -v`. Do NOT use `source .env && pytest` — line 4 of `.env` does not `source` cleanly in zsh, so that form silently skips every DB test (recorded in `cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md`). Passing `NEO4J_PASSWORD` explicitly also works.
 
 **Database:** Each project gets its own Neo4j database. Seldon self-dogfood uses `seldon-seldon-self`. Leibniz-pi uses its own database per `seldon.yaml`. Shared ontology uses `seldon-ontology` (master — never modified by project-level commands).
 
