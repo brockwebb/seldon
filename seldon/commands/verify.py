@@ -186,8 +186,23 @@ def _tracked_content_dirs(project_dir: Path, config: dict = None) -> list[Path]:
 # Check 1: File hash integrity
 # ---------------------------------------------------------------------------
 
+def _snapshot_note(n: int) -> str:
+    """Informational suffix for the file-hash line (AD-027)."""
+    return f"{n} snapshot artifact{'s' if n != 1 else ''}, drift not checked"
+
+
 def check_file_hashes(driver, database: str, project_dir: Path) -> CheckResult:
-    """Compare on-disk SHA-256 against content_hash stored in graph."""
+    """Compare on-disk SHA-256 against content_hash stored in graph.
+
+    Two carve-outs (AD-027):
+
+    * Artifacts with ``snapshot: true`` record a file as it stood at registration;
+      drift from the live file is the point of the artifact, so they are counted and
+      reported informationally, never compared, and never offered to ``--fix``.
+    * An artifact whose path resolves to a directory is a schema violation for that
+      artifact (a DataFile/Script path must be a file). It is reported and the check
+      continues instead of raising out of the whole verify run.
+    """
     with driver.session(database=database) as session:
         records = session.run(
             "MATCH (a:Artifact) "
@@ -197,12 +212,18 @@ def check_file_hashes(driver, database: str, project_dir: Path) -> CheckResult:
 
     mismatched = []
     missing_files = []
+    directories = []
+    snapshots = 0
     total = 0
 
     for rec in records:
         node = dict(rec["a"])
         file_path_str = node.get("file_path") or node.get("path")
         if not file_path_str:
+            continue
+
+        if node.get("snapshot") is True:
+            snapshots += 1
             continue
 
         file_path = Path(file_path_str)
@@ -216,28 +237,49 @@ def check_file_hashes(driver, database: str, project_dir: Path) -> CheckResult:
             missing_files.append(file_path.name)
             continue
 
+        if file_path.is_dir():
+            directories.append(f"{file_path_str} ({node.get('artifact_type', 'Artifact')} "
+                               f"{str(node.get('artifact_id', ''))[:8]})")
+            continue
+
         disk_hash = _sha256(file_path)
         if disk_hash != stored_hash:
             mismatched.append(file_path.name)
 
-    if mismatched or missing_files:
+    if mismatched or missing_files or directories:
         parts = []
         if mismatched:
             parts.append(f"{len(mismatched)} modified: {', '.join(mismatched)}")
         if missing_files:
             parts.append(f"{len(missing_files)} missing: {', '.join(missing_files)}")
+        if directories:
+            parts.append(
+                f"{len(directories)} path{'es' if len(directories) != 1 else ''} "
+                f"resolve{'s' if len(directories) == 1 else ''} to a directory "
+                f"(schema violation): {', '.join(directories)}"
+            )
+        summary = " — ".join(parts)
+        # Only drift is fixable by paper sync; a directory path is a registration error.
+        fixable = bool(mismatched or missing_files)
+        if fixable:
+            summary += " — run `seldon paper sync`"
+        if snapshots:
+            summary += f" — {_snapshot_note(snapshots)}"
         return CheckResult(
             name="File hashes",
             symbol="fail",
-            summary=" — ".join(parts) + " — run `seldon paper sync`",
-            details=mismatched + missing_files,
-            fixable=True,
+            summary=summary,
+            details=mismatched + missing_files + directories,
+            fixable=fixable,
         )
 
+    summary = f"All {total} tracked files in sync"
+    if snapshots:
+        summary += f" — {_snapshot_note(snapshots)}"
     return CheckResult(
         name="File hashes",
         symbol="pass",
-        summary=f"All {total} tracked files in sync",
+        summary=summary,
     )
 
 

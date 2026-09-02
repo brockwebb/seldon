@@ -37,6 +37,9 @@ artifact_types:
       dependencies:
         category: documentation
         description: "Required packages, data files, other scripts"
+      snapshot:
+        category: system
+        description: "Boolean, default false (AD-027). True means this artifact records the file as it stood at registration: content_hash is the identity of that state and the live file is expected to diverge. seldon verify skips snapshot artifacts in the drift check and reports them informationally; verify --fix and paper sync never rewrite their hash."
 
   Result:
     properties:
@@ -76,6 +79,9 @@ artifact_types:
       row_count:
         category: documentation
         description: "Number of records (approximate is fine)"
+      snapshot:
+        category: system
+        description: "Boolean, default false (AD-027). True means this artifact records the file as it stood at registration: content_hash is the identity of that state and the live file is expected to diverge. seldon verify skips snapshot artifacts in the drift check and reports them informationally; verify --fix and paper sync never rewrite their hash."
 
   Figure:
     properties:
@@ -154,6 +160,9 @@ artifact_types:
       content_hash:
         category: system
         description: "SHA-256 hash of file content at last sync"
+      snapshot:
+        category: system
+        description: "Boolean, default false (AD-027). True means this artifact records the file as it stood at registration: content_hash is the identity of that state and the live file is expected to diverge. seldon verify skips snapshot artifacts in the drift check and reports them informationally; verify --fix and paper sync never rewrite their hash."
       sequence:
         category: system
         description: "Ordering within parent (1, 2, 3...). Determines document order and figure/table numbering."

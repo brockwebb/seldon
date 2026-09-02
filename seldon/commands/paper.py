@@ -215,7 +215,7 @@ def paper_sync(register_untracked, dry_run, auto_stale):
     click.echo()
 
     col_width = max(len(r.filename) for r in results) + 3
-    counts = {"updated": 0, "untracked": 0, "unchanged": 0, "registered": 0}
+    counts = {"updated": 0, "untracked": 0, "unchanged": 0, "registered": 0, "snapshot": 0}
 
     for r in results:
         counts[r.status] = counts.get(r.status, 0) + 1
@@ -223,6 +223,8 @@ def paper_sync(register_untracked, dry_run, auto_stale):
 
         if r.status == "unchanged":
             click.echo(f"  {name_col} unchanged")
+        elif r.status == "snapshot":
+            click.echo(f"  {name_col} snapshot (hash frozen at registration; drift not synced)")
         elif r.status == "untracked":
             click.echo(f"  {name_col} untracked (no PaperSection artifact)")
         elif r.status == "registered":
@@ -255,6 +257,8 @@ def paper_sync(register_untracked, dry_run, auto_stale):
         summary_parts.append(f"{counts['untracked']} untracked")
     if counts.get("unchanged"):
         summary_parts.append(f"{counts['unchanged']} unchanged")
+    if counts.get("snapshot"):
+        summary_parts.append(f"{counts['snapshot']} snapshot")
     click.echo(f"Summary: {', '.join(summary_parts)}")
 
 

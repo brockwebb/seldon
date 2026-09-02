@@ -18,6 +18,25 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def validate_snapshot_property(properties: Dict[str, Any]) -> None:
+    """Reject a non-boolean ``snapshot`` value (AD-027).
+
+    ``snapshot`` is a cross-type artifact property: True means the artifact records a
+    file as it stood at registration, so its ``content_hash`` is the identity of that
+    state and the live file is expected to diverge. Absence means False. Anything other
+    than a real bool is refused here so that a string such as ``"yes"`` can never be
+    stored and later read as truthy by ``seldon verify``.
+
+    Raises:
+        ValueError: If ``snapshot`` is present and not a bool.
+    """
+    if "snapshot" in properties and not isinstance(properties["snapshot"], bool):
+        raise ValueError(
+            f"Property 'snapshot' must be a boolean (true/false), "
+            f"got {properties['snapshot']!r}"
+        )
+
+
 def create_artifact(
     project_dir: Path,
     driver: Driver,
@@ -39,6 +58,7 @@ def create_artifact(
             configured as "read-only", or if required properties are missing.
     """
     validate_artifact_type(domain_config, artifact_type)
+    validate_snapshot_property(properties)
 
     # Validate required properties
     required = domain_config.get_required_properties(artifact_type)
@@ -111,8 +131,11 @@ def update_artifact(
 
     Raises:
         ValueError: If attempting to update an OntologyTerm artifact in a project with
-            shared_ontology.inheritance configured as "read-only".
+            shared_ontology.inheritance configured as "read-only", or if ``snapshot``
+            is present and not a bool.
     """
+    validate_snapshot_property(properties)
+
     # Write protection for OntologyTerm in project databases
     from seldon.config import load_project_config
     try:

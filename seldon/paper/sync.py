@@ -51,7 +51,7 @@ class SyncResult:
     """Outcome of syncing a single section file against its graph artifact."""
 
     filename: str
-    status: str  # "unchanged" | "updated" | "untracked" | "registered"
+    status: str  # "unchanged" | "updated" | "untracked" | "registered" | "snapshot"
     refs_added: list = field(default_factory=list)
     refs_removed: list = field(default_factory=list)
     state_changed: bool = False
@@ -562,6 +562,15 @@ def sync_section(
                 artifact_id=artifact_id,
             )
         return SyncResult(filename=filename, status="untracked")
+
+    # AD-027: a snapshot artifact's content_hash is the identity of the file as it
+    # stood at registration. Sync (and therefore `verify --fix`) must never rewrite it.
+    if artifact.get("snapshot") is True:
+        return SyncResult(
+            filename=filename,
+            status="snapshot",
+            artifact_id=artifact["artifact_id"],
+        )
 
     current_hash = compute_file_hash(section_path)
     stored_hash = artifact.get("content_hash")

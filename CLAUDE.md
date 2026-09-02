@@ -172,6 +172,7 @@ Every public function gets a docstring (Args/Returns/Raises). Every module gets 
 AD-017: Central Validity Ontology — `docs/design/AD-017_central_validity_ontology.md`
 AD-021: Session Continuity Fidelity — `docs/design/AD-021_session_continuity_fidelity.md`
 AD-026: `seldon init` Project Templates — `docs/design/AD-026_init_templates.md`
+AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-027_snapshot_artifacts.md`
 
 ## Project Templates
 

@@ -17,14 +17,28 @@ def _get_domain_config(config: dict):
     return load_domain_config(domain_yaml)
 
 
+_BOOL_PROPERTIES = frozenset({"snapshot"})
+_BOOL_LITERALS = {"true": True, "false": False, "1": True, "0": False,
+                  "yes": True, "no": False}
+
+
 def _parse_properties(properties: tuple) -> dict:
-    """Parse KEY=VALUE tuples into a dict, with numeric coercion."""
+    """Parse KEY=VALUE tuples into a dict, with numeric coercion.
+
+    Keys in ``_BOOL_PROPERTIES`` (currently ``snapshot``, AD-027) are parsed as
+    booleans from true/false/1/0/yes/no, case-insensitive. Any other literal for
+    those keys is passed through as a string so the core validator rejects it with
+    a clear message instead of a silent coercion.
+    """
     props = {}
     for prop in properties:
         if "=" not in prop:
             click.echo(f"Invalid property format '{prop}' — use KEY=VALUE", err=True)
             raise SystemExit(1)
         key, _, value = prop.partition("=")
+        if key in _BOOL_PROPERTIES:
+            props[key] = _BOOL_LITERALS.get(value.strip().lower(), value)
+            continue
         try:
             props[key] = float(value) if "." in value else int(value)
         except ValueError:
@@ -161,6 +175,9 @@ def artifact_update(artifact_id: str, properties: tuple, actor: str, authority: 
         )
         keys = ", ".join(props.keys())
         click.echo(f"Updated {resolved_id}: set {keys}")
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
     finally:
         driver.close()
 
