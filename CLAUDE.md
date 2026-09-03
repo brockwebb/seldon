@@ -119,7 +119,7 @@ Before iterative editing of sections, establish the constraint surface. This red
 | `docs/design/` | Architectural decisions, design insights |
 | `docs/requirements/` | Requirements specifications |
 | `handoffs/` | Session handoff notes (gitignored) |
-| `cc_tasks/` | Claude Code task files (gitignored) |
+| `cc_tasks/` | Claude Code task files and RESULTs. `cc_tasks/` is intentionally tracked; `handoffs/` is not. |
 | `output/results/` | Registered results as YAML |
 | `ontology/` | Shared ontology definitions (validity vocabulary) |
 
