@@ -2,7 +2,8 @@
 
 # Working directories (gitignored by convention)
 handoffs/
-cc_tasks/
+# cc_tasks/ is intentionally TRACKED (task 2026-09-02_track_cc_tasks): execution
+# records are provenance, not scratch. handoffs/ stays ignored.
 tmp/
 .worktrees/
 .claude/
@@ -16,7 +17,6 @@ docs/references/**/*.pdf
 
 # Keep directory structure
 !handoffs/.gitkeep
-!cc_tasks/.gitkeep
 !tmp/.gitkeep
 !notes/.gitkeep
 !docs/references/.gitkeep
