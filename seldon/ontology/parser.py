@@ -65,7 +65,8 @@ class ParsedTerm:
     """
     One of: framework, sub_dimension, threat, severity, tax, argument,
     countermeasure, metric, classical_validity, terminology_decision,
-    framework_term, boilerplate, related_term.
+    framework_term, boilerplate, core_instrument_term, cross_cutting_term,
+    related_term.
     """
 
     citations: list[str]
@@ -381,7 +382,17 @@ SECTION_COVERAGE: dict[str, tuple[str | None, int]] = {
     "## Purpose": (None, 0),
     "## Sources": (None, 0),  # citation key table, not terms
     "## State Fidelity Validity (SFV)": ("_parse_sfv_term", 1),
-    "### Core Construct: Context Window": (None, 0),  # see NOTE below
+    # Deliberately unparsed, and the reason is enforced by
+    # tests/test_parser_sections.py::test_context_window_is_not_minted_twice.
+    # This section defines "Context window", which ALREADY reaches the graph as
+    # ontology:validity:related:context_window via _parse_related_terms. Minting
+    # a second node would give two active OntologyTerms with the same `name`,
+    # and `seldon glossary generate` renders one MyST {glossary} entry per term
+    # by name — a duplicate term description. The Related Terms entry carries the
+    # shorter of the two definitions and points here for the full one; promoting
+    # the fuller text is a vocabulary-content edit for the vocabulary's author,
+    # not something a parser may decide.
+    "### Core Construct: Context Window": (None, 0),
     "### Sub-dimensions": ("_parse_sub_dimensions", 5),
     "### Threat Taxonomy": ("_parse_threats", 5),
     "### Severity Scale": ("_parse_severity", 4),
@@ -404,15 +415,8 @@ SECTION_COVERAGE: dict[str, tuple[str | None, int]] = {
     "### Total Survey Error (TSE)": (None, 0),
     "### FCSM Data Quality Dimensions": (None, 0),
     "### Construct Validity Audit Methodology (Crosswalk Application)": (None, 0),
-    # NOTE (known gap, not this parser's regression): the three sections below
-    # are definition lists added by commit 62d6bdf that no parser claims. Between
-    # them they define six real terms — accumulated state, operative state,
-    # composite instrument, token limit, instrument stability assumption,
-    # bounded agency — plus the Core Construct entry for "context window". They
-    # are declared here so the coverage test passes while the gap stays visible
-    # and attributable rather than invisible.
-    "## Core Instrument Terms": (None, 0),
-    "## Framework Terms (Cross-Cutting)": (None, 0),
+    "## Core Instrument Terms": ("_parse_core_instrument_terms", 5),
+    "## Framework Terms (Cross-Cutting)": ("_parse_cross_cutting_terms", 1),
     "## Related Terms (Defined Elsewhere)": ("_parse_related_terms", 5),
     "## Terms That May Be Promoted from Projects": (None, 0),  # placeholder
 }
@@ -433,6 +437,8 @@ _PARSER_CATEGORY: dict[str, str] = {
     "_parse_classical_validity": "classical_validity",
     "_parse_terminology_decisions": "terminology_decision",
     "_parse_framework_terms": "framework_term",
+    "_parse_core_instrument_terms": "core_instrument_term",
+    "_parse_cross_cutting_terms": "cross_cutting_term",
     "_parse_related_terms": "related_term",
 }
 
@@ -966,9 +972,46 @@ def _parse_related_terms(lines: list[str]) -> list[ParsedTerm]:
     to the table form is caught by the section minimum in
     :data:`SECTION_COVERAGE`, not silently absorbed.
     """
+    return _parse_definition_list_section(
+        lines,
+        heading="## Related Terms (Defined Elsewhere)",
+        id_segment="related",
+        category="related_term",
+    )
+
+
+def _parse_definition_list_section(
+    lines: list[str], *, heading: str, id_segment: str, category: str
+) -> list[ParsedTerm]:
+    """Parse one bounded definition-list section into terms.
+
+    Three sections of the vocabulary share exactly this shape::
+
+        **Term name**
+        : The definition.
+        : Do not write: "some synonym" (why not).
+
+    The first ``:`` line is the definition. Any further ``:`` lines are usage
+    guidance and are kept in ``extra["usage_note"]`` rather than folded into the
+    definition, because the definition is what downstream consumers cite.
+
+    Only the definition-list form is supported. A section that is reformatted
+    into a table yields nothing here and is caught by the section minimum in
+    :data:`SECTION_COVERAGE` — a permissive "parse whichever shape turns up
+    next" scan is precisely the b6714f3 failure this module exists to prevent.
+
+    Args:
+        lines: The full vocabulary file split into lines.
+        heading: Exact heading line introducing the section.
+        id_segment: Segment placed after the namespace in each ``term_id``.
+        category: :attr:`ParsedTerm.category` stamped on every term produced.
+
+    Returns:
+        Terms in document order; empty when the section is absent.
+    """
     terms: list[ParsedTerm] = []
 
-    bounds = _find_section(lines, "## Related Terms (Defined Elsewhere)")
+    bounds = _find_section(lines, heading)
     if bounds is None:
         return terms
     start, end = bounds
@@ -981,10 +1024,10 @@ def _parse_related_terms(lines: list[str]) -> list[ParsedTerm]:
             extra["usage_note"] = _strip_markdown(usage_note)
         terms.append(
             ParsedTerm(
-                term_id=f"{_NAMESPACE}:related:{_slugify(name)}",
+                term_id=f"{_NAMESPACE}:{id_segment}:{_slugify(name)}",
                 name=name,
                 definition=_strip_markdown(raw_definition),
-                category="related_term",
+                category=category,
                 citations=_extract_citations(" ".join(defn_lines)),
                 namespace=_NAMESPACE,
                 extra=extra,
@@ -992,6 +1035,39 @@ def _parse_related_terms(lines: list[str]) -> list[ParsedTerm]:
         )
 
     return terms
+
+
+def _parse_core_instrument_terms(lines: list[str]) -> list[ParsedTerm]:
+    """Parse the definition list under ``## Core Instrument Terms``.
+
+    Added to the vocabulary by commit ``62d6bdf`` (2026-04-17) and claimed by no
+    parser until 2026-09-04, so its five terms — accumulated state, operative
+    state, composite instrument, token limit, instrument stability assumption —
+    had never reached the shared master despite being enforced for glossary
+    checking by ``ontology/validity/vocabulary_rules.yaml``.
+    """
+    return _parse_definition_list_section(
+        lines,
+        heading="## Core Instrument Terms",
+        id_segment="instrument",
+        category="core_instrument_term",
+    )
+
+
+def _parse_cross_cutting_terms(lines: list[str]) -> list[ParsedTerm]:
+    """Parse the definition list under ``## Framework Terms (Cross-Cutting)``.
+
+    A *different* section from ``## Framework Terms`` further up the file, which
+    :func:`_parse_framework_terms` claims. Both heading matches are exact, not
+    prefix, so the two cannot collide — the shorter heading is a strict prefix
+    of the longer one and a prefix match here would silently merge them.
+    """
+    return _parse_definition_list_section(
+        lines,
+        heading="## Framework Terms (Cross-Cutting)",
+        id_segment="crosscutting",
+        category="cross_cutting_term",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1180,6 +1256,8 @@ def parse_vocabulary(path: Path | str) -> ParsedVocabulary:
     terminology = _parse_terminology_decisions(lines)
     framework_terms = _parse_framework_terms(lines)
     boilerplate = _parse_boilerplate(lines)
+    core_instrument = _parse_core_instrument_terms(lines)
+    cross_cutting = _parse_cross_cutting_terms(lines)
     related = _parse_related_terms(lines)
 
     all_terms: list[ParsedTerm] = (
@@ -1195,6 +1273,8 @@ def parse_vocabulary(path: Path | str) -> ParsedVocabulary:
         + terminology
         + framework_terms
         + boilerplate
+        + core_instrument
+        + cross_cutting
         + related
     )
 

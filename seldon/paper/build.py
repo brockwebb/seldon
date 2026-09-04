@@ -9,7 +9,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Iterable, Optional
 
 from seldon.config import load_project_config, get_neo4j_driver
 from seldon.paper.numbering import (
@@ -29,13 +29,34 @@ from seldon.paper.qc import (
 )
 from seldon.paper.copyedit import load_copyedit_config, run_copyedit, parse_bib_keys
 from seldon.domain.units_vocabulary import load_units_vocabulary
+from seldon.core.naming import unanchored_name_grammar
 
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-REFERENCE_PATTERN = re.compile(r'\{\{(result|figure|cite):([^:}]+):([^}]+)\}\}')
+#: Reference token: ``{{result|figure|cite : NAME : FIELD}}``.
+#:
+#: The NAME capture uses the AD-028 Result name grammar (as amended 2026-09-04
+#: to admit uppercase), not "any character but ':' and '}'". A string whose
+#: name position is not a legal name is therefore not a token at all, which is
+#: what lets a document print the placeholder ``{{result:<NAME>:value}}`` while
+#: explaining the token syntax to a reader, without the resolver reporting
+#: SI-01 on the explanation.
+#:
+#: All three token types share the grammar because all three names are Seldon
+#: artifact names: a `cite` token names a Citation artifact, and that
+#: artifact's BibTeX key lives in its own `bibtex_key` property (see the SI-07
+#: check), so narrowing the token grammar constrains no BibTeX key.
+#:
+#: The grammar comes from `seldon.core.naming`, a leaf module, so this is a
+#: plain eager compile. It was previously a lazy-compiling wrapper because the
+#: grammar lived in `seldon.commands.result`, which imports this module — a
+#: hard circular import. Hoisting the constant removed the need for it.
+REFERENCE_PATTERN = re.compile(
+    r'\{\{(result|figure|cite):(' + unanchored_name_grammar() + r'):([^}]+)\}\}'
+)
 
 # AD-028: marker appended to a resolved value when a `proposed` Result is
 # rendered under --allow-proposed. Single space, then the literal.
@@ -167,6 +188,11 @@ def load_named_artifacts(driver, database: str) -> dict:
 # build_paper, and the `units_fallback` parameter of resolve_references once
 # `seldon result migrate-names` has been run live against every project graph
 # and no build emits an SI-09 line. Nothing else depends on this path.
+#
+# check_units_fallback (below) is the instrument that measures that condition,
+# and `seldon paper check-units-fallback` is its CLI. Both go with the fallback
+# when it goes: an instrument for a removed condition is dead weight.
+# Last fleet measurement: cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md
 # ---------------------------------------------------------------------------
 
 def build_units_fallback_index(
@@ -218,6 +244,194 @@ def build_units_fallback_index(
     return index
 
 
+@dataclass
+class UnitsFallbackFileCount:
+    """Per-file SI-09 tally produced by :func:`check_units_fallback`.
+
+    Attributes:
+        path: File measured, as given by the caller.
+        tokens: Result tokens the resolver recognised in the file. Reported so
+            a zero can be distinguished from "this file has no tokens at all".
+        resolutions: Tokens resolved by the transitional units fallback
+            (non-fatal SI-09). This is the number the removal condition is
+            stated in.
+        ambiguities: Tokens the fallback refused to resolve because more than
+            one unnamed Result carried the units string (fatal SI-09). These
+            also block removal: the fallback is still load-bearing wherever it
+            is being consulted at all.
+        unresolved: Tokens that matched nothing at all (SI-01). Reported so a
+            zero can be read honestly: a project whose graph is empty resolves
+            nothing by the fallback either, and that is not the same evidence
+            as a project whose tokens all resolve by name.
+    """
+
+    path: str
+    tokens: int
+    resolutions: int
+    ambiguities: int
+    unresolved: int = 0
+
+
+@dataclass
+class UnitsFallbackReport:
+    """Whole-project SI-09 tally produced by :func:`check_units_fallback`.
+
+    Attributes:
+        project_dir: Project measured.
+        database: Neo4j database read, or None when the config named none.
+        files: Per-file tallies, in the order the caller supplied the files.
+        index_keys: Number of distinct units strings in the fallback index —
+            i.e. how many unnamed Results are still reachable *only* by the
+            transitional path. Zero here means the fallback could not fire even
+            if a document asked it to. A non-zero value in a project reporting
+            zero resolutions is a latent dependency, not a live one: nothing
+            cites those Results today, but the legacy rows are still there.
+        named_artifacts: Number of name-bearing artifacts loaded from the
+            graph. A zero-resolution report from a graph with zero named
+            artifacts is vacuous — the tokens matched nothing at all — so this
+            is what makes a reported zero auditable.
+        error: Populated when the project could not be measured (no config, no
+            database name, graph unreachable). A project with an error is NOT a
+            project at zero and must never be counted as one.
+    """
+
+    project_dir: Path
+    database: Optional[str]
+    files: list[UnitsFallbackFileCount]
+    index_keys: int
+    named_artifacts: int = 0
+    error: Optional[str] = None
+
+    @property
+    def measured(self) -> bool:
+        """True when the tallies below are real measurements."""
+        return self.error is None
+
+    @property
+    def resolutions(self) -> int:
+        """Total non-fatal SI-09 resolutions across all files."""
+        return sum(f.resolutions for f in self.files)
+
+    @property
+    def ambiguities(self) -> int:
+        """Total fatal SI-09 ambiguities across all files."""
+        return sum(f.ambiguities for f in self.files)
+
+    @property
+    def tokens(self) -> int:
+        """Total result tokens seen across all files."""
+        return sum(f.tokens for f in self.files)
+
+    @property
+    def unresolved(self) -> int:
+        """Total SI-01 tokens (matched no artifact by any route)."""
+        return sum(f.unresolved for f in self.files)
+
+
+def check_units_fallback(
+    project_dir: Path,
+    files: Iterable[Path],
+) -> UnitsFallbackReport:
+    """Count SI-09 transitional-fallback resolutions without writing anything.
+
+    This is the instrument for the SI-09 removal condition stated above: the
+    fallback may be deleted once every project reports zero. `build_paper`
+    cannot answer that question for a general project, because it only looks at
+    `paper/sections/*.md` while token-bearing prose also lives in `docs/`,
+    `cc_tasks/`, and elsewhere; and because it writes a `.qmd` and may invoke
+    Quarto, which a fleet-wide read-only measurement must not do.
+
+    Every graph query it issues is a read. Nothing is written to the project.
+
+    Args:
+        project_dir: Project root holding `seldon.yaml`.
+        files: Files to resolve. The caller chooses the file set — for the
+            removal-condition measurement that set is the project's *tracked*
+            files containing result tokens, since untracked scratch is not the
+            project's content.
+
+    Returns:
+        A :class:`UnitsFallbackReport`. When the project cannot be measured —
+        unparseable config, no `neo4j.database`, unreachable or absent graph —
+        the report carries `error` and empty tallies. That is deliberately not
+        the same value as a measured zero: an unmeasurable project does not
+        satisfy the removal condition, and collapsing the two would let the
+        fallback be deleted on the strength of a project nobody could read.
+
+    Raises:
+        Nothing. Failure to reach a project's graph is a reportable outcome of a
+        fleet-wide survey, not an error that should abort the survey. Anything
+        that goes wrong is recorded in `error` with its exception type.
+    """
+    file_list = [Path(f) for f in files]
+
+    try:
+        config = load_project_config(project_dir)
+        database = (config.get("neo4j") or {}).get("database")
+        if not database:
+            return UnitsFallbackReport(
+                project_dir=Path(project_dir), database=None, files=[],
+                index_keys=0,
+                error="seldon.yaml names no neo4j.database",
+            )
+        driver = get_neo4j_driver(config)
+        try:
+            artifacts = load_named_artifacts(driver, database)
+            index = build_units_fallback_index(driver, database)
+        finally:
+            driver.close()
+    except Exception as exc:  # noqa: BLE001 — reported, never swallowed
+        return UnitsFallbackReport(
+            project_dir=Path(project_dir), database=None, files=[],
+            index_keys=0,
+            error=f"{type(exc).__name__}: {exc}",
+        )
+
+    counts: list[UnitsFallbackFileCount] = []
+    for path in file_list:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            counts.append(UnitsFallbackFileCount(
+                path=str(path), tokens=0, resolutions=0, ambiguities=0,
+                unresolved=0,
+            ))
+            # A file named by the caller that cannot be read is a caller-side
+            # problem, but silently scoring it zero would understate the tally.
+            print(f"WARNING: {path}: {type(exc).__name__}: {exc}")
+            continue
+
+        tokens = sum(
+            1 for m in REFERENCE_PATTERN.finditer(text) if m.group(1) == "result"
+        )
+        _resolved, errors = resolve_references(
+            text=text,
+            artifacts=artifacts,
+            filename=str(path),
+            units_fallback=index,
+            # Proposed and stale Results are irrelevant to the SI-09 question;
+            # admitting them keeps the tally about the fallback alone.
+            allow_proposed=True,
+            mark_proposed=False,
+        )
+        si09 = [e for e in errors if e.check_id == UNITS_FALLBACK_CHECK_ID]
+        counts.append(UnitsFallbackFileCount(
+            path=str(path),
+            tokens=tokens,
+            resolutions=sum(1 for e in si09 if not e.fatal),
+            ambiguities=sum(1 for e in si09 if e.fatal),
+            unresolved=sum(1 for e in errors if e.check_id == "SI-01"),
+        ))
+
+    return UnitsFallbackReport(
+        project_dir=Path(project_dir),
+        database=database,
+        files=counts,
+        index_keys=len(index),
+        named_artifacts=len(artifacts),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Reference resolution
 # ---------------------------------------------------------------------------
@@ -230,6 +444,8 @@ def resolve_references(
     paper_dir: Optional[Path] = None,
     units_fallback: Optional[dict] = None,
     allow_proposed: bool = False,
+    mark_proposed: bool = True,
+    value_formatter: Callable[[Any], str] = str,
 ) -> tuple[str, list[RefError]]:
     """
     Replace {{type:name:field}} tokens with artifact values.
@@ -260,12 +476,29 @@ def resolve_references(
         allow_proposed: When True, a Result in `proposed` state resolves and is
             rendered as "<value> (proposed)" with a non-fatal SI-03 record
             instead of aborting the build.
+        mark_proposed: When True (the default) a value admitted by
+            allow_proposed carries the PROPOSED_MARKER suffix. Pass False to
+            render the bare value — appropriate for a working document whose
+            every Result is proposed, where the marker on every number is noise
+            rather than signal. The non-fatal SI-03 record is still emitted
+            either way, so the information is never lost: the caller can count
+            and name the proposed Results it rendered. Has no effect unless
+            allow_proposed is True.
+        value_formatter: Callable applied to the resolved field value to produce
+            the rendered string. Defaults to `str`, i.e. exactly today's
+            output. Supply a formatter to control rendering — for example to
+            print an integral float as "26" rather than "26.0" when the graph
+            stores every Result value as a float. Applied to the value in every
+            case, including the proposed-marker case.
 
     Returns:
         Tuple of (resolved_text, errors).
 
     Raises:
-        Nothing. Every problem is recorded as a RefError.
+        TypeError: If value_formatter returns a non-str. That is a caller bug,
+            not a document problem, so it is raised rather than recorded as a
+            RefError — a non-str substitution would otherwise fail deep inside
+            `re.sub` with no reference to the token that caused it.
     """
     errors: list[RefError] = []
 
@@ -368,8 +601,11 @@ def resolve_references(
                     artifact_name=name,
                 ))
                 return token
-            # AD-028: --allow-proposed downgrades SI-03 to a warning and marks
-            # the rendered value so a reader can see it is not yet verified.
+            # AD-028: --allow-proposed downgrades SI-03 to a warning and, by
+            # default, marks the rendered value so a reader can see it is not
+            # yet verified. Under mark_proposed=False the value renders bare —
+            # but this warning still records the token, so the proposed set
+            # remains countable and nameable by the caller.
             render_proposed = True
             errors.append(RefError(
                 check_id="SI-03",
@@ -379,6 +615,9 @@ def resolve_references(
                 message=(
                     f"Result '{key}' is proposed — rendered with the "
                     f"'{PROPOSED_MARKER}' marker (--allow-proposed)"
+                    if mark_proposed else
+                    f"Result '{key}' is proposed — rendered without a marker "
+                    f"(--allow-proposed, mark_proposed=False)"
                 ),
                 fatal=False,
                 artifact_name=name,
@@ -431,9 +670,16 @@ def resolve_references(
                 ))
                 return token
 
-        if render_proposed:
-            return f"{str(value)} {PROPOSED_MARKER}"
-        return str(value)
+        rendered = value_formatter(value)
+        if not isinstance(rendered, str):
+            raise TypeError(
+                f"value_formatter must return str; got "
+                f"{type(rendered).__name__} for token {token!r} in {filename}"
+            )
+
+        if render_proposed and mark_proposed:
+            return f"{rendered} {PROPOSED_MARKER}"
+        return rendered
 
     resolved = REFERENCE_PATTERN.sub(_replace, text)
     return resolved, errors

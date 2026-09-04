@@ -17,6 +17,7 @@ from seldon.commands.issue import issue_group
 from seldon.commands.cc import cc_group
 from seldon.commands.glossary import glossary_group
 from seldon.commands.audit_dispatch import audit_dispatch_command
+from seldon.commands.events import events_group
 
 
 @click.group()
@@ -44,3 +45,4 @@ main.add_command(issue_group, name="issue")
 main.add_command(cc_group, name="cc")
 main.add_command(glossary_group, name="glossary")
 main.add_command(audit_dispatch_command, name="audit-dispatch")
+main.add_command(events_group, name="events")

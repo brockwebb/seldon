@@ -523,3 +523,181 @@ class TestSyncPropagatesDeprecation:
             _term_state(master_and_replica, TEST_PROJECT_DB, "ontology:validity:SFV")
             == "active"
         )
+
+
+# ===========================================================================
+# D. Term content hash — what counts as "changed"
+#
+# 2026-09-04 defect sweep RESULT §7.4: the hash covered only
+# term_id | definition | category. A term's `name`, its `citations`, and its
+# `extra` (which holds the "Do not write:" usage notes) are all written to the
+# master node by `_term_to_props`, and all three could therefore be edited in the
+# vocabulary file and never reach the shared master or any replica. Nothing
+# raised; ingest simply reported the term as unchanged.
+#
+# The rule these tests encode: every field `_term_to_props` persists must be
+# inside the hash. Anything outside it is a silent-drift channel.
+# ===========================================================================
+
+
+class TestTermContentHash:
+    """Every persisted field participates in change detection."""
+
+    def _hash(self, **overrides):
+        from seldon.commands.ontology import _term_content_hash
+        from seldon.ontology.parser import ParsedTerm
+
+        base = dict(
+            term_id="ontology:test:t1",
+            name="Term one",
+            definition="A definition.",
+            category="domain_term",
+            citations=[],
+            namespace="ontology:test",
+            extra={},
+        )
+        base.update(overrides)
+        return _term_content_hash(ParsedTerm(**base))
+
+    def test_hash_is_deterministic(self):
+        assert self._hash() == self._hash()
+
+    def test_definition_change_is_detected(self):
+        assert self._hash() != self._hash(definition="Another definition.")
+
+    def test_category_change_is_detected(self):
+        assert self._hash() != self._hash(category="framework_term")
+
+    def test_term_id_change_is_detected(self):
+        assert self._hash() != self._hash(term_id="ontology:test:t2")
+
+    def test_name_change_is_detected(self):
+        """Would have failed before 2026-09-04: `name` was outside the hash."""
+        assert self._hash() != self._hash(name="Term uno")
+
+    def test_citation_change_is_detected(self):
+        """Would have failed before 2026-09-04: `citations` was outside the hash."""
+        assert self._hash() != self._hash(citations=["[Webb-2026a]"])
+
+    def test_citation_order_is_significant(self):
+        """Document order is the citation order a replica renders."""
+        a = self._hash(citations=["[Webb-2026a]", "[SCC-2002]"])
+        b = self._hash(citations=["[SCC-2002]", "[Webb-2026a]"])
+        assert a != b
+
+    def test_extra_change_is_detected(self):
+        """Would have failed before 2026-09-04: `extra` was outside the hash.
+
+        `extra["usage_note"]` carries the "Do not write:" guidance for the six
+        definition-list sections, so this was a live drift channel, not a
+        theoretical one.
+        """
+        assert self._hash() != self._hash(
+            extra={"usage_note": 'Do not write: "the model".'}
+        )
+
+    def test_extra_key_order_is_not_significant(self):
+        """Dict insertion order must not change the digest."""
+        a = self._hash(extra={"alpha": 1, "beta": 2})
+        b = self._hash(extra={"beta": 2, "alpha": 1})
+        assert a == b
+
+    def test_hash_covers_every_field_term_to_props_persists(self):
+        """The invariant, asserted structurally rather than field by field.
+
+        If `_term_to_props` grows a property sourced from the ParsedTerm, this
+        fails until that field is added to `_term_content_hash` — which is the
+        only thing preventing the next silent-drift channel.
+        """
+        from seldon.commands.ontology import _term_to_props
+        from seldon.ontology.parser import ParsedTerm
+
+        term = ParsedTerm(
+            term_id="ontology:test:t1",
+            name="Term one",
+            definition="A definition.",
+            category="domain_term",
+            citations=["[Webb-2026a]"],
+            namespace="ontology:test",
+            extra={"usage_note": "note"},
+        )
+        props = _term_to_props(term, epoch=1, content_hash="x")
+
+        #: Properties that ingest computes rather than reads off the term, so
+        #: they legitimately do not participate in the term's content hash.
+        NOT_FROM_TERM = {"content_hash", "epoch", "state", "artifact_type"}
+        from_term = set(props) - NOT_FROM_TERM
+
+        varied = {
+            "term_id": {"term_id": "ontology:test:t2"},
+            "name": {"name": "Other"},
+            "definition": {"definition": "Other."},
+            "category": {"category": "other"},
+            "citations": {"citations": ["[SCC-2002]"]},
+            "extra": {"usage_note": "different"},
+            "namespace": None,  # see below
+        }
+        assert from_term <= set(varied), (
+            f"_term_to_props persists {sorted(from_term - set(varied))} with no "
+            f"declared variation — add it to _term_content_hash and to this test"
+        )
+
+        base = self._hash(citations=["[Webb-2026a]"], extra={"usage_note": "note"})
+        for field_name in from_term:
+            override = varied[field_name]
+            if override is None:
+                # `namespace` is a constant of the parser, not an editable field
+                # of the vocabulary file: every term in a file shares it and it
+                # is derived from the parser module, not from the markdown. It
+                # cannot drift independently, so it is deliberately out of scope.
+                continue
+            kwargs = {"citations": ["[Webb-2026a]"], "extra": {"usage_note": "note"}}
+            if field_name == "extra":
+                kwargs["extra"] = override
+            else:
+                kwargs.update(override)
+            changed = self._hash(**kwargs)
+            assert changed != base, (
+                f"editing {field_name!r} does not change the content hash, so a "
+                f"vocabulary edit to it would never reach master"
+            )
+
+    def test_hash_payload_is_versioned(self):
+        """Widening the field set must invalidate stored hashes, visibly.
+
+        The version prefix is what turns a change in the *definition of changed*
+        into one reviewable mass update instead of an old and a new hash that
+        happen to be comparable.
+        """
+        from seldon.commands import ontology as ontology_mod
+
+        assert ontology_mod._TERM_HASH_VERSION >= 2
+        digest_v2 = self._hash()
+        original = ontology_mod._TERM_HASH_VERSION
+        try:
+            ontology_mod._TERM_HASH_VERSION = original + 1
+            assert self._hash() != digest_v2
+        finally:
+            ontology_mod._TERM_HASH_VERSION = original
+
+    def test_widened_hash_makes_every_real_term_look_changed_once(self):
+        """The one-time cost of the widening, pinned so it is not a surprise.
+
+        Recomputing the real vocabulary under the v1 payload reproduces the old
+        digests; none of them match the current ones. That is why the live
+        migration was a single planned 109-row update and an epoch bump, not a
+        no-op.
+        """
+        import hashlib
+
+        from seldon.commands.ontology import _term_content_hash
+        from seldon.ontology.parser import parse_vocabulary
+
+        def _v1(term):
+            payload = f"{term.term_id}|{term.definition}|{term.category}"
+            return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+        vocab = parse_vocabulary(VOCAB_PATH)
+        assert vocab.terms
+        for term in vocab.terms:
+            assert _v1(term) != _term_content_hash(term)

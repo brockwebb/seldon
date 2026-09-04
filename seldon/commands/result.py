@@ -24,24 +24,16 @@ from seldon.domain.loader import load_domain_config
 from seldon.domain.units_vocabulary import load_units_vocabulary
 from seldon.paper.build import REFERENCE_PATTERN
 
-# AD-028 §1, as amended by Amendment 01 (2026-09-04): the Result.name slug
-# grammar. Case-sensitive, ASCII, safe in a filename or a URL fragment.
-#
-# THIS IS THE SINGLE DEFINITION POINT. The pattern string is written here and
-# nowhere else: every name-accepting path imports this constant, and every
-# message, `--help` string, domain-config description and convention doc that
-# needs to show the grammar interpolates `RESULT_NAME_PATTERN.pattern` or
-# describes it in words. `tests/test_result_grammar.py` pins that with a grep
-# test over the whole repo. Do not paste the pattern anywhere else — a second
-# copy is a second definition, and the two will drift.
-RESULT_NAME_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$')
-RESULT_NAME_MAX_LENGTH = 128
-
-#: Human-readable rendering of RESULT_NAME_PATTERN, derived from the constant so
-#: it cannot drift from it. Used in error messages and `--help` text.
-RESULT_NAME_GRAMMAR_PROSE = (
-    "must start with an ASCII letter or digit, then any of letters, digits, "
-    "underscore, dot or hyphen"
+# The AD-028 name grammar lives in `seldon.core.naming`, a leaf module that
+# imports nothing from Seldon. It cannot live here: this module imports
+# REFERENCE_PATTERN from `seldon.paper.build`, and `build` must embed the name
+# grammar in that pattern, so defining it here makes the pair circular. These
+# re-exports keep `seldon.commands.result.RESULT_NAME_PATTERN` working for
+# existing callers.
+from seldon.core.naming import (  # noqa: F401  (re-exported for callers)
+    RESULT_NAME_GRAMMAR_PROSE,
+    RESULT_NAME_MAX_LENGTH,
+    RESULT_NAME_PATTERN,
 )
 
 #: Classification buckets emitted by `seldon result migrate-names`, in report

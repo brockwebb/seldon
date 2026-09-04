@@ -1,11 +1,11 @@
 """
 seldon verify — project integrity checks.
 
-Runs 9 checks in order: file hash integrity, ontology freshness,
+Runs 11 checks in order: file hash integrity, ontology freshness,
 glossary compliance, reference resolution, stale artifacts,
-open blocking tasks, unregistered files, relationship-type case, and
-task source-file resolution. Reports issues with actionable remediation
-guidance.
+open blocking tasks, unregistered files, relationship-type case,
+task source-file resolution, event-log readability, and event-log replay.
+Reports issues with actionable remediation guidance.
 
 Exit codes:
     Default mode:
@@ -974,6 +974,207 @@ def check_task_source_files(
 
 
 # ---------------------------------------------------------------------------
+# Check 10: Event log
+# ---------------------------------------------------------------------------
+
+#: Command that repairs an unassigned-legacy-record finding.
+LEGACY_ID_MIGRATION_CMD = "seldon events migrate-legacy-ids"
+
+
+def check_event_log(project_dir: Path) -> CheckResult:
+    """Fail when the event log cannot be read back, or has been tampered with.
+
+    Recoverability rests on one thing: the log can be read, whole, from the
+    first line. This check exercises exactly that, in-process and in
+    milliseconds — no database, no network. It is cheap enough to run before
+    every commit, which is what `seldon verify` is for.
+
+    Three findings, in descending severity:
+
+    1. **Unreadable.** `read_events` raised. Until 2026-09-04 this was the live
+       state of `seldon-seldon-self`: nine pre-envelope records had no
+       ``event_id``, the duplicate check read two ``None`` values as a
+       collision, and full replay was impossible. That defect is repaired in
+       the reader, so a raise here now means something new and real.
+    2. **Tampered.** A ``legacy_event_id_assigned`` record froze an id derived
+       from a line's content. Re-deriving it today gives a different answer,
+       which can only mean the append-only log was edited.
+    3. **Unassigned legacy records.** The log reads fine, but legacy records
+       have no frozen assignment, so nothing would detect a later edit to them.
+       A warning, not a failure: readability is already restored.
+
+    Not Tier A — see ``TIER_A_CHECKS``. Every finding here is a property of
+    accumulated log history rather than of the change in hand, and an executing
+    agent cannot clear it by doing its own task correctly.
+
+    Args:
+        project_dir: Project root holding ``seldon_events.jsonl``.
+
+    Returns:
+        A CheckResult named "Event log".
+    """
+    from seldon.core.events import read_events
+    from seldon.core.legacy_events import (
+        scan_legacy_records,
+        unassigned_ordinals,
+        verify_assignments,
+    )
+
+    log_path = project_dir / "seldon_events.jsonl"
+    if not log_path.exists():
+        return CheckResult(
+            name="Event log",
+            symbol="pass",
+            summary="No event log (nothing to verify)",
+        )
+
+    try:
+        events = read_events(project_dir)
+    except Exception as exc:
+        return CheckResult(
+            name="Event log",
+            symbol="fail",
+            summary=f"Log cannot be read — full replay is impossible ({type(exc).__name__})",
+            details=[str(exc)],
+        )
+
+    tamper = verify_assignments(events)
+    if tamper:
+        return CheckResult(
+            name="Event log",
+            symbol="fail",
+            summary=(
+                f"{len(tamper)} legacy id assignment"
+                f"{'s' if len(tamper) != 1 else ''} no longer reconcile — "
+                "the append-only log was edited"
+            ),
+            details=tamper,
+        )
+
+    legacy = scan_legacy_records(events)
+    pending = unassigned_ordinals(events)
+    if pending:
+        return CheckResult(
+            name="Event log",
+            symbol="warn",
+            summary=(
+                f"{len(events)} events readable; {len(pending)} legacy record"
+                f"{'s' if len(pending) != 1 else ''} have no frozen id assignment"
+            ),
+            details=[
+                f"Legacy records at ordinal(s): "
+                f"{', '.join(str(o) for o in pending[:20])}"
+                + (" ..." if len(pending) > 20 else ""),
+                f"Freeze them with: {LEGACY_ID_MIGRATION_CMD}",
+            ],
+        )
+
+    suffix = f", {len(legacy)} legacy record(s) with frozen ids" if legacy else ""
+    return CheckResult(
+        name="Event log",
+        symbol="pass",
+        summary=f"{len(events)} events readable{suffix}",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Check 11: Replay
+# ---------------------------------------------------------------------------
+
+def check_replay(
+    driver, database: str, project_dir: Path, enabled: bool
+) -> CheckResult:
+    """Replay the event log into a scratch database and diff it against live.
+
+    This is the *measurement* behind the Recoverability guarantee, as opposed to
+    check 10's *precondition*: reading the log proves it is legible; replaying it
+    proves it is sufficient.
+
+    **Default scope is this project only, and the check is opt-in.** Two
+    decisions, both forced by the same constraint — `seldon verify` runs before
+    every commit:
+
+    - *Opt-in.* The replay creates a Neo4j database, applies every event in the
+      log one statement at a time, restores the ontology from master, and drops
+      the database again. On `seldon-seldon-self` (1700+ events) that is tens of
+      seconds against a default `seldon verify` of about two. A pre-commit gate
+      that slow gets bypassed, and a bypassed gate checks nothing. So the
+      default run reports that the check is available and skips it.
+    - *This project only.* Replaying every project on the machine would multiply
+      that cost by thirty and would make one project's commit gate depend on
+      thirty other projects' databases being up. Worse, it would report
+      failures the committer has no standing to fix. The fleet sweep is a
+      separate, deliberate act: ``seldon events replay-check --roots ...``.
+
+    A mismatch is reported, never repaired. It almost always means something
+    wrote to the graph without writing an event, and that write is the thing to
+    fix — not the diff.
+
+    Args:
+        driver: Neo4j driver.
+        database: Live project database. Read only; the replay targets a
+            scratch database that is created and dropped by this call.
+        project_dir: Project root holding ``seldon_events.jsonl``.
+        enabled: False for the default run, which reports the check as skipped.
+
+    Returns:
+        A CheckResult named "Replay".
+    """
+    if not enabled:
+        return CheckResult(
+            name="Replay",
+            symbol="pass",
+            summary="Skipped (expensive) — run `seldon verify --replay`",
+        )
+
+    from seldon.core.replay_check import replay_check
+
+    if not (project_dir / "seldon_events.jsonl").exists():
+        return CheckResult(
+            name="Replay", symbol="pass", summary="No event log (nothing to replay)"
+        )
+
+    comparison = replay_check(project_dir, driver, database)
+
+    if comparison.error is not None:
+        return CheckResult(
+            name="Replay",
+            symbol="fail",
+            summary="Replay could not run",
+            details=[comparison.error],
+        )
+
+    if comparison.matches:
+        return CheckResult(
+            name="Replay",
+            symbol="pass",
+            summary=(
+                f"{comparison.events_replayed} events reproduce the live graph "
+                f"exactly ({comparison.live.node_count} nodes, "
+                f"{comparison.live.relationship_count} relationships)"
+            ),
+        )
+
+    details = list(comparison.summary_lines())
+    details.append(
+        "A mismatch means graph state exists that the log cannot rebuild. "
+        "Diagnose the write that skipped the event path; do not reconcile by hand."
+    )
+    details.append(
+        "Full diff: `seldon events replay-check --project-dir . --verbose`"
+    )
+    return CheckResult(
+        name="Replay",
+        symbol="fail",
+        summary=(
+            f"Replay of {comparison.events_replayed} events does not reproduce "
+            f"the live graph"
+        ),
+        details=details,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fix actions
 # ---------------------------------------------------------------------------
 
@@ -1058,12 +1259,19 @@ def _fix_unregistered_files(
 @click.option("--strict", is_flag=True, default=False,
               help="Exit non-zero only on Tier A (mechanical) violations. "
                    "Advisory findings are reported but do not affect exit code.")
-def verify_command(fix, quiet, strict):
-    """Run 9 integrity checks on the current Seldon project.
+@click.option("--replay", "replay", is_flag=True, default=False,
+              help="Also replay this project's event log into a throwaway "
+                   "database and diff it against the live graph. Off by "
+                   "default because it costs tens of seconds and `verify` is a "
+                   "pre-commit gate. For every project on the machine, use "
+                   "`seldon events replay-check --roots ...` instead.")
+def verify_command(fix, quiet, strict, replay):
+    """Run 11 integrity checks on the current Seldon project.
 
     Checks file hashes, ontology freshness, glossary compliance, reference
     resolution, stale artifacts, blocking tasks, unregistered files,
-    relationship-type case, and task source-file resolution.
+    relationship-type case, task source-file resolution, event-log
+    readability, and (with --replay) event-log replay fidelity.
 
     Exit codes: 0 = clean, 1 = warnings only, 2 = issues found.
     Use --strict to gate only on mechanical (Tier A) violations.
@@ -1076,12 +1284,15 @@ def verify_command(fix, quiet, strict):
     domain_config = _get_domain_config(config)
 
     try:
-        results = _run_all_checks(driver, database, config, project_dir)
+        results = _run_all_checks(
+            driver, database, config, project_dir, replay=replay
+        )
 
         # Apply fixes if requested
         if fix:
             results = _apply_fixes(
-                results, driver, database, project_dir, domain_config, config, quiet
+                results, driver, database, project_dir, domain_config, config,
+                quiet, replay=replay,
             )
     finally:
         driver.close()
@@ -1117,9 +1328,21 @@ def verify_command(fix, quiet, strict):
 
 
 def _run_all_checks(
-    driver, database: str, config: dict, project_dir: Path
+    driver, database: str, config: dict, project_dir: Path, replay: bool = False
 ) -> list[CheckResult]:
-    """Execute all 9 checks and return results."""
+    """Execute all 11 checks and return results.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+        config: Loaded seldon.yaml.
+        project_dir: Project root.
+        replay: Run the expensive event-log replay check. See `check_replay`
+            for why it is off by default.
+
+    Returns:
+        One CheckResult per check, in report order.
+    """
     return [
         check_file_hashes(driver, database, project_dir),
         check_ontology_freshness(driver, database, config),
@@ -1130,6 +1353,8 @@ def _run_all_checks(
         check_unregistered_files(driver, database, project_dir, config),
         check_relationship_types(driver, database),
         check_task_source_files(driver, database, project_dir, config),
+        check_event_log(project_dir),
+        check_replay(driver, database, project_dir, enabled=replay),
     ]
 
 
@@ -1141,6 +1366,7 @@ def _apply_fixes(
     domain_config,
     config: dict,
     quiet: bool,
+    replay: bool = False,
 ) -> list[CheckResult]:
     """Apply --fix actions and re-run affected checks."""
     check_names_to_fix = {
@@ -1170,7 +1396,7 @@ def _apply_fixes(
             click.echo(f"  Registered {count} file{'s' if count != 1 else ''}.")
 
     # Re-run checks after fixes
-    return _run_all_checks(driver, database, config, project_dir)
+    return _run_all_checks(driver, database, config, project_dir, replay=replay)
 
 
 def _print_report(
