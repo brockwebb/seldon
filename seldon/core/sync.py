@@ -38,7 +38,23 @@ _ONTOLOGY_EVENT_TYPES = frozenset({"ontology_synced", "ontology_ingested"})
 # replayed graph and there is nothing for this event to remove. Projecting it as
 # a `link_removed` would be actively wrong: that path also uppercases, so replay
 # would delete the canonical edge the migration just established.
-_AUDIT_ONLY_EVENT_TYPES = frozenset({"paper_fix", "link_case_migrated"})
+#
+# `legacy_event_id_assigned` records that a pre-envelope log record was given a
+# deterministic derived id (see seldon/core/legacy_events.py). It is audit-only
+# *deliberately*, for two reasons. First, it describes a property of the event
+# log, not of the research domain — there is no artifact type it could project
+# to, and inventing one would put log-maintenance bookkeeping into the same
+# graph as the science. Second, `read_events` re-derives every legacy id on
+# every read from the line's own content, so replay never needs to consult
+# these records; they exist to freeze the derivation for audit and to detect
+# tampering (`seldon verify` cross-checks them). Listing the type here rather
+# than letting it fall through to the `else` branch is the whole point: nine
+# migration records would otherwise emit nine WARNINGs on every single replay,
+# which trains an operator to ignore replay warnings — precisely the signal
+# this set exists to keep meaningful.
+_AUDIT_ONLY_EVENT_TYPES = frozenset(
+    {"paper_fix", "link_case_migrated", "legacy_event_id_assigned"}
+)
 
 
 def get_sync_point(session: Session) -> Optional[str]:

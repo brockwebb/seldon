@@ -13,7 +13,10 @@ shared_ontology:
   # Per AD-017: Central Validity Ontology
   # Seldon repo owns the master vocabulary files.
   # ingest reads both vocabularies and writes to seldon-ontology master DB.
-  source: /Users/brock/GitHub/seldon/ontology/
+  # Relative to this file's directory, so every checkout and every git worktree
+  # reads its OWN vocabulary tree. An absolute path here named one clone and
+  # made worktree vocabulary edits untestable (defect sweep RESULT §7.6).
+  source: ontology/
   vocabularies:
     - validity/VALIDITY_VOCABULARY.md
     - practitioner/PRACTITIONER_VOCABULARY.md

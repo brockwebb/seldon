@@ -570,6 +570,79 @@ def paper_build(skip_qc, strict, output_path, no_render, qc_config_path, style_c
     raise SystemExit(exit_code)
 
 
+@paper_group.command("check-units-fallback")
+@click.argument("files", nargs=-1, type=click.Path())
+@click.option("--project-dir", "project_dir", default=None, type=click.Path(),
+              help="Project root holding seldon.yaml. Defaults to the current "
+                   "directory.")
+@click.option("--files-from", "files_from", default=None, type=click.Path(),
+              help="Read the file list from this file, one path per line "
+                   "(use '-' for stdin). Intended for `git ls-files | grep ...`, "
+                   "so the measurement covers TRACKED content only.")
+@click.option("--verbose", is_flag=True, default=False,
+              help="List every file, not only those with a non-zero tally.")
+def paper_check_units_fallback(files, project_dir, files_from, verbose):
+    """Count SI-09 transitional units-fallback resolutions. Read-only.
+
+    TRANSITIONAL (AD-028). This measures the removal condition for the units
+    fallback in seldon/paper/build.py: the fallback may be deleted once every
+    project reports zero. Unlike `paper build`, it reads any file list — token
+    prose lives in docs/ and cc_tasks/ as well as paper/sections/ — writes no
+    output, and never invokes Quarto.
+
+    Exit code: 0 = measured zero, 1 = measured non-zero, 2 = not measurable.
+    """
+    import sys
+
+    from seldon.paper.build import check_units_fallback
+
+    root = Path(project_dir) if project_dir else Path.cwd()
+
+    paths = [Path(f) for f in files]
+    if files_from:
+        raw = (
+            sys.stdin.read() if files_from == "-"
+            else Path(files_from).read_text(encoding="utf-8")
+        )
+        paths.extend(Path(line.strip()) for line in raw.splitlines() if line.strip())
+    if not paths:
+        sections_dir = root / "paper" / "sections"
+        paths = sorted(sections_dir.glob("*.md")) if sections_dir.is_dir() else []
+
+    # A relative path in the list is relative to the project, not to wherever
+    # the command happens to have been invoked from.
+    paths = [p if p.is_absolute() else root / p for p in paths]
+
+    report = check_units_fallback(root, paths)
+
+    click.echo(f"project:  {report.project_dir}")
+    if not report.measured:
+        click.echo("database: (none)")
+        click.echo(f"RESULT:   NOT MEASURABLE — {report.error}")
+        raise SystemExit(2)
+
+    click.echo(f"database: {report.database}")
+    click.echo(f"files:    {len(report.files)}   result tokens: {report.tokens}")
+    click.echo(f"named artifacts in graph: {report.named_artifacts}")
+    click.echo(f"unnamed Results reachable only by units: {report.index_keys}")
+
+    for f in report.files:
+        if verbose or f.resolutions or f.ambiguities:
+            click.echo(
+                f"  {f.path}: tokens={f.tokens} "
+                f"si09_resolved={f.resolutions} si09_ambiguous={f.ambiguities} "
+                f"si01_unresolved={f.unresolved}"
+            )
+
+    total = report.resolutions + report.ambiguities
+    click.echo(
+        f"RESULT:   SI-09 resolutions={report.resolutions} "
+        f"ambiguities={report.ambiguities} "
+        f"(SI-01 unresolved tokens: {report.unresolved})"
+    )
+    raise SystemExit(1 if total else 0)
+
+
 @paper_group.command("glossary")
 @click.option(
     "--format", "fmt",

@@ -29,7 +29,7 @@ from seldon.commands.result import (
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 #: The one file allowed to contain the pattern string, relative to the repo root.
-DEFINITION_POINT = Path("seldon") / "commands" / "result.py"
+DEFINITION_POINT = Path("seldon") / "core" / "naming.py"
 
 #: Directories whose contents are an immutable record of what was decided or
 #: done at a past moment, not a statement of what the grammar is now. AD-028 and

@@ -61,15 +61,37 @@ def read_events(project_path: Path) -> List[Dict[str, Any]]:
     Read all events from the JSONL event log.
 
     - Skips malformed lines with a WARNING log (does not crash).
+    - Repairs legacy pre-envelope records: a record with no ``event_id`` gets a
+      deterministic derived one and its flat top-level fields are folded into
+      ``payload``. See `seldon.core.legacy_events` for the recipe and the
+      argument that a derived id can never collide with a real uuid4. The log
+      file itself is never modified — the repair happens in memory on every
+      read, which is what makes it safe to apply to an append-only substrate.
     - Raises DuplicateEventError if any event_id appears more than once.
     - Returns events in append order (oldest first).
+
+    On the duplicate check and legacy records
+    -----------------------------------------
+    The check is *strengthened*, not weakened. Before the repair, two records
+    that both lacked an id collided on ``None`` and the whole log became
+    unreadable — a false positive that made full replay impossible and broke
+    Recoverability. Now every record carries a distinct id and the check does
+    what it was written to do: two genuinely duplicated uuid4 values still
+    raise, because they are equal strings in ``seen_ids`` exactly as before.
+    Nothing in this path special-cases legacy ids out of the comparison.
     """
+    # Imported here rather than at module scope: legacy_events documents the
+    # repair in terms of this reader, and a module-level import in both
+    # directions would be circular.
+    from seldon.core.legacy_events import is_legacy_record, normalise_legacy_record
+
     path = _events_path(project_path)
     if not path.exists():
         return []
 
     events: List[Dict[str, Any]] = []
     seen_ids: set[str] = set()
+    ordinal = 0
 
     with open(path, "r", encoding="utf-8") as f:
         for lineno, raw_line in enumerate(f, start=1):
@@ -85,6 +107,18 @@ def read_events(project_path: Path) -> List[Dict[str, Any]]:
                     line[:120],
                 )
                 continue
+
+            # Ordinal counts parsed records only, and must stay in lockstep
+            # with legacy_events.raw_records — the derived id embeds it.
+            ordinal += 1
+
+            if is_legacy_record(event):
+                event = normalise_legacy_record(ordinal, event)
+                logger.debug(
+                    "Repaired legacy event log record at line %d as %s",
+                    lineno,
+                    event["event_id"],
+                )
 
             event_id = event.get("event_id")
             if event_id in seen_ids:

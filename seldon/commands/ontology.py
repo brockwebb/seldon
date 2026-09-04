@@ -19,12 +19,13 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import click
 
 from seldon.config import ONTOLOGY_MASTER_DB
 from seldon.core.events import append_event, make_event
+from seldon.core.projects import DEFAULT_SCAN_DEPTH
 from seldon.core.graph import create_indexes
 
 #: Environment variable overriding the directory whose event log `ingest`
@@ -54,13 +55,52 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _term_content_hash(term) -> str:
-    """Compute a SHA-256 hash of a term's definition for change detection.
+#: Version of the :func:`_term_content_hash` payload format.
+#:
+#: The hash is the ONLY thing ingest compares a source term against master, so
+#: any field left out of it is a field a vocabulary edit can change without the
+#: graph noticing. Version 1 covered ``term_id | definition | category``, which
+#: meant a corrected term ``name``, an added citation, or a rewritten
+#: ``Do not write:`` usage note (which lives in ``extra``) all landed on disk and
+#: never reached the shared master — a silent-wrong-answer failure of exactly the
+#: family this module keeps producing (2026-09-04 defect sweep RESULT §7.4).
+#:
+#: The version prefix is part of the hashed payload on purpose: widening the
+#: definition of "changed" is itself a content-definition change, so it MUST
+#: invalidate every stored hash and force one visible mass update rather than
+#: leaving old and new hashes silently comparable. Bump it whenever the field set
+#: below changes, and say so in the commit.
+_TERM_HASH_VERSION = 2
 
-    Uses term_id + definition + category so renames and recategorizations
-    are also detected.
+
+def _term_content_hash(term) -> str:
+    """Compute a SHA-256 hash of everything ingest persists about a term.
+
+    Every field that :func:`_term_to_props` writes to the master node is hashed
+    here, so "hash unchanged" means "nothing a replica would see is different".
+    Renames, recategorizations, citation edits and usage-note edits are all
+    detected.
+
+    Args:
+        term: A ``ParsedTerm`` (or the practitioner parser's equivalent).
+
+    Returns:
+        Hex SHA-256 digest of the versioned payload.
     """
-    payload = f"{term.term_id}|{term.definition}|{term.category}"
+    payload = "|".join(
+        [
+            f"v{_TERM_HASH_VERSION}",
+            term.term_id,
+            term.name,
+            term.definition,
+            term.category,
+            # Citation order is meaningful and deterministic (document order),
+            # so it is hashed as-is rather than sorted. `extra` is a dict, so its
+            # keys are sorted to make the digest independent of insertion order.
+            json.dumps(list(term.citations or []), ensure_ascii=False),
+            json.dumps(dict(term.extra or {}), sort_keys=True, ensure_ascii=False),
+        ]
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -135,14 +175,23 @@ def _resolve_vocabulary_paths() -> list[Path]:
     Resolution order:
     1. SELDON_ONTOLOGY_PATH env var — explicit override, single file, takes
        precedence over config (used in tests and CI scripts).
-    2. Project seldon.yaml shared_ontology.source + vocabularies (all entries)
+    2. Project seldon.yaml shared_ontology.vocabularies, joined to the ontology
+       root that :func:`seldon.paths.resolve_ontology_root` derives from
+       shared_ontology.source and the project directory. A *relative* source is
+       resolved against the directory holding seldon.yaml, and an absent source
+       tree falls back to the ontology tree shipped beside the installed
+       package — see that function for why both halves are required.
     3. Error with instructions
 
     Returns list of existing vocabulary paths in config order.
     """
-    from seldon.config import get_shared_ontology_sources, load_project_config
+    from seldon.config import load_project_config
+    from seldon.paths import DEFAULT_VOCABULARIES, resolve_ontology_root
 
-    # Env var override takes precedence — enables test isolation and CI use
+    # Env var override takes precedence — enables test isolation and CI use.
+    # Note this variable names a single vocabulary FILE here, whereas
+    # seldon.paths treats it as the ontology ROOT directory. The two never meet:
+    # this branch returns before any seldon.paths resolution is attempted.
     env_path = os.getenv("SELDON_ONTOLOGY_PATH")
     if env_path:
         p = Path(env_path)
@@ -154,11 +203,15 @@ def _resolve_vocabulary_paths() -> list[Path]:
 
     # Fall back to project config (all vocabulary entries)
     try:
-        config = load_project_config()
-        all_paths = get_shared_ontology_sources(config)
-        existing = [p for p in all_paths if p.exists()]
-        if existing:
-            return existing
+        project_dir = Path.cwd()
+        config = load_project_config(project_dir)
+        shared = config.get("shared_ontology") or {}
+        root = resolve_ontology_root(shared.get("source"), project_dir)
+        if root is not None:
+            vocabs = shared.get("vocabularies") or list(DEFAULT_VOCABULARIES)
+            existing = [p for p in (root / v for v in vocabs) if p.exists()]
+            if existing:
+                return existing
     except FileNotFoundError:
         pass
 
@@ -419,6 +472,116 @@ def _is_missing_database_error(exc: Exception) -> bool:
 # Core sync logic (shared between `sync` command and `init` hook)
 # ---------------------------------------------------------------------------
 
+@dataclass
+class ReplicaDelta:
+    """The writes that would bring one replica into agreement with master.
+
+    Produced by :func:`_compute_replica_delta`, which is pure: it reads two
+    dicts of term properties and decides. ``sync --all`` uses it to *report* a
+    plan without writing, and :func:`_do_sync` uses it to *apply* one. Both go
+    through this single classification so a dry-run cannot promise something
+    the live run would not do — the failure mode that makes a dry-run worse
+    than no dry-run at all.
+
+    Attributes:
+        creates: Full property dicts for terms the replica does not carry.
+        updates: Property dicts (including ``artifact_id``) for terms whose
+            content hash diverges. ``state`` is deliberately absent — lifecycle
+            moves are recorded separately so a content update cannot smuggle in
+            an unexamined state change.
+        state_changes: ``(artifact_id, new_state)`` for terms whose lifecycle
+            state master has moved.
+        orphan_deprecations: ``artifact_id`` for replica terms master no longer
+            holds at all.
+        skipped_deprecated: ``term_id`` for master terms this replica never
+            carried and that master has already retired. Deliberately not
+            created.
+    """
+
+    creates: List[Dict[str, Any]] = field(default_factory=list)
+    updates: List[Dict[str, Any]] = field(default_factory=list)
+    state_changes: List[Tuple[str, str]] = field(default_factory=list)
+    orphan_deprecations: List[str] = field(default_factory=list)
+    skipped_deprecated: List[str] = field(default_factory=list)
+
+    @property
+    def deprecated_count(self) -> int:
+        """Terms this sync would move to ``deprecated``, from both causes."""
+        moved = sum(1 for _, state in self.state_changes if state == "deprecated")
+        return moved + len(self.orphan_deprecations)
+
+    @property
+    def state_synced_count(self) -> int:
+        """Lifecycle moves to a state other than ``deprecated``."""
+        return sum(1 for _, state in self.state_changes if state != "deprecated")
+
+    @property
+    def is_empty(self) -> bool:
+        """True when the replica already matches master term-for-term."""
+        return not (
+            self.creates or self.updates or self.state_changes
+            or self.orphan_deprecations
+        )
+
+
+def _compute_replica_delta(
+    master_terms: Dict[str, Dict[str, Any]],
+    project_terms: Dict[str, Dict[str, Any]],
+    inheritance: str,
+    now: Optional[str] = None,
+) -> ReplicaDelta:
+    """Classify the difference between master terms and one replica's terms.
+
+    Args:
+        master_terms: ``term_id`` -> node properties, read from the master DB.
+        project_terms: ``term_id`` -> node properties, read from the replica.
+        inheritance: Inheritance mode stamped onto every synced term.
+        now: ISO timestamp for ``created_at``/``updated_at``. Defaults to now.
+
+    Returns:
+        A :class:`ReplicaDelta`. No I/O is performed and nothing is mutated.
+    """
+    now = _now_iso() if now is None else now
+    delta = ReplicaDelta()
+
+    for term_id, master_term in master_terms.items():
+        props = dict(master_term)
+        props["inheritance"] = inheritance
+        master_state = props.get("state")
+
+        if term_id not in project_terms:
+            if master_state == "deprecated":
+                # Master retired this term and the replica never carried it.
+                # Introducing a dead term into a project that never referenced
+                # it adds no provenance and pollutes `seldon ontology list`, so
+                # it is skipped. Replicas that DO carry it have the deprecation
+                # propagated below.
+                delta.skipped_deprecated.append(term_id)
+                continue
+            props.setdefault("created_at", now)
+            delta.creates.append(props)
+            continue
+
+        proj_term = project_terms[term_id]
+        if props.get("content_hash") != proj_term.get("content_hash"):
+            content_props = dict(props)
+            content_props.pop("state", None)
+            content_props["updated_at"] = now
+            delta.updates.append(content_props)
+        # A term master has retired keeps its content hash, so a content-only
+        # comparison would leave the replica calling a dead term 'active'.
+        # Master is authoritative for the lifecycle of an inherited term:
+        # replicate its state whenever it diverges.
+        if master_state and master_state != proj_term.get("state"):
+            delta.state_changes.append((proj_term["artifact_id"], master_state))
+
+    for term_id, proj_term in project_terms.items():
+        if term_id not in master_terms and proj_term.get("state") != "deprecated":
+            delta.orphan_deprecations.append(proj_term["artifact_id"])
+
+    return delta
+
+
 def _do_sync(
     driver,
     database: str,
@@ -528,60 +691,30 @@ def _do_sync(
         ).data()
         project_terms = {dict(r["a"])["term_id"]: dict(r["a"]) for r in project_records}
 
-    new_count = 0
-    updated_count = 0
-    deprecated_count = 0
-    state_synced_count = 0
-    skipped_deprecated_count = 0
+    # Classify once, apply below. The same function backs `sync --all --dry-run`.
+    delta = _compute_replica_delta(master_terms, project_terms, inheritance)
+
+    new_count = len(delta.creates)
+    updated_count = len(delta.updates)
+    deprecated_count = delta.deprecated_count
+    state_synced_count = delta.state_synced_count
+    skipped_deprecated_count = len(delta.skipped_deprecated)
     rel_count = 0
 
     with driver.session(database=database) as session:
-        # Sync terms from master
-        for term_id, master_term in master_terms.items():
-            props = dict(master_term)
-            props["inheritance"] = inheritance
-            master_state = props.get("state")
+        # New terms -- created with the same artifact_id as master.
+        for props in delta.creates:
+            create_artifact(session, "OntologyTerm", props)
 
-            if term_id not in project_terms:
-                if master_state == "deprecated":
-                    # Master retired this term and the replica never carried it.
-                    # Introducing a dead term into a project that never
-                    # referenced it adds no provenance and pollutes
-                    # `seldon ontology list`, so it is skipped. Replicas that DO
-                    # carry it have the deprecation propagated below.
-                    skipped_deprecated_count += 1
-                    continue
-                # New term -- create with same artifact_id as master
-                props.setdefault("created_at", _now_iso())
-                create_artifact(session, "OntologyTerm", props)
-                new_count += 1
-            else:
-                proj_term = project_terms[term_id]
-                # Existing term -- check if content changed. State is handled
-                # separately below, so a content update cannot smuggle in an
-                # unexamined lifecycle change.
-                if props.get("content_hash") != proj_term.get("content_hash"):
-                    content_props = dict(props)
-                    content_props.pop("state", None)
-                    content_props["updated_at"] = _now_iso()
-                    update_artifact(session, props["artifact_id"], content_props)
-                    updated_count += 1
-                # A term master has retired keeps its content hash, so a
-                # content-only comparison would leave the replica calling a dead
-                # term 'active'. Master is authoritative for the lifecycle of an
-                # inherited term: replicate its state whenever it diverges.
-                if master_state and master_state != proj_term.get("state"):
-                    change_state(session, proj_term["artifact_id"], master_state)
-                    if master_state == "deprecated":
-                        deprecated_count += 1
-                    else:
-                        state_synced_count += 1
+        for content_props in delta.updates:
+            update_artifact(session, content_props["artifact_id"], content_props)
+
+        for artifact_id, new_state in delta.state_changes:
+            change_state(session, artifact_id, new_state)
 
         # Deprecate project terms not in master
-        for term_id, proj_term in project_terms.items():
-            if term_id not in master_terms and proj_term.get("state") != "deprecated":
-                change_state(session, proj_term["artifact_id"], "deprecated")
-                deprecated_count += 1
+        for artifact_id in delta.orphan_deprecations:
+            change_state(session, artifact_id, "deprecated")
 
         # Sync relationships using MERGE
         for rel in master_rels:
@@ -648,6 +781,504 @@ def _do_sync(
         "relationships": rel_count,
         "up_to_date": False,
     }
+
+
+# ---------------------------------------------------------------------------
+# Fleet-wide sync (`sync --all`)
+# ---------------------------------------------------------------------------
+
+#: The only inheritance mode AD-017 defines. Used for replicas that no project
+#: directory claims, which therefore have no `seldon.yaml` to read a mode from.
+DEFAULT_INHERITANCE = "read-only"
+
+#: Environment variable naming databases `sync --all` must never sync,
+#: ``os.pathsep``-separated. Additive with ``--exclude``.
+SYNC_ALL_EXCLUDE_ENV = "SELDON_SYNC_ALL_EXCLUDE"
+
+#: Databases this repository's own pytest harness creates, reproduced exactly
+#: from `tests/testdb.py` (``seldon-test`` and ``seldon-test-project`` under the
+#: ``SELDON_TEST_DATABASE=seldon-test`` serial-run override; ``seldon-test-p<pid>``
+#: and its ``-<worker>`` / ``-project`` derivatives otherwise).
+#:
+#: They are excluded by default because a fleet sync would push the *real*
+#: master's terms into a database an in-flight test run is asserting against —
+#: turning a hygiene command into a source of flaky test failures. Exclusion
+#: fails closed (the database is simply left alone) and every skip is printed
+#: with its reason, so an over-exclusion is visible rather than silent. The
+#: pattern is deliberately exact, not a ``seldon-test`` prefix match: a real
+#: project database would have to be named ``seldon-test``, ``seldon-test-project``
+#: or ``seldon-test-p<digits>`` to collide with it.
+_TEST_HARNESS_DB_RE = re.compile(
+    r"^seldon-test(?:-project|-p\d+(?:-[A-Za-z0-9]+)*)?$"
+)
+
+
+@dataclass
+class ReplicaSyncReport:
+    """One row of the `sync --all` report.
+
+    Attributes:
+        database: Replica database name.
+        current_epoch: The replica's ``_OntologyReplicaMeta.last_epoch``.
+        target_epoch: Master's epoch.
+        delta: The classified work, or None when the replica could not be read.
+        project_dir: Directory whose `seldon.yaml` names this database, when
+            exactly one was found.
+        project_note: Why ``project_dir`` is what it is — reported so a
+            graph-only sync (no event recorded) is never silent.
+        applied: True when writes were performed.
+        error: Failure message; the database was left untouched.
+    """
+
+    database: str
+    current_epoch: int = 0
+    target_epoch: int = 0
+    delta: Optional[ReplicaDelta] = None
+    project_dir: Optional[Path] = None
+    project_note: str = ""
+    applied: bool = False
+    error: Optional[str] = None
+
+    @property
+    def epoch_current(self) -> bool:
+        """True when the replica's epoch already equals master's."""
+        return self.current_epoch == self.target_epoch and self.target_epoch > 0
+
+
+def _excluded_databases(extra: Iterable[str] = ()) -> Set[str]:
+    """Databases `sync --all` must skip, from the environment and CLI.
+
+    Args:
+        extra: Names passed via ``--exclude``.
+
+    Returns:
+        Set of database names. The master is added by the caller as a
+        structural rule, not as a configurable exclusion.
+    """
+    names = {n.strip() for n in extra if n and n.strip()}
+    raw = os.getenv(SYNC_ALL_EXCLUDE_ENV) or ""
+    for part in raw.split(os.pathsep):
+        part = part.strip()
+        if part:
+            names.add(part)
+    return names
+
+
+def _list_online_databases(driver) -> List[str]:
+    """Return the names of online standard databases, de-duplicated and sorted.
+
+    Args:
+        driver: Connected Neo4j driver.
+
+    Returns:
+        Database names. ``system`` and any database that is not online are
+        excluded — an offline database cannot be synced, and saying so is more
+        useful than failing on it.
+    """
+    with driver.session(database="system") as session:
+        rows = session.run(
+            "SHOW DATABASES YIELD name, type, currentStatus "
+            "WHERE type = 'standard' AND currentStatus = 'online' "
+            "RETURN DISTINCT name"
+        ).data()
+    return sorted({r["name"] for r in rows})
+
+
+def _discover_replica_databases(
+    driver, exclude: Iterable[str] = (), skip_test_harness: bool = True
+) -> Tuple[List[str], List[Tuple[str, str]]]:
+    """Find every database that is an ontology replica.
+
+    Discovery is by *marker node*, not by name. ``seldon-`` is a naming
+    convention, not a guarantee: this cluster holds ``seldon-``-prefixed
+    databases that are not replicas (``seldon-arnold``, ``seldon-leibniz-pi``)
+    and non-prefixed Seldon-adjacent ones (``arnold``, ``quarry``). The
+    presence of an ``_OntologyReplicaMeta`` node is the thing that actually
+    makes a database a replica, so that is what is tested. Prefix filtering
+    would be simultaneously over- and under-inclusive.
+
+    Two structural guards precede it:
+
+    * The master (:data:`seldon.config.ONTOLOGY_MASTER_DB`) is never a target —
+      syncing it into itself would be a no-op at best and a corruption at worst.
+    * Any database holding an ``_OntologyMeta {key: 'master'}`` node is skipped
+      for the same reason, by marker rather than by name, so a renamed or a
+      second master (a test master, say) is also protected.
+
+    Args:
+        driver: Connected Neo4j driver.
+        exclude: Database names the operator has excluded.
+        skip_test_harness: Apply :data:`_TEST_HARNESS_DB_RE`. Set False only by
+            this repository's own tests, which necessarily run against
+            harness-named databases and would otherwise be unable to observe
+            discovery at all. The CLI always leaves it True.
+
+    Returns:
+        ``(replicas, skipped)`` where ``skipped`` is ``(database, reason)``.
+        A database that cannot be inspected is reported as a skip carrying the
+        error text, so one unreachable database does not abort discovery.
+    """
+    excluded = set(exclude)
+    replicas: List[str] = []
+    skipped: List[Tuple[str, str]] = []
+
+    for name in _list_online_databases(driver):
+        if name == ONTOLOGY_MASTER_DB:
+            skipped.append((name, "master database — never a sync target"))
+            continue
+        if name in excluded:
+            skipped.append((name, "excluded by operator"))
+            continue
+        if skip_test_harness and _TEST_HARNESS_DB_RE.match(name):
+            skipped.append((name, "pytest harness database (tests/testdb.py)"))
+            continue
+        try:
+            with driver.session(database=name) as session:
+                is_master = session.run(
+                    "MATCH (m:_OntologyMeta {key: 'master'}) RETURN count(m) AS c"
+                ).single()["c"]
+                if is_master:
+                    skipped.append((name, "holds _OntologyMeta — this is a master"))
+                    continue
+                has_replica_meta = session.run(
+                    "MATCH (m:_OntologyReplicaMeta) RETURN count(m) AS c"
+                ).single()["c"]
+        except Exception as exc:  # noqa: BLE001 — reported, never swallowed
+            skipped.append((name, f"could not inspect: {type(exc).__name__}: {exc}"))
+            continue
+        if has_replica_meta:
+            replicas.append(name)
+
+    return replicas, skipped
+
+
+def _find_projects_including_nested(roots: Iterable[Path], depth: int):
+    """Scan ``roots`` for projects, including projects nested inside projects.
+
+    :func:`seldon.core.projects.find_projects` deliberately stops at the first
+    `seldon.yaml` it meets, on the rule that a project's subdirectories belong
+    to that project. That rule is right for auditing *event logs* and wrong for
+    mapping *databases*: this machine has a project (`nsf_aiday2026`, database
+    ``seldon-nsf-aiday2026``) living inside another project (`brock_projects`),
+    and it owns its own database. Attributing that database to the enclosing
+    project — or to nothing — would put a sync event in the wrong log.
+
+    Args:
+        roots: Directories to scan.
+        depth: Maximum depth passed to each ``find_projects`` call.
+
+    Returns:
+        List of ``ProjectRef``, de-duplicated by resolved path.
+    """
+    from seldon.core.projects import SKIP_DIRS, find_projects
+
+    found = {ref.path: ref for ref in find_projects(roots, depth=depth)}
+    frontier = list(found.values())
+    while frontier:
+        ref = frontier.pop()
+        try:
+            children = [
+                child
+                for child in ref.path.iterdir()
+                if child.is_dir()
+                and not child.is_symlink()
+                and child.name not in SKIP_DIRS
+                and not child.name.startswith(".")
+            ]
+        except (PermissionError, OSError):
+            continue
+        for nested in find_projects(children, depth=depth):
+            if nested.path not in found:
+                found[nested.path] = nested
+                frontier.append(nested)
+    return [found[p] for p in sorted(found)]
+
+
+def _map_databases_to_projects(
+    roots: Iterable[str], depth: int
+) -> Tuple[Dict[str, List[Path]], List[str]]:
+    """Build a ``database -> project directories`` map for event attribution.
+
+    Args:
+        roots: Directories to scan. Empty falls back to
+            ``$SELDON_PROJECT_ROOTS``.
+        depth: Maximum scan depth.
+
+    Returns:
+        ``(mapping, notes)``. A database claimed by more than one directory maps
+        to all of them; the caller refuses to guess between them.
+    """
+    from seldon.core.projects import PROJECT_ROOTS_ENV_VAR, roots_from_env
+
+    notes: List[str] = []
+    scan_roots = [Path(r).expanduser() for r in roots if r]
+    if scan_roots:
+        notes.append("project roots: " + ", ".join(str(r) for r in scan_roots))
+    else:
+        scan_roots = roots_from_env()
+        if scan_roots:
+            notes.append(
+                f"project roots (${PROJECT_ROOTS_ENV_VAR}): "
+                + ", ".join(str(r) for r in scan_roots)
+            )
+
+    if not scan_roots:
+        notes.append(
+            f"no project roots given — pass --roots or set "
+            f"${PROJECT_ROOTS_ENV_VAR}. Replicas will be synced graph-only, "
+            f"with no ontology_synced event recorded."
+        )
+        return {}, notes
+
+    mapping: Dict[str, List[Path]] = {}
+    refs = _find_projects_including_nested(scan_roots, depth)
+    broken = 0
+    not_projects = 0
+    for ref in refs:
+        if ref.config_error:
+            broken += 1
+            continue
+        # A `seldon.yaml` that is somebody else's file, not a Seldon project
+        # config. seldon.core.projects flags these rather than guessing.
+        if getattr(ref, "not_a_project", None):
+            not_projects += 1
+            continue
+        if ref.database:
+            mapping.setdefault(ref.database, []).append(ref.path)
+    notes.append(
+        f"scanned {len(refs)} project(s); "
+        f"{len(mapping)} distinct database(s) claimed"
+        + (f"; {broken} unreadable seldon.yaml" if broken else "")
+        + (f"; {not_projects} non-Seldon seldon.yaml" if not_projects else "")
+    )
+    return mapping, notes
+
+
+def _plan_replica(
+    driver,
+    database: str,
+    master_epoch: int,
+    master_terms: Dict[str, Dict[str, Any]],
+    inheritance: str,
+) -> ReplicaSyncReport:
+    """Read one replica and classify what a sync would do to it.
+
+    Args:
+        driver: Connected Neo4j driver.
+        database: Replica database name.
+        master_epoch: Master's current epoch.
+        master_terms: ``term_id`` -> properties, read once from master.
+        inheritance: Inheritance mode to stamp on synced terms.
+
+    Returns:
+        A report with ``delta`` populated, or with ``error`` set if the replica
+        could not be read. Never raises: one unreadable database must not abort
+        a fleet run.
+    """
+    report = ReplicaSyncReport(database=database, target_epoch=master_epoch)
+    try:
+        with driver.session(database=database) as session:
+            row = session.run(
+                "MATCH (m:_OntologyReplicaMeta {key: 'replica'}) "
+                "RETURN m.last_epoch AS last_epoch"
+            ).single()
+            report.current_epoch = (row["last_epoch"] if row else 0) or 0
+            project_terms = {
+                dict(r["a"])["term_id"]: dict(r["a"])
+                for r in session.run(
+                    "MATCH (a:Artifact:OntologyTerm) RETURN a"
+                ).data()
+            }
+    except Exception as exc:  # noqa: BLE001 — recorded and reported, not swallowed
+        report.error = f"{type(exc).__name__}: {exc}"
+        return report
+
+    report.delta = _compute_replica_delta(master_terms, project_terms, inheritance)
+    return report
+
+
+def _sync_one_replica(driver, report: ReplicaSyncReport) -> None:
+    """Apply a planned sync to one replica, recording the outcome on ``report``.
+
+    A replica claimed by exactly one project directory is synced through that
+    project's own configuration, so the ``ontology_synced`` event lands in the
+    right event log. A replica no directory claims — or one claimed by several,
+    where attributing the event would mean inventing a fact — is synced
+    graph-only with no event. The report says which happened for every row.
+
+    Args:
+        driver: Connected Neo4j driver.
+        report: Row to act on; mutated in place.
+
+    Returns:
+        None. Failures are recorded in ``report.error``, never raised.
+    """
+    from seldon.config import load_project_config
+
+    try:
+        if report.project_dir is not None:
+            config = load_project_config(report.project_dir)
+            _do_sync(driver, report.database, report.project_dir, config)
+        else:
+            # No event log to append to. project_dir is unused because
+            # emit_event is False; see _do_sync.
+            _do_sync(
+                driver,
+                report.database,
+                Path.cwd(),
+                {"shared_ontology": {"inheritance": DEFAULT_INHERITANCE}},
+                emit_event=False,
+            )
+        report.applied = True
+    except Exception as exc:  # noqa: BLE001 — one failure must not stop the fleet
+        report.error = f"{type(exc).__name__}: {exc}"
+
+
+def _render_sync_all_report(reports: List[ReplicaSyncReport]) -> None:
+    """Print the per-database table.
+
+    Args:
+        reports: Rows to print, in database order.
+
+    Returns:
+        None.
+    """
+    header = (
+        f"{'DATABASE':38} {'EPOCH':>5} {'->':^4} {'TARGET':>6} "
+        f"{'ADD':>5} {'UPD':>5} {'DEP':>5} {'SKIP':>5}  EVENT LOG"
+    )
+    click.echo(header)
+    click.echo("-" * len(header))
+    for r in reports:
+        if r.error and r.delta is None:
+            click.echo(f"{r.database:38} ERROR: {r.error}")
+            continue
+        d = r.delta
+        assert d is not None  # guarded above
+        if r.epoch_current:
+            add = upd = dep = skip = 0
+        else:
+            add, upd = len(d.creates), len(d.updates)
+            dep, skip = d.deprecated_count, len(d.skipped_deprecated)
+        click.echo(
+            f"{r.database:38} {r.current_epoch:>5} {'->':^4} {r.target_epoch:>6} "
+            f"{add:>5} {upd:>5} {dep:>5} {skip:>5}  {r.project_note}"
+        )
+        if r.epoch_current and not d.is_empty:
+            click.echo(
+                f"{'':38}   ! epoch already {r.target_epoch} but content diverges "
+                f"({len(d.creates)} missing, {len(d.updates)} stale, "
+                f"{d.deprecated_count} wrong state) — sync will NOT fix this; "
+                f"the epoch short-circuit skips it."
+            )
+        if r.error:
+            click.echo(f"{'':38}   ! {r.error}")
+
+
+def _run_sync_all(
+    driver, apply: bool, exclude: Tuple[str, ...], roots: Tuple[str, ...], depth: int
+) -> int:
+    """Discover every ontology replica and sync (or plan a sync for) each.
+
+    Args:
+        driver: Connected Neo4j driver.
+        apply: Perform writes. False runs a plan-only pass.
+        exclude: Database names to skip.
+        roots: Directories to scan for projects, for event attribution.
+        depth: Maximum project-scan depth.
+
+    Returns:
+        Process exit code: 0 when every discovered replica was handled, 1 when
+        any failed. A failure never aborts the remaining databases.
+    """
+    with driver.session(database=ONTOLOGY_MASTER_DB) as session:
+        row = session.run(
+            "MATCH (m:_OntologyMeta {key: 'master'}) RETURN m.epoch AS epoch"
+        ).single()
+        if row is None:
+            raise click.ClickException(
+                f"No _OntologyMeta node in {ONTOLOGY_MASTER_DB}. "
+                "Run `seldon ontology ingest` first."
+            )
+        master_epoch = row["epoch"]
+        master_terms = {
+            dict(r["a"])["term_id"]: dict(r["a"])
+            for r in session.run("MATCH (a:Artifact:OntologyTerm) RETURN a").data()
+        }
+
+    master_deprecated = sum(
+        1 for t in master_terms.values() if t.get("state") == "deprecated"
+    )
+    mode = "APPLY" if apply else "DRY RUN"
+    click.echo(
+        f"[{mode}] master {ONTOLOGY_MASTER_DB} at epoch {master_epoch} "
+        f"({len(master_terms)} terms, {master_deprecated} deprecated)"
+    )
+
+    replicas, skipped = _discover_replica_databases(
+        driver, _excluded_databases(exclude)
+    )
+    click.echo(
+        f"Discovered {len(replicas)} replica database(s) "
+        f"by _OntologyReplicaMeta marker; {len(skipped)} database(s) skipped."
+    )
+    for name, reason in skipped:
+        click.echo(f"  skip {name}: {reason}")
+
+    db_to_dirs, notes = _map_databases_to_projects(roots, depth)
+    for note in notes:
+        click.echo(f"  {note}")
+    click.echo()
+
+    reports: List[ReplicaSyncReport] = []
+    for database in replicas:
+        report = _plan_replica(
+            driver, database, master_epoch, master_terms, DEFAULT_INHERITANCE
+        )
+        dirs = db_to_dirs.get(database, [])
+        if len(dirs) == 1:
+            report.project_dir = dirs[0]
+            report.project_note = str(dirs[0])
+        elif len(dirs) > 1:
+            report.project_note = (
+                f"AMBIGUOUS ({len(dirs)} dirs) — graph-only, no event: "
+                + ", ".join(str(d) for d in dirs)
+            )
+        else:
+            report.project_note = "unmapped — graph-only, no event"
+        reports.append(report)
+
+    if apply:
+        for report in reports:
+            if report.error is not None:
+                continue  # could not be read; do not write to it
+            assert report.delta is not None
+            if report.epoch_current:
+                continue  # _do_sync would no-op; skip the round trip
+            _sync_one_replica(driver, report)
+
+    _render_sync_all_report(reports)
+    click.echo()
+
+    failures = [r for r in reports if r.error]
+    changed = [r for r in reports if not r.epoch_current and r.error is None]
+    if apply:
+        click.echo(
+            f"Synced {len([r for r in reports if r.applied])} replica(s); "
+            f"{len(reports) - len(changed) - len(failures)} already current."
+        )
+    else:
+        click.echo(
+            f"{len(changed)} replica(s) would be synced; "
+            f"{len(reports) - len(changed) - len(failures)} already current. "
+            f"No changes written — re-run with --apply."
+        )
+    if failures:
+        click.echo(f"\n{len(failures)} database(s) failed:")
+        for r in failures:
+            click.echo(f"  {r.database}: {r.error}")
+        return 1
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -1019,17 +1650,89 @@ def _deprecate_terms(driver, terms: List[Dict[str, Any]]) -> List[str]:
 
 @ontology_group.command("sync")
 @click.option("--dry-run", is_flag=True, help="Show what would change without writing.")
-def sync_command(dry_run: bool):
+@click.option(
+    "--all",
+    "all_replicas",
+    is_flag=True,
+    help=(
+        "Sync every ontology replica in the cluster, not just this project. "
+        "Plans only unless --apply is given."
+    ),
+)
+@click.option(
+    "--apply",
+    is_flag=True,
+    help="With --all: perform the writes. Without it, --all only reports.",
+)
+@click.option(
+    "--exclude",
+    multiple=True,
+    metavar="DATABASE",
+    help=(
+        f"With --all: a database to skip. Repeatable. Additive with "
+        f"${SYNC_ALL_EXCLUDE_ENV}."
+    ),
+)
+@click.option(
+    "--roots",
+    multiple=True,
+    metavar="DIR",
+    help=(
+        "With --all: a directory to scan for projects, so each replica's sync "
+        "event lands in the right event log. Repeatable. Defaults to "
+        "$SELDON_PROJECT_ROOTS."
+    ),
+)
+@click.option(
+    "--depth",
+    default=DEFAULT_SCAN_DEPTH,
+    show_default=True,
+    help="With --all: maximum directory depth when scanning --roots.",
+)
+def sync_command(
+    dry_run: bool,
+    all_replicas: bool,
+    apply: bool,
+    exclude: Tuple[str, ...],
+    roots: Tuple[str, ...],
+    depth: int,
+):
     """Pull ontology terms from the master database into the current project.
 
     Must be run from a project directory with seldon.yaml containing a
     shared_ontology section with inheritance: read-only.
+
+    With --all, operates on every ontology replica in the cluster instead. That
+    mode is plan-only by default: a fleet-wide write is not something a command
+    should do because a flag was forgotten, so it takes an explicit --apply.
     """
     from dotenv import load_dotenv
     from seldon.config import load_project_config
 
     project_dir = Path.cwd()
     load_dotenv(project_dir / ".env", override=False)
+
+    if all_replicas:
+        if dry_run and apply:
+            raise click.ClickException(
+                "--dry-run and --apply contradict each other. --all is "
+                "plan-only by default; pass --apply to write."
+            )
+        driver = _get_neo4j_driver()
+        try:
+            exit_code = _run_sync_all(
+                driver, apply=apply, exclude=exclude, roots=roots, depth=depth
+            )
+        finally:
+            driver.close()
+        if exit_code:
+            raise SystemExit(exit_code)
+        return
+
+    if apply or exclude or roots:
+        raise click.ClickException(
+            "--apply, --exclude and --roots apply only to `sync --all`."
+        )
 
     config = load_project_config(project_dir)
     database = config["neo4j"]["database"]

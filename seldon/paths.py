@@ -173,3 +173,50 @@ def resolve_system_standards() -> Optional[Path]:
         if candidate.is_file():
             return candidate
     return None
+
+
+def resolve_ontology_root(
+    configured_source: object, project_dir: Path
+) -> Optional[Path]:
+    """Resolve a project's ``shared_ontology.source`` to an ontology root.
+
+    Two independent failures are covered here, and both are needed (2026-09-04
+    defect sweep RESULT §7.6):
+
+    * ``seldon.yaml`` may name the ontology tree by a *relative* path. Relative
+      is the only form that is correct in every checkout of the same
+      repository — an absolute path baked into committed config names one
+      developer's clone, so a git worktree silently reads the *main* checkout's
+      vocabulary and cannot test a vocabulary edit at all. Relative sources are
+      joined to ``project_dir`` (the directory holding ``seldon.yaml``), not to
+      the process CWD, so the answer does not depend on where the command was
+      launched from.
+    * The configured tree may be absent — a moved or renamed checkout, or a
+      config with no ``shared_ontology.source`` at all. Rather than failing with
+      "cannot locate vocabulary file", fall back to the tree that ships beside
+      the installed package (:func:`ontology_source_candidates`).
+
+    Neither half subsumes the other. The fallback alone does not fix the
+    worktree case, because the hardcoded main-checkout path *exists* and so is
+    never rejected; the relative rewrite alone does not help a project whose
+    absolute source has moved.
+
+    Args:
+        configured_source: The raw ``shared_ontology.source`` value, or None.
+        project_dir: Directory containing the project's ``seldon.yaml``.
+
+    Returns:
+        Absolute path to an existing ontology root directory, or None when
+        neither the configured source nor any derived candidate exists.
+    """
+    if configured_source:
+        candidate = Path(str(configured_source)).expanduser()
+        if not candidate.is_absolute():
+            candidate = Path(project_dir) / candidate
+        if candidate.is_dir():
+            return candidate.resolve()
+
+    for candidate in ontology_source_candidates():
+        if candidate.is_dir() and is_ontology_root(candidate):
+            return candidate.resolve()
+    return None
