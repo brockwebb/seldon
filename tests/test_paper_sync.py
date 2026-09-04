@@ -20,8 +20,10 @@ from seldon.paper.sync import (
     _sync_subsections,
 )
 
+from tests.testdb import TEST_DATABASE
+
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 
 # Applied to integration test classes/functions individually — unit tests don't need Neo4j
 needs_neo4j = pytest.mark.usefixtures("neo4j_available")

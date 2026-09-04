@@ -5,7 +5,7 @@ Task: cc_tasks/2026-09-02_snapshot_artifacts_verify.md. Each verify-side behavio
 positive control: the same artifact with `snapshot` cleared must FAIL, so a test that
 passes because the check silently stopped comparing would be caught.
 
-Requires Neo4j for the graph-backed cases (seldon-test database, cleaned per test).
+Requires Neo4j for the graph-backed cases (per-process test database, cleaned per test).
 The CLI parsing and core validator cases need no database.
 """
 from __future__ import annotations
@@ -25,7 +25,9 @@ from seldon.core.artifacts import (
 from seldon.domain.loader import load_domain_config
 from seldon.paper.sync import compute_file_hash, sync_section
 
-NEO4J_DB = "seldon-test"
+from tests.testdb import TEST_DATABASE
+
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 

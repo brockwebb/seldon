@@ -1,7 +1,7 @@
 """
 Tests for seldon verify command (AD-018 B4).
 
-Requires Neo4j. Uses seldon-test database (cleaned before each test).
+Requires Neo4j. Uses the per-process test database (cleaned before each test).
 """
 from __future__ import annotations
 
@@ -23,9 +23,11 @@ from seldon.commands.verify import (
 from seldon.core.artifacts import create_artifact, transition_state, create_link
 from seldon.domain.loader import load_domain_config
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 
@@ -394,7 +396,7 @@ def test_verify_quiet_exit_code_2(neo4j_driver, project_dir, domain_config, clea
 
 # TODO: test_verify_detects_ontology_drift — requires multi-DB test setup
 #   Would need to create _OntologyMeta in seldon-ontology DB and
-#   _OntologyReplicaMeta in seldon-test DB with different epochs.
+#   _OntologyReplicaMeta in the test DB with different epochs.
 
 # TODO: test_verify_fix_syncs_ontology — requires multi-DB test setup
 #   Would mock subprocess call to `seldon ontology sync`.
@@ -439,7 +441,7 @@ class TestStrictMode:
 
         fake_config = {
             "project": {"name": "test", "domain": "research"},
-            "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+            "neo4j": {"uri": "bolt://localhost:7687", "database": TEST_DATABASE},
         }
         fake_driver = MagicMock()
         fake_driver.close = MagicMock()
@@ -522,7 +524,7 @@ class TestStrictMode:
 
         fake_config = {
             "project": {"name": "test", "domain": "research"},
-            "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+            "neo4j": {"uri": "bolt://localhost:7687", "database": TEST_DATABASE},
         }
         fake_driver = MagicMock()
         fake_driver.close = MagicMock()

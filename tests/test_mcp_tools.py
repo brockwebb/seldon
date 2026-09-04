@@ -22,9 +22,11 @@ from seldon.mcp_server import (
     seldon_query,
 )
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 
@@ -161,6 +163,11 @@ def test_cc_complete_via_mcp(
     result = seldon_cc_complete(
         filepath="cc_tasks/2026-04-03_mcp_test.md",
         project_dir=str(project_dir),
+        # `project_dir` is a bare tmp_path with no git work tree, so the
+        # untracked-file guard (868d6bb0) would refuse. This test is about the
+        # completion mechanics, not provenance; the guard itself is covered by
+        # tests/test_mcp_cc_git_guard.py.
+        allow_untracked=True,
     )
     assert "completed" in result
     assert "mcp test" in result
@@ -186,6 +193,9 @@ def test_cc_register_via_mcp(
     result = seldon_cc_register(
         filepath="cc_tasks/2026-04-03_register_test.md",
         project_dir=str(project_dir),
+        # See test_cc_complete_via_mcp: no git work tree here, and this test is
+        # about registration, not the untracked-file guard.
+        allow_untracked=True,
     )
     assert "proposed" in result
     assert "register test" in result

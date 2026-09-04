@@ -13,7 +13,9 @@ import pytest
 from seldon.core.artifacts import create_artifact, create_link
 from seldon.domain.loader import load_domain_config
 
-NEO4J_DB = "seldon-test"
+from tests.testdb import TEST_DATABASE
+
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 

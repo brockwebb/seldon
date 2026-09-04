@@ -5,6 +5,8 @@ handoffs/
 # cc_tasks/ is intentionally TRACKED (task 2026-09-02_track_cc_tasks): execution
 # records are provenance, not scratch. handoffs/ stays ignored.
 tmp/
+# Logs from scripts/test_db_concurrency_check.sh
+_conc/
 .worktrees/
 .claude/
 .seldon/

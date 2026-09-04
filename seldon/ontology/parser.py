@@ -4,6 +4,35 @@ Parses the markdown vocabulary file using regex and line-by-line logic (no LLM).
 Same input always produces the same output (deterministic).
 
 Per AD-017: Central Validity Ontology.
+
+Section scanning is *bounded*
+-----------------------------
+Every section parser resolves its heading to an explicit ``(start, end)`` line
+range via :func:`_find_section` and scans only inside it.  This is not
+stylistic.  The original parsers located their heading and then scanned forward
+to "the next thing that looks like my shape" with no stop condition, e.g.::
+
+    while j < len(lines) and not lines[j].strip().startswith("|"):
+        j += 1
+
+When commit ``b6714f3`` (2026-03-28) rewrote ``## Related Terms (Defined
+Elsewhere)`` from a pipe table into a definition list, that scan walked straight
+past the section and parsed the *next* table in the file — ``## Terms That May
+Be Promoted from Projects`` — as if it were Related Terms.  For roughly five
+months the shared ``seldon-ontology`` master carried two junk terms whose
+``definition`` was the literal string ``leibniz-pi`` (an "Origin Project" column
+value) while five genuine terms were silently absent.  Nothing failed; the
+parse simply produced the wrong terms.
+
+Two mechanisms keep that failure mode from recurring:
+
+1. Bounded scanning makes cross-section leakage structurally impossible.
+2. :data:`SECTION_COVERAGE` declares, for every ``##``/``###`` heading in the
+   vocabulary file, which parser claims it and how many terms it must yield.
+   :func:`parse_vocabulary` enforces the per-section minimums at runtime, and
+   ``tests/test_parser_sections.py`` enforces that the declaration and the real
+   file agree — so an added, renamed, or reformatted section fails loudly
+   instead of silently yielding nothing.
 """
 
 from __future__ import annotations
@@ -77,7 +106,14 @@ class ParsedVocabulary:
 # Helpers
 # ---------------------------------------------------------------------------
 
-__all__ = ["parse_vocabulary", "ParsedTerm", "ParsedRelationship", "ParsedVocabulary"]
+__all__ = [
+    "parse_vocabulary",
+    "ParsedTerm",
+    "ParsedRelationship",
+    "ParsedVocabulary",
+    "VocabularyParseError",
+    "SECTION_COVERAGE",
+]
 
 _NAMESPACE = "ontology:validity"
 
@@ -93,6 +129,11 @@ _MULTI_CITATION_RE = re.compile(
 )
 # Individual citation key within a matched bracket group.
 _CITATION_KEY_RE = re.compile(r"[A-Z][\w\-]*-\d{4}[a-z]?")
+
+# Markdown definition list: a bold-only line is the term, following ": " lines
+# are its definition body.
+_DEFN_TERM_RE = re.compile(r"^\*\*(.+?)\*\*\s*$")
+_DEFN_BODY_RE = re.compile(r"^:\s*(.*)")
 
 
 def _extract_citations(text: str) -> list[str]:
@@ -170,6 +211,233 @@ def _parse_table_rows(lines: list[str], start: int) -> tuple[list[list[str]], in
 
 
 # ---------------------------------------------------------------------------
+# Section bounds — see the module docstring for why these exist
+# ---------------------------------------------------------------------------
+
+
+class VocabularyParseError(ValueError):
+    """Raised when the vocabulary file cannot be parsed as declared.
+
+    Subclasses :class:`ValueError` so existing callers that catch ``ValueError``
+    keep working.
+    """
+
+
+def _heading_level(line: str) -> int:
+    """Return the ATX heading depth of *line*, or ``0`` if it is not a heading.
+
+    ``"## Foo"`` is level 2, ``"### Foo"`` is level 3.  A run of ``#`` not
+    followed by a space (``"#nothashtag"``) is not a heading.
+    """
+    stripped = line.strip()
+    if not stripped.startswith("#"):
+        return 0
+    level = len(stripped) - len(stripped.lstrip("#"))
+    if level > 6:
+        return 0
+    rest = stripped[level:]
+    if rest and not rest.startswith(" "):
+        return 0
+    return level
+
+
+def _normalize_heading(line: str) -> str:
+    """Collapse a heading line to a comparable form (lowercased, single-spaced)."""
+    return re.sub(r"\s+", " ", line.strip()).lower()
+
+
+def _find_section(
+    lines: list[str], heading: str, *, prefix: bool = False
+) -> tuple[int, int] | None:
+    """Locate the section introduced by *heading* and return its line bounds.
+
+    Args:
+        lines: The full vocabulary file split into lines.
+        heading: The heading line to match, hashes included
+            (e.g. ``"### Sub-dimensions"``).  Matched case-insensitively with
+            whitespace collapsed.
+        prefix: When True, match any heading that *starts with* *heading*, so a
+            trailing parenthetical in the document does not break the parser.
+
+    Returns:
+        ``(start, end)`` where *start* is the index of the heading line and
+        *end* is one past the last line of the section — i.e. the index of the
+        next heading at the same or a shallower level, or ``len(lines)``.
+        Returns None if the heading is not present.
+    """
+    target = _normalize_heading(heading)
+    target_level = _heading_level(heading)
+
+    for i, line in enumerate(lines):
+        level = _heading_level(line)
+        if not level:
+            continue
+        norm = _normalize_heading(line)
+        if norm == target or (prefix and norm.startswith(target)):
+            for j in range(i + 1, len(lines)):
+                nxt = _heading_level(lines[j])
+                if nxt and nxt <= (target_level or level):
+                    return i, j
+            return i, len(lines)
+
+    return None
+
+
+def _section_table_rows(
+    lines: list[str], heading: str, *, prefix: bool = False
+) -> list[list[str]]:
+    """Return the data rows of the first pipe table inside section *heading*.
+
+    The search for the table start is bounded by the section, so a section that
+    no longer contains a table yields an empty list instead of silently
+    capturing the next section's table.
+
+    Returns an empty list if the section is absent or contains no table; the
+    caller's declared minimum in :data:`SECTION_COVERAGE` turns that into a
+    loud failure.
+    """
+    bounds = _find_section(lines, heading, prefix=prefix)
+    if bounds is None:
+        return []
+    start, end = bounds
+
+    j = start + 1
+    while j < end and not lines[j].strip().startswith("|"):
+        j += 1
+    if j >= end:
+        return []
+
+    rows, _ = _parse_table_rows(lines[:end], j)
+    return rows
+
+
+def _parse_definition_list(
+    lines: list[str], start: int, end: int
+) -> list[tuple[str, list[str]]]:
+    """Parse a markdown definition list from ``lines[start:end]``.
+
+    Recognizes the form used throughout the vocabulary files::
+
+        **Term name**
+        : First definition line.
+        : Second line — usage note, "do not write" guidance, etc.
+
+    Returns:
+        A list of ``(term_name, definition_lines)`` pairs in document order.
+        Entries with no ``:`` continuation lines are skipped, since a bold line
+        with no definition is a heading-like emphasis, not a term.
+    """
+    entries: list[tuple[str, list[str]]] = []
+    i = start
+    while i < end:
+        stripped = lines[i].strip()
+        m = _DEFN_TERM_RE.match(stripped)
+        if not m:
+            i += 1
+            continue
+
+        term_name = _strip_markdown(m.group(1))
+        defn_lines: list[str] = []
+        j = i + 1
+        while j < end:
+            dm = _DEFN_BODY_RE.match(lines[j].strip())
+            if not dm:
+                # Blank lines inside an entry are tolerated; anything else ends it.
+                if not lines[j].strip():
+                    j += 1
+                    continue
+                break
+            defn_lines.append(dm.group(1).strip())
+            j += 1
+
+        i = j
+        if defn_lines:
+            entries.append((term_name, defn_lines))
+
+    return entries
+
+
+#: Declared coverage of every ``##``/``###`` heading in VALIDITY_VOCABULARY.md.
+#:
+#: Maps the exact heading line to ``(claiming parser, expected term count)``.
+#: ``None`` as the parser means the section is intentionally not turned into
+#: ontology terms (prose, reference tables, placeholders).
+#:
+#: The count is enforced at two different strengths, deliberately:
+#:
+#: * :func:`parse_vocabulary` — runtime, ships to every project — fails if a
+#:   claimed section is missing or yields *zero* terms.  That is the shape of the
+#:   b6714f3 mis-parse and of any reformatting the parser cannot read.  Editing
+#:   one row out of a table is a legitimate vocabulary change and must not break
+#:   ingest for every downstream project, so the runtime floor is one, not N.
+#: * ``tests/test_parser_sections.py`` — repo CI, against the real file —
+#:   enforces the exact count and the exact heading set.  Drift there forces this
+#:   table to be updated, which is a deliberate, reviewable one-line act.
+#:
+#: A new or renamed section therefore forces an explicit decision instead of
+#: being silently ignored — or silently swallowed by a neighbouring parser.
+#: See the module docstring.
+SECTION_COVERAGE: dict[str, tuple[str | None, int]] = {
+    "## Purpose": (None, 0),
+    "## Sources": (None, 0),  # citation key table, not terms
+    "## State Fidelity Validity (SFV)": ("_parse_sfv_term", 1),
+    "### Core Construct: Context Window": (None, 0),  # see NOTE below
+    "### Sub-dimensions": ("_parse_sub_dimensions", 5),
+    "### Threat Taxonomy": ("_parse_threats", 5),
+    "### Severity Scale": ("_parse_severity", 4),
+    "### Operationalization: The State Fidelity Tax": ("_parse_tax_tiers", 3),
+    "### Key Arguments": ("_parse_key_arguments", 5),
+    "### Engineering Countermeasures": ("_parse_countermeasures", 7),
+    "### Operationalization Metrics": ("_parse_metrics", 6),
+    "### Limitations Boilerplate (for papers using LLM pipelines)": (
+        "_parse_boilerplate",
+        1,
+    ),
+    "## Classical Validity Types": ("_parse_classical_validity", 4),
+    "### Positioning of SFV Relative to Classical Types": (None, 0),
+    "## Key Terminology Decisions": ("_parse_terminology_decisions", 2),
+    "### Confabulation (not fabrication, not hallucination)": (None, 0),
+    "### Reliability vs. Validity Distinction": (None, 0),
+    "### Terms Considered and Rejected": (None, 0),  # feeds terminology extra{}
+    "## Framework Terms": ("_parse_framework_terms", 3),
+    "### TEVV (Test, Evaluation, Verification, and Validation)": (None, 0),
+    "### Total Survey Error (TSE)": (None, 0),
+    "### FCSM Data Quality Dimensions": (None, 0),
+    "### Construct Validity Audit Methodology (Crosswalk Application)": (None, 0),
+    # NOTE (known gap, not this parser's regression): the three sections below
+    # are definition lists added by commit 62d6bdf that no parser claims. Between
+    # them they define six real terms — accumulated state, operative state,
+    # composite instrument, token limit, instrument stability assumption,
+    # bounded agency — plus the Core Construct entry for "context window". They
+    # are declared here so the coverage test passes while the gap stays visible
+    # and attributable rather than invisible.
+    "## Core Instrument Terms": (None, 0),
+    "## Framework Terms (Cross-Cutting)": (None, 0),
+    "## Related Terms (Defined Elsewhere)": ("_parse_related_terms", 5),
+    "## Terms That May Be Promoted from Projects": (None, 0),  # placeholder
+}
+
+#: Maps a parser name in :data:`SECTION_COVERAGE` to the ``ParsedTerm.category``
+#: it produces, so ``parse_vocabulary`` can check the declared minimums against
+#: what was actually parsed.
+_PARSER_CATEGORY: dict[str, str] = {
+    "_parse_sfv_term": "framework",
+    "_parse_sub_dimensions": "sub_dimension",
+    "_parse_threats": "threat",
+    "_parse_severity": "severity",
+    "_parse_tax_tiers": "tax",
+    "_parse_key_arguments": "argument",
+    "_parse_countermeasures": "countermeasure",
+    "_parse_metrics": "metric",
+    "_parse_boilerplate": "boilerplate",
+    "_parse_classical_validity": "classical_validity",
+    "_parse_terminology_decisions": "terminology_decision",
+    "_parse_framework_terms": "framework_term",
+    "_parse_related_terms": "related_term",
+}
+
+
+# ---------------------------------------------------------------------------
 # Section parsers
 # ---------------------------------------------------------------------------
 
@@ -194,114 +462,96 @@ def _parse_sfv_term(lines: list[str]) -> ParsedTerm | None:
 
 
 def _parse_sub_dimensions(lines: list[str]) -> list[ParsedTerm]:
-    """Parse sub-dimension table rows."""
+    """Parse sub-dimension table rows from ``### Sub-dimensions``."""
     terms: list[ParsedTerm] = []
 
-    # Find the ### Sub-dimensions heading
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### sub-dimensions":
-            # Advance to the table (skip blank lines)
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 3:
-                    continue
-                canonical_name, shorthand, definition_raw = row[0], row[1], row[2]
-                definition = _strip_markdown(definition_raw)
-                citations = _extract_citations(definition_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:SFV:{shorthand}",
-                        name=canonical_name,
-                        definition=definition,
-                        category="sub_dimension",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={"shorthand": shorthand},
-                    )
-                )
-            break
+    for row in _section_table_rows(lines, "### Sub-dimensions"):
+        if len(row) < 3:
+            continue
+        canonical_name, shorthand, definition_raw = row[0], row[1], row[2]
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:SFV:{shorthand}",
+                name=canonical_name,
+                definition=_strip_markdown(definition_raw),
+                category="sub_dimension",
+                citations=_extract_citations(definition_raw),
+                namespace=_NAMESPACE,
+                extra={"shorthand": shorthand},
+            )
+        )
 
     return terms
 
 
 def _parse_threats(lines: list[str]) -> list[ParsedTerm]:
-    """Parse threat taxonomy table rows."""
+    """Parse threat taxonomy table rows from ``### Threat Taxonomy``."""
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### threat taxonomy":
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 3:
-                    continue
-                number, name, desc_raw = row[0], row[1], row[2]
-                definition = _strip_markdown(desc_raw)
-                citations = _extract_citations(desc_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:SFV:{number}",
-                        name=name,
-                        definition=definition,
-                        category="threat",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={"threat_number": number},
-                    )
-                )
-            break
+    for row in _section_table_rows(lines, "### Threat Taxonomy"):
+        if len(row) < 3:
+            continue
+        number, name, desc_raw = row[0], row[1], row[2]
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:SFV:{number}",
+                name=name,
+                definition=_strip_markdown(desc_raw),
+                category="threat",
+                citations=_extract_citations(desc_raw),
+                namespace=_NAMESPACE,
+                extra={"threat_number": number},
+            )
+        )
 
     return terms
 
 
 def _parse_severity(lines: list[str]) -> list[ParsedTerm]:
-    """Parse severity scale table rows."""
+    """Parse severity scale table rows from ``### Severity Scale``."""
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### severity scale":
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 2:
-                    continue
-                level, desc_raw = row[0], row[1]
-                slug = _slugify(level)
-                definition = _strip_markdown(desc_raw)
-                citations = _extract_citations(desc_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:severity:{slug}",
-                        name=level,
-                        definition=definition,
-                        category="severity",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={},
-                    )
-                )
-            break
+    for row in _section_table_rows(lines, "### Severity Scale"):
+        if len(row) < 2:
+            continue
+        level, desc_raw = row[0], row[1]
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:severity:{_slugify(level)}",
+                name=level,
+                definition=_strip_markdown(desc_raw),
+                category="severity",
+                citations=_extract_citations(desc_raw),
+                namespace=_NAMESPACE,
+                extra={},
+            )
+        )
 
     return terms
 
 
 def _parse_tax_tiers(lines: list[str]) -> list[ParsedTerm]:
-    """Parse tolerable variance tier table rows."""
+    """Parse the tolerable variance tier table from the State Fidelity Tax section.
+
+    Keyed on the ``**Tolerable Variance Tiers:**`` lead-in, but the search for
+    that lead-in — and for the table under it — is confined to
+    ``### Operationalization: The State Fidelity Tax``.
+    """
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if "**Tolerable Variance Tiers:**" in line:
+    bounds = _find_section(lines, "### Operationalization: The State Fidelity Tax")
+    if bounds is None:
+        return terms
+    start, end = bounds
+
+    for i in range(start, end):
+        if "**Tolerable Variance Tiers:**" in lines[i]:
             j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
+            while j < end and not lines[j].strip().startswith("|"):
                 j += 1
-            rows, _ = _parse_table_rows(lines, j)
+            if j >= end:
+                break
+            rows, _ = _parse_table_rows(lines[:end], j)
             for row in rows:
                 if len(row) < 4:
                     continue
@@ -334,18 +584,15 @@ def _parse_tax_tiers(lines: list[str]) -> list[ParsedTerm]:
 
 
 def _parse_key_arguments(lines: list[str]) -> list[ParsedTerm]:
-    """Parse numbered key arguments under ### Key Arguments."""
+    """Parse numbered key arguments under ``### Key Arguments``."""
     terms: list[ParsedTerm] = []
 
-    # Find the heading
-    start = None
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### key arguments":
-            start = i + 1
-            break
-
-    if start is None:
+    bounds = _find_section(lines, "### Key Arguments")
+    if bounds is None:
         return terms
+    start, section_end = bounds
+    start += 1
+    lines = lines[:section_end]
 
     # Collect numbered list items; each spans until the next numbered item or
     # blank-line-then-heading.
@@ -408,81 +655,57 @@ def _parse_key_arguments(lines: list[str]) -> list[ParsedTerm]:
 
 
 def _parse_countermeasures(lines: list[str]) -> list[ParsedTerm]:
-    """Parse engineering countermeasures table."""
+    """Parse the ``### Engineering Countermeasures`` table."""
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### engineering countermeasures":
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 3:
-                    continue
-                name_raw, threat_field, impl_raw = row[0], row[1], row[2]
-                name = _strip_markdown(name_raw)
-                slug = _slugify(name)
-                impl = _strip_markdown(impl_raw)
-                # Extract T-codes from threat_field: T1, T2, etc.
-                threat_refs = re.findall(r"\bT\d+\b", threat_field)
-                definition = impl  # implementation text serves as definition
-                citations = _extract_citations(name_raw + " " + impl_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:countermeasure:{slug}",
-                        name=name,
-                        definition=definition,
-                        category="countermeasure",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={"implementation": impl, "threat_refs": threat_refs},
-                    )
-                )
-            break
+    for row in _section_table_rows(lines, "### Engineering Countermeasures"):
+        if len(row) < 3:
+            continue
+        name_raw, threat_field, impl_raw = row[0], row[1], row[2]
+        name = _strip_markdown(name_raw)
+        impl = _strip_markdown(impl_raw)
+        # Extract T-codes from threat_field: T1, T2, etc.
+        threat_refs = re.findall(r"\bT\d+\b", threat_field)
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:countermeasure:{_slugify(name)}",
+                name=name,
+                definition=impl,  # implementation text serves as definition
+                category="countermeasure",
+                citations=_extract_citations(name_raw + " " + impl_raw),
+                namespace=_NAMESPACE,
+                extra={"implementation": impl, "threat_refs": threat_refs},
+            )
+        )
 
     return terms
 
 
 def _parse_metrics(lines: list[str]) -> list[ParsedTerm]:
-    """Parse operationalization metrics table."""
+    """Parse the ``### Operationalization Metrics`` table."""
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "### operationalization metrics":
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 3:
-                    continue
-                metric_raw, what_measures_raw, threat_field = (
-                    row[0],
-                    row[1],
-                    row[2],
-                )
-                name = _strip_markdown(metric_raw)
-                slug = _slugify(name)
-                what_measures = _strip_markdown(what_measures_raw)
-                threat_refs = re.findall(r"\bT\d+\b", threat_field)
-                definition = what_measures
-                citations = _extract_citations(metric_raw + " " + what_measures_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:metric:{slug}",
-                        name=name,
-                        definition=definition,
-                        category="metric",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={
-                            "what_it_measures": what_measures,
-                            "threat_refs": threat_refs,
-                        },
-                    )
-                )
-            break
+    for row in _section_table_rows(lines, "### Operationalization Metrics"):
+        if len(row) < 3:
+            continue
+        metric_raw, what_measures_raw, threat_field = row[0], row[1], row[2]
+        name = _strip_markdown(metric_raw)
+        what_measures = _strip_markdown(what_measures_raw)
+        threat_refs = re.findall(r"\bT\d+\b", threat_field)
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:metric:{_slugify(name)}",
+                name=name,
+                definition=what_measures,
+                category="metric",
+                citations=_extract_citations(metric_raw + " " + what_measures_raw),
+                namespace=_NAMESPACE,
+                extra={
+                    "what_it_measures": what_measures,
+                    "threat_refs": threat_refs,
+                },
+            )
+        )
 
     return terms
 
@@ -491,15 +714,11 @@ def _parse_classical_validity(lines: list[str]) -> list[ParsedTerm]:
     """Parse classical validity types from ## Classical Validity Types section."""
     terms: list[ParsedTerm] = []
 
-    # Find section start
-    start = None
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "## classical validity types":
-            start = i + 1
-            break
-
-    if start is None:
+    bounds = _find_section(lines, "## Classical Validity Types")
+    if bounds is None:
         return terms
+    start, section_end = bounds
+    start += 1
 
     # Definitions use pattern: **Name:** text  (bold name followed by colon)
     # Matches "**Name:**" (colon inside bold) or "**Name**:" (colon outside bold)
@@ -511,10 +730,8 @@ def _parse_classical_validity(lines: list[str]) -> list[ParsedTerm]:
         "Statistical Conclusion Validity": "statistical_conclusion",
     }
 
-    for i in range(start, len(lines)):
+    for i in range(start, section_end):
         line = lines[i].strip()
-        if line.startswith("## ") and i > start:
-            break
         m = defn_re.match(line)
         if m:
             # Alternation: first alt uses groups 1,2; second uses groups 3,4
@@ -544,41 +761,34 @@ def _parse_terminology_decisions(lines: list[str]) -> list[ParsedTerm]:
     """Parse key terminology decisions section."""
     terms: list[ParsedTerm] = []
 
-    # Find section start
-    start = None
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "## key terminology decisions":
-            start = i + 1
-            break
-
-    if start is None:
+    bounds = _find_section(lines, "## Key Terminology Decisions")
+    if bounds is None:
         return terms
+    start, section_end = bounds
+    start += 1
 
     # --- Confabulation ---
-    for i in range(start, len(lines)):
+    for i in range(start, section_end):
         line = lines[i].strip()
-        if line.startswith("## ") and i > start:
-            break
         if line.startswith("**Confabulation:**"):
             raw_def = line[len("**Confabulation:**"):].strip()
             # Collect continuation lines up to blank line
             j = i + 1
-            while j < len(lines) and lines[j].strip():
+            while j < section_end and lines[j].strip():
                 raw_def += " " + lines[j].strip()
                 j += 1
             definition = _strip_markdown(raw_def)
             citations = _extract_citations(raw_def)
 
-            # Extract rejected terms from the "Terms Considered and Rejected" table
-            rejected_terms: list[str] = []
-            for k, tl in enumerate(lines):
-                if tl.strip().lower() == "### terms considered and rejected":
-                    tj = k + 1
-                    while tj < len(lines) and not lines[tj].strip().startswith("|"):
-                        tj += 1
-                    rows, _ = _parse_table_rows(lines, tj)
-                    rejected_terms = [r[0] for r in rows if r]
-                    break
+            # Extract rejected terms from the "Terms Considered and Rejected"
+            # table — a subsection of this one, so bounded to it.
+            rejected_terms = [
+                r[0]
+                for r in _section_table_rows(
+                    lines[:section_end], "### Terms Considered and Rejected"
+                )
+                if r
+            ]
 
             terms.append(
                 ParsedTerm(
@@ -596,43 +806,41 @@ def _parse_terminology_decisions(lines: list[str]) -> list[ParsedTerm]:
     # --- Reliability vs. Validity ---
     # The "Reliability vs. Validity Distinction" entry is the combined definition
     # of Reliability + Validity + Application to SFV paragraph.
-    for i in range(start, len(lines)):
-        line = lines[i].strip()
-        if line.startswith("## ") and i > start:
-            break
-        if line.strip().lower() == "### reliability vs. validity distinction":
-            # Collect everything from here until next ### or ## section
-            parts: list[str] = []
-            j = i + 1
-            while j < len(lines):
-                tl = lines[j].strip()
-                if tl.startswith("## ") or tl.startswith("### "):
-                    break
-                if tl:
-                    parts.append(tl)
-                j += 1
-            raw_def = " ".join(parts)
-            definition = _strip_markdown(raw_def)
-            citations = _extract_citations(raw_def)
-            terms.append(
-                ParsedTerm(
-                    term_id=f"{_NAMESPACE}:terminology:reliability_vs_validity",
-                    name="Reliability vs. Validity Distinction",
-                    definition=definition,
-                    category="terminology_decision",
-                    citations=citations,
-                    namespace=_NAMESPACE,
-                    extra={},
-                )
+    rv_bounds = _find_section(
+        lines[:section_end], "### Reliability vs. Validity Distinction"
+    )
+    if rv_bounds is not None:
+        rv_start, rv_end = rv_bounds
+        parts = [lines[j].strip() for j in range(rv_start + 1, rv_end) if lines[j].strip()]
+        raw_def = " ".join(parts)
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:terminology:reliability_vs_validity",
+                name="Reliability vs. Validity Distinction",
+                definition=_strip_markdown(raw_def),
+                category="terminology_decision",
+                citations=_extract_citations(raw_def),
+                namespace=_NAMESPACE,
+                extra={},
             )
-            break
+        )
 
     return terms
 
 
 def _parse_framework_terms(lines: list[str]) -> list[ParsedTerm]:
-    """Parse TEVV, TSE, and FCSM framework term definitions."""
+    """Parse TEVV, TSE, and FCSM framework term definitions.
+
+    Confined to ``## Framework Terms``.  Note that ``## Framework Terms
+    (Cross-Cutting)`` is a *different* section further down the file; the
+    heading match here is exact, not prefix, so the two do not collide.
+    """
     terms: list[ParsedTerm] = []
+
+    bounds = _find_section(lines, "## Framework Terms")
+    if bounds is None:
+        return terms
+    lines = lines[bounds[0]:bounds[1]]
 
     # TEVV
     for line in lines:
@@ -702,76 +910,86 @@ def _parse_framework_terms(lines: list[str]) -> list[ParsedTerm]:
 
 
 def _parse_boilerplate(lines: list[str]) -> list[ParsedTerm]:
-    """Parse limitations boilerplate blockquote."""
+    """Parse the limitations boilerplate blockquote.
+
+    Matched by heading prefix so the trailing parenthetical
+    ("(for papers using LLM pipelines)") can be reworded without breaking the
+    parser; the scan for the blockquote is still bounded by the section.
+    """
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if "### Limitations Boilerplate" in line:
-            # Find the blockquote (lines starting with ">")
-            parts: list[str] = []
-            j = i + 1
-            while j < len(lines):
-                tl = lines[j]
-                stripped = tl.strip()
-                if stripped.startswith(">"):
-                    parts.append(stripped[1:].strip())
-                elif stripped.startswith("###") or stripped.startswith("##"):
-                    break
-                j += 1
-            if parts:
-                raw = " ".join(parts)
-                definition = _strip_markdown(raw)
-                citations = _extract_citations(raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:boilerplate:limitations",
-                        name="Limitations Boilerplate",
-                        definition=definition,
-                        category="boilerplate",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={},
-                    )
-                )
-            break
+    bounds = _find_section(lines, "### Limitations Boilerplate", prefix=True)
+    if bounds is None:
+        return terms
+    start, end = bounds
+
+    parts = [
+        lines[j].strip()[1:].strip()
+        for j in range(start + 1, end)
+        if lines[j].strip().startswith(">")
+    ]
+    if parts:
+        raw = " ".join(parts)
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:boilerplate:limitations",
+                name="Limitations Boilerplate",
+                definition=_strip_markdown(raw),
+                category="boilerplate",
+                citations=_extract_citations(raw),
+                namespace=_NAMESPACE,
+                extra={},
+            )
+        )
 
     return terms
 
 
 def _parse_related_terms(lines: list[str]) -> list[ParsedTerm]:
-    """Parse related terms table under ## Related Terms (Defined Elsewhere)."""
+    """Parse the definition list under ``## Related Terms (Defined Elsewhere)``.
+
+    The section is a markdown definition list::
+
+        **Handoff document**
+        : Explicit serialization of accumulated state for session continuity.
+        : Use precisely; do not conflate with ...
+
+    The first ``:`` line is the definition.  Any further ``:`` lines are usage
+    guidance and are kept in ``extra["usage_note"]`` rather than folded into the
+    definition, because the definition is what downstream consumers cite.
+
+    Only the definition-list form is supported.  This section was a pipe table
+    until commit ``b6714f3`` (2026-03-28); nothing in the repo has used that form
+    since, ``ontology/practitioner/PRACTITIONER_VOCABULARY.md`` contains no
+    tables at all, and a permissive "parse whichever shape turns up next" scan is
+    precisely what caused the regression this function exists to fix.  A revert
+    to the table form is caught by the section minimum in
+    :data:`SECTION_COVERAGE`, not silently absorbed.
+    """
     terms: list[ParsedTerm] = []
 
-    for i, line in enumerate(lines):
-        if line.strip().lower() == "## related terms (defined elsewhere)":
-            j = i + 1
-            while j < len(lines) and not lines[j].strip().startswith("|"):
-                j += 1
-            rows, _ = _parse_table_rows(lines, j)
-            for row in rows:
-                if len(row) < 3:
-                    continue
-                term_name, brief_meaning_raw, canonical_source = (
-                    row[0],
-                    row[1],
-                    row[2],
-                )
-                name = _strip_markdown(term_name)
-                slug = _slugify(name)
-                definition = _strip_markdown(brief_meaning_raw)
-                citations = _extract_citations(brief_meaning_raw)
-                terms.append(
-                    ParsedTerm(
-                        term_id=f"{_NAMESPACE}:related:{slug}",
-                        name=name,
-                        definition=definition,
-                        category="related_term",
-                        citations=citations,
-                        namespace=_NAMESPACE,
-                        extra={"canonical_source": canonical_source},
-                    )
-                )
-            break
+    bounds = _find_section(lines, "## Related Terms (Defined Elsewhere)")
+    if bounds is None:
+        return terms
+    start, end = bounds
+
+    for name, defn_lines in _parse_definition_list(lines, start + 1, end):
+        raw_definition = defn_lines[0]
+        usage_note = " ".join(defn_lines[1:]).strip()
+        extra: dict = {}
+        if usage_note:
+            extra["usage_note"] = _strip_markdown(usage_note)
+        terms.append(
+            ParsedTerm(
+                term_id=f"{_NAMESPACE}:related:{_slugify(name)}",
+                name=name,
+                definition=_strip_markdown(raw_definition),
+                category="related_term",
+                citations=_extract_citations(" ".join(defn_lines)),
+                namespace=_NAMESPACE,
+                extra=extra,
+            )
+        )
 
     return terms
 
@@ -859,6 +1077,64 @@ def _build_relationships(
 
 
 # ---------------------------------------------------------------------------
+# Parse-completeness guard
+# ---------------------------------------------------------------------------
+
+
+def _check_section_yields(
+    all_terms: list[ParsedTerm], lines: list[str], path: Path
+) -> None:
+    """Fail loudly when a claimed section is missing or produced nothing.
+
+    For every entry in :data:`SECTION_COVERAGE` that names a parser, this
+    verifies (a) that the heading is still present in the document and (b) that
+    the parser produced at least one term in that section's category.
+
+    A section that was reformatted, renamed, or emptied therefore raises here
+    rather than quietly contributing nothing to the shared ontology — the
+    failure mode that let the ``## Related Terms (Defined Elsewhere)`` mis-parse
+    survive from 2026-03-28 to 2026-09-04.
+
+    The floor is deliberately one term, not the declared count: dropping a single
+    row from a table is a legitimate vocabulary edit, and breaking ingest for
+    every downstream project over it would be a worse failure than the one being
+    prevented. Exact counts are asserted in ``tests/test_parser_sections.py``
+    against the real file, where a change is reviewable.
+
+    Raises:
+        VocabularyParseError: If a claimed section is missing or yields nothing.
+    """
+    by_category: dict[str, int] = {}
+    for term in all_terms:
+        by_category[term.category] = by_category.get(term.category, 0) + 1
+
+    problems: list[str] = []
+    for heading, (parser_name, expected) in SECTION_COVERAGE.items():
+        if parser_name is None or expected == 0:
+            continue
+        prefix = heading.startswith("### Limitations Boilerplate")
+        if _find_section(lines, heading, prefix=prefix) is None:
+            problems.append(
+                f"section {heading!r} is claimed by {parser_name}() but is not "
+                f"present in the file"
+            )
+            continue
+        category = _PARSER_CATEGORY[parser_name]
+        if by_category.get(category, 0) == 0:
+            problems.append(
+                f"section {heading!r} yielded no terms of category {category!r} "
+                f"via {parser_name}(), but the section is present. Its content no "
+                f"longer matches the shape {parser_name}() parses"
+            )
+
+    if problems:
+        raise VocabularyParseError(
+            f"Vocabulary parse incomplete for {path}:\n  - "
+            + "\n  - ".join(problems)
+        )
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -922,22 +1198,7 @@ def parse_vocabulary(path: Path | str) -> ParsedVocabulary:
         + related
     )
 
-    # Guard: fail loudly if any mandatory category is missing entirely,
-    # which indicates a section heading mismatch or corrupted vocabulary file.
-    _EXPECTED_MINIMUMS = {
-        "sub_dimension": 1,
-        "threat": 1,
-        "countermeasure": 1,
-        "metric": 1,
-        "classical_validity": 1,
-    }
-    by_category = {cat: sum(1 for t in all_terms if t.category == cat) for cat in _EXPECTED_MINIMUMS}
-    for cat, minimum in _EXPECTED_MINIMUMS.items():
-        if by_category.get(cat, 0) < minimum:
-            raise ValueError(
-                f"Expected at least {minimum} term(s) in category '{cat}', got "
-                f"{by_category.get(cat, 0)}. Check section headings in {path}."
-            )
+    _check_section_yields(all_terms, lines, path)
 
     relationships = _build_relationships(
         sfv_term=sfv_term,

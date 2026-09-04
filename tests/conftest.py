@@ -3,7 +3,10 @@ Shared fixtures for Seldon test suite.
 
 Neo4j fixtures:
 - Skip tests (not fail) if Neo4j is unreachable.
-- Use dedicated `seldon_test` database to avoid polluting production databases.
+- Use a dedicated, per-process database to avoid polluting production databases
+  and to keep concurrent pytest processes from wiping each other's fixtures.
+  The name is resolved once in `tests/testdb.py` — see that module for the
+  resolution order and the sweeper's safety argument.
 - Clear the test database before each test that uses it.
 """
 import os
@@ -11,6 +14,15 @@ import uuid
 from pathlib import Path
 
 import pytest
+
+from tests.testdb import (
+    TEST_DATABASE,
+    TEST_DATABASE_IS_EPHEMERAL,
+    TEST_PROJECT_DATABASE,
+    create_database,
+    drop_database,
+    sweep_stale_test_databases,
+)
 
 # ── Event store fixtures ──────────────────────────────────────────────────────
 
@@ -27,7 +39,9 @@ def sample_artifact_id():
 
 # ── Neo4j fixtures ────────────────────────────────────────────────────────────
 
-TEST_DATABASE = "seldon-test"
+# TEST_DATABASE / TEST_PROJECT_DATABASE are imported from tests.testdb and
+# re-exported here because most test modules already import them from conftest.
+__all__ = ["TEST_DATABASE", "TEST_PROJECT_DATABASE"]
 
 
 def _neo4j_creds():
@@ -71,23 +85,38 @@ def neo4j_available():
 
 @pytest.fixture(scope="session")
 def neo4j_driver(neo4j_available):
-    """Session-scoped Neo4j driver connected to the test instance."""
+    """Session-scoped Neo4j driver bound to this process's test database.
+
+    Creates the database at session start (after reclaiming orphans left by
+    interrupted runs) and drops it at session teardown, so concurrent pytest
+    processes never share graph state.
+
+    Yields:
+        A connected `neo4j.Driver`.
+    """
     from neo4j import GraphDatabase
     uri, username, password = _neo4j_creds()
     driver = GraphDatabase.driver(uri, auth=(username, password))
 
-    # Ensure seldon_test database exists
-    with driver.session(database="system") as session:
-        session.run(f"CREATE DATABASE `{TEST_DATABASE}` IF NOT EXISTS")
-
-    yield driver
-    driver.close()
+    try:
+        # Self-healing: an interrupted run leaves its database behind. Reclaim
+        # only those whose owning process is gone (see tests/testdb.py).
+        sweep_stale_test_databases(driver)
+        create_database(driver, TEST_DATABASE)
+        yield driver
+    finally:
+        if TEST_DATABASE_IS_EPHEMERAL:
+            # TEST_PROJECT_DATABASE is created on demand by the ontology tests;
+            # drop_database is a no-op when it was never created.
+            drop_database(driver, TEST_PROJECT_DATABASE)
+            drop_database(driver, TEST_DATABASE)
+        driver.close()
 
 
 @pytest.fixture(autouse=False)
 def clean_test_db(neo4j_driver):
     """
-    Clear all nodes and relationships in seldon_test before each test.
+    Clear all nodes and relationships in the test database before each test.
     Use this fixture in tests that write to Neo4j.
     """
     with neo4j_driver.session(database=TEST_DATABASE) as session:
@@ -97,6 +126,6 @@ def clean_test_db(neo4j_driver):
 
 @pytest.fixture
 def test_db_session(neo4j_driver, clean_test_db):
-    """Provide a session to seldon_test, with the db pre-cleared."""
+    """Provide a session to the test database, with the db pre-cleared."""
     with neo4j_driver.session(database=TEST_DATABASE) as session:
         yield session

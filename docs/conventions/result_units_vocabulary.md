@@ -24,10 +24,17 @@ nobody wrote down. AD-028 splits them:
 | `name`   | Stable token key. What `{{result:NAME:field}}` looks up. | `admitted_yield_ratio` |
 | `units`  | A real unit of measurement. Never a token key. | `ratio` |
 
-`name` grammar: `^[a-z0-9][a-z0-9_.-]*$`, case-sensitive, at most 128 characters,
-unique per project graph. `seldon result register --name` enforces all three at
-the CLI. The domain config deliberately does **not** mark `name` as required, so
-Results registered before AD-028 stay schema-valid.
+`name` is case-sensitive, at most 128 characters, and unique per project graph.
+It must start with an ASCII letter or digit, then any of letters, digits,
+underscore, dot or hyphen (AD-028 §1 as amended by Amendment 01, which admitted
+uppercase). **The regex itself is written in exactly one place —
+`RESULT_NAME_PATTERN` in `seldon/commands/result.py` — and is deliberately not
+reproduced here**, because a second copy is a second definition and the two
+drift; `seldon result register --help` prints the live pattern.
+`seldon result register --name` enforces grammar, length and uniqueness at the
+CLI, and `seldon result migrate-names` applies the identical check on both its
+dry-run and its live path. The domain config deliberately does **not** mark
+`name` as required, so Results registered before AD-028 stay schema-valid.
 
 ## 2. What the vocabulary is for
 

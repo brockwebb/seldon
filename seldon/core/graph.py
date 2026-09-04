@@ -104,6 +104,143 @@ def remove_link(
     session.run(cypher, from_id=from_id, to_id=to_id)
 
 
+# ---------------------------------------------------------------------------
+# Relationship-type case canonicalisation
+# ---------------------------------------------------------------------------
+#
+# UPPERCASE is the canonical spelling of a relationship type, and it is
+# canonical *by construction*, not by convention: every sanctioned write path
+# uppercases before the type reaches Neo4j —
+# ``seldon.core.artifacts.create_link`` and ``remove_link`` both call
+# ``rel_type.upper()``, and event replay in ``seldon.core.sync._apply_event``
+# does the same. The domain config declares type names in lowercase; that
+# lowercase name is what the JSONL event records and what validation matches,
+# but it is never what the graph stores.
+#
+# A relationship stored in any other case therefore cannot have come from a
+# sanctioned write. It is graph-only drift, and it is invisible: every
+# type-filtered query in this codebase names the uppercase form, so a
+# lowercase twin is silently skipped rather than reported.
+
+#: Relationship type names are interpolated into Cypher (the driver cannot
+#: parameterise them), so anything that reaches interpolation is checked
+#: against this first.
+_REL_TYPE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def canonical_rel_type(rel_type: str) -> str:
+    """Return the canonical (uppercase) spelling of a relationship type.
+
+    Args:
+        rel_type: Relationship type name in any case.
+
+    Returns:
+        The uppercase form actually written to Neo4j by every sanctioned path.
+    """
+    return rel_type.upper()
+
+
+def _assert_safe_rel_type(rel_type: str) -> None:
+    """Reject a relationship type name that is unsafe to interpolate into Cypher.
+
+    Args:
+        rel_type: Candidate relationship type name.
+
+    Raises:
+        ValueError: If the name is empty or contains anything but an initial
+            letter/underscore followed by letters, digits or underscores.
+    """
+    if not rel_type or not _REL_TYPE_RE.match(rel_type):
+        raise ValueError(f"Invalid relationship type name: {rel_type!r}")
+
+
+def find_noncanonical_rel_types(session: Session) -> List[Dict[str, Any]]:
+    """Return every relationship type in the database stored in non-canonical case.
+
+    Args:
+        session: Open Neo4j session bound to the database to audit.
+
+    Returns:
+        One dict per offending type, sorted by type name, with keys
+        ``rel_type`` (as stored), ``canonical`` (the uppercase form it should
+        have) and ``count`` (how many relationships carry it). Empty list when
+        the database is clean.
+    """
+    records = session.run(
+        "MATCH ()-[r]->() RETURN type(r) AS rel_type, count(r) AS cnt ORDER BY rel_type"
+    ).data()
+    return [
+        {
+            "rel_type": rec["rel_type"],
+            "canonical": canonical_rel_type(rec["rel_type"]),
+            "count": rec["cnt"],
+        }
+        for rec in records
+        if rec["rel_type"] != canonical_rel_type(rec["rel_type"])
+    ]
+
+
+def get_relationships_of_type(
+    session: Session,
+    rel_type: str,
+) -> List[Dict[str, Any]]:
+    """Return every relationship whose type matches ``rel_type`` exactly.
+
+    Type matching in Cypher is case-sensitive, so this returns only the exact
+    spelling asked for — which is the point: it is how the non-canonical twin
+    of a canonical type is enumerated before migration.
+
+    Args:
+        session: Open Neo4j session.
+        rel_type: Exact relationship type name.
+
+    Returns:
+        One dict per relationship with keys ``from_id``, ``to_id`` and
+        ``properties``. Endpoint ids are ``None`` for non-Artifact nodes.
+
+    Raises:
+        ValueError: If ``rel_type`` is not a safe identifier.
+    """
+    _assert_safe_rel_type(rel_type)
+    cypher = (
+        f"MATCH (a)-[r:{rel_type}]->(b) "
+        f"RETURN a.artifact_id AS from_id, b.artifact_id AS to_id, "
+        f"properties(r) AS properties "
+        f"ORDER BY from_id, to_id"
+    )
+    return [dict(rec) for rec in session.run(cypher).data()]
+
+
+def relationship_exists(
+    session: Session,
+    from_id: str,
+    to_id: str,
+    rel_type: str,
+) -> bool:
+    """Return True if a relationship of exactly this type joins the two artifacts.
+
+    Args:
+        session: Open Neo4j session.
+        from_id: Source artifact_id.
+        to_id: Target artifact_id.
+        rel_type: Exact relationship type name.
+
+    Returns:
+        True when at least one such relationship exists.
+
+    Raises:
+        ValueError: If ``rel_type`` is not a safe identifier.
+    """
+    _assert_safe_rel_type(rel_type)
+    cypher = (
+        f"MATCH (a:Artifact {{artifact_id: $from_id}})-[r:{rel_type}]->"
+        f"(b:Artifact {{artifact_id: $to_id}}) "
+        f"RETURN count(r) AS cnt"
+    )
+    record = session.run(cypher, from_id=from_id, to_id=to_id).single()
+    return bool(record and record["cnt"] > 0)
+
+
 def get_artifact(
     session: Session,
     artifact_id: str,

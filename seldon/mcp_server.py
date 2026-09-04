@@ -636,11 +636,57 @@ def seldon_issue_update(
 # CC task tools
 # ---------------------------------------------------------------------------
 
+def _mcp_git_tracking_error(
+    project_dir: Path, task_path: Path, rel_path: str,
+    tool: str, allow_untracked: bool,
+) -> Optional[str]:
+    """Return an error string when an untracked task file must be refused.
+
+    MCP mirror of ``seldon.commands.cc._enforce_git_tracking``. That function is
+    CLI-shaped — it echoes and raises SystemExit — so a tool that must return a
+    string cannot call it. The *decision* is not duplicated here: the status
+    predicate and the reason/remedy tables are imported from cc.py, so the rules
+    live in one place and the two front ends can only diverge in wording.
+
+    Args:
+        project_dir: Project root.
+        task_path: Absolute path to the task file.
+        rel_path: Path as it will be stored in ``source_file``.
+        tool: MCP tool name, used in the override hint.
+        allow_untracked: Operator override.
+
+    Returns:
+        None when registration may proceed (tracked, or overridden); otherwise
+        the error string the tool should return to its caller.
+
+    Raises:
+        Nothing.
+    """
+    from seldon.commands.cc import (
+        GIT_TRACKED, _UNTRACKED_REASONS, _UNTRACKED_REMEDIES, _git_tracking_status,
+    )
+
+    status = _git_tracking_status(project_dir, task_path)
+    if status == GIT_TRACKED or allow_untracked:
+        return None
+
+    return (
+        f"Error: refusing to register an untracked task file ({status}).\n"
+        f"  File: {rel_path}\n"
+        f"  Why: {_UNTRACKED_REASONS[status]}.\n"
+        f"  A ResearchTask whose source_file cannot be recovered records that a\n"
+        f"  task existed but not what it was.\n"
+        f"  Fix: {_UNTRACKED_REMEDIES[status]}\n"
+        f"  Or override: call {tool} again with allow_untracked=True"
+    )
+
+
 @mcp.tool()
 def seldon_cc_complete(
     filepath: str,
     project_dir: str = ".",
     note: str = "",
+    allow_untracked: bool = False,
 ) -> str:
     """Mark a CC task file as completed in the graph.
 
@@ -651,6 +697,9 @@ def seldon_cc_complete(
         filepath: Path to the CC task file (relative to project root)
         project_dir: Path to project root
         note: Optional description override (default: auto-extracted from file)
+        allow_untracked: Register even though git does not track the file. The
+            file must still be committed with its RESULT, or the graph keeps a
+            task whose source can never be recovered.
     """
     from seldon.commands.cc import (
         _find_existing, _name_from_filepath, _extract_description,
@@ -673,6 +722,13 @@ def seldon_cc_complete(
         rel_path = str(task_path.relative_to(p))
     except ValueError:
         rel_path = str(task_path)
+
+    refusal = _mcp_git_tracking_error(
+        p, task_path, rel_path, "seldon_cc_complete", allow_untracked
+    )
+    if refusal is not None:
+        driver.close()
+        return refusal
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
@@ -747,6 +803,7 @@ def seldon_cc_complete(
 def seldon_cc_register(
     filepath: str,
     project_dir: str = ".",
+    allow_untracked: bool = False,
 ) -> str:
     """Register a CC task file as a proposed ResearchTask in the graph.
 
@@ -756,6 +813,9 @@ def seldon_cc_register(
     Args:
         filepath: Path to the CC task file (relative to project root)
         project_dir: Path to project root
+        allow_untracked: Register even though git does not track the file. The
+            file must still be committed with its RESULT, or the graph keeps a
+            task whose source can never be recovered.
     """
     from seldon.commands.cc import (
         _find_existing, _name_from_filepath, _extract_description,
@@ -777,6 +837,13 @@ def seldon_cc_register(
         rel_path = str(task_path.relative_to(p))
     except ValueError:
         rel_path = str(task_path)
+
+    refusal = _mcp_git_tracking_error(
+        p, task_path, rel_path, "seldon_cc_register", allow_untracked
+    )
+    if refusal is not None:
+        driver.close()
+        return refusal
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:

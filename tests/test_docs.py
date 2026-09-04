@@ -10,6 +10,8 @@ from seldon.domain.loader import (
     PropertyDef, ArtifactTypeConfig,
 )
 
+from tests.testdb import TEST_DATABASE
+
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 
@@ -199,7 +201,7 @@ def test_required_validation_missing_raises(neo4j_driver, project_dir, domain_co
         create_artifact(
             project_dir=project_dir,
             driver=neo4j_driver,
-            database="seldon-test",
+            database=TEST_DATABASE,
             domain_config=domain_config_fixture,
             artifact_type="Result",
             properties={"value": 1.0},  # missing units and description
@@ -214,7 +216,7 @@ def test_required_validation_passes(neo4j_driver, project_dir, domain_config_fix
     artifact_id = create_artifact(
         project_dir=project_dir,
         driver=neo4j_driver,
-        database="seldon-test",
+        database=TEST_DATABASE,
         domain_config=domain_config_fixture,
         artifact_type="Result",
         properties={"value": 1.0, "units": "score", "description": "complete result"},
