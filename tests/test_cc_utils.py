@@ -29,30 +29,37 @@ class TestNameFromFilepath:
 
 
 class TestExtractDescription:
+    """Prose-fallback behaviour of the description extractor.
+
+    The first H1 wins whenever it names a subject, so every fixture below whose
+    point is the FALLBACK path uses a subject-free boilerplate title
+    (`# CC Task`). H1 precedence itself is covered in test_cc_description.py.
+    """
+
     def test_extracts_first_non_header_line(self, tmp_path):
         f = tmp_path / "task.md"
-        f.write_text("# Title\n\nSome description text here.\n\nMore content.")
+        f.write_text("# CC Task\n\nSome description text here.\n\nMore content.")
         assert _extract_description(f) == "Some description text here."
 
     def test_skips_blank_lines_before_header(self, tmp_path):
         f = tmp_path / "task.md"
-        f.write_text("\n\n# Header\n\nFirst real line.\n")
+        f.write_text("\n\n# CC Task\n\nFirst real line.\n")
         assert _extract_description(f) == "First real line."
 
     def test_falls_back_to_filename_if_only_headers(self, tmp_path):
         f = tmp_path / "mytask.md"
-        f.write_text("# Title\n## Subtitle\n")
+        f.write_text("# CC Task\n## Subtitle\n")
         assert _extract_description(f) == "mytask.md"
 
     def test_truncates_at_200_chars(self, tmp_path):
         f = tmp_path / "long.md"
-        f.write_text("# H\n\n" + "x" * 300 + "\n")
+        f.write_text("# CC Task\n\n" + "x" * 300 + "\n")
         result = _extract_description(f)
         assert len(result) == 200
 
     def test_skips_date_metadata_line(self, tmp_path):
         f = tmp_path / "task.md"
-        f.write_text("# Title\n\n**Date:** 2026-04-05\n**Project:** seldon\n\nActual goal.")
+        f.write_text("# CC Task\n\n**Date:** 2026-04-05\n**Project:** seldon\n\nActual goal.")
         assert _extract_description(f) == "Actual goal."
 
     def test_skips_all_metadata_before_content(self, tmp_path):
@@ -70,7 +77,7 @@ class TestExtractDescription:
 
     def test_skips_horizontal_rule(self, tmp_path):
         f = tmp_path / "task.md"
-        f.write_text("# Title\n\n---\n\nFirst real content.\n")
+        f.write_text("# CC Task\n\n---\n\nFirst real content.\n")
         assert _extract_description(f) == "First real content."
 
     def test_skips_location_bold_metadata(self, tmp_path):
@@ -166,7 +173,7 @@ class TestExtractDescription:
         path (non-CC-Task H1)."""
         f = tmp_path / "task.md"
         f.write_text(
-            "# Title\n"
+            "# CC Task\n"
             "\n"
             "**Priority:** HIGH — kills the whining email and ~$59/mo burn;\n"
             "removes the iCloud-symlink fragility from all scheduled jobs.\n"

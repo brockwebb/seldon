@@ -10,10 +10,20 @@ import yaml
 
 from seldon.config import slugify
 from seldon.core.graph import create_indexes
+from seldon.paths import (
+    DEFAULT_VOCABULARIES,
+    ONTOLOGY_PATH_ENV,
+    ontology_source_candidates,
+    resolve_ontology_source,
+)
 from seldon.templates import loader as template_loader
 
 
 DEFAULT_TEMPLATE = "blank"
+
+#: Inheritance mode written into a new project's shared_ontology block. Projects
+#: hold read-only replicas; all writes go to the master (AD-017).
+SHARED_ONTOLOGY_INHERITANCE = "read-only"
 
 
 def _apply_template(
@@ -42,6 +52,22 @@ def _apply_template(
             authority="accepted",
         )
     return len(tasks)
+
+
+#: Bolt endpoint used when NEO4J_URI is unset. `seldon init` previously hardcoded
+#: this string in two places and ignored NEO4J_URI entirely, so it could neither
+#: target a non-default server nor be pointed away from one in a test. Matches the
+#: resolution already used by seldon/commands/ontology.py.
+DEFAULT_NEO4J_URI = "bolt://localhost:7687"
+
+
+def _resolve_neo4j_uri() -> str:
+    """Return the Bolt URI for this invocation.
+
+    Returns:
+        ``$NEO4J_URI`` when set and non-empty, otherwise DEFAULT_NEO4J_URI.
+    """
+    return os.getenv("NEO4J_URI") or DEFAULT_NEO4J_URI
 
 
 def _database_has_artifacts(driver, database: str) -> bool:
@@ -121,13 +147,23 @@ def init_command(
     slug = slugify(project_name)
     database = f"seldon-{slug}"
     events_path = "seldon_events.jsonl"
+    # Resolved once: the same URI is written into seldon.yaml and connected to,
+    # so a project can never be configured for one server and initialised against
+    # another. Read after load_dotenv so a project-local .env can set it.
+    neo4j_uri = _resolve_neo4j_uri()
 
     # 1. Create seldon.yaml
-    ontology_env = os.getenv("SELDON_ONTOLOGY_PATH")
-    if ontology_env:
-        ontology_source = str(Path(ontology_env))
-    else:
-        ontology_source = str(Path(__file__).parent.parent.parent / "ontology")
+    #
+    # The shared-ontology default is derived from the installed package location
+    # (see seldon.paths). A missing ontology tree is reported and the
+    # shared_ontology block is omitted, rather than written as a path that
+    # cannot resolve — a config pointing at nothing degrades silently in every
+    # downstream command that reads it.
+    try:
+        ontology_source_path = resolve_ontology_source()
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
 
     config = {
         "project": {
@@ -138,20 +174,28 @@ def init_command(
             "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         },
         "neo4j": {
-            "uri": "bolt://localhost:7687",
+            "uri": neo4j_uri,
             "database": database,
         },
         "event_store": {
             "path": events_path,
         },
-        "shared_ontology": {
-            "source": ontology_source,
-            "vocabularies": [
-                "validity/VALIDITY_VOCABULARY.md",
-            ],
-            "inheritance": "read-only",
-        },
     }
+    if ontology_source_path is None:
+        click.echo(
+            "WARNING: no shared ontology tree found next to the installed seldon "
+            f"package (looked in: {', '.join(str(c) for c in ontology_source_candidates())}).\n"
+            "  seldon.yaml is being written WITHOUT a shared_ontology block.\n"
+            f"  Set {ONTOLOGY_PATH_ENV}=/path/to/ontology and re-run `seldon init`, "
+            "or add the block by hand, to enable `seldon ontology sync`.",
+            err=True,
+        )
+    else:
+        config["shared_ontology"] = {
+            "source": str(ontology_source_path),
+            "vocabularies": list(DEFAULT_VOCABULARIES),
+            "inheritance": SHARED_ONTOLOGY_INHERITANCE,
+        }
     config_path = project_dir / "seldon.yaml"
     if config_path.exists():
         click.echo(f"seldon.yaml already exists. Aborting.")
@@ -179,7 +223,7 @@ def init_command(
         )
 
     # 5. Connect to Neo4j and set up project database
-    uri = "bolt://localhost:7687"
+    uri = neo4j_uri
     username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
 

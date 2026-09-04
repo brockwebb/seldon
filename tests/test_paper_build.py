@@ -660,3 +660,256 @@ def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
     assembled = output_path.read_text()
     assert "abstract:" not in assembled
     assert "## Introduction" in assembled
+
+
+# ---------------------------------------------------------------------------
+# AD-028 — --allow-proposed render mode and the transitional units fallback
+# ---------------------------------------------------------------------------
+
+def _verified(name, **props):
+    """A verified Result node as load_named_artifacts would return it."""
+    node = {
+        "artifact_id": f"id-{name}",
+        "artifact_type": "Result",
+        "name": name,
+        "state": "verified",
+        "value": 42.0,
+        "units": "score",
+    }
+    node.update(props)
+    return node
+
+
+def test_verified_result_renders_bare_value_with_no_suffix():
+    """A4 collision check: resolution emits str(value) and nothing else.
+
+    No number formatting, no significant figures, no units suffix — so the
+    '(proposed)' marker cannot collide with anything already appended.
+    """
+    artifacts = {"result:m": _verified("m", value=0.9123456)}
+    resolved, errors = resolve_references(
+        "x={{result:m:value}}y", artifacts, "test.md"
+    )
+    assert resolved == "x=0.9123456y"
+    assert errors == []
+
+
+def test_allow_proposed_renders_value_space_marker():
+    from seldon.paper.build import PROPOSED_MARKER
+
+    artifacts = {"result:m": _verified("m", state="proposed", value=7.5)}
+    resolved, errors = resolve_references(
+        "{{result:m:value}}", artifacts, "test.md", allow_proposed=True
+    )
+    assert resolved == f"7.5 {PROPOSED_MARKER}"
+    assert resolved == "7.5 (proposed)"
+    assert len(errors) == 1
+    assert errors[0].check_id == "SI-03"
+    assert errors[0].fatal is False
+    assert errors[0].artifact_name == "m"
+
+
+def test_allow_proposed_leaves_verified_render_unchanged():
+    artifacts = {
+        "result:v": _verified("v", value=1.25),
+        "result:p": _verified("p", state="proposed", value=9.0),
+    }
+    resolved, _errors = resolve_references(
+        "{{result:v:value}} and {{result:p:value}}",
+        artifacts, "test.md", allow_proposed=True,
+    )
+    assert resolved == "1.25 and 9.0 (proposed)"
+
+
+def test_default_keeps_proposed_fatal_and_leaves_token():
+    artifacts = {"result:m": _verified("m", state="proposed", value=7.5)}
+    resolved, errors = resolve_references("{{result:m:value}}", artifacts, "test.md")
+    assert resolved == "{{result:m:value}}"
+    assert [e.check_id for e in errors] == ["SI-03"]
+    assert errors[0].fatal is True
+
+
+def test_summarize_proposed_counts_tokens_and_lists_names():
+    from seldon.paper.build import summarize_proposed
+
+    artifacts = {
+        "result:a": _verified("a", state="proposed", value=1.0),
+        "result:b": _verified("b", state="proposed", value=2.0),
+    }
+    _resolved, errors = resolve_references(
+        "{{result:a:value}} {{result:a:value}} {{result:b:value}}",
+        artifacts, "test.md", allow_proposed=True,
+    )
+    count, names = summarize_proposed(errors)
+    assert count == 3
+    assert names == ["a", "b"]
+
+
+def test_units_fallback_resolves_and_emits_warning():
+    """TRANSITIONAL (AD-028): a token key still living in `units` resolves."""
+    legacy = {
+        "artifact_id": "legacy-1",
+        "artifact_type": "Result",
+        "state": "verified",
+        "value": 3.5,
+        "units": "admitted_yield_ratio",
+    }
+    resolved, errors = resolve_references(
+        "{{result:admitted_yield_ratio:value}}",
+        artifacts={}, filename="test.md",
+        units_fallback={"admitted_yield_ratio": [legacy]},
+    )
+    assert resolved == "3.5"
+    assert len(errors) == 1
+    assert errors[0].check_id == "SI-09"
+    assert errors[0].fatal is False
+    assert "admitted_yield_ratio" in errors[0].message
+    assert "legacy-1" in errors[0].message
+
+
+def test_units_fallback_ambiguity_is_fatal_and_names_candidates():
+    candidates = [
+        {"artifact_id": "a", "state": "verified", "value": 1.0, "units": "precision"},
+        {"artifact_id": "b", "state": "verified", "value": 2.0, "units": "precision"},
+    ]
+    resolved, errors = resolve_references(
+        "{{result:precision:value}}",
+        artifacts={}, filename="test.md",
+        units_fallback={"precision": candidates},
+    )
+    assert resolved == "{{result:precision:value}}"
+    assert len(errors) == 1
+    assert errors[0].check_id == "SI-09"
+    assert errors[0].fatal is True
+    assert "a" in errors[0].message and "b" in errors[0].message
+
+
+def test_name_wins_over_units_fallback():
+    """A real `name` match is never overridden by the transitional fallback."""
+    named = _verified("shared", value=100.0)
+    legacy = {"artifact_id": "legacy", "state": "verified", "value": 1.0,
+              "units": "shared"}
+    resolved, errors = resolve_references(
+        "{{result:shared:value}}",
+        artifacts={"result:shared": named}, filename="test.md",
+        units_fallback={"shared": [legacy]},
+    )
+    assert resolved == "100.0"
+    assert errors == []
+
+
+def test_units_fallback_absent_falls_through_to_si01():
+    resolved, errors = resolve_references(
+        "{{result:nothing:value}}", artifacts={}, filename="test.md",
+        units_fallback={},
+    )
+    assert resolved == "{{result:nothing:value}}"
+    assert [e.check_id for e in errors] == ["SI-01"]
+
+
+def test_build_units_fallback_index_excludes_real_units_and_named(
+    neo4j_driver, project_dir, domain_config, clean_test_db
+):
+    from seldon.paper.build import build_units_fallback_index
+
+    # units is a token key → indexed
+    create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Result",
+        properties={"value": 1.0, "units": "token_key_x", "description": "d"},
+        actor="human", authority="accepted",
+    )
+    # units is a real unit → not indexed
+    create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Result",
+        properties={"value": 2.0, "units": "count", "description": "d"},
+        actor="human", authority="accepted",
+    )
+    # already has a name → not indexed
+    create_artifact(
+        project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Result",
+        properties={"name": "already_named", "value": 3.0,
+                    "units": "token_key_y", "description": "d"},
+        actor="human", authority="accepted",
+    )
+
+    index = build_units_fallback_index(neo4j_driver, NEO4J_DB)
+
+    assert set(index) == {"token_key_x"}
+    assert len(index["token_key_x"]) == 1
+
+
+def _allow_proposed_build_env(tmp_path, section_text, neo4j_driver, monkeypatch):
+    """Wire build_paper to the real test database with a single section file."""
+    (tmp_path / "seldon.yaml").write_text(
+        "project:\n  name: test\n  domain: research\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "event_store:\n  path: seldon_events.jsonl\n"
+    )
+    sections_dir = tmp_path / "paper" / "sections"
+    sections_dir.mkdir(parents=True)
+    (sections_dir / "01_intro.md").write_text(section_text)
+
+    monkeypatch.setattr(
+        "seldon.paper.build.get_neo4j_driver", lambda config: neo4j_driver
+    )
+    monkeypatch.setattr(neo4j_driver, "close", lambda: None)
+    return tmp_path / "paper" / "paper.qmd"
+
+
+def test_build_paper_allow_proposed_renders_and_summarises(
+    tmp_path, neo4j_driver, domain_config, clean_test_db, monkeypatch, capsys
+):
+    from seldon.paper.build import build_paper
+
+    create_artifact(
+        project_dir=tmp_path, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Result",
+        properties={"name": "draft_metric", "value": 0.42, "units": "ratio",
+                    "description": "a draft metric"},
+        actor="human", authority="accepted",
+    )
+    output_path = _allow_proposed_build_env(
+        tmp_path, "Value: {{result:draft_metric:value}}\n", neo4j_driver, monkeypatch
+    )
+
+    exit_code = build_paper(
+        project_dir=tmp_path, paper_dir=tmp_path / "paper",
+        output_path=output_path, skip_qc=True, no_render=True,
+        allow_proposed=True,
+    )
+    out = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "0.42 (proposed)" in output_path.read_text()
+    assert "PROPOSED RESULTS RENDERED: 1" in out
+    assert "- draft_metric" in out
+
+
+def test_build_paper_without_allow_proposed_still_fails(
+    tmp_path, neo4j_driver, domain_config, clean_test_db, monkeypatch, capsys
+):
+    from seldon.paper.build import build_paper
+
+    create_artifact(
+        project_dir=tmp_path, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="Result",
+        properties={"name": "draft_metric", "value": 0.42, "units": "ratio",
+                    "description": "a draft metric"},
+        actor="human", authority="accepted",
+    )
+    output_path = _allow_proposed_build_env(
+        tmp_path, "Value: {{result:draft_metric:value}}\n", neo4j_driver, monkeypatch
+    )
+
+    exit_code = build_paper(
+        project_dir=tmp_path, paper_dir=tmp_path / "paper",
+        output_path=output_path, skip_qc=True, no_render=True,
+    )
+    out = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "SI-03" in out
+    assert "PROPOSED RESULTS RENDERED" not in out

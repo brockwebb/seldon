@@ -56,6 +56,10 @@ def _resolve_artifact_id(driver, database: str, id_prefix: str) -> str | None:
     return None
 
 
+# Actor recorded on events written by the MCP tools. The CLI writes 'human'.
+MCP_ACTOR = "desktop"
+
+
 def _walk_task_to_completed(
     project_dir: Path,
     driver,
@@ -66,42 +70,100 @@ def _walk_task_to_completed(
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
-    Returns list of transitions performed.
+    Thin adapter over :func:`seldon.core.artifacts.walk_to_completed` — the single
+    close walk shared with `seldon task close`, so both surfaces emit the same event
+    sequence (AD-028). There is deliberately no second walker here.
+
+    Args:
+        project_dir: Project root, for the JSONL event store.
+        driver: Neo4j driver.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        artifact_id: Full artifact_id of the ResearchTask.
+        current_state: The task's current state in the graph.
+
+    Returns:
+        List of 'from → to' transition strings performed.
+
+    Raises:
+        ValueError: If current_state has no known path to completed.
     """
-    from seldon.core.artifacts import transition_state
+    from seldon.core.artifacts import walk_to_completed
 
-    # Define the happy path to completed
-    path_to_completed = {
-        "proposed": ["accepted", "in_progress", "completed"],
-        "accepted": ["in_progress", "completed"],
-        "in_progress": ["completed"],
-        "completed": [],
-        "blocked": ["in_progress", "completed"],
-    }
+    return walk_to_completed(
+        project_dir=project_dir,
+        driver=driver,
+        database=database,
+        domain_config=domain_config,
+        artifact_id=artifact_id,
+        current_state=current_state,
+        actor=MCP_ACTOR,
+    )
 
-    steps = path_to_completed.get(current_state)
-    if steps is None:
-        raise ValueError(f"Cannot close from state '{current_state}'")
 
-    transitions = []
-    state = current_state
-    for next_state in steps:
-        transition_state(
-            project_dir=project_dir,
-            driver=driver,
-            database=database,
-            domain_config=domain_config,
-            artifact_id=artifact_id,
-            artifact_type="ResearchTask",
-            current_state=state,
-            new_state=next_state,
-            actor="desktop",
-            authority="accepted",
+def _mcp_terminal_transition(
+    task_id: str,
+    new_state: str,
+    reason: str,
+    superseded_by: str | None,
+    project_dir: str,
+) -> str:
+    """Shared body for seldon_task_withdraw and seldon_task_supersede.
+
+    Args:
+        task_id: Artifact ID (full UUID or prefix).
+        new_state: Terminal state to move to ('withdrawn' or 'superseded').
+        reason: Operator-supplied reason, stored as `terminal_reason`.
+        superseded_by: Optional artifact ID that overtook the task, or None.
+        project_dir: Path to project root.
+
+    Returns:
+        A human-readable result or an "Error: ..." line. Every precondition is
+        checked before the first write, so an error means nothing was written.
+    """
+    from seldon.core.artifacts import transition_task
+    from seldon.core.graph import get_artifact
+    from seldon.core.state import InvalidStateTransition
+
+    if not reason or not reason.strip():
+        return f"Error: '{new_state}' requires a reason."
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    p = Path(project_dir)
+
+    try:
+        full_id = _resolve_artifact_id(driver, database, task_id)
+        if full_id is None:
+            return f"Error: artifact '{task_id}' not found or ambiguous."
+
+        with driver.session(database=database) as session:
+            node = get_artifact(session, full_id)
+        if node is None:
+            return f"Error: artifact '{task_id}' not found."
+
+        current_state = node.get("state", "")
+        desc = (node.get("description") or "")[:60]
+
+        transition_task(
+            project_dir=p, driver=driver, database=database,
+            domain_config=domain_config, artifact_id=full_id,
+            current_state=current_state, new_state=new_state,
+            actor=MCP_ACTOR, authority="accepted",
+            terminal_reason=reason, superseded_by=superseded_by,
         )
-        transitions.append(f"{state} → {next_state}")
-        state = next_state
 
-    return transitions
+        lines = [
+            f"Updated: {full_id[:8]}... — {desc}",
+            f"  {current_state} → {new_state}",
+            f"  reason: {reason}",
+        ]
+        if superseded_by:
+            lines.append(f"  superseded_by: {superseded_by}")
+        return "\n".join(lines)
+    except (ValueError, InvalidStateTransition) as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
 
 
 # ---------------------------------------------------------------------------
@@ -157,11 +219,15 @@ def seldon_task_create(
         if blocks:
             target_id = _resolve_artifact_id(driver, database, blocks)
             if target_id:
+                with driver.session(database=database) as session:
+                    target_node = get_artifact(session, target_id)
                 create_link(
                     project_dir=p, driver=driver, database=database,
                     domain_config=domain_config,
                     from_id=artifact_id, to_id=target_id, rel_type="blocks",
-                    actor="desktop", authority="accepted",
+                    from_type="ResearchTask",
+                    to_type=target_node.get("artifact_type", ""),
+                    actor=MCP_ACTOR, authority="accepted",
                 )
             else:
                 return (
@@ -189,17 +255,28 @@ def seldon_task_update(
 ) -> str:
     """Update a ResearchTask's state (single transition).
 
+    Use seldon_task_withdraw or seldon_task_supersede for the two terminal states
+    that require a recorded reason — this tool refuses them, because its `note`
+    argument is echoed back and not stored, and a terminal state with a silently
+    dropped reason is indistinguishable from the other terminal states later.
+
     Args:
         task_id: Artifact ID (full UUID or prefix)
         state: New state (accepted, in_progress, completed, verified, blocked,
-            superseded). superseded is a terminal state for a task overtaken
-            before it finished; reachable only from proposed/accepted/
-            in_progress/blocked, never from completed/verified.
+            rejected). The accepted → in_progress transition records claimed_by
+            ('desktop') and claimed_at.
         project_dir: Path to project root
-        note: Optional note (currently logged but not stored separately)
+        note: Optional note (echoed back, not stored)
     """
-    from seldon.core.artifacts import transition_state
+    from seldon.core.artifacts import REASON_REQUIRED_STATES, transition_task
     from seldon.core.graph import get_artifact
+    from seldon.core.state import InvalidStateTransition
+
+    if state in REASON_REQUIRED_STATES:
+        return (
+            f"Error: '{state}' requires a recorded reason, which seldon_task_update "
+            f"cannot store. Use seldon_task_withdraw or seldon_task_supersede."
+        )
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
     p = Path(project_dir)
@@ -215,14 +292,13 @@ def seldon_task_update(
             return f"Error: artifact '{task_id}' not found."
 
         current_state = node.get("state", "")
-        artifact_type = node.get("artifact_type", "ResearchTask")
 
-        transition_state(
+        transition_task(
             project_dir=p, driver=driver, database=database,
             domain_config=domain_config,
-            artifact_id=full_id, artifact_type=artifact_type,
+            artifact_id=full_id,
             current_state=current_state, new_state=state,
-            actor="desktop", authority="accepted",
+            actor=MCP_ACTOR, authority="accepted",
         )
 
         return (
@@ -230,8 +306,57 @@ def seldon_task_update(
             f"  {current_state} → {state}"
             + (f"\n  note: {note}" if note else "")
         )
+    except (ValueError, InvalidStateTransition) as exc:
+        return f"Error: {exc}"
     finally:
         driver.close()
+
+
+@mcp.tool()
+def seldon_task_withdraw(
+    task_id: str,
+    reason: str,
+    project_dir: str = ".",
+) -> str:
+    """Withdraw a ResearchTask: its premise turned out to be false.
+
+    Terminal. Reachable only from an open state (proposed/accepted/in_progress/
+    blocked) — never from completed or verified, because relabelling a finished
+    task would corrupt the honest completion record. The reason is stored on the
+    task as `terminal_reason`.
+
+    Args:
+        task_id: Artifact ID (full UUID or prefix)
+        reason: Why the task's premise no longer holds. Required.
+        project_dir: Path to project root
+    """
+    return _mcp_terminal_transition(task_id, "withdrawn", reason, None, project_dir)
+
+
+@mcp.tool()
+def seldon_task_supersede(
+    task_id: str,
+    reason: str,
+    project_dir: str = ".",
+    superseded_by: str = "",
+) -> str:
+    """Supersede a ResearchTask: the work was valid but something else overtook it.
+
+    Terminal, with the same reachability as withdrawn. The reason is stored as
+    `terminal_reason`. When `superseded_by` is given it is validated (the artifact
+    must exist and be a legal endpoint for the edge) and a `superseded_by` edge is
+    written; an unknown or illegal id is a hard error that leaves the state unchanged.
+
+    Args:
+        task_id: Artifact ID (full UUID or prefix)
+        reason: What overtook this task, and why. Required.
+        project_dir: Path to project root
+        superseded_by: Optional artifact ID (full or prefix) of the ResearchTask,
+            ArchitecturalDecision, DesignNote or Result that overtook this task.
+    """
+    return _mcp_terminal_transition(
+        task_id, "superseded", reason, superseded_by or None, project_dir
+    )
 
 
 @mcp.tool()
@@ -296,30 +421,40 @@ def seldon_task_list(
 ) -> str:
     """List ResearchTasks filtered by state.
 
+    The default filter, 'open', excludes every terminal state (verified, rejected,
+    superseded, withdrawn) and also 'completed'. The open set is derived from the
+    domain config's state machine, so a terminal state added to research.yaml drops
+    out of this view without a code change. Use 'all' to see everything.
+
+    For in_progress tasks the claim marker (claimed_by / claimed_at) is shown when
+    present — advisory only, staleness is never auto-released.
+
     Args:
         project_dir: Path to project root
-        state_filter: 'open' (proposed/accepted/in_progress/blocked),
-                      'completed', 'all', or a specific state name
+        state_filter: 'open' (the default: live work only), 'completed', 'all',
+                      or a specific state name
         brief: If True, one-line summaries. If False, full details including IDs.
     """
-    _OPEN_STATES = ["proposed", "accepted", "in_progress", "blocked"]
+    from seldon.core.artifacts import open_states
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
 
+    params: dict[str, Any] = {}
     if state_filter == "open":
-        where = "WHERE t.state IN ['proposed', 'accepted', 'in_progress', 'blocked']"
+        where = "WHERE t.state IN $states"
+        params["states"] = open_states(domain_config, "ResearchTask")
     elif state_filter == "all":
         where = ""
-    elif state_filter == "completed":
-        where = "WHERE t.state = 'completed'"
     else:
-        where = f"WHERE t.state = '{state_filter}'"
+        where = "WHERE t.state = $state"
+        params["state"] = state_filter
 
     try:
         with driver.session(database=database) as session:
             records = session.run(
                 f"MATCH (t:Artifact:ResearchTask) {where} "
-                "RETURN t ORDER BY t.created_at"
+                "RETURN t ORDER BY t.created_at",
+                **params,
             ).data()
     finally:
         driver.close()
@@ -332,15 +467,20 @@ def seldon_task_list(
         t = dict(r["t"])
         state = t.get("state", "?")
         desc = (t.get("description") or "")[:80]
+        claim = ""
+        if state == "in_progress" and t.get("claimed_by"):
+            claim = f" (claimed by {t['claimed_by']} at {t.get('claimed_at', '?')})"
         if brief:
-            lines.append(f"  [{state}] {desc}")
+            lines.append(f"  [{state}] {desc}{claim}")
         else:
             aid = t.get("artifact_id", "?")[:8]
             source = t.get("source_file", "")
-            lines.append(f"  [{state}] {desc}")
+            lines.append(f"  [{state}] {desc}{claim}")
             lines.append(f"    id: {aid}...")
             if source:
                 lines.append(f"    source: {source}")
+            if t.get("terminal_reason"):
+                lines.append(f"    reason: {t['terminal_reason']}")
 
     return "\n".join(lines)
 

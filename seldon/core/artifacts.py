@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from neo4j import Driver
 
@@ -11,6 +11,23 @@ from seldon.domain.loader import DomainConfig, validate_artifact_type, validate_
 from seldon.core.state import validate_transition
 from seldon.core.events import append_event, make_event
 from seldon.core import graph
+
+# AD-028 — ResearchTask lifecycle semantics.
+#
+# CLAIM_TRANSITION is the single edge in the ResearchTask state machine that means
+# "an agent has taken ownership of this work". It is domain semantics, not a tunable:
+# the state names come from `seldon/domain/research.yaml`, and if that machine ever
+# renames the edge this constant must move with it.
+CLAIM_TRANSITION = ("accepted", "in_progress")
+
+# Terminal states that record *why* the task ended rather than *that* it ended.
+# `rejected` and `verified` are terminal too but carry their meaning in the state
+# name alone; `withdrawn` (premise turned out false) and `superseded` (something
+# else overtook the work) are indistinguishable without an operator-supplied reason.
+REASON_REQUIRED_STATES = ("withdrawn", "superseded")
+
+# Relationship written by `seldon task supersede --superseded-by`.
+SUPERSEDED_BY_REL = "superseded_by"
 
 
 def _now_iso() -> str:
@@ -264,6 +281,267 @@ def create_link(
         graph.create_link(session, from_id, to_id, rel_type.upper(), props)
 
 
+def _state_machine(domain_config: DomainConfig, artifact_type: str) -> Dict[str, list]:
+    """Return the state machine for ``artifact_type``.
+
+    Args:
+        domain_config: Loaded domain configuration.
+        artifact_type: Artifact type to look up.
+
+    Returns:
+        Mapping of state name to its list of permitted successor states.
+
+    Raises:
+        ValueError: If the domain config defines no state machine for the type.
+    """
+    machines = domain_config.state_machines
+    if artifact_type not in machines:
+        raise ValueError(
+            f"No state machine defined for artifact type: '{artifact_type}'. "
+            f"Types with state machines: {sorted(machines.keys())}"
+        )
+    return machines[artifact_type]
+
+
+def terminal_states(domain_config: DomainConfig, artifact_type: str) -> List[str]:
+    """States of ``artifact_type`` from which no further transition is possible.
+
+    Derived from the domain config's state machine rather than enumerated in code, so
+    adding a terminal state to ``research.yaml`` needs no corresponding code change.
+
+    Args:
+        domain_config: Loaded domain configuration.
+        artifact_type: Artifact type whose state machine is inspected.
+
+    Returns:
+        Sorted list of terminal state names.
+
+    Raises:
+        ValueError: If the domain config defines no state machine for the type.
+    """
+    machine = _state_machine(domain_config, artifact_type)
+    return sorted(state for state, successors in machine.items() if not successors)
+
+
+def open_states(domain_config: DomainConfig, artifact_type: str) -> List[str]:
+    """States of ``artifact_type`` in which live work is still possible.
+
+    A state is *open* when it is not itself terminal **and** at least one of its
+    successors is not terminal — the artifact can still move somewhere that is not an
+    ending. For ``ResearchTask`` this derives ``{proposed, accepted, in_progress,
+    blocked}`` from ``research.yaml``: ``completed`` is excluded because its only
+    successor, ``verified``, is terminal. Deriving the set means a terminal state added
+    to the config drops out of default listings without a code change (AD-028).
+
+    Args:
+        domain_config: Loaded domain configuration.
+        artifact_type: Artifact type whose state machine is inspected.
+
+    Returns:
+        Sorted list of open state names.
+
+    Raises:
+        ValueError: If the domain config defines no state machine for the type.
+    """
+    machine = _state_machine(domain_config, artifact_type)
+    terminal = set(terminal_states(domain_config, artifact_type))
+    return sorted(
+        state
+        for state, successors in machine.items()
+        if state not in terminal and any(s not in terminal for s in successors)
+    )
+
+
+def resolve_artifact_id(driver: Driver, database: str, id_prefix: str) -> str:
+    """Resolve a full artifact_id or unambiguous prefix to a single artifact_id.
+
+    Args:
+        driver: Neo4j driver.
+        database: Database name to query.
+        id_prefix: Full UUID or leading prefix of one.
+
+    Returns:
+        The full artifact_id.
+
+    Raises:
+        ValueError: If nothing matches, or if the prefix matches more than one
+            artifact (the message lists the candidates).
+    """
+    if not id_prefix or not id_prefix.strip():
+        raise ValueError("An artifact id (or id prefix) is required.")
+
+    with driver.session(database=database) as session:
+        records = session.run(
+            "MATCH (a:Artifact) WHERE a.artifact_id STARTS WITH $prefix "
+            "RETURN a.artifact_id AS id",
+            prefix=id_prefix.strip(),
+        ).data()
+
+    if not records:
+        raise ValueError(f"No artifact found matching '{id_prefix}'.")
+    if len(records) > 1:
+        candidates = ", ".join(sorted(r["id"] for r in records))
+        raise ValueError(
+            f"'{id_prefix}' matches {len(records)} artifacts — use a longer prefix: "
+            f"{candidates}"
+        )
+    return records[0]["id"]
+
+
+def transition_task(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    domain_config: DomainConfig,
+    artifact_id: str,
+    current_state: str,
+    new_state: str,
+    actor: str,
+    authority: str = "accepted",
+    session_id: Optional[str] = None,
+    claimed_by: Optional[str] = None,
+    terminal_reason: Optional[str] = None,
+    superseded_by: Optional[str] = None,
+) -> None:
+    """Transition a ResearchTask, applying the AD-028 lifecycle side effects.
+
+    Wraps :func:`transition_state` with the two ResearchTask-specific behaviours that
+    the plain state machine cannot express:
+
+    * ``accepted -> in_progress`` records ``claimed_by`` and ``claimed_at`` so a
+      stale claim can be *reported* (never auto-released).
+    * ``withdrawn`` and ``superseded`` require a ``terminal_reason``, and
+      ``superseded`` may additionally point at the artifact that overtook the task
+      via a ``superseded_by`` edge.
+
+    Every precondition is checked before the first event is appended, so a rejected
+    call leaves no trace: an unknown ``superseded_by`` target, an illegal edge
+    endpoint, a missing reason, or an illegal transition all raise with no state
+    change and no event written.
+
+    Args:
+        project_dir: Project root, for the JSONL event store.
+        driver: Neo4j driver.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        artifact_id: Full artifact_id of the ResearchTask.
+        current_state: The task's current state in the graph.
+        new_state: State to transition to.
+        actor: Actor string written to events (e.g. 'human', 'cc', 'desktop').
+        authority: Authority string written to events.
+        session_id: Optional Seldon session id recorded on the events.
+        claimed_by: Agent identifier recorded on the claim transition. Defaults to
+            ``actor``. Ignored (and rejected) on any other transition.
+        terminal_reason: Why the task ended. Required for withdrawn/superseded,
+            refused for every other target state.
+        superseded_by: Optional artifact_id (or unambiguous prefix) of the artifact
+            that overtook this task. Only valid when ``new_state`` is 'superseded'.
+
+    Raises:
+        ValueError: If a required reason is missing, if a reason/claim/superseded_by
+            argument is supplied for a transition it does not apply to, if the
+            ``superseded_by`` target does not exist, or if the ``superseded_by`` edge
+            endpoints are not permitted by the domain config.
+        InvalidStateTransition: If the transition is not permitted by the state machine.
+    """
+    artifact_type = "ResearchTask"
+    is_claim = (current_state, new_state) == CLAIM_TRANSITION
+
+    # --- Precondition checks: everything that can fail must fail before any write ---
+    if new_state in REASON_REQUIRED_STATES:
+        if terminal_reason is None or not terminal_reason.strip():
+            raise ValueError(
+                f"Transition to '{new_state}' requires a reason. "
+                f"A terminal state without a recorded reason is indistinguishable "
+                f"from the other terminal states later."
+            )
+    elif terminal_reason is not None:
+        raise ValueError(
+            f"A terminal reason is only recorded for {list(REASON_REQUIRED_STATES)}, "
+            f"not for a transition to '{new_state}'."
+        )
+
+    if superseded_by is not None and new_state != "superseded":
+        raise ValueError(
+            f"--superseded-by is only valid when superseding a task, "
+            f"not for a transition to '{new_state}'."
+        )
+
+    if claimed_by is not None and not is_claim:
+        raise ValueError(
+            f"A claim is only recorded on the "
+            f"'{CLAIM_TRANSITION[0]} -> {CLAIM_TRANSITION[1]}' transition, "
+            f"not on '{current_state} -> {new_state}'."
+        )
+
+    superseded_by_id: Optional[str] = None
+    superseded_by_type: Optional[str] = None
+    if superseded_by is not None:
+        # Raises ValueError naming the id when unknown or ambiguous.
+        superseded_by_id = resolve_artifact_id(driver, database, superseded_by)
+        with driver.session(database=database) as session:
+            target = graph.get_artifact(session, superseded_by_id)
+        if target is None:
+            raise ValueError(f"Artifact '{superseded_by}' not found.")
+        superseded_by_type = target.get("artifact_type")
+        # Raises ValueError when the endpoint types are not legal for the edge.
+        validate_relationship(
+            domain_config, SUPERSEDED_BY_REL, artifact_type, superseded_by_type
+        )
+
+    validate_transition(domain_config, artifact_type, current_state, new_state)
+
+    # --- Writes: property event first, then the state event, then the edge ---
+    properties: Dict[str, Any] = {}
+    if new_state in REASON_REQUIRED_STATES:
+        properties["terminal_reason"] = terminal_reason.strip()
+    if is_claim:
+        properties["claimed_by"] = (claimed_by or actor).strip()
+        properties["claimed_at"] = _now_iso()
+
+    if properties:
+        update_artifact(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            artifact_id=artifact_id,
+            properties=properties,
+            actor=actor,
+            authority=authority,
+            session_id=session_id,
+        )
+
+    transition_state(
+        project_dir=project_dir,
+        driver=driver,
+        database=database,
+        domain_config=domain_config,
+        artifact_id=artifact_id,
+        artifact_type=artifact_type,
+        current_state=current_state,
+        new_state=new_state,
+        actor=actor,
+        authority=authority,
+        session_id=session_id,
+    )
+
+    if superseded_by_id is not None:
+        create_link(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            from_id=artifact_id,
+            to_id=superseded_by_id,
+            from_type=artifact_type,
+            to_type=superseded_by_type,
+            rel_type=SUPERSEDED_BY_REL,
+            actor=actor,
+            authority=authority,
+            session_id=session_id,
+        )
+
+
 def walk_to_completed(
     project_dir: Path,
     driver: Driver,
@@ -273,15 +551,28 @@ def walk_to_completed(
     current_state: str,
     actor: str = "cc",
     session_id: Optional[str] = None,
+    claimed_by: Optional[str] = None,
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
-    State-aware: skips transitions for states already passed. Raises ValueError
-    if current_state is not on a known path to completed.
+    The single close walk shared by `seldon task close` and the MCP
+    `seldon_task_close` tool, so both surfaces emit the same event sequence
+    (AD-028). State-aware: skips transitions for states already passed.
+
+    The walk crosses :data:`CLAIM_TRANSITION`, so closing a task that had not yet
+    been claimed records the closer as the claimant.
 
     Args:
+        project_dir: Project root, for the JSONL event store.
+        driver: Neo4j driver.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        artifact_id: Full artifact_id of the ResearchTask.
         current_state: The artifact's current state in the graph.
-        actor: Actor string written to events ('cc' or 'desktop').
+        actor: Actor string written to events ('human', 'cc' or 'desktop').
+        session_id: Optional Seldon session id recorded on the events.
+        claimed_by: Agent identifier recorded if the walk crosses the claim
+            transition. Defaults to ``actor``.
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -306,18 +597,18 @@ def walk_to_completed(
     transitions = []
     state = current_state
     for next_state in steps:
-        transition_state(
+        transition_task(
             project_dir=project_dir,
             driver=driver,
             database=database,
             domain_config=domain_config,
             artifact_id=artifact_id,
-            artifact_type="ResearchTask",
             current_state=state,
             new_state=next_state,
             actor=actor,
             authority="accepted",
             session_id=session_id,
+            claimed_by=claimed_by if (state, next_state) == CLAIM_TRANSITION else None,
         )
         transitions.append(f"{state} → {next_state}")
         state = next_state

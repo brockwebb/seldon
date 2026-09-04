@@ -173,6 +173,7 @@ AD-017: Central Validity Ontology — `docs/design/AD-017_central_validity_ontol
 AD-021: Session Continuity Fidelity — `docs/design/AD-021_session_continuity_fidelity.md`
 AD-026: `seldon init` Project Templates — `docs/design/AD-026_init_templates.md`
 AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-027_snapshot_artifacts.md`
+AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics — `docs/design/AD-028_result_names_and_task_lifecycle.md`
 
 ## Project Templates
 

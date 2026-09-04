@@ -43,12 +43,15 @@ artifact_types:
 
   Result:
     properties:
+      name:
+        category: system
+        description: "Stable token key for {{result:NAME:field}} references. Slug grammar ^[a-z0-9][a-z0-9_.-]*$, case-sensitive, <=128 chars, unique per project graph. Not `required` here on purpose: `seldon result register` enforces --name for new registrations, while Results created before AD-028 have no name and must stay valid. See AD-028."
       value:
         required: true
         description: "The numeric or categorical result value"
       units:
         required: true
-        description: "Units of measurement"
+        description: "Units of measurement. A real unit only — never a token key. See AD-028 and docs/conventions/result_units_vocabulary.md."
       description:
         required: true
         description: "What this result measures"
@@ -208,6 +211,19 @@ artifact_types:
       description:
         required: true
         description: "What needs to be done"
+      terminal_reason:
+        # `system`, not `documentation`: absence is the normal case for every task
+        # that ended any other way, so counting it as a documentation gap would
+        # manufacture one false gap per completed task. Same reasoning as AD-027's
+        # `snapshot` — conditionally-set operator input, not authored prose.
+        category: system
+        description: "Why the task was withdrawn or superseded. Required by `seldon task withdraw` / `seldon task supersede`; absent on tasks that reached a terminal state before AD-028. See AD-028."
+      claimed_by:
+        category: system
+        description: "Agent identifier that took the task in_progress ('desktop', 'cc', or a caller-supplied id). Set on the accepted -> in_progress transition. See AD-028."
+      claimed_at:
+        category: system
+        description: "ISO-8601 UTC timestamp of the accepted -> in_progress transition that set claimed_by. Advisory: staleness is reported, never auto-released. See AD-028."
 
   LabNotebookEntry:
     properties:
@@ -537,10 +553,14 @@ relationship_types:
     from_types: [PaperSection, Figure]
     to_types: [Result, Citation]
   generated_by:
-    from_types: [Result, Figure, Table]
+    # DataFile added (AD-028): a derived data file is produced by a Script the
+    # same way a Result is; ai-readiness-kg had to carry that edge as a property.
+    from_types: [Result, Figure, Table, DataFile]
     to_types: [Script]
   computed_from:
-    from_types: [Result]
+    # DataFile -> DataFile added (AD-028): a derived data file is computed from
+    # upstream data files, which is how provenance chains through intermediates.
+    from_types: [Result, DataFile]
     to_types: [DataFile]
   implements:
     from_types: [Script, Result]
@@ -652,6 +672,33 @@ relationship_types:
     from_types: [ArchitecturalDecision]
     to_types: [ArchitecturalDecision]
 
+  superseded_by:
+    # AD-028: written by `seldon task supersede --superseded-by`. Points from the
+    # task that was overtaken to the artifact that overtook it. Direction is the
+    # inverse of `supersedes` on purpose — the transition is authored on the
+    # losing side, and the replacement may not exist as an AD at all.
+    from_types: [ResearchTask]
+    to_types: [ResearchTask, ArchitecturalDecision, DesignNote, Result]
+
+  corrects:
+    # AD-028: an erratum note that corrects an earlier note or a published Result.
+    # Surfaced by ai-readiness-kg ERRATUM-01, which had to carry its target as a
+    # property because no edge type accepted it.
+    from_types: [DesignNote]
+    to_types: [DesignNote, Result]
+
+  annotates:
+    # AD-028: an Issue that adds commentary or caveat to a Result without
+    # asserting the Result is wrong.
+    from_types: [Issue]
+    to_types: [Result]
+
+  disputes:
+    # AD-028: an Issue that asserts a Result is wrong. Distinct from `annotates`:
+    # `disputes` is a claim about correctness, `annotates` is not.
+    from_types: [Issue]
+    to_types: [Result]
+
   produces:
     # AD-025: BuildRun emits at completion with a list of produced artifacts.
     # The projection creates `produces` edges from the BuildRun to each
@@ -692,14 +739,20 @@ state_machines:
     # NOT reachable from completed/verified — relabeling a finished task would
     # corrupt the honest completion record. See cc_tasks/2026-06-18_cc_task_
     # researchtask_superseded_terminal.md.
-    proposed: [accepted, rejected, superseded]
-    accepted: [in_progress, superseded]
-    in_progress: [completed, blocked, superseded]
+    #
+    # withdrawn (AD-028): honest terminal for a task whose *premise* turned out
+    # false — the work was never valid to do, as opposed to `superseded`, where
+    # the work was valid but something else overtook it. Same reachability as
+    # superseded: active states only, never from completed/verified.
+    proposed: [accepted, rejected, superseded, withdrawn]
+    accepted: [in_progress, superseded, withdrawn]
+    in_progress: [completed, blocked, superseded, withdrawn]
     completed: [verified]
-    blocked: [in_progress, superseded]
+    blocked: [in_progress, superseded, withdrawn]
     verified: []
     rejected: []
     superseded: []
+    withdrawn: []
 
   Script:
     proposed: [active, deprecated]

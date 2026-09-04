@@ -27,7 +27,16 @@ import yaml  # PyYAML — already in Seldon venv
 
 DB_PATH = Path.home() / ".seldon-observability" / "metrics.db"
 COLLECTOR_ID = "nightly_collector_v1"
-GITHUB_ROOT = Path("/Users/brock/Documents/GitHub")
+
+# Roots are DERIVED, never hardcoded to one developer's home directory: this
+# script lives at <seldon repo>/scripts/, and sibling Seldon projects live
+# alongside the seldon repo. Both are overridable for non-standard layouts.
+SELDON_REPO_ROOT = Path(
+    os.environ.get("SELDON_REPO_ROOT") or Path(__file__).resolve().parent.parent
+)
+PROJECTS_ROOT = Path(
+    os.environ.get("SELDON_PROJECTS_ROOT") or SELDON_REPO_ROOT.parent
+)
 CLAUDE_PROJECTS_ROOT = Path.home() / ".claude" / "projects"
 
 # Excluded databases
@@ -81,11 +90,11 @@ def discover_projects() -> list[dict]:
     """Return list of {slug, project_dir, db_name, event_log} dicts."""
     projects = []
     patterns = [
-        GITHUB_ROOT / "*" / "seldon.yaml",
-        GITHUB_ROOT / "*" / "*" / "seldon.yaml",
+        "*/seldon.yaml",
+        "*/*/seldon.yaml",
     ]
     for pattern in patterns:
-        for yaml_path in sorted(GITHUB_ROOT.glob(str(pattern.relative_to(GITHUB_ROOT)))):
+        for yaml_path in sorted(PROJECTS_ROOT.glob(pattern)):
             try:
                 config = yaml.safe_load(yaml_path.read_text())
                 slug = config.get("project", {}).get("slug", yaml_path.parent.name)
@@ -125,7 +134,7 @@ def collect_neo4j(conn: sqlite3.Connection, ts: str, projects: list[dict]) -> No
         return
 
     # Load credentials
-    env_path = GITHUB_ROOT / "seldon" / ".env"
+    env_path = SELDON_REPO_ROOT / ".env"
     load_dotenv(env_path)
     password = os.getenv("NEO4J_PASSWORD")
     if not password:
@@ -336,8 +345,8 @@ def collect_tokens(conn: sqlite3.Connection, ts: str, projects: list[dict]) -> N
         return
 
     # Build project path → slug mapping
-    # Claude uses path-encoded dir names: /Users/brock/Documents/GitHub/seldon →
-    #   -Users-brock-Documents-GitHub-seldon
+    # Claude uses path-encoded dir names: every "/" in the absolute project path
+    # becomes "-", e.g. /a/b/seldon -> -a-b-seldon
     def path_to_claude_dir(project_dir: Path) -> str:
         return str(project_dir).replace("/", "-")
 

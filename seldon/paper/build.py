@@ -28,6 +28,7 @@ from seldon.paper.qc import (
     format_violations,
 )
 from seldon.paper.copyedit import load_copyedit_config, run_copyedit, parse_bib_keys
+from seldon.domain.units_vocabulary import load_units_vocabulary
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +36,13 @@ from seldon.paper.copyedit import load_copyedit_config, run_copyedit, parse_bib_
 # ---------------------------------------------------------------------------
 
 REFERENCE_PATTERN = re.compile(r'\{\{(result|figure|cite):([^:}]+):([^}]+)\}\}')
+
+# AD-028: marker appended to a resolved value when a `proposed` Result is
+# rendered under --allow-proposed. Single space, then the literal.
+PROPOSED_MARKER = "(proposed)"
+
+# AD-028: check id for the transitional resolve-by-units fallback.
+UNITS_FALLBACK_CHECK_ID = "SI-09"
 
 TYPE_TO_REFTYPE = {
     "Result": "result",
@@ -106,12 +114,16 @@ def _build_minimal_frontmatter(abstract_text: str) -> str:
 
 @dataclass
 class RefError:
-    check_id: str   # SI-01, SI-02, SI-03, SI-07, SI-08
+    check_id: str   # SI-01, SI-02, SI-03, SI-07, SI-08, SI-09
     file: str
     line: int
     token: str      # the original {{...}} token
     message: str
     fatal: bool     # True = build aborts; False = warning only
+    # AD-028: the artifact name this record is about, when one is known. Set on
+    # non-fatal SI-03 records so the build summary can list which Results were
+    # rendered as proposed without re-parsing tokens.
+    artifact_name: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -145,6 +157,68 @@ def load_named_artifacts(driver, database: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# TRANSITIONAL (AD-028) — resolve {{result:NAME:...}} by the `units` property
+#
+# Before AD-028 `seldon result register` had no --name flag, so authors stashed
+# the token key in `units`. This fallback keeps those projects building while
+# `seldon result migrate-names` is rolled out.
+#
+# REMOVAL CONDITION: delete build_units_fallback_index, its call site in
+# build_paper, and the `units_fallback` parameter of resolve_references once
+# `seldon result migrate-names` has been run live against every project graph
+# and no build emits an SI-09 line. Nothing else depends on this path.
+# ---------------------------------------------------------------------------
+
+def build_units_fallback_index(
+    driver,
+    database: str,
+    vocabulary: Optional[frozenset] = None,
+) -> dict[str, list[dict]]:
+    """Index unnamed Results by their ``units`` value for transitional lookup.
+
+    Only Results that have no ``name`` and whose ``units`` is NOT a real unit of
+    measurement are indexed: a Result whose units is ``count`` is measured in
+    counts, and a ``{{result:count:value}}`` token matching it would be a
+    coincidence rather than a reference.
+
+    Args:
+        driver: Open Neo4j driver.
+        database: Database name to query.
+        vocabulary: Optional pre-loaded units vocabulary. Defaults to the
+            packaged one from ``seldon.domain.units_vocabulary``.
+
+    Returns:
+        Mapping of units string → list of Result nodes carrying it. A list with
+        more than one entry is an ambiguity the resolver refuses to guess at.
+
+    Raises:
+        FileNotFoundError: If the packaged units vocabulary is missing.
+        ValueError: If the packaged units vocabulary is malformed.
+    """
+    if vocabulary is None:
+        vocabulary = load_units_vocabulary()
+
+    index: dict[str, list[dict]] = {}
+    with driver.session(database=database) as session:
+        records = session.run(
+            "MATCH (r:Result) "
+            "WHERE r.name IS NULL AND r.units IS NOT NULL "
+            "RETURN r"
+        ).data()
+
+    for record in records:
+        node = dict(record["r"])
+        units = node.get("units")
+        if not isinstance(units, str) or not units.strip():
+            continue
+        if units in vocabulary:
+            continue
+        index.setdefault(units, []).append(node)
+
+    return index
+
+
+# ---------------------------------------------------------------------------
 # Reference resolution
 # ---------------------------------------------------------------------------
 
@@ -154,6 +228,8 @@ def resolve_references(
     filename: str,
     bib_path: Optional[Path] = None,
     paper_dir: Optional[Path] = None,
+    units_fallback: Optional[dict] = None,
+    allow_proposed: bool = False,
 ) -> tuple[str, list[RefError]]:
     """
     Replace {{type:name:field}} tokens with artifact values.
@@ -162,11 +238,34 @@ def resolve_references(
     Tier 1 checks during resolution:
     - SI-01: artifact not found → fatal
     - SI-02: artifact.state == "stale" → fatal
-    - SI-03: Result artifact.state == "proposed" → fatal
+    - SI-03: Result artifact.state == "proposed" → fatal, unless allow_proposed
     - SI-07: cite token, bib_path provided, bibtex_key not in bib content → fatal
     - SI-08: figure token, paper_dir provided, figure path field not a real file → fatal
+    - SI-09: result token resolved by the TRANSITIONAL units fallback → warning;
+      fatal only when the fallback is ambiguous (AD-028)
 
     On error: leave original token in text, record error.
+
+    Args:
+        text: Section text containing {{type:name:field}} tokens.
+        artifacts: Mapping of "reftype:name" → artifact node, from
+            load_named_artifacts.
+        filename: Name used in error records.
+        bib_path: Optional path to references.bib, enabling SI-07.
+        paper_dir: Optional paper directory, enabling SI-08.
+        units_fallback: Optional TRANSITIONAL (AD-028) index from
+            build_units_fallback_index, mapping a units string to the unnamed
+            Results carrying it. When supplied, a result token that matches no
+            `name` is retried against it. Pass None to disable the fallback.
+        allow_proposed: When True, a Result in `proposed` state resolves and is
+            rendered as "<value> (proposed)" with a non-fatal SI-03 record
+            instead of aborting the build.
+
+    Returns:
+        Tuple of (resolved_text, errors).
+
+    Raises:
+        Nothing. Every problem is recorded as a RefError.
     """
     errors: list[RefError] = []
 
@@ -187,6 +286,47 @@ def resolve_references(
 
         key = f"{reftype}:{name}"
         artifact = artifacts.get(key)
+
+        # TRANSITIONAL (AD-028): no Result carries this name — retry against the
+        # units-as-name index. See build_units_fallback_index for the removal
+        # condition.
+        if artifact is None and reftype == "result" and units_fallback:
+            candidates = units_fallback.get(name, [])
+            if len(candidates) == 1:
+                artifact = candidates[0]
+                errors.append(RefError(
+                    check_id=UNITS_FALLBACK_CHECK_ID,
+                    file=filename,
+                    line=lineno,
+                    token=token,
+                    message=(
+                        f"TRANSITIONAL units fallback (AD-028): no Result has "
+                        f"name='{name}'; matched artifact_id "
+                        f"{candidates[0].get('artifact_id', '?')} whose units='{name}'. "
+                        f"Run `seldon result migrate-names` to assign a real name."
+                    ),
+                    fatal=False,
+                    artifact_name=name,
+                ))
+            elif len(candidates) > 1:
+                ids = ", ".join(
+                    str(c.get("artifact_id", "?")) for c in candidates
+                )
+                errors.append(RefError(
+                    check_id=UNITS_FALLBACK_CHECK_ID,
+                    file=filename,
+                    line=lineno,
+                    token=token,
+                    message=(
+                        f"TRANSITIONAL units fallback (AD-028) is ambiguous for "
+                        f"'{name}': {len(candidates)} unnamed Results carry "
+                        f"units='{name}' ({ids}). Run `seldon result migrate-names` "
+                        f"and name them explicitly."
+                    ),
+                    fatal=True,
+                    artifact_name=name,
+                ))
+                return token
 
         # SI-01: not found
         if artifact is None:
@@ -215,16 +355,34 @@ def resolve_references(
             return token
 
         # SI-03: Result in proposed state
+        render_proposed = False
         if reftype == "result" and state == "proposed":
+            if not allow_proposed:
+                errors.append(RefError(
+                    check_id="SI-03",
+                    file=filename,
+                    line=lineno,
+                    token=token,
+                    message=f"Result '{key}' is proposed (not yet verified)",
+                    fatal=True,
+                    artifact_name=name,
+                ))
+                return token
+            # AD-028: --allow-proposed downgrades SI-03 to a warning and marks
+            # the rendered value so a reader can see it is not yet verified.
+            render_proposed = True
             errors.append(RefError(
                 check_id="SI-03",
                 file=filename,
                 line=lineno,
                 token=token,
-                message=f"Result '{key}' is proposed (not yet verified)",
-                fatal=True,
+                message=(
+                    f"Result '{key}' is proposed — rendered with the "
+                    f"'{PROPOSED_MARKER}' marker (--allow-proposed)"
+                ),
+                fatal=False,
+                artifact_name=name,
             ))
-            return token
 
         # Resolve field value
         value = artifact.get(field)
@@ -273,6 +431,8 @@ def resolve_references(
                 ))
                 return token
 
+        if render_proposed:
+            return f"{str(value)} {PROPOSED_MARKER}"
         return str(value)
 
     resolved = REFERENCE_PATTERN.sub(_replace, text)
@@ -324,9 +484,17 @@ def build_paper(
     no_render: bool = False,
     qc_config_path: Optional[Path] = None,
     style_config_path: Optional[Path] = None,
+    allow_proposed: bool = False,
 ) -> int:
     """
     Full build pipeline. Returns exit code (0=success, 1=fatal errors).
+
+    Args:
+        allow_proposed: When True, a `proposed` Result no longer aborts the
+            build (SI-03 becomes a warning) and renders as "<value> (proposed)".
+            The summary reports how many proposed tokens were rendered and the
+            Result names behind them. Default False preserves the fatal
+            behaviour.
 
     Pipeline:
     1. Load config (load_project_config from project_dir)
@@ -368,6 +536,8 @@ def build_paper(
     driver = get_neo4j_driver(config)
     try:
         artifacts = load_named_artifacts(driver, database)
+        # TRANSITIONAL (AD-028) — see build_units_fallback_index.
+        units_fallback = build_units_fallback_index(driver, database)
         with driver.session(database=database) as session:
             figure_by_name, table_by_name, section_by_name = _compute_xref_lookups(
                 session
@@ -395,6 +565,8 @@ def build_paper(
             filename=section_file.name,
             bib_path=bib_path,
             paper_dir=paper_dir,
+            units_fallback=units_fallback,
+            allow_proposed=allow_proposed,
         )
         all_ref_errors.extend(errors)
         resolved_sections.append((section_file.name, resolved))
@@ -484,6 +656,7 @@ def build_paper(
         output_path=output_path,
         paper_dir=paper_dir,
         strict=strict,
+        allow_proposed=allow_proposed,
     )
 
     # 13. Return code — CE violations are always blocking
@@ -494,6 +667,28 @@ def build_paper(
     return 0
 
 
+def summarize_proposed(ref_errors: list[RefError]) -> tuple[int, list[str]]:
+    """Summarise which Results were rendered as proposed (AD-028).
+
+    Args:
+        ref_errors: All Tier 1 records collected during resolution.
+
+    Returns:
+        Tuple of (token_count, names). token_count is how many individual
+        {{result:...}} tokens were rendered with the "(proposed)" marker;
+        names is the sorted list of distinct Result names behind them.
+
+    Raises:
+        Nothing.
+    """
+    rendered = [
+        e for e in ref_errors
+        if e.check_id == "SI-03" and not e.fatal
+    ]
+    names = sorted({e.artifact_name for e in rendered if e.artifact_name})
+    return len(rendered), names
+
+
 def _print_report(
     ref_errors: list[RefError],
     tier2: list[Violation],
@@ -501,8 +696,26 @@ def _print_report(
     output_path: Path,
     paper_dir: Path,
     strict: bool,
+    allow_proposed: bool = False,
 ) -> None:
-    """Print the structured build summary report."""
+    """Print the structured build summary report.
+
+    Args:
+        ref_errors: All Tier 1 records collected during resolution.
+        tier2: Tier 2 prose-quality violations.
+        tier3: Tier 3 style findings.
+        output_path: Path the assembled .qmd was written to.
+        paper_dir: Paper directory, used to shorten the reported output path.
+        strict: Whether Tier 2/3 violations make the build fail.
+        allow_proposed: When True, add the AD-028 section listing how many
+            proposed Result tokens were rendered and which Results they name.
+
+    Returns:
+        None. Writes to stdout.
+
+    Raises:
+        Nothing.
+    """
     print("=== BUILD REPORT ===\n")
 
     # Tier 1
@@ -514,6 +727,15 @@ def _print_report(
     else:
         print("  (none)")
     print()
+
+    # AD-028: proposed-render summary. Only meaningful under --allow-proposed;
+    # without the flag a proposed Result is fatal and the build never got here.
+    if allow_proposed:
+        token_count, proposed_names = summarize_proposed(ref_errors)
+        print(f"PROPOSED RESULTS RENDERED: {token_count}")
+        for pname in proposed_names:
+            print(f"  - {pname}")
+        print()
 
     # Tier 2
     n2 = len(tier2)

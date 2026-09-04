@@ -80,7 +80,16 @@ def test_unknown_current_state_raises(domain_config):
 
 
 def test_invalid_state_transition_carries_valid_options(domain_config):
-    """InvalidStateTransition.valid_transitions must be populated."""
+    """InvalidStateTransition.valid_transitions must name the real alternatives.
+
+    Asserted as a set membership rather than an exact list so that adding a state
+    to research.yaml does not break this test for the wrong reason — what matters
+    is that the caller is told where it *could* have gone.
+    """
     with pytest.raises(InvalidStateTransition) as exc_info:
         validate_transition(domain_config, "ResearchTask", "proposed", "completed")
-    assert exc_info.value.valid_transitions == ["accepted", "rejected", "superseded"]
+    offered = exc_info.value.valid_transitions
+    assert offered, "valid_transitions must be populated"
+    assert "accepted" in offered
+    assert "completed" not in offered
+    assert set(offered) == set(domain_config.state_machines["ResearchTask"]["proposed"])

@@ -467,3 +467,25 @@ ResearchTask {
 ---
 
 *This document will evolve as implementation proceeds. Parking lot items are not commitments — they're preserved ideas awaiting the right moment.*
+
+---
+
+### AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics
+
+**Date appended:** 2026-09-03
+
+**Decision:** `Result.name` is the token key that `{{result:NAME:field}}` resolves against, unique per project graph; `units` means a real unit and nothing else. `ResearchTask` gains `withdrawn` as a terminal state distinct from `superseded`, both requiring an operator-supplied reason, plus a claim marker on the `accepted → in_progress` transition.
+
+**Full spec:** `docs/design/AD-028_result_names_and_task_lifecycle.md`
+
+**Key choices:**
+- `--name` required at the CLI, `category: system` in the schema — pre-AD-028 Results stay valid, and `docs check` does not report an identifier as a documentation gap
+- Transitional resolver fallback matches `units` only when it is NOT a real unit, warns on every hit, and is marked for removal in a later task
+- Migration classifies (`migrated` / `units_is_real_unit` / `ambiguous` / `no_units`) and writes one combined `artifact_updated` event — `core/sync.py` skips unknown event types, so a bespoke type would vanish on replay
+- Unknown `--data-name` / `--script-name` is a hard error with **no event written**; `backfill-provenance` repairs existing graphs
+- `--allow-proposed` renders `<value> (proposed)`; default stays fatal
+- `withdrawn` = the premise turned out false; `superseded` = something else overtook the work. Neither reachable from `completed`/`verified`
+- Stale-claim expiry is a **report**, never an automatic transition — releasing a merely-slow claim reintroduces the concurrency failure it prevents
+- `task list` excludes terminal states by default (behavior change for existing CLI callers)
+
+**Contradicted premises from the originating task file** (recorded, not silently reconciled): relationship types live in the domain config, not the `seldon-ontology` master DB; `superseded` already existed and the 31 rows were legitimate; `seldon init`'s ontology default was already derived, though still wrong for a wheel install.

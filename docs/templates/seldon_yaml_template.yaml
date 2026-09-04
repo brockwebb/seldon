@@ -38,7 +38,11 @@ paths:
 # List every vocabulary your project needs. Missing vocabularies = missing terminology.
 # After adding a vocabulary here, run: seldon ontology sync
 shared_ontology:
-  source: /Users/brock/Documents/GitHub/seldon/ontology/
+  # `seldon init` fills this in automatically, deriving the path from where the
+  # seldon package is installed (override with SELDON_ONTOLOGY_PATH). Only edit
+  # it by hand if the ontology tree lives somewhere else; it must be the
+  # absolute path of the ontology ROOT DIRECTORY on this machine.
+  source: /ABSOLUTE/PATH/TO/seldon/ontology/
   vocabularies:
     - validity/VALIDITY_VOCABULARY.md
     # Add as needed:

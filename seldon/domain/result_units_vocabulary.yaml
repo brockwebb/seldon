@@ -1,0 +1,54 @@
+# Result units vocabulary (AD-028)
+#
+# AUTHORITATIVE MACHINE-READABLE LIST. The human-readable explanation lives in
+# docs/conventions/result_units_vocabulary.md and points here.
+#
+# This file lives inside the `seldon.domain` package on purpose: pyproject.toml
+# ships `[tool.setuptools.package-data] "seldon.domain" = ["*.yaml"]`, so it is
+# present after a real (non-editable) install. `docs/` is NOT part of the
+# installed package, so nothing may load configuration from there at runtime.
+#
+# What this list means: a string in this vocabulary is a REAL UNIT OF
+# MEASUREMENT. `seldon result migrate-names` uses it to decide whether a
+# legacy Result's `units` property is a genuine unit (leave it alone) or a
+# token key that was stashed in the wrong property (promote it to `name`).
+# The transitional `{{result:...}}` units fallback in seldon/paper/build.py
+# refuses to match any Result whose `units` is in this list.
+#
+# Adding an entry makes migrate-names STOP promoting that string to a name.
+# Removing an entry makes migrate-names START promoting it. Change with care
+# and re-run `--dry-run` against affected projects first.
+
+version: 1
+
+# Units named directly by the AD-028 task specification.
+seed_units:
+  - "%"
+  - rate
+  - ratio
+  - count
+  - tokens
+  - chars
+  - seconds
+  - minutes
+  - docs
+  - chunks
+  - items
+  - facts
+  - USD
+  - kappa
+
+# Strings the Seldon codebase itself already treats as a Result unit, found by
+# sweeping every `units=` / `units:` literal in the repository (source, tests,
+# domain config help text, fixtures). Several of these are metric names rather
+# than dimensional units; they are listed because the codebase uses them in the
+# `units` slot, and omitting them would make migrate-names promote them to
+# names and silently rewrite existing Results.
+codebase_units:
+  - accuracy        # seldon/commands/result.py --units help text; tests
+  - acc             # tests/test_paper_build.py fixture
+  - ms              # seldon/commands/result.py --units help text
+  - score           # most common literal across the test suite
+  - fraction        # tests/test_verify.py fixtures
+  - bits            # tests/test_impact.py fixture
+  - bits_per_decade # tests/test_impact.py fixture

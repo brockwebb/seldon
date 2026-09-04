@@ -104,57 +104,125 @@ _METADATA_RE = re.compile(
     r"^\*?\*?[A-Z][A-Za-z0-9 _-]{0,40}:\*?\*?(\s|$)",
 )
 
+# A line that is entirely bold (`**...**`) is a callout or banner, never the
+# task's subject. The canonical offender is the immutability banner every task
+# file carries; it survives _METADATA_RE because its first sentence ends in `.`
+# rather than `:`, so it needs its own rule.
+_BOLD_ONLY_RE = re.compile(r"^\*\*\s*\S.*\S\s*\*\*$")
+
 # ATX H1 (`# <title>`). A markdown header is a single physical line by
 # construction, so a title-based description is immune to the hard-wrap
 # fragmenting that let prose extraction capture a mid-sentence metadata
 # continuation line as the "description".
 _H1_RE = re.compile(r"^#\s+(.+?)\s*$")
 
-# cc_task files carry the subject in a "CC Task: <subject>" or
-# "CC Task T4: <subject>" H1. Capture the subject after that boilerplate.
-_CC_TASK_TITLE_RE = re.compile(r"^CC Task(?:\s+\S+)?:\s*(.+)$", re.IGNORECASE)
+# Boilerplate that may precede the subject in a task-file H1:
+#   "CC Task: <subject>"        "Task: <subject>"
+#   "CC Task T4: <subject>"     "CC Task — <subject>"
+# The separator may be a colon, an em dash, an en dash, or a hyphen. Only the
+# separator forms are stripped; "Task list overhaul" is a title, not boilerplate
+# plus a subject, because nothing separates a prefix from a subject there.
+_TITLE_BOILERPLATE_RE = re.compile(
+    r"^(?:CC\s+)?Task(?:\s+[\w.-]+)?\s*[:—–-]\s*(.+)$", re.IGNORECASE
+)
+
+# An H1 that is *only* the boilerplate ("# CC Task", "# Task T4:") names no
+# subject, so it must not become the description — fall through to prose.
+_TITLE_BOILERPLATE_ONLY_RE = re.compile(
+    r"^(?:CC\s+)?Task(?:\s+[\w.-]+)?\s*[:—–-]?\s*$", re.IGNORECASE
+)
+
+
+def _subject_from_h1(title: str) -> str:
+    """Reduce an H1's text to the task subject.
+
+    Strips a leading ``CC Task`` / ``Task`` prefix (with an optional task id and
+    a colon, em dash, en dash or hyphen separator). A title carrying no such
+    prefix is already the subject and is returned unchanged.
+
+    Args:
+        title: Text of the H1, with the leading ``#`` and surrounding whitespace
+            already removed.
+
+    Returns:
+        The subject, or an empty string when the title is pure boilerplate and
+        names no subject.
+    """
+    title = title.strip()
+    if _TITLE_BOILERPLATE_ONLY_RE.match(title):
+        return ""
+    match = _TITLE_BOILERPLATE_RE.match(title)
+    if match:
+        return match.group(1).strip()
+    return title
 
 
 def _description_looks_like_metadata(text: str) -> bool:
-    """Return True if text still looks like a metadata line.
+    """Return True if text still looks like metadata or a banner, not a description.
 
     Used as a defensive second layer after extraction — if the chosen
-    description matches the metadata pattern, emit a warning so the user
-    knows something went wrong with auto-extraction.
+    description matches the metadata pattern or is an all-bold banner line,
+    emit a warning so the user knows auto-extraction went wrong.
+
+    Args:
+        text: The extracted description.
+
+    Returns:
+        True when the text should be treated as a failed extraction.
     """
     if not text:
         return False
-    return bool(_METADATA_RE.match(text))
+    return bool(_METADATA_RE.match(text)) or bool(_BOLD_ONLY_RE.match(text))
 
 
-def _extract_description(filepath: Path) -> str:
-    """Extract a one-line description from a CC task file.
+#: How a description was obtained. Callers use this to decide whether the
+#: "looks like metadata" warning is meaningful: a colon inside an authored H1
+#: title ("Defect sweep: registry contract") is ordinary punctuation, while the
+#: same shape found in the body is very likely a metadata key.
+DESCRIPTION_SOURCE_TITLE = "h1"
+DESCRIPTION_SOURCE_PROSE = "prose"
+DESCRIPTION_SOURCE_FILENAME = "filename"
+
+
+def _extract_description_with_source(filepath: Path) -> tuple[str, str]:
+    """Extract a description and report which strategy produced it.
 
     Strategy, in order:
-      1. The first ``# CC Task[ TN]: <subject>`` H1 — the subject after the
-         boilerplate prefix. An H1 is a single physical line, so this is
-         immune to the hard-wrap fragmenting that used to capture a wrapped
-         ``**Priority:**`` value's continuation line as the description.
+      1. The first H1's subject — the title with any ``CC Task`` / ``Task``
+         boilerplate prefix stripped (see :func:`_subject_from_h1`). The title
+         is where a task file states what it is about, and an H1 is a single
+         physical line, so this is immune to the hard-wrap fragmenting that
+         made prose extraction capture half a sentence. An H1 that is nothing
+         but boilerplate names no subject and does not win.
       2. Otherwise, the first substantive PARAGRAPH — consecutive prose lines
-         joined — skipping headers, horizontal rules, and whole metadata
-         blocks (a metadata line AND its hard-wrapped continuation lines).
-         Joining the paragraph means a wrapped summary is captured whole, and
-         skipping the continuation lines means a wrapped metadata value is
-         never mistaken for prose.
+         joined — skipping headers, horizontal rules, whole metadata blocks
+         (a metadata line AND its hard-wrapped continuation lines), and
+         all-bold banner paragraphs such as the immutability notice.
       3. Otherwise, the filename.
+
+    Args:
+        filepath: Path to the CC task markdown file.
+
+    Returns:
+        ``(description, source)`` where description is truncated to 200
+        characters and source is one of :data:`DESCRIPTION_SOURCE_TITLE`,
+        :data:`DESCRIPTION_SOURCE_PROSE`, :data:`DESCRIPTION_SOURCE_FILENAME`.
+
+    Raises:
+        OSError: If the file cannot be read.
     """
     lines = filepath.read_text().splitlines()
 
-    # 1. Prefer a "CC Task[ TN]: <subject>" H1 title.
+    # 1. Prefer the first H1's subject.
     for line in lines:
         h1 = _H1_RE.match(line.strip())
         if h1:
-            m = _CC_TASK_TITLE_RE.match(h1.group(1).strip())
-            if m and m.group(1).strip():
-                return m.group(1).strip()[:200]
-            break  # first H1 isn't a CC-Task title → fall through to prose
+            subject = _subject_from_h1(h1.group(1))
+            if subject:
+                return subject[:200], DESCRIPTION_SOURCE_TITLE
+            break  # H1 carries no subject → fall through to prose
 
-    # 2. First substantive paragraph, metadata-block-aware.
+    # 2. First substantive paragraph, metadata- and banner-aware.
     i, n = 0, len(lines)
     while i < n:
         stripped = lines[i].strip()
@@ -170,7 +238,7 @@ def _extract_description(filepath: Path) -> str:
             while i < n and lines[i].strip():
                 i += 1
             continue
-        # First real prose line — collect the wrapped paragraph whole.
+        # Candidate prose — collect the wrapped paragraph whole.
         para: list[str] = []
         while i < n:
             t = lines[i].strip()
@@ -178,19 +246,59 @@ def _extract_description(filepath: Path) -> str:
                 break
             para.append(t)
             i += 1
-        return " ".join(para)[:200]
+        joined = " ".join(para)
+        if _BOLD_ONLY_RE.match(joined):
+            # An all-bold paragraph is a banner (e.g. the immutability notice),
+            # not the task subject. Keep looking.
+            continue
+        return joined[:200], DESCRIPTION_SOURCE_PROSE
 
-    return filepath.name
+    return filepath.name, DESCRIPTION_SOURCE_FILENAME
 
 
-def _warn_if_description_suspicious(filepath: Path, description: str) -> None:
-    """Emit a stderr warning when an auto-extracted description looks like metadata
-    or fell back to the filename. Does not fail the registration.
+def _extract_description(filepath: Path) -> str:
+    """Extract a one-line description from a CC task file.
+
+    Thin wrapper over :func:`_extract_description_with_source` for callers that
+    do not care how the description was obtained.
+
+    Args:
+        filepath: Path to the CC task markdown file.
+
+    Returns:
+        The extracted description, truncated to 200 characters.
+
+    Raises:
+        OSError: If the file cannot be read.
     """
-    looks_bad = (
-        _description_looks_like_metadata(description)
-        or description == filepath.name
-    )
+    return _extract_description_with_source(filepath)[0]
+
+
+def _warn_if_description_suspicious(
+    filepath: Path,
+    description: str,
+    source: str = DESCRIPTION_SOURCE_PROSE,
+) -> None:
+    """Warn on stderr when an auto-extracted description looks wrong.
+
+    A description taken from an authored H1 title is never flagged for metadata
+    shape — a colon in a title is punctuation, not a metadata key — but a
+    fallback to the filename is always flagged.
+
+    Args:
+        filepath: The task file the description came from.
+        description: The extracted description.
+        source: Which strategy produced it; see ``DESCRIPTION_SOURCE_*``.
+
+    Returns:
+        None. This never fails the registration.
+    """
+    if source == DESCRIPTION_SOURCE_FILENAME:
+        looks_bad = True
+    elif source == DESCRIPTION_SOURCE_TITLE:
+        looks_bad = False
+    else:
+        looks_bad = _description_looks_like_metadata(description)
     if not looks_bad:
         return
     click.echo(
@@ -383,8 +491,8 @@ def cc_complete(filepath, note):
     if note:
         description = note
     else:
-        description = _extract_description(task_path)
-        _warn_if_description_suspicious(task_path, description)
+        description, source = _extract_description_with_source(task_path)
+        _warn_if_description_suspicious(task_path, description, source)
     completed_at = datetime.now(timezone.utc).isoformat()
 
     try:
@@ -468,8 +576,8 @@ def cc_register(filepath, description):
 
     name = _name_from_filepath(rel_path)
     if description is None:
-        description = _extract_description(task_path)
-        _warn_if_description_suspicious(task_path, description)
+        description, source = _extract_description_with_source(task_path)
+        _warn_if_description_suspicious(task_path, description, source)
     # Hash the SPEC only. Findings are appended after execution by convention,
     # so a whole-file hash would guarantee that every correctly-executed task is
     # divergent at completion time.
@@ -497,5 +605,140 @@ def cc_register(filepath, description):
         click.echo(f"  source_file: {rel_path}")
         click.echo(f"  id: {artifact_id[:8]}...")
         click.echo(f"  state: proposed")
+    finally:
+        driver.close()
+
+
+def _find_by_artifact_id_prefix(
+    driver, database: str, prefix: str
+) -> list[dict]:
+    """Return ResearchTasks whose artifact_id starts with ``prefix``.
+
+    A prefix is accepted because every Seldon surface — `seldon go`, the
+    briefing, this module's own output — prints artifact ids truncated to eight
+    characters, so that is what a caller has to hand.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+        prefix: Full or leading portion of an artifact_id.
+
+    Returns:
+        Matching records with keys ``artifact_id``, ``source_file`` and
+        ``description``. More than one match means the prefix is ambiguous.
+    """
+    with driver.session(database=database) as session:
+        return session.run(
+            "MATCH (t:Artifact:ResearchTask) "
+            "WHERE t.artifact_id STARTS WITH $prefix "
+            "RETURN t.artifact_id AS artifact_id, t.source_file AS source_file, "
+            "t.description AS description",
+            prefix=prefix,
+        ).data()
+
+
+@cc_group.command("rederive-description")
+@click.argument("target")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show the derived description without writing an event.",
+)
+def cc_rederive_description(target, dry_run):
+    """Re-parse a registered CC task file and update its description.
+
+    TARGET is either an artifact_id (full, or the truncated prefix Seldon
+    prints) or the task file's path.
+
+    Descriptions extracted by an older parser stay wrong in the graph forever,
+    because nothing re-reads the file after registration. This re-runs the
+    current extractor and records the result as an `artifact_updated` EVENT —
+    history is appended to, never rewritten.
+
+    Exits non-zero if the target cannot be resolved, is ambiguous, or its
+    source file is missing; a description cannot be re-derived from a file that
+    is not there, and guessing one would be worse than failing.
+    """
+    project_dir = Path.cwd()
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    session_id = get_current_session(project_dir)
+
+    try:
+        candidate_path = Path(target)
+        if not candidate_path.is_absolute():
+            candidate_path = project_dir / candidate_path
+        try:
+            rel_path = str(candidate_path.relative_to(project_dir))
+        except ValueError:
+            rel_path = str(candidate_path)
+
+        artifact_id = _find_existing(driver, database, rel_path)
+        if artifact_id is None:
+            matches = _find_by_artifact_id_prefix(driver, database, target)
+            if len(matches) > 1:
+                ids = ", ".join(m["artifact_id"] for m in matches)
+                click.echo(
+                    f"Error: '{target}' matches {len(matches)} artifacts: {ids}",
+                    err=True,
+                )
+                raise SystemExit(1)
+            if not matches:
+                click.echo(
+                    f"Error: no registered CC task matches '{target}' "
+                    "(tried source_file path, then artifact_id prefix).",
+                    err=True,
+                )
+                raise SystemExit(1)
+            artifact_id = matches[0]["artifact_id"]
+            rel_path = matches[0]["source_file"]
+
+        record = _find_by_artifact_id_prefix(driver, database, artifact_id)[0]
+        old_description = record["description"]
+        source_file = record["source_file"] or rel_path
+
+        task_path = Path(source_file)
+        if not task_path.is_absolute():
+            task_path = project_dir / task_path
+        if not task_path.is_file():
+            click.echo(
+                f"Error: source file missing on disk: {source_file}\n"
+                f"  Artifact: {artifact_id}\n"
+                "  The description is derived from the file; it cannot be "
+                "re-derived without it.\n"
+                "  Restore the file, or set the description explicitly with "
+                "`seldon artifact update`.",
+                err=True,
+            )
+            raise SystemExit(1)
+
+        new_description, source = _extract_description_with_source(task_path)
+        _warn_if_description_suspicious(task_path, new_description, source)
+
+        click.echo(f"Artifact: {artifact_id}")
+        click.echo(f"  source_file: {source_file}")
+        click.echo(f"  before: {old_description!r}")
+        click.echo(f"  after:  {new_description!r}")
+
+        if new_description == old_description:
+            click.echo("  unchanged — no event written.")
+            return
+
+        if dry_run:
+            click.echo("  dry run — no event written.")
+            return
+
+        update_artifact(
+            project_dir=project_dir,
+            driver=driver,
+            database=database,
+            artifact_id=artifact_id,
+            properties={"description": new_description},
+            actor="cc",
+            authority="accepted",
+            session_id=session_id,
+        )
+        click.echo("  updated (artifact_updated event written).")
     finally:
         driver.close()

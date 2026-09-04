@@ -13,7 +13,7 @@ shared_ontology:
   # Per AD-017: Central Validity Ontology
   # Seldon repo owns the master vocabulary files.
   # ingest reads both vocabularies and writes to seldon-ontology master DB.
-  source: /Users/brock/Documents/GitHub/seldon/ontology/
+  source: /Users/brock/GitHub/seldon/ontology/
   vocabularies:
     - validity/VALIDITY_VOCABULARY.md
     - practitioner/PRACTITIONER_VOCABULARY.md

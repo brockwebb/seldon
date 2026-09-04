@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -9,6 +11,7 @@ import click
 
 from seldon.config import load_project_config, get_neo4j_driver
 from seldon.domain.loader import load_domain_config
+from seldon.paths import resolve_system_standards
 
 
 _ROLE_SECTION = """\
@@ -98,16 +101,20 @@ _AVAILABLE_COMMANDS_SECTION = """\
 
 
 def _read_system_standards() -> Optional[str]:
-    """Read system CLAUDE.md from env var or default location. Returns None if not found."""
-    env_path = os.environ.get("SELDON_SYSTEM_CLAUDE_MD")
-    if env_path:
-        p = Path(env_path)
-        if p.exists():
-            return p.read_text()
-    fallback = Path.home() / "Documents" / "GitHub" / "CLAUDE.md"
-    if fallback.exists():
-        return fallback.read_text()
-    return None
+    """Read the system-wide engineering standards document.
+
+    The location comes from :func:`seldon.paths.resolve_system_standards`, which
+    honours ``SELDON_SYSTEM_CLAUDE_MD`` and otherwise derives the path from where
+    the ``seldon`` package is installed. The previous hardcoded home-directory
+    fallback named a source root that no longer exists.
+
+    Returns:
+        Contents of the standards file, or None if no candidate exists.
+    """
+    path = resolve_system_standards()
+    if path is None:
+        return None
+    return path.read_text()
 
 
 def _read_project_claude_md(project_dir: str) -> Optional[str]:
@@ -118,19 +125,87 @@ def _read_project_claude_md(project_dir: str) -> Optional[str]:
     return None
 
 
-def _read_latest_handoff(project_dir: str) -> Optional[str]:
-    """Read the most recent handoff file. Returns None if none found."""
+# Handoff filenames carry the session date as a `YYYY-MM-DD` prefix, followed by
+# a separator and a free-form slug (project convention: `YYYY-MM-DD_<slug>.md`).
+# Only the date is ordering-bearing; the slug is not. The negative lookahead
+# accepts any separator (`_`, `-`, `.`, end of name) while refusing to read a
+# date out of a longer digit run such as `20260902_x.md`.
+_HANDOFF_DATE_PREFIX_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?!\d)")
+
+
+def _handoff_sort_key(path: Path) -> tuple[str, float]:
+    """Return the recency sort key for one handoff file: ``(date, mtime)``.
+
+    The session date in the filename prefix is authoritative, because a handoff
+    is *about* a session and may be written, corrected, or copied at any later
+    wall-clock time. Modification time only breaks ties within a date.
+
+    A plain descending sort on the whole filename — the previous behaviour — is
+    wrong because the slug after the date participates in the comparison. Two
+    handoffs written on the same day are then ordered alphabetically by subject,
+    which is unrelated to recency.
+
+    A file with no `YYYY-MM-DD` prefix has no declared session date, so its
+    modification date stands in for one and it competes on mtime alone.
+
+    Args:
+        path: Handoff file to key.
+
+    Returns:
+        ``(date_str, mtime_epoch_seconds)``. Larger sorts later, so the most
+        recent handoff is the maximum.
+
+    Raises:
+        OSError: If the file's metadata cannot be read.
+    """
+    mtime = path.stat().st_mtime
+    match = _HANDOFF_DATE_PREFIX_RE.match(path.name)
+    if match:
+        date_str = match.group(1)
+    else:
+        date_str = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+    return (date_str, mtime)
+
+
+def _find_latest_handoff(project_dir: str) -> Optional[Path]:
+    """Return the path of the most recent handoff file, or None if there is none.
+
+    Recency is decided by :func:`_handoff_sort_key`. Dotfiles are ignored so
+    filesystem debris (`.DS_Store`) can never be served as a handoff.
+
+    Args:
+        project_dir: Project root containing a `handoffs/` directory.
+
+    Returns:
+        Path of the most recent handoff, or None if the directory is absent or
+        holds no candidate files.
+    """
     handoffs_dir = Path(project_dir) / "handoffs"
-    if not handoffs_dir.exists():
+    if not handoffs_dir.is_dir():
         return None
-    files = sorted(
-        (f for f in handoffs_dir.iterdir() if f.is_file()),
-        key=lambda f: f.name,
-        reverse=True,
-    )
-    if not files:
+    candidates = [
+        f
+        for f in handoffs_dir.iterdir()
+        if f.is_file() and not f.name.startswith(".")
+    ]
+    if not candidates:
         return None
-    return files[0].read_text()
+    return max(candidates, key=_handoff_sort_key)
+
+
+def _read_latest_handoff(project_dir: str) -> Optional[str]:
+    """Read the most recent handoff file. Returns None if none found.
+
+    Args:
+        project_dir: Project root containing a `handoffs/` directory.
+
+    Returns:
+        Text of the most recent handoff, or None if there is none.
+    """
+    latest = _find_latest_handoff(project_dir)
+    if latest is None:
+        return None
+    return latest.read_text()
 
 
 def _get_handoff_reconciliation(project_dir: str, handoff_text: str) -> Optional[str]:

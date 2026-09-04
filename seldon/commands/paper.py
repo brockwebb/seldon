@@ -546,7 +546,12 @@ def paper_context_command(section_name, output_format):
               help="Override Tier 2 config path.")
 @click.option("--style-config", "style_config_path", default=None, type=click.Path(),
               help="Override Tier 3 config path.")
-def paper_build(skip_qc, strict, output_path, no_render, qc_config_path, style_config_path):
+@click.option("--allow-proposed", is_flag=True, default=False,
+              help="Render Results still in 'proposed' state as '<value> (proposed)' "
+                   "instead of failing the build (SI-03). Draft builds only — the "
+                   "summary lists every Result rendered this way.")
+def paper_build(skip_qc, strict, output_path, no_render, qc_config_path, style_config_path,
+                allow_proposed):
     """Resolve graph references, run QC, assemble .qmd, and render via Quarto."""
     project_dir = Path.cwd()
     paper_dir = project_dir / "paper"
@@ -560,6 +565,7 @@ def paper_build(skip_qc, strict, output_path, no_render, qc_config_path, style_c
         no_render=no_render,
         qc_config_path=Path(qc_config_path) if qc_config_path else None,
         style_config_path=Path(style_config_path) if style_config_path else None,
+        allow_proposed=allow_proposed,
     )
     raise SystemExit(exit_code)
 
