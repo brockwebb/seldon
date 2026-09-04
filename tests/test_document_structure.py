@@ -1,7 +1,7 @@
 """
 Graph integration tests for AD-018 document structure types and relationships.
 
-Requires Neo4j. Uses seldon-test database (cleaned before each test).
+Requires Neo4j. Uses the per-process test database (cleaned before each test).
 Tests create Table, PaperSection hierarchy, Figure with appears_in edges,
 and verify traversal.
 """
@@ -14,9 +14,11 @@ import pytest
 from seldon.core.artifacts import create_artifact, create_link, transition_state
 from seldon.domain.loader import load_domain_config
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 

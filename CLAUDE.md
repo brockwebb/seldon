@@ -190,3 +190,15 @@ Projects hold read-only replicas synced via `seldon ontology sync`.
 All writes go to master via `seldon ontology ingest`.
 Projects cannot create or modify OntologyTerm artifacts locally.
 Project-specific terms link to shared terms via `references_ontology` relationships.
+
+`ingest` compares the parsed vocabulary against master before writing: the master
+epoch moves, and an `ontology_ingested` event is written, **only** when master
+content actually changed. An ingest that finds nothing to do writes nothing and
+leaves every replica current. `--dry-run` reports the same plan without writing.
+
+Terms present in master but absent from the source are **reported, not retired**.
+Pass `--deprecate-missing` to retire them; `deprecated` is terminal for an
+OntologyTerm, so this is irreversible and a term retired this way cannot be
+re-ingested under the same `term_id`. `sync` propagates a master deprecation to
+replicas that already carry the term and does not introduce deprecated terms into
+replicas that never had them.

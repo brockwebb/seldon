@@ -1,7 +1,7 @@
 """Tests for `seldon_audit_ingest` MCP tool and the audit_ingest helpers.
 
 The plan_ingest path is fully exercised against synthetic fixtures (no graph).
-The write_ingest path is exercised against the seldon-test Neo4j database.
+The write_ingest path is exercised against the per-process Neo4j test database.
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from seldon.paper.audit_ingest import (
     _strip_code_fences,
     plan_ingest,
 )
+
+from tests.testdb import TEST_DATABASE
 
 
 # ── Helpers: synthetic run-dir builders ──────────────────────────────────────
@@ -283,7 +285,7 @@ def test_findings_summary_counts_severity_and_type():
 # ── Graph wiring (Neo4j-backed) ─────────────────────────────────────────────
 
 pytestmark_graph = pytest.mark.usefixtures("neo4j_available")
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 
 
 def _write_seldon_yaml(project_dir: Path):

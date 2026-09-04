@@ -12,9 +12,11 @@ from seldon.commands.session import get_briefing_data
 from seldon.commands.init import _apply_template
 from seldon.templates.loader import load_template
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 

@@ -24,17 +24,71 @@ from seldon.domain.loader import load_domain_config
 from seldon.domain.units_vocabulary import load_units_vocabulary
 from seldon.paper.build import REFERENCE_PATTERN
 
-# AD-028: Result.name slug grammar. Case-sensitive, lowercase-anchored, so a
-# token key is unambiguous in prose and safe in a filename or a URL fragment.
-RESULT_NAME_PATTERN = re.compile(r'^[a-z0-9][a-z0-9_.-]*$')
+# AD-028 §1, as amended by Amendment 01 (2026-09-04): the Result.name slug
+# grammar. Case-sensitive, ASCII, safe in a filename or a URL fragment.
+#
+# THIS IS THE SINGLE DEFINITION POINT. The pattern string is written here and
+# nowhere else: every name-accepting path imports this constant, and every
+# message, `--help` string, domain-config description and convention doc that
+# needs to show the grammar interpolates `RESULT_NAME_PATTERN.pattern` or
+# describes it in words. `tests/test_result_grammar.py` pins that with a grep
+# test over the whole repo. Do not paste the pattern anywhere else — a second
+# copy is a second definition, and the two will drift.
+RESULT_NAME_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$')
 RESULT_NAME_MAX_LENGTH = 128
 
-#: Classification buckets emitted by `seldon result migrate-names`.
-MIGRATION_CLASSES = ("migrated", "units_is_real_unit", "ambiguous", "no_units")
+#: Human-readable rendering of RESULT_NAME_PATTERN, derived from the constant so
+#: it cannot drift from it. Used in error messages and `--help` text.
+RESULT_NAME_GRAMMAR_PROSE = (
+    "must start with an ASCII letter or digit, then any of letters, digits, "
+    "underscore, dot or hyphen"
+)
 
-#: How many rows of each non-ambiguous class the migration report prints
-#: before summarising. `ambiguous` is always listed in full — it is the class a
-#: human has to adjudicate.
+#: Classification buckets emitted by `seldon result migrate-names`, in report
+#: order. Every Result in the graph lands in exactly one, so the summary table
+#: reconciles against the total row count.
+#:
+#: - ``migrated``               units is promoted to name and units cleared
+#: - ``name_set_units_pending`` name already set, units still holds the same
+#:                              string (a half-applied earlier migration) —
+#:                              clear units only
+#: - ``already_named``          name set and units is a real unit or absent —
+#:                              nothing to do; this is what makes the command
+#:                              resumable
+#: - ``units_is_real_unit``     no name, units is a genuine unit — leave alone
+#: - ``ambiguous``              no name, cannot be assigned without a human
+#: - ``no_units``               no name and no units — nothing is inferable
+#: - ``refused``                would be migrated, but the resulting name fails
+#:                              the validation the live path applies
+MIGRATION_CLASSES = (
+    "migrated",
+    "name_set_units_pending",
+    "already_named",
+    "units_is_real_unit",
+    "ambiguous",
+    "no_units",
+    "refused",
+)
+
+#: Classes whose rows the live run writes an event for.
+MIGRATION_WRITING_CLASSES = ("migrated", "name_set_units_pending")
+
+#: Field order of the `--report PATH` JSONL. This is a consumed contract —
+#: `ai-readiness-kg/cc_tasks/2026-09-04_result_migration_completion.md` reads it.
+#: Adding a field is safe; renaming or removing one is a breaking change.
+MIGRATION_REPORT_FIELDS = (
+    "artifact_id",
+    "current_name",
+    "current_units",
+    "class",
+    "planned_action",
+    "reason",
+)
+
+#: How many rows of each class the migration report prints before summarising.
+#: `ambiguous` and `refused` are always listed in full — those are the classes a
+#: human has to adjudicate, and truncating them is how a refusal goes unnoticed.
+#: `--show-all` lifts the cap; `--report PATH` writes every row regardless.
 MIGRATION_REPORT_PREVIEW = 20
 
 
@@ -56,8 +110,9 @@ def validate_result_name(name: str) -> None:
     Raises:
         ValueError: If the name is empty, longer than
             RESULT_NAME_MAX_LENGTH characters, or does not match
-            ``^[a-z0-9][a-z0-9_.-]*$``. The message names the offending value
-            and the grammar it violated.
+            RESULT_NAME_PATTERN (the single definition point for the grammar —
+            see the constant, which is deliberately not restated here). The
+            message names the offending value and the grammar it violated.
     """
     if not name:
         raise ValueError("Result --name is required and must not be empty")
@@ -69,8 +124,8 @@ def validate_result_name(name: str) -> None:
     if not RESULT_NAME_PATTERN.match(name):
         raise ValueError(
             f"Result name '{name}' does not match the required slug grammar "
-            f"{RESULT_NAME_PATTERN.pattern} — lowercase letters and digits, "
-            f"then any of [a-z0-9_.-]. Names are case-sensitive."
+            f"{RESULT_NAME_PATTERN.pattern} — it {RESULT_NAME_GRAMMAR_PROSE}. "
+            f"Names are case-sensitive (AD-028 §1 as amended by Amendment 01)."
         )
 
 
@@ -108,8 +163,9 @@ def result_group():
 @result_group.command("register")
 @click.option("--name", "name", required=True,
               help="Stable token key for {{result:NAME:field}} references. "
-                   "Slug ^[a-z0-9][a-z0-9_.-]*$, case-sensitive, <=128 chars, "
-                   "unique per project graph (AD-028).")
+                   f"Slug {RESULT_NAME_PATTERN.pattern}, case-sensitive, "
+                   f"<={RESULT_NAME_MAX_LENGTH} chars, unique per project "
+                   "graph (AD-028).")
 @click.option("--value", required=True, type=float, help="Numeric result value")
 @click.option("--units", default="", help="Units of measurement (e.g. 'accuracy', 'ms'). "
                                           "A real unit only — never a token key; use --name for that.")
@@ -537,10 +593,19 @@ class Classification:
         node: The Result node as read from the graph.
         migration_class: One of MIGRATION_CLASSES.
         reason: Why this class, in words, for the report.
+        planned_action: What the live run would do to this row — one of
+            ``set_name_and_clear_units``, ``clear_units`` or ``none``. The
+            dry-run prints it and the live run executes it; they read the same
+            field off the same plan, which is what makes the dry run
+            predictive.
+        new_name: The name the live run would assign, for the
+            ``set_name_and_clear_units`` action. None for every other action.
     """
     node: dict
     migration_class: str
     reason: str
+    planned_action: str = "none"
+    new_name: Optional[str] = None
 
 
 def classify_unnamed_results(
@@ -570,8 +635,15 @@ def classify_unnamed_results(
           is not assignable without a human deciding who gets it.
         - ``units_is_real_unit``: units is a real unit and nothing contests it.
           Leave `name` unset; report only.
-        - ``migrated``: units is present, is not a real unit, and is
-          uncontested — promote it to `name`.
+        - ``refused``: units would be promoted, but the resulting name fails
+          `validate_result_name` — bad grammar, empty, or over length. This is
+          the class the original implementation was missing: the live path
+          validated and the dry run did not, so the dry run predicted 3529
+          migrations where the live run wrote 2576 and refused 953. The check
+          now lives here, on the shared classification path, so a dry run
+          cannot disagree with the live run about it.
+        - ``migrated``: units is present, is not a real unit, is a valid name,
+          and is uncontested — promote it to `name`.
         - ``no_units``: no name and no units. Nothing is inferable.
 
     Raises:
@@ -614,6 +686,17 @@ def classify_unnamed_results(
                 ))
             continue
 
+        # The grammar check the live path applies, applied here so the dry run
+        # applies it too. A string that cannot be a name is refused whether or
+        # not anything contests it.
+        try:
+            validate_result_name(units)
+        except ValueError as exc:
+            classifications.append(Classification(
+                node, "refused", str(exc),
+            ))
+            continue
+
         # Only the promote branch can collide: `name` is unique per graph.
         contested_count = proposals.get(units, 0)
         if contested_count > 1:
@@ -634,36 +717,185 @@ def classify_unnamed_results(
             node, "migrated",
             f"units {units!r} is not a real unit — it is a token key in the "
             f"wrong property",
+            planned_action="set_name_and_clear_units",
+            new_name=units,
         ))
 
     return classifications
 
 
+def build_migration_plan(
+    results: list[dict],
+    vocabulary: frozenset,
+    token_keys: set[str],
+) -> list[Classification]:
+    """Classify *every* Result in the graph into exactly one migration class.
+
+    This is the single plan both `--dry-run` and the live run consume. The dry
+    run prints it; the live run executes the `planned_action` on it. Neither
+    path re-derives anything, which is the structural fix for the defect
+    recorded in AD-028 Amendment 01:
+
+        A dry run that does not execute every validation the live path
+        executes is not a dry run.
+
+    Args:
+        results: Every Result node in the project graph, in report order.
+        vocabulary: Strings that count as real units of measurement.
+        token_keys: Names referenced by {{result:NAME:field}} tokens on disk.
+
+    Returns:
+        One Classification per input Result, in input order. Results that
+        already carry a `name` are handled here (they are what makes the
+        command resumable); the rest are delegated to
+        `classify_unnamed_results`.
+
+        A named Result whose `units` still holds the same string is
+        ``name_set_units_pending``: an earlier migration set the name but its
+        compensating `units` clear never landed. Its planned action is
+        ``clear_units`` — never a re-assignment of the name it already has.
+
+    Raises:
+        Nothing.
+    """
+    named_idx: list[int] = []
+    unnamed_idx: list[int] = []
+    for i, node in enumerate(results):
+        name = node.get("name")
+        (named_idx if isinstance(name, str) and name else unnamed_idx).append(i)
+
+    claimed_names = {results[i]["name"] for i in named_idx}
+
+    plan: list[Optional[Classification]] = [None] * len(results)
+
+    for i in named_idx:
+        node = results[i]
+        name = node["name"]
+        units = node.get("units")
+        if isinstance(units, str) and units == name:
+            plan[i] = Classification(
+                node, "name_set_units_pending",
+                f"name {name!r} is already set but units still holds the same "
+                f"string — the units clear from an earlier migration never "
+                f"landed",
+                planned_action="clear_units",
+            )
+        else:
+            plan[i] = Classification(
+                node, "already_named",
+                f"name {name!r} is already set — skipped",
+            )
+
+    unnamed = [results[i] for i in unnamed_idx]
+    for i, classification in zip(
+        unnamed_idx,
+        classify_unnamed_results(
+            unnamed, vocabulary, token_keys, claimed_names=claimed_names
+        ),
+    ):
+        plan[i] = classification
+
+    # Every index was assigned by one of the two loops above; the assertion
+    # states that invariant rather than trusting it.
+    if any(item is None for item in plan):
+        raise RuntimeError(
+            "build_migration_plan left a Result unclassified — this is a bug"
+        )
+    return [item for item in plan if item is not None]
+
+
+def write_migration_report(path: Path, plan: list[Classification]) -> None:
+    """Write the per-row migration plan as JSONL.
+
+    The field set is MIGRATION_REPORT_FIELDS and is a consumed contract; see
+    that constant. One JSON object per line, in plan order, one line per
+    Result in the graph — including rows the run will not touch, so a consumer
+    can reconcile the file against the graph's total row count.
+
+    Args:
+        path: Destination file. Parent directories are created.
+        plan: The plan from `build_migration_plan`.
+
+    Returns:
+        None.
+
+    Raises:
+        OSError: If the file cannot be written. Not caught — a report the
+            caller asked for and did not get is a failure, not a warning.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for item in plan:
+            row = {
+                "artifact_id": item.node.get("artifact_id"),
+                "current_name": item.node.get("name"),
+                "current_units": item.node.get("units"),
+                "class": item.migration_class,
+                "planned_action": item.planned_action,
+                "reason": item.reason,
+            }
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def _describe_result(node: dict) -> str:
     """One-line description of a Result for the migration report."""
     return (
-        f"{node.get('artifact_id', '?')}  units={node.get('units')!r}  "
-        f"value={node.get('value')!r}  state={node.get('state')!r}"
+        f"{node.get('artifact_id', '?')}  name={node.get('name')!r}  "
+        f"units={node.get('units')!r}  value={node.get('value')!r}  "
+        f"state={node.get('state')!r}"
     )
 
 
 @result_group.command("migrate-names")
 @click.option("--dry-run", is_flag=True, default=False,
-              help="Classify and report without writing any event.")
+              help="Build and report the plan without writing any event. The "
+                   "dry run applies every validation the live run applies and "
+                   "exits with the same code, so its report predicts the live "
+                   "outcome exactly.")
+@click.option("--partial", "partial", is_flag=True, default=False,
+              help="Write the valid rows even when the plan contains refusals. "
+                   "Without it a single refusal aborts the whole run and "
+                   "nothing at all is written. Either way the run still exits "
+                   "non-zero when anything was refused.")
+@click.option("--report", "report_path", default=None,
+              type=click.Path(dir_okay=False),
+              help="Write the per-row plan to PATH as JSONL — one object per "
+                   "Result in the graph, with artifact_id, current_name, "
+                   "current_units, class, planned_action and reason. Works "
+                   "with and without --dry-run.")
 @click.option("--project-dir", "project_dir_opt", default=None,
               type=click.Path(exists=True, file_okay=False),
               help="Project root to migrate. Defaults to the current directory.")
 @click.option("--show-all", is_flag=True, default=False,
               help="List every Result in every class. Without it, only the "
-                   "ambiguous class is listed in full.")
-def result_migrate_names(dry_run, project_dir_opt, show_all):
+                   "refused and ambiguous classes are listed in full.")
+def result_migrate_names(dry_run, partial, report_path, project_dir_opt, show_all):
     """Promote units-as-name Results to a real `name` property (AD-028).
 
     Before AD-028 `seldon result register` had no --name flag, so token keys
-    were stashed in `units`. This walks every Result with no `name`, classifies
-    it against the packaged units vocabulary, and — outside --dry-run — emits
-    one `artifact_updated` event per promotion that sets `name` and clears
-    `units` together. Migration is by event; nothing is mutated directly.
+    were stashed in `units`. This walks every Result in the graph, builds one
+    plan classifying each row (see MIGRATION_CLASSES), and — outside --dry-run
+    — executes that plan's actions as `artifact_updated` events. Migration is
+    by event; nothing is mutated directly.
+
+    Three properties, each pinned by a test:
+
+    **Predictive.** `--dry-run` and the live run consume the same plan from the
+    same `build_migration_plan` call, so the dry run applies every validation
+    the live path applies and exits with the same code. AD-028 Amendment 01
+    records why: the first implementation validated only on the live path, so
+    the dry run promised 3529 migrations and the live run wrote 2576 and
+    refused 953 partway through.
+
+    **Atomic.** Validate-all-then-write. Any row in the `refused` class aborts
+    the whole run with nothing written, unless --partial is passed, in which
+    case the valid rows are written and the refusals are left untouched. Both
+    forms exit non-zero when anything was refused.
+
+    **Resumable.** A Result that already carries a `name` is never renamed. If
+    its `units` still holds that same string — a half-applied earlier run whose
+    compensating clear never landed — it is classified
+    `name_set_units_pending` and gets the `units` clear event only.
     """
     project_dir = Path(project_dir_opt) if project_dir_opt else Path.cwd()
     config = load_project_config(project_dir)
@@ -674,44 +906,58 @@ def result_migrate_names(dry_run, project_dir_opt, show_all):
     try:
         vocabulary = load_units_vocabulary()
 
+        # Every Result, not just the unnamed ones: named rows are what the
+        # resumability and `name_set_units_pending` classes are about, and a
+        # plan that omits them cannot reconcile against the graph's row count.
         with driver.session(database=database) as sess:
-            unnamed = [
+            results = [
                 dict(r["r"]) for r in sess.run(
-                    "MATCH (r:Result) WHERE r.name IS NULL "
-                    "RETURN r ORDER BY r.created_at ASC"
+                    "MATCH (r:Result) RETURN r ORDER BY r.created_at ASC"
                 ).data()
             ]
-            claimed_names = {
-                r["name"] for r in sess.run(
-                    "MATCH (r:Result) WHERE r.name IS NOT NULL RETURN r.name AS name"
-                ).data()
-                if r["name"]
-            }
 
         token_keys = collect_token_keys(project_dir)
-        classifications = classify_unnamed_results(
-            unnamed, vocabulary, token_keys, claimed_names=claimed_names
-        )
+        plan = build_migration_plan(results, vocabulary, token_keys)
+
         buckets: dict[str, list[Classification]] = {c: [] for c in MIGRATION_CLASSES}
-        for item in classifications:
+        for item in plan:
             buckets[item.migration_class].append(item)
 
         mode = "DRY RUN" if dry_run else "LIVE"
         click.echo(f"Result name migration — database '{database}' ({mode})")
-        click.echo(f"  Results with no name: {len(unnamed)}")
+        click.echo(f"  Results in graph: {len(results)}")
         for cls in MIGRATION_CLASSES:
-            click.echo(f"    {cls:<20} {len(buckets[cls])}")
+            click.echo(f"    {cls:<24} {len(buckets[cls])}")
         click.echo()
 
-        # The ambiguous class is always listed in full: a human resolves it.
+        if report_path:
+            destination = Path(report_path)
+            write_migration_report(destination, plan)
+            click.echo(
+                f"Wrote the per-row plan for {len(plan)} Result(s) to {destination}"
+            )
+            click.echo()
+
+        refused = buckets["refused"]
         ambiguous = buckets["ambiguous"]
+
+        # Refused and ambiguous are always listed in full: both need a human,
+        # and truncating the list is how a refusal goes unnoticed.
+        click.echo(
+            f"refused ({len(refused)}) — cannot become a name, nothing written:"
+        )
+        for item in refused:
+            click.echo(f"  {_describe_result(item.node)}")
+            click.echo(f"      {item.reason}")
+        click.echo()
+
         click.echo(f"ambiguous ({len(ambiguous)}) — not assigned, needs a human:")
         for item in ambiguous:
             click.echo(f"  {_describe_result(item.node)}")
             click.echo(f"      {item.reason}")
         click.echo()
 
-        for cls in ("units_is_real_unit", "no_units"):
+        for cls in ("units_is_real_unit", "no_units", "already_named"):
             items = buckets[cls]
             click.echo(f"{cls} ({len(items)}):")
             shown = items if show_all else items[:MIGRATION_REPORT_PREVIEW]
@@ -721,60 +967,121 @@ def result_migrate_names(dry_run, project_dir_opt, show_all):
                 click.echo(f"  ... and {len(items) - len(shown)} more (--show-all)")
             click.echo()
 
+        pending = buckets["name_set_units_pending"]
+        click.echo(
+            f"name_set_units_pending ({len(pending)}) — units cleared, name left as is:"
+        )
+        shown = pending if show_all else pending[:MIGRATION_REPORT_PREVIEW]
+        for item in shown:
+            click.echo(
+                f"  {item.node.get('artifact_id', '?')}  "
+                f"name={item.node.get('name')!r} (kept)  units := null"
+            )
+        if len(shown) < len(pending):
+            click.echo(f"  ... and {len(pending) - len(shown)} more (--show-all)")
+        click.echo()
+
         to_migrate = buckets["migrated"]
         click.echo(f"migrated ({len(to_migrate)}) — name := units, units cleared:")
         shown = to_migrate if show_all else to_migrate[:MIGRATION_REPORT_PREVIEW]
         for item in shown:
             click.echo(
                 f"  {item.node.get('artifact_id', '?')}  "
-                f"name := {item.node.get('units')!r}"
+                f"name := {item.new_name!r}"
             )
         if len(shown) < len(to_migrate):
             click.echo(f"  ... and {len(to_migrate) - len(shown)} more (--show-all)")
         click.echo()
 
+        writable = [
+            item for item in plan
+            if item.migration_class in MIGRATION_WRITING_CLASSES
+        ]
+
+        # Invariant, not a re-validation: build_migration_plan sends every
+        # contested string to `ambiguous`, so no two writable rows may claim
+        # the same name. Stating it here turns a silent uniqueness violation
+        # into a crash before any event is written.
+        proposed = [item.new_name for item in writable if item.new_name is not None]
+        if len(proposed) != len(set(proposed)):
+            raise RuntimeError(
+                "migration plan proposes the same name twice — this is a bug "
+                "in build_migration_plan, not a data problem"
+            )
+
+        blocked = bool(refused) and not partial
+
         if dry_run:
             click.echo("Dry run — no events written.")
+            if blocked:
+                click.echo(
+                    f"The live run would REFUSE to write anything: "
+                    f"{len(refused)} row(s) fail validation and --partial was "
+                    f"not passed. Predicted live exit code: 1.",
+                    err=True,
+                )
+                raise SystemExit(1)
+            click.echo(
+                f"The live run would write {len(writable)} event(s): "
+                f"{len(to_migrate)} promotion(s) and {len(pending)} units clear(s)."
+            )
+            if refused:
+                click.echo(
+                    f"With --partial it would still exit 1: {len(refused)} "
+                    f"row(s) refused.", err=True,
+                )
+                raise SystemExit(1)
             return
 
-        # A promotion whose new name is not a valid slug, or collides with a
-        # name taken since classification, is refused loudly rather than written.
-        written = 0
-        refused: list[str] = []
-        taken = set(claimed_names)
-        for item in to_migrate:
-            node = item.node
-            new_name = node["units"]
-            artifact_id = node.get("artifact_id", "?")
-            try:
-                validate_result_name(new_name)
-            except ValueError as e:
-                refused.append(f"{artifact_id}: {e}")
-                continue
-            if new_name in taken:
-                refused.append(
-                    f"{artifact_id}: name '{new_name}' is already taken by another Result"
+        if blocked:
+            click.echo(
+                f"Refusing to write: {len(refused)} of {len(plan)} Result(s) "
+                f"fail validation. NOTHING was written. Fix the offending rows, "
+                f"or pass --partial to write the {len(writable)} valid row(s) "
+                f"and leave the refusals in place.",
+                err=True,
+            )
+            for item in refused:
+                click.echo(
+                    f"  {item.node.get('artifact_id', '?')}: {item.reason}", err=True
                 )
-                continue
+            raise SystemExit(1)
+
+        promoted = 0
+        cleared = 0
+        for item in writable:
+            artifact_id = item.node.get("artifact_id", "?")
             # One combined event: `seldon/core/sync.py` projects events by
             # event_type and skips types it does not know, so a bespoke
             # result_name_assigned / result_units_cleared pair would vanish on
             # replay. `artifact_updated` replays correctly, and a null property
             # value removes the key in Neo4j, so the clear survives too.
+            if item.planned_action == "set_name_and_clear_units":
+                properties = {"name": item.new_name, "units": None}
+            else:
+                properties = {"units": None}
             update_artifact(
                 project_dir=project_dir, driver=driver, database=database,
                 artifact_id=artifact_id,
-                properties={"name": new_name, "units": None},
+                properties=properties,
                 actor="cc", authority="accepted", session_id=session_id,
             )
-            taken.add(new_name)
-            written += 1
+            if item.planned_action == "set_name_and_clear_units":
+                promoted += 1
+            else:
+                cleared += 1
 
-        click.echo(f"Migrated {written} Result(s).")
+        click.echo(f"Migrated {promoted} Result(s).")
+        click.echo(f"Cleared pending units on {cleared} Result(s).")
         if refused:
-            click.echo(f"Refused {len(refused)}:", err=True)
-            for problem in refused:
-                click.echo(f"  {problem}", err=True)
+            click.echo(
+                f"Refused {len(refused)} (written anyway under --partial: "
+                f"{len(writable)}):", err=True,
+            )
+            for item in refused:
+                click.echo(
+                    f"  {item.node.get('artifact_id', '?')}: {item.reason}", err=True
+                )
             raise SystemExit(1)
     finally:
         driver.close()

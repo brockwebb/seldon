@@ -21,9 +21,11 @@ from seldon.core.artifacts import create_artifact, create_link
 from seldon.domain.loader import load_domain_config
 from seldon.cli import main
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 

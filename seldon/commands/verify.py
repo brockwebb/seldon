@@ -1,16 +1,18 @@
 """
 seldon verify — project integrity checks.
 
-Runs 7 checks in order: file hash integrity, ontology freshness,
+Runs 9 checks in order: file hash integrity, ontology freshness,
 glossary compliance, reference resolution, stale artifacts,
-open blocking tasks, and unregistered files. Reports issues with
-actionable remediation guidance.
+open blocking tasks, unregistered files, relationship-type case, and
+task source-file resolution. Reports issues with actionable remediation
+guidance.
 
 Exit codes:
     Default mode:
         0 — all clean
-        1 — warnings only (stale artifacts, open blocking tasks)
-        2 — issues found (hash mismatch, ontology drift, unresolvable refs, unregistered files)
+        1 — warnings only (stale artifacts, open blocking tasks, missing task source files)
+        2 — issues found (hash mismatch, ontology drift, unresolvable refs,
+            unregistered files, non-canonical relationship types)
     Strict mode (--strict):
         0 — no Tier A violations (advisory findings may exist)
         2 — Tier A violations found (file hashes, ontology, glossary, references, unregistered files)
@@ -64,6 +66,14 @@ SYMBOL_MAP = {
 # Checks whose failures block under --strict mode.
 # Advisory checks (stale artifacts, blocking tasks) are always reported
 # but never block.
+#
+# "Relationship types" and "Task source files" are deliberately NOT Tier A.
+# Both report a property of accumulated graph history rather than of the change
+# in hand: an executing agent cannot make either clean by doing its task
+# correctly. --strict is the machine gate CC tasks run before a state
+# transition, so putting a historical data condition in it would block every
+# task in any project that adopted Seldon with a legacy graph. Default
+# `seldon verify` still surfaces them (see each check for its severity).
 TIER_A_CHECKS = frozenset({
     "File hashes",
     "Ontology",
@@ -734,6 +744,236 @@ def check_unregistered_files(
 
 
 # ---------------------------------------------------------------------------
+# Check 8: Relationship-type case
+# ---------------------------------------------------------------------------
+
+#: Remediation command printed when non-canonical relationship types are found.
+#: Deliberately NOT wired into `--fix`: renaming a relationship type deletes and
+#: recreates edges, which is a migration, not a sync. It gets its own
+#: dry-run-by-default command so the operator sees the plan before it runs.
+REL_TYPE_MIGRATION_CMD = (
+    "python scripts/migrations/2026-09-04_migrate_rel_type_case.py --apply"
+)
+
+
+def check_relationship_types(driver, database: str) -> CheckResult:
+    """Fail when the graph holds relationships stored in non-canonical case.
+
+    UPPERCASE is canonical by construction: ``seldon.core.artifacts.create_link``
+    and ``remove_link`` both uppercase before writing, and event replay in
+    ``seldon.core.sync`` does the same. A type stored in any other case cannot
+    have come from a sanctioned write, and every type-filtered query in the
+    codebase names the uppercase form — so the non-canonical twin is not merely
+    untidy, it is *silently invisible*. That is why this is a ``fail`` and not a
+    warning: the failure mode is a query returning a confidently wrong answer.
+
+    It is still not Tier A. See ``TIER_A_CHECKS``.
+
+    Uses a full relationship scan rather than ``db.relationshipTypes()``
+    because Neo4j retains a type token after the last relationship carrying it
+    is deleted; the metadata call would keep reporting a type this project has
+    already migrated away from.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name. Scoped to this database only — the
+            check never looks at any other project's graph.
+
+    Returns:
+        A CheckResult named "Relationship types".
+    """
+    from seldon.core.graph import find_noncanonical_rel_types
+
+    with driver.session(database=database) as session:
+        offenders = find_noncanonical_rel_types(session)
+
+    if not offenders:
+        return CheckResult(
+            name="Relationship types",
+            symbol="pass",
+            summary="All canonical (uppercase)",
+        )
+
+    details = [
+        f"{o['rel_type']} ({o['count']} relationship"
+        f"{'s' if o['count'] != 1 else ''}) → should be {o['canonical']}"
+        for o in offenders
+    ]
+    details.append(f"Migrate with: {REL_TYPE_MIGRATION_CMD}")
+    total = sum(o["count"] for o in offenders)
+    return CheckResult(
+        name="Relationship types",
+        symbol="fail",
+        summary=(
+            f"{len(offenders)} non-canonical type"
+            f"{'s' if len(offenders) != 1 else ''} "
+            f"({total} relationship{'s' if total != 1 else ''}) — "
+            "invisible to type-filtered queries"
+        ),
+        details=details,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Check 9: Task source files
+# ---------------------------------------------------------------------------
+
+#: How many missing source files to name individually before summarising the
+#: rest. This check runs before every commit and its finding is permanent for
+#: settled history, so an uncapped dump would train the reader to skip it.
+MAX_MISSING_DETAILS = 10
+
+
+#: The state machine edge that identifies an *unfinished* ResearchTask.
+#:
+#: `seldon/domain/research.yaml` documents `superseded` as "an honest terminal
+#: for a task overtaken/obsoleted *before* it finishes — reachable only from
+#: active, non-finished states. NOT reachable from completed/verified." So the
+#: set of states offering `superseded` is the domain config's own declaration of
+#: which states mean "still awaiting execution", and reading it here keeps this
+#: check and the orphan-supersede migration on one definition.
+#:
+#: A leaf-node test would be wrong: `completed` has a successor (`verified`) yet
+#: is finished, so "no outgoing transitions" would misclassify every completed
+#: task as open.
+_UNFINISHED_MARKER_STATE = "superseded"
+
+
+def open_task_states(domain_config) -> set[str]:
+    """Return the ResearchTask states that mean "still awaiting execution".
+
+    Args:
+        domain_config: Loaded domain configuration.
+
+    Returns:
+        Set of state names from which :data:`_UNFINISHED_MARKER_STATE` is
+        reachable. Empty if the domain defines no ResearchTask machine.
+    """
+    machine = domain_config.state_machines.get("ResearchTask", {})
+    return {
+        state
+        for state, nexts in machine.items()
+        if _UNFINISHED_MARKER_STATE in nexts
+    }
+
+
+def check_task_source_files(
+    driver, database: str, project_dir: Path, config: dict = None
+) -> CheckResult:
+    """Report ResearchTasks naming a ``source_file`` that is not on disk.
+
+    A ResearchTask's ``source_file`` is the task's specification — the only
+    place its scope, success criteria and boundaries are recorded. When the file
+    is gone the graph node is a stub: it says a task existed, not what it was.
+
+    Severity is graded by whether the task is still open, because the two cases
+    are different problems:
+
+    * An **open** task (``proposed`` / ``accepted`` / ``in_progress`` /
+      ``blocked``) with no spec on disk is a live obstruction — nobody can
+      execute it. That is a ``warn``, listed individually.
+    * A **finished** task with no spec on disk is settled history. The work
+      completed (or was rejected, superseded, withdrawn) and the graph records
+      the outcome; only the spec is lost, and losing the spec of a finished task
+      does not un-finish it. Counted in the summary, never a warning.
+
+    The alternative — warning on every missing file forever — produces a check
+    that can never go green, which is a check people learn to ignore. This one
+    goes green once the open orphans are resolved and goes amber again the
+    moment a new one appears. The forward-looking half of the defect is enforced
+    where it can be: at registration, by the git-tracking guard in
+    ``seldon cc register`` / ``seldon cc complete``.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+        project_dir: Project root; relative ``source_file`` values resolve
+            against it.
+        config: Loaded project config, used to find the domain's state machine.
+            When None, every state is treated as open — the conservative
+            reading, since it can only over-report.
+
+    Returns:
+        A CheckResult named "Task source files".
+    """
+    with driver.session(database=database) as session:
+        records = session.run(
+            "MATCH (t:Artifact:ResearchTask) WHERE t.source_file IS NOT NULL "
+            "RETURN t.artifact_id AS artifact_id, t.source_file AS source_file, "
+            "t.state AS state ORDER BY t.source_file"
+        ).data()
+
+    if not records:
+        return CheckResult(
+            name="Task source files",
+            symbol="pass",
+            summary="No tasks carry a source_file",
+        )
+
+    missing = []
+    for rec in records:
+        path = Path(rec["source_file"])
+        if not path.is_absolute():
+            path = project_dir / path
+        if not path.is_file():
+            missing.append(rec)
+
+    if not missing:
+        return CheckResult(
+            name="Task source files",
+            symbol="pass",
+            summary=f"All {len(records)} resolve on disk",
+        )
+
+    # No config → treat every state as open. Over-reporting is the safe failure
+    # here; silently passing a live obstruction is not.
+    open_states = (
+        open_task_states(_get_domain_config(config))
+        if config
+        else {r["state"] for r in missing}
+    )
+    open_missing = [r for r in missing if r["state"] in open_states]
+    settled_missing = [r for r in missing if r["state"] not in open_states]
+
+    settled_note = (
+        f"{len(settled_missing)} settled (finished task; spec lost, outcome recorded)"
+    )
+
+    if not open_missing:
+        return CheckResult(
+            name="Task source files",
+            symbol="pass",
+            summary=(
+                f"No open task is missing its spec "
+                f"({len(records) - len(missing)} of {len(records)} resolve on "
+                f"disk); {settled_note}"
+            ),
+        )
+
+    details = [
+        f"{rec['artifact_id'][:8]}... [{rec['state']}] {rec['source_file']}"
+        for rec in open_missing[:MAX_MISSING_DETAILS]
+    ]
+    if len(open_missing) > MAX_MISSING_DETAILS:
+        details.append(
+            f"... and {len(open_missing) - MAX_MISSING_DETAILS} more open task(s)"
+        )
+    if settled_missing:
+        details.append(f"Also: {settled_note}")
+
+    return CheckResult(
+        name="Task source files",
+        symbol="warn",
+        summary=(
+            f"{len(open_missing)} open task"
+            f"{'s' if len(open_missing) != 1 else ''} name a source_file that is "
+            f"not on disk — unexecutable as specified"
+        ),
+        details=details,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fix actions
 # ---------------------------------------------------------------------------
 
@@ -819,10 +1059,11 @@ def _fix_unregistered_files(
               help="Exit non-zero only on Tier A (mechanical) violations. "
                    "Advisory findings are reported but do not affect exit code.")
 def verify_command(fix, quiet, strict):
-    """Run 7 integrity checks on the current Seldon project.
+    """Run 9 integrity checks on the current Seldon project.
 
     Checks file hashes, ontology freshness, glossary compliance, reference
-    resolution, stale artifacts, blocking tasks, and unregistered files.
+    resolution, stale artifacts, blocking tasks, unregistered files,
+    relationship-type case, and task source-file resolution.
 
     Exit codes: 0 = clean, 1 = warnings only, 2 = issues found.
     Use --strict to gate only on mechanical (Tier A) violations.
@@ -878,7 +1119,7 @@ def verify_command(fix, quiet, strict):
 def _run_all_checks(
     driver, database: str, config: dict, project_dir: Path
 ) -> list[CheckResult]:
-    """Execute all 7 checks and return results."""
+    """Execute all 9 checks and return results."""
     return [
         check_file_hashes(driver, database, project_dir),
         check_ontology_freshness(driver, database, config),
@@ -887,6 +1128,8 @@ def _run_all_checks(
         check_stale_artifacts(driver, database),
         check_blocking_tasks(driver, database),
         check_unregistered_files(driver, database, project_dir, config),
+        check_relationship_types(driver, database),
+        check_task_source_files(driver, database, project_dir, config),
     ]
 
 

@@ -30,7 +30,15 @@ _ONTOLOGY_EVENT_TYPES = frozenset({"ontology_synced", "ontology_ingested"})
 # happened, but project no graph state. Recognised here so replay does not warn
 # about them. An unrecognised type is still a real warning — that is the signal
 # an emitter was added without a replay decision being made.
-_AUDIT_ONLY_EVENT_TYPES = frozenset({"paper_fix"})
+#
+# `link_case_migrated` records that a relationship stored in non-canonical case
+# was deleted by the rel-type case migration. It projects nothing on purpose:
+# replay creates only the canonical (uppercase) spelling — `link_created` above
+# uppercases unconditionally — so the non-canonical edge never exists in a
+# replayed graph and there is nothing for this event to remove. Projecting it as
+# a `link_removed` would be actively wrong: that path also uppercases, so replay
+# would delete the canonical edge the migration just established.
+_AUDIT_ONLY_EVENT_TYPES = frozenset({"paper_fix", "link_case_migrated"})
 
 
 def get_sync_point(session: Session) -> Optional[str]:

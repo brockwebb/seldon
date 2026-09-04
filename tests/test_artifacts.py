@@ -15,10 +15,12 @@ from seldon.domain.loader import load_domain_config
 from seldon.core.state import InvalidStateTransition
 from seldon.cli import main
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 
 RESULT_PROPS = {"value": 0.912, "units": "accuracy", "description": "test result"}
 SCRIPT_PROPS = {"name": "test_script", "path": "scripts/test.py"}

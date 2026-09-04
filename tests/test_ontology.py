@@ -17,18 +17,21 @@ import yaml
 
 from seldon.ontology.parser import ParsedVocabulary, parse_vocabulary
 
+from tests.testdb import TEST_DATABASE, TEST_PROJECT_DATABASE
+
 VOCAB_PATH = Path(__file__).parent.parent / "ontology" / "validity" / "VALIDITY_VOCABULARY.md"
 
-# Test database names — never touch production databases
-TEST_MASTER_DB = "seldon-test"
-TEST_PROJECT_DB = "seldon-test-project"
+# Test database names — never touch production databases. Both are
+# per-process (see tests/testdb.py) so concurrent pytest runs stay isolated.
+TEST_MASTER_DB = TEST_DATABASE
+TEST_PROJECT_DB = TEST_PROJECT_DATABASE
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_project_config(tmp_path, database="seldon-test", with_shared_ontology=True):
+def _make_project_config(tmp_path, database=TEST_DATABASE, with_shared_ontology=True):
     """Write a minimal seldon.yaml and event store file for testing."""
     config = {
         "project": {"name": "test", "slug": "test", "domain": "research"},
@@ -46,10 +49,17 @@ def _make_project_config(tmp_path, database="seldon-test", with_shared_ontology=
     return config
 
 
-def _do_ingest(monkeypatch, vocab_path=None):
+def _do_ingest(monkeypatch, vocab_path=None, args=()):
     """Run ingest via CliRunner with monkeypatched master DB and vocab path.
 
-    Returns the CliRunner result object.
+    Args:
+        monkeypatch: pytest monkeypatch fixture.
+        vocab_path: Vocabulary file to ingest. Defaults to the real validity
+            vocabulary.
+        args: Extra CLI arguments (e.g. ``["--dry-run"]``).
+
+    Returns:
+        The CliRunner result object.
     """
     from click.testing import CliRunner
     from seldon.commands.ontology import ontology_group
@@ -60,7 +70,7 @@ def _do_ingest(monkeypatch, vocab_path=None):
     monkeypatch.setenv("SELDON_ONTOLOGY_PATH", str(vocab_path))
 
     runner = CliRunner()
-    result = runner.invoke(ontology_group, ["ingest"])
+    result = runner.invoke(ontology_group, ["ingest", *args])
     return result
 
 
@@ -142,6 +152,24 @@ class TestParser:
         assert "ontology:validity:framework:tse" in ids
         assert "ontology:validity:framework:fcsm" in ids
 
+    def test_parse_related_terms(self):
+        """5 related terms from the definition list, no promotion-table junk.
+
+        This class had no related_term assertion at all until 2026-09-04, which
+        is why the b6714f3 mis-parse survived. Full coverage of that regression
+        lives in tests/test_parser_sections.py.
+        """
+        related = [t for t in self.vocab.terms if t.category == "related_term"]
+        assert {t.term_id for t in related} == {
+            "ontology:validity:related:context_window",
+            "ontology:validity:related:compaction",
+            "ontology:validity:related:handoff_document",
+            "ontology:validity:related:state",
+            "ontology:validity:related:fidelity",
+        }
+        # 'leibniz-pi' is an Origin Project column value, never a definition.
+        assert all(t.definition.strip().lower() != "leibniz-pi" for t in self.vocab.terms)
+
     def test_parse_relationships(self):
         """Relationship counts match expected topology."""
         by_type: dict[str, int] = {}
@@ -178,7 +206,7 @@ class TestParser:
 
 @pytest.fixture
 def clean_master_db(neo4j_driver):
-    """Clear seldon-test (used as master substitute) before each test."""
+    """Clear the test database (used as master substitute) before each test."""
     with neo4j_driver.session(database="system") as s:
         s.run(f"CREATE DATABASE `{TEST_MASTER_DB}` IF NOT EXISTS WAIT")
     with neo4j_driver.session(database=TEST_MASTER_DB) as s:
@@ -187,7 +215,18 @@ def clean_master_db(neo4j_driver):
 
 
 class TestIngest:
-    """Test ontology ingest into master database (seldon-test as substitute)."""
+    """Test ontology ingest into master database (test database as substitute)."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate_event_store(self, tmp_path, monkeypatch):
+        """Keep ingest events out of the real Seldon repo event log.
+
+        `ingest` appends to the Seldon repository's event store by default,
+        because its subject is the shared master database rather than any one
+        project. Without this redirect every test run would append test events
+        to the repo's tracked log.
+        """
+        monkeypatch.setenv("SELDON_ONTOLOGY_EVENT_DIR", str(tmp_path))
 
     def test_ingest_creates_meta_node(self, clean_master_db, monkeypatch):
         """After ingest, _OntologyMeta {key: 'master'} exists with epoch >= 1."""
@@ -233,10 +272,25 @@ class TestIngest:
             ).single()["cnt"]
         assert count > 0, "No relationships created"
 
-    def test_ingest_increments_epoch(self, clean_master_db, monkeypatch):
-        """Ingest twice; epoch should be 2 after the second run."""
+    def test_ingest_increments_epoch_on_change(
+        self, clean_master_db, monkeypatch, tmp_path
+    ):
+        """Epoch advances once per *changed* ingest, not once per run.
+
+        The epoch is the staleness signal every replica compares against, so it
+        may only move when master content actually moved.
+        """
         _do_ingest(monkeypatch)
-        _do_ingest(monkeypatch)
+
+        modified = tmp_path / "VALIDITY_VOCABULARY.md"
+        shutil.copy(VOCAB_PATH, modified)
+        modified.write_text(
+            modified.read_text().replace(
+                "State Fidelity Validity (SFV):**",
+                "State Fidelity Validity (SFV):** MODIFIED_DEFINITION_FOR_TEST",
+            )
+        )
+        _do_ingest(monkeypatch, vocab_path=modified)
 
         with clean_master_db.session(database=TEST_MASTER_DB) as s:
             epoch = s.run(
@@ -245,13 +299,12 @@ class TestIngest:
         assert epoch == 2
 
     def test_ingest_idempotent_no_changes(self, clean_master_db, monkeypatch):
-        """Second ingest of the same file reports 0 new, 0 updated."""
+        """Second ingest of the same file changes nothing and says so."""
         _do_ingest(monkeypatch)
         result = _do_ingest(monkeypatch)
         assert result.exit_code == 0
-        # Output should report 0 new and 0 updated (all unchanged)
-        assert "0 new" in result.output
-        assert "updated 0" in result.output
+        assert "No changes" in result.output
+        assert "Master epoch stays 1" in result.output
 
     def test_ingest_detects_definition_change(self, clean_master_db, monkeypatch, tmp_path):
         """Modifying a definition and re-ingesting detects the update."""
@@ -311,11 +364,16 @@ def two_clean_dbs(neo4j_driver):
 class TestSync:
     """Test ontology sync from master to project database."""
 
+    @pytest.fixture(autouse=True)
+    def _isolate_event_store(self, tmp_path, monkeypatch):
+        """Keep ingest events out of the real Seldon repo event log."""
+        monkeypatch.setenv("SELDON_ONTOLOGY_EVENT_DIR", str(tmp_path))
+
     def _ingest_then_sync(self, driver, monkeypatch, tmp_path):
         """Helper: ingest to master, then sync to project. Returns sync result dict."""
         from seldon.commands.ontology import _do_sync
 
-        # Ingest into master (seldon-test)
+        # Ingest into master (the per-process test database)
         result = _do_ingest(monkeypatch)
         assert result.exit_code == 0, f"ingest failed: {result.output}"
 

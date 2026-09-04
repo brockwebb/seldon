@@ -19,13 +19,15 @@ from seldon.paper.build import (
     resolve_references,
 )
 
+from tests.testdb import TEST_DATABASE
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 
 
@@ -432,7 +434,7 @@ def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
     """00_abstract.md content does not appear in the assembled section body."""
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: " + TEST_DATABASE + "\n"
         "event_store:\n  path: seldon_events.jsonl\n"
     )
     paper_dir = tmp_path / "paper"
@@ -447,7 +449,7 @@ def test_build_paper_skips_abstract_from_body(tmp_path, monkeypatch):
     monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
     monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
         "project": {"name": "test", "domain": "research"},
-        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": TEST_DATABASE},
     })
     monkeypatch.setattr(
         "seldon.paper.build._compute_xref_lookups",
@@ -501,7 +503,7 @@ def _make_xref_build_env(tmp_path, section_text, monkeypatch, xref_lookups=None)
 
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: " + TEST_DATABASE + "\n"
         "event_store:\n  path: seldon_events.jsonl\n"
     )
     paper_dir = tmp_path / "paper"
@@ -514,7 +516,7 @@ def _make_xref_build_env(tmp_path, section_text, monkeypatch, xref_lookups=None)
     monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
     monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
         "project": {"name": "test", "domain": "research"},
-        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": TEST_DATABASE},
     })
     # Patch _compute_xref_lookups so tests don't need real graph data
     monkeypatch.setattr(
@@ -627,7 +629,7 @@ def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
     """If 00_abstract.md does not exist, build behaves as before (no abstract: in output)."""
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: " + TEST_DATABASE + "\n"
         "event_store:\n  path: seldon_events.jsonl\n"
     )
     paper_dir = tmp_path / "paper"
@@ -640,7 +642,7 @@ def test_build_paper_no_abstract_file_unchanged(tmp_path, monkeypatch):
     monkeypatch.setattr("seldon.paper.build.get_neo4j_driver", lambda config: mock_driver)
     monkeypatch.setattr("seldon.paper.build.load_project_config", lambda path: {
         "project": {"name": "test", "domain": "research"},
-        "neo4j": {"uri": "bolt://localhost:7687", "database": "seldon-test"},
+        "neo4j": {"uri": "bolt://localhost:7687", "database": TEST_DATABASE},
     })
     monkeypatch.setattr(
         "seldon.paper.build._compute_xref_lookups",
@@ -845,7 +847,7 @@ def _allow_proposed_build_env(tmp_path, section_text, neo4j_driver, monkeypatch)
     """Wire build_paper to the real test database with a single section file."""
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  uri: bolt://localhost:7687\n  database: seldon-test\n"
+        "neo4j:\n  uri: bolt://localhost:7687\n  database: " + TEST_DATABASE + "\n"
         "event_store:\n  path: seldon_events.jsonl\n"
     )
     sections_dir = tmp_path / "paper" / "sections"

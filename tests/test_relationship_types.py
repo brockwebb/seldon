@@ -32,10 +32,12 @@ from seldon.core.artifacts import create_artifact, create_link
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config, validate_relationship
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 
 # Minimal property sets satisfying each type's required properties in
 # research.yaml. Values are only meaningful enough to pass creation.

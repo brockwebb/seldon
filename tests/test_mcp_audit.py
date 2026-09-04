@@ -14,6 +14,8 @@ import yaml
 
 from seldon.mcp_server import seldon_audit, _next_run_id, _resolve_paper_root
 
+from tests.testdb import TEST_DATABASE
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,7 +23,7 @@ def _make_project(tmp_path: Path, paper_subdir: str = "paper") -> Path:
     """Build a minimal Seldon project at tmp_path with a paper section file."""
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  database: seldon-test\n  uri: bolt://localhost:7687\n"
+        "neo4j:\n  database: " + TEST_DATABASE + "\n  uri: bolt://localhost:7687\n"
         "event_store:\n  path: seldon_events.jsonl\n"
         f"paths:\n  paper: {paper_subdir}\n  sections: {paper_subdir}/sections\n"
     )
@@ -201,7 +203,7 @@ def test_audit_invalid_gate_returns_error(tmp_path: Path):
 def test_audit_no_paper_root_returns_error(tmp_path: Path):
     (tmp_path / "seldon.yaml").write_text(
         "project:\n  name: test\n  domain: research\n"
-        "neo4j:\n  database: seldon-test\n  uri: bolt://localhost:7687\n"
+        "neo4j:\n  database: " + TEST_DATABASE + "\n  uri: bolt://localhost:7687\n"
         "event_store:\n  path: seldon_events.jsonl\n"
     )
     section = tmp_path / "random.md"

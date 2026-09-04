@@ -489,3 +489,5 @@ ResearchTask {
 - `task list` excludes terminal states by default (behavior change for existing CLI callers)
 
 **Contradicted premises from the originating task file** (recorded, not silently reconciled): relationship types live in the domain config, not the `seldon-ontology` master DB; `superseded` already existed and the 31 rows were legitimate; `seldon init`'s ontology default was already derived, though still wrong for a wheel install.
+
+**2026-09-04 — AD-028 Amendment 01:** Result name slug grammar amended from `^[a-z0-9][a-z0-9_.-]*$` to `^[A-Za-z0-9][A-Za-z0-9_.-]*$`. Uniqueness unchanged (exact-match, case-sensitive). The lowercase restriction added no collision safety beyond the existing uniqueness rule, collided with an established downstream convention cited by 66 live tokens, and departed from citation-key prior art (BibTeX, Pandoc) without stating a reason. Full text: `docs/design/AD-028_result_names_and_task_lifecycle.md` § Amendment 01.

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -310,6 +311,177 @@ def _warn_if_description_suspicious(
     )
 
 
+# ---------------------------------------------------------------------------
+# Git tracking guard
+# ---------------------------------------------------------------------------
+#
+# Why this exists: 37 of the 50 ResearchTasks in this project's own graph that
+# name a source_file point at a file that is on neither disk nor any branch,
+# because `cc_tasks/` was gitignored until commit c53b3c9. Each of those nodes
+# records that a task existed without recording what it was, and two of them
+# cannot be re-derived at all. Registration is the only moment at which that
+# outcome is still preventable, so the check lives here.
+#
+# "Tracked" means git knows the path — in the index or in a commit. A file that
+# has been `git add`ed but not yet committed counts, because the normal workflow
+# is write spec → add → register → commit the spec and the RESULT together, and
+# a guard that demanded a prior commit would make the sanctioned workflow
+# impossible.
+
+#: Path is in git's index or a commit — provenance is recoverable.
+GIT_TRACKED = "tracked"
+#: Path is inside a git work tree but git does not know it.
+GIT_UNTRACKED = "untracked"
+#: Path is inside a git work tree and matched by a .gitignore rule. This is the
+#: exact condition that produced the 37 orphans, so it gets its own diagnostic.
+GIT_IGNORED = "ignored"
+#: There is no git work tree here at all — nothing can recover the file.
+GIT_NO_REPO = "no-repo"
+#: git is not installed or not on PATH.
+GIT_UNAVAILABLE = "git-unavailable"
+
+
+def _git(project_dir: Path, *args: str) -> subprocess.CompletedProcess:
+    """Run a git command inside ``project_dir`` and return the completed process.
+
+    Args:
+        project_dir: Directory to run git in.
+        *args: Arguments after ``git``.
+
+    Returns:
+        The completed process; the caller inspects ``returncode``.
+
+    Raises:
+        FileNotFoundError: If the git executable is not on PATH.
+    """
+    return subprocess.run(
+        ["git", "-C", str(project_dir), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def _git_tracking_status(project_dir: Path, task_path: Path) -> str:
+    """Classify a task file's git provenance.
+
+    Args:
+        project_dir: Project root, used as git's working directory.
+        task_path: Absolute path to the task file.
+
+    Returns:
+        One of :data:`GIT_TRACKED`, :data:`GIT_IGNORED`, :data:`GIT_UNTRACKED`,
+        :data:`GIT_NO_REPO`, :data:`GIT_UNAVAILABLE`.
+    """
+    try:
+        inside = _git(project_dir, "rev-parse", "--is-inside-work-tree")
+    except FileNotFoundError:
+        return GIT_UNAVAILABLE
+    if inside.returncode != 0 or inside.stdout.strip() != "true":
+        return GIT_NO_REPO
+
+    listed = _git(project_dir, "ls-files", "--error-unmatch", "--", str(task_path))
+    if listed.returncode == 0:
+        return GIT_TRACKED
+
+    # Untracked. Distinguish "ignored" because that is the failure mode that
+    # actually happened here, and its remediation is different: editing
+    # .gitignore, not `git add`.
+    ignored = _git(project_dir, "check-ignore", "-q", "--", str(task_path))
+    return GIT_IGNORED if ignored.returncode == 0 else GIT_UNTRACKED
+
+
+#: Human-readable reason per non-tracked status, keyed by status constant.
+_UNTRACKED_REASONS = {
+    GIT_IGNORED: (
+        "the file is matched by a .gitignore rule, so it will never be "
+        "committed and its spec cannot be recovered later"
+    ),
+    GIT_UNTRACKED: (
+        "git does not know this path — it is in neither the index nor a commit"
+    ),
+    GIT_NO_REPO: (
+        "there is no git work tree here, so nothing can recover the file "
+        "once it is deleted"
+    ),
+    GIT_UNAVAILABLE: (
+        "git is not on PATH, so the file's provenance cannot be established"
+    ),
+}
+
+#: Remediation per non-tracked status.
+_UNTRACKED_REMEDIES = {
+    GIT_IGNORED: "Un-ignore the path (edit .gitignore), then `git add`.",
+    GIT_UNTRACKED: "Run `git add <file>` first.",
+    GIT_NO_REPO: "Initialise a repository, or re-run with --allow-untracked.",
+    GIT_UNAVAILABLE: "Install git, or re-run with --allow-untracked.",
+}
+
+
+def _enforce_git_tracking(
+    project_dir: Path,
+    task_path: Path,
+    rel_path: str,
+    command: str,
+    allow_untracked: bool,
+) -> None:
+    """Refuse to register a task file git cannot recover, and warn either way.
+
+    A tracked file always proceeds, with a reminder that the file must be
+    committed alongside the RESULT — being in the index is not being in history.
+    An untracked file is refused unless ``allow_untracked`` is set, in which
+    case it proceeds with a loud warning naming the consequence.
+
+    Args:
+        project_dir: Project root.
+        task_path: Absolute path to the task file.
+        rel_path: Path as it will be stored in ``source_file``.
+        command: Command name, for the error message ("cc register").
+        allow_untracked: Operator override.
+
+    Returns:
+        None.
+
+    Raises:
+        SystemExit: Exit code 1 when the file is not tracked and no override
+            was given.
+    """
+    status = _git_tracking_status(project_dir, task_path)
+
+    if status == GIT_TRACKED:
+        click.echo(
+            f"NOTE: commit {rel_path} together with its RESULT. A registered "
+            "task whose source file never reaches a commit becomes an "
+            "undescribable stub in the graph.",
+            err=True,
+        )
+        return
+
+    reason = _UNTRACKED_REASONS[status]
+    if allow_untracked:
+        click.echo(
+            f"WARNING: registering an untracked task file ({status}) — {reason}.\n"
+            f"  File: {rel_path}\n"
+            "  Proceeding because --allow-untracked was passed. Commit the file "
+            "with its RESULT or this task becomes an undescribable stub.",
+            err=True,
+        )
+        return
+
+    click.echo(
+        f"ERROR: refusing to register an untracked task file ({status}).\n"
+        f"  File: {rel_path}\n"
+        f"  Why: {reason}.\n"
+        f"  A ResearchTask whose source_file cannot be recovered records that a\n"
+        f"  task existed but not what it was — 37 such stubs already exist in\n"
+        f"  this project's graph.\n"
+        f"  Fix: {_UNTRACKED_REMEDIES[status]}\n"
+        f"  Or override: seldon {command} {rel_path} --allow-untracked",
+        err=True,
+    )
+    raise SystemExit(1)
+
+
 def _find_existing(driver, database: str, rel_path: str) -> str | None:
     """Return artifact_id of any ResearchTask with matching source_file, or None."""
     with driver.session(database=database) as session:
@@ -359,11 +531,21 @@ def cc_group():
 @cc_group.command("complete")
 @click.argument("filepath")
 @click.option("--note", default=None, help="Override auto-extracted description")
-def cc_complete(filepath, note):
+@click.option(
+    "--allow-untracked",
+    is_flag=True,
+    default=False,
+    help="Proceed even though git cannot recover the task file. "
+         "The task will become an undescribable stub if the file is lost.",
+)
+def cc_complete(filepath, note, allow_untracked):
     """Record a CC task as completed in the graph.
 
     Creates a ResearchTask artifact in 'completed' state linked to the task file.
     Running twice on the same file warns instead of creating a duplicate.
+
+    Refuses a task file git does not track unless --allow-untracked is passed;
+    a source_file that never reaches a commit cannot be recovered later.
 
     FILEPATH is relative to project root or absolute.
     """
@@ -389,6 +571,14 @@ def cc_complete(filepath, note):
         rel_path = str(task_path.relative_to(project_dir))
     except ValueError:
         rel_path = str(task_path)
+
+    try:
+        _enforce_git_tracking(
+            project_dir, task_path, rel_path, "cc complete", allow_untracked
+        )
+    except SystemExit:
+        driver.close()
+        raise
 
     # Duplicate guard — state-aware
     existing_id = _find_existing(driver, database, rel_path)
@@ -535,11 +725,21 @@ def cc_complete(filepath, note):
 @cc_group.command("register")
 @click.argument("filepath")
 @click.option("--description", default=None, help="Override auto-extracted description")
-def cc_register(filepath, description):
+@click.option(
+    "--allow-untracked",
+    is_flag=True,
+    default=False,
+    help="Proceed even though git cannot recover the task file. "
+         "The task will become an undescribable stub if the file is lost.",
+)
+def cc_register(filepath, description, allow_untracked):
     """Register a CC task file as a proposed ResearchTask in the graph.
 
     Use at task creation time to track the task before execution.
     Running twice on the same file warns instead of creating a duplicate.
+
+    Refuses a task file git does not track unless --allow-untracked is passed;
+    a source_file that never reaches a commit cannot be recovered later.
 
     FILEPATH is relative to project root or absolute.
     """
@@ -563,6 +763,14 @@ def cc_register(filepath, description):
         rel_path = str(task_path.relative_to(project_dir))
     except ValueError:
         rel_path = str(task_path)
+
+    try:
+        _enforce_git_tracking(
+            project_dir, task_path, rel_path, "cc register", allow_untracked
+        )
+    except SystemExit:
+        driver.close()
+        raise
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:

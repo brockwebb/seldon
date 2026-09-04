@@ -45,7 +45,7 @@ artifact_types:
     properties:
       name:
         category: system
-        description: "Stable token key for {{result:NAME:field}} references. Slug grammar ^[a-z0-9][a-z0-9_.-]*$, case-sensitive, <=128 chars, unique per project graph. Not `required` here on purpose: `seldon result register` enforces --name for new registrations, while Results created before AD-028 have no name and must stay valid. See AD-028."
+        description: "Stable token key for {{result:NAME:field}} references. Case-sensitive, <=128 chars, unique per project graph. The slug grammar has a single definition point in code — `seldon.commands.result.RESULT_NAME_PATTERN` — and is deliberately not restated here; run `seldon result register --help` to see it. Not `required` here on purpose: `seldon result register` enforces --name for new registrations, while Results created before AD-028 have no name and must stay valid. See AD-028 and its Amendment 01."
       value:
         required: true
         description: "The numeric or categorical result value"

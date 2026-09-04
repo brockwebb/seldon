@@ -168,3 +168,62 @@ Recorded because the task file is immutable and these premises were contradicted
   `scripts/observability_collect.py`, and `go.py::_read_system_standards` — and the derivation was
   still wrong for a wheel install, because `ontology/` is not packaged and `seldon/ontology/` is the
   parser *code* package. Resolution now requires a marker vocabulary file.
+
+---
+
+## Amendment 01 — the slug grammar admits uppercase
+
+**Date:** 2026-09-04
+**Status:** Accepted
+**Origin:** Seldon task `a79bf520`, found by ai-readiness-kg `cc_tasks/2026-09-03_hygiene_sweep_post_g1_freeze.md` Lane 1. Implemented by `cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md`.
+**Amends:** §1 of this document. The original text above is left as written.
+
+### What changed
+
+The Result name slug grammar
+
+```
+^[a-z0-9][a-z0-9_.-]*$      (original, §1)
+^[A-Za-z0-9][A-Za-z0-9_.-]*$   (amended)
+```
+
+Uniqueness is unchanged: **exact-match, case-sensitive**. Length is unchanged at ≤128.
+
+### Why
+
+1. **The lowercase restriction bought nothing.** §1 already declares names case-sensitive and uniqueness
+   exact-match. A lowercase-only grammar therefore adds no collision safety that the uniqueness rule does
+   not already provide — it was a cosmetic constraint presented as a safety one.
+2. **It collided with an established downstream convention.** ai-readiness-kg's DD-035/DD-037 naming uses
+   uppercase level and class segments (`_L0`…`_L4`, `MOE`, `CI`, `SE`, `CV`, `DP_NOISE`,
+   `RELIABILITY_FLAG`, `VINTAGE`). Those segments carry meaning, and 66 of the affected names are cited by
+   live `{{result:}}` tokens.
+3. **The cost was real and one-sided.** Enforcing lowercase meant renaming 953 Results and rewriting the
+   tokens that cite them, against no measured benefit.
+4. **Prior art agrees.** `{{result:NAME:field}}` is a citation-key mechanism, and the canonical citation-key
+   grammars — BibTeX/biblatex keys, Pandoc `[@key]` citation keys — are case-sensitive and admit mixed
+   case. The original lowercase-only rule departed from that convention without stating a reason.
+
+### Considered and rejected
+
+Adding a **case-insensitive uniqueness check** alongside the widened grammar, so `MOE` and `moe` could not
+coexist. Rejected: the authoring task settled uniqueness as exact-match and case-sensitive, and the measured
+risk is nil — across all 3592 prospective names in ai-readiness-kg there are **zero** groups whose members
+differ only by case. Adding the check would refuse nothing today while diverging from the citation-key prior
+art in (4), which is likewise case-sensitive.
+
+### How the defect reached production
+
+The grammar itself was only half the failure. `migrate-names --dry-run` did not apply the validation the
+live path applied, so the dry run predicted 3529 migrations and the live run wrote 2576 and refused 953,
+exiting non-zero partway through. The lesson is recorded as a rule, not an anecdote:
+
+> **A dry run that does not execute every validation the live path executes is not a dry run.**
+
+The originating sweep verified that the dry run's class counts summed to the row total, which they did — the
+counts were internally consistent and still wrong, because no row was validated. Reconciling totals is not
+evidence of correctness.
+
+The accompanying behavioural changes (validate-all-then-write, `--partial`, resumability, the `refused` and
+`name_set_units_pending` classes, and the `--report` JSONL plan) are specified in the implementing task and
+recorded in its RESULT.

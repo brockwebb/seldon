@@ -39,9 +39,11 @@ from seldon.mcp_server import (
     seldon_task_withdraw,
 )
 
+from tests.testdb import TEST_DATABASE
+
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
-NEO4J_DB = "seldon-test"
+NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
 ARTIFACT_TYPE = "ResearchTask"
 
