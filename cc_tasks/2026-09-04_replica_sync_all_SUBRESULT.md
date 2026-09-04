@@ -249,16 +249,21 @@ on it), it is not met.
 
 1. Every `seldon.yaml` under `/Users/brock` to depth 6 (18 files) with its
    `neo4j.database` extracted. **Complete.** None names `seldon-test-project`.
+   Confirmed independently and at unbounded depth by
+   `grep -rln --include=seldon.yaml "seldon-test-project" /Users/brock`, which
+   returned nothing: no project config anywhere on this machine mentions the
+   database, at any depth, in any section — not just as its `neo4j.database`.
 2. `grep -rn "seldon-test-project"` over `/Users/brock/GitHub` excluding
    `.git`, `node_modules`, `.venv`, `__pycache__`. **Complete** — 21 hits, all
    listed below or in documentation.
 3. This repo's own test harness, specifically. **Complete.**
-4. A full-text grep of `/Users/brock/Documents/GitHub` was started and had
-   returned no hits when this was written, but did **not** finish — that tree is
-   large and slow to walk. It does not change the decision: the blocking
-   references are inside this repository, and check 1 (which does cover the
-   Documents tree) proves no project config there claims the database. Noted
-   rather than glossed over.
+4. `grep -rn "seldon-test-project"` over `/Users/brock/GitHub` **and**
+   `/Users/brock/Documents/GitHub`, and a second bounded pass over the
+   Documents tree restricted to source/config/doc extensions. Both
+   **complete**, and both agree: **zero hits anywhere under
+   `/Users/brock/Documents/GitHub`**. Of the 24 hits across both trees, 23 are
+   in this repository and one is a prose inventory line in
+   `GitHub/arnold/cc_tasks/2026-05-02_deerflow-pilot_step1_findings.md`.
 
 **What was found — the blocking references**
 
