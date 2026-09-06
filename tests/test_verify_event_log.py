@@ -201,4 +201,5 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     results = _run_all_checks(neo4j_driver, TEST_DATABASE, config, project_dir)
     names = [r.name for r in results]
     assert names[-2:] == ["Event log", "Replay"]
-    assert len(results) == 11
+    # 12 since AD-029 added the `precedes` DAG check.
+    assert len(results) == 12

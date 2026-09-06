@@ -8,11 +8,18 @@ from seldon.config import (
     load_project_config, get_neo4j_driver,
     start_session, end_session, get_current_session, get_current_session_data,
 )
-from seldon.core.artifacts import create_artifact
+from seldon.core.artifacts import create_artifact, open_states
 from seldon.core.events import read_events
 from seldon.core.graph import graph_stats, get_stale_artifacts
+from seldon.core.precedence import chain_lines, precedence_view, render_node, short
 from seldon.domain.loader import load_domain_config
 from seldon.commands.docs import run_docs_check
+
+
+#: The ResearchTask states the briefing treats as open when no domain config is
+#: supplied. The domain config is authoritative whenever there is one; this
+#: literal exists only because `get_briefing_data` accepts `domain_config=None`.
+OPEN_TASK_STATES = ("proposed", "accepted", "in_progress", "blocked")
 
 
 def _get_domain_config(config: dict):
@@ -24,13 +31,19 @@ def _get_domain_config(config: dict):
 def get_briefing_data(driver, database: str, domain_config=None) -> dict:
     """Query graph for briefing data. Returns dict with keys:
     open_tasks, stale_artifacts, incomplete_provenance, docs_health, graph_stats,
-    citation_health, open_issues
+    citation_health, open_issues, precedence
+
+    `precedence` is the AD-029 view: `ready` task ids, `chains`, and the
+    `waits_on` map. It is assembled by `seldon.core.precedence.precedence_view`
+    so that `seldon briefing`, `seldon go` and `seldon task list` all read one
+    computation of what is ready rather than three.
     """
     with driver.session(database=database) as session:
         # 1. Open tasks
         open_task_records = session.run(
-            "MATCH (t:ResearchTask) WHERE t.state IN ['proposed','accepted','in_progress','blocked'] "
-            "RETURN t ORDER BY t.created_at"
+            "MATCH (t:ResearchTask) WHERE t.state IN $open_states "
+            "RETURN t ORDER BY t.created_at",
+            open_states=list(OPEN_TASK_STATES),
         ).data()
         open_tasks = [dict(r["t"]) for r in open_task_records]
 
@@ -63,7 +76,19 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             "RETURN count(DISTINCT s) AS n"
         ).single()["n"]
 
-        # 6. Open issues
+        # 6. Precedence view — ready tasks and chains (AD-029).
+        #
+        # The open set comes from the domain config when one was supplied, and
+        # otherwise from the same literal list the open-task query above uses,
+        # so the two never disagree about what "open" means within one call.
+        open_set = (
+            open_states(domain_config, "ResearchTask")
+            if domain_config is not None
+            else OPEN_TASK_STATES
+        )
+        precedence_data = precedence_view(session, open_set)
+
+        # 7. Open issues
         open_issue_records = session.run(
             "MATCH (i:Artifact:Issue) WHERE i.state IN ['open', 'in_progress'] "
             "RETURN i.importance AS importance, i.urgency AS urgency, "
@@ -74,7 +99,7 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
         ).data()
         open_issues = [dict(r) for r in open_issue_records]
 
-    # 7. Documentation completeness (separate driver session for re-use)
+    # 8. Documentation completeness (separate driver session for re-use)
     if domain_config is not None:
         docs_data = run_docs_check(driver, database, domain_config)
     else:
@@ -91,6 +116,7 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             "cited_sections": cited_sections,
         },
         "open_issues": open_issues,
+        "precedence": precedence_data,
     }
 
 
@@ -137,6 +163,30 @@ def briefing_command():
                     bid = b.get("artifact_id", "?")[:8]
                     bstate = b.get("state", "?")
                     click.echo(f"      → blocks: [{btype}] {bid}... ({bstate})")
+    else:
+        click.echo("  (none)")
+
+    prec = data.get("precedence", {})
+    ready = prec.get("ready", [])
+    states = prec.get("states", {})
+    descriptions = prec.get("descriptions", {})
+    prec_chains = prec.get("chains", [])
+
+    click.echo(f"\nNEXT READY ({len(ready)}):")
+    if ready:
+        for tid in ready:
+            desc = (descriptions.get(tid) or "")[:60]
+            click.echo(f"  ▸ {render_node(tid, states)} {desc}")
+    else:
+        click.echo("  (none)")
+
+    click.echo(f"\nCHAINS ({len(prec_chains)}):")
+    if prec_chains:
+        for chain in prec_chains:
+            lines = chain_lines(chain, states, descriptions)
+            click.echo(f"  {lines[0]}")
+            for line in lines[1:]:
+                click.echo(f"      {line}")
     else:
         click.echo("  (none)")
 

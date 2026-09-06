@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import yaml
 from pydantic import BaseModel, model_validator
-
-
-class RelationshipConfig(BaseModel):
-    from_types: List[str]
-    to_types: List[str]
 
 
 class PropertyDef(BaseModel):
@@ -23,6 +18,28 @@ class PropertyDef(BaseModel):
         if self.required:
             self.category = "required"
         return self
+
+
+class RelationshipConfig(BaseModel):
+    """Schema for one relationship type.
+
+    `cardinality` and `inverse` are declarative metadata: nothing in the writer
+    consults them, because the writer stores exactly one direction and never
+    deduplicates. They exist so the read name a query or renderer uses
+    (`preceded_by` for `precedes`) is declared in the domain rather than
+    hardcoded in whichever module happened to need it first (AD-029).
+
+    `properties` declares what may be stored *on the edge*. Declaring it is
+    opt-in: a relationship type that declares no properties accepts any, which
+    is what keeps pre-AD-029 edges (`assumes` carries `topic` and `strength`,
+    undeclared) valid. A type that declares a schema is validated against it.
+    """
+
+    from_types: List[str]
+    to_types: List[str]
+    cardinality: str = "many_to_many"
+    inverse: Optional[str] = None
+    properties: Dict[str, PropertyDef] = {}
 
 
 class ArtifactTypeConfig(BaseModel):
@@ -43,6 +60,25 @@ class DomainConfig(BaseModel):
             if artifact_type not in self.artifact_types:
                 raise ValueError(
                     f"State machine defined for unknown artifact type: {artifact_type}"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_inverse_names_do_not_collide(self) -> "DomainConfig":
+        """An inverse read-name must not also be a stored relationship type.
+
+        `preceded_by` is a *view* of `precedes`. If some later edit declared it
+        as its own relationship type too, half the codebase would traverse the
+        stored edge and half would traverse a second, separately-written one,
+        and the two would silently disagree. Cheaper to forbid at load time.
+        """
+        for rel_type, rel_config in self.relationship_types.items():
+            inverse = rel_config.inverse
+            if inverse and inverse in self.relationship_types:
+                raise ValueError(
+                    f"Relationship '{rel_type}' declares inverse '{inverse}', "
+                    f"which is itself a declared relationship type. An inverse "
+                    f"is a read-name only and is never stored."
                 )
         return self
 
@@ -83,6 +119,36 @@ class DomainConfig(BaseModel):
             return {}
         return dict(type_config.properties)
 
+    def get_relationship_properties(self, rel_type: str) -> Dict[str, PropertyDef]:
+        """Return the declared edge-property definitions for a relationship type.
+
+        Args:
+            rel_type: Relationship type name (lowercase, as declared).
+
+        Returns:
+            Mapping of property name to definition. Empty when the type declares
+            no property schema, which means "any property is accepted".
+        """
+        rel_config = self.relationship_types.get(rel_type)
+        if rel_config is None:
+            return {}
+        return dict(rel_config.properties)
+
+    def get_relationship_inverse(self, rel_type: str) -> Optional[str]:
+        """Return the declared read-name for traversing a relationship backwards.
+
+        Args:
+            rel_type: Relationship type name (lowercase, as declared).
+
+        Returns:
+            The inverse read-name, or None when the type declares none. The
+            inverse is never stored as an edge — see :class:`RelationshipConfig`.
+        """
+        rel_config = self.relationship_types.get(rel_type)
+        if rel_config is None:
+            return None
+        return rel_config.inverse
+
 
 def load_domain_config(config_path: Path) -> DomainConfig:
     """Parse domain YAML file and return validated DomainConfig."""
@@ -122,4 +188,50 @@ def validate_relationship(
         raise ValueError(
             f"'{to_type}' cannot target a '{rel_type}' relationship. "
             f"Valid to_types: {rel_config.to_types}"
+        )
+
+
+def validate_relationship_properties(
+    domain_config: DomainConfig,
+    rel_type: str,
+    properties: Dict[str, object],
+) -> None:
+    """Raise ValueError if edge properties are not permitted for this type.
+
+    Opt-in by declaration: a relationship type with no declared property schema
+    accepts anything, so edges written before AD-029 are unaffected. A type that
+    declares a schema accepts only the declared names, and every property it
+    marks `required: true` must be present.
+
+    Args:
+        domain_config: Loaded domain configuration.
+        rel_type: Relationship type name (lowercase, as declared).
+        properties: Properties about to be written onto the edge.
+
+    Raises:
+        ValueError: If an undeclared property is present, or a required one is
+            missing.
+    """
+    declared = domain_config.get_relationship_properties(rel_type)
+    if not declared:
+        return
+
+    # `created_at` is stamped by seldon.core.graph.create_link on every edge and
+    # is not part of any domain declaration.
+    supplied = {k for k in properties if k != "created_at"}
+
+    unknown = sorted(supplied - set(declared))
+    if unknown:
+        raise ValueError(
+            f"'{rel_type}' does not accept propert{'ies' if len(unknown) > 1 else 'y'} "
+            f"{unknown}. Declared: {sorted(declared)}"
+        )
+
+    missing = sorted(
+        name for name, prop in declared.items()
+        if prop.required and name not in supplied
+    )
+    if missing:
+        raise ValueError(
+            f"'{rel_type}' requires propert{'ies' if len(missing) > 1 else 'y'} {missing}."
         )

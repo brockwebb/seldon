@@ -1,5 +1,5 @@
 domain: research
-version: "0.2"
+version: "0.3"
 
 # System properties set automatically on every artifact, regardless of type:
 #   artifact_id    — UUID, set at creation
@@ -571,6 +571,23 @@ relationship_types:
   depends_on:
     from_types: [ResearchTask]
     to_types: [Result, DataFile, Script]
+  precedes:
+    # AD-029: finish-to-start task ordering. `A precedes B` means B is not
+    # expected to leave `proposed` until A is terminal-complete. This is the
+    # default dependency of precedence diagramming (PMBOK PDM; Kelley & Walker
+    # 1959), and the `precedes` subgraph is required to be a DAG.
+    #
+    # Stored in one direction only. `preceded_by` is a read-name for queries
+    # and rendering — it is never written as an edge, which is why it is
+    # declared here as `inverse` rather than as a second relationship type.
+    from_types: [ResearchTask]
+    to_types: [ResearchTask]
+    cardinality: many_to_many
+    inverse: preceded_by
+    properties:
+      reason:
+        required: false
+        description: "Why the successor waits on the predecessor (free text)"
   validates:
     from_types: [Result]
     to_types: [Result]

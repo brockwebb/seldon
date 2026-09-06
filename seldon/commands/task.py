@@ -22,12 +22,17 @@ from seldon.core.artifacts import (
     walk_to_completed,
 )
 from seldon.core.graph import get_artifact
+from seldon.core import precedence
 from seldon.domain.loader import load_domain_config
 
 # Actor recorded on events written by this CLI. The MCP tools write 'desktop'.
 CLI_ACTOR = "human"
 
 ARTIFACT_TYPE = "ResearchTask"
+
+#: Marks a task that is open and has no unsatisfied `precedes` predecessor —
+#: i.e. one work can start on right now (AD-029).
+READY_MARKER = "\u25b8"  # ▸
 
 
 def _get_domain_config(config: dict):
@@ -98,13 +103,15 @@ def _terminal_transition(task_id, new_state, reason, superseded_by):
     try:
         full_id, node = _load_task(driver, database, task_id)
         old_state = node["state"]
-        transition_task(
+        warnings = transition_task(
             project_dir=project_dir, driver=driver, database=database,
             domain_config=domain_config, artifact_id=full_id,
             current_state=old_state, new_state=new_state,
             actor=CLI_ACTOR, authority="accepted", session_id=session_id,
             terminal_reason=reason, superseded_by=superseded_by,
         )
+        for line in warnings:
+            click.echo(line, err=True)
         click.echo(f"Updated Task: {full_id[:8]}...")
         click.echo(f"  state: {old_state} → {new_state}")
         click.echo(f"  reason: {reason}")
@@ -303,7 +310,16 @@ def task_list(state, open_only, show_all, stale_claims):
                 id=tid,
             ).single()["c"]
 
+        # One pass for the whole `precedes` view (AD-029), shared with the
+        # briefing so the two surfaces cannot disagree about what is ready.
+        view = precedence.precedence_view(session, open_set)
+
     driver.close()
+
+    for t in tasks:
+        tid = t["artifact_id"]
+        t["waits_on"] = view["waits_on"].get(tid, [])
+        t["ready"] = t.get("state") in open_set and not t["waits_on"]
 
     unmarked = 0
     if stale_claims is not None:
@@ -335,8 +351,12 @@ def task_list(state, open_only, show_all, stale_claims):
         )
         click.echo("Report only — no task has been transitioned or released.")
 
-    click.echo(f"{'ID':10} {'STATE':14} {'BLOCKS':7} {'DEPS':5} {'CLAIM':28} DESCRIPTION")
-    click.echo("-" * 110)
+    click.echo(
+        f"{'':2}{'ID':10} {'STATE':14} {'BLOCKS':7} {'DEPS':5} "
+        f"{'WAITS_ON':22} {'CLAIM':28} DESCRIPTION"
+    )
+    click.echo("-" * 130)
+    any_ready = False
     for t in tasks:
         tid = t.get("artifact_id", "?")[:8]
         st = (t.get("state") or "?")[:13]
@@ -349,7 +369,19 @@ def task_list(state, open_only, show_all, stale_claims):
             at = t.get("claimed_at")
             at_text = str(at)[:19] if at else "?"
             claim = f"{by}@{at_text}"[:27]
-        click.echo(f"{tid:<10} {st:<14} {bc:<7} {dc:<5} {claim:<28} {desc}")
+        waits = t.get("waits_on") or []
+        waits_text = ", ".join(precedence.short(w) for w in waits)[:22] or "-"
+        marker = READY_MARKER if t.get("ready") else " "
+        any_ready = any_ready or bool(t.get("ready"))
+        click.echo(
+            f"{marker:<2}{tid:<10} {st:<14} {bc:<7} {dc:<5} "
+            f"{waits_text:<22} {claim:<28} {desc}"
+        )
+
+    if any_ready:
+        click.echo(
+            f"\n{READY_MARKER} = ready: open, with no unsatisfied predecessor."
+        )
 
     if stale_claims is not None and unmarked:
         click.echo(
@@ -386,7 +418,7 @@ def task_update(task_id, state, reason, superseded_by, claimed_by):
         full_id, node = _load_task(driver, database, task_id)
         old_state = node["state"]
 
-        transition_task(
+        warnings = transition_task(
             project_dir=project_dir, driver=driver, database=database,
             domain_config=domain_config, artifact_id=full_id,
             current_state=old_state, new_state=state,
@@ -394,6 +426,8 @@ def task_update(task_id, state, reason, superseded_by, claimed_by):
             claimed_by=claimed_by, terminal_reason=reason,
             superseded_by=superseded_by,
         )
+        for line in warnings:
+            click.echo(line, err=True)
         click.echo(f"Updated Task: {full_id[:8]}...")
         click.echo(f"  state: {old_state} → {state}")
         if reason:
@@ -428,6 +462,7 @@ def task_close(task_id, note):
             project_dir=project_dir, driver=driver, database=database,
             domain_config=domain_config, artifact_id=full_id,
             current_state=old_state, actor=CLI_ACTOR, session_id=session_id,
+            on_warning=lambda line: click.echo(line, err=True),
         )
         click.echo(f"Closed: {full_id[:8]}... — {desc}")
         click.echo(f"  path: {old_state} → " + " → ".join(
@@ -470,6 +505,113 @@ def task_supersede(task_id, reason, superseded_by):
     `superseded_by` edge is written from this task to the artifact that overtook it.
     """
     _terminal_transition(task_id, "superseded", reason, superseded_by)
+
+
+def _precede_body(task_ids, reason, verb):
+    """Shared body for `task precede` and `task chain`.
+
+    Args:
+        task_ids: Two or more task ids or unambiguous prefixes, in execution order.
+        reason: Optional free text stored on every edge written by this call.
+        verb: Word used in the output line ('Precedes' or 'Chained').
+
+    Raises:
+        SystemExit: With a diagnostic on stderr on any validation failure. The
+            whole call is validated before its first write, so a failure here
+            means nothing was written.
+    """
+    project_dir, driver, database, domain_config, session_id = _open_project()
+    try:
+        result = precedence.add_chain(
+            project_dir=project_dir, driver=driver, database=database,
+            domain_config=domain_config, task_ids=list(task_ids), reason=reason,
+            actor=CLI_ACTOR, authority="accepted", session_id=session_id,
+        )
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    finally:
+        driver.close()
+
+    click.echo(f"{verb}: {precedence.render_path(result.resolved)}")
+    for before, after in result.created:
+        click.echo(f"  + {precedence.short(before)} → {precedence.short(after)}")
+    for before, after in result.skipped:
+        click.echo(
+            f"  = {precedence.short(before)} → {precedence.short(after)} "
+            f"(already recorded)"
+        )
+    if reason and result.created:
+        click.echo(f"  reason: {reason}")
+
+
+@task_group.command("precede")
+@click.argument("before_id")
+@click.argument("after_id")
+@click.option(
+    "--reason", default=None,
+    help="Why the successor waits on the predecessor. Stored on the edge.",
+)
+def task_precede(before_id, after_id, reason):
+    """Record that BEFORE_ID must finish before AFTER_ID starts.
+
+    Finish-to-start ordering (AD-029). Advisory: nothing is blocked, but the
+    successor is reported as waiting until the predecessor is completed,
+    verified, superseded or withdrawn.
+
+    The `precedes` subgraph must stay acyclic — an edge that would close a cycle
+    is refused and the error names the cycle. Re-running an edge that already
+    exists is a no-op.
+    """
+    _precede_body([before_id, after_id], reason, "Precedes")
+
+
+@task_group.command("chain")
+@click.argument("task_ids", nargs=-1, required=True)
+@click.option(
+    "--reason", default=None,
+    help="Why the tasks are ordered this way. Stored on every edge written.",
+)
+def task_chain(task_ids, reason):
+    """Order a whole sequence of tasks: TASK_IDS in execution order.
+
+    `seldon task chain A B C` writes A → B and B → C. All-or-nothing: if any
+    link would be a self-loop or close a cycle, nothing at all is written.
+    Existing links are left alone, so re-running a chain is safe.
+    """
+    if len(task_ids) < 2:
+        click.echo(
+            "Error: a chain needs at least two tasks.", err=True
+        )
+        raise SystemExit(1)
+    _precede_body(task_ids, reason, "Chained")
+
+
+@task_group.command("unprecede")
+@click.argument("before_id")
+@click.argument("after_id")
+def task_unprecede(before_id, after_id):
+    """Remove the `precedes` edge from BEFORE_ID to AFTER_ID.
+
+    The way an operator retires an ordering that no longer reflects the plan —
+    including a chain hanging off a rejected predecessor.
+    """
+    project_dir, driver, database, domain_config, session_id = _open_project()
+    try:
+        before, after = precedence.remove_precedence(
+            project_dir=project_dir, driver=driver, database=database,
+            before_id=before_id, after_id=after_id,
+            actor=CLI_ACTOR, authority="accepted", session_id=session_id,
+        )
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    finally:
+        driver.close()
+
+    click.echo(
+        f"Removed: {precedence.short(before)} → {precedence.short(after)}"
+    )
 
 
 @task_group.command("show")

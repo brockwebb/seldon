@@ -3,14 +3,19 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from neo4j import Driver
 
-from seldon.domain.loader import DomainConfig, validate_artifact_type, validate_relationship
+from seldon.domain.loader import (
+    DomainConfig,
+    validate_artifact_type,
+    validate_relationship,
+    validate_relationship_properties,
+)
 from seldon.core.state import validate_transition
 from seldon.core.events import append_event, make_event
-from seldon.core import graph
+from seldon.core import graph, precedence
 
 # AD-028 — ResearchTask lifecycle semantics.
 #
@@ -253,13 +258,27 @@ def create_link(
 ) -> None:
     """Validate relationship, write JSONL event, then create Neo4j relationship.
 
+    Every precondition is checked before the first write, so a rejected call
+    leaves nothing in the event log or the graph.
+
     Args:
         rel_properties: Optional properties to set on the relationship itself
             (e.g., topic and strength for `assumes` edges).
+
+    Raises:
+        ValueError: If the endpoints are illegal for the relationship type, if a
+            declared edge-property schema is violated, or — for `precedes` — if
+            the edge would be a self-loop or close a cycle (AD-029).
     """
     validate_relationship(domain_config, rel_type, from_type, to_type)
 
     props = rel_properties or {}
+    validate_relationship_properties(domain_config, rel_type, props)
+
+    # The DAG invariant is enforced here rather than in the CLI so that every
+    # write path reaches it, `seldon link create` included (AD-029).
+    if rel_type == precedence.REL_TYPE:
+        precedence.validate_precedes_write(driver, database, from_id, to_id)
 
     event = make_event(
         event_type="link_created",
@@ -402,7 +421,7 @@ def transition_task(
     claimed_by: Optional[str] = None,
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
-) -> None:
+) -> List[str]:
     """Transition a ResearchTask, applying the AD-028 lifecycle side effects.
 
     Wraps :func:`transition_state` with the two ResearchTask-specific behaviours that
@@ -436,6 +455,12 @@ def transition_task(
             refused for every other target state.
         superseded_by: Optional artifact_id (or unambiguous prefix) of the artifact
             that overtook this task. Only valid when ``new_state`` is 'superseded'.
+
+    Returns:
+        Advisory warning lines the caller should surface — currently the AD-029
+        `precedes` warning raised when work starts ahead of an unsatisfied
+        predecessor. Empty when there is nothing to say. Advisory means
+        advisory: the transition has already happened when these are returned.
 
     Raises:
         ValueError: If a required reason is missing, if a reason/claim/superseded_by
@@ -491,6 +516,12 @@ def transition_task(
 
     validate_transition(domain_config, artifact_type, current_state, new_state)
 
+    # Read before the writes: the question is whether it was legitimate to start
+    # this task, which is a fact about the graph as it stood beforehand.
+    warnings = precedence.transition_warnings(
+        driver, database, artifact_id, new_state
+    )
+
     # --- Writes: property event first, then the state event, then the edge ---
     properties: Dict[str, Any] = {}
     if new_state in REASON_REQUIRED_STATES:
@@ -541,6 +572,8 @@ def transition_task(
             session_id=session_id,
         )
 
+    return warnings
+
 
 def walk_to_completed(
     project_dir: Path,
@@ -552,6 +585,7 @@ def walk_to_completed(
     actor: str = "cc",
     session_id: Optional[str] = None,
     claimed_by: Optional[str] = None,
+    on_warning: Optional[Callable[[str], None]] = None,
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
@@ -573,6 +607,10 @@ def walk_to_completed(
         session_id: Optional Seldon session id recorded on the events.
         claimed_by: Agent identifier recorded if the walk crosses the claim
             transition. Defaults to ``actor``.
+        on_warning: Optional sink for advisory warnings raised along the walk
+            (AD-029). A callback rather than a second return value so that the
+            walk's return contract — the thing both surfaces render and the
+            parity test compares — stays exactly what it was.
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -597,7 +635,7 @@ def walk_to_completed(
     transitions = []
     state = current_state
     for next_state in steps:
-        transition_task(
+        step_warnings = transition_task(
             project_dir=project_dir,
             driver=driver,
             database=database,
@@ -610,6 +648,9 @@ def walk_to_completed(
             session_id=session_id,
             claimed_by=claimed_by if (state, next_state) == CLAIM_TRANSITION else None,
         )
+        if on_warning is not None:
+            for line in step_warnings:
+                on_warning(line)
         transitions.append(f"{state} → {next_state}")
         state = next_state
 

@@ -42,6 +42,9 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
 | `paper impact`    | Check blast radius of a change | `seldon paper impact <n>` |
 | `paper context`   | Structured context for drafting/revision | `seldon paper context <section-name> [--format yaml\|text]` |
+| `task precede`    | One task must finish before another starts | `seldon task precede <A> <B> [--reason ...]` |
+| `task chain`      | Order a whole sequence of tasks | `seldon task chain <A> <B> <C> ...` |
+| `task unprecede`  | Retire an ordering that no longer holds | `seldon task unprecede <A> <B>` |
 | `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
 | `cc register`     | When writing a new CC task | `seldon cc register <task-filepath>` |
 
@@ -55,7 +58,10 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 | `seldon_task_create` | Create a ResearchTask |
 | `seldon_task_update` | Single state transition |
 | `seldon_task_close` | Walk any task to `completed` in one call |
-| `seldon_task_list` | List tasks by state filter |
+| `seldon_task_list` | List tasks by state filter (marks ready tasks) |
+| `seldon_task_precede` | Order one task before another |
+| `seldon_task_chain` | Order a whole sequence of tasks in one call |
+| `seldon_task_unprecede` | Remove a `precedes` edge |
 | `seldon_issue_create` | Create Issue (Eisenhower 3×3) |
 | `seldon_issue_update` | Update Issue state/priority |
 | `seldon_cc_complete` | Mark CC task file as completed |
@@ -71,6 +77,12 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
    **CC task contracts:** Complex CC tasks (3+ deliverables, schema + code changes, new test files, or tasks where the spec says "check whether X exists and handle accordingly") should include a `## Success Contract` section in the task file or produce a separate `cc_tasks/<date>_<name>_contract.md` before execution begins. The contract lists deliverables, verification commands with expected results, scope boundaries, and assumptions. Simple tasks (single-function fixes, doc updates, file registration) do not need contracts. Template: `docs/templates/cc_task_contract.md`.
 3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
 4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
+
+**Multi-task plans belong in the graph too (AD-029).** `seldon task chain A B C` records the
+order; `seldon go` then renders **Next ready** and **Chains**, and `seldon task list` marks ready
+tasks with `▸`. Ordering carried as prose in each task's description drifts — that is the defect
+this replaced. The `precedes` subgraph must stay acyclic and is advisory: starting a task ahead of
+its predecessor warns and proceeds.
 
 Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. Desktop sessions can create tasks and issues via MCP tools (`seldon_task_create`, `seldon_issue_create`). If a task must survive across sessions, create a graph artifact.
 
@@ -174,6 +186,7 @@ AD-021: Session Continuity Fidelity — `docs/design/AD-021_session_continuity_f
 AD-026: `seldon init` Project Templates — `docs/design/AD-026_init_templates.md`
 AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-027_snapshot_artifacts.md`
 AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics — `docs/design/AD-028_result_names_and_task_lifecycle.md`
+AD-029: `precedes` — Task Ordering as a First-Class Relationship — `docs/design/AD-029_task_precedence.md`
 
 ## Project Templates
 

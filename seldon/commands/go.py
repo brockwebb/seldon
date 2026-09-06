@@ -10,6 +10,7 @@ from typing import Optional
 import click
 
 from seldon.config import load_project_config, get_neo4j_driver
+from seldon.core.precedence import chain_lines, render_node
 from seldon.domain.loader import load_domain_config
 from seldon.paths import resolve_system_standards
 
@@ -248,6 +249,45 @@ def _get_handoff_reconciliation(project_dir: str, handoff_text: str) -> Optional
         return None
 
 
+def _format_precedence(precedence_data: dict) -> list[str]:
+    """Format the AD-029 `precedes` view: what is ready, and what waits on what.
+
+    Placed directly after open tasks because it answers the question an
+    orienting agent asks next: of these open tasks, which one may I start?
+
+    Args:
+        precedence_data: The `precedence` block of the briefing data, as
+            assembled by `seldon.core.precedence.precedence_view`. An empty dict
+            (a project whose graph predates AD-029) renders nothing.
+
+    Returns:
+        Markdown lines, or an empty list when there is no precedence data.
+    """
+    if not precedence_data:
+        return []
+
+    states = precedence_data.get("states", {})
+    descriptions = precedence_data.get("descriptions", {})
+    ready = precedence_data.get("ready", [])
+    chains = precedence_data.get("chains", [])
+
+    lines = ["", f"**Next ready:** {len(ready)}"]
+    if ready:
+        for task_id in ready:
+            desc = (descriptions.get(task_id) or "")[:80]
+            lines.append(f"- {render_node(task_id, states)} {desc}")
+    else:
+        lines.append("- (none — every open task waits on a predecessor)")
+
+    lines.append("")
+    lines.append(f"**Chains:** {len(chains)}")
+    for chain in chains:
+        rendered = chain_lines(chain, states, descriptions)
+        lines.append(f"- {rendered[0]}")
+        lines.extend(f"    - {line}" for line in rendered[1:])
+    return lines
+
+
 def _format_project_state(briefing_data: dict) -> str:
     """Format briefing data dict into a markdown project state section."""
     open_tasks = briefing_data["open_tasks"]
@@ -262,6 +302,8 @@ def _format_project_state(briefing_data: dict) -> str:
         desc = (t.get("description") or "")[:80]
         state = t.get("state", "?")
         lines.append(f"- [{state}] {desc}")
+
+    lines.extend(_format_precedence(briefing_data.get("precedence") or {}))
 
     lines.append("")
     lines.append(f"**Stale Artifacts:** {len(stale)}")

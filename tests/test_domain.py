@@ -12,7 +12,8 @@ def research_config():
 
 def test_load_domain_config(research_config):
     assert research_config.domain == "research"
-    assert research_config.version == "0.2"
+    # 0.3 — AD-029 added the `precedes` relationship type.
+    assert research_config.version == "0.3"
     assert "Result" in research_config.artifact_types
     assert "ResearchTask" in research_config.artifact_types
     assert len(research_config.artifact_types) == 21  # AD-020: + AuditRun, AuditFinding

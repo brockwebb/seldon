@@ -67,6 +67,7 @@ def _walk_task_to_completed(
     domain_config,
     artifact_id: str,
     current_state: str,
+    on_warning=None,
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
@@ -81,6 +82,8 @@ def _walk_task_to_completed(
         domain_config: Loaded domain configuration.
         artifact_id: Full artifact_id of the ResearchTask.
         current_state: The task's current state in the graph.
+        on_warning: Optional sink for advisory `precedes` warnings (AD-029),
+            passed straight through to the shared walker.
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -98,6 +101,7 @@ def _walk_task_to_completed(
         artifact_id=artifact_id,
         current_state=current_state,
         actor=MCP_ACTOR,
+        on_warning=on_warning,
     )
 
 
@@ -293,7 +297,7 @@ def seldon_task_update(
 
         current_state = node.get("state", "")
 
-        transition_task(
+        warnings = transition_task(
             project_dir=p, driver=driver, database=database,
             domain_config=domain_config,
             artifact_id=full_id,
@@ -301,11 +305,14 @@ def seldon_task_update(
             actor=MCP_ACTOR, authority="accepted",
         )
 
-        return (
+        out = (
             f"Updated: {full_id[:8]}...\n"
             f"  {current_state} → {state}"
             + (f"\n  note: {note}" if note else "")
         )
+        for line in warnings:
+            out += f"\n  {line}"
+        return out
     except (ValueError, InvalidStateTransition) as exc:
         return f"Error: {exc}"
     finally:
@@ -397,15 +404,18 @@ def seldon_task_close(
         if current_state == "completed":
             return f"Already completed: {full_id[:8]}... — {desc}"
 
+        warnings: list[str] = []
         transitions = _walk_task_to_completed(
             project_dir=p, driver=driver, database=database,
             domain_config=domain_config, artifact_id=full_id,
-            current_state=current_state,
+            current_state=current_state, on_warning=warnings.append,
         )
 
         result = f"Closed: {full_id[:8]}... — {desc}\n  path: {' → '.join(t.split(' → ')[1] for t in transitions)}"
         if note:
             result += f"\n  note: {note}"
+        for line in warnings:
+            result += f"\n  {line}"
         return result
     except ValueError as exc:
         return f"Error: {exc}"
@@ -436,13 +446,15 @@ def seldon_task_list(
         brief: If True, one-line summaries. If False, full details including IDs.
     """
     from seldon.core.artifacts import open_states
+    from seldon.core import precedence
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
 
+    open_set = open_states(domain_config, "ResearchTask")
     params: dict[str, Any] = {}
     if state_filter == "open":
         where = "WHERE t.state IN $states"
-        params["states"] = open_states(domain_config, "ResearchTask")
+        params["states"] = open_set
     elif state_filter == "all":
         where = ""
     else:
@@ -456,6 +468,9 @@ def seldon_task_list(
                 "RETURN t ORDER BY t.created_at",
                 **params,
             ).data()
+            # Same one-pass view the CLI listing and the briefing read, so a
+            # Desktop thread picking work sees the same readiness (AD-029).
+            view = precedence.precedence_view(session, open_set)
     finally:
         driver.close()
 
@@ -465,24 +480,161 @@ def seldon_task_list(
     lines = [f"ResearchTasks ({state_filter}): {len(records)}"]
     for r in records:
         t = dict(r["t"])
+        tid = t.get("artifact_id", "")
         state = t.get("state", "?")
         desc = (t.get("description") or "")[:80]
         claim = ""
         if state == "in_progress" and t.get("claimed_by"):
             claim = f" (claimed by {t['claimed_by']} at {t.get('claimed_at', '?')})"
+        waits = view["waits_on"].get(tid, [])
+        marker = "▸" if (state in open_set and not waits) else " "
         if brief:
-            lines.append(f"  [{state}] {desc}{claim}")
+            lines.append(f"  {marker} [{state}] {desc}{claim}")
         else:
-            aid = t.get("artifact_id", "?")[:8]
             source = t.get("source_file", "")
-            lines.append(f"  [{state}] {desc}{claim}")
-            lines.append(f"    id: {aid}...")
+            lines.append(f"  {marker} [{state}] {desc}{claim}")
+            lines.append(f"    id: {tid[:8]}...")
             if source:
                 lines.append(f"    source: {source}")
             if t.get("terminal_reason"):
                 lines.append(f"    reason: {t['terminal_reason']}")
+        if waits:
+            lines.append(
+                f"    waits_on: {', '.join(precedence.short(w) for w in waits)}"
+            )
 
+    lines.append("▸ = ready: open, with no unsatisfied predecessor.")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Precedence tools (AD-029)
+#
+# Argument-for-argument parity with `seldon task precede|unprecede|chain`.
+# Every one of them delegates to `seldon.core.precedence`, so the CLI and the
+# Desktop thread share one validator, one writer and one set of error strings —
+# the same construction that keeps the AD-028 close walk identical across both
+# surfaces.
+# ---------------------------------------------------------------------------
+
+def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str) -> str:
+    """Shared body for seldon_task_precede and seldon_task_chain.
+
+    Args:
+        task_ids: Two or more task ids or prefixes, in execution order.
+        reason: Optional free text stored on every edge written.
+        project_dir: Path to project root.
+        verb: Word used in the result line ('Precedes' or 'Chained').
+
+    Returns:
+        A human-readable result, or an "Error: ..." line. The whole call is
+        validated before its first write, so an error means nothing was written.
+    """
+    from seldon.core import precedence
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    p = Path(project_dir)
+
+    try:
+        result = precedence.add_chain(
+            project_dir=p, driver=driver, database=database,
+            domain_config=domain_config, task_ids=task_ids,
+            reason=reason or None, actor=MCP_ACTOR, authority="accepted",
+        )
+    except ValueError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+
+    lines = [f"{verb}: {precedence.render_path(result.resolved)}"]
+    lines.extend(
+        f"  + {precedence.short(a)} → {precedence.short(b)}" for a, b in result.created
+    )
+    lines.extend(
+        f"  = {precedence.short(a)} → {precedence.short(b)} (already recorded)"
+        for a, b in result.skipped
+    )
+    if reason and result.created:
+        lines.append(f"  reason: {reason}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def seldon_task_precede(
+    before_id: str,
+    after_id: str,
+    project_dir: str = ".",
+    reason: str = "",
+) -> str:
+    """Record that one ResearchTask must finish before another starts.
+
+    Finish-to-start ordering (AD-029). Advisory: nothing is blocked, but the
+    successor is reported as waiting until the predecessor is completed,
+    verified, superseded or withdrawn. The `precedes` subgraph must stay
+    acyclic — an edge that would close a cycle is refused and the error names
+    the cycle. Re-recording an existing edge is a no-op.
+
+    Args:
+        before_id: Predecessor ResearchTask id (full UUID or prefix)
+        after_id: Successor ResearchTask id (full UUID or prefix)
+        project_dir: Path to project root
+        reason: Optional free text stored on the edge
+    """
+    return _mcp_add_chain([before_id, after_id], reason, project_dir, "Precedes")
+
+
+@mcp.tool()
+def seldon_task_chain(
+    task_ids: list[str],
+    project_dir: str = ".",
+    reason: str = "",
+) -> str:
+    """Order a whole sequence of ResearchTasks in one call.
+
+    `[A, B, C]` writes A → B and B → C. All-or-nothing: if any link would be a
+    self-loop or close a cycle, nothing at all is written. Existing links are
+    left alone, so re-running a chain is safe.
+
+    Args:
+        task_ids: Two or more ResearchTask ids or prefixes, in execution order
+        project_dir: Path to project root
+        reason: Optional free text stored on every edge written
+    """
+    if len(task_ids) < 2:
+        return "Error: a chain needs at least two tasks."
+    return _mcp_add_chain(list(task_ids), reason, project_dir, "Chained")
+
+
+@mcp.tool()
+def seldon_task_unprecede(
+    before_id: str,
+    after_id: str,
+    project_dir: str = ".",
+) -> str:
+    """Remove a `precedes` edge between two ResearchTasks.
+
+    Args:
+        before_id: Predecessor ResearchTask id (full UUID or prefix)
+        after_id: Successor ResearchTask id (full UUID or prefix)
+        project_dir: Path to project root
+    """
+    from seldon.core import precedence
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    p = Path(project_dir)
+
+    try:
+        before, after = precedence.remove_precedence(
+            project_dir=p, driver=driver, database=database,
+            before_id=before_id, after_id=after_id,
+            actor=MCP_ACTOR, authority="accepted",
+        )
+    except ValueError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+
+    return f"Removed: {precedence.short(before)} → {precedence.short(after)}"
 
 
 # ---------------------------------------------------------------------------

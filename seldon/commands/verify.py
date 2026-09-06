@@ -1,10 +1,11 @@
 """
 seldon verify — project integrity checks.
 
-Runs 11 checks in order: file hash integrity, ontology freshness,
+Runs 12 checks in order: file hash integrity, ontology freshness,
 glossary compliance, reference resolution, stale artifacts,
 open blocking tasks, unregistered files, relationship-type case,
-task source-file resolution, event-log readability, and event-log replay.
+`precedes` DAG integrity, task source-file resolution, event-log readability,
+and event-log replay.
 Reports issues with actionable remediation guidance.
 
 Exit codes:
@@ -12,7 +13,8 @@ Exit codes:
         0 — all clean
         1 — warnings only (stale artifacts, open blocking tasks, missing task source files)
         2 — issues found (hash mismatch, ontology drift, unresolvable refs,
-            unregistered files, non-canonical relationship types)
+            unregistered files, non-canonical relationship types, a malformed
+            `precedes` subgraph)
     Strict mode (--strict):
         0 — no Tier A violations (advisory findings may exist)
         2 — Tier A violations found (file hashes, ontology, glossary, references, unregistered files)
@@ -815,7 +817,108 @@ def check_relationship_types(driver, database: str) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 9: Task source files
+# Check 9: Precedence DAG (AD-029)
+# ---------------------------------------------------------------------------
+
+def check_precedence(driver, database: str) -> CheckResult:
+    """Fail when the `precedes` subgraph is not a well-formed DAG.
+
+    Three ways it can be malformed, all of them meaning a write bypassed
+    ``seldon.core.artifacts.create_link``, which refuses every one of them:
+
+    * a **cycle**, which makes "what is ready?" unanswerable — every task in the
+      cycle waits on itself, so none is ever ready and the briefing silently
+      stops proposing work;
+    * a **self-loop**, the degenerate cycle;
+    * a **dangling or mistyped endpoint** — an edge to a node that no longer
+      exists, or to something that is not a ResearchTask. Its state can never
+      satisfy the edge, so its successor waits forever.
+
+    Not Tier A. Like "Relationship types", it reports a property of accumulated
+    graph state rather than of the change in hand: an operator can author a
+    cycle with raw Cypher, and an executing CC task cannot make that clean by
+    doing its own task correctly. Default `seldon verify` still fails on it.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+
+    Returns:
+        A CheckResult named "Precedence".
+    """
+    from seldon.core.precedence import (
+        ARTIFACT_TYPE as PRECEDES_ENDPOINT_TYPE,
+        find_cycles,
+        read_edges,
+        render_path,
+        short,
+    )
+
+    with driver.session(database=database) as session:
+        edges = read_edges(session)
+
+    if not edges:
+        return CheckResult(
+            name="Precedence",
+            symbol="pass",
+            summary="No `precedes` edges",
+        )
+
+    details: list[str] = []
+
+    bad_endpoints = [
+        e for e in edges
+        if e.from_id is None
+        or e.to_id is None
+        or e.from_type != PRECEDES_ENDPOINT_TYPE
+        or e.to_type != PRECEDES_ENDPOINT_TYPE
+    ]
+    for e in bad_endpoints:
+        details.append(
+            f"illegal endpoint: {short(e.from_id or '?')} [{e.from_type or 'missing'}] "
+            f"→ {short(e.to_id or '?')} [{e.to_type or 'missing'}] "
+            f"— both ends must be a {PRECEDES_ENDPOINT_TYPE}"
+        )
+
+    pairs = [e.pair for e in edges if e.from_id and e.to_id]
+    self_loops = sorted({a for a, b in pairs if a == b})
+    for node in self_loops:
+        details.append(f"self-loop: {short(node)} precedes itself")
+
+    cycles = [c for c in find_cycles(pairs) if len(set(c)) > 1]
+    for cycle in cycles:
+        details.append(f"cycle: {render_path(cycle)}")
+
+    if not details:
+        return CheckResult(
+            name="Precedence",
+            symbol="pass",
+            summary=f"{len(edges)} edge{'s' if len(edges) != 1 else ''}, acyclic",
+        )
+
+    parts = []
+    if cycles:
+        parts.append(f"{len(cycles)} cycle{'s' if len(cycles) != 1 else ''}")
+    if self_loops:
+        parts.append(f"{len(self_loops)} self-loop{'s' if len(self_loops) != 1 else ''}")
+    if bad_endpoints:
+        parts.append(
+            f"{len(bad_endpoints)} illegal endpoint"
+            f"{'s' if len(bad_endpoints) != 1 else ''}"
+        )
+    details.append(
+        "Remove an edge with: seldon task unprecede <before> <after>"
+    )
+    return CheckResult(
+        name="Precedence",
+        symbol="fail",
+        summary=", ".join(parts) + " — readiness is unanswerable",
+        details=details,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Check 10: Task source files
 # ---------------------------------------------------------------------------
 
 #: How many missing source files to name individually before summarising the
@@ -974,7 +1077,7 @@ def check_task_source_files(
 
 
 # ---------------------------------------------------------------------------
-# Check 10: Event log
+# Check 11: Event log
 # ---------------------------------------------------------------------------
 
 #: Command that repairs an unassigned-legacy-record finding.
@@ -1078,7 +1181,7 @@ def check_event_log(project_dir: Path) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 11: Replay
+# Check 12: Replay
 # ---------------------------------------------------------------------------
 
 def check_replay(
@@ -1330,7 +1433,7 @@ def verify_command(fix, quiet, strict, replay):
 def _run_all_checks(
     driver, database: str, config: dict, project_dir: Path, replay: bool = False
 ) -> list[CheckResult]:
-    """Execute all 11 checks and return results.
+    """Execute all 12 checks and return results.
 
     Args:
         driver: Neo4j driver.
@@ -1352,6 +1455,7 @@ def _run_all_checks(
         check_blocking_tasks(driver, database),
         check_unregistered_files(driver, database, project_dir, config),
         check_relationship_types(driver, database),
+        check_precedence(driver, database),
         check_task_source_files(driver, database, project_dir, config),
         check_event_log(project_dir),
         check_replay(driver, database, project_dir, enabled=replay),
