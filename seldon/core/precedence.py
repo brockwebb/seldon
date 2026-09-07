@@ -85,19 +85,35 @@ class PrecedesEdge:
 
 
 def read_edges(session) -> List[PrecedesEdge]:
-    """Read every stored `precedes` edge in the project graph.
+    """Read every stored `precedes` edge between Seldon artifacts.
 
-    Deliberately unfiltered by endpoint label — see :class:`PrecedesEdge`.
+    Bound to `:Artifact` on both endpoints, and this is load-bearing. A project
+    database may co-tenant a domain knowledge graph beside the Seldon artifact
+    graph under disjoint labels, and `precedes` is a name that graph may already
+    use for something else — ai-readiness-kg whitelists `precedes: Concept →
+    Concept` (BFO_0000063). An unbound `MATCH (a)-[r:PRECEDES]->(b)` reads those
+    edges as task ordering and readiness becomes unanswerable. See the AD-029
+    addendum: Seldon never reads a relationship by name alone.
+
+    The label bind is not a substitute for the endpoint checks in
+    `seldon verify`. Endpoint ids and types are still carried rather than
+    filtered on, so an `:Artifact` endpoint that carries no `artifact_id`, or
+    that is not a ResearchTask, still reads back and still reports as illegal —
+    see :class:`PrecedesEdge` and
+    :func:`seldon.commands.verify.check_precedence`. The one case the bind does
+    hide is an edge with a co-tenant at one end, so
+    :func:`read_half_artifact_edges` reads that case separately.
 
     Args:
         session: An open Neo4j session bound to the project database.
 
     Returns:
-        Every `PRECEDES` edge, ordered by predecessor then successor creation
-        time so that callers render deterministically.
+        Every `PRECEDES` edge whose endpoints are both Seldon artifacts,
+        ordered by predecessor then successor creation time so that callers
+        render deterministically.
     """
     records = session.run(
-        f"MATCH (a)-[r:{REL_TYPE_UPPER}]->(b) "
+        f"MATCH (a:Artifact)-[r:{REL_TYPE_UPPER}]->(b:Artifact) "
         "RETURN a.artifact_id AS from_id, b.artifact_id AS to_id, "
         "       a.artifact_type AS from_type, b.artifact_type AS to_type, "
         "       r.reason AS reason "
@@ -109,6 +125,58 @@ def read_edges(session) -> List[PrecedesEdge]:
             to_id=r["to_id"],
             from_type=r["from_type"],
             to_type=r["to_type"],
+            reason=r["reason"],
+        )
+        for r in records
+    ]
+
+
+def read_half_artifact_edges(session) -> List[PrecedesEdge]:
+    """Read `precedes` edges that straddle the Seldon graph and a co-tenant.
+
+    Exactly one endpoint is a Seldon `:Artifact`; the other is a node Seldon
+    never authored. :func:`read_edges` cannot see these — that is the point of
+    its label bind — but they are still illegal, and they are the one class of
+    illegal edge the bind would otherwise make invisible rather than fix. So
+    `seldon verify` asks for them separately and reports them, while readiness
+    goes on being computed from :func:`read_edges` alone.
+
+    A `precedes` edge with *neither* endpoint in the Seldon graph is not read at
+    all. It belongs to the co-tenant, under the documented arrangement of
+    disjoint labels, and is none of Seldon's business.
+
+    Args:
+        session: An open Neo4j session bound to the project database.
+
+    Returns:
+        One :class:`PrecedesEdge` per straddling edge, in stable id order. The
+        co-tenant endpoint carries ``None`` for its id and its labels, joined by
+        ``+``, for its type — enough for the operator to recognise what the edge
+        collided with.
+    """
+    records = session.run(
+        f"MATCH (a)-[r:{REL_TYPE_UPPER}]->(b) "
+        "WHERE ('Artifact' IN labels(a)) <> ('Artifact' IN labels(b)) "
+        "RETURN a.artifact_id AS from_id, b.artifact_id AS to_id, "
+        "       labels(a) AS from_labels, labels(b) AS to_labels, "
+        "       r.reason AS reason "
+        "ORDER BY from_id, to_id"
+    ).data()
+
+    def endpoint_type(artifact_id, labels):
+        # A Seldon endpoint reports its artifact_type the way read_edges does;
+        # a co-tenant endpoint has none, so its labels are the only handle the
+        # operator has on what the edge actually hit.
+        if artifact_id is not None:
+            return "+".join(l for l in labels if l != "Artifact") or None
+        return "+".join(labels) or None
+
+    return [
+        PrecedesEdge(
+            from_id=r["from_id"],
+            to_id=r["to_id"],
+            from_type=endpoint_type(r["from_id"], r["from_labels"]),
+            to_type=endpoint_type(r["to_id"], r["to_labels"]),
             reason=r["reason"],
         )
         for r in records
@@ -137,7 +205,8 @@ def read_task_states(session) -> Dict[str, str]:
         Mapping of artifact_id to state.
     """
     records = session.run(
-        f"MATCH (t:{ARTIFACT_TYPE}) RETURN t.artifact_id AS id, t.state AS state"
+        f"MATCH (t:Artifact:{ARTIFACT_TYPE}) "
+        "RETURN t.artifact_id AS id, t.state AS state"
     ).data()
     return {r["id"]: r["state"] for r in records if r["id"]}
 
@@ -154,7 +223,9 @@ def edge_exists(session, from_id: str, to_id: str) -> bool:
         True when at least one such edge is stored.
     """
     record = session.run(
-        f"MATCH (a {{artifact_id: $a}})-[r:{REL_TYPE_UPPER}]->(b {{artifact_id: $b}}) "
+        f"MATCH (a:Artifact {{artifact_id: $a}})"
+        f"-[r:{REL_TYPE_UPPER}]->"
+        f"(b:Artifact {{artifact_id: $b}}) "
         "RETURN count(r) AS n",
         a=from_id,
         b=to_id,
@@ -880,7 +951,8 @@ def precedence_view(session, open_state_set: Iterable[str]) -> Dict[str, Any]:
             ``chains`` — the connected components, as :class:`Chain` objects.
     """
     records = session.run(
-        f"MATCH (t:{ARTIFACT_TYPE}) RETURN t.artifact_id AS id, t.state AS state, "
+        f"MATCH (t:Artifact:{ARTIFACT_TYPE}) "
+        "RETURN t.artifact_id AS id, t.state AS state, "
         "t.description AS description ORDER BY t.created_at"
     ).data()
     states = {r["id"]: r["state"] for r in records if r["id"]}

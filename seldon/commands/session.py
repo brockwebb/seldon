@@ -49,7 +49,8 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
 
         for t in open_tasks:
             blocked = session.run(
-                "MATCH (t:ResearchTask {artifact_id: $id})-[:BLOCKS]->(target) RETURN target",
+                "MATCH (t:Artifact:ResearchTask {artifact_id: $id})"
+                "-[:BLOCKS]->(target:Artifact) RETURN target",
                 id=t["artifact_id"],
             ).data()
             t["_blocks"] = [dict(r["target"]) for r in blocked]
@@ -59,8 +60,8 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
 
         # 3. Incomplete provenance: Results with no GENERATED_BY Script and no DERIVED_FROM source
         no_script_records = session.run(
-            "MATCH (r:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Script) "
-            "AND NOT (r)-[:DERIVED_FROM]->() RETURN r"
+            "MATCH (r:Artifact:Result) WHERE NOT (r)-[:GENERATED_BY]->(:Artifact:Script) "
+            "AND NOT (r)-[:DERIVED_FROM]->(:Artifact) RETURN r"
         ).data()
         no_script = [dict(r["r"]) for r in no_script_records]
 

@@ -203,7 +203,7 @@ def artifact_show(artifact_id: str):
             props = dict(records[0]["a"])
 
             out_rels = session.run(
-                "MATCH (a {artifact_id: $id})-[r]->(b) "
+                "MATCH (a:Artifact {artifact_id: $id})-[r]->(b:Artifact) "
                 "RETURN type(r) AS rel, b.artifact_id AS target_id, "
                 "b.artifact_type AS target_type, b.name AS target_name "
                 "ORDER BY type(r), b.artifact_id",
@@ -211,7 +211,7 @@ def artifact_show(artifact_id: str):
             ).data()
 
             in_rels = session.run(
-                "MATCH (b)-[r]->(a {artifact_id: $id}) "
+                "MATCH (b:Artifact)-[r]->(a:Artifact {artifact_id: $id}) "
                 "RETURN type(r) AS rel, b.artifact_id AS source_id, "
                 "b.artifact_type AS source_type, b.name AS source_name "
                 "ORDER BY type(r), b.artifact_id",

@@ -291,7 +291,7 @@ def fingerprint_graph(driver, database: str) -> GraphFingerprint:
 
     with driver.session(database=database) as session:
         rows = session.run(
-            "MATCH (n) WHERE NONE(l IN labels(n) WHERE l IN $internal) "
+            "MATCH (n:Artifact) WHERE NONE(l IN labels(n) WHERE l IN $internal) "
             "RETURN n.artifact_id AS aid, n.state AS state, "
             "n.artifact_type AS atype, labels(n) AS labels",
             internal=internal,
@@ -306,7 +306,7 @@ def fingerprint_graph(driver, database: str) -> GraphFingerprint:
                 fp.types[aid] = row["atype"]
 
         rows = session.run(
-            "MATCH (a)-[r]->(b) "
+            "MATCH (a:Artifact)-[r]->(b:Artifact) "
             "WHERE NONE(l IN labels(a) WHERE l IN $internal) "
             "  AND NONE(l IN labels(b) WHERE l IN $internal) "
             "RETURN a.artifact_id AS from_id, type(r) AS rel, "

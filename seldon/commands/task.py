@@ -302,11 +302,13 @@ def task_list(state, open_only, show_all, stale_claims):
         for t in tasks:
             tid = t["artifact_id"]
             t["blocks_count"] = session.run(
-                "MATCH (t:ResearchTask {artifact_id: $id})-[:BLOCKS]->(x) RETURN count(x) AS c",
+                "MATCH (t:Artifact:ResearchTask {artifact_id: $id})"
+                f"-[:BLOCKS]->(x:Artifact) RETURN count(x) AS c",
                 id=tid,
             ).single()["c"]
             t["depends_count"] = session.run(
-                "MATCH (t:ResearchTask {artifact_id: $id})-[:DEPENDS_ON]->(x) RETURN count(x) AS c",
+                "MATCH (t:Artifact:ResearchTask {artifact_id: $id})"
+                f"-[:DEPENDS_ON]->(x:Artifact) RETURN count(x) AS c",
                 id=tid,
             ).single()["c"]
 
@@ -617,33 +619,38 @@ def task_unprecede(before_id, after_id):
 @task_group.command("show")
 @click.argument("task_id")
 def task_show(task_id):
-    """Show full detail for a ResearchTask including blocks and depends_on."""
+    """Show full detail for a ResearchTask including blocks and depends_on.
+
+    TASK_ID may be a full artifact_id or any unambiguous prefix — the same
+    resolution every other `seldon task` command already accepts. `show` is the
+    command an operator reaches for after reading an 8-character short id out of
+    `task list` or a chain, so requiring the full UUID here made it the one
+    command that could not consume the output of the others.
+    """
     config = load_project_config()
     driver = get_neo4j_driver(config)
     database = config["neo4j"]["database"]
 
-    with driver.session(database=database) as session:
-        node = get_artifact(session, task_id)
-        if node is None:
-            click.echo(f"Error: Task '{task_id}' not found", err=True)
-            driver.close()
-            raise SystemExit(1)
+    full_id, node = _load_task(driver, database, task_id)
 
+    with driver.session(database=database) as session:
         blocked_records = session.run(
-            "MATCH (t:ResearchTask {artifact_id: $id})-[:BLOCKS]->(target) RETURN target",
-            id=task_id,
+            "MATCH (t:Artifact:ResearchTask {artifact_id: $id})"
+            "-[:BLOCKS]->(target:Artifact) RETURN target",
+            id=full_id,
         ).data()
         blocked = [dict(r["target"]) for r in blocked_records]
 
         dep_records = session.run(
-            "MATCH (t:ResearchTask {artifact_id: $id})-[:DEPENDS_ON]->(dep) RETURN dep",
-            id=task_id,
+            "MATCH (t:Artifact:ResearchTask {artifact_id: $id})"
+            "-[:DEPENDS_ON]->(dep:Artifact) RETURN dep",
+            id=full_id,
         ).data()
         deps = [dict(r["dep"]) for r in dep_records]
 
     driver.close()
 
-    click.echo(f"\nTask: {task_id}")
+    click.echo(f"\nTask: {full_id}")
     click.echo(f"  description: {node.get('description', '(none)')}")
     click.echo(f"  state:       {node.get('state', '?')}")
     click.echo(f"  created_at:  {node.get('created_at', '?')}")

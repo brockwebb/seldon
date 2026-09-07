@@ -214,16 +214,44 @@ class TestApplyPlan:
     def test_null_endpoint_is_refused_rather_than_silently_dropped(
         self, migration, neo4j_driver, clean_test_db, tmp_path
     ):
-        """A relationship on a non-Artifact node has no artifact_id, so its
-        migration cannot be recorded as an event. Fail loud."""
+        """An :Artifact carrying no artifact_id makes the edge unrecordable.
+
+        The migration is event-then-write, and an event needs both endpoint ids.
+        Fail loud rather than rewrite an edge the log cannot replay.
+        """
         with neo4j_driver.session(database=NEO4J_DB) as session:
-            session.run("CREATE (:Thing {n: 1})-[:informs]->(:Thing {n: 2})")
+            session.run(
+                "CREATE (:Artifact:DesignNote {state: 'proposed'})"
+                "-[:informs]->"
+                "(:Artifact:DesignNote {state: 'proposed'})"
+            )
             plan = migration.build_plan(session)
 
+        assert len(plan) == 1
         with pytest.raises(ValueError, match="null endpoint"):
             migration.apply_plan(
                 tmp_path, neo4j_driver, NEO4J_DB, plan, {"INFORMS": "informs"}, None
             )
+
+    def test_a_co_tenant_relationship_is_not_seldons_to_migrate(
+        self, migration, neo4j_driver, clean_test_db, tmp_path
+    ):
+        """A domain KG sharing the database keeps its own relationship casing.
+
+        `find_noncanonical_rel_types` and `get_relationships_of_type` both bind
+        `:Artifact` on their endpoints, so a co-tenant's lowercase edge is
+        invisible to the plan. Before that bind, this migration would have
+        rewritten a graph Seldon does not own and cannot replay.
+        """
+        with neo4j_driver.session(database=NEO4J_DB) as session:
+            session.run("CREATE (:Thing {n: 1})-[:informs]->(:Thing {n: 2})")
+
+            assert migration.build_plan(session) == []
+
+            surviving = session.run(
+                "MATCH (:Thing)-[r:informs]->(:Thing) RETURN count(r) AS n"
+            ).single()["n"]
+        assert surviving == 1
 
 
 class TestMainSafety:

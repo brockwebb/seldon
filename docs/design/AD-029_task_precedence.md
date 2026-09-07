@@ -219,3 +219,126 @@ deliberate.
 The task file's premise was otherwise accurate on every point that was checked:
 `superseded_by` was indeed the only `ResearchTask → ResearchTask` edge, and
 `blocks` / `depends_on` accept exactly the endpoint types it named.
+
+---
+
+# Addendum 029-A: Seldon never reads a relationship by name alone
+
+**Date:** 2026-09-07
+**Status:** Accepted
+**Origin:** `cc_tasks/2026-09-07_precedence_artifact_labels.md`, closing Seldon ResearchTask `1ad92c2b`. Defect surfaced by ai-readiness-kg (`2026-09-06_scan_targets_RESULT.md` §3).
+**Amends:** AD-029, which specified the edge and its algorithms but said nothing about what a query is allowed to match.
+
+## What was wrong
+
+`precedence.read_edges` ran `MATCH (a)-[r:PRECEDES]->(b)` with no endpoint
+label. That is correct in a database Seldon has to itself, and wrong in the
+arrangement Seldon actually ships into.
+
+A project database may co-tenant a domain knowledge graph beside the Seldon
+artifact graph, under disjoint labels. This is not an accident to be designed
+out; it is the documented arrangement, and it is why `create_artifact` writes
+the double label `:Artifact:<type>` on every node. ai-readiness-kg's
+`kg/schema.yaml` whitelists `precedes: Concept → Concept` — BFO_0000063,
+*precedes* in the temporal sense — which collides with AD-029's `precedes` by
+name while sharing no label with it.
+
+The unlabelled query swept the domain KG's edges into the task graph.
+`seldon verify` reported 117 `illegal endpoint: ? [missing] → ? [missing]` rows,
+and readiness — the one question AD-029 exists to answer — became unanswerable.
+
+The failure was not in the name. Two graphs are entitled to use the word
+`precedes`; a shared vocabulary is what an ontology is for. The failure was in
+matching on the name alone.
+
+## The rule
+
+**Seldon never reads a relationship by name alone.** Concretely, in every query
+Seldon issues:
+
+1. **Every node pattern names a label.** No `(a)`, no `(a {artifact_id: $id})`,
+   no `()`. A pattern with no label matches the co-tenant's nodes as readily as
+   Seldon's.
+2. **Every relationship traversal binds `:Artifact` on both endpoints.** The
+   relationship type is not a namespace, and `:Artifact` is the only thing that
+   distinguishes an edge Seldon wrote from an edge that merely shares its name.
+3. **Destructive scope is enumerated, not universal.** A rebuild deletes
+   `seldon.core.sync.SELDON_OWNED_LABELS` — `:Artifact` plus the three `_*Meta`
+   bookkeeping labels — rather than issuing `MATCH (n) DETACH DELETE n`. The
+   unscoped form destroys a co-tenant graph that Seldon never owned and its
+   event log cannot replay.
+
+The rule is enforced by `tests/test_cypher_unlabelled_lint.py`, adapted from
+ai-readiness-kg's lint of the same shape (`230b282f` §1.2). It recovers every
+query from the Python AST — so f-strings, implicit concatenation and `+`-joins
+are all checked as the single query they become — and fails on any node pattern
+that neither carries a label nor reuses a variable labelled elsewhere in the
+same query. Its allowlist holds one entry, carrying its own justification.
+
+## What the rule deliberately does not cost
+
+Narrowing a query is a way to make a check vacuous, so three things are pinned
+by test rather than by intention:
+
+**Illegal endpoints inside the Seldon graph still report.** `read_edges` binds
+`:Artifact` but still *returns* each endpoint's id and type rather than
+filtering on them, so an `:Artifact` with no `artifact_id`, or one that is not a
+ResearchTask, still reaches `check_precedence` and still fails it.
+
+**Straddling edges report rather than vanishing.** An edge with one end in each
+graph is illegal and is the one class of illegal edge the label bind would
+otherwise hide instead of fix. `read_half_artifact_edges` reads exactly that
+case — it is the lint's single allowlisted query, because its whole job is to
+compare labels across the boundary — and `seldon verify` reports it separately.
+An edge with *neither* end in the Seldon graph is not read at all: it is the
+co-tenant's, under the disjoint-label arrangement, and none of Seldon's
+business.
+
+**A co-tenant's own graph is left alone.** Its `precedes` cycles are not
+Seldon's DAG violations, its lowercase relationship types are not Seldon's
+case-migration candidates (`find_noncanonical_rel_types` and
+`get_relationships_of_type` are both bound, so the rel-type migration can no
+longer rewrite a graph it does not own), its nodes are not counted in the replay
+fingerprint, and a rebuild leaves it standing.
+
+## Scope of the change
+
+Nineteen queries across `seldon/core/` and `seldon/commands/` were bound. The
+`precedes` read path was the one causing live damage; the rest — `blocks`,
+`depends_on`, `affects`, `blocked_by`, `resolved_by`, `related_issue`,
+`generated_by`, `derived_from`, the artifact-detail link listing, the replay
+fingerprint and the rel-type audit — carried the same defect and were fixed
+under the same rule rather than left for the next report.
+
+`MATCH (n) DETACH DELETE n` in `full_replay` was the most dangerous find and is
+not a read at all: an unscoped rebuild in a co-tenanted project database
+destroys the co-tenant. It is now scoped to the labels Seldon writes, and a test
+asserts that set covers every label any Cypher write in `seldon/core/` or
+`seldon/commands/` creates — so a new creation path cannot quietly leave orphans
+behind a rebuild.
+
+## Considered and rejected
+
+**Namespacing the relationship type — `SELDON_PRECEDES`.** Rejected. It solves
+the collision by refusing to share the vocabulary, which is backwards: the point
+of a shared ontology is that two graphs may use the same word for the same
+concept. It would also be a stored-data migration for every existing edge, to
+buy what a label bind buys for free.
+
+**A separate database per graph.** Already the default, and not always
+available: co-tenancy is a deployment reality, not a preference. Designing as
+though it cannot happen is how this defect shipped.
+
+**A `labels(...)` escape hatch in the lint, as the prior art has.** Rejected in
+favour of a named allowlist. A blanket escape passes any query that mentions
+`labels()` anywhere, including one where the mention guards a different node
+than the unlabelled one. The allowlist is one entry long and each entry carries
+its reason, which is the point: an entry is an accepted standing risk, not a
+dismissal.
+
+**Requiring `:Artifact` on node-only matches too.** Not done. `MATCH
+(t:ResearchTask)` is already label-bound, and under the disjoint-label
+arrangement a co-tenant does not use Seldon's artifact-type labels. The rule
+that pays for itself is the one above: a label on every node pattern, and
+`:Artifact` wherever a relationship is traversed. The `precedes` read path binds
+both anyway, since it is the surface under repair.

@@ -830,9 +830,15 @@ def check_precedence(driver, database: str) -> CheckResult:
       cycle waits on itself, so none is ever ready and the briefing silently
       stops proposing work;
     * a **self-loop**, the degenerate cycle;
-    * a **dangling or mistyped endpoint** — an edge to a node that no longer
-      exists, or to something that is not a ResearchTask. Its state can never
-      satisfy the edge, so its successor waits forever.
+    * a **dangling or mistyped endpoint** — an edge to a node that carries no
+      `artifact_id`, or to something that is not a ResearchTask. Its state can
+      never satisfy the edge, so its successor waits forever.
+    * a **straddling endpoint** — one end in the Seldon graph and one in a
+      co-tenant graph sharing the database. `read_edges` binds `:Artifact` on
+      both ends so that a co-tenant's own `precedes` edges are never mistaken
+      for task ordering, which means a half-and-half edge is invisible to it.
+      It is still illegal, so it is read separately and reported here rather
+      than being quietly dropped by the label bind.
 
     Not Tier A. Like "Relationship types", it reports a property of accumulated
     graph state rather than of the change in hand: an operator can author a
@@ -850,14 +856,16 @@ def check_precedence(driver, database: str) -> CheckResult:
         ARTIFACT_TYPE as PRECEDES_ENDPOINT_TYPE,
         find_cycles,
         read_edges,
+        read_half_artifact_edges,
         render_path,
         short,
     )
 
     with driver.session(database=database) as session:
         edges = read_edges(session)
+        straddling = read_half_artifact_edges(session)
 
-    if not edges:
+    if not edges and not straddling:
         return CheckResult(
             name="Precedence",
             symbol="pass",
@@ -865,6 +873,13 @@ def check_precedence(driver, database: str) -> CheckResult:
         )
 
     details: list[str] = []
+
+    for e in straddling:
+        details.append(
+            f"straddling endpoint: {short(e.from_id or '?')} "
+            f"[{e.from_type or 'missing'}] → {short(e.to_id or '?')} "
+            f"[{e.to_type or 'missing'}] — one end is not a Seldon artifact"
+        )
 
     bad_endpoints = [
         e for e in edges
@@ -905,6 +920,11 @@ def check_precedence(driver, database: str) -> CheckResult:
         parts.append(
             f"{len(bad_endpoints)} illegal endpoint"
             f"{'s' if len(bad_endpoints) != 1 else ''}"
+        )
+    if straddling:
+        parts.append(
+            f"{len(straddling)} straddling endpoint"
+            f"{'s' if len(straddling) != 1 else ''}"
         )
     details.append(
         "Remove an edge with: seldon task unprecede <before> <after>"

@@ -167,7 +167,8 @@ def find_noncanonical_rel_types(session: Session) -> List[Dict[str, Any]]:
         the database is clean.
     """
     records = session.run(
-        "MATCH ()-[r]->() RETURN type(r) AS rel_type, count(r) AS cnt ORDER BY rel_type"
+        "MATCH (:Artifact)-[r]->(:Artifact) "
+        "RETURN type(r) AS rel_type, count(r) AS cnt ORDER BY rel_type"
     ).data()
     return [
         {
@@ -203,7 +204,7 @@ def get_relationships_of_type(
     """
     _assert_safe_rel_type(rel_type)
     cypher = (
-        f"MATCH (a)-[r:{rel_type}]->(b) "
+        f"MATCH (a:Artifact)-[r:{rel_type}]->(b:Artifact) "
         f"RETURN a.artifact_id AS from_id, b.artifact_id AS to_id, "
         f"properties(r) AS properties "
         f"ORDER BY from_id, to_id"

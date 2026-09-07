@@ -282,25 +282,29 @@ def issue_show(issue_id):
             raise SystemExit(1)
 
         affects_records = session.run(
-            "MATCH (i:Issue {artifact_id: $id})-[:AFFECTS]->(t) RETURN t",
+            "MATCH (i:Artifact:Issue {artifact_id: $id})-[:AFFECTS]->(t:Artifact) "
+            "RETURN t",
             id=issue_id,
         ).data()
         affects = [dict(r["t"]) for r in affects_records]
 
         blocked_by_records = session.run(
-            "MATCH (i:Issue {artifact_id: $id})-[:BLOCKED_BY]->(t) RETURN t",
+            "MATCH (i:Artifact:Issue {artifact_id: $id})-[:BLOCKED_BY]->(t:Artifact) "
+            "RETURN t",
             id=issue_id,
         ).data()
         blocked_by = [dict(r["t"]) for r in blocked_by_records]
 
         related_records = session.run(
-            "MATCH (i:Issue {artifact_id: $id})-[:RELATED_ISSUE]-(t) RETURN DISTINCT t",
+            "MATCH (i:Artifact:Issue {artifact_id: $id})-[:RELATED_ISSUE]-(t:Artifact) "
+            "RETURN DISTINCT t",
             id=issue_id,
         ).data()
         related = [dict(r["t"]) for r in related_records]
 
         resolved_by_records = session.run(
-            "MATCH (i:Issue {artifact_id: $id})-[:RESOLVED_BY]->(t) RETURN t",
+            "MATCH (i:Artifact:Issue {artifact_id: $id})-[:RESOLVED_BY]->(t:Artifact) "
+            "RETURN t",
             id=issue_id,
         ).data()
         resolved_by = [dict(r["t"]) for r in resolved_by_records]

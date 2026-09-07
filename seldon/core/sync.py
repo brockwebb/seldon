@@ -20,6 +20,22 @@ logger = logging.getLogger(__name__)
 
 _META_KEY = "sync_point"
 
+#: Every node label Seldon writes, and therefore the exact scope of a rebuild's
+#: wipe. `:Artifact` covers every projected artifact — `create_artifact` writes
+#: it alongside the artifact type on every node it creates — and the three
+#: `_*Meta` labels are Seldon's bookkeeping: the sync point, the ontology
+#: replica epoch, and the master epoch on an ontology master database.
+#:
+#: A label absent from this set is a co-tenant's, and a rebuild must not touch
+#: it. Adding a node label to Seldon without adding it here would leave orphans
+#: behind a rebuild, which is why `create_artifact` is the single creation path.
+SELDON_OWNED_LABELS = (
+    "Artifact",
+    "_SeldonMeta",
+    "_OntologyReplicaMeta",
+    "_OntologyMeta",
+)
+
 # Event types that carry ontology state. Their payloads hold only counts and the
 # master epoch, not the terms themselves, so they cannot be projected from the
 # payload alone — replay restores them by re-running the ontology sync against
@@ -196,9 +212,17 @@ def full_replay(
     """
     Replay ALL events from the JSONL log into a clean Neo4j database.
 
-    DESTRUCTIVE on the target database: all nodes and relationships are
-    deleted before replay begins. Use only on project databases
+    DESTRUCTIVE on the Seldon graph in the target database: every node Seldon
+    authored is deleted before replay begins. Use only on project databases
     (seldon_<slug>), never on shared databases.
+
+    Scoped to Seldon's own labels rather than issuing `MATCH (n) DETACH DELETE
+    n`. A project database may co-tenant a domain knowledge graph beside the
+    Seldon artifact graph under disjoint labels, and an unscoped wipe destroys
+    it — data this event log cannot replay and Seldon never owned. The scope is
+    exhaustive by construction: `seldon.core.graph.create_artifact` is the only
+    thing that creates an artifact node and it always writes `:Artifact`, and
+    the three `_*Meta` labels are the whole of Seldon's bookkeeping.
 
     Returns the number of events replayed.
     """
@@ -208,9 +232,19 @@ def full_replay(
         return 0
 
     with driver.session(database=database) as session:
-        # Clear the database — destructive, project DB only
-        session.run("MATCH (n) DETACH DELETE n")
-        logger.info("full_replay: cleared database '%s'", database)
+        # Clear Seldon's own graph — destructive, project DB only. Any
+        # co-tenant graph in the same database is left untouched.
+        deleted = 0
+        for label in SELDON_OWNED_LABELS:
+            summary = session.run(
+                f"MATCH (n:{label}) DETACH DELETE n"
+            ).consume()
+            deleted += summary.counters.nodes_deleted
+        logger.info(
+            "full_replay: cleared %d Seldon node(s) from database '%s'",
+            deleted,
+            database,
+        )
 
         needs_ontology_restore = False
         for event in events:

@@ -444,6 +444,51 @@ def test_cli_precede_accepts_id_prefixes(
 
 
 @neo4j_tests
+def test_cli_show_accepts_an_id_prefix(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    """`show` was the one task command that demanded the full UUID.
+
+    Every other command resolves a prefix, and the short ids an operator reads
+    out of `task list` and the chain renderer are 8 characters — so `show` could
+    not consume the output of the surfaces that produce its argument.
+    """
+    a = _make_task(cli_project, neo4j_driver, domain_config, "alpha task")
+
+    result = CliRunner().invoke(task_group, ["show", a[:8]])
+
+    assert result.exit_code == 0, result.output
+    assert a in result.output
+    assert "alpha task" in result.output
+
+
+@neo4j_tests
+def test_cli_show_reports_an_unknown_prefix(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    _make_task(cli_project, neo4j_driver, domain_config, "a")
+
+    result = CliRunner().invoke(task_group, ["show", "ffffffff"])
+
+    assert result.exit_code == 1
+    assert "No artifact found" in result.output
+
+
+@neo4j_tests
+def test_cli_show_reports_an_ambiguous_prefix(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    """The shared resolver lists the candidates; `show` must not swallow that."""
+    _make_task(cli_project, neo4j_driver, domain_config, "a")
+    _make_task(cli_project, neo4j_driver, domain_config, "b")
+
+    result = CliRunner().invoke(task_group, ["show", ""])
+
+    assert result.exit_code == 1
+    assert "id" in result.output.lower()
+
+
+@neo4j_tests
 def test_cli_chain_writes_the_whole_sequence(
     neo4j_driver, cli_project, domain_config, clean_test_db,
 ):
