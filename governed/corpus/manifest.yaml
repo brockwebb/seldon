@@ -892,6 +892,44 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest
+    verification_method: "local governed file, sha256 482a78c76a6f333f, 5,074 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: AD-030 names, supersession syntax, incremental re-ingest, constraint backfill'
+    source_url: cc_tasks/2026-09-12_ad030_names_supersession_reingest.md
+    local_path: "../cc_tasks/2026-09-12_ad030_names_supersession_reingest.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "482a78c76a6f333fe567dd8a6c5e634a235bb86e9401ec919f710d03288f9d47"
+    bytes: 5074
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest_addendum_1
+    verification_method: "local governed file, sha256 9f968f6e1d1fcc7b, 2,384 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: ADDENDUM 1 to cc_tasks/2026-09-12_ad030_names_supersession_reingest.md
+    source_url: cc_tasks/2026-09-12_ad030_names_supersession_reingest_ADDENDUM_1.md
+    local_path: "../cc_tasks/2026-09-12_ad030_names_supersession_reingest_ADDENDUM_1.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "9f968f6e1d1fcc7b463d451bbab54fea4ad84da0aa837f297e31319ee00ba90b"
+    bytes: 2384
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: cc_tasks_2026_09_12_seldon_handoff_tool
     verification_method: "local governed file, sha256 cf0d1a17f7789425, 4,014 characters"
     retrieved_date: "2026-09-12"
@@ -1519,6 +1557,25 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: docs_design_ad_030_implementation_findings_002
+    verification_method: "local governed file, sha256 e2e44008f3ed8ac0, 5,238 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_002.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-030 Implementation Findings 002: Names, Supersession, Incremental Re-ingest'
+    source_url: docs/design/AD-030_implementation_findings_002.md
+    local_path: "../docs/design/AD-030_implementation_findings_002.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "e2e44008f3ed8ac0c8c3ae5631fa3a519b6bee56dba832182da14833de2d5fb8"
+    bytes: 5239
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: docs_design_dn_session_continuity_graph_backed_handoffs
     verification_method: "local governed file, sha256 db4446f81a75f833, 14,093 characters"
     retrieved_date: "2026-09-12"
@@ -1951,6 +2008,27 @@ documents:
     provenance_flag: local_authored
     sha256: "ca91831200a28efbaa03a529766823c61bbd5780ab9850e6966ca651fcc41841"
     bytes: 2940
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest_result
+    verification_method: "local governed file, sha256 5a3d9dc5e420b8c1, 26,463 characters"
+    retrieved_date: "2026-09-12"
+    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 31a3f436285e43c4 recorded, 5a3d9dc5e420b8c1 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-09-12. || PRIOR NOTE, PRESERVED: RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 be71254e0148b096 recorded, 31a3f436285e43c4 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: AD-030 names, supersession syntax, incremental re-ingest, constraint backfill'
+    source_url: cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "5a3d9dc5e420b8c1e38f6618ba045ac8f96fee7626ceb8d80d74ff7d3a6c8fa9"
+    bytes: 26567
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"

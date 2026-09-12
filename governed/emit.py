@@ -231,8 +231,10 @@ def deontic_force(
     return default_force
 
 
-#: A document's own label for a ruling, e.g. `AD-030-R9`.
-_RULING_IDENTIFIER_RE = re.compile(r"\b([A-Z]{2,4}-\d+-R\d+)\b")
+#: A document's own label for a ruling: `AD-030-R9`, or the `Addendum 029-A` form this repository
+#: also uses for an amendment to a decision. Both are stable across every edit of the ruling's
+#: text, which is the whole point of taking the id from the label rather than from the ordinal.
+_RULING_IDENTIFIER_RE = re.compile(r"\b([A-Z]{2,4}-\d+-R\d+|Addendum\s+\d+-[A-Za-z0-9]+)\b")
 
 
 def ruling_identifier(text: str) -> str | None:
@@ -245,7 +247,65 @@ def ruling_identifier(text: str) -> str | None:
         The identifier, or None.
     """
     match = _RULING_IDENTIFIER_RE.search(text)
-    return match.group(1) if match else None
+    return " ".join(match.group(1).split()) if match else None
+
+
+def ruling_blocks(doc_id: str, blocks: list[dict], domain: dict) -> list[dict]:
+    """Every block of a document that is a Ruling, with the id it will carry.
+
+    ONE READING, TWO CALLERS. `emit` mints the Ruling nodes and `emit_layer` recovers the
+    supersession edges between them; if the two disagreed about which blocks are rulings or about
+    what a ruling's id is, the edges would point at nodes that do not exist. Sharing the pass is
+    what makes that impossible rather than merely unlikely.
+
+    Args:
+        doc_id: The Document key.
+        blocks: The parsed blocks, in reading order.
+        domain: The graph's `domain:` block.
+
+    Returns:
+        `{"id", "identifier", "force", "matched_pattern", "block"}` per ruling, in reading order.
+        A ruling with no label of its own falls back to its ordinal, which is stable only while
+        the document's other rulings are.
+    """
+    rules = compiled_rules(domain, "ruling_patterns")
+    force_rules = compiled_rules(domain, "force_patterns")
+    default_force = domain.get("default_force", "binding")
+    out: list[dict] = []
+    for block in blocks:
+        if block["kind"] not in ("heading", *_PROSE_KINDS):
+            continue
+        match = classify_ruling(block["text"], rules, force_rules, default_force)
+        if not match:
+            continue
+        identifier = ruling_identifier(block["text"])
+        ruling_id = (f"{doc_id}!{slug(identifier)}" if identifier
+                     else f"{doc_id}!r{len(out):03d}")
+        out.append({"id": ruling_id, "identifier": identifier, "force": match["force"],
+                    "matched_pattern": match["name"], "block": block})
+    return out
+
+
+def supersedes_references(text: str, pattern: re.Pattern | None) -> list[str]:
+    """The ruling identifiers a ruling declares it supersedes (AD-030-R21).
+
+    Args:
+        text: The ruling's verbatim text.
+        pattern: The compiled supersession pattern, or None to recover nothing.
+
+    Returns:
+        Hyphenated ruling identifiers, in order, deduplicated. Empty when the text declares none —
+        which includes text that merely discusses a supersession, because R21 makes supersession
+        declared rather than inferred.
+    """
+    if pattern is None:
+        return []
+    out: list[str] = []
+    for match in pattern.finditer(text or ""):
+        for ident in re.findall(r"[A-Z]{2,4}-\d+-R\d+", match.group(1)):
+            if ident not in out:
+                out.append(ident)
+    return out
 
 
 def identifier_references(text: str, rules: list[tuple[dict, re.Pattern]]) -> list[dict]:
@@ -480,6 +540,24 @@ def manifest_projection(entry: dict, graph) -> dict:
     return {k: v for k, v in props.items() if v is not None}
 
 
+def declared_name(plain_text: str, domain: dict) -> str | None:
+    """The name a document declares for itself in its header (AD-030-R20).
+
+    Args:
+        plain_text: The whole document.
+        domain: The graph's `domain:` block; `name_field` names the header field.
+
+    Returns:
+        The declared name, or None when the document declares none and a derivation must stand in.
+    """
+    field = domain.get("name_field")
+    if not field:
+        return None
+    value = header_fields(plain_text, [field]).get(field)
+    value = " ".join((value or "").split()).strip("`*")
+    return value or None
+
+
 def _document_instance(entry, graph, classes, parsed, sections, rulings):
     """Build the Document instance for one admitted entry."""
     props = manifest_projection(entry, graph)
@@ -487,6 +565,11 @@ def _document_instance(entry, graph, classes, parsed, sections, rulings):
     props["content_hash"] = props.get("content_hash") or sha256_text(parsed["plain_text"])
     props["section_count"] = len(sections)
     props["ruling_count"] = len(rulings)
+    # NOT in manifest_projection: the drift gate compares exactly those fields against the
+    # manifest, and this one is read from the document's text, which the manifest never holds.
+    name = declared_name(parsed["plain_text"], graph.domain)
+    if name:
+        props["declared_name"] = name
     return classes["Document"](**props)
 
 
@@ -513,10 +596,8 @@ def emit(entry: dict, resolved: dict | None, graph, classes: dict) -> list:
     blocks = parsed["blocks"]
     doc_hash = entry.get("sha256") or sha256_text(plain)
 
-    ruling_rules = compiled_rules(domain, "ruling_patterns")
-    force_rules = compiled_rules(domain, "force_patterns")
-    default_force = domain.get("default_force", "binding")
     ident_rules = compiled_rules(domain, "identifier_patterns")
+    rulings_by_block = {r["block"]["idx"]: r for r in ruling_blocks(doc_id, blocks, domain)}
     cito_markers = domain.get("cito_markers") or []
     inline_pattern = re.compile(domain["inline_citation_pattern"]) if domain.get("inline_citation_pattern") else None
 
@@ -574,24 +655,19 @@ def emit(entry: dict, resolved: dict | None, graph, classes: dict) -> list:
         start, end = block["char_span"]
         section_id = section_by_block_idx.get(block["idx"])
 
-        if kind in ("heading", *_PROSE_KINDS):
-            match = classify_ruling(text, ruling_rules, force_rules, default_force)
-            if match:
-                ordinal = len(rulings)
-                identifier = ruling_identifier(text)
-                ruling_id = (f"{doc_id}!{slug(identifier)}" if identifier
-                             else f"{doc_id}!r{ordinal:03d}")
-                rulings.append(ruling_id)
-                nodes.append(classes["Ruling"](
-                    id=ruling_id, doc_id=doc_id, ruling_identifier=identifier,
-                    force=match["force"], matched_pattern=match["name"],
-                    section_id=section_id, section_path=block["section_path"],
-                    text=text, span_start=start, span_end=end,
-                    content_hash=sha256_text(text), method="governed_markdown_ingest",
-                ))
-                edges.append(classes["Contains"](subject=doc_id, object=ruling_id,
-                                                 method="governed_markdown_ingest"))
-                note_identifiers(ruling_id, text)
+        ruling = rulings_by_block.get(block["idx"])
+        if ruling:
+            rulings.append(ruling["id"])
+            nodes.append(classes["Ruling"](
+                id=ruling["id"], doc_id=doc_id, ruling_identifier=ruling["identifier"],
+                force=ruling["force"], matched_pattern=ruling["matched_pattern"],
+                section_id=section_id, section_path=block["section_path"],
+                text=text, span_start=start, span_end=end,
+                content_hash=sha256_text(text), method="governed_markdown_ingest",
+            ))
+            edges.append(classes["Contains"](subject=doc_id, object=ruling["id"],
+                                             method="governed_markdown_ingest"))
+            note_identifiers(ruling["id"], text)
 
         if kind in _PROSE_KINDS or kind == "heading":
             note_identifiers(section_id or doc_id, text)
@@ -700,15 +776,57 @@ def document_index(graph) -> tuple[dict[str, str], dict[str, str]]:
     _s, _m, docs = mf.load_manifest(graph.manifest_path)
     by_identifier: dict[str, str] = {}
     by_path: dict[str, str] = {}
-    for entry in docs:
+    # A DECLARED NAME CLAIMS FIRST (AD-030-R20). It is a statement of intent; the derivation from a
+    # filename is a guess, and a guess must never take a name from a document that asked for it.
+    for entry in sorted(docs, key=lambda e: str(e.get("source_url") or e["id"])):
         rel = entry.get("source_url") or ""
         if rel:
             by_path[rel] = entry["id"]
-        name = rel.rsplit("/", 1)[-1]
-        match = re.match(r"^((?:AD|DN)-\d+)", name)
+        name = _declared_name_of(graph, entry["id"])
+        if name:
+            by_identifier.setdefault(name, entry["id"])
+    # ... then the filename derivation, in sorted path order so the tiebreak between two documents
+    # sharing a leading identifier is the same one Seldon's importer applies.
+    for entry in sorted(docs, key=lambda e: str(e.get("source_url") or e["id"])):
+        rel = entry.get("source_url") or ""
+        match = re.match(r"^((?:AD|DN)-\d+)", rel.rsplit("/", 1)[-1])
         if match:
             by_identifier.setdefault(match.group(1), entry["id"])
     return by_identifier, by_path
+
+
+#: A cache that survives the emitter being re-executed. The kit loads this file by path for every
+#: call, which builds a fresh module each time, so a module-level dict here would be a cache of
+#: one. `document_index` runs once per document and a layer pass runs it once per document, so
+#: without this the declared-name index would cost a hundred parsed-file reads a hundred times.
+_CACHE_MODULE = "_governed_emit_process_cache"
+
+
+def _process_cache(bucket: str) -> dict:
+    """One named dict per process, whoever re-executes this module."""
+    import sys
+    import types
+
+    module = sys.modules.get(_CACHE_MODULE)
+    if module is None:
+        module = types.ModuleType(_CACHE_MODULE)
+        sys.modules[_CACHE_MODULE] = module
+    if not hasattr(module, bucket):
+        setattr(module, bucket, {})
+    return getattr(module, bucket)
+
+
+def _declared_name_of(graph, doc_id: str) -> str | None:
+    """The `Name:` a document declares, or None. Cached; a missing parse is not an error here."""
+    cache = _process_cache("declared_names")
+    if doc_id not in cache:
+        try:
+            parsed = load_parsed(graph, doc_id)
+        except SystemExit:
+            cache[doc_id] = None
+        else:
+            cache[doc_id] = declared_name(parsed["plain_text"], graph.domain)
+    return cache[doc_id]
 
 
 #: A repo-relative markdown path as a header field writes one, backticked or bare.
@@ -729,6 +847,28 @@ def path_references(text: str) -> list[str]:
         path = match.group(1)
         if path not in out:
             out.append(path)
+    return out
+
+
+def _ruling_index(in_graph: set) -> dict[str, list[str]]:
+    """Ruling node ids in the ledger, grouped by the slug of the identifier they carry.
+
+    A Ruling's key is `<doc>!<slug of its identifier>` when it has one, so the ledger's own id set
+    is the index and no extra context is needed. Grouping rather than mapping is deliberate: two
+    documents can state a ruling under the same identifier, and the caller must abstain on that
+    rather than pick one.
+
+    Args:
+        in_graph: Every node id the ledger holds.
+
+    Returns:
+        Slugged identifier to the node ids carrying it.
+    """
+    out: dict[str, list[str]] = {}
+    for node_id in sorted(in_graph):
+        _, sep, suffix = str(node_id).partition("!")
+        if sep and suffix and not re.fullmatch(r"r\d{3}", suffix):
+            out.setdefault(suffix, []).append(node_id)
     return out
 
 
@@ -805,6 +945,32 @@ def emit_layer(entry: dict, resolved: dict | None, graph, classes: dict, layer: 
             seen.add(key)
             edges.append(classes[rule["edge"]](
                 subject=doc_id, object=target, raw_field=raw[:300], method="header_field",
+            ))
+
+    # ---- ruling-level supersession (AD-030-R21) --------------------------
+    # A ruling that replaces another SAYS SO, as the last sentence of its own text. The target is
+    # another Ruling node, so this is a cross-document edge and belongs here rather than in `emit`:
+    # at admission time the ruling it supersedes may not be in the ledger yet.
+    pattern = graph.domain.get("supersession_pattern")
+    supersedes_re = re.compile(pattern) if pattern else None
+    ruling_ids = _ruling_index(in_graph)
+    for ruling in ruling_blocks(doc_id, parsed["blocks"], domain):
+        for identifier in supersedes_references(ruling["block"]["text"], supersedes_re):
+            targets = [t for t in ruling_ids.get(slug(identifier), []) if t != ruling["id"]]
+            if len(targets) != 1:
+                # Nothing, or more than one document stating a ruling by that identifier. Either
+                # way the declaration names something this graph cannot resolve to ONE node, and
+                # a guess would be a supersession nobody declared.
+                abstained[identifier] = abstained.get(identifier, 0) + 1
+                continue
+            key = ("Supersedes", ruling["id"], targets[0])
+            if key in seen:
+                continue
+            seen.add(key)
+            edges.append(classes["Supersedes"](
+                subject=ruling["id"], object=targets[0],
+                reason=f"declared in {ruling['identifier'] or ruling['id']}: "
+                       f"`Supersedes {identifier}.`",
             ))
 
     # ---- mentions: every identifier reference anywhere in the document ----

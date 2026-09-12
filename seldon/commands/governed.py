@@ -46,7 +46,7 @@ def render_report(report: governed.SyncReport) -> str:
     lines = [
         f"{prefix}governed sync — {report.documents_seen} document(s) in the ledger",
         f"  Documents: {report.documents_created} created, {report.documents_updated} updated, "
-        f"{report.documents_unchanged} unchanged (hash matched)",
+        f"{report.documents_unchanged} unchanged (file, name and children all matched)",
     ]
     if report.nodes_created:
         lines.append("  Nodes created: " + ", ".join(
@@ -67,6 +67,13 @@ def render_report(report: governed.SyncReport) -> str:
         lines.append(f"  Edges marked suspect by a content-hash change: {report.edges_suspect}")
     if report.edges_cleared:
         lines.append(f"  Suspect edges cleared after re-derivation: {report.edges_cleared}")
+    if report.retired_but_in_ledger:
+        shown = ", ".join(sorted(report.retired_but_in_ledger)[:5])
+        lines.append(
+            f"  {len(report.retired_but_in_ledger)} child artifact(s) the ledger holds again are "
+            f"`retired` in the graph, which is terminal: {shown}"
+            f"{' ...' if len(report.retired_but_in_ledger) > 5 else ''} — reported, not revived."
+        )
     if report.abstained:
         total = sum(report.abstained.values())
         shown = ", ".join(f"{k}" for k in sorted(report.abstained)[:8])
@@ -197,6 +204,20 @@ def governed_status():
         click.echo("  Edges:   " + ", ".join(f"{t} {n}" for t, n in sorted(counts["edges"].items())))
     if counts["suspect_edges"]:
         click.echo(f"  Suspect: {counts['suspect_edges']} edge(s) awaiting review")
+    docs = view.documents()
+    collisions = governed.name_collisions(
+        [d.get("path") or d["id"] for d in docs],
+        {(d.get("path") or d["id"]): d.get("declared_name") for d in docs},
+    )
+    if collisions:
+        click.echo(f"\n{len(collisions)} document(s) lost the name tiebreak and hold a derived "
+                   f"name nobody declared (AD-030-R20):")
+        for path, got, wanted in collisions[:20]:
+            click.echo(f"  - {path}")
+            click.echo(f"      wanted `{wanted}`, holds `{got}` — settle it with a `Name:` header field")
+        if len(collisions) > 20:
+            click.echo(f"  ... and {len(collisions) - 20} more")
+
     if stale:
         click.echo(f"\n{len(stale)} document(s) not in sync — run `seldon governed sync`:")
         for path in stale[:20]:

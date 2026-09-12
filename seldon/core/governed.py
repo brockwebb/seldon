@@ -19,12 +19,13 @@ which is the existing stale-propagation discipline applied to structure instead 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Mapping, Optional
 
 from seldon.core import graph
 from seldon.core.artifacts import create_artifact, transition_state, update_artifact
@@ -60,7 +61,7 @@ EDGE_TYPES = {
 #: records in its own envelope and must not duplicate as an artifact property.
 NODE_PROPERTIES = {
     "Document": ("path", "content_hash", "doc_kind", "manifest_state", "reason", "decided_by",
-                 "section_count", "ruling_count", "identifiers"),
+                 "section_count", "ruling_count", "identifiers", "declared_name"),
     "Section": ("text", "content_hash", "heading", "section_path", "level", "span_start",
                 "span_end", "identifiers"),
     "Ruling": ("text", "content_hash", "force", "matched_pattern", "ruling_identifier",
@@ -231,18 +232,66 @@ def document_name(rel_path: str, claimed: Optional[set[str]] = None) -> str:
     return name
 
 
-def assign_names(paths: Iterable[str]) -> dict[str, str]:
+def assign_names(
+    paths: Iterable[str], declared: Optional[Mapping[str, Optional[str]]] = None
+) -> dict[str, str]:
     """Assign a unique `name` to each governed document path.
+
+    A DECLARATION BEATS A DERIVATION, ALWAYS (AD-030-R20). A document that writes `Name:` in its
+    header has stated what it is called; the derivation from the file stem is a guess about a
+    document that stated nothing. So declared names are claimed first, in one pass, and the
+    derivation then works around whatever is left — which also means adding the field to one
+    document can take a name away from another that only ever had it by default. That is the
+    correct direction: the tiebreak was never a statement of intent.
 
     Args:
         paths: Repo-relative paths.
+        declared: Path to the name that document declares, where it declares one.
 
     Returns:
         Path to name. Sorted order makes the assignment deterministic; a path absent from the
         input cannot change the name of one that is present.
     """
+    declared = declared or {}
     claimed: set[str] = set()
-    return {path: document_name(path, claimed) for path in sorted(paths)}
+    out: dict[str, str] = {}
+    for path in sorted(paths):
+        name = str(declared.get(path) or "").strip()
+        if name:
+            out[path] = name
+            claimed.add(name)
+    for path in sorted(paths):
+        if path not in out:
+            out[path] = document_name(path, claimed)
+    return out
+
+
+def name_collisions(
+    paths: Iterable[str], declared: Optional[Mapping[str, Optional[str]]] = None
+) -> list[tuple[str, str, str]]:
+    """Documents whose derived name lost the tiebreak to another document's claim.
+
+    A document that keeps its full file stem because the bare identifier was already taken is not
+    broken — the assignment is deterministic and stable — but it is a document nobody has named,
+    holding a name nobody would guess. `seldon governed status` reports these so the operator can
+    settle it with a `Name:` field, which is what AD-030-R20 exists for.
+
+    Args:
+        paths: Repo-relative paths.
+        declared: Path to the name that document declares, where it declares one.
+
+    Returns:
+        `(path, name it got, identifier it wanted)`, sorted by path.
+    """
+    assigned = assign_names(paths, declared)
+    out = []
+    for path in sorted(paths):
+        if str((declared or {}).get(path) or "").strip():
+            continue
+        wanted = document_name(path)
+        if assigned[path] != wanted:
+            out.append((path, assigned[path], wanted))
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -263,11 +312,12 @@ def existing_documents(driver, database: str) -> dict[str, dict]:
         records = session.run(
             "MATCH (d:Artifact:Document) RETURN d.governed_id AS gid, "
             "d.artifact_id AS aid, d.content_hash AS hash, d.state AS state, d.path AS path, "
-            "d.name AS name"
+            "d.name AS name, d.children_fingerprint AS children"
         ).data()
     return {
         r["gid"]: {"artifact_id": r["aid"], "content_hash": r["hash"],
-                   "state": r["state"], "path": r["path"], "name": r["name"]}
+                   "state": r["state"], "path": r["path"], "name": r["name"],
+                   "children_fingerprint": r["children"]}
         for r in records if r["gid"]
     }
 
@@ -501,6 +551,8 @@ class SyncReport:
         linked_legacy: Documents matched to an existing ArchitecturalDecision or DesignNote.
         nodes_retired: Child artifacts the ledger no longer holds, by type.
         abstained: Identifier references that resolved to nothing, by identifier.
+        retired_but_in_ledger: Children the ledger holds again whose graph record is `retired`,
+            which is terminal. Reported, never revived.
         violations: AD-030-R5 admission-invariant findings.
         dry_run: True when nothing was written.
     """
@@ -517,6 +569,7 @@ class SyncReport:
     linked_legacy: int = 0
     nodes_retired: dict[str, int] = field(default_factory=dict)
     abstained: dict[str, int] = field(default_factory=dict)
+    retired_but_in_ledger: dict[str, str] = field(default_factory=dict)
     violations: list[str] = field(default_factory=list)
     dry_run: bool = False
 
@@ -555,13 +608,39 @@ def out_of_date(project_dir: Path, config: dict, driver, database: str) -> list[
     return sorted(stale)
 
 
-def _document_properties(payload: dict, rel_path: str, name: str) -> dict:
+def children_fingerprint(children: Iterable[tuple[str, dict]]) -> str:
+    """A digest of what the ledger says a document's children are.
+
+    THE CONTENT HASH COVERS THE FILE, NOT THE EXTRACTION. A recipe change moves the children of a
+    document whose bytes never moved: the `Addendum NNN-X:` label added on 2026-09-12 made a
+    heading a Ruling in a file nobody had touched, and a sync that compares only the file hash and
+    the derived name skipped it and reported the document as unchanged. The fingerprint closes
+    that: it is stored on the Document and compared against the ledger, so a child that appears,
+    disappears or changes its span reaches the graph whatever moved it.
+
+    Args:
+        children: `(class, payload)` pairs for one document, as the ledger holds them.
+
+    Returns:
+        A hex digest over the children's ids and content hashes, order-independent.
+    """
+    rows = sorted(
+        f"{cls}\t{payload.get('id')}\t{payload.get('content_hash') or ''}"
+        for cls, payload in children
+    )
+    return hashlib.sha256("\n".join(rows).encode("utf-8")).hexdigest()
+
+
+def _document_properties(
+    payload: dict, rel_path: str, name: str, fingerprint: Optional[str] = None
+) -> dict:
     """Seldon artifact properties for one governed Document payload.
 
     Args:
         payload: The Document node's ledger payload.
         rel_path: Repo-relative path of the file.
         name: The name assigned by :func:`assign_names`.
+        fingerprint: The children fingerprint to store, when one was computed.
 
     Returns:
         Properties for the artifact, with None values dropped.
@@ -571,6 +650,7 @@ def _document_properties(payload: dict, rel_path: str, name: str) -> dict:
         "governed_id": payload["id"],
         "title": payload.get("title"),
         "description": payload.get("title"),
+        "children_fingerprint": fingerprint,
     }
     for key in NODE_PROPERTIES["Document"]:
         if payload.get(key) is not None:
@@ -653,8 +733,10 @@ def sync(
     legacy = legacy_nodes_by_path(driver, database)
     # Names are assigned over EVERY document in the ledger, not over the subset being synced, so a
     # `--only` run cannot hand out a name a full run would have given to someone else.
+    all_documents = view.documents()
     names = assign_names(
-        d.get("path") or d["id"] for d in view.documents()
+        [d.get("path") or d["id"] for d in all_documents],
+        {(d.get("path") or d["id"]): d.get("declared_name") for d in all_documents},
     )
 
     # Children, indexed by the document that owns them.
@@ -708,13 +790,15 @@ def sync(
         rel_path = payload.get("path") or governed_id
         existing = have_docs.get(governed_id)
         name = names.get(rel_path) or document_name(rel_path)
-        # The hash covers the FILE. `name` is derived, so a change in how it is derived moves it
-        # without moving the hash, and a document skipped as "unchanged" would keep a name the
-        # current rule would never give it.
+        fingerprint = children_fingerprint(children_by_doc.get(governed_id, []))
+        # THREE THINGS CAN MOVE, AND THE HASH ONLY COVERS ONE. The hash covers the FILE. `name` is
+        # derived, so a change in how it is derived moves it without moving the hash. The children
+        # come from the RECIPE, so a new ruling pattern moves them without moving either.
         unchanged = (
             existing is not None
             and existing["content_hash"] == payload.get("content_hash")
             and existing.get("name") == name
+            and existing.get("children_fingerprint") == fingerprint
         )
 
         if unchanged:
@@ -728,7 +812,7 @@ def sync(
                     type_of[child["id"]] = known["artifact_type"]
             continue
 
-        props = _document_properties(payload, rel_path, name)
+        props = _document_properties(payload, rel_path, name, fingerprint)
         match = legacy.get(rel_path)
         if match:
             props["seldon_artifact_id"] = match["artifact_id"]
@@ -753,6 +837,14 @@ def sync(
         for cls, child in children_by_doc.get(governed_id, []):
             child_props = _child_properties(cls, child, rel_path)
             known = have_children.get(child["id"])
+            if known and known.get("state") == "retired":
+                # `retired` is terminal by declaration (research.yaml): the span left the document
+                # and the graph recorded a deletion it must not perform twice. A ledger that holds
+                # the id again is a real event — an ordinal-keyed child whose neighbours moved, or
+                # a deleted paragraph restored — and it is REPORTED rather than quietly revived,
+                # because reviving it would make the retirement a lie in retrospect.
+                report.retired_but_in_ledger[child["id"]] = cls
+                continue
             child_id = write_node(cls, child_props, known, None)
             id_to_artifact[child["id"]] = child_id
             type_of[child["id"]] = NODE_TYPES[cls]
@@ -1262,7 +1354,14 @@ def match_rulings(
     Returns:
         Identifier matches first, then concept matches by descending score.
     """
-    rulings = list(rulings)
+    # THE SECOND GUARD, AND THE ONE A CALLER CANNOT GET AROUND. `read_rulings` excludes retired and
+    # superseded rulings in the query, which is where it belongs and where it is cheapest. It is
+    # not, on its own, enough: on 2026-09-12 a long-lived MCP server process held the module as it
+    # stood BEFORE that filter shipped and wrote nine `constrained_by` edges to retired rulings —
+    # the query had the filter, the process did not. A pure function that refuses a ruling carrying
+    # a non-binding state is testable without a database and holds however the rulings were
+    # fetched. See AD-030-R24.
+    rulings = [r for r in rulings if (r.get("state") or "") not in NON_BINDING_RULING_STATES]
     task_terms = concept_terms(task_text)
     named = set(re.findall(r"\b[A-Z]{2,4}-\d+-R\d+\b", task_text or ""))
     named_docs = set(re.findall(r"\b(?:AD|DN)-\d+\b", task_text or ""))
@@ -1333,10 +1432,18 @@ def write_constrained_by(
         session_id: Session id stamped on the events.
 
     Returns:
-        How many edges were written. An edge that already exists is not rewritten.
+        `(edges written, artifact ids refused)`. An edge that already exists is not rewritten, and
+        a ruling that no longer binds is refused here even if the caller matched it — the graph is
+        read at the moment of the write, so a caller running stale code cannot assert an obligation
+        no document imposes (AD-030-R24).
     """
     written = 0
+    refused: list[str] = []
+    binding = binding_ruling_ids(driver, database, [m.artifact_id for m in matches])
     for match in matches:
+        if match.artifact_id not in binding:
+            refused.append(match.artifact_id)
+            continue
         if _link_exists(driver, database, task_id, match.artifact_id, "constrained_by"):
             continue
         props: dict[str, Any] = {"match_method": match.match_method}
@@ -1351,7 +1458,83 @@ def write_constrained_by(
             session_id=session_id, rel_properties=props,
         )
         written += 1
-    return written
+    return written, refused
+
+
+def binding_ruling_ids(driver, database: str, artifact_ids: Iterable[str]) -> set[str]:
+    """Which of these Ruling artifacts still bind, read live.
+
+    Args:
+        driver: Neo4j driver.
+        database: Database name.
+        artifact_ids: Ruling artifact ids.
+
+    Returns:
+        The subset whose state is not retired or superseded.
+    """
+    ids = [i for i in artifact_ids if i]
+    if not ids:
+        return set()
+    cypher = (
+        "MATCH (r:Artifact:Ruling) WHERE r.artifact_id IN $ids "
+        "AND NOT coalesce(r.state, '') IN $excluded RETURN r.artifact_id AS artifact_id"
+    )
+    with driver.session(database=database) as session:
+        rows = session.run(cypher, ids=ids, excluded=sorted(NON_BINDING_RULING_STATES)).data()
+    return {r["artifact_id"] for r in rows}
+
+
+def non_binding_constraints(driver, database: str) -> list[dict]:
+    """`constrained_by` edges whose target no longer binds.
+
+    The standing detector for the defect the two guards above exist to prevent. An edge like this
+    is not repaired automatically: it was written by something, and what wrote it is the finding.
+
+    Args:
+        driver: Neo4j driver.
+        database: Database name.
+
+    Returns:
+        `{task, task_name, ruling, ruling_identifier, state, source_document}` per edge.
+    """
+    cypher = (
+        f"MATCH (t:Artifact)-[:{graph.canonical_rel_type('constrained_by')}]->(r:Artifact:Ruling) "
+        "WHERE coalesce(r.state, '') IN $excluded "
+        "RETURN t.artifact_id AS task, t.name AS task_name, r.artifact_id AS ruling, "
+        "r.ruling_identifier AS ruling_identifier, r.state AS state, "
+        "r.source_document AS source_document ORDER BY t.name, r.name"
+    )
+    with driver.session(database=database) as session:
+        return session.run(cypher, excluded=sorted(NON_BINDING_RULING_STATES)).data()
+
+
+def prune_non_binding_constraints(
+    *, project_dir: Path, driver, database: str, session_id: Optional[str] = None
+) -> list[dict]:
+    """Remove every `constrained_by` edge whose target no longer binds.
+
+    The removal is an event, not a delete: the graph records that the edge existed and that this
+    is what ended it, which is the only way the next reader can tell a repair from a gap.
+
+    Args:
+        project_dir: Project root.
+        driver: Neo4j driver.
+        database: Database name.
+        session_id: Session id stamped on the events.
+
+    Returns:
+        The rows removed, as :func:`non_binding_constraints` returns them.
+    """
+    from seldon.core.artifacts import remove_link
+
+    rows = non_binding_constraints(driver, database)
+    for row in rows:
+        remove_link(
+            project_dir=project_dir, driver=driver, database=database,
+            from_id=row["task"], to_id=row["ruling"], rel_type="constrained_by",
+            actor=ACTOR, authority="accepted", session_id=session_id,
+        )
+    return rows
 
 
 #: Refusal text for AD-030-R9's task-registration half.

@@ -1099,3 +1099,313 @@ def test_every_build_target_depends_on_the_pin_check():
     makefile = (GOVERNED_DIR / "Makefile").read_text(encoding="utf-8")
     for target in ("catalog", "admit", "plan", "sweep", "schema"):
         assert f"\n{target}: check-squiddy" in makefile, target
+
+
+# ---------------------------------------------------------------------------
+# 5. AD-030-R20: a document's declared name
+# ---------------------------------------------------------------------------
+
+@needs_governed_graph
+def test_a_document_declares_its_own_name(emitter, domain_block):
+    text = (
+        "# AD-030 Implementation Findings 002\n\n"
+        "**Name:** AD-030-F002\n**Date:** 2026-09-12\n\n---\n\n## 1. Context\n\nProse.\n"
+    )
+    assert emitter.declared_name(text, domain_block) == "AD-030-F002"
+
+
+@needs_governed_graph
+def test_a_name_in_the_body_is_prose_not_a_declaration(emitter, domain_block):
+    text = "# AD-1\n\n**Date:** today\n\n---\n\n## Body\n\n**Name:** not a declaration.\n"
+    assert emitter.declared_name(text, domain_block) is None
+
+
+@needs_governed_graph
+def test_a_document_that_declares_nothing_declares_nothing(emitter, domain_block):
+    assert emitter.declared_name("# AD-1\n\n**Date:** today\n", domain_block) is None
+
+
+def test_a_declared_name_beats_the_derivation():
+    """AD-030-R20: a derived name is never authoritative over a declared one."""
+    names = governed.assign_names(
+        ["docs/design/AD-030_governed.md", "docs/design/AD-030_findings_002.md"],
+        {"docs/design/AD-030_findings_002.md": "AD-030-F002"},
+    )
+    assert names["docs/design/AD-030_findings_002.md"] == "AD-030-F002"
+    assert names["docs/design/AD-030_governed.md"] == "AD-030"
+
+
+def test_a_declaration_can_take_a_name_the_tiebreak_had_given_away():
+    """The tiebreak was never a statement of intent; a declaration is, so it wins."""
+    names = governed.assign_names(
+        ["docs/design/AD-030_a.md", "docs/design/AD-030_b.md"],
+        {"docs/design/AD-030_b.md": "AD-030"},
+    )
+    assert names["docs/design/AD-030_b.md"] == "AD-030"
+    assert names["docs/design/AD-030_a.md"] == "AD-030_a"
+
+
+def test_the_tiebreak_is_still_sorted_path_first_claim():
+    names = governed.assign_names(
+        ["docs/design/AD-030_governed.md", "docs/design/AD-030_implementation.md"]
+    )
+    assert names["docs/design/AD-030_governed.md"] == "AD-030"
+    assert names["docs/design/AD-030_implementation.md"] == "AD-030_implementation"
+
+
+def test_the_loser_of_a_tiebreak_is_reported_so_it_can_be_settled():
+    collisions = governed.name_collisions(
+        ["docs/design/AD-030_governed.md", "docs/design/AD-030_implementation.md"]
+    )
+    assert collisions == [
+        ("docs/design/AD-030_implementation.md", "AD-030_implementation", "AD-030")
+    ]
+
+
+def test_a_document_that_declares_its_name_is_not_reported_as_a_collision():
+    assert governed.name_collisions(
+        ["docs/design/AD-030_governed.md", "docs/design/AD-030_findings.md"],
+        {"docs/design/AD-030_findings.md": "AD-030-F002"},
+    ) == []
+
+
+# ---------------------------------------------------------------------------
+# 6. AD-030-R21: supersession is declared, never inferred
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def supersession_re(domain_block):
+    import re as _re
+
+    return _re.compile(domain_block["supersession_pattern"])
+
+
+@needs_governed_graph
+def test_a_sentence_final_declaration_is_recovered(emitter, supersession_re):
+    text = "**AD-030-R25.** The thing is now the other thing. Supersedes AD-030-R12."
+    assert emitter.supersedes_references(text, supersession_re) == ["AD-030-R12"]
+
+
+@needs_governed_graph
+def test_several_targets_in_one_declaration(emitter, supersession_re):
+    text = "**AD-030-R25.** Supersedes AD-030-R12, AD-030-R13 and AD-029-R1."
+    assert emitter.supersedes_references(text, supersession_re) == [
+        "AD-030-R12", "AD-030-R13", "AD-029-R1"
+    ]
+
+
+@needs_governed_graph
+def test_prose_about_a_supersession_is_not_one(emitter, supersession_re):
+    """AD-030-R17's own wording. It does not match, and that is the pattern working."""
+    text = ("**AD-030-R17.** Squiddy is a build-time dependency of the `governed/` graph. "
+            "Supersedes the `pyproject.toml` clause of AD-030 R10; the acyclicity clause stands.")
+    assert emitter.supersedes_references(text, supersession_re) == []
+
+
+@needs_governed_graph
+def test_nothing_else_is_read_as_supersession(emitter, supersession_re):
+    for text in (
+        "This ruling replaces AD-030-R12.",
+        "AD-030-R12 is superseded by this one.",
+        "See AD-030-R12, which this supersedes eventually.",
+    ):
+        assert emitter.supersedes_references(text, supersession_re) == [], text
+
+
+@needs_governed_graph
+def test_the_document_half_is_a_header_field(domain_block):
+    """Whole-document supersession rides the same header-field mechanism as `Extends:`."""
+    assert {"field": "Supersedes", "edge": "Supersedes"} in domain_block["header_edges"]
+
+
+# ---------------------------------------------------------------------------
+# 7. AD-030-R23: classification is by label, force is read separately
+# ---------------------------------------------------------------------------
+
+@needs_governed_graph
+@pytest.mark.parametrize("text", [
+    "**AD-030-R1.** Every governed document is graph content.",
+    "AD-030-R1. Every governed document is graph content.",
+    "AD-030-R1: Every governed document is graph content.",
+    "**AD-030-R1** Every governed document is graph content.",
+    "## AD-030-R9 The design-note gate",
+])
+def test_an_identifier_used_as_a_label_classifies(emitter, domain_block, text):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(text, rules) is not None, text
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text", [
+    'AD-030-R3 is "Ingest runs on commit, not on cron."',
+    "## 2. Step 2 — actor gate (AD-030-R11)",
+    "The implementer applied AD-030-R16 and retired 161 rulings.",
+])
+def test_an_identifier_merely_mentioned_does_not_classify(emitter, domain_block, text):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(text, rules) is None, text
+
+
+@needs_governed_graph
+def test_force_is_read_from_the_ruling_and_not_from_the_classifier(emitter, domain_block):
+    """R16 governs classification. If position also supplied force, every ruling would be binding."""
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    force_rules = emitter.compiled_rules(domain_block, "force_patterns")
+    cases = {
+        "**AD-1-R1.** This is never done.": "prohibition",
+        "**AD-1-R2.** A session MUST do the thing.": "obligation",
+        "**AD-1-R3.** A session SHOULD do the thing.": "recommendation",
+        "**AD-1-R4.** The thing is the case.": "binding",
+    }
+    for text, want in cases.items():
+        assert emitter.classify_ruling(text, rules, force_rules, "binding")["force"] == want, text
+
+
+@needs_governed_graph
+def test_deontic_words_in_body_prose_still_do_not_classify(emitter, domain_block):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(
+        "The manifest is never hand-edited, and a field set by hand is a claim no stage made.",
+        rules,
+    ) is None
+
+
+@needs_governed_graph
+def test_an_addendum_heading_is_a_label(emitter, domain_block):
+    """Addendum 1 to this task, 5c: `Addendum NNN-X:` is a ruling ID form this repo uses."""
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    heading = "# Addendum 029-A: Seldon never reads a relationship by name alone"
+    match = emitter.classify_ruling(heading, rules)
+    assert match is not None and match["name"] == "addendum_heading"
+    assert emitter.ruling_identifier(heading) == "Addendum 029-A"
+
+
+@needs_governed_graph
+def test_a_heading_that_discusses_an_addendum_is_not_one(emitter, domain_block):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling("## What Addendum 029-A changed", rules) is None
+
+
+@needs_governed_graph
+def test_a_labelled_ruling_keeps_its_id_when_its_neighbours_change(emitter, domain_block):
+    """The id comes from the label, so an edit elsewhere in the document cannot reassign it."""
+    def blocks(*texts):
+        return [{"idx": i, "kind": "paragraph", "text": t} for i, t in enumerate(texts)]
+
+    first = emitter.ruling_blocks("doc", blocks("**AD-1-R1.** A.", "**AD-1-R2.** B."), domain_block)
+    again = emitter.ruling_blocks(
+        "doc", blocks("prose", "**AD-1-R2.** B.", "**AD-1-R1.** A."), domain_block
+    )
+    assert {r["identifier"]: r["id"] for r in first} == {r["identifier"]: r["id"] for r in again}
+
+
+# ---------------------------------------------------------------------------
+# 8. AD-030-R24: a retired ruling binds nothing
+# ---------------------------------------------------------------------------
+
+RETIRED_RULING = {
+    "artifact_id": "r3", "name": "result!ad_030_r18", "ruling_identifier": "AD-030-R18",
+    "force": "binding", "state": "retired",
+    "text": ("**AD-030-R18.** Counts registered by a backfill are run outputs and enter the graph "
+             "as proposed; verification is a re-run of the sync followed by result verify."),
+    "source_document": "cc_tasks/2026-09-12_reconcile_RESULT.md",
+}
+
+
+def test_a_retired_ruling_never_reaches_a_match_however_strongly_it_scores():
+    """2026-09-12: a stale process wrote nine edges to retired rulings. The query filtered; the
+    process did not. The matcher filters too, and it is pure."""
+    task = ("Register the backfill counts as run outputs, then verify them by re-running the sync "
+            "and `seldon result verify`, per AD-030-R18.")
+    assert governed.match_rulings(task, [RETIRED_RULING], 0.18) == []
+
+
+def test_a_superseded_ruling_is_refused_the_same_way():
+    superseded = {**RETIRED_RULING, "state": "superseded"}
+    assert governed.match_rulings("counts backfill verify sync", [superseded], 0.18) == []
+
+
+def test_a_binding_ruling_with_no_state_property_still_matches():
+    """A graph written before states existed must not lose every ruling it holds."""
+    assert governed.match_rulings(
+        "Implement AD-900-R1.", [RPE_RULING], 0.18
+    )[0].ruling_identifier == "AD-900-R1"
+
+
+@neo4j_tests
+def test_read_rulings_excludes_retired_by_default(project, neo4j_driver, domain_config):
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (r:Artifact:Ruling) SET r.state = 'retired'")
+    assert governed.read_rulings(neo4j_driver, NEO4J_DB) == []
+    assert len(governed.read_rulings(neo4j_driver, NEO4J_DB, include_non_binding=True)) == 1
+
+
+@neo4j_tests
+def test_the_write_path_refuses_a_target_that_no_longer_binds(
+    project, neo4j_driver, domain_config
+):
+    """The guard that would have caught the stale process: the state is read at the write."""
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        ruling = session.run(
+            "MATCH (r:Artifact:Ruling) SET r.state = 'retired' RETURN r.artifact_id AS id"
+        ).single()["id"]
+    task_id = create_artifact(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="ResearchTask",
+        properties={"name": "t", "description": "d"}, actor="cc", authority="accepted",
+    )
+    match = governed.RulingMatch(
+        artifact_id=ruling, name="r", ruling_identifier="AD-900-R1", force="prohibition",
+        text="t", source_document="d", match_method="identifier",
+    )
+    written, refused = governed.write_constrained_by(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, task_id=task_id, task_type="ResearchTask",
+        matches=[match],
+    )
+    assert (written, refused) == (0, [ruling])
+
+
+@neo4j_tests
+def test_verify_sees_a_constraint_on_a_ruling_that_no_longer_binds(
+    project, neo4j_driver, domain_config
+):
+    from seldon.commands.verify import check_binding_constraints
+
+    _sync(project, neo4j_driver, domain_config)
+    assert check_binding_constraints(
+        neo4j_driver, NEO4J_DB, project, _config(project)
+    ).symbol == "pass"
+
+    ruling = governed.read_rulings(neo4j_driver, NEO4J_DB)[0]
+    task_id = create_artifact(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="ResearchTask",
+        properties={"name": "t", "description": "d"}, actor="cc", authority="accepted",
+    )
+    match = governed.RulingMatch(
+        artifact_id=ruling["artifact_id"], name=ruling["name"],
+        ruling_identifier=ruling["ruling_identifier"], force=ruling["force"],
+        text=ruling["text"], source_document=ruling["source_document"],
+        match_method="identifier",
+    )
+    governed.write_constrained_by(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, task_id=task_id, task_type="ResearchTask",
+        matches=[match],
+    )
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (r:Artifact:Ruling) SET r.state = 'retired'")
+
+    result = check_binding_constraints(neo4j_driver, NEO4J_DB, project, _config(project))
+    assert result.symbol == "fail" and result.fixable
+
+    removed = governed.prune_non_binding_constraints(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+    )
+    assert len(removed) == 1
+    assert check_binding_constraints(
+        neo4j_driver, NEO4J_DB, project, _config(project)
+    ).symbol == "pass"

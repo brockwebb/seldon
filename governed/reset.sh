@@ -2,6 +2,12 @@
 # Reset the governed graph to "nothing has ever been admitted": empty manifest, empty ledger, no
 # evidence, no caches. The four governed files themselves are never touched.
 #
+# THIS IS THE RESET PATH AND NOT THE EDIT PATH (AD-030-R22). An edited governed document is
+# re-ingested at the cost of that one document by `make -C governed admit ID=<doc_id>`; running
+# this to pick up one changed paragraph rewrites the whole ledger and throws away the history of
+# every other document. Use it when the RECIPE changed — a new ruling pattern, a new header field,
+# a kit upgrade — so that every document's extraction really has moved.
+#
 # This exists because a partial reset is worse than none: stage records left behind make `make`
 # skip the stages that would have recomputed the manifest, and the ledger then records a document
 # state that no stage actually decided.

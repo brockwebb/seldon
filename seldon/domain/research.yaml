@@ -273,6 +273,12 @@ artifact_types:
       content_hash:
         required: true
         description: "sha256 of the file. Identity rests here, not on the path (AD-030-R4)."
+      children_fingerprint:
+        category: system
+        description: "Digest of what the ledger said this document's sections, rulings, citations and passages were at the last sync. Compared on the next one, because the content hash covers the FILE and the children come from the recipe: a new ruling pattern moves them without moving the hash or the name."
+      declared_name:
+        category: system
+        description: "The name the document declares for itself in its `Name:` header field (AD-030-R20). When present it IS `name`; when absent, `name` is derived from the file stem and the derivation is never authoritative over a declaration. Carried separately so a reader can tell which of the two a name is."
       doc_kind:
         category: system
         description: "Which governed directory it came from: design, requirements, cc_task, handoff."

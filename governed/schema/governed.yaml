@@ -142,6 +142,12 @@ classes:
       path:
         required: true
         description: Repo-relative path, the edit surface. Governed documents stay in place.
+      declared_name:
+        description: >-
+          The document's own canonical name, read from its `Name:` header field (AD-030-R20). This
+          is the graph identity a `name`-keyed query and `Extends:` recovery use. It is absent from
+          a document that declares none, and the consumer then derives a name from the file stem —
+          a derivation is never authoritative over a declaration.
       doc_kind:
         range: DocKind
         required: true
@@ -261,8 +267,14 @@ classes:
 
   Supersedes:
     is_a: Edge
-    description: (Ruling)-[:SUPERSEDES]->(Ruling), or decision to decision.
+    description: >-
+      (Ruling)-[:SUPERSEDES]->(Ruling), or (Document)-[:SUPERSEDES]->(Document). Declared, never
+      inferred (AD-030-R21): a ruling carries `Supersedes AD-NNN-Rn.` as its final sentence, and a
+      whole document carries a `Supersedes:` header field naming the documents it replaces.
     slots: [reason]
+    attributes:
+      raw_field:
+        description: The header field's value, when the edge came from one.
 
   Extends:
     is_a: Edge
