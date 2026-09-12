@@ -1,0 +1,1785 @@
+{
+    "$defs": {
+        "Any": {
+            "additionalProperties": true,
+            "description": "",
+            "title": "Any",
+            "type": [
+                "null",
+                "boolean",
+                "object",
+                "number",
+                "string"
+            ]
+        },
+        "AssertionStatus": {
+            "description": "The authority model on an assertion, from fss-policy-kg's overlay discipline.",
+            "enum": [
+                "proposed",
+                "accepted",
+                "retracted"
+            ],
+            "title": "AssertionStatus",
+            "type": "string"
+        },
+        "Citation": {
+            "additionalProperties": false,
+            "description": "Any citation appearing in a governed document, captured at ingest in state `proposed` (AD-030-R6). Verification is a transition carrying method, date and by.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "authors": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "citation_state": {
+                    "$ref": "#/$defs/CitationState"
+                },
+                "doc_id": {
+                    "description": "The Document a child node belongs to.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "doi": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "raw": {
+                    "description": "The citation exactly as the document writes it.",
+                    "type": "string"
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "source_url": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "text": {
+                    "description": "The verbatim span. Never paraphrased; the hash is over the file, not over this.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verification_date": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verification_method": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verified_by": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "year": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "citation_state",
+                "raw",
+                "id"
+            ],
+            "title": "Citation",
+            "type": "object"
+        },
+        "CitationState": {
+            "description": "AD-030-R6. Capture is free; verification is a separate, recorded transition.",
+            "enum": [
+                "proposed",
+                "verified"
+            ],
+            "title": "CitationState",
+            "type": "string"
+        },
+        "Cites": {
+            "additionalProperties": false,
+            "description": "(Section | Document)-[:CITES]->(Citation | Passage), typed with a CiTO intent (AD-030-R7).",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "cito_type": {
+                    "$ref": "#/$defs/CitoType"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "raw_reference": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reason": {
+                    "description": "Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "cito_type",
+                "subject",
+                "object"
+            ],
+            "title": "Cites",
+            "type": "object"
+        },
+        "CitoType": {
+            "description": "CiTO (Shotton 2010), the subset AD-030-R7 names. `disagrees_with` and `refutes` carry a `reason` naming the constraint that no longer holds: rejected science stays in the graph as a rejected prescription rather than vanishing from it.",
+            "enum": [
+                "cites_as_evidence",
+                "uses_method_in",
+                "cites_for_information",
+                "extends",
+                "disagrees_with",
+                "refutes"
+            ],
+            "title": "CitoType",
+            "type": "string"
+        },
+        "ConstrainedBy": {
+            "additionalProperties": false,
+            "description": "(task)-[:CONSTRAINED_BY]->(Ruling). Written by `seldon cc register` from identifier reference and concept overlap; the edge AD-030 exists to create.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "match_method": {
+                    "description": "identifier | concept_overlap",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "match_score": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "matched_terms": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "ConstrainedBy",
+            "type": "object"
+        },
+        "Contains": {
+            "additionalProperties": false,
+            "description": "(Document)-[:CONTAINS]->(Section | Ruling | Citation | Passage). Structural parenthood.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "Contains",
+            "type": "object"
+        },
+        "DeonticForce": {
+            "description": "What makes a Section a Ruling. Profiled from the deontic axis fss-policy-kg uses over obligations; the vocabulary here is the one Seldon's own documents actually write.",
+            "enum": [
+                "binding",
+                "obligation",
+                "prohibition",
+                "recommendation"
+            ],
+            "title": "DeonticForce",
+            "type": "string"
+        },
+        "DependsOn": {
+            "additionalProperties": false,
+            "description": "(Document)-[:DEPENDS_ON]->(Document), from the `Depends on:` header field.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "raw_field": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "DependsOn",
+            "type": "object"
+        },
+        "DocKind": {
+            "description": "Which governed directory the document came from. The directory is the document's genre and decides how hard its citation gate is (AD-030-R6: a design note ships with `proposed` citations, a paper does not).",
+            "enum": [
+                "design",
+                "requirements",
+                "cc_task",
+                "handoff"
+            ],
+            "title": "DocKind",
+            "type": "string"
+        },
+        "Document": {
+            "additionalProperties": false,
+            "description": "One governed markdown file. `id` is its repo-relative path slugged; `path` is the live edit surface; `content_hash` is what identity actually rests on (AD-030-R4).",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "byte_length": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "content_hash": {
+                    "description": "sha256 of the file as it stood when the assertion was made (AD-030-R4).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "decided_by": {
+                    "description": "Who decided a `declined` state.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "decided_date": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "disposition": {
+                    "$ref": "#/$defs/ManifestDisposition"
+                },
+                "doc_kind": {
+                    "$ref": "#/$defs/DocKind"
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "identifiers": {
+                    "description": "Every identifier reference the node's text names (`AD-030`, `DN-4`, an eight-hex task id prefix), recovered lexically. Squiddy turns the ones that resolve inside THIS graph into `Mentions` edges; the rest are carried here because they resolve in Seldon's graph, not in this one, and `seldon governed sync` is what can see them (AD-030-R10: the coupling is a stream, not awareness). A reference that is dropped rather than carried is a link the graph can never recover.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "local_path": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "manifest_state": {
+                    "$ref": "#/$defs/ManifestState",
+                    "description": "AD-030-R5. No content edge may point at a document that is not `admitted`."
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "path": {
+                    "description": "Repo-relative path, the edit surface. Governed documents stay in place.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reason": {
+                    "description": "Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_count": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "section_count": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "seldon_artifact_id": {
+                    "description": "The artifact_id of the ArchitecturalDecision or DesignNote node Seldon already holds for this path, when there is one. Carried so the import matches rather than double-minting.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sha256": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "path",
+                "doc_kind",
+                "manifest_state",
+                "id"
+            ],
+            "title": "Document",
+            "type": "object"
+        },
+        "Edge": {
+            "additionalProperties": false,
+            "description": "A property-graph edge from `subject` to `object`; the class is the predicate.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "Edge",
+            "type": "object"
+        },
+        "EventEnvelope": {
+            "additionalProperties": false,
+            "description": "One line of the ledger.",
+            "properties": {
+                "doc_id": {
+                    "description": "The Document a child node belongs to.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "event_id": {
+                    "type": "string"
+                },
+                "event_kind": {
+                    "$ref": "#/$defs/EventKind"
+                },
+                "event_stage": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "payload": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Any"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "provenance": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Any"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "run_id": {
+                    "type": "string"
+                },
+                "schema_version": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ts": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "event_id",
+                "run_id",
+                "type",
+                "event_kind",
+                "ts"
+            ],
+            "title": "EventEnvelope",
+            "type": "object"
+        },
+        "EventKind": {
+            "description": "",
+            "enum": [
+                "node",
+                "edge",
+                "retract",
+                "manifest",
+                "catalog"
+            ],
+            "title": "EventKind",
+            "type": "string"
+        },
+        "Extends": {
+            "additionalProperties": false,
+            "description": "(Document)-[:EXTENDS]->(Document), from the `Extends:` header field.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "raw_field": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "Extends",
+            "type": "object"
+        },
+        "GovernedGraph": {
+            "additionalProperties": false,
+            "description": "The graph as two lists, the shape of the node-link export.",
+            "properties": {
+                "edges": {
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/Contains"
+                            },
+                            {
+                                "$ref": "#/$defs/ConstrainedBy"
+                            },
+                            {
+                                "$ref": "#/$defs/Satisfies"
+                            },
+                            {
+                                "$ref": "#/$defs/Supersedes"
+                            },
+                            {
+                                "$ref": "#/$defs/Extends"
+                            },
+                            {
+                                "$ref": "#/$defs/DependsOn"
+                            },
+                            {
+                                "$ref": "#/$defs/Mentions"
+                            },
+                            {
+                                "$ref": "#/$defs/Cites"
+                            }
+                        ]
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "nodes": {
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/Document"
+                            },
+                            {
+                                "$ref": "#/$defs/Section"
+                            },
+                            {
+                                "$ref": "#/$defs/Ruling"
+                            },
+                            {
+                                "$ref": "#/$defs/Citation"
+                            },
+                            {
+                                "$ref": "#/$defs/Passage"
+                            }
+                        ]
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "title": "GovernedGraph",
+            "type": "object"
+        },
+        "ManifestDisposition": {
+            "description": "Axis 2, intent or role, profiling DDI-Lifecycle 3.3 with local reason codes. A graph's config restricts this to the values it uses; a value not in the config is a gate failure.",
+            "enum": [
+                "active",
+                "reference",
+                "metadata_only",
+                "excluded:deferred",
+                "excluded:restricted",
+                "excluded:out_of_scope"
+            ],
+            "title": "ManifestDisposition",
+            "type": "string"
+        },
+        "ManifestEntry": {
+            "additionalProperties": false,
+            "description": "One entry per document ever considered (DI-070). The two status axes are required.",
+            "properties": {
+                "acquisition_status": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "admitting_since": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "bytes": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "cited_in": {
+                    "description": "Where in the graph's own record this item is cited; the biblio assessment criterion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "disposition": {
+                    "$ref": "#/$defs/ManifestDisposition"
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "kind": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "local_path": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "notes": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "provenance_flag": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "retrieved_date": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sha256": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "source_url": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "stage": {
+                    "$ref": "#/$defs/ManifestStage"
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verification_status": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "stage",
+                "disposition"
+            ],
+            "title": "ManifestEntry",
+            "type": "object"
+        },
+        "ManifestStage": {
+            "description": "Axis 1, pipeline position, profiling UNECE GSBPM v5.1 (icsp_notebook/corpus/manifest_schema.md). `admitting` is `in_graph` in the middle of becoming true (v7.11, DI-078).",
+            "enum": [
+                "cataloged",
+                "acquired",
+                "admitting",
+                "in_graph",
+                "assess_queue"
+            ],
+            "title": "ManifestStage",
+            "type": "string"
+        },
+        "ManifestState": {
+            "description": "AD-030-R5. Every document ever considered is a node from the moment it is cataloged. A `declined` node carries its reason and never receives a content edge; reopening one requires a new decision with a `supersedes` edge.",
+            "enum": [
+                "cataloged",
+                "held",
+                "admitted",
+                "declined"
+            ],
+            "title": "ManifestState",
+            "type": "string"
+        },
+        "Mentions": {
+            "additionalProperties": false,
+            "description": "(any)-[:MENTIONS]->(any), recovered lexically from an identifier reference: `AD-NNN`, `DN-`, `S-NNN`, `TN-N`, or an eight-hex task id prefix. The weakest edge in the set, and the one that finds the most.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "identifier_kind": {
+                    "type": "string"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "occurrences": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "identifier",
+                "identifier_kind",
+                "subject",
+                "object"
+            ],
+            "title": "Mentions",
+            "type": "object"
+        },
+        "Node": {
+            "additionalProperties": false,
+            "description": "A property-graph node keyed by `id`.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "id"
+            ],
+            "title": "Node",
+            "type": "object"
+        },
+        "Passage": {
+            "additionalProperties": false,
+            "description": "A quoted span in a source, with the hash of the quoted text (AD-030-R6; the micropublication model, Clark et al. 2014). Minted only when a document actually quotes something.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "content_hash": {
+                    "description": "sha256 of the file as it stood when the assertion was made (AD-030-R4).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "doc_id": {
+                    "description": "The Document a child node belongs to.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "quoted_in_section": {
+                    "description": "The Section id the quotation appears in.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "span_end": {
+                    "description": "End offset, exclusive.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "span_start": {
+                    "description": "Character offset of the node's verbatim text in the document.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "text": {
+                    "description": "The verbatim span. Never paraphrased; the hash is over the file, not over this.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "text",
+                "id"
+            ],
+            "title": "Passage",
+            "type": "object"
+        },
+        "Ruling": {
+            "additionalProperties": false,
+            "description": "A Section or paragraph whose text is deontic (AD-030 section 4). A Ruling is the unit a task is `constrained_by`; the nanopublication assertion is the model (Groth et al. 2010).",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "content_hash": {
+                    "description": "sha256 of the file as it stood when the assertion was made (AD-030-R4).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "doc_id": {
+                    "description": "The Document a child node belongs to.",
+                    "type": "string"
+                },
+                "force": {
+                    "$ref": "#/$defs/DeonticForce"
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "identifiers": {
+                    "description": "Every identifier reference the node's text names (`AD-030`, `DN-4`, an eight-hex task id prefix), recovered lexically. Squiddy turns the ones that resolve inside THIS graph into `Mentions` edges; the rest are carried here because they resolve in Seldon's graph, not in this one, and `seldon governed sync` is what can see them (AD-030-R10: the coupling is a stream, not awareness). A reference that is dropped rather than carried is a link the graph can never recover.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "matched_pattern": {
+                    "description": "The configured pattern that classified this text as deontic. Recorded so a Ruling can be argued with: a wrong match is a pattern to fix, not a judgement to relitigate.",
+                    "type": "string"
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_identifier": {
+                    "description": "The document's own label for it, e.g. `AD-030-R9`, when the text carries one.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "section_id": {
+                    "description": "The Section this ruling sits in, when it is a paragraph rather than a section.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "section_path": {
+                    "description": "The heading stack, joined, as the parser produced it.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "span_end": {
+                    "description": "End offset, exclusive.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "span_start": {
+                    "description": "Character offset of the node's verbatim text in the document.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "text": {
+                    "description": "The verbatim span. Never paraphrased; the hash is over the file, not over this.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "doc_id",
+                "text",
+                "force",
+                "matched_pattern",
+                "id"
+            ],
+            "title": "Ruling",
+            "type": "object"
+        },
+        "Satisfies": {
+            "additionalProperties": false,
+            "description": "(task | Script)-[:SATISFIES]->(Requirement).",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "Satisfies",
+            "type": "object"
+        },
+        "Section": {
+            "additionalProperties": false,
+            "description": "An addressable child of a Document with a stable id and a verbatim span (doco:Section). The id is `<doc>#<slug of section path>`, so a citation survives every edit that leaves the heading alone.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "content_hash": {
+                    "description": "sha256 of the file as it stood when the assertion was made (AD-030-R4).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "doc_id": {
+                    "description": "The Document a child node belongs to.",
+                    "type": "string"
+                },
+                "heading": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
+                    "type": "string"
+                },
+                "identifiers": {
+                    "description": "Every identifier reference the node's text names (`AD-030`, `DN-4`, an eight-hex task id prefix), recovered lexically. Squiddy turns the ones that resolve inside THIS graph into `Mentions` edges; the rest are carried here because they resolve in Seldon's graph, not in this one, and `seldon governed sync` is what can see them (AD-030-R10: the coupling is a stream, not awareness). A reference that is dropped rather than carried is a link the graph can never recover.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "level": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ordinal": {
+                    "description": "Position in reading order within the document.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "section_path": {
+                    "description": "The heading stack, joined, as the parser produced it.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "span_end": {
+                    "description": "End offset, exclusive.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "span_start": {
+                    "description": "Character offset of the node's verbatim text in the document.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "text": {
+                    "description": "The verbatim span. Never paraphrased; the hash is over the file, not over this.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "doc_id",
+                "text",
+                "heading",
+                "id"
+            ],
+            "title": "Section",
+            "type": "object"
+        },
+        "Supersedes": {
+            "additionalProperties": false,
+            "description": "(Ruling)-[:SUPERSEDES]->(Ruling), or decision to decision.",
+            "properties": {
+                "asserted_at": {
+                    "description": "When the assertion was made, ISO 8601 UTC.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "method": {
+                    "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "object": {
+                    "description": "The id of the target node.",
+                    "type": "string"
+                },
+                "prov_wasDerivedFrom": {
+                    "description": "The manifest entry or source the assertion was derived from.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_wasGeneratedBy": {
+                    "description": "Run id of the activity that made the assertion.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reason": {
+                    "description": "Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "ruling_id": {
+                    "description": "The event id of the human ruling that authorized this assertion, when one did.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/AssertionStatus"
+                },
+                "subject": {
+                    "description": "The id of the source node.",
+                    "type": "string"
+                },
+                "superseded_by": {
+                    "description": "The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "subject",
+                "object"
+            ],
+            "title": "Supersedes",
+            "type": "object"
+        }
+    },
+    "$id": "https://github.com/brockwebb/seldon/governed/schema",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "additionalProperties": false,
+    "description": "The graph as two lists, the shape of the node-link export.",
+    "metamodel_version": "1.11.0",
+    "properties": {
+        "edges": {
+            "items": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/Contains"
+                    },
+                    {
+                        "$ref": "#/$defs/ConstrainedBy"
+                    },
+                    {
+                        "$ref": "#/$defs/Satisfies"
+                    },
+                    {
+                        "$ref": "#/$defs/Supersedes"
+                    },
+                    {
+                        "$ref": "#/$defs/Extends"
+                    },
+                    {
+                        "$ref": "#/$defs/DependsOn"
+                    },
+                    {
+                        "$ref": "#/$defs/Mentions"
+                    },
+                    {
+                        "$ref": "#/$defs/Cites"
+                    }
+                ]
+            },
+            "type": [
+                "array",
+                "null"
+            ]
+        },
+        "nodes": {
+            "items": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/Document"
+                    },
+                    {
+                        "$ref": "#/$defs/Section"
+                    },
+                    {
+                        "$ref": "#/$defs/Ruling"
+                    },
+                    {
+                        "$ref": "#/$defs/Citation"
+                    },
+                    {
+                        "$ref": "#/$defs/Passage"
+                    }
+                ]
+            },
+            "type": [
+                "array",
+                "null"
+            ]
+        }
+    },
+    "title": "governed",
+    "type": "object",
+    "version": "0.1.0"
+}
+

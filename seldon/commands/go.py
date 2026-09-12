@@ -274,13 +274,37 @@ def _get_r9_notice(project_dir: str) -> Optional[str]:
             require_design_note=DEFAULT_REQUIRE_DESIGN_NOTE,
         )
 
+    # AD-030 C7: the node form of the check when a graph is reachable, the filesystem form when
+    # it is not. `seldon go` degrades rather than failing on an unreachable database everywhere
+    # else, and an orientation that refused to render because Neo4j was down would be worse than
+    # one that reports the weaker check.
+    driver, database = None, None
+    try:
+        config = load_project_config(root)
+        driver = get_neo4j_driver(config)
+        database = config["neo4j"]["database"]
+    except Exception:
+        driver, database = None, None
+
     try:
         window = previous_session_window(root, settings)
         if window is None:
             return None
-        verdict = check_r9(root, window, events_in_window(root, window))
+        verdict = check_r9(root, window, events_in_window(root, window), driver, database)
     except (OSError, DuplicateEventError):
         return None
+    except Exception:
+        # A graph-side failure must not silence the filesystem form of the check.
+        try:
+            window = previous_session_window(root, settings)
+            if window is None:
+                return None
+            verdict = check_r9(root, window, events_in_window(root, window))
+        except (OSError, DuplicateEventError):
+            return None
+    finally:
+        if driver is not None:
+            driver.close()
 
     if not verdict.violated:
         return None

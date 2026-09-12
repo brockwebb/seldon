@@ -188,7 +188,10 @@ def test_cc_register_via_mcp(
 
     cc_file = project_dir / "cc_tasks" / "2026-04-03_register_test.md"
     cc_file.parent.mkdir(parents=True, exist_ok=True)
-    cc_file.write_text("# CC Task: Register Test\n\nA task to register.\n")
+    # AD-030-R9: a CC task cites the decision it implements, or registration refuses it.
+    cc_file.write_text(
+        "# CC Task: Register Test\n\n**Governing doc:** AD-030\n\nA task to register.\n"
+    )
 
     result = seldon_cc_register(
         filepath="cc_tasks/2026-04-03_register_test.md",

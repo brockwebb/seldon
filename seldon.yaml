@@ -17,6 +17,16 @@ handoff:
   # no docs/design/ note. Set false to warn instead of refusing.
   require_design_note: true
 
+governed:
+  # AD-030: governed documents as graph content. The Squiddy graph under `governed/` parses every
+  # markdown file in docs/design/, docs/requirements/, cc_tasks/ and handoffs/ into its own ledger;
+  # `seldon governed sync` imports that ledger through Seldon's write path.
+  graph_dir: governed
+  # Minimum concept overlap before `seldon cc register` surfaces a ruling it was not told about.
+  # Lower buries the identifier matches under coincidence; higher finds only rulings the task
+  # already names, which the identifier pass has found already.
+  ruling_match_threshold: 0.18
+
 shared_ontology:
   # Per AD-017: Central Validity Ontology
   # Seldon repo owns the master vocabulary files.

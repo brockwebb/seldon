@@ -41,6 +41,9 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `ontology sync`   | Pull latest vocabulary into project | `seldon ontology sync` (reads from master) |
 | `ontology list`   | Check inherited terms | `seldon ontology list [--master]` |
 | `verify`          | Before committing, or after any edit session | `seldon verify [--fix]` |
+| `governed sync`   | After editing any docs/design, docs/requirements, cc_tasks or handoffs file | `seldon governed sync` |
+| `governed search` | Find a ruling or a section by its words | `seldon governed search <terms>` |
+| `governed status` | What the graph holds vs. what the ledger says | `seldon governed status` |
 | `paper impact`    | Check blast radius of a change | `seldon paper impact <n>` |
 | `paper context`   | Structured context for drafting/revision | `seldon paper context <section-name> [--format yaml\|text]` |
 | `task precede`    | One task must finish before another starts | `seldon task precede <A> <B> [--reason ...]` |
@@ -68,6 +71,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 | `seldon_cc_complete` | Mark CC task file as completed |
 | `seldon_cc_register` | Register CC task file as proposed |
 | `seldon_handoff` | Close the session: write the handoff, return the resume and CC dispatch blocks |
+| `seldon_cc_register` | ...also returns the Rulings the task is constrained by, and refuses a task citing no AD/DN (AD-030-R9) |
 | `seldon_query` | Read-only Cypher against project graph |
 
 `seldon_query` is read-only — write operations (CREATE, MERGE, SET, DELETE, REMOVE) are rejected. Use the typed tools for mutations.
@@ -97,6 +101,41 @@ this replaced. The `precedes` subgraph must stay acyclic and is advisory: starti
 its predecessor warns and proceeds.
 
 Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. Desktop sessions can create tasks and issues via MCP tools (`seldon_task_create`, `seldon_issue_create`). If a task must survive across sessions, create a graph artifact.
+
+## Governed Documents (AD-030)
+
+**Every markdown file under `docs/design/`, `docs/requirements/`, `cc_tasks/` and `handoffs/` is a
+Document node in the graph.** The file is the serialization; parsing it is the single write path.
+Its sections, its rulings (deontic text: `AD-NNN-Rn`, BINDING, MUST, never), its citations and its
+quoted passages are child nodes with stable ids and verbatim spans.
+
+**The loop is: edit → ingest → sync.**
+
+```bash
+make -C governed catalog        # enumerate new governed files into the manifest
+make -C governed sweep          # parse, extract, append to governed/ledger/events.jsonl
+seldon governed sync            # import that ledger into seldon-seldon-self
+```
+
+`seldon verify --fix` runs `governed sync` for you; `seldon verify --strict` fails on an unsynced
+governed document, which is what puts ingest on the commit rather than on a cron (AD-030-R3).
+
+**What this buys, concretely.** `seldon cc register` now returns the rulings a new task is
+constrained by — found by identifier when the task names one, and by concept overlap when it does
+not — and writes a `constrained_by` edge for each. That is the mechanism whose absence let a
+retired per-set RPE field be reintroduced on 2026-09-01. It also **refuses** a CC task that
+references no `AD-` or `DN-` identifier (AD-030-R9); set `handoff.require_design_note: false` to
+downgrade that to a warning.
+
+**Two ledgers, one write path each.** Squiddy's DI-005 guard refuses any `seldon-*` projection
+target, and rightly. So `governed/` is a Squiddy graph inside this repo with its own ledger and no
+Neo4j backend; Seldon imports that ledger through its own event store. `seldon/core/governed.py`
+imports nothing from Squiddy — the coupling is a file format, not an awareness (AD-030-R10).
+
+**Config:** `governed.graph_dir`, `governed.ruling_match_threshold` in `seldon.yaml`.
+Extraction rules — what counts as a ruling, an identifier, a CiTO marker — live in
+`governed/config.yaml` under `domain:`, never in code, and every node records which rule produced
+it.
 
 ## Paper Editing Workflow
 

@@ -1,0 +1,182 @@
+# governed/config.yaml: the governed-documents graph (AD-030).
+#
+# TWO TOP-LEVEL BLOCKS, per the kit's contract: `engine:` is what Squiddy's modules read and every
+# key in it is a kit contract; `domain:` is this graph's vocabulary, which the kit reads only by a
+# key this graph's own emitter names.
+#
+# WHY THIS GRAPH HAS NO NEO4J BACKEND. Squiddy's DI-005 guard refuses any projection target whose
+# database starts with `seldon-`, and AD-030-R10 says Squiddy returns ledger events and Seldon
+# consumes them. So this is a Squiddy graph that lives inside the Seldon repository, keeps its own
+# ledger, and projects to NetworkX only; `seldon governed sync` reads that ledger and writes into
+# `seldon-seldon-self` through Seldon's own event store. Two ledgers, one write path each. The
+# guard stays exactly as it is.
+
+engine:
+  graph:
+    name: governed
+    prefix: governed
+    schema: schema/governed.yaml
+    generated_module: schema/generated/governed_pydantic.py
+    generated_json_schema: schema/generated/governed.schema.json
+    emitter: emit.py
+
+  paths:
+    manifest: corpus/manifest.yaml
+    events: ledger/events.jsonl
+    corpus_dir: corpus
+    parsed_dir: corpus/parsed              # markdown intermediate, gitignored, reproducible
+    resolved_dir: corpus/resolved          # acquisition records, gitignored, reproducible
+    exports_dir: exports
+    evidence_dir: evidence
+    acquisition_state: corpus/acquisition_state.json
+    allowlist: corpus/manifest_property_allowlist.yaml
+
+  manifest:
+    profile: seldon-governed-documents-manifest
+    # AD-030-R5 names four document states; the kit's stage axis carries them. `cataloged` and
+    # `acquired` are the kit's names for R5's `cataloged` and `held`; the emitter maps them.
+    stages: [cataloged, acquired, admitting, in_graph, assess_queue]
+    dispositions: [active, reference, metadata_only, "excluded:out_of_scope", "excluded:deferred", "excluded:restricted"]
+    in_graph_stage: in_graph
+    admitting_stage: admitting
+    incomplete_after_minutes: 10           # a local-file admission is seconds; ten minutes is 30x
+
+  acquire:
+    user_agent: "seldon-governed/0.1 (local files only; this graph makes no network request)"
+    timeout_seconds: 5
+    min_valid_bytes: 1
+    min_text_chars: 1
+    min_local_text_chars: 40               # a governed file under 40 characters is a stub, not a document
+    inter_request_delay_seconds: 0
+    # Required by the kit's contract and inert here: the resolver-title gate compares a fetched
+    # record's title against the citing text, and nothing in this graph is fetched or cited.
+    title_match_floor: 1.0
+
+  assess:
+    # A repository's own governed documents have no wider world to vouch for them: every file
+    # under the governed directories is in scope by construction (AD-030-R1). The only question
+    # left is whether the file is on disk.
+    criterion: local_file_present
+
+  parse:
+    # Routing is a decision taken before a reader runs (squiddy.parse.choose_parser).
+    markdown_kinds: [local_document]
+    markdown_suffixes: [".md", ".markdown"]
+
+  write:
+    schema_version: "1"
+    # Nothing here is shared with another graph: every node this graph mints belongs to the
+    # document that produced it. Citation is deliberately NOT shared — two documents citing the
+    # same paper mint two Citation nodes, because a citation is an act of a document (AD-030-R6)
+    # and the thing cited is resolved through the identity registry, not by collapsing the acts.
+    shared_classes: []
+    primary_class_by_kind: {local_document: Document}
+
+  projection:
+    backends:
+      - name: networkx
+        enabled: true
+      # NO NEO4J BACKEND. See the header. Seldon projects this ledger into its own database
+      # through `seldon governed sync`, which is Seldon's write path, not Squiddy's.
+
+  export:
+    artifact_stem: governed_graph
+    kgx:
+      knowledge_level: knowledge_assertion
+      agent_type: automated_agent
+      primary_knowledge_source: "infores:seldon-governed"
+      category_map:
+        Document: biolink:InformationContentEntity
+        Section: biolink:InformationContentEntity
+        Ruling: biolink:InformationContentEntity
+        Citation: biolink:InformationContentEntity
+        Passage: biolink:InformationContentEntity
+      predicate_map:
+        Contains: biolink:has_part
+        Cites: biolink:cites
+        Extends: biolink:related_to
+        Mentions: biolink:mentions
+        Supersedes: biolink:superseded_by
+
+  gates:
+    schema_closed: true
+    dangling:
+      legs: [edge_endpoints]
+      currency_sweep: scheduled
+
+  preview:
+    pause: false                           # DI-098: no human review is a gate; the consumer is the report
+
+  policy:
+    # These documents are authored in this repository. They are neither public nor fetched, and
+    # the public-only vocabulary does not describe them.
+    provenance: local_authored
+    allowed_provenance_flags: [local_authored]
+
+  serve:
+    text_fields:
+      Document: [title, path]
+      Section: [heading, text]
+      Ruling: [text, ruling_identifier]
+      Citation: [raw, title]
+      Passage: [text]
+    currency_edges: [Supersedes, Extends]
+
+domain:
+  kinds:
+    local_document: a governed markdown file this repository authors and edits in place (AD-030-R4).
+
+  # The four governed directories (AD-030-R1), and the doc_kind each one gives its documents.
+  governed_directories:
+    - {path: docs/design, doc_kind: design}
+    - {path: docs/requirements, doc_kind: requirements}
+    - {path: cc_tasks, doc_kind: cc_task}
+    - {path: handoffs, doc_kind: handoff}
+
+  # Where the governed directories are, relative to this graph's root.
+  source_root: ".."
+
+  # WHAT MAKES A SECTION OR A PARAGRAPH A RULING. Every pattern is listed here, never in the
+  # emitter, and every Ruling records which one matched it, so a wrong classification is a
+  # pattern to fix rather than a judgement to relitigate.
+  ruling_patterns:
+    - {name: numbered_ruling, force: binding, pattern: '^\*\*[A-Z]{2,4}-\d+-R\d+\.\*\*'}
+    - {name: numbered_ruling_heading, force: binding, pattern: '^#{1,6}\s+[A-Z]{2,4}-\d+-R\d+\b'}
+    - {name: banner_binding, force: binding, pattern: '\bBINDING\b'}
+    - {name: numbered_requirement, force: binding, pattern: '^\*\*(?:AD|DI|OD|DN|S|FR|NFR)-\d+[.:]'}
+    - {name: must_not, force: prohibition, pattern: '\bMUST NOT\b'}
+    - {name: must, force: obligation, pattern: '\bMUST\b'}
+    - {name: shall, force: obligation, pattern: '\bSHALL\b'}
+    - {name: never, force: prohibition, pattern: '\bnever\b'}
+    - {name: forbidden, force: prohibition, pattern: '\bis forbidden\b'}
+    - {name: should, force: recommendation, pattern: '\bSHOULD\b'}
+
+  # IDENTIFIER REFERENCES recovered as `mentions` edges. Lexical by default (AD-030 section 4).
+  identifier_patterns:
+    - {kind: AD, pattern: '\bAD-\d{3}\b'}
+    - {kind: DN, pattern: '\bDN-\d+\b'}
+    - {kind: DI, pattern: '\bDI-\d{3}\b'}
+    - {kind: OD, pattern: '\bOD-\d\b'}
+    - {kind: SRS, pattern: '\bS-\d+\b'}
+    - {kind: TIER, pattern: '\bT\d-\d+\b'}
+    - {kind: TASK, pattern: '\b[0-9a-f]{8}\b'}
+
+  # HEADER FIELDS that carry a typed edge. `Extends:` and `Depends on:` per AD-030 section 4.
+  header_edges:
+    - {field: "Extends", edge: Extends}
+    - {field: "Depends on", edge: DependsOn}
+
+  # THE PRIOR-ART LIST FORM AD-030 section 6 uses: a bullet ending in a backticked CiTO type,
+  # optionally followed by `for <target>` and `, reason: <why>`.
+  cito_markers:
+    - {token: cites_as_evidence, cito_type: cites_as_evidence}
+    - {token: uses_method_in, cito_type: uses_method_in}
+    - {token: cites_for_information, cito_type: cites_for_information}
+    - {token: disagrees_with, cito_type: disagrees_with}
+    - {token: refutes, cito_type: refutes}
+    - {token: extends, cito_type: extends}
+
+  # An inline author-year citation, the second citation form (AD-030-R6).
+  inline_citation_pattern: '\b([A-Z][A-Za-zÀ-ſ’''-]+(?:\s+(?:and|et al\.?|&)\s+[A-Z][A-Za-zÀ-ſ’''-]+)?)\s*\((\d{4})\)'
+
+  cito_default: cites_for_information

@@ -1,0 +1,1862 @@
+# The governed-documents manifest: one entry per governed markdown file ever considered (AD-030-R5).
+#
+# NEVER HAND-EDITED. `squiddy catalog` appends entries from `catalog_governed.py`'s enumeration of
+# the four governed directories; `squiddy.assess` writes the decision; `squiddy.acquire` writes the
+# hash and the byte count; `squiddy.write` flips the stage on the far side of the append. A field
+# set by hand here is a claim no stage made, and the manifest-to-ledger gate will disagree with it.
+
+schema:
+  profile: seldon-governed-documents-manifest
+
+metadata:
+  policy: local_authored
+  governed_by: docs/design/AD-030_governed_documents_as_graph_content.md
+
+documents:
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_03_22_global_citation_catalog
+    verification_method: "local governed file, sha256 b6fb49f30229d2a6, 9,575 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-03-22_global_citation_catalog.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Build Global Citation Catalog in Seldon'
+    source_url: cc_tasks/2026-03-22_global_citation_catalog.md
+    local_path: "../cc_tasks/2026-03-22_global_citation_catalog.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b6fb49f30229d2a6f680b3af637312554b7ca1829e0967367107ec49e03c5518"
+    bytes: 10849
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_03_register_glossary_ontology_design_note
+    verification_method: "local governed file, sha256 4ace7167c238a733, 1,536 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Register Glossary-Ontology Architecture Gap Design Note'
+    source_url: cc_tasks/2026-04-03_register_glossary_ontology_design_note.md
+    local_path: "../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "4ace7167c238a733da19e1df6691065b5e9290e8b462897063652dc9979c77ed"
+    bytes: 1540
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_03_verify_glossary_path_resolution
+    verification_method: "local governed file, sha256 6bd857705afe72af, 3,860 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_verify_glossary_path_resolution.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Fix `seldon verify` Glossary Path Resolution'
+    source_url: cc_tasks/2026-04-03_verify_glossary_path_resolution.md
+    local_path: "../cc_tasks/2026-04-03_verify_glossary_path_resolution.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6bd857705afe72afc52bee36d9f23c98c9cc6e4c9f223442e91fba0689c80c86"
+    bytes: 3878
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_05_implement_verify_strict_mode
+    verification_method: "local governed file, sha256 1e540adca4b99389, 6,659 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-05_implement_verify_strict_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Implement `seldon verify --strict` Mode'
+    source_url: cc_tasks/2026-04-05_implement_verify_strict_mode.md
+    local_path: "../cc_tasks/2026-04-05_implement_verify_strict_mode.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "1e540adca4b99389af1b096600901ac099670b76cb272354bcd5383661ad099d"
+    bytes: 6713
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_18_cc3_measurement_function_audit
+    verification_method: "local governed file, sha256 b1a7f4ce0408cd87, 10,494 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Measurement-Function Audit'
+    source_url: cc_tasks/2026-04-18_cc3_measurement_function_audit.md
+    local_path: "../cc_tasks/2026-04-18_cc3_measurement_function_audit.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b1a7f4ce0408cd87ad08ccb3824e5e39adc8e547cbdc3078d1a2161fb76d69e7"
+    bytes: 10568
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_18_cc5_sleep_function_architecture
+    verification_method: "local governed file, sha256 f1fb2d793f053c91, 17,011 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Wintermute Sleep-Function Architecture Specification'
+    source_url: cc_tasks/2026-04-18_cc5_sleep_function_architecture.md
+    local_path: "../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "f1fb2d793f053c91642292ce87c6d2f0fe5de8aef3733280c8a696215d3c07bd"
+    bytes: 17081
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_18_phase_c_closure
+    verification_method: "local governed file, sha256 6d45064aeef0d547, 8,076 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_phase_c_closure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Register Phase C Synthesis Outputs and Close Evolution Burst'
+    source_url: cc_tasks/2026-04-18_phase_c_closure.md
+    local_path: "../cc_tasks/2026-04-18_phase_c_closure.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6d45064aeef0d54786bbffcc773ac5e1152f71e6668c8da6d4ab2cea4735bf00"
+    bytes: 8120
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_04_21_investigate_cross_project_contamination
+    verification_method: "local governed file, sha256 fa37f2420a3df12a, 7,688 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-21_investigate_cross_project_contamination.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Investigate and Fix Cross-Project Graph Contamination'
+    source_url: cc_tasks/2026-04-21_investigate_cross_project_contamination.md
+    local_path: "../cc_tasks/2026-04-21_investigate_cross_project_contamination.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "fa37f2420a3df12a657556c57e35e5c6b1df1e001381c94d99eaf6268d3f557f"
+    bytes: 7696
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_06_18_cc_task_researchtask_superseded_terminal
+    verification_method: "local governed file, sha256 9c0afe7a445a7b5e, 6,903 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: CC Task — Add `superseded` terminal state to ResearchTask state machine
+    source_url: cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md
+    local_path: "../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "9c0afe7a445a7b5e2c81af1f73f71d74db0442a6e7bc3331ef49e3bc1c41c846"
+    bytes: 6977
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_07_04_init_db_name_from_project_name
+    verification_method: "local governed file, sha256 a57e8687f9bdde0b, 2,121 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-07-04_init_db_name_from_project_name.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: `seldon init` must derive the Neo4j database name from the PROJECT name'
+    source_url: cc_tasks/2026-07-04_init_db_name_from_project_name.md
+    local_path: "../cc_tasks/2026-07-04_init_db_name_from_project_name.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "a57e8687f9bdde0b79d2215c3971f91da0c15806bf7aa230bc0e5fc17a29bca8"
+    bytes: 2141
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_08_29_documentation_artifact_type
+    verification_method: "local governed file, sha256 f179daa35f86c59a, 2,060 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-08-29_documentation_artifact_type.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Research domain config: add Documentation artifact type with ResearchTask linkage'
+    source_url: cc_tasks/2026-08-29_documentation_artifact_type.md
+    local_path: "../cc_tasks/2026-08-29_documentation_artifact_type.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "f179daa35f86c59a52705e780581318d35846132d3d09463aeac9c9fc17dc2d1"
+    bytes: 2074
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_paper_build_xref_passthrough_failure
+    verification_method: "local governed file, sha256 3906949e268d45ff, 1,913 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Root-cause and fix the pre-existing failure in `test_build_paper_unknown_xref_passthrough`'
+    source_url: cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md
+    local_path: "../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "3906949e268d45ff087d691c955b2d182a4aa82d7b5e6006d0c71a54dee6b3ce"
+    bytes: 1915
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_paper_build_xref_passthrough_failure_result
+    verification_method: "local governed file, sha256 39cf90f550c2e5d5, 5,206 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: Root-cause and fix `test_build_paper_unknown_xref_passthrough`'
+    source_url: cc_tasks/2026-09-02_paper_build_xref_passthrough_failure_RESULT.md
+    local_path: "../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "39cf90f550c2e5d52626b55f0be591c33a9399283c361bec9be14902499d6d11"
+    bytes: 5235
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_snapshot_artifacts_verify
+    verification_method: "local governed file, sha256 0dcb40fe460f8567, 3,361 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Snapshot artifacts must not fail the file-hash drift check'
+    source_url: cc_tasks/2026-09-02_snapshot_artifacts_verify.md
+    local_path: "../cc_tasks/2026-09-02_snapshot_artifacts_verify.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "0dcb40fe460f85673743cecb5cbe1b91a4e0fd39d224eb659a12f6346fee5cd1"
+    bytes: 3362
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_snapshot_artifacts_verify_result
+    verification_method: "local governed file, sha256 83de39e5ab59e6b1, 3,697 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: RESULT — 2026-09-02_snapshot_artifacts_verify
+    source_url: cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md
+    local_path: "../cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "83de39e5ab59e6b1c5f96489867ce59f6084c4c6c25d0df0e5ec7a843e568379"
+    bytes: 3713
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_track_cc_tasks
+    verification_method: "local governed file, sha256 28023993d45c1122, 1,904 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: Track `cc_tasks/` in the Seldon repo — execution records are provenance, not scratch'
+    source_url: cc_tasks/2026-09-02_track_cc_tasks.md
+    local_path: "../cc_tasks/2026-09-02_track_cc_tasks.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "28023993d45c1122d137114cb85c561799959b84242539276e270ff00382eb5a"
+    bytes: 1906
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_02_track_cc_tasks_result
+    verification_method: "local governed file, sha256 17954ed764dc062c, 3,175 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: Track `cc_tasks/` in the Seldon repo'
+    source_url: cc_tasks/2026-09-02_track_cc_tasks_RESULT.md
+    local_path: "../cc_tasks/2026-09-02_track_cc_tasks_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "17954ed764dc062c897d59e4d66a41789b63943be2a3be0300d36c19004fdd76"
+    bytes: 3199
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_lanea_subresult
+    verification_method: "local governed file, sha256 067bf5d347623fe5, 24,823 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneA_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Lane A sub-RESULT — Result registry contract (AD-028)
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_laneA_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_laneA_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "067bf5d347623fe5434dcfc3cc9982ceb007dcc787bf6e11d9795bb87ed2d1a8"
+    bytes: 24966
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_laneb_subresult
+    verification_method: "local governed file, sha256 6e43a72695c05a54, 15,819 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneB_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Lane B sub-RESULT — Ontology gaps (`698d1d86` + item 4 of `0bc41cfc`)
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_laneB_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_laneB_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6e43a72695c05a54f72b7c1570aade9b56c03eede4734735329bc85d204f166d"
+    bytes: 15914
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_lanec_subresult
+    verification_method: "local governed file, sha256 0b3b1e5d30f5b84d, 26,945 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneC_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Lane C sub-RESULT — ResearchTask lifecycle (`a3ba67a3` + `1a23fd00`)
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_laneC_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_laneC_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "0b3b1e5d30f5b84d806e2f12432ff315cddcb182939977ca4374bcd1a5e5cf41"
+    bytes: 27091
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_laned_subresult
+    verification_method: "local governed file, sha256 d6dccfa823d75123, 25,033 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneD_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Lane D sub-RESULT — Small defects (`f951ed84`, `e3f751f6`, registrar description)
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_laneD_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_laneD_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "d6dccfa823d7512399d77176fbf07fdba1dcd79fef700110b644423923236b17"
+    bytes: 25168
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_registry_lifecycle_ontology
+    verification_method: "local governed file, sha256 23aa7ee89a591a2c, 12,396 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small
+      defects'
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "23aa7ee89a591a2cc35e7b0607c967b2bb75ed921bf7514c957fc5d8ef7c7d4b"
+    bytes: 12465
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_03_seldon_defect_sweep_registry_lifecycle_ontology_result
+    verification_method: "local governed file, sha256 628a4de61e707e98, 15,908 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small
+      defects'
+    source_url: cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md
+    local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "628a4de61e707e98d899d32758e8db5a737f1b7aa984e202a9a0b4abc4a55c3e"
+    bytes: 16008
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic
+    verification_method: "local governed file, sha256 dc84fab73fc2d779, 3,447 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task — AD-028 amendment: admit uppercase in Result names; make `migrate-names` predictive
+      and atomic'
+    source_url: cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md
+    local_path: "../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "dc84fab73fc2d779751fa53946e47601a4027e2f72d034de1c97277da6705f99"
+    bytes: 3455
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic_result
+    verification_method: "local governed file, sha256 7d971f0b888cffeb, 13,735 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: RESULT — AD-028 amendment + the 2026-09-04 defect sweep
+    source_url: cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_RESULT.md
+    local_path: "../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "7d971f0b888cffeba339cf303c45d4faae0b45a83e4bb379ce376db281c8b233"
+    bytes: 13810
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic_subresult
+    verification_method: "local governed file, sha256 6c1d01d8308a55f1, 16,041 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SUBRESULT — Lane 1: AD-028 Amendment 01 grammar + predictive, atomic `migrate-names`'
+    source_url: cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6c1d01d8308a55f1d525dc60b68511f95fc0fe4ad7da9948326492c053264512"
+    bytes: 16113
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_ontology_ingest_defects_subresult
+    verification_method: "local governed file, sha256 eac6354c14cadd95, 15,647 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ontology_ingest_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — `seldon ontology ingest` defects (Lane 2)
+    source_url: cc_tasks/2026-09-04_ontology_ingest_defects_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_ontology_ingest_defects_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "eac6354c14cadd955b1aecf1668c41942acd85c76ca1a77c379d7f551da94493"
+    bytes: 15718
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_recoverability_replay_subresult
+    verification_method: "local governed file, sha256 476ac1becec3d04c, 10,449 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_recoverability_replay_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUB-RESULT — `42be368d` recoverability and replay
+    source_url: cc_tasks/2026-09-04_recoverability_replay_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_recoverability_replay_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "476ac1becec3d04cafbc69064ecc2aeefe1a8d3dd27b13f09c596ab4124373d7"
+    bytes: 10507
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_related_terms_parser_regression_subresult
+    verification_method: "local governed file, sha256 7260081bd4862e6a, 22,975 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_related_terms_parser_regression_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — `_parse_related_terms` section-boundary regression (Lane 4)
+    source_url: cc_tasks/2026-09-04_related_terms_parser_regression_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_related_terms_parser_regression_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "7260081bd4862e6a1c0c1862c84bb82acb4bcf012821444526b9b89a2be409a0"
+    bytes: 23091
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_reltype_case_and_source_provenance_subresult
+    verification_method: "local governed file, sha256 4d170b0af607c351, 15,656 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_reltype_case_and_source_provenance_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — Relationship-type case + CC task source-file provenance
+    source_url: cc_tasks/2026-09-04_reltype_case_and_source_provenance_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_reltype_case_and_source_provenance_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "4d170b0af607c351c7450fa756ff96166f0eaf66d73c3e5fc8f13851afda21bc"
+    bytes: 15772
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_replica_sync_all_subresult
+    verification_method: "local governed file, sha256 ece209612cb861bd, 17,471 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_replica_sync_all_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — Fleet-wide ontology replica sync (`seldon ontology sync --all`)
+    source_url: cc_tasks/2026-09-04_replica_sync_all_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_replica_sync_all_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "ece209612cb861bd080de8ff0093af78dcba0372752427f9efb5e325698efaf9"
+    bytes: 17546
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_resolver_options_and_placeholder_subresult
+    verification_method: "local governed file, sha256 9cb4c5501e14e201, 12,310 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_resolver_options_and_placeholder_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SUBRESULT — Lane B: resolver caller options + reference-token name grammar'
+    source_url: cc_tasks/2026-09-04_resolver_options_and_placeholder_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_resolver_options_and_placeholder_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "9cb4c5501e14e201d3fb5bcd91fee260b7664b867f8d26850086a9c18e6b58c9"
+    bytes: 12367
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_seldon_open_defect_closeout
+    verification_method: "local governed file, sha256 863c0707ccb04d57, 2,524 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: CC Task — Seldon open-defect closeout
+    source_url: cc_tasks/2026-09-04_seldon_open_defect_closeout.md
+    local_path: "../cc_tasks/2026-09-04_seldon_open_defect_closeout.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "863c0707ccb04d573bb391d15da2522b855490bc53203235317987af6c188cae"
+    bytes: 2539
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_seldon_open_defect_closeout_result
+    verification_method: "local governed file, sha256 26de57e9e5201d46, 13,313 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: RESULT — Seldon open-defect closeout
+    source_url: cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md
+    local_path: "../cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "26de57e9e5201d46147c9aa4498b23ccf879b3f627bae2c202dd97e66e38284f"
+    bytes: 13398
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_si09_removal_condition_subresult
+    verification_method: "local governed file, sha256 5944a6876039e992, 12,254 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SI-09 removal condition — fleet measurement (LANE F)
+    source_url: cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "5944a6876039e9922ac1de537f8b2896217184a000dce1f12bdd8be6dd858dc1"
+    bytes: 12310
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_small_defects_subresult
+    verification_method: "local governed file, sha256 6e4241cddc8fa201, 21,191 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_small_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — Small defects from the 2026-09-04 sweep RESULT §7 (Lane S)
+    source_url: cc_tasks/2026-09-04_small_defects_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_small_defects_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6e4241cddc8fa2017460dbbc6f7db8053d848731a59159acfdead039c8fcab40"
+    bytes: 21297
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_04_test_db_isolation_subresult
+    verification_method: "local governed file, sha256 26adcbd16534485a, 15,537 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_test_db_isolation_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: SUBRESULT — Per-process Neo4j test database isolation
+    source_url: cc_tasks/2026-09-04_test_db_isolation_SUBRESULT.md
+    local_path: "../cc_tasks/2026-09-04_test_db_isolation_SUBRESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "26adcbd16534485a876f5fcd8797cd694b1c93b3843fac6a7812410495955aab"
+    bytes: 15617
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_06_task_precedes_relationship
+    verification_method: "local governed file, sha256 d1c7538e1c5160e4, 4,426 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task — `precedes`: task ordering as a first-class relationship'
+    source_url: cc_tasks/2026-09-06_task_precedes_relationship.md
+    local_path: "../cc_tasks/2026-09-06_task_precedes_relationship.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "d1c7538e1c5160e4212350b31a09f7fb75fd9c2334ff1107e76a2e614ac98c4a"
+    bytes: 4439
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_06_task_precedes_relationship_result
+    verification_method: "local governed file, sha256 58ca3ac8e714bf52, 10,059 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT — `precedes`: task ordering as a first-class relationship'
+    source_url: cc_tasks/2026-09-06_task_precedes_relationship_RESULT.md
+    local_path: "../cc_tasks/2026-09-06_task_precedes_relationship_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "58ca3ac8e714bf52f7d2217199e61ae13f9c031bfaa46e7a22f163249ad06435"
+    bytes: 10150
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_07_precedence_artifact_labels
+    verification_method: "local governed file, sha256 4af49f993a81aacf, 2,079 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: CC Task — Precedence check must read Artifact edges only
+    source_url: cc_tasks/2026-09-07_precedence_artifact_labels.md
+    local_path: "../cc_tasks/2026-09-07_precedence_artifact_labels.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "4af49f993a81aacfde4c46ad7b700f1d88cfd3202e7eda576d45a78df1355399"
+    bytes: 2090
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_07_precedence_artifact_labels_result
+    verification_method: "local governed file, sha256 3c5d1fa74f70cb10, 10,984 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: RESULT — Precedence check must read Artifact edges only
+    source_url: cc_tasks/2026-09-07_precedence_artifact_labels_RESULT.md
+    local_path: "../cc_tasks/2026-09-07_precedence_artifact_labels_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "3c5d1fa74f70cb10781e841126a2029e44cdfb01cfc7b3cdb90a5c3f38e15522"
+    bytes: 11067
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest
+    verification_method: "local governed file, sha256 9ea91d6a90257f56, 8,523 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: AD-030 governed documents ingest, Squiddy recipe plus Seldon import, with backfill'
+    source_url: cc_tasks/2026-09-12_ad030_governed_docs_ingest.md
+    local_path: "../cc_tasks/2026-09-12_ad030_governed_docs_ingest.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "9ea91d6a90257f56faab734c0ee624f6f2911c2c5d413735c863dc5263e62e34"
+    bytes: 8523
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_seldon_handoff_tool
+    verification_method: "local governed file, sha256 cf0d1a17f7789425, 4,014 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: `seldon handoff` Desktop closeout tool'
+    source_url: cc_tasks/2026-09-12_seldon_handoff_tool.md
+    local_path: "../cc_tasks/2026-09-12_seldon_handoff_tool.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "cf0d1a17f7789425a3d53dfe7269f86adbec4af5831ee20dfdd0d0b0272a531a"
+    bytes: 4014
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_seldon_handoff_tool_result
+    verification_method: "local governed file, sha256 664b27cc66da8d21, 5,741 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: `seldon handoff` Desktop closeout tool'
+    source_url: cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "664b27cc66da8d21a7f27edbc2835ae00c76b2711832e899b20ac52d778d2ca1"
+    bytes: 5759
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_03_10_database_as_context_architecture
+    verification_method: "local governed file, sha256 fbbf288ed472551c, 8,824 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_database_as_context_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Insight: Database as Context Architecture'
+    source_url: docs/design/2026-03-10_database_as_context_architecture.md
+    local_path: "../docs/design/2026-03-10_database_as_context_architecture.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "fbbf288ed472551c259f51e56c3084b665bae7831b9ec59f0bbd745115290d9c"
+    bytes: 8850
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_03_10_fractal_document_graph
+    verification_method: "local governed file, sha256 58f00c5f51fe9040, 7,429 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_fractal_document_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Insight: Fractal Document Graph — Paper as Database'
+    source_url: docs/design/2026-03-10_fractal_document_graph.md
+    local_path: "../docs/design/2026-03-10_fractal_document_graph.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "58f00c5f51fe9040734ef51d5ef0cd725c59c8da9cb237143a6fe03f9e1db901"
+    bytes: 7541
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_03_10_parallel_decomposition_via_graph
+    verification_method: "local governed file, sha256 cc1a6e5ff89671dc, 7,056 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_parallel_decomposition_via_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Insight: Parallel Decomposition via Graph Partitioning'
+    source_url: docs/design/2026-03-10_parallel_decomposition_via_graph.md
+    local_path: "../docs/design/2026-03-10_parallel_decomposition_via_graph.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "cc1a6e5ff89671dcee89c16bb9d280a8d56fc8ecc53287b00ec7372805fc0714"
+    bytes: 7076
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_04_04_semantic_anchoring_and_narrative_logic
+    verification_method: "local governed file, sha256 b7e56d799fbefda8, 16,204 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Note: Semantic Anchoring & Narrative Logic Passes for Content Pipelines'
+    source_url: docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md
+    local_path: "../docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "b7e56d799fbefda889ce41489130c01c729def13189883206a160cce8213f994"
+    bytes: 16262
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_04_05_ad020_calibration_consolidated
+    verification_method: "local governed file, sha256 fcd616b6592c47e0, 17,681 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_ad020_calibration_consolidated.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: AD-020 Consolidated Calibration Analysis — 8 Discovery Runs + 2 TEVV Verifications
+    source_url: docs/design/2026-04-05_ad020_calibration_consolidated.md
+    local_path: "../docs/design/2026-04-05_ad020_calibration_consolidated.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "fcd616b6592c47e02f8da4e49226b1771ad85a98f2279287e6e83da8c1864146"
+    bytes: 17835
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_04_05_hard_threshold_gating_for_mechanical_qc
+    verification_method: "local governed file, sha256 2f0b0c6134162f35, 7,361 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Note: Hard-Threshold Gating for Mechanical QC Checks'
+    source_url: docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md
+    local_path: "../docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "2f0b0c6134162f359f1509617c85caa85df8ae30d61ef64a9251ff66ee66f309"
+    bytes: 7390
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_04_05_regression_audit_loop
+    verification_method: "local governed file, sha256 076cb735e601ee38, 11,371 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_regression_audit_loop.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Note: Regression Audit Loop for Revision Verification'
+    source_url: docs/design/2026-04-05_regression_audit_loop.md
+    local_path: "../docs/design/2026-04-05_regression_audit_loop.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "076cb735e601ee38622c1399458e6393ad5a5511a0b09051870355fea8ddea41"
+    bytes: 11407
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_04_05_sprint_contracts_for_cc_tasks
+    verification_method: "local governed file, sha256 04e75652dd94e10f, 6,510 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Note: Sprint Contracts for CC Task Execution'
+    source_url: docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md
+    local_path: "../docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "04e75652dd94e10f44ed342d588fa02d4bb833036abcc4626dae9a0d10139fa2"
+    bytes: 6532
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_011_database_driven_paper_assembly
+    verification_method: "local governed file, sha256 b1d9585aa9455050, 10,310 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-011_database_driven_paper_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Seldon Paper Build — Database-Driven Manuscript Assembly
+    source_url: docs/design/AD-011_database_driven_paper_assembly.md
+    local_path: "../docs/design/AD-011_database_driven_paper_assembly.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "b1d9585aa9455050a65439f8fa2c410062217e1e9eb1f874da294df4024bd514"
+    bytes: 10336
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_012_paper_as_graph_assembly
+    verification_method: "local governed file, sha256 4b10bc98dba254a4, 26,138 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-012_paper_as_graph_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-012: Paper-as-Graph Assembly with Claim-Level Tracking and Tiered QC'
+    source_url: docs/design/AD-012_paper_as_graph_assembly.md
+    local_path: "../docs/design/AD-012_paper_as_graph_assembly.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "4b10bc98dba254a46bab7a085a4e42bf190657ac7df01bf6f8b868b933b2c994"
+    bytes: 26327
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_013_documentation_as_traceability
+    verification_method: "local governed file, sha256 c1d243faa53d3523, 19,158 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-013_documentation_as_traceability.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-013: Documentation as Traceability'
+    source_url: docs/design/AD-013_documentation_as_traceability.md
+    local_path: "../docs/design/AD-013_documentation_as_traceability.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "c1d243faa53d352366684c30e4a50f61467a2c867df28054f6a4a6324e397cf6"
+    bytes: 19298
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_014_agent_roles_as_graph_artifacts
+    verification_method: "local governed file, sha256 53778f1584761875, 17,213 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-014_agent_roles_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-014: Agent Roles as Graph Artifacts'
+    source_url: docs/design/AD-014_agent_roles_as_graph_artifacts.md
+    local_path: "../docs/design/AD-014_agent_roles_as_graph_artifacts.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "53778f1584761875518377e1ca60b61a26380ae9f1341addb51aef959eda66de"
+    bytes: 17289
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_016_paper_qc_severity_tiers
+    verification_method: "local governed file, sha256 69c917c50e66f820, 14,018 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-016_paper_qc_severity_tiers.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-016: Paper QC Severity Tiers — Critical / Substantive / Administrative'
+    source_url: docs/design/AD-016_paper_qc_severity_tiers.md
+    local_path: "../docs/design/AD-016_paper_qc_severity_tiers.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "69c917c50e66f8202f62faef736c438af26d7e0c712a4a396a512d5610e8f333"
+    bytes: 14074
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_017_central_validity_ontology
+    verification_method: "local governed file, sha256 145b6e683083cb25, 5,235 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-017_central_validity_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-017: Central Validity Ontology'
+    source_url: docs/design/AD-017_central_validity_ontology.md
+    local_path: "../docs/design/AD-017_central_validity_ontology.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "145b6e683083cb25724c477a6df69e007bf58b1f7b6cc0458ba04e893b37c2f6"
+    bytes: 5481
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_018_document_structure_graph
+    verification_method: "local governed file, sha256 6e30da2793d1553e, 7,952 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-018_document_structure_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-018: Document Structure Graph'
+    source_url: docs/design/AD-018_document_structure_graph.md
+    local_path: "../docs/design/AD-018_document_structure_graph.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "6e30da2793d1553ec27fc01708935c88bb0bf232a61e15a07854c19e53a7e3ad"
+    bytes: 8036
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_019_agentic_content_audit
+    verification_method: "local governed file, sha256 fa764ea156ba5f8f, 23,174 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-019_agentic_content_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-019: Agentic Content Audit Pipeline'
+    source_url: docs/design/AD-019_agentic_content_audit.md
+    local_path: "../docs/design/AD-019_agentic_content_audit.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "fa764ea156ba5f8f6ed3a17873b1d6d0f61139cc8b40dc47be608e2a0af859c7"
+    bytes: 23244
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_020_calibration_001_leibniz_pi
+    verification_method: "local governed file, sha256 26cf02623cf862ed, 8,098 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_001_leibniz_pi.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-020 Calibration Data — Run 001: Leibniz-Pi Paper'
+    source_url: docs/design/AD-020_calibration_001_leibniz_pi.md
+    local_path: "../docs/design/AD-020_calibration_001_leibniz_pi.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "26cf02623cf862edc5b04f03c85c3cfec72a6e071212eb73aecae1b8c2675ab9"
+    bytes: 8142
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_020_calibration_002_ch04
+    verification_method: "local governed file, sha256 800e4d08483c523e, 5,132 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_002_ch04.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-020 Calibration Point 002: Chapter 4 (ai-workflow-design)'
+    source_url: docs/design/AD-020_calibration_002_ch04.md
+    local_path: "../docs/design/AD-020_calibration_002_ch04.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "800e4d08483c523ea14f25431eeeb289e921ecc28886d5e813fd6096408c61fe"
+    bytes: 5142
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_020_calibration_003_ch05
+    verification_method: "local governed file, sha256 847a4bda8679ec21, 10,171 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_003_ch05.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-020 Calibration Point 003: Chapter 5 (ai-workflow-design)'
+    source_url: docs/design/AD-020_calibration_003_ch05.md
+    local_path: "../docs/design/AD-020_calibration_003_ch05.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "847a4bda8679ec213825c6055eef414c65430cba33e932c1753bad2898c53db8"
+    bytes: 10183
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_020_iterative_content_review_pipeline
+    verification_method: "local governed file, sha256 6450faa75566d218, 22,277 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_iterative_content_review_pipeline.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-020: Iterative Content Review Pipeline — Multi-Lens Comprehensiveness Gates'
+    source_url: docs/design/AD-020_iterative_content_review_pipeline.md
+    local_path: "../docs/design/AD-020_iterative_content_review_pipeline.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "6450faa75566d2183dbe2efe9bbf5a102542e4eaf0dad882d1a59d3678132e63"
+    bytes: 22363
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_021_session_continuity_fidelity
+    verification_method: "local governed file, sha256 5a3d8685f8c0b118, 13,993 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-021_session_continuity_fidelity.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-021: Session Continuity Fidelity'
+    source_url: docs/design/AD-021_session_continuity_fidelity.md
+    local_path: "../docs/design/AD-021_session_continuity_fidelity.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "5a3d8685f8c0b1186be2bb35d31fbce477f3d80892512ad6c2f4715c171e65b1"
+    bytes: 14067
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_022_cli_default_mcp_exception
+    verification_method: "local governed file, sha256 71e67e41390d7f0b, 4,213 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-022_cli_default_mcp_exception.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: AD-022 — CLI-Default, MCP-Exception
+    source_url: docs/design/AD-022_cli_default_mcp_exception.md
+    local_path: "../docs/design/AD-022_cli_default_mcp_exception.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "71e67e41390d7f0b7b42ace80515b1f8c06a8002c620d4bf127a6dbe7bb1c3b0"
+    bytes: 4223
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_023_wintermute_sleep_functions
+    verification_method: "local governed file, sha256 2d68cb13faf3a360, 7,924 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-023_wintermute_sleep_functions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: AD-023 — Wintermute Sleep Functions as Architectural Center
+    source_url: docs/design/AD-023_wintermute_sleep_functions.md
+    local_path: "../docs/design/AD-023_wintermute_sleep_functions.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "2d68cb13faf3a36073760eef7b347e16b5b8a2fbbc2d572f1ddcf279db576c73"
+    bytes: 7972
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_024_observability_as_substrate
+    verification_method: "local governed file, sha256 0944a6c23d17d00f, 6,755 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-024_observability_as_substrate.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: AD-024 — Observability as Substrate
+    source_url: docs/design/AD-024_observability_as_substrate.md
+    local_path: "../docs/design/AD-024_observability_as_substrate.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "0944a6c23d17d00f21ff28fa608e1c01bbc9ece31107c425bbf136f42a82543d"
+    bytes: 6784
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_025_subprojects_as_graph_artifacts
+    verification_method: "local governed file, sha256 4278a91ca1738f48, 13,232 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-025_subprojects_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: AD-025 — Subprojects as First-Class Graph Artifacts
+    source_url: docs/design/AD-025_subprojects_as_graph_artifacts.md
+    local_path: "../docs/design/AD-025_subprojects_as_graph_artifacts.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "4278a91ca1738f48731abeefcf3aa0f5f045dce013dc9a4eb3aac7b3fba0160e"
+    bytes: 13388
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_026_init_templates
+    verification_method: "local governed file, sha256 6bd01a2b2ab04cf7, 5,462 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-026_init_templates.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-026: `seldon init` Project Templates'
+    source_url: docs/design/AD-026_init_templates.md
+    local_path: "../docs/design/AD-026_init_templates.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "6bd01a2b2ab04cf7f922adaab513088e0b6617b7f9fb2d378e77e8faead8969a"
+    bytes: 5486
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_027_snapshot_artifacts
+    verification_method: "local governed file, sha256 0da8de62008c8fe9, 3,749 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-027_snapshot_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-027: Snapshot Artifacts Are Exempt From Drift Checking'
+    source_url: docs/design/AD-027_snapshot_artifacts.md
+    local_path: "../docs/design/AD-027_snapshot_artifacts.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "0da8de62008c8fe9289bc2cf7d558aa30f59dbfab5e9c8eb8d6de0b07392647f"
+    bytes: 3752
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_028_result_names_and_task_lifecycle
+    verification_method: "local governed file, sha256 d83fea50d488a86e, 14,107 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-028_result_names_and_task_lifecycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics'
+    source_url: docs/design/AD-028_result_names_and_task_lifecycle.md
+    local_path: "../docs/design/AD-028_result_names_and_task_lifecycle.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "d83fea50d488a86eff07d98b5e6320475a33d22d5b09fc5c44fd1a66d6ff910d"
+    bytes: 14151
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_029_task_precedence
+    verification_method: "local governed file, sha256 4d65daf70cc3aa47, 18,109 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-029_task_precedence.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-029: `precedes` — Task Ordering as a First-Class Relationship'
+    source_url: docs/design/AD-029_task_precedence.md
+    local_path: "../docs/design/AD-029_task_precedence.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "4d65daf70cc3aa47524e2380c65696bf8f915f38703214ea98ea106e2c1c25b2"
+    bytes: 18189
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_030_governed_documents_as_graph_content
+    verification_method: "local governed file, sha256 2290ce7fffffcf1d, 10,778 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_governed_documents_as_graph_content.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-030: Governed Documents as Graph Content'
+    source_url: docs/design/AD-030_governed_documents_as_graph_content.md
+    local_path: "../docs/design/AD-030_governed_documents_as_graph_content.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940"
+    bytes: 10779
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_dn_session_continuity_graph_backed_handoffs
+    verification_method: "local governed file, sha256 db4446f81a75f833, 14,093 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/DN-session-continuity-graph-backed-handoffs.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Design Note: Graph-Backed Session Continuity'
+    source_url: docs/design/DN-session-continuity-graph-backed-handoffs.md
+    local_path: "../docs/design/DN-session-continuity-graph-backed-handoffs.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "db4446f81a75f8336197c751396e23a6897787587c425bd624285491707ec761"
+    bytes: 14155
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad014_agent_roles
+    verification_method: "local governed file, sha256 df06efe9d01821c3, 4,728 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/ad014_agent_roles.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: AD-014 Phase 1 — Agent Roles as Graph Artifacts'
+    source_url: docs/design/ad014_agent_roles.md
+    local_path: "../docs/design/ad014_agent_roles.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "df06efe9d01821c3609bd2d4cab5159302afc62b1552350817fcb129fec826bc"
+    bytes: 4776
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_agent_tool_design_lessons
+    verification_method: "local governed file, sha256 f71c83602cfa3922, 6,151 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/agent_tool_design_lessons.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Agent Tool Design Lessons — Applied to Seldon
+    source_url: docs/design/agent_tool_design_lessons.md
+    local_path: "../docs/design/agent_tool_design_lessons.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "f71c83602cfa3922cbfa93fbe1479d783fefe75c7955775082ea392352ce2f14"
+    bytes: 6183
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_conops_agent_swarm_workflow
+    verification_method: "local governed file, sha256 d5ef4ec149257ff1, 10,527 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/conops_agent_swarm_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'ConOps: Seldon Agent Swarm Workflow'
+    source_url: docs/design/conops_agent_swarm_workflow.md
+    local_path: "../docs/design/conops_agent_swarm_workflow.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "d5ef4ec149257ff15d8383f8f8fea448b3c767fdeca3a30e8b3a147d3db3a525"
+    bytes: 10591
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_cc1_pattern_extraction
+    verification_method: "local governed file, sha256 8ee4f7045c649137, 40,119 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC1: Pattern Extraction Crawl — 2026-04-18'
+    source_url: docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md
+    local_path: "../docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "8ee4f7045c6491376aa59661381ddf2e3f4b15d0e898978c6f260065324d4f68"
+    bytes: 40361
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_cc2_infrastructure_state_2026_04_18
+    verification_method: "local governed file, sha256 d3512b599cc1dc55, 17,922 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC2: Infrastructure State-of-Play — 2026-04-18'
+    source_url: docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md
+    local_path: "../docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "d3512b599cc1dc55fcd54c37401c77bef09077853a4b376e5ae6b504e8af1561"
+    bytes: 18022
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_cc3_measurement_function_audit
+    verification_method: "local governed file, sha256 522b1188ddc5f486, 23,397 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC3: Measurement-Function Audit — 2026-04-18'
+    source_url: docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md
+    local_path: "../docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "522b1188ddc5f4865f288e87e92b01a51b5c460fd10c7d3446d15036b24e9d58"
+    bytes: 23538
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_cc4_dashboard_design
+    verification_method: "local governed file, sha256 1118ddda8708982d, 19,870 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc4_dashboard_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC4: Baseline Observability Dashboard — Design Doc'
+    source_url: docs/design/evolution_burst_2026-04/cc4_dashboard_design.md
+    local_path: "../docs/design/evolution_burst_2026-04/cc4_dashboard_design.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "1118ddda8708982db408acaf2ef342953d160969cd24388c8b8f95f2d4aec398"
+    bytes: 19968
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture
+    verification_method: "local governed file, sha256 4ac42d8885d2254f, 37,888 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC5: Wintermute Sleep-Function Architecture — 2026-04-18'
+    source_url: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    local_path: "../docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "4ac42d8885d2254f1c3619a70c5b726e386bcf87d5e508980fe75361c2283225"
+    bytes: 38055
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_dual_model_verification_2026_04_18
+    verification_method: "local governed file, sha256 baadd93781f9952c, 5,552 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Dual-Model Audit Verification — 2026-04-18
+    source_url: docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md
+    local_path: "../docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "baadd93781f9952c5792edb49097922b81eb701456eba888fe74773f81a3f449"
+    bytes: 5572
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_phase_c_retirement_list
+    verification_method: "local governed file, sha256 ebb3ca70f12e728b, 6,792 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_retirement_list.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Phase C — Infrastructure Retirement List
+    source_url: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+    local_path: "../docs/design/evolution_burst_2026-04/phase_c_retirement_list.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b"
+    bytes: 6856
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_evolution_burst_2026_04_phase_c_roadmap_75_15_10
+    verification_method: "local governed file, sha256 8261c8307ae6d887, 13,193 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Phase C — 75/15/10 Roadmap + Three-Item Commit Point
+    source_url: docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md
+    local_path: "../docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "8261c8307ae6d8879faf208a5a3fc3cef330c49f5c30df83883d0dfee9481e4f"
+    bytes: 13290
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_guarded_incremental_change_cycle
+    verification_method: "local governed file, sha256 f95e08b92d6dba5a, 5,054 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/guarded_incremental_change_cycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Methodology — The Guarded Incremental-Change Cycle
+    source_url: docs/design/guarded_incremental_change_cycle.md
+    local_path: "../docs/design/guarded_incremental_change_cycle.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "f95e08b92d6dba5ab7d122bd4ed4deb1f722c19ebe57bd5db4660d4a0ddd9f41"
+    bytes: 5074
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_paper_authoring_convention
+    verification_method: "local governed file, sha256 242a34caf2845c1f, 9,178 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_authoring_convention.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Seldon Paper Authoring Convention — Design Spec
+    source_url: docs/design/paper_authoring_convention.md
+    local_path: "../docs/design/paper_authoring_convention.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "242a34caf2845c1f35780c0c00e9edfa585f880e4f7246e3da6baf4e99dcbe93"
+    bytes: 9310
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_paper_foundations_workflow
+    verification_method: "local governed file, sha256 8ac80d2f0e007e83, 10,290 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_foundations_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Paper Foundations Workflow — Design Spec
+    source_url: docs/design/paper_foundations_workflow.md
+    local_path: "../docs/design/paper_foundations_workflow.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "8ac80d2f0e007e831ebc440e6ac067dd272a066ee456f5e325df81c7270efda0"
+    bytes: 10334
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_seldon_architectural_decisions
+    verification_method: "local governed file, sha256 ff82c6e0b175d6b0, 37,330 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/seldon_architectural_decisions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Seldon — Architectural Decisions & Vision
+    source_url: docs/design/seldon_architectural_decisions.md
+    local_path: "../docs/design/seldon_architectural_decisions.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "ff82c6e0b175d6b0a14e6663c2390d329408b0a99fe9c579f696e9131d41d314"
+    bytes: 37532
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_requirements_conops
+    verification_method: "local governed file, sha256 11c0d59f0d7481b5, 1,426 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/conops.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Seldon — Concept of Operations
+    source_url: docs/requirements/conops.md
+    local_path: "../docs/requirements/conops.md"
+    doc_kind: requirements
+    provenance_flag: local_authored
+    sha256: "11c0d59f0d7481b5e14eb6e55d0e0bf51b1aac28b3e320d00bb17e9bb420957d"
+    bytes: 1446
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_requirements_vision
+    verification_method: "local governed file, sha256 4e39e4fe39fd9d1f, 1,528 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/vision.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Seldon — Vision
+    source_url: docs/requirements/vision.md
+    local_path: "../docs/requirements/vision.md"
+    doc_kind: requirements
+    provenance_flag: local_authored
+    sha256: "4e39e4fe39fd9d1fbf513c85c075067980cf13945345d887b559c96cf1b76a61"
+    bytes: 1534
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_04_04_semantic_anchoring_and_cc_bug
+    verification_method: "local governed file, sha256 b8de216534167e60, 7,250 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-04_semantic_anchoring_and_cc_bug.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Session Handoff: Semantic Anchoring Design + cc_complete Bug Discovery'
+    source_url: handoffs/2026-04-04_semantic_anchoring_and_cc_bug.md
+    local_path: "../handoffs/2026-04-04_semantic_anchoring_and_cc_bug.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "b8de216534167e60e738a211312faa966a0ad0d1346b70cfe6df038c971e2847"
+    bytes: 7286
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_04_07_decision_gates_batch_b
+    verification_method: "local governed file, sha256 3de8c4559455d62e, 5,716 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-07_decision_gates_batch_b.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Session Handoff: Decision Gates + Batch B Setup'
+    source_url: handoffs/2026-04-07_decision_gates_batch_b.md
+    local_path: "../handoffs/2026-04-07_decision_gates_batch_b.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "3de8c4559455d62e27798e4c19ca486ea72839aad533e69728f4281e9dc88c58"
+    bytes: 5759
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_04_18_evolution_burst_closeout
+    verification_method: "local governed file, sha256 49e56c765742997d, 3,150 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_evolution_burst_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Handoff: Evolution Burst 2026-04 Complete'
+    source_url: handoffs/2026-04-18_evolution_burst_closeout.md
+    local_path: "../handoffs/2026-04-18_evolution_burst_closeout.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "49e56c765742997dcf49c4402f346e6052684305381860c78dca52a1ab83bbe0"
+    bytes: 3180
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_04_18_session_close_75_bucket_shipped
+    verification_method: "local governed file, sha256 60636d9bc5e84814, 9,291 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_session_close_75_bucket_shipped.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Handoff: 2026-04-18 Session Close — Burst Ended, Three 75% Items Shipped, SFV Audit Done'
+    source_url: handoffs/2026-04-18_session_close_75_bucket_shipped.md
+    local_path: "../handoffs/2026-04-18_session_close_75_bucket_shipped.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "60636d9bc5e84814354af9ad5a11664dbab0d254eaa817002765137fbe7a6aa4"
+    bytes: 9391
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_09_12_ad030_governed_documents_design
+    verification_method: "local governed file, sha256 ca91831200a28efb, 2,940 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-09-12_ad030_governed_documents_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Handoff: 2026-09-12 Seldon design session, governed documents as graph content'
+    source_url: handoffs/2026-09-12_ad030_governed_documents_design.md
+    local_path: "../handoffs/2026-09-12_ad030_governed_documents_design.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "ca91831200a28efbaa03a529766823c61bbd5780ab9850e6966ca651fcc41841"
+    bytes: 2940
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)

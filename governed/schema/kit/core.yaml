@@ -1,0 +1,162 @@
+id: https://github.com/brockwebb/squiddy/schema/core
+name: squiddy_core
+title: squiddy core schema
+description: >-
+  What every graph built with the kit imports: the property-graph node and edge shape (the
+  Biolink Model and KGX convention, S-003), the provenance slots every assertion carries (the one
+  invariant in CLAUDE.md; W3C PROV reuse), the authority-model status and supersession slots
+  (fss-policy-kg's CONFLICTS_WITH and IMPLEMENTS status discipline, kg/loader.py:282-290), the
+  manifest entry with its two status axes (DI-073), and the event envelope of the ledger. A
+  domain schema imports this and declares its own classes; it never re-declares these.
+version: 0.1.0
+license: MIT
+
+prefixes:
+  squiddy: https://github.com/brockwebb/squiddy/schema/core/
+  linkml: https://w3id.org/linkml/
+  prov: http://www.w3.org/ns/prov#
+  skos: http://www.w3.org/2004/02/skos/core#
+  dcterms: http://purl.org/dc/terms/
+default_prefix: squiddy
+default_range: string
+
+imports:
+  - linkml:types
+
+enums:
+  AssertionStatus:
+    description: The authority model on an assertion, from fss-policy-kg's overlay discipline.
+    permissible_values:
+      proposed: {}
+      accepted: {}
+      retracted: {}
+
+  ManifestStage:
+    description: >-
+      Axis 1, pipeline position, profiling UNECE GSBPM v5.1 (icsp_notebook/corpus/manifest_schema.md).
+      `admitting` is `in_graph` in the middle of becoming true (v7.11, DI-078).
+    permissible_values:
+      cataloged: {}
+      acquired: {}
+      admitting: {}
+      in_graph: {}
+      assess_queue: {}
+
+  ManifestDisposition:
+    description: >-
+      Axis 2, intent or role, profiling DDI-Lifecycle 3.3 with local reason codes. A graph's
+      config restricts this to the values it uses; a value not in the config is a gate failure.
+    permissible_values:
+      active: {}
+      reference: {}
+      metadata_only: {}
+      "excluded:deferred": {}
+      "excluded:restricted": {}
+      "excluded:out_of_scope": {}
+
+  EventKind:
+    permissible_values:
+      node: {}
+      edge: {}
+      retract: {}
+      manifest: {}
+      catalog: {}
+
+slots:
+  id:
+    identifier: true
+    description: >-
+      The readable, source-scoped key the graph minted at admission. It never changes and is never
+      reused; a name is a property (DI-060, DI-062, OD-4 §3.1).
+  subject:
+    description: The id of the source node.
+    required: true
+  object:
+    description: The id of the target node.
+    required: true
+  prov_wasGeneratedBy:
+    slot_uri: prov:wasGeneratedBy
+    description: Run id of the activity that made the assertion.
+  prov_wasDerivedFrom:
+    slot_uri: prov:wasDerivedFrom
+    description: The manifest entry or source the assertion was derived from.
+  method:
+    description: How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).
+  ruling_id:
+    description: The event id of the human ruling that authorized this assertion, when one did.
+  asserted_at:
+    description: When the assertion was made, ISO 8601 UTC.
+  status:
+    range: AssertionStatus
+  superseded_by:
+    description: The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).
+  # ---- manifest entry ----
+  kind:
+  stage:
+    range: ManifestStage
+  disposition:
+    range: ManifestDisposition
+  title:
+  source_url:
+  cited_in:
+    description: Where in the graph's own record this item is cited; the biblio assessment criterion.
+  provenance_flag:
+  acquisition_status:
+  local_path:
+  sha256:
+  bytes:
+    range: integer
+  retrieved_date:
+  verification_status:
+  notes:
+  admitting_since:
+  # ---- event envelope ----
+  event_id:
+    identifier: true
+  run_id:
+  event_stage:
+  type:
+  event_kind:
+    range: EventKind
+  ts:
+  schema_version:
+  doc_id:
+  payload:
+    range: Any
+  provenance:
+    range: Any
+
+classes:
+  Any:
+    class_uri: linkml:Any
+
+  Node:
+    abstract: true
+    description: A property-graph node keyed by `id`.
+    slots: [id, prov_wasGeneratedBy, prov_wasDerivedFrom, method, ruling_id, asserted_at, status,
+            superseded_by]
+
+  Edge:
+    abstract: true
+    description: A property-graph edge from `subject` to `object`; the class is the predicate.
+    slots: [subject, object, prov_wasGeneratedBy, prov_wasDerivedFrom, method, ruling_id,
+            asserted_at, status, superseded_by]
+
+  ManifestEntry:
+    description: One entry per document ever considered (DI-070). The two status axes are required.
+    slots: [id, kind, stage, disposition, title, source_url, cited_in, provenance_flag,
+            acquisition_status, local_path, sha256, bytes, retrieved_date, verification_status,
+            notes, admitting_since]
+    slot_usage:
+      stage: {required: true}
+      disposition: {required: true}
+
+  EventEnvelope:
+    description: One line of the ledger.
+    slots: [event_id, run_id, event_stage, type, event_kind, ts, schema_version, doc_id,
+            provenance, payload]
+    slot_usage:
+      run_id: {required: true}
+      type: {required: true}
+      event_kind: {required: true}
+      ts: {required: true}

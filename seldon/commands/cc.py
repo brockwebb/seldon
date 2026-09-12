@@ -522,6 +522,102 @@ def _get_artifact_file_hash(
     return record["fh"], record["scope"]
 
 
+# ---------------------------------------------------------------------------
+# AD-030: the rulings a task is constrained by
+# ---------------------------------------------------------------------------
+
+def enforce_design_reference(task_path: Path, config: dict) -> str | None:
+    """Check AD-030-R9's task half: a CC task names the decision it implements.
+
+    Args:
+        task_path: The task file.
+        config: Parsed seldon.yaml.
+
+    Returns:
+        None when the task names an `AD-` or `DN-` identifier, or when the project has set
+        `handoff.require_design_note: false`. Otherwise the refusal text.
+    """
+    from seldon.core.governed import R9_TASK_MESSAGE, references_a_design_note
+    from seldon.core.handoff import handoff_settings
+
+    text = task_path.read_text(encoding="utf-8", errors="replace")
+    if references_a_design_note(text):
+        return None
+    if not handoff_settings(config).require_design_note:
+        return f"WARNING: {R9_TASK_MESSAGE} (handoff.require_design_note is false.)"
+    return R9_TASK_MESSAGE
+
+
+def constraining_rulings(
+    *,
+    project_dir: Path,
+    config: dict,
+    driver,
+    database: str,
+    domain_config,
+    task_path: Path,
+    task_id: str,
+    session_id: str | None,
+) -> tuple[list, int]:
+    """Find the rulings this task is constrained by, and record them (AD-030).
+
+    The whole point of registering a task against the graph: a ruling that was written months ago
+    becomes addressable at the moment the task that would violate it is filed. Returning them
+    without writing the edges would make the check advice; writing them without returning them
+    would make it invisible.
+
+    Args:
+        project_dir: Project root.
+        config: Parsed seldon.yaml.
+        driver: Neo4j driver.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        task_path: The task file.
+        task_id: The registered task's artifact id.
+        session_id: Session id stamped on the events.
+
+    Returns:
+        `(matches, edges_written)`. An empty list when the graph holds no rulings yet, which is
+        the state of a project that has not run `seldon governed sync`.
+    """
+    from seldon.core import governed
+
+    rulings = governed.read_rulings(driver, database)
+    if not rulings:
+        return [], 0
+    matches = governed.match_rulings(
+        task_path.read_text(encoding="utf-8", errors="replace"),
+        rulings,
+        governed.ruling_match_threshold(config),
+    )
+    if not matches:
+        return [], 0
+    written = governed.write_constrained_by(
+        project_dir=project_dir, driver=driver, database=database,
+        domain_config=domain_config, task_id=task_id, task_type="ResearchTask",
+        matches=matches, session_id=session_id,
+    )
+    return matches, written
+
+
+def render_rulings(matches: list, written: int) -> str:
+    """Render matched rulings for a CLI or MCP response.
+
+    Args:
+        matches: The matched rulings.
+        written: How many `constrained_by` edges were written.
+
+    Returns:
+        Multi-line text, or a one-line note when nothing matched.
+    """
+    if not matches:
+        return ("No ruling in the graph constrains this task. If that is wrong, the ruling is "
+                "not ingested — run `seldon governed sync`.")
+    lines = [f"Constrained by {len(matches)} ruling(s) ({written} new edge(s)):"]
+    lines.extend(match.render() for match in matches)
+    return "\n".join(lines)
+
+
 @click.group("cc")
 def cc_group():
     """CC task lifecycle commands."""
@@ -772,6 +868,23 @@ def cc_register(filepath, description, allow_untracked):
         driver.close()
         raise
 
+    # AD-030-R9, the task half: refuse a task that cites no decision, BEFORE registering it.
+    # Refusing after the write would leave a task in the graph that the check says should not be
+    # there.
+    refusal = enforce_design_reference(task_path, config)
+    if refusal and refusal.startswith("WARNING"):
+        click.echo(refusal, err=True)
+    elif refusal:
+        click.echo(
+            f"ERROR: {refusal}\n"
+            f"  File: {rel_path}\n"
+            f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
+            f"  Override for this project: handoff.require_design_note: false in seldon.yaml.",
+            err=True,
+        )
+        driver.close()
+        raise SystemExit(1)
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         click.echo(
@@ -813,6 +926,13 @@ def cc_register(filepath, description, allow_untracked):
         click.echo(f"  source_file: {rel_path}")
         click.echo(f"  id: {artifact_id[:8]}...")
         click.echo(f"  state: proposed")
+        matches, written = constraining_rulings(
+            project_dir=project_dir, config=config, driver=driver, database=database,
+            domain_config=domain_config, task_path=task_path, task_id=artifact_id,
+            session_id=session_id,
+        )
+        click.echo("")
+        click.echo(render_rulings(matches, written))
     finally:
         driver.close()
 

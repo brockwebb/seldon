@@ -1,0 +1,6 @@
+# Manifest fields the ledger is allowed to disagree with, per document id.
+#
+# Empty, deliberately. Every field the manifest-to-ledger gate compares for this graph is either
+# the document's address or its hash, and a disagreement on either is exactly the drift the gate
+# exists to catch. An entry here would be a decision to stop noticing one.
+allow: {}

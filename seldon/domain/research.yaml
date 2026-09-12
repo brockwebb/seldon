@@ -1,5 +1,5 @@
 domain: research
-version: "0.3"
+version: "0.4"
 
 # System properties set automatically on every artifact, regardless of type:
 #   artifact_id    — UUID, set at creation
@@ -198,13 +198,35 @@ artifact_types:
         description: "How anchors were generated (e.g., 'AD-020 run 005', 'direct read', 'manual')"
 
   Citation:
+    # AD-030-R6: a citation appearing in a governed document becomes a Citation in
+    # state `proposed` at ingest; verification is a separate transition carrying how,
+    # when and by whom. The three verification properties are `system`, not
+    # `documentation`: absence is the normal case for every unverified citation, so
+    # counting them as documentation gaps would manufacture one false gap per
+    # citation the pipeline has correctly not yet checked. Same reasoning as
+    # `terminal_reason` on ResearchTask.
     properties:
       key:
         required: true
-        description: "BibTeX key"
+        description: "BibTeX key. For a citation recovered from a governed document, the document-scoped citation id, which is a key in exactly the sense the slot means: a stable handle for this act of citing."
       title:
         required: true
         description: "Paper/source title"
+      raw:
+        category: documentation
+        description: "The citation exactly as the citing document writes it (AD-030-R6). Verbatim; never normalised, because verification is against what was actually written."
+      source_document:
+        category: system
+        description: "Path of the governed document this citation was recovered from."
+      method:
+        category: system
+        description: "How the citation was verified (e.g. 'crossref DOI match', 'read the PDF'). Set on proposed -> verified. See AD-030-R6."
+      date:
+        category: system
+        description: "ISO-8601 date of verification. Set on proposed -> verified. See AD-030-R6."
+      by:
+        category: system
+        description: "Who verified it. Set on proposed -> verified. See AD-030-R6."
 
   ResearchTask:
     properties:
@@ -230,6 +252,144 @@ artifact_types:
       summary:
         required: true
         description: "Session summary"
+
+  # ---- AD-030: governed documents as graph content -------------------------
+  #
+  # These five types mirror the governed-documents graph's LinkML classes
+  # (governed/schema/governed.yaml). They are imported by `seldon governed sync`
+  # from that graph's ledger and are never authored directly: every property here
+  # is derived from a file on disk, and a hand-set value is a claim no ingest made.
+  # Hence every non-required property is `system` rather than `documentation` — a
+  # derived field is not a documentation gap.
+
+  Document:
+    properties:
+      name:
+        required: true
+        description: "The document's own title, or its filename when it states none."
+      path:
+        required: true
+        description: "Repo-relative path. The edit surface; governed documents stay in place (AD-030-R4)."
+      content_hash:
+        required: true
+        description: "sha256 of the file. Identity rests here, not on the path (AD-030-R4)."
+      doc_kind:
+        category: system
+        description: "Which governed directory it came from: design, requirements, cc_task, handoff."
+      manifest_state:
+        category: system
+        description: "AD-030-R5: cataloged, held, admitted or declined. No content edge may point at a document that is not `admitted`."
+      reason:
+        category: system
+        description: "Why a `declined` document was declined (AD-030-R5). A refusal with no reason cannot be argued with later."
+      decided_by:
+        category: system
+        description: "Who decided a `declined` state."
+      section_count:
+        category: system
+        description: "Sections the ingest found. Derived; a change here is the hash's job to notice."
+      ruling_count:
+        category: system
+        description: "Rulings the ingest found."
+      identifiers:
+        category: system
+        description: "Identifier references recovered from the text (AD-030 section 4), carried so `mentions` edges can be resolved against this graph."
+      description:
+        category: documentation
+        description: "What this document decides or specifies, in one or two sentences."
+
+  Section:
+    properties:
+      name:
+        required: true
+        description: "Stable section id: `<doc>#<slug of section path>`. Stable across every edit that leaves the heading alone."
+      text:
+        required: true
+        description: "The verbatim span. Never paraphrased."
+      content_hash:
+        required: true
+        description: "sha256 of the span."
+      heading:
+        category: system
+        description: "The heading line, without its `#` marks."
+      section_path:
+        category: system
+        description: "The heading stack, joined."
+      level:
+        category: system
+        description: "Heading depth."
+      span_start:
+        category: system
+        description: "Character offset of the span in the document."
+      span_end:
+        category: system
+        description: "End offset, exclusive."
+      source_document:
+        category: system
+        description: "Path of the document this section belongs to."
+      identifiers:
+        category: system
+        description: "Identifier references recovered from this section's text."
+
+  Ruling:
+    properties:
+      name:
+        required: true
+        description: "Stable ruling id: the document's own label (`AD-030-R9`) when it writes one, else a document-scoped ordinal."
+      text:
+        required: true
+        description: "The verbatim deontic text. This is what a task is constrained by, so it is quoted, never summarised."
+      content_hash:
+        required: true
+        description: "sha256 of the span."
+      force:
+        category: system
+        description: "binding, obligation, prohibition or recommendation."
+      matched_pattern:
+        category: system
+        description: "Which configured pattern classified this text as deontic. Recorded so a wrong match is a pattern to fix, not a judgement to relitigate."
+      ruling_identifier:
+        category: system
+        description: "The document's own label for it, when it writes one."
+      section_path:
+        category: system
+        description: "The heading stack of the section it sits in."
+      span_start:
+        category: system
+        description: "Character offset of the span in the document."
+      span_end:
+        category: system
+        description: "End offset, exclusive."
+      source_document:
+        category: system
+        description: "Path of the document this ruling belongs to."
+      identifiers:
+        category: system
+        description: "Identifier references recovered from this ruling's text."
+
+  Passage:
+    properties:
+      name:
+        required: true
+        description: "Document-scoped passage id, keyed by the hash of the quoted text."
+      text:
+        required: true
+        description: "The quoted span, verbatim (AD-030-R6)."
+      content_hash:
+        required: true
+        description: "sha256 of the quoted text."
+      source_document:
+        category: system
+        description: "Path of the document the quotation appears in."
+      quoted_in_section:
+        category: system
+        description: "Section id the quotation appears in."
+      span_start:
+        category: system
+        description: "Character offset of the containing block."
+      span_end:
+        category: system
+        description: "End offset, exclusive."
 
   SRS_Requirement:
     properties:
@@ -550,8 +710,22 @@ artifact_types:
 
 relationship_types:
   cites:
-    from_types: [PaperSection, Figure]
-    to_types: [Result, Citation]
+    # AD-030-R7: a citation edge carries a CiTO intent rather than an invented
+    # vocabulary, and `disagrees_with` / `refutes` carry the constraint that no
+    # longer holds. Rejected science stays in the graph as a rejected prescription;
+    # reinstatement is supersession with evidence, not deletion.
+    from_types: [PaperSection, Figure, Document, Section, Ruling]
+    to_types: [Result, Citation, Passage]
+    properties:
+      cito_type:
+        required: false
+        description: "CiTO intent: cites_as_evidence, uses_method_in, cites_for_information, extends, disagrees_with, refutes."
+      reason:
+        required: false
+        description: "Why this citation disagrees or refutes — the constraint being named (AD-030-R7)."
+      raw_reference:
+        required: false
+        description: "The reference line exactly as the citing document writes it."
   generated_by:
     # DataFile added (AD-028): a derived data file is produced by a Script the
     # same way a Result is; ai-readiness-kg had to carry that edge as a property.
@@ -569,8 +743,10 @@ relationship_types:
     from_types: [ResearchTask]
     to_types: [Result, PaperSection, Figure]
   depends_on:
-    from_types: [ResearchTask]
-    to_types: [Result, DataFile, Script]
+    # Document -> Document added (AD-030 section 4): recovered from a governed
+    # document's `Depends on:` header field.
+    from_types: [ResearchTask, Document]
+    to_types: [Result, DataFile, Script, Document]
   precedes:
     # AD-029: finish-to-start task ordering. `A precedes B` means B is not
     # expected to leave `proposed` until A is terminal-complete. This is the
@@ -595,8 +771,11 @@ relationship_types:
     from_types: [DataFile]
     to_types: [PipelineRun]
   contains:
-    from_types: [Figure]
-    to_types: [Result]
+    # Document -> its children added (AD-030 section 4). Structural parenthood: the
+    # edge `seldon governed sync` writes for every Section, Ruling, Citation and
+    # Passage an ingest recovers.
+    from_types: [Figure, Document]
+    to_types: [Result, Section, Ruling, Citation, Passage]
   derived_from:
     from_types: [Result]
     to_types: [LabNotebookEntry, Citation, Result]
@@ -686,8 +865,14 @@ relationship_types:
     to_types: [ArchitecturalDecision]
 
   supersedes:
-    from_types: [ArchitecturalDecision]
-    to_types: [ArchitecturalDecision]
+    # Ruling -> Ruling added (AD-030 section 4): a ruling that replaces an earlier
+    # one. Document -> Document covers a design note that replaces another.
+    from_types: [ArchitecturalDecision, Ruling, Document]
+    to_types: [ArchitecturalDecision, Ruling, Document]
+    properties:
+      reason:
+        required: false
+        description: "Why the earlier ruling no longer holds."
 
   superseded_by:
     # AD-028: written by `seldon task supersede --superseded-by`. Points from the
@@ -741,6 +926,64 @@ relationship_types:
     # has no graph artifact yet).
     from_types: [AuditFinding]
     to_types: [PaperSection]
+
+  # ---- AD-030: the closed edge set of section 4 ----------------------------
+
+  constrained_by:
+    # THE EDGE AD-030 EXISTS TO CREATE. A task is constrained by the rulings it must
+    # respect; `seldon cc register` writes these from identifier reference and concept
+    # overlap and prints them back, so a ruling is addressable at the moment a task is
+    # filed. The defect this closes: on 2026-09-01 a per-set RPE field, retired by a
+    # recorded ruling, was reintroduced by a new task because no mechanism made the
+    # ruling addressable at task registration.
+    from_types: [ResearchTask, Script, Issue]
+    to_types: [Ruling]
+    cardinality: many_to_many
+    properties:
+      match_method:
+        required: false
+        description: "identifier | concept_overlap — how the ruling was found for this task."
+      match_score:
+        required: false
+        description: "Overlap score for a concept match; absent for an identifier match, which is exact."
+      matched_terms:
+        required: false
+        description: "The terms the task and the ruling share, for a concept match."
+
+  satisfies:
+    # AD-030 section 4. Distinct from `implements`, which points at a decision:
+    # `satisfies` points at a requirement and is the RTM's forward edge.
+    from_types: [ResearchTask, Script, Result, PaperSection]
+    to_types: [SRS_Requirement, Ruling]
+
+  extends:
+    # AD-030 section 4, recovered from a governed document's `Extends:` header field.
+    # The `extends` of CiTO, applied to this repository's own decisions.
+    from_types: [Document, ArchitecturalDecision]
+    to_types: [Document, ArchitecturalDecision]
+    properties:
+      raw_field:
+        required: false
+        description: "The header field's text, verbatim."
+
+  mentions:
+    # THE WEAKEST EDGE IN THE SET, AND THE ONE THAT FINDS THE MOST. Recovered
+    # lexically from an identifier reference (`AD-030`, `DN-4`, an eight-hex task id
+    # prefix). Deliberately untyped as to intent: a mention asserts only that one
+    # artifact names another, which is exactly what a lexical scan can know.
+    from_types: [Document, Section, Ruling, ResearchTask]
+    to_types: [Document, Section, Ruling, ResearchTask, ArchitecturalDecision, DesignNote, SRS_Requirement]
+    cardinality: many_to_many
+    properties:
+      identifier:
+        required: false
+        description: "The identifier as the text writes it."
+      identifier_kind:
+        required: false
+        description: "AD, DN, DI, OD, SRS, TIER or TASK."
+      occurrences:
+        required: false
+        description: "How many times the source text names it."
 
 state_machines:
   Result:
@@ -809,9 +1052,41 @@ state_machines:
     stale: [draft]
 
   Citation:
+    # AD-030-R6: capture is free, verification is a separate recorded transition.
     proposed: [verified]
     verified: [stale]
     stale: [verified]
+
+  # AD-030. A governed document's structure is derived from a file, so its states
+  # track the file rather than a review process: `admitted` is the working state,
+  # `stale` is what a content-hash change moves it to, and `declined` is terminal
+  # until a new decision supersedes it (AD-030-R5).
+  Document:
+    cataloged: [held, admitted, declined]
+    held: [admitted, declined]
+    admitted: [stale, declined]
+    stale: [admitted]
+    declined: []
+
+  # A Section, Ruling or Passage exists because a Document says so. It goes stale
+  # when its own span's hash changes and returns when the ingest re-derives it;
+  # `retired` is where it lands when the span leaves the document entirely, which is
+  # a deletion the graph must record rather than perform.
+  Section:
+    admitted: [stale, retired]
+    stale: [admitted, retired]
+    retired: []
+
+  Ruling:
+    admitted: [stale, retired, superseded]
+    stale: [admitted, retired]
+    retired: []
+    superseded: []
+
+  Passage:
+    admitted: [stale, retired]
+    stale: [admitted, retired]
+    retired: []
 
   LabNotebookEntry:
     proposed: [finalized]
