@@ -45,6 +45,82 @@ from seldon.paper.numbering import XREF_PATTERN
 
 
 # ---------------------------------------------------------------------------
+# Check 13: Governed documents (AD-030)
+# ---------------------------------------------------------------------------
+
+def check_governed(driver, database: str, project_dir: Path, config: dict) -> CheckResult:
+    """Fail when a governed document's ledger hash is not what the graph holds.
+
+    AD-030-R3 puts ingest on the commit, not on a cron: the defect window is the gap between a
+    ruling being written and the next task being registered, and a daily sweep leaves that window
+    open. This is the check that closes it — `--fix` runs `governed sync`, and `--strict` refuses
+    a commit whose governed documents have moved without the graph following.
+
+    A project with no governed graph passes and says so. The governed graph is opt-in per project
+    (AD-030 names Seldon's own repository as the first corpus, not every repository), and a check
+    that failed on its absence would make every other project adopt it by force.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+        project_dir: Project root.
+        config: Loaded seldon.yaml.
+
+    Returns:
+        A CheckResult named "Governed docs".
+    """
+    from seldon.core import governed
+
+    ledger = governed.ledger_path(project_dir, config)
+    if not ledger.is_file():
+        return CheckResult(
+            name="Governed docs", symbol="pass",
+            summary="No governed graph in this project — skipping (AD-030 is opt-in per project)",
+        )
+
+    try:
+        stale = governed.out_of_date(project_dir, config, driver, database)
+    except ValueError as exc:
+        return CheckResult(
+            name="Governed docs", symbol="fail",
+            summary="The governed ledger cannot be read",
+            details=[str(exc)],
+        )
+
+    if not stale:
+        view = governed.read_ledger(ledger)
+        return CheckResult(
+            name="Governed docs", symbol="pass",
+            summary=f"All {len(view.documents())} governed documents in sync",
+        )
+
+    return CheckResult(
+        name="Governed docs", symbol="fail",
+        summary=f"{len(stale)} governed document(s) not synced into the graph",
+        details=[f"{p} — run `seldon governed sync`" for p in stale[:20]],
+        fixable=True,
+    )
+
+
+def _fix_governed(project_dir: Path, quiet: bool = False) -> None:
+    """Run `seldon governed sync` to bring the graph level with the ledger.
+
+    Args:
+        project_dir: Project root.
+        quiet: Suppress the command's own output.
+
+    Raises:
+        subprocess.CalledProcessError: If the sync fails. A fix that failed silently would leave
+            the next check reporting the same thing with no explanation.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "seldon", "governed", "sync"],
+        cwd=str(project_dir), check=True,
+        capture_output=quiet, text=True,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Result data structures
 # ---------------------------------------------------------------------------
 
@@ -82,6 +158,11 @@ TIER_A_CHECKS = frozenset({
     "Glossary",
     "References",
     "Unregistered files",
+    # AD-030-R3. Unlike "Relationship types" and "Task source files", this IS a property of the
+    # change in hand: the agent that edited a governed document is the agent that can re-run the
+    # ingest, and `--fix` does it. A ruling that has been written but not ingested is invisible
+    # to the next `cc register`, which is the exact window AD-030 exists to close.
+    "Governed docs",
 })
 
 
@@ -1478,6 +1559,7 @@ def _run_all_checks(
         check_precedence(driver, database),
         check_task_source_files(driver, database, project_dir, config),
         check_event_log(project_dir),
+        check_governed(driver, database, project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 
@@ -1496,6 +1578,7 @@ def _apply_fixes(
     check_names_to_fix = {
         "File hashes": _fix_file_hashes,
         "Ontology": _fix_ontology,
+        "Governed docs": _fix_governed,
     }
 
     for r in results:

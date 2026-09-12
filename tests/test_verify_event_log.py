@@ -200,6 +200,9 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     config = {"project": {"name": "fixture"}, "neo4j": {"database": TEST_DATABASE}}
     results = _run_all_checks(neo4j_driver, TEST_DATABASE, config, project_dir)
     names = [r.name for r in results]
-    assert names[-2:] == ["Event log", "Replay"]
-    # 12 since AD-029 added the `precedes` DAG check.
-    assert len(results) == 12
+    # AD-030 inserted "Governed docs" between them; what this wiring test is about is that both
+    # new checks reach the report, not that nothing may ever be added after them.
+    assert "Event log" in names
+    assert names[-1] == "Replay"
+    # 13 since AD-030 added the governed-documents check.
+    assert len(results) == 13

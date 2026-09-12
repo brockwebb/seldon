@@ -52,6 +52,22 @@ HISTORICAL_RECORD_DIRS = (
 IGNORED_DIRS = (".git", ".claude", "__pycache__", ".pytest_cache",
                 ".venv", "venv", "node_modules", ".ruff_cache", ".mypy_cache")
 
+#: The governed-documents graph (AD-030) holds VERBATIM COPIES of the governed
+#: files — the parse cache, the ledger, the exports — so a grammar string written
+#: once in an exempt `cc_tasks/` file appears again here, as the same statement
+#: reproduced rather than as a second authored one. Exempting the copies is not a
+#: hole in the lint: the originals are still scanned under their own rules, and a
+#: new authored copy of the grammar cannot hide in a cache that is regenerated
+#: from those originals on every ingest.
+DERIVED_DIRS = (
+    "governed/corpus/parsed",
+    "governed/corpus/resolved",
+    "governed/ledger",
+    "governed/exports",
+    "governed/evidence",
+    "governed/work",
+)
+
 #: Text file types that could plausibly carry a copy of the grammar.
 SCANNED_SUFFIXES = {".py", ".yaml", ".yml", ".md", ".toml", ".json", ".txt",
                     ".cfg", ".ini", ".sh", ".rst"}
@@ -73,6 +89,8 @@ def _scanned_files() -> list[Path]:
             continue
         posix = relative.as_posix()
         if any(posix.startswith(d + "/") for d in HISTORICAL_RECORD_DIRS):
+            continue
+        if any(posix.startswith(d + "/") for d in DERIVED_DIRS):
             continue
         files.append(relative)
     return files

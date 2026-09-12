@@ -86,7 +86,13 @@ def test_domain_declares_an_optional_reason_property(domain_config):
 
 
 def test_domain_version_was_bumped(domain_config):
-    assert domain_config.version == "0.3"
+    """AD-029 bumped the schema to 0.3; a later change may raise it further.
+
+    Pinning the exact version here made every subsequent schema change edit a test
+    about `precedes`, which is not what this file is about. What AD-029 needs is
+    that the bump happened and was never rolled back.
+    """
+    assert tuple(int(p) for p in domain_config.version.split(".")) >= (0, 3)
 
 
 def test_an_inverse_colliding_with_a_real_type_is_refused(tmp_path):

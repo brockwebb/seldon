@@ -971,6 +971,7 @@ def seldon_cc_register(
     """
     from seldon.commands.cc import (
         _find_existing, _name_from_filepath, _extract_description,
+        constraining_rulings, enforce_design_reference, render_rulings,
     )
     from seldon.core.artifacts import create_artifact
 
@@ -1002,6 +1003,16 @@ def seldon_cc_register(
         driver.close()
         return f"Warning: CC task already registered (id: {existing_id[:8]}...). No duplicate created."
 
+    # AD-030-R9, the task half: refuse a task that cites no decision, before registering it.
+    refusal = enforce_design_reference(task_path, config)
+    if refusal and not refusal.startswith("WARNING"):
+        driver.close()
+        return (
+            f"Error: {refusal}\n"
+            f"  File: {rel_path}\n"
+            f"  Fix: cite the AD or DN this task implements in the task file's header."
+        )
+
     name = _name_from_filepath(rel_path)
     description = _extract_description(task_path)
 
@@ -1016,12 +1027,21 @@ def seldon_cc_register(
             },
             actor="desktop", authority="accepted",
         )
-        return (
-            f"Registered: {name}\n"
-            f"  source_file: {rel_path}\n"
-            f"  id: {artifact_id[:8]}...\n"
-            f"  state: proposed"
+        matches, written = constraining_rulings(
+            project_dir=p, config=config, driver=driver, database=database,
+            domain_config=domain_config, task_path=task_path, task_id=artifact_id,
+            session_id=None,
         )
+        lines = [
+            f"Registered: {name}",
+            f"  source_file: {rel_path}",
+            f"  id: {artifact_id[:8]}...",
+            f"  state: proposed",
+        ]
+        if refusal:
+            lines.append(refusal)
+        lines.extend(["", render_rulings(matches, written)])
+        return "\n".join(lines)
     finally:
         driver.close()
 

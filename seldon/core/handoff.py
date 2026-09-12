@@ -471,17 +471,75 @@ def files_touched(
     return sorted(found)
 
 
-def design_notes_written(project_dir: Path, window: SessionWindow) -> list[str]:
-    """Return design-note files created or modified inside the window.
+def design_notes_in_graph(
+    project_dir: Path, window: SessionWindow, driver, database: str
+) -> list[str]:
+    """Return design notes the GRAPH holds that were written inside the window (AD-030-R7... R9).
+
+    The stronger form of the check. A file's mtime says the bytes were touched; a Document or
+    DesignNote node whose content hash matches the file on disk says the decision was actually
+    ingested and is addressable — which is the whole obligation AD-030-R9 states. A note written
+    and never ingested satisfies the letter of "a file appeared" and none of the point.
+
+    Falls back to nothing (not to an error) when the project has no governed graph: the mtime
+    check is still run alongside, and a project that has not adopted AD-030's ingest is not in
+    violation of it.
 
     Args:
         project_dir: Project root.
         window: The session window.
+        driver: Neo4j driver.
+        database: Database name.
+
+    Returns:
+        Sorted repo-relative paths of design documents the graph holds whose file mtime falls in
+        the window.
+    """
+    touched = set(files_touched(project_dir, window, [DESIGN_DIR]))
+    if not touched or driver is None or not database:
+        return []
+    with driver.session(database=database) as session:
+        records = session.run(
+            "MATCH (d:Artifact) WHERE d.artifact_type IN ['Document', 'DesignNote', "
+            "'ArchitecturalDecision'] AND d.path IN $paths RETURN DISTINCT d.path AS path",
+            paths=sorted(touched),
+        ).data()
+    return sorted(r["path"] for r in records)
+
+
+def design_notes_written(
+    project_dir: Path,
+    window: SessionWindow,
+    driver=None,
+    database: Optional[str] = None,
+) -> list[str]:
+    """Return the design notes that discharge AD-030-R9 for this window.
+
+    Two readings of "wrote a design note", and the obligation is discharged by either:
+
+    * a file under `docs/design/` was created or modified in the window — the filesystem form,
+      which works before the governed graph exists and in a project that never adopts it;
+    * the graph holds a Document, DesignNote or ArchitecturalDecision at that path — the node
+      form AD-030's ingest makes possible, and the stronger of the two.
+
+    The node check is not made the *only* check, because that would fail a session that wrote a
+    note correctly and closed before the pre-commit ingest ran — punishing the right behaviour for
+    the timing of a hook.
+
+    Args:
+        project_dir: Project root.
+        window: The session window.
+        driver: Neo4j driver, or None to run the filesystem form alone.
+        database: Database name; required when `driver` is given.
 
     Returns:
         Sorted repo-relative paths under `docs/design/`.
     """
-    return files_touched(project_dir, window, [DESIGN_DIR])
+    from_disk = files_touched(project_dir, window, [DESIGN_DIR])
+    if driver is None or not database:
+        return from_disk
+    in_graph = design_notes_in_graph(project_dir, window, driver, database)
+    return sorted(set(from_disk) | set(in_graph))
 
 
 @dataclass(frozen=True)
@@ -500,25 +558,31 @@ class R9Verdict:
 
 
 def check_r9(
-    project_dir: Path, window: SessionWindow, events: Iterable[dict]
+    project_dir: Path,
+    window: SessionWindow,
+    events: Iterable[dict],
+    driver=None,
+    database: Optional[str] = None,
 ) -> R9Verdict:
     """Evaluate AD-030-R9 over one window.
 
     The rule fires only when both halves hold: Desktop created at least one
-    ResearchTask, and no file under `docs/design/` was written. A Desktop
-    session that filed nothing was not a design session; one that wrote a note
-    discharged the obligation.
+    ResearchTask, and no design note was written. A Desktop session that filed
+    nothing was not a design session; one that wrote a note discharged the
+    obligation. See :func:`design_notes_written` for what counts as writing one.
 
     Args:
         project_dir: Project root.
         window: The session window.
         events: Events already restricted to that window.
+        driver: Neo4j driver, so the graph form of the note check can run.
+        database: Database name; required when `driver` is given.
 
     Returns:
         The verdict, carrying the evidence on both sides.
     """
     task_ids = desktop_task_ids(events)
-    notes = design_notes_written(project_dir, window)
+    notes = design_notes_written(project_dir, window, driver, database)
     return R9Verdict(
         violated=bool(task_ids) and not notes,
         desktop_task_ids=tuple(task_ids),
@@ -1035,7 +1099,7 @@ def build_handoff(
     window = session_window(project_dir, settings, driver, database, now=end)
     events = events_in_window(project_dir, window)
 
-    verdict = check_r9(project_dir, window, events)
+    verdict = check_r9(project_dir, window, events, driver, database)
     warnings: list[str] = []
     if verdict.violated:
         if settings.require_design_note:

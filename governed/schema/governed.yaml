@@ -1,0 +1,317 @@
+id: https://github.com/brockwebb/seldon/governed/schema
+name: governed
+title: the governed-documents graph
+description: >-
+  Seldon's own engineering record as graph content (AD-030). A governed markdown file under
+  docs/design/, docs/requirements/, cc_tasks/ or handoffs/ is the serialization of a Document node;
+  parsing it is the single write path (AD-030-R1). Node classes are the five AD-030 section 4 names
+  — Document, Section, Ruling, Citation, Passage — and the edge classes are the closed set that
+  section declares, plus CiTO-typed citation edges (AD-030-R7).
+
+  IDENTITY. A Document's key is its repo-relative path slugged, and its content_hash is the sha256
+  of the file (AD-030-R4: identity is the hash, the path is the edit surface). A Section's key is
+  `<doc>#<slug of its section path>`, which is stable across every edit that does not rename the
+  heading — that stability is what lets a task cite a ruling and still be citing it a month later.
+
+  WHAT THIS SCHEMA DOES NOT DO. It declares no rules engine (AD-030-R5). The only gates are the
+  hash mismatch, the admission invariant, and the design-note reference on task registration.
+version: 0.1.0
+license: MIT
+
+prefixes:
+  governed: https://github.com/brockwebb/seldon/governed/
+  squiddy: https://github.com/brockwebb/squiddy/schema/core/
+  linkml: https://w3id.org/linkml/
+  cito: http://purl.org/spar/cito/
+  fabio: http://purl.org/spar/fabio/
+  doco: http://purl.org/spar/doco/
+  prov: http://www.w3.org/ns/prov#
+default_prefix: governed
+default_range: string
+
+imports:
+  - linkml:types
+  - kit/core
+
+enums:
+  DocKind:
+    description: >-
+      Which governed directory the document came from. The directory is the document's genre and
+      decides how hard its citation gate is (AD-030-R6: a design note ships with `proposed`
+      citations, a paper does not).
+    permissible_values:
+      design:
+        description: docs/design/ — architectural decisions and design notes.
+      requirements:
+        description: docs/requirements/ — specifications.
+      cc_task:
+        description: cc_tasks/ — Claude Code task specifications and their RESULT files.
+      handoff:
+        description: handoffs/ — session handoff records.
+
+  ManifestState:
+    description: >-
+      AD-030-R5. Every document ever considered is a node from the moment it is cataloged. A
+      `declined` node carries its reason and never receives a content edge; reopening one requires
+      a new decision with a `supersedes` edge.
+    permissible_values:
+      cataloged: {}
+      held: {}
+      admitted: {}
+      declined: {}
+
+  DeonticForce:
+    description: >-
+      What makes a Section a Ruling. Profiled from the deontic axis fss-policy-kg uses over
+      obligations; the vocabulary here is the one Seldon's own documents actually write.
+    permissible_values:
+      binding:
+        description: The text says BINDING, or carries a numbered ruling identifier.
+      obligation:
+        description: MUST, SHALL, or "is required to".
+      prohibition:
+        description: NEVER, MUST NOT, "is forbidden".
+      recommendation:
+        description: SHOULD, "prefer", "by default".
+
+  CitationState:
+    description: AD-030-R6. Capture is free; verification is a separate, recorded transition.
+    permissible_values:
+      proposed: {}
+      verified: {}
+
+  CitoType:
+    description: >-
+      CiTO (Shotton 2010), the subset AD-030-R7 names. `disagrees_with` and `refutes` carry a
+      `reason` naming the constraint that no longer holds: rejected science stays in the graph as
+      a rejected prescription rather than vanishing from it.
+    permissible_values:
+      cites_as_evidence:
+        meaning: cito:citesAsEvidence
+      uses_method_in:
+        meaning: cito:usesMethodIn
+      cites_for_information:
+        meaning: cito:citesForInformation
+      extends:
+        meaning: cito:extends
+      disagrees_with:
+        meaning: cito:disagreesWith
+      refutes:
+        meaning: cito:refutes
+
+slots:
+  doc_id:
+    description: The Document a child node belongs to.
+  content_hash:
+    description: sha256 of the file as it stood when the assertion was made (AD-030-R4).
+  span_start:
+    range: integer
+    description: Character offset of the node's verbatim text in the document.
+  span_end:
+    range: integer
+    description: End offset, exclusive.
+  text:
+    description: The verbatim span. Never paraphrased; the hash is over the file, not over this.
+  section_path:
+    description: The heading stack, joined, as the parser produced it.
+  identifiers:
+    multivalued: true
+    description: >-
+      Every identifier reference the node's text names (`AD-030`, `DN-4`, an eight-hex task id
+      prefix), recovered lexically. Squiddy turns the ones that resolve inside THIS graph into
+      `Mentions` edges; the rest are carried here because they resolve in Seldon's graph, not in
+      this one, and `seldon governed sync` is what can see them (AD-030-R10: the coupling is a
+      stream, not awareness). A reference that is dropped rather than carried is a link the graph
+      can never recover.
+  reason:
+    description: >-
+      Why a declined document was declined, or why a CiTO edge disagrees. Required on both by
+      AD-030-R5 and R7; a refusal with no reason cannot be argued with later.
+
+classes:
+  # ---- node classes ----
+  Document:
+    is_a: Node
+    description: >-
+      One governed markdown file. `id` is its repo-relative path slugged; `path` is the live edit
+      surface; `content_hash` is what identity actually rests on (AD-030-R4).
+    slots: [title, local_path, sha256, content_hash, disposition, reason, identifiers]
+    slot_usage:
+      title: {required: true}
+    attributes:
+      path:
+        required: true
+        description: Repo-relative path, the edit surface. Governed documents stay in place.
+      doc_kind:
+        range: DocKind
+        required: true
+      manifest_state:
+        range: ManifestState
+        required: true
+        description: AD-030-R5. No content edge may point at a document that is not `admitted`.
+      decided_by:
+        description: Who decided a `declined` state.
+      decided_date:
+      seldon_artifact_id:
+        description: >-
+          The artifact_id of the ArchitecturalDecision or DesignNote node Seldon already holds for
+          this path, when there is one. Carried so the import matches rather than double-minting.
+      byte_length:
+        range: integer
+      section_count:
+        range: integer
+      ruling_count:
+        range: integer
+
+  Section:
+    is_a: Node
+    description: >-
+      An addressable child of a Document with a stable id and a verbatim span (doco:Section). The
+      id is `<doc>#<slug of section path>`, so a citation survives every edit that leaves the
+      heading alone.
+    slots: [doc_id, text, section_path, span_start, span_end, content_hash, identifiers]
+    slot_usage:
+      doc_id: {required: true}
+      text: {required: true}
+    attributes:
+      heading:
+        required: true
+      level:
+        range: integer
+      ordinal:
+        range: integer
+        description: Position in reading order within the document.
+
+  Ruling:
+    is_a: Node
+    description: >-
+      A Section or paragraph whose text is deontic (AD-030 section 4). A Ruling is the unit a task
+      is `constrained_by`; the nanopublication assertion is the model (Groth et al. 2010).
+    slots: [doc_id, text, section_path, span_start, span_end, content_hash, identifiers]
+    slot_usage:
+      doc_id: {required: true}
+      text: {required: true}
+    attributes:
+      ruling_identifier:
+        description: The document's own label for it, e.g. `AD-030-R9`, when the text carries one.
+      force:
+        range: DeonticForce
+        required: true
+      matched_pattern:
+        required: true
+        description: >-
+          The configured pattern that classified this text as deontic. Recorded so a Ruling can be
+          argued with: a wrong match is a pattern to fix, not a judgement to relitigate.
+      section_id:
+        description: The Section this ruling sits in, when it is a paragraph rather than a section.
+
+  Citation:
+    is_a: Node
+    description: >-
+      Any citation appearing in a governed document, captured at ingest in state `proposed`
+      (AD-030-R6). Verification is a transition carrying method, date and by.
+    slots: [doc_id, title, source_url, text]
+    attributes:
+      citation_state:
+        range: CitationState
+        required: true
+      raw:
+        required: true
+        description: The citation exactly as the document writes it.
+      authors:
+      year:
+      doi:
+      verification_method:
+      verification_date:
+      verified_by:
+
+  Passage:
+    is_a: Node
+    description: >-
+      A quoted span in a source, with the hash of the quoted text (AD-030-R6; the micropublication
+      model, Clark et al. 2014). Minted only when a document actually quotes something.
+    slots: [doc_id, text, span_start, span_end, content_hash]
+    slot_usage:
+      text: {required: true}
+    attributes:
+      quoted_in_section:
+        description: The Section id the quotation appears in.
+
+  # ---- edge classes: the closed set of AD-030 section 4 ----
+  Contains:
+    is_a: Edge
+    description: (Document)-[:CONTAINS]->(Section | Ruling | Citation | Passage). Structural parenthood.
+
+  ConstrainedBy:
+    is_a: Edge
+    description: >-
+      (task)-[:CONSTRAINED_BY]->(Ruling). Written by `seldon cc register` from identifier reference
+      and concept overlap; the edge AD-030 exists to create.
+    attributes:
+      match_method:
+        description: identifier | concept_overlap
+      match_score:
+        range: float
+      matched_terms:
+        multivalued: true
+
+  Satisfies:
+    is_a: Edge
+    description: (task | Script)-[:SATISFIES]->(Requirement).
+
+  Supersedes:
+    is_a: Edge
+    description: (Ruling)-[:SUPERSEDES]->(Ruling), or decision to decision.
+    slots: [reason]
+
+  Extends:
+    is_a: Edge
+    description: (Document)-[:EXTENDS]->(Document), from the `Extends:` header field.
+    attributes:
+      raw_field:
+
+  DependsOn:
+    is_a: Edge
+    description: (Document)-[:DEPENDS_ON]->(Document), from the `Depends on:` header field.
+    attributes:
+      raw_field:
+
+  Mentions:
+    is_a: Edge
+    description: >-
+      (any)-[:MENTIONS]->(any), recovered lexically from an identifier reference: `AD-NNN`, `DN-`,
+      `S-NNN`, `TN-N`, or an eight-hex task id prefix. The weakest edge in the set, and the one
+      that finds the most.
+    attributes:
+      identifier:
+        required: true
+      identifier_kind:
+        required: true
+      occurrences:
+        range: integer
+
+  Cites:
+    is_a: Edge
+    description: >-
+      (Section | Document)-[:CITES]->(Citation | Passage), typed with a CiTO intent (AD-030-R7).
+    slots: [reason]
+    attributes:
+      cito_type:
+        range: CitoType
+        required: true
+        ifabsent: string(cites_for_information)
+      raw_reference:
+
+  # ---- the container the export validates ----
+  GovernedGraph:
+    tree_root: true
+    description: The graph as two lists, the shape of the node-link export.
+    attributes:
+      nodes:
+        range: Node
+        multivalued: true
+        inlined_as_list: true
+      edges:
+        range: Edge
+        multivalued: true
+        inlined_as_list: true

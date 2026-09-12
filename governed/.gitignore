@@ -1,0 +1,22 @@
+# Reproducible from the ledger and the governed files; never the source of anything.
+#
+# THE LEDGER ITSELF IS COMMITTED. It is this graph's source of truth (Squiddy's one invariant: a
+# projection is disposable, the events are not), and `seldon governed sync` reads it. Everything
+# below is rebuilt from it by replay.
+corpus/parsed/
+corpus/resolved/
+corpus/acquisition_state.json
+work/
+evidence/
+
+# Pre-write snapshots. Squiddy copies the ledger before every append (DI-014), so a backfill over
+# a hundred documents leaves a hundred copies of an ever-growing file. They are a crash-recovery
+# convenience for the run in progress, not history: history is the ledger, and git holds that.
+ledger/*.bak-*
+
+# The KGX export and its node/edge sidecars: sixteen megabytes of JSON per release, every byte of
+# it a replay of the ledger. `squiddy release --graph governed` regenerates them. EXPORT_VERSIONS.md
+# and the release diff are NOT ignored — those are the small, pinned record OF a release (DI-110),
+# and a release whose row is missing did not happen as far as the graph is concerned.
+exports/*.json
+exports/*.jsonl
