@@ -11,6 +11,7 @@ from seldon.commands.session import briefing_command, closeout_command
 from seldon.commands.paper import paper_group
 from seldon.commands.docs import docs_group
 from seldon.commands.go import go_command
+from seldon.commands.handoff import handoff_command
 from seldon.commands.ontology import ontology_group
 from seldon.commands.verify import verify_command
 from seldon.commands.issue import issue_group
@@ -39,6 +40,7 @@ main.add_command(closeout_command, name="closeout")
 main.add_command(paper_group, name="paper")
 main.add_command(docs_group, name="docs")
 main.add_command(go_command, name="go")
+main.add_command(handoff_command, name="handoff")
 main.add_command(ontology_group, name="ontology")
 main.add_command(verify_command, name="verify")
 main.add_command(issue_group, name="issue")

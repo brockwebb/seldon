@@ -1027,6 +1027,71 @@ def seldon_cc_register(
 
 
 # ---------------------------------------------------------------------------
+# Session closeout
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def seldon_handoff(
+    slug: str,
+    summary: str,
+    next: str,
+    project_dir: str = ".",
+    force: bool = False,
+) -> str:
+    """Close this session: write the handoff, return the resume and dispatch blocks.
+
+    The handoff document is generated from the event log, the graph and the
+    filesystem — only `summary` and `next` are authored prose (AD-030-R2).
+
+    Refuses when this session created ResearchTasks and wrote no file under
+    `docs/design/` (AD-030-R9), unless `handoff.require_design_note` is false in
+    seldon.yaml.
+
+    Args:
+        slug: Filename slug — the handoff lands at handoffs/<date>_<slug>.md
+        summary: One line stating what this session did
+        next: The first action for the next session
+        project_dir: Path to project root
+        force: Replace an existing handoff at the same path
+    """
+    from seldon.commands.handoff import r9_refusal_text
+    from seldon.core.handoff import R9Violation, build_handoff, write_handoff
+
+    try:
+        config, driver, database, domain_config, resolved = _resolve_project(project_dir)
+    except Exception as exc:
+        return f"Error: cannot resolve project at {project_dir!r}: {exc}"
+
+    try:
+        document = build_handoff(
+            project_dir=Path(resolved),
+            config=config,
+            driver=driver,
+            database=database,
+            domain_config=domain_config,
+            slug=slug,
+            summary=summary,
+            next_action=next,
+        )
+    except R9Violation as violation:
+        return r9_refusal_text(violation)
+    except ValueError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+
+    try:
+        written = write_handoff(document, force=force)
+    except FileExistsError as exc:
+        return f"Error: {exc}"
+
+    lines = [*document.warnings, f"Wrote {written}", ""]
+    lines.extend(["## Resume block", "", document.resume, ""])
+    lines.extend(["## CC dispatch block", "", document.dispatch])
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Audit orchestration (AD-019 + AD-020 pipeline, Desktop entry point)
 # ---------------------------------------------------------------------------
 

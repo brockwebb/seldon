@@ -26,6 +26,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 |-------|------|--------|
 | `briefing` | Session start | `/briefing` or `seldon briefing` |
 | `closeout` | Session end | `/closeout` or `seldon closeout` |
+| `handoff` | Desktop session end | `seldon handoff --slug <s> --summary <s> --next <s>` |
 | `result-register` | Computation produces a citable result | `/result-register` |
 | `task-track` | Work item must survive across sessions | `/task-track` |
 | `research` | Writing lab notebook entries, lit notes, citations | `/research` |
@@ -66,6 +67,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 | `seldon_issue_update` | Update Issue state/priority |
 | `seldon_cc_complete` | Mark CC task file as completed |
 | `seldon_cc_register` | Register CC task file as proposed |
+| `seldon_handoff` | Close the session: write the handoff, return the resume and CC dispatch blocks |
 | `seldon_query` | Read-only Cypher against project graph |
 
 `seldon_query` is read-only — write operations (CREATE, MERGE, SET, DELETE, REMOVE) are rejected. Use the typed tools for mutations.
@@ -77,6 +79,16 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
    **CC task contracts:** Complex CC tasks (3+ deliverables, schema + code changes, new test files, or tasks where the spec says "check whether X exists and handle accordingly") should include a `## Success Contract` section in the task file or produce a separate `cc_tasks/<date>_<name>_contract.md` before execution begins. The contract lists deliverables, verification commands with expected results, scope boundaries, and assumptions. Simple tasks (single-function fixes, doc updates, file registration) do not need contracts. Template: `docs/templates/cc_task_contract.md`.
 3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
 4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit
+
+**Desktop sessions close with `seldon handoff` (AD-030-R9).** The command derives the session
+window from the newest LabNotebookEntry or handoff file, generates the handoff document from the
+event log, the graph and the filesystem, and returns two blocks: the resume line for the next
+Desktop thread and the CC dispatch text for the CC tasks it registered. It **refuses** to close a
+Desktop session that created ResearchTasks and wrote no file under `docs/design/` — a design
+session that ships tasks without a ruling leaves the decision addressable nowhere. Window length
+and the gate live in `seldon.yaml` under `handoff.session_window_hours` and
+`handoff.require_design_note`. `seldon go` reports, at the next orient, a previous Desktop session
+that closed in violation.
 
 **Multi-task plans belong in the graph too (AD-029).** `seldon task chain A B C` records the
 order; `seldon go` then renders **Next ready** and **Chains**, and `seldon task list` marks ready
@@ -187,6 +199,7 @@ AD-026: `seldon init` Project Templates — `docs/design/AD-026_init_templates.m
 AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-027_snapshot_artifacts.md`
 AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics — `docs/design/AD-028_result_names_and_task_lifecycle.md`
 AD-029: `precedes` — Task Ordering as a First-Class Relationship — `docs/design/AD-029_task_precedence.md`
+AD-030: Governed Documents as Graph Content — `docs/design/AD-030_governed_documents_as_graph_content.md`
 
 ## Project Templates
 

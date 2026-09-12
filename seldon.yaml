@@ -9,6 +9,14 @@ project:
   name: seldon-self
   slug: seldon-self
 
+handoff:
+  # Session-window fallback used only when no LabNotebookEntry and no handoff
+  # file exist to bound the session (`seldon handoff`, AD-030-R9).
+  session_window_hours: 12
+  # AD-030-R9: refuse to close a Desktop session that created tasks and wrote
+  # no docs/design/ note. Set false to warn instead of refusing.
+  require_design_note: true
+
 shared_ontology:
   # Per AD-017: Central Validity Ontology
   # Seldon repo owns the master vocabulary files.

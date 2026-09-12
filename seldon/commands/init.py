@@ -10,6 +10,10 @@ import yaml
 
 from seldon.config import slugify
 from seldon.core.graph import create_indexes
+from seldon.core.handoff import (
+    DEFAULT_REQUIRE_DESIGN_NOTE,
+    DEFAULT_SESSION_WINDOW_HOURS,
+)
 from seldon.paths import (
     DEFAULT_VOCABULARIES,
     ONTOLOGY_PATH_ENV,
@@ -179,6 +183,12 @@ def init_command(
         },
         "event_store": {
             "path": events_path,
+        },
+        # Written at init so `seldon handoff` reads its window and its AD-030-R9
+        # gate from config rather than from a literal in the source.
+        "handoff": {
+            "session_window_hours": DEFAULT_SESSION_WINDOW_HOURS,
+            "require_design_note": DEFAULT_REQUIRE_DESIGN_NOTE,
         },
     }
     if ontology_source_path is None:

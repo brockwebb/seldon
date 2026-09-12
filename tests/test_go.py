@@ -115,6 +115,9 @@ def test_go_json_output_has_expected_keys(tmp_path):
         "system_standards",
         "project_context",
         "latest_handoff",
+        # AD-030-R9: a Desktop session that closed without a design note is
+        # reported at the next orient, so the key is part of the contract.
+        "r9_notice",
         "project_state",
         "audit_pipeline",
         "agent_roles",
