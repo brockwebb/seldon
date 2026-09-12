@@ -797,6 +797,63 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: cc_tasks_2026_09_12_ad030_findings_reconcile
+    verification_method: "local governed file, sha256 7adb6ade5d864f69, 5,320 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: AD-030 findings reconciliation, ruling patterns, dependency pin, count verification'
+    source_url: cc_tasks/2026-09-12_ad030_findings_reconcile.md
+    local_path: "../cc_tasks/2026-09-12_ad030_findings_reconcile.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "7adb6ade5d864f69e211cfcbaa293a1663bdc28b7ffe510dee10f409c118335c"
+    bytes: 5330
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_ad030_findings_reconcile_addendum_1
+    verification_method: "local governed file, sha256 2dee0348cf758151, 1,415 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: ADDENDUM 1 to cc_tasks/2026-09-12_ad030_findings_reconcile.md
+    source_url: cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md
+    local_path: "../cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "2dee0348cf75815195f6bafbd6d8aef09a7223ca00b45a5e2e26465f32c2b3d3"
+    bytes: 1415
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_ad030_findings_reconcile_result
+    verification_method: "local governed file, sha256 c46a1b20dbf15fa7, 17,857 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: AD-030 findings reconciliation, ruling patterns, dependency pin, count verification'
+    source_url: cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "c46a1b20dbf15fa78824677a4d0417bf98b2a7079479dceb3d5e6be93959c6e7"
+    bytes: 17935
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest
     verification_method: "local governed file, sha256 9ea91d6a90257f56, 8,523 characters"
     retrieved_date: "2026-09-12"
@@ -811,6 +868,25 @@ documents:
     provenance_flag: local_authored
     sha256: "9ea91d6a90257f56faab734c0ee624f6f2911c2c5d413735c863dc5263e62e34"
     bytes: 8523
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest_result
+    verification_method: "local governed file, sha256 883beb3a5d91e02e, 13,104 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: AD-030 governed documents ingest, Squiddy recipe plus Seldon import, with backfill'
+    source_url: cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "883beb3a5d91e02e076a9f6fab0edf11a3257d63ef87d2949c7171058d7cbdfb"
+    bytes: 13146
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
@@ -1424,6 +1500,25 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: docs_design_ad_030_implementation_findings_001
+    verification_method: "local governed file, sha256 dc3e60b92f772f7c, 7,555 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_001.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-030 Implementation Findings 001: Rulings on the First Backfill'
+    source_url: docs/design/AD-030_implementation_findings_001.md
+    local_path: "../docs/design/AD-030_implementation_findings_001.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2"
+    bytes: 7558
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: docs_design_dn_session_continuity_graph_backed_handoffs
     verification_method: "local governed file, sha256 db4446f81a75f833, 14,093 characters"
     retrieved_date: "2026-09-12"
@@ -1856,27 +1951,6 @@ documents:
     provenance_flag: local_authored
     sha256: "ca91831200a28efbaa03a529766823c61bbd5780ab9850e6966ca651fcc41841"
     bytes: 2940
-    acquisition: none
-    acquisition_status: "acquired"
-    verification_status: "verified"
-    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
-
-# AD-030-R1: every governed markdown file is a Document node.
-
-  - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest_result
-    verification_method: "local governed file, sha256 fd3325c00e0a78ed, 12,263 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
-    kind: local_document
-    stage: "in_graph"
-    disposition: active
-    title: 'RESULT: AD-030 governed documents ingest, Squiddy recipe plus Seldon import, with backfill'
-    source_url: cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
-    local_path: "../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md"
-    doc_kind: cc_task
-    provenance_flag: local_authored
-    sha256: "fd3325c00e0a78ed8d7fe2c6af38bb3317ede68f04f1bd1fe7271c7ca2fcf282"
-    bytes: 12303
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"

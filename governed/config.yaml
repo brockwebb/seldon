@@ -136,20 +136,55 @@ domain:
   # Where the governed directories are, relative to this graph's root.
   source_root: ".."
 
-  # WHAT MAKES A SECTION OR A PARAGRAPH A RULING. Every pattern is listed here, never in the
-  # emitter, and every Ruling records which one matched it, so a wrong classification is a
-  # pattern to fix rather than a judgement to relitigate.
+  # WHAT MAKES A SECTION OR A PARAGRAPH A RULING (AD-030-R16).
+  #
+  # POSITION, NOT VOCABULARY. A Ruling is a section whose HEADING or FIRST TOKEN carries a ruling
+  # identifier (`AD-NNN-Rn`, `DN-...-Rn`, a numbered requirement ID) or the `BINDING` banner as a
+  # heading token. A deontic word in body prose does not classify: the first backfill matched
+  # `never` in ordinary narrative and `BINDING` where AD-030 section 4 uses the word as vocabulary,
+  # and a corpus where every paragraph containing "must" is a ruling has no rulings in it.
+  #
+  # `\A`, not `^`: patterns are compiled with re.MULTILINE so a heading pattern can anchor, and
+  # under MULTILINE a `^` would also match the second line of a paragraph — which is not the first
+  # token of anything.
+  #
+  # Every Ruling records which pattern matched it, so a reclassification is auditable and a wrong
+  # match is a pattern to fix rather than a judgement to relitigate.
   ruling_patterns:
-    - {name: numbered_ruling, force: binding, pattern: '^\*\*[A-Z]{2,4}-\d+-R\d+\.\*\*'}
-    - {name: numbered_ruling_heading, force: binding, pattern: '^#{1,6}\s+[A-Z]{2,4}-\d+-R\d+\b'}
-    - {name: banner_binding, force: binding, pattern: '\bBINDING\b'}
-    - {name: numbered_requirement, force: binding, pattern: '^\*\*(?:AD|DI|OD|DN|S|FR|NFR)-\d+[.:]'}
-    - {name: must_not, force: prohibition, pattern: '\bMUST NOT\b'}
-    - {name: must, force: obligation, pattern: '\bMUST\b'}
-    - {name: shall, force: obligation, pattern: '\bSHALL\b'}
-    - {name: never, force: prohibition, pattern: '\bnever\b'}
-    - {name: forbidden, force: prohibition, pattern: '\bis forbidden\b'}
-    - {name: should, force: recommendation, pattern: '\bSHOULD\b'}
+    # `**AD-030-R1.**` or `AD-030-R1.` opening a paragraph — the identifier used as a LABEL.
+    #
+    # The terminator is required, and that is the whole difference between stating a ruling and
+    # talking about one. `AD-030-R3 is "Ingest runs on commit"` opens with the same identifier and
+    # is a sentence ABOUT R3; the RESULT files of this very task are full of such sentences, and
+    # without the terminator every one of them became a Ruling. Bold form may carry the terminator
+    # inside the bold or omit it, because `**AD-030-R1**` is already unambiguously a label.
+    - {name: numbered_ruling, pattern: '\A\s{0,3}(?:\*\*(?:[A-Z]{2,4}-\d+|DN-[A-Za-z0-9_]+)-R\d+[.:]?\*\*|(?:[A-Z]{2,4}-\d+|DN-[A-Za-z0-9_]+)-R\d+[.:])(?:\s|\Z)'}
+    # `## AD-030-R9 The design-note gate` — the identifier OPENS the heading text. A heading that
+    # merely cites one ("## Step 2 — actor gate (AD-030-R11)") is a section about a ruling.
+    - {name: numbered_ruling_heading, pattern: '\A\s{0,3}#{1,6}\s+\*{0,2}(?:[A-Z]{2,4}-\d+|DN-[A-Za-z0-9_]+)-R\d+\b'}
+    # A numbered requirement identifier opening a paragraph, or naming a heading. Decision ids
+    # (AD-, DI-, OD-, DN- without an `-Rn` suffix) are deliberately absent: a paragraph opening
+    # `**AD-030.**` is a reference to a decision, not a ruling of one.
+    - {name: numbered_requirement, pattern: '\A\s{0,3}\*{0,2}(?:FR|NFR|SRS|SR|S)-\d+[.:]'}
+    - {name: numbered_requirement_heading, pattern: '\A\s{0,3}#{1,6}\s+(?:FR|NFR|SRS|SR|S)-\d+\b'}
+    # The BINDING banner: a heading token, or the first token of a paragraph. Never mid-sentence,
+    # where the word is vocabulary rather than a banner.
+    - {name: banner_binding_heading, pattern: '\A\s{0,3}#{1,6}\s+.{0,60}?\bBINDING\b'}
+    - {name: banner_binding, pattern: '\A\s{0,3}\*{0,2}BINDING\b'}
+
+  # WHAT KIND OF OBLIGATION A RULING CARRIES, once it has already been classified as one.
+  #
+  # R16 governs CLASSIFICATION — whether a block is a Ruling at all — and says deontic words in
+  # body prose do not classify. It says nothing about reading the force of text that IS a ruling,
+  # and collapsing every Ruling to `binding` would throw away the one axis that distinguishes
+  # "must" from "should". So these patterns run only over blocks the list above already admitted,
+  # in declaration order, and fall through to `binding` when a ruling states its force no more
+  # precisely than by being one.
+  force_patterns:
+    - {force: prohibition, pattern: '\bMUST NOT\b|\bSHALL NOT\b|\bis forbidden\b|\bnever\b'}
+    - {force: obligation, pattern: '\bMUST\b|\bSHALL\b|\bis required to\b'}
+    - {force: recommendation, pattern: '\bSHOULD\b|\bprefer\b'}
+  default_force: binding
 
   # IDENTIFIER REFERENCES recovered as `mentions` edges. Lexical by default (AD-030 section 4).
   identifier_patterns:

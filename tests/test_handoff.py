@@ -302,7 +302,7 @@ def test_r9_warns_instead_of_refusing_when_configured(
 
 @neo4j_tests
 def test_r9_ignores_tasks_a_cc_session_created(project, neo4j_driver, domain_config):
-    """Only a Desktop session owes a design note; CC executes what was decided."""
+    """AD-030-R11's allow-list of one: CC executes what was decided, so it owes no note."""
     create_artifact(
         project_dir=project,
         driver=neo4j_driver,
@@ -316,6 +316,27 @@ def test_r9_ignores_tasks_a_cc_session_created(project, neo4j_driver, domain_con
     window = _window()
     verdict = check_r9(project, window, events_in_window(project, window))
     assert verdict.violated is False
+
+
+@neo4j_tests
+def test_r9_gates_an_actor_that_is_neither_cc_nor_desktop(
+    project, neo4j_driver, domain_config
+):
+    """AD-030-R11: the gate was a deny-list on `desktop`, so an unknown actor escaped it."""
+    create_artifact(
+        project_dir=project,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        artifact_type="ResearchTask",
+        properties={"description": "filed by something new"},
+        actor="hermes",
+        authority="accepted",
+    )
+    window = _window()
+    verdict = check_r9(project, window, events_in_window(project, window))
+    assert verdict.violated is True
+    assert len(verdict.gated_task_ids) == 1
 
 
 def test_r9_ignores_a_design_note_written_before_the_window(project):

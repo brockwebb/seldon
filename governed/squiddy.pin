@@ -1,0 +1,20 @@
+# The Squiddy commit this graph is built against (AD-030-R17).
+#
+# WHY A FILE AND NOT A pyproject DEPENDENCY. Squiddy is a BUILD-TIME dependency of this graph, not
+# a runtime dependency of the `seldon` package: `seldon/core/governed.py` reads a JSONL ledger and
+# imports no Squiddy module, so a `pyproject.toml` entry would be a dependency Seldon never uses
+# and would make Seldon un-installable wherever Squiddy is absent — which is every environment
+# Seldon's own suite runs in. AD-030-R17 supersedes the `pyproject.toml` clause of AD-030-R10; the
+# acyclicity and no-awareness clauses of R10 stand.
+#
+# WHY A COMMIT AND NOT A VERSION. The kit is one day old and its version number moves slower than
+# its behaviour. The extraction this graph produces is a function of the parser, the assess
+# criterion and the acquire adapter as they stood at a specific commit; a version range would make
+# the corpus unreproducible without saying so.
+#
+# `make -C governed check-squiddy` verifies this, and every build target depends on it. To move the
+# pin: check out the new commit, re-run `make -C governed kit-schema schema`, re-run the sweep, and
+# update both values here in the same commit as the re-ingested ledger.
+
+SQUIDDY_COMMIT=f23023750787ec3ca97c0a1f3b8d872445676b94
+SQUIDDY_VERSION=0.2.0
