@@ -34,7 +34,7 @@ did not before.
 | `seldon_cc_register` on a fixture task mentioning "per-set RPE" against a fixture Ruling forbidding it returns that Ruling | `test_mcp_cc_register_returns_the_matched_ruling` | PASS |
 | Squiddy DI-005 guard unchanged and its test passes | Guard unchanged in what it refuses; test written (see §5, F1) | PASS |
 
-`seldon verify --strict` exits 0. Seldon suite: **1623 passed** (1574 at start, +49). Squiddy suite:
+`seldon verify --strict` exits 0. Seldon suite: **1628 passed** (1574 at start, +54). Squiddy suite:
 **107 passed** (50 at start, +57).
 
 AD-030 section 1 measured this graph on the morning of 2026-09-12: "61 relationships total, all
@@ -172,7 +172,17 @@ This is the designed behaviour — a Ruling records `matched_pattern`, so the fi
 not a judgement — but the ruling counts in §3 include them and should be read as "text the
 configured patterns classified as deontic", not as "rulings a human would recognise".
 
-**F10. AD-030-R10 says the Squiddy dependency is "pinned in `pyproject.toml`", and it is not.**
+**F10. A governed file that has never been cataloged was invisible to every check.**
+The hash comparison asks whether the ledger and the graph agree about a document. A file written
+and never put through the ingest is in neither, so nothing disagreed about it — and AD-030-R1's
+"every governed document is graph content" quietly meant "every document the ledger already knows
+about". Found immediately: this RESULT file was the first one. `governed.uncataloged` enumerates
+the four directories (reading the list from `governed/config.yaml`, never restating it) and the
+verify check now reports files with no ledger entry. It is deliberately NOT `--fix`-able: cataloging
+runs Squiddy's pipeline, and a Seldon `--fix` that silently invoked another repository's toolchain
+would erase the boundary AD-030-R10 draws. The check says what to run.
+
+**F11. AD-030-R10 says the Squiddy dependency is "pinned in `pyproject.toml`", and it is not.**
 Seldon's import reads a JSONL file and imports no Squiddy module, so a hard runtime dependency
 would be one Seldon never uses — and it would make Seldon un-installable wherever Squiddy is
 absent, which is currently every environment Seldon's own suite runs in. The dependency is real but

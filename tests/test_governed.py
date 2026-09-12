@@ -692,3 +692,62 @@ def test_mcp_cc_register_refuses_a_task_that_cites_no_decision(
     with neo4j_driver.session(database=NEO4J_DB) as session:
         n = session.run("MATCH (t:Artifact:ResearchTask) RETURN count(t) AS n").single()["n"]
     assert n == 0
+
+
+# ---------------------------------------------------------------------------
+# A governed file the ledger has never heard of (AD-030-R1)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def project_with_graph_config(project):
+    """The `project` fixture plus a governed `config.yaml` declaring one governed directory."""
+    (project / "governed" / "config.yaml").write_text(
+        "engine: {}\n"
+        "domain:\n"
+        "  governed_directories:\n"
+        "    - {path: docs/design, doc_kind: design}\n"
+    )
+    (project / "docs" / "design").mkdir(parents=True)
+    return project
+
+
+def test_a_file_the_ledger_never_heard_of_is_reported(project_with_graph_config):
+    """The hash check cannot see it: it is in neither the ledger nor the graph."""
+    project = project_with_graph_config
+    (project / "docs" / "design" / "AD-901_new.md").write_text("# AD-901\n\nProse.\n")
+    assert governed.uncataloged(project, _config(project)) == ["docs/design/AD-901_new.md"]
+
+
+def test_a_cataloged_file_is_not_reported(project_with_graph_config):
+    project = project_with_graph_config
+    (project / "docs" / "design" / "AD-900_fixture.md").write_text("x")
+    assert governed.uncataloged(project, _config(project)) == []
+
+
+def test_readmes_are_not_governed_documents(project_with_graph_config):
+    project = project_with_graph_config
+    (project / "docs" / "design" / "README.md").write_text("# Index\n")
+    assert governed.uncataloged(project, _config(project)) == []
+
+
+def test_a_project_with_no_governed_config_reports_nothing(project):
+    """The directory list is read from the governed graph, never restated."""
+    assert governed.governed_directories(project, _config(project)) == []
+    assert governed.uncataloged(project, _config(project)) == []
+
+
+@neo4j_tests
+def test_verify_fails_on_an_uncataloged_file_and_says_what_to_run(
+    project_with_graph_config, neo4j_driver, domain_config
+):
+    project = project_with_graph_config
+    _sync(project, neo4j_driver, domain_config)
+    (project / "docs" / "design" / "AD-901_new.md").write_text("# AD-901\n\nProse.\n")
+
+    result = check_governed(neo4j_driver, NEO4J_DB, project, _config(project))
+    assert result.symbol == "fail"
+    assert "never cataloged" in result.summary
+    assert "make -C governed catalog" in " ".join(result.details)
+    # Not fixable by `--fix`: cataloging runs another repository's pipeline, and a fix that
+    # silently invoked it would erase the boundary AD-030-R10 draws.
+    assert result.fixable is False

@@ -1860,3 +1860,24 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest_result
+    verification_method: "local governed file, sha256 fd3325c00e0a78ed, 12,263 characters"
+    retrieved_date: "2026-09-12"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: AD-030 governed documents ingest, Squiddy recipe plus Seldon import, with backfill'
+    source_url: cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "fd3325c00e0a78ed8d7fe2c6af38bb3317ede68f04f1bd1fe7271c7ca2fcf282"
+    bytes: 12303
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)

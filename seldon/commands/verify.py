@@ -87,18 +87,37 @@ def check_governed(driver, database: str, project_dir: Path, config: dict) -> Ch
             details=[str(exc)],
         )
 
-    if not stale:
+    # A file the ledger has never heard of is invisible to the hash comparison above: it is in
+    # neither the ledger nor the graph, so nothing disagrees about it. AD-030-R1 says every
+    # governed document is graph content, and this is what makes "every" mean it.
+    new_files = governed.uncataloged(project_dir, config)
+
+    if not stale and not new_files:
         view = governed.read_ledger(ledger)
         return CheckResult(
             name="Governed docs", symbol="pass",
             summary=f"All {len(view.documents())} governed documents in sync",
         )
 
+    details = [f"{p} — run `seldon governed sync`" for p in stale[:20]]
+    details += [
+        f"{p} — never cataloged; run `make -C governed catalog && make -C governed sweep`"
+        for p in new_files[:20]
+    ]
+    parts = []
+    if stale:
+        parts.append(f"{len(stale)} not synced into the graph")
+    if new_files:
+        parts.append(f"{len(new_files)} never cataloged")
     return CheckResult(
         name="Governed docs", symbol="fail",
-        summary=f"{len(stale)} governed document(s) not synced into the graph",
-        details=[f"{p} — run `seldon governed sync`" for p in stale[:20]],
-        fixable=True,
+        summary=f"Governed documents: {', '.join(parts)}",
+        details=details,
+        # Only the sync half is fixable here. Cataloging and ingesting a NEW file runs the Squiddy
+        # pipeline, which is a different toolchain with its own gates; `--fix` says what to run
+        # rather than running it, because a fix that silently invoked another repository's
+        # pipeline would be the opposite of the boundary AD-030-R10 draws.
+        fixable=bool(stale),
     )
 
 

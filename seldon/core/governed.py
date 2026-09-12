@@ -1245,3 +1245,70 @@ def references_a_design_note(text: str) -> bool:
         True when it names at least one `AD-` or `DN-` identifier.
     """
     return bool(_DESIGN_REFERENCE_RE.search(text or ""))
+
+
+# ---------------------------------------------------------------------------
+# Files the ledger has never heard of
+# ---------------------------------------------------------------------------
+
+#: Filenames under a governed directory that are not governed documents.
+SKIP_FILENAMES = frozenset({"README.md"})
+
+
+def governed_directories(project_dir: Path, config: dict) -> list[str]:
+    """The governed directories this project declares (AD-030-R1).
+
+    Read from the governed graph's own `config.yaml`, not restated here: the enumerator, the
+    emitter and this check must agree on which directories are governed, and three copies of that
+    list would be three chances to disagree.
+
+    Args:
+        project_dir: Project root.
+        config: Parsed seldon.yaml.
+
+    Returns:
+        Repo-relative directory paths. Empty when the governed graph is absent or declares none.
+    """
+    import yaml
+
+    path = graph_dir(project_dir, config) / "config.yaml"
+    if not path.is_file():
+        return []
+    domain = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("domain") or {}
+    return [entry["path"] for entry in (domain.get("governed_directories") or [])]
+
+
+def uncataloged(project_dir: Path, config: dict) -> list[str]:
+    """Governed markdown files the ledger has never heard of.
+
+    AD-030-R1 says every governed document is graph content. A file that was written and never
+    cataloged satisfies nothing: the hash check compares the ledger to the graph and cannot see a
+    document that is in neither. This is the check that makes "every governed file" mean it.
+
+    Args:
+        project_dir: Project root.
+        config: Parsed seldon.yaml.
+
+    Returns:
+        Sorted repo-relative paths with no Document in the ledger.
+    """
+    directories = governed_directories(project_dir, config)
+    if not directories:
+        return []
+    known = {
+        payload.get("path")
+        for payload in read_ledger(ledger_path(project_dir, config)).documents()
+    }
+    root = Path(project_dir)
+    missing = []
+    for directory in directories:
+        base = root / directory
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*.md"):
+            if path.name.startswith(".") or path.name in SKIP_FILENAMES:
+                continue
+            rel = path.relative_to(root).as_posix()
+            if rel not in known:
+                missing.append(rel)
+    return sorted(missing)
