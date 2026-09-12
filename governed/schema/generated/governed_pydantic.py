@@ -322,6 +322,7 @@ class Document(Node):
     reason: Optional[str] = Field(default=None, description="""Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Supersedes', 'Cites']} })
     identifiers: Optional[list[str]] = Field(default=None, description="""Every identifier reference the node's text names (`AD-030`, `DN-4`, an eight-hex task id prefix), recovered lexically. Squiddy turns the ones that resolve inside THIS graph into `Mentions` edges; the rest are carried here because they resolve in Seldon's graph, not in this one, and `seldon governed sync` is what can see them (AD-030-R10: the coupling is a stream, not awareness). A reference that is dropped rather than carried is a link the graph can never recover.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Section', 'Ruling']} })
     path: str = Field(default=..., description="""Repo-relative path, the edit surface. Governed documents stay in place.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
+    declared_name: Optional[str] = Field(default=None, description="""The document's own canonical name, read from its `Name:` header field (AD-030-R20). This is the graph identity a `name`-keyed query and `Extends:` recovery use. It is absent from a document that declares none, and the consumer then derives a name from the file stem — a derivation is never authoritative over a declaration.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     doc_kind: DocKind = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     manifest_state: ManifestState = Field(default=..., description="""AD-030-R5. No content edge may point at a document that is not `admitted`.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     decided_by: Optional[str] = Field(default=None, description="""Who decided a `declined` state.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
@@ -504,11 +505,12 @@ class Satisfies(Edge):
 
 class Supersedes(Edge):
     """
-    (Ruling)-[:SUPERSEDES]->(Ruling), or decision to decision.
+    (Ruling)-[:SUPERSEDES]->(Ruling), or (Document)-[:SUPERSEDES]->(Document). Declared, never inferred (AD-030-R21): a ruling carries `Supersedes AD-NNN-Rn.` as its final sentence, and a whole document carries a `Supersedes:` header field naming the documents it replaces.
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/seldon/governed/schema'})
 
     reason: Optional[str] = Field(default=None, description="""Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Supersedes', 'Cites']} })
+    raw_field: Optional[str] = Field(default=None, description="""The header field's value, when the edge came from one.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Supersedes', 'Extends', 'DependsOn']} })
     subject: str = Field(default=..., description="""The id of the source node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     object: str = Field(default=..., description="""The id of the target node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     prov_wasGeneratedBy: Optional[str] = Field(default=None, description="""Run id of the activity that made the assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasGeneratedBy'} })
@@ -526,7 +528,7 @@ class Extends(Edge):
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/seldon/governed/schema'})
 
-    raw_field: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Extends', 'DependsOn']} })
+    raw_field: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Supersedes', 'Extends', 'DependsOn']} })
     subject: str = Field(default=..., description="""The id of the source node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     object: str = Field(default=..., description="""The id of the target node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     prov_wasGeneratedBy: Optional[str] = Field(default=None, description="""Run id of the activity that made the assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasGeneratedBy'} })
@@ -544,7 +546,7 @@ class DependsOn(Edge):
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/seldon/governed/schema'})
 
-    raw_field: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Extends', 'DependsOn']} })
+    raw_field: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Supersedes', 'Extends', 'DependsOn']} })
     subject: str = Field(default=..., description="""The id of the source node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     object: str = Field(default=..., description="""The id of the target node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
     prov_wasGeneratedBy: Optional[str] = Field(default=None, description="""Run id of the activity that made the assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasGeneratedBy'} })

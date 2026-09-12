@@ -204,5 +204,6 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     # new checks reach the report, not that nothing may ever be added after them.
     assert "Event log" in names
     assert names[-1] == "Replay"
-    # 13 since AD-030 added the governed-documents check.
-    assert len(results) == 13
+    # 14 since AD-030-R24 added the binding-constraints check alongside the governed-documents one.
+    assert "Binding constraints" in names
+    assert len(results) == 14

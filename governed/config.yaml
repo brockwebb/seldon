@@ -65,6 +65,10 @@ engine:
 
   write:
     schema_version: "1"
+    # AD-030-R22: the payload slot the kit compares against the manifest's recorded hash to decide
+    # that an admitted document has been edited. Named here rather than assumed, because it is the
+    # one thing the kit has to know about a graph's own Document shape to re-ingest it.
+    content_hash_field: sha256
     # Nothing here is shared with another graph: every node this graph mints belongs to the
     # document that produced it. Citation is deliberately NOT shared — two documents citing the
     # same paper mint two Citation nodes, because a citation is an act of a document (AD-030-R6)
@@ -169,6 +173,13 @@ domain:
     - {name: numbered_requirement_heading, pattern: '\A\s{0,3}#{1,6}\s+(?:FR|NFR|SRS|SR|S)-\d+\b'}
     # The BINDING banner: a heading token, or the first token of a paragraph. Never mid-sentence,
     # where the word is vocabulary rather than a banner.
+    # `# Addendum 029-A: Seldon never reads a relationship by name alone` — a ruling ID form this
+    # repository already uses, opening a heading and terminated by `:`, which is exactly what
+    # AD-030-R23 calls a label. It was lost when R16 moved classification from vocabulary to
+    # position: the heading had been admitted by the word `never` in its own text, so retiring
+    # `never` retired a real ruling with it. The colon is required for the same reason it is
+    # required of a ruling identifier — a heading that merely mentions an addendum is prose.
+    - {name: addendum_heading, pattern: '\A\s{0,3}#{1,6}\s+\*{0,2}Addendum\s+\d+-[A-Za-z0-9]+:'}
     - {name: banner_binding_heading, pattern: '\A\s{0,3}#{1,6}\s+.{0,60}?\bBINDING\b'}
     - {name: banner_binding, pattern: '\A\s{0,3}\*{0,2}BINDING\b'}
 
@@ -200,6 +211,24 @@ domain:
   header_edges:
     - {field: "Extends", edge: Extends}
     - {field: "Depends on", edge: DependsOn}
+    # AD-030-R21, the document half: whole-document supersession is DECLARED in a header field
+    # naming the documents it replaces. Resolved the same way `Extends:` is — by identifier or by
+    # repo-relative path — and abstained on when the name resolves to no document of this graph.
+    - {field: "Supersedes", edge: Supersedes}
+
+  # THE DOCUMENT'S OWN NAME (AD-030-R20). A `Name:` header field is the canonical name; the
+  # derivation from the file stem is a fallback and is never authoritative over a declared one.
+  name_field: "Name"
+
+  # RULING-LEVEL SUPERSESSION (AD-030-R21). One pattern over the text of a block already admitted
+  # as a Ruling: the word `Supersedes` followed by one or more hyphenated ruling IDs, ending the
+  # sentence. Nothing else is read as supersession.
+  #
+  # AD-030-R17 writes "Supersedes the `pyproject.toml` clause of AD-030 R10." — prose about a
+  # supersession, with a noun phrase after the verb and an unhyphenated reference. It does not
+  # match, and that is the pattern working: R21 says supersession is declared, not inferred, and
+  # the alternative is a pattern that reads every sentence containing the word.
+  supersession_pattern: '\bSupersedes\s+((?:[A-Z]{2,4}-\d+-R\d+)(?:\s*(?:,|and)\s*[A-Z]{2,4}-\d+-R\d+)*)\s*\.'
 
   # THE PRIOR-ART LIST FORM AD-030 section 6 uses: a bullet ending in a backticked CiTO type,
   # optionally followed by `for <target>` and `, reason: <why>`.

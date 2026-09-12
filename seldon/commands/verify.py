@@ -121,6 +121,75 @@ def check_governed(driver, database: str, project_dir: Path, config: dict) -> Ch
     )
 
 
+def check_binding_constraints(driver, database: str, project_dir: Path, config: dict) -> CheckResult:
+    """Fail when a task is constrained by a ruling that no longer binds (AD-030-R24).
+
+    A retired ruling's text has left its document and a superseded one has been replaced. An edge
+    saying a task is constrained by either asserts an obligation nothing imposes, which is the
+    mirror image of the defect AD-030 was written to end — there, a ruling that existed bound
+    nothing; here, a ruling that does not exist binds something.
+
+    Two guards already stop this at the gate: `read_rulings` filters in the query and
+    `match_rulings` filters in the matcher. This is the standing detector for the case they cannot
+    see — on 2026-09-12 a long-lived MCP server process wrote nine such edges from the module as
+    it stood before either guard shipped. A guard nothing checks is a guard that goes stale.
+
+    Args:
+        driver: Neo4j driver.
+        database: Project database name.
+        project_dir: Project root.
+        config: Loaded seldon.yaml.
+
+    Returns:
+        A CheckResult named "Binding constraints".
+    """
+    from seldon.core import governed
+
+    if not governed.ledger_path(project_dir, config).is_file():
+        return CheckResult(
+            name="Binding constraints", symbol="pass",
+            summary="No governed graph in this project — skipping (AD-030 is opt-in per project)",
+        )
+    rows = governed.non_binding_constraints(driver, database)
+    if not rows:
+        return CheckResult(
+            name="Binding constraints", symbol="pass",
+            summary="Every `constrained_by` edge points at a ruling that still binds",
+        )
+    details = [
+        f"{(r['task_name'] or r['task'])[:60]} → "
+        f"{r['ruling_identifier'] or r['ruling'][:8]} [{r['state']}] in {r['source_document']}"
+        for r in rows[:20]
+    ]
+    return CheckResult(
+        name="Binding constraints", symbol="fail",
+        summary=f"{len(rows)} `constrained_by` edge(s) point at a ruling that no longer binds",
+        details=details,
+        fixable=True,
+    )
+
+
+def _fix_binding_constraints(project_dir: Path, quiet: bool = False) -> None:
+    """Remove the edges, through the event log so the repair is itself on the record."""
+    from seldon.config import get_current_session, get_neo4j_driver, load_project_config
+    from seldon.core import governed
+
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    try:
+        removed = governed.prune_non_binding_constraints(
+            project_dir=project_dir, driver=driver,
+            database=config["neo4j"]["database"],
+            session_id=get_current_session(project_dir),
+        )
+    finally:
+        driver.close()
+    if not quiet:
+        for row in removed:
+            click.echo(f"    removed {(row['task_name'] or row['task'])[:50]} → "
+                       f"{row['ruling_identifier'] or row['ruling'][:8]} [{row['state']}]")
+
+
 def _fix_governed(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon governed sync` to bring the graph level with the ledger.
 
@@ -182,6 +251,9 @@ TIER_A_CHECKS = frozenset({
     # ingest, and `--fix` does it. A ruling that has been written but not ingested is invisible
     # to the next `cc register`, which is the exact window AD-030 exists to close.
     "Governed docs",
+    # AD-030-R24. Binary, cheap, and zero in a clean graph: an edge asserting an obligation no
+    # document imposes is not a warning to carry forward, and the fix is mechanical.
+    "Binding constraints",
 })
 
 
@@ -1579,6 +1651,7 @@ def _run_all_checks(
         check_task_source_files(driver, database, project_dir, config),
         check_event_log(project_dir),
         check_governed(driver, database, project_dir, config),
+        check_binding_constraints(driver, database, project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 
@@ -1598,6 +1671,7 @@ def _apply_fixes(
         "File hashes": _fix_file_hashes,
         "Ontology": _fix_ontology,
         "Governed docs": _fix_governed,
+        "Binding constraints": _fix_binding_constraints,
     }
 
     for r in results:

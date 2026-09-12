@@ -588,7 +588,9 @@ def constraining_rulings(
 
     Returns:
         `(matches, edges_written)`. An empty list when the graph holds no rulings yet, which is
-        the state of a project that has not run `seldon governed sync`.
+        the state of a project that has not run `seldon governed sync`. A ruling the write path
+        refused as non-binding is dropped from the matches too, so what is reported is what was
+        written.
     """
     from seldon.core import governed
 
@@ -602,11 +604,15 @@ def constraining_rulings(
     )
     if not matches or dry_run:
         return matches, 0
-    written = governed.write_constrained_by(
+    written, refused = governed.write_constrained_by(
         project_dir=project_dir, driver=driver, database=database,
         domain_config=domain_config, task_id=task_id, task_type="ResearchTask",
         matches=matches, session_id=session_id,
     )
+    # A ruling the write path refused no longer binds, so it is not something this task is
+    # constrained by and must not be reported as one.
+    if refused:
+        matches = [m for m in matches if m.artifact_id not in set(refused)]
     return matches, written
 
 

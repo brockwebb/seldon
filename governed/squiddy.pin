@@ -15,6 +15,25 @@
 # `make -C governed check-squiddy` verifies this, and every build target depends on it. To move the
 # pin: check out the new commit, re-run `make -C governed kit-schema schema`, re-run the sweep, and
 # update both values here in the same commit as the re-ingested ledger.
+#
+# 0.3.0 (2026-09-12) is the kit release AD-030-R22 asked for: an admitted document whose file hash
+# has moved is admissible again and costs that one document, so `make -C governed admit ID=<id>` is
+# the edit path and `reset.sh` plus a sweep is the reset path. The ledger under this pin was cut by
+# a full sweep, because the recipe itself moved in the same change (the `Name:` header field, the
+# supersession pattern, the `Addendum NNN-X:` label) and every document's extraction moved with it.
+#
+# 0.3.1 keys an admission's evidence directory and its export by the content it admitted rather
+# than by the day, which is what makes a SECOND admission of one document on one day actually run.
+# Found by the first real re-ingest in this graph: the run reported thirteen stages passed and had
+# re-extracted nothing, because make had every stage record from the morning's admission already.
+#
+# 0.3.2 makes the parse cache follow the source. Found the same way and worse: the next re-ingest
+# DID run every stage and extracted the previous version of the document, because the intermediate
+# was cached by document id alone. Every gate passed — the manifest and the ledger agreed about the
+# hash, and nothing downstream compares the text.
+#
+# 0.3.3 carries `--reingest` through to the assess stage, which is the stage that decides. Forcing
+# the write stage alone forced nothing: assess stopped the pipeline at `already_admitted` first.
 
-SQUIDDY_COMMIT=f23023750787ec3ca97c0a1f3b8d872445676b94
-SQUIDDY_VERSION=0.2.0
+SQUIDDY_COMMIT=5611cf45967edd3d2844f69e45a685f2315bca6d
+SQUIDDY_VERSION=0.3.3
