@@ -36,6 +36,10 @@ You are orienting to a Seldon-managed project.
 - Desktop sessions MUST NOT **edit** existing tracked source files.
 - Desktop sessions MAY use `seldon paper fix` for mechanical edits to tracked files (this command handles event capture and build cycle internally).
 
+#### Closing a Desktop Session
+
+- Close with `seldon handoff --slug <s> --summary <s> --next <s>`; a design session must write docs/design first (AD-030-R9).
+
 ### If You Are a CC Session (Claude Code)
 
 - Execute the CC task you were given.
@@ -61,6 +65,7 @@ _AVAILABLE_COMMANDS_SECTION = """\
 - `seldon go` — orient to project (this command)
 - `seldon briefing` — detailed session briefing
 - `seldon closeout` — end session, log notebook entry
+- `seldon handoff --slug <s> --summary <s> --next <s>` — close a Desktop session: write the handoff from graph state, print the resume and CC dispatch blocks (AD-030-R9)
 - `seldon verify [--fix] [--quiet]` — **run before every commit**: checks file integrity, ontology freshness, glossary, references, stale artifacts, unregistered files
 
 ### Artifacts & Links
@@ -98,6 +103,7 @@ _AVAILABLE_COMMANDS_SECTION = """\
 - `seldon_issue_update(issue_id, project_dir, state, importance, urgency)` — update Issue
 - `seldon_cc_complete(filepath, project_dir, note)` — mark CC task completed
 - `seldon_cc_register(filepath, project_dir)` — register CC task as proposed
+- `seldon_handoff(project_dir, slug, summary, next)` — close the session; returns the resume and CC dispatch blocks
 - `seldon_query(cypher, project_dir)` — read-only Cypher query"""
 
 
@@ -207,6 +213,85 @@ def _read_latest_handoff(project_dir: str) -> Optional[str]:
     if latest is None:
         return None
     return latest.read_text()
+
+
+def _read_handoff(project_dir: str, handoff_path: Optional[str]) -> Optional[str]:
+    """Read the handoff to orient on: the named one, else the newest.
+
+    Args:
+        project_dir: Project root containing a `handoffs/` directory.
+        handoff_path: Explicit handoff to read, or None to auto-discover.
+
+    Returns:
+        Text of the handoff, or None when there is none to read.
+    """
+    if handoff_path is None:
+        return _read_latest_handoff(project_dir)
+    named = Path(handoff_path)
+    if not named.is_absolute():
+        named = Path(project_dir) / named
+    if not named.is_file():
+        return None
+    return named.read_text()
+
+
+#: Reported at orient when the previous Desktop session filed tasks and left no
+#: design note. AD-030-R9 binds the close; this is the only place a close that
+#: already happened can still be called out.
+R9_PREVIOUS_SESSION_NOTICE = "Previous Desktop session violated AD-030-R9."
+
+
+def _get_r9_notice(project_dir: str) -> Optional[str]:
+    """Report an AD-030-R9 violation by the session the newest handoff covers.
+
+    Reads only the filesystem and the event log, so it works without Neo4j and
+    without a `handoff` config block.
+
+    Args:
+        project_dir: Project root.
+
+    Returns:
+        The notice line with its evidence, or None when there is no violation,
+        no handoff to bound a previous session, or no readable event log.
+    """
+    from seldon.core.events import DuplicateEventError
+    from seldon.core.handoff import (
+        DEFAULT_REQUIRE_DESIGN_NOTE,
+        DEFAULT_SESSION_WINDOW_HOURS,
+        HandoffSettings,
+        check_r9,
+        events_in_window,
+        handoff_settings,
+        previous_session_window,
+    )
+
+    root = Path(project_dir)
+    try:
+        settings = handoff_settings(load_project_config(root))
+    except (FileNotFoundError, ValueError):
+        settings = HandoffSettings(
+            session_window_hours=DEFAULT_SESSION_WINDOW_HOURS,
+            require_design_note=DEFAULT_REQUIRE_DESIGN_NOTE,
+        )
+
+    try:
+        window = previous_session_window(root, settings)
+        if window is None:
+            return None
+        verdict = check_r9(root, window, events_in_window(root, window))
+    except (OSError, DuplicateEventError):
+        return None
+
+    if not verdict.violated:
+        return None
+
+    ids = ", ".join(f"`{tid[:8]}`" for tid in verdict.desktop_task_ids)
+    return (
+        f"**⚠ {R9_PREVIOUS_SESSION_NOTICE}** "
+        f"It created {len(verdict.desktop_task_ids)} task(s) ({ids}) and wrote "
+        "no file under `docs/design/`. The rulings those tasks implement are "
+        "not addressable; establish them before acting on the tasks."
+    )
 
 
 def _get_handoff_reconciliation(project_dir: str, handoff_text: str) -> Optional[str]:
@@ -634,8 +719,22 @@ def _resolve_project_dir(project_dir: str) -> str:
 def assemble_go_context(
     project_dir: str = ".",
     brief: bool = False,
+    handoff_path: Optional[str] = None,
 ) -> str:
-    """Assemble full orientation context for an AI consumer."""
+    """Assemble full orientation context for an AI consumer.
+
+    Args:
+        project_dir: Project root.
+        brief: Skip the system-wide engineering standards.
+        handoff_path: Read this handoff instead of auto-discovering the newest
+            one. This is what makes the resume block that `seldon handoff`
+            emits — ``seldon go --brief <absolute handoff path>`` — a runnable
+            command: the next thread opens on the handoff it was handed, not on
+            whichever file happens to sort last.
+
+    Returns:
+        The assembled markdown context.
+    """
     project_dir = _resolve_project_dir(project_dir)
     sections = []
 
@@ -658,15 +757,18 @@ def assemble_go_context(
         sections.append(f"## Project Context\n\n{project_claude_md}")
 
     # Section 4 — Latest Handoff
-    handoff = _read_latest_handoff(project_dir)
+    handoff = _read_handoff(project_dir, handoff_path)
+    r9_notice = _get_r9_notice(project_dir)
     if handoff is None:
-        sections.append("## Latest Handoff\n\n*No handoffs found.*")
+        handoff_section = "## Latest Handoff\n\n*No handoffs found.*"
     else:
         handoff_section = f"## Latest Handoff\n\n{handoff}"
         reconciliation = _get_handoff_reconciliation(project_dir, handoff)
         if reconciliation:
             handoff_section += f"\n\n{reconciliation}"
-        sections.append(handoff_section)
+    if r9_notice:
+        handoff_section += f"\n\n{r9_notice}"
+    sections.append(handoff_section)
 
     # Section 5 — Project State
     sections.append(_get_project_state_section(project_dir))
@@ -690,8 +792,18 @@ def assemble_go_context(
 def assemble_go_context_as_dict(
     project_dir: str = ".",
     brief: bool = False,
+    handoff_path: Optional[str] = None,
 ) -> dict:
-    """Assemble orientation context as a structured dict for JSON output."""
+    """Assemble orientation context as a structured dict for JSON output.
+
+    Args:
+        project_dir: Project root.
+        brief: Skip the system-wide engineering standards.
+        handoff_path: Read this handoff instead of the newest one.
+
+    Returns:
+        The orientation context, one key per section.
+    """
     project_dir = _resolve_project_dir(project_dir)
     # Role
     role = _ROLE_SECTION
@@ -714,7 +826,7 @@ def assemble_go_context_as_dict(
         project_context = project_claude_md
 
     # Latest Handoff
-    handoff = _read_latest_handoff(project_dir)
+    handoff = _read_handoff(project_dir, handoff_path)
     if handoff is None:
         latest_handoff = "*No handoffs found.*"
     else:
@@ -734,6 +846,7 @@ def assemble_go_context_as_dict(
         "system_standards": system_standards,
         "project_context": project_context,
         "latest_handoff": latest_handoff,
+        "r9_notice": _get_r9_notice(project_dir),
         "project_state": project_state,
         "audit_pipeline": _get_pipeline_section(project_dir),
         "agent_roles": agent_roles,
@@ -742,15 +855,28 @@ def assemble_go_context_as_dict(
 
 
 @click.command("go")
+@click.argument("handoff_path", required=False, type=click.Path())
 @click.option("--brief", is_flag=True, default=False, help="Skip system CLAUDE.md.")
 @click.option("--json", "output_json", is_flag=True, default=False, help="JSON output.")
-def go_command(brief, output_json):
-    """Orient an AI agent: engineering standards, project context, open tasks, commands."""
+def go_command(handoff_path, output_json, brief):
+    """Orient an AI agent: engineering standards, project context, open tasks, commands.
+
+    HANDOFF_PATH optionally names the handoff to open on, instead of the newest
+    one on disk. `seldon handoff` emits exactly this form in its resume block.
+    """
     project_dir = str(Path.cwd())
 
+    if handoff_path is not None and not Path(handoff_path).is_file():
+        click.echo(f"Error: handoff not found: {handoff_path}", err=True)
+        raise SystemExit(1)
+
     if output_json:
-        data = assemble_go_context_as_dict(project_dir=project_dir, brief=brief)
+        data = assemble_go_context_as_dict(
+            project_dir=project_dir, brief=brief, handoff_path=handoff_path
+        )
         click.echo(json.dumps(data, indent=2))
     else:
-        output = assemble_go_context(project_dir=project_dir, brief=brief)
+        output = assemble_go_context(
+            project_dir=project_dir, brief=brief, handoff_path=handoff_path
+        )
         click.echo(output)
