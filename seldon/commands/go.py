@@ -309,10 +309,10 @@ def _get_r9_notice(project_dir: str) -> Optional[str]:
     if not verdict.violated:
         return None
 
-    ids = ", ".join(f"`{tid[:8]}`" for tid in verdict.desktop_task_ids)
+    ids = ", ".join(f"`{tid[:8]}`" for tid in verdict.gated_task_ids)
     return (
         f"**⚠ {R9_PREVIOUS_SESSION_NOTICE}** "
-        f"It created {len(verdict.desktop_task_ids)} task(s) ({ids}) and wrote "
+        f"It created {len(verdict.gated_task_ids)} task(s) ({ids}) and wrote "
         "no file under `docs/design/`. The rulings those tasks implement are "
         "not addressable; establish them before acting on the tasks."
     )

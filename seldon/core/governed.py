@@ -197,7 +197,7 @@ def read_ledger(path: Path) -> LedgerView:
 # Naming
 # ---------------------------------------------------------------------------
 
-def document_name(rel_path: str) -> str:
+def document_name(rel_path: str, claimed: Optional[set[str]] = None) -> str:
     """The Seldon `name` for a governed document.
 
     A design document names itself in its filename, and this repository's existing
@@ -205,18 +205,44 @@ def document_name(rel_path: str) -> str:
     the convention rather than inventing one is what makes `MATCH (d {name: 'AD-030'})` the
     obvious query it looks like.
 
+    TWO DOCUMENTS CAN SHARE A LEADING IDENTIFIER. `AD-030_governed_documents_as_graph_content.md`
+    and `AD-030_implementation_findings_001.md` are not the same document — the second extends the
+    first — but both filenames open with `AD-030`, so a name taken from the identifier alone
+    collides and every query that uses it silently returns both. The bare identifier therefore goes
+    to the FIRST claimant and every later one keeps its full stem. Callers iterate in sorted path
+    order, which makes the assignment deterministic and stable across runs.
+
     Args:
         rel_path: Repo-relative path of the governed file.
+        claimed: Names already taken, mutated in place as this one is claimed. None disables
+            collision handling, which is correct only when naming a single document in isolation.
 
     Returns:
-        The identifier when the filename carries one, else the filename stem with any date prefix
-        stripped and underscores turned into hyphens — the shape the DesignNote nodes already use.
+        The identifier when the filename carries one and it is free, else the filename stem with
+        any date prefix stripped — the shape the DesignNote nodes already use.
     """
-    stem = Path(rel_path).stem
+    stem = _DATE_PREFIX_RE.sub("", Path(rel_path).stem)
     match = _FILENAME_IDENTIFIER_RE.match(stem)
-    if match:
-        return match.group(1)
-    return _DATE_PREFIX_RE.sub("", stem)
+    name = match.group(1) if match else stem
+    if claimed is not None:
+        if name in claimed:
+            name = stem
+        claimed.add(name)
+    return name
+
+
+def assign_names(paths: Iterable[str]) -> dict[str, str]:
+    """Assign a unique `name` to each governed document path.
+
+    Args:
+        paths: Repo-relative paths.
+
+    Returns:
+        Path to name. Sorted order makes the assignment deterministic; a path absent from the
+        input cannot change the name of one that is present.
+    """
+    claimed: set[str] = set()
+    return {path: document_name(path, claimed) for path in sorted(paths)}
 
 
 # ---------------------------------------------------------------------------
@@ -236,11 +262,12 @@ def existing_documents(driver, database: str) -> dict[str, dict]:
     with driver.session(database=database) as session:
         records = session.run(
             "MATCH (d:Artifact:Document) RETURN d.governed_id AS gid, "
-            "d.artifact_id AS aid, d.content_hash AS hash, d.state AS state, d.path AS path"
+            "d.artifact_id AS aid, d.content_hash AS hash, d.state AS state, d.path AS path, "
+            "d.name AS name"
         ).data()
     return {
         r["gid"]: {"artifact_id": r["aid"], "content_hash": r["hash"],
-                   "state": r["state"], "path": r["path"]}
+                   "state": r["state"], "path": r["path"], "name": r["name"]}
         for r in records if r["gid"]
     }
 
@@ -472,6 +499,7 @@ class SyncReport:
         edges_suspect: Relationships flagged by a hash change.
         edges_cleared: Relationships whose suspect flag was cleared after re-derivation.
         linked_legacy: Documents matched to an existing ArchitecturalDecision or DesignNote.
+        nodes_retired: Child artifacts the ledger no longer holds, by type.
         abstained: Identifier references that resolved to nothing, by identifier.
         violations: AD-030-R5 admission-invariant findings.
         dry_run: True when nothing was written.
@@ -487,6 +515,7 @@ class SyncReport:
     edges_suspect: int = 0
     edges_cleared: int = 0
     linked_legacy: int = 0
+    nodes_retired: dict[str, int] = field(default_factory=dict)
     abstained: dict[str, int] = field(default_factory=dict)
     violations: list[str] = field(default_factory=list)
     dry_run: bool = False
@@ -526,10 +555,19 @@ def out_of_date(project_dir: Path, config: dict, driver, database: str) -> list[
     return sorted(stale)
 
 
-def _document_properties(payload: dict, rel_path: str) -> dict:
-    """Seldon artifact properties for one governed Document payload."""
+def _document_properties(payload: dict, rel_path: str, name: str) -> dict:
+    """Seldon artifact properties for one governed Document payload.
+
+    Args:
+        payload: The Document node's ledger payload.
+        rel_path: Repo-relative path of the file.
+        name: The name assigned by :func:`assign_names`.
+
+    Returns:
+        Properties for the artifact, with None values dropped.
+    """
     props = {
-        "name": document_name(rel_path),
+        "name": name,
         "governed_id": payload["id"],
         "title": payload.get("title"),
         "description": payload.get("title"),
@@ -613,6 +651,11 @@ def sync(
     have_docs = existing_documents(driver, database)
     have_children = existing_children(driver, database)
     legacy = legacy_nodes_by_path(driver, database)
+    # Names are assigned over EVERY document in the ledger, not over the subset being synced, so a
+    # `--only` run cannot hand out a name a full run would have given to someone else.
+    names = assign_names(
+        d.get("path") or d["id"] for d in view.documents()
+    )
 
     # Children, indexed by the document that owns them.
     children_by_doc: dict[str, list[tuple[str, dict]]] = {}
@@ -664,7 +707,15 @@ def sync(
         governed_id = payload["id"]
         rel_path = payload.get("path") or governed_id
         existing = have_docs.get(governed_id)
-        unchanged = existing is not None and existing["content_hash"] == payload.get("content_hash")
+        name = names.get(rel_path) or document_name(rel_path)
+        # The hash covers the FILE. `name` is derived, so a change in how it is derived moves it
+        # without moving the hash, and a document skipped as "unchanged" would keep a name the
+        # current rule would never give it.
+        unchanged = (
+            existing is not None
+            and existing["content_hash"] == payload.get("content_hash")
+            and existing.get("name") == name
+        )
 
         if unchanged:
             report.documents_unchanged += 1
@@ -677,7 +728,7 @@ def sync(
                     type_of[child["id"]] = known["artifact_type"]
             continue
 
-        props = _document_properties(payload, rel_path)
+        props = _document_properties(payload, rel_path, name)
         match = legacy.get(rel_path)
         if match:
             props["seldon_artifact_id"] = match["artifact_id"]
@@ -690,7 +741,12 @@ def sync(
 
         if existing:
             report.documents_updated += 1
-            changed_documents.append(artifact_id)
+            # SUSPECT FOLLOWS THE CONTENT HASH, NOT THE UPDATE. A document can be re-written here
+            # because the way its `name` is derived changed, with its bytes untouched; flagging its
+            # edges then would ask for a review of links nothing has disturbed, and a suspect flag
+            # that fires on non-events is one people learn to clear without reading.
+            if existing["content_hash"] != payload.get("content_hash"):
+                changed_documents.append(artifact_id)
         else:
             report.documents_created += 1
 
@@ -792,7 +848,66 @@ def sync(
     if rederived and not dry_run:
         report.edges_cleared = clear_suspect(driver, database, rederived)
 
+    # A child the ledger no longer holds — a section deleted from a document, a paragraph that a
+    # pattern change no longer classifies as a Ruling — is RETIRED, never deleted. It was true of
+    # the document once, edges point at it, and a graph that silently drops what it used to assert
+    # cannot be audited. Only a full sync may do this: a `--only` run has seen one document and
+    # knows nothing about what the rest of the corpus still holds.
+    if only is None and not dry_run:
+        report.nodes_retired = retire_absent_children(
+            project_dir=project_dir, driver=driver, database=database,
+            domain_config=domain_config, view=view, session_id=session_id,
+        )
+
     return report
+
+
+def retire_absent_children(
+    *,
+    project_dir: Path,
+    driver,
+    database: str,
+    domain_config,
+    view: LedgerView,
+    session_id: Optional[str] = None,
+) -> dict[str, int]:
+    """Move every governed child artifact the ledger no longer holds to `retired`.
+
+    Args:
+        project_dir: Project root.
+        driver: Neo4j driver.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        view: The replayed ledger, which is the complete set of what should exist.
+        session_id: Session id stamped on the events.
+
+    Returns:
+        Count retired, by artifact type.
+    """
+    live = {node_id for (cls, node_id) in view.nodes if cls != "Document"}
+    have = existing_children(driver, database)
+    retired: dict[str, int] = {}
+    for governed_id, record in sorted(have.items()):
+        if governed_id in live or record["state"] == "retired":
+            continue
+        artifact_type = record["artifact_type"]
+        try:
+            transition_state(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config, artifact_id=record["artifact_id"],
+                artifact_type=artifact_type, current_state=record["state"],
+                new_state="retired", actor=ACTOR, authority="accepted",
+                session_id=session_id,
+            )
+        except ValueError:
+            # A type whose state machine has no `retired` (Citation: proposed/verified/stale).
+            # Left alone and counted, rather than forced through a transition the domain refuses.
+            retired[f"{artifact_type} (no retired state)"] = (
+                retired.get(f"{artifact_type} (no retired state)", 0) + 1
+            )
+            continue
+        retired[artifact_type] = retired.get(artifact_type, 0) + 1
+    return retired
 
 
 def _identifier_kind(identifier: str) -> str:
@@ -1093,23 +1208,38 @@ class RulingMatch:
                 f"    {text[:280]}{'...' if len(text) > 280 else ''}")
 
 
-def read_rulings(driver, database: str) -> list[dict]:
-    """Every Ruling artifact in the graph.
+#: States in which a Ruling no longer binds anything. A retired ruling's text left the document;
+#: a superseded one was replaced. Either way a new task cannot be constrained by it, and returning
+#: one from a match would be the graph asserting an obligation nothing imposes any more.
+NON_BINDING_RULING_STATES = frozenset({"retired", "superseded"})
+
+
+def read_rulings(driver, database: str, include_non_binding: bool = False) -> list[dict]:
+    """Every Ruling artifact that still binds.
+
+    A pattern change retired 161 rulings in one sync. They keep their nodes and their edges — the
+    graph records what it used to assert rather than deleting it — but they must not reach a match,
+    or `cc register` would constrain a new task by a ruling that no longer exists in any document.
 
     Args:
         driver: Neo4j driver.
         database: Database name.
+        include_non_binding: Return retired and superseded rulings too. For auditing what was
+            dropped, never for matching.
 
     Returns:
         One dict per ruling, with the properties a match needs.
     """
+    cypher = (
+        "MATCH (r:Artifact:Ruling) "
+        + ("" if include_non_binding else "WHERE NOT r.state IN $excluded ")
+        + "RETURN r.artifact_id AS artifact_id, r.name AS name, "
+        "r.ruling_identifier AS ruling_identifier, r.force AS force, r.text AS text, "
+        "r.source_document AS source_document, r.identifiers AS identifiers, "
+        "r.state AS state"
+    )
     with driver.session(database=database) as session:
-        return session.run(
-            "MATCH (r:Artifact:Ruling) RETURN r.artifact_id AS artifact_id, r.name AS name, "
-            "r.ruling_identifier AS ruling_identifier, r.force AS force, r.text AS text, "
-            "r.source_document AS source_document, r.identifiers AS identifiers, "
-            "r.state AS state"
-        ).data()
+        return session.run(cypher, excluded=sorted(NON_BINDING_RULING_STATES)).data()
 
 
 def match_rulings(

@@ -409,13 +409,13 @@ def test_cc_register_returns_the_matched_ruling(project, neo4j_driver, domain_co
 def test_a_task_that_cites_a_decision_passes(tmp_path):
     task = tmp_path / "t.md"
     task.write_text("# CC Task\n\n**Governing doc:** AD-030, ruling AD-030-R9\n")
-    assert enforce_design_reference(task, {}) is None
+    assert enforce_design_reference(task, {}, "desktop") is None
 
 
 def test_a_task_that_cites_nothing_is_refused(tmp_path):
     task = tmp_path / "t.md"
     task.write_text("# CC Task\n\nDo the thing.\n")
-    message = enforce_design_reference(task, {})
+    message = enforce_design_reference(task, {}, "desktop")
     assert message is not None and "AD-030-R9" in message
     assert not message.startswith("WARNING")
 
@@ -423,23 +423,86 @@ def test_a_task_that_cites_nothing_is_refused(tmp_path):
 def test_the_refusal_downgrades_to_a_warning_when_configured(tmp_path):
     task = tmp_path / "t.md"
     task.write_text("# CC Task\n\nDo the thing.\n")
-    message = enforce_design_reference(task, {"handoff": {"require_design_note": False}})
+    message = enforce_design_reference(
+        task, {"handoff": {"require_design_note": False}}, "desktop"
+    )
     assert message is not None and message.startswith("WARNING")
 
 
+# ---------------------------------------------------------------------------
+# AD-030-R11: the allow-list of one
+# ---------------------------------------------------------------------------
+
+def test_cc_is_the_only_exempt_actor():
+    from seldon.core.handoff import EXEMPT_ACTORS, actor_is_gated
+
+    assert EXEMPT_ACTORS == frozenset({"cc"})
+    assert actor_is_gated("cc") is False
+
+
+@pytest.mark.parametrize(
+    "actor",
+    ["desktop", "human", "hermes", "autonomous-agent-7", "CC", " cc", "cc ", "", None],
+)
+def test_every_other_actor_is_gated(actor):
+    """A deny-list on `desktop` waves an unknown actor through in silence.
+
+    The list is stated as what is EXEMPT so a new actor is gated by default and somebody has to
+    decide to exempt it. `CC` and `cc ` are in here on purpose: a near-miss must not pass.
+    """
+    from seldon.core.handoff import actor_is_gated
+
+    assert actor_is_gated(actor) is True
+
+
+@pytest.mark.parametrize("actor", ["desktop", "hermes", "autonomous-agent-7", "human"])
+def test_an_unknown_actor_string_is_gated_at_registration(tmp_path, actor):
+    """AD-030-R11 at the surface that enforces it, not only at the predicate."""
+    task = tmp_path / "t.md"
+    task.write_text("# CC Task\n\nDo the thing.\n")
+    message = enforce_design_reference(task, {}, actor)
+    assert message is not None and "AD-030-R9" in message
+
+
+def test_cc_is_waved_through_even_with_no_reference(tmp_path):
+    """CC executes decisions someone else made; it is not the one deciding."""
+    task = tmp_path / "t.md"
+    task.write_text("# CC Task\n\nDo the thing.\n")
+    assert enforce_design_reference(task, {}, "cc") is None
+
+
 @neo4j_tests
-def test_cc_register_refuses_a_task_that_cites_no_decision(
+def test_cc_register_refuses_a_gated_actor_citing_no_decision(
     project, neo4j_driver, domain_config
 ):
     task = project / "cc_tasks" / "2026-09-12_uncited.md"
     task.parent.mkdir(parents=True, exist_ok=True)
     task.write_text("# CC Task: uncited\n\nDo the thing.\n")
-    result = CliRunner().invoke(cc_group, ["register", str(task), "--allow-untracked"])
+    result = CliRunner().invoke(
+        cc_group, ["register", str(task), "--allow-untracked", "--actor", "hermes"]
+    )
     assert result.exit_code == 1
     assert "AD-030-R9" in result.output
     with neo4j_driver.session(database=NEO4J_DB) as session:
         n = session.run("MATCH (t:Artifact:ResearchTask) RETURN count(t) AS n").single()["n"]
     assert n == 0, "a refused task must not reach the graph"
+
+
+@neo4j_tests
+def test_cc_register_records_the_declared_actor(project, neo4j_driver, domain_config):
+    """`--actor` is not only a gate switch: it is what `created_by` records."""
+    task = project / "cc_tasks" / "2026-09-12_declared.md"
+    task.parent.mkdir(parents=True, exist_ok=True)
+    task.write_text("# CC Task\n\n**Governing doc:** AD-030\n\nDo the thing.\n")
+    result = CliRunner().invoke(
+        cc_group, ["register", str(task), "--allow-untracked", "--actor", "hermes"]
+    )
+    assert result.exit_code == 0, result.output
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        by = session.run(
+            "MATCH (t:Artifact:ResearchTask) RETURN t.created_by AS by"
+        ).single()["by"]
+    assert by == "hermes"
 
 
 # ---------------------------------------------------------------------------
@@ -751,3 +814,288 @@ def test_verify_fails_on_an_uncataloged_file_and_says_what_to_run(
     # Not fixable by `--fix`: cataloging runs another repository's pipeline, and a fix that
     # silently invoked it would erase the boundary AD-030-R10 draws.
     assert result.fixable is False
+
+
+# ---------------------------------------------------------------------------
+# AD-030-R16: classification is positional; force is read separately
+# ---------------------------------------------------------------------------
+
+@needs_governed_graph
+@pytest.mark.parametrize("text", [
+    "**AD-030-R1.** Every governed document is graph content.",
+    "AD-030-R1. Every governed document is graph content.",
+    "## AD-030-R9 The design-note gate",
+    "**DN-4-R2.** A thing is decided.",
+    "**FR-001.** The system shall do the thing.",
+    "## FR-012 Something required",
+    "**BINDING.** This paragraph opens with the banner.",
+    "## A heading that says BINDING",
+])
+def test_a_ruling_identifier_or_banner_at_the_front_classifies(emitter, domain_block, text):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(text, rules) is not None, text
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text", [
+    "Nothing was lost; nothing was bound, and the ruling was never addressable.",
+    "Node types: `Ruling` (a Section whose text is deontic: BINDING, MUST, never).",
+    "The file MUST be committed alongside its RESULT.",
+    "A periodic sweep is the backstop, never the primary path.",
+    "This should be reviewed at some point.",
+    "Every write SHALL go through one path.",
+    "See AD-030-R9 for the gate.",
+    "The rule in **AD-030-R9** is quoted here mid-sentence.",
+])
+def test_deontic_words_in_body_prose_do_not_classify(emitter, domain_block, text):
+    """The first backfill classified 161 paragraphs this way; 154 of them on the word `never`."""
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(text, rules) is None, text
+
+
+@needs_governed_graph
+def test_exactly_ten_rulings_in_ad030_after_r16(emitter, domain_block):
+    """The success contract, at the pattern level rather than through the graph."""
+    if not AD030.is_file():
+        pytest.skip("AD-030 is not in this checkout")
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    blocks = AD030.read_text(encoding="utf-8").split("\n\n")
+    identifiers = {
+        emitter.ruling_identifier(b)
+        for b in blocks if emitter.classify_ruling(b, rules)
+    }
+    assert identifiers == {f"AD-030-R{n}" for n in range(1, 11)}
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text,expected", [
+    ("**AD-1-R1.** A thing MUST NOT happen.", "prohibition"),
+    ("**AD-1-R1.** A thing is never recorded.", "prohibition"),
+    ("**AD-1-R1.** A thing MUST happen.", "obligation"),
+    ("**AD-1-R1.** A thing SHOULD happen.", "recommendation"),
+    ("**AD-1-R1.** A thing is the case.", "binding"),
+])
+def test_force_is_still_read_from_the_text(emitter, domain_block, text, expected):
+    """R16 governs whether a block IS a ruling, not what force a ruling carries.
+
+    Collapsing every Ruling to `binding` would throw away the only axis that distinguishes a
+    prohibition from a recommendation.
+    """
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    forces = emitter.compiled_rules(domain_block, "force_patterns")
+    match = emitter.classify_ruling(text, rules, forces, domain_block["default_force"])
+    assert match["force"] == expected
+
+
+@needs_governed_graph
+def test_a_header_field_resolves_paths_as_well_as_identifiers(emitter):
+    """The findings note's `Depends on:` names two RESULT files by path, not by identifier."""
+    assert emitter.path_references(
+        "`cc_tasks/a_RESULT.md`, `cc_tasks/b_RESULT.md`"
+    ) == ["cc_tasks/a_RESULT.md", "cc_tasks/b_RESULT.md"]
+    assert emitter.path_references("AD-030 and AD-028") == []
+
+
+# ---------------------------------------------------------------------------
+# Names must be unique
+# ---------------------------------------------------------------------------
+
+def test_two_documents_sharing_a_leading_identifier_get_distinct_names():
+    """`AD-030_governed_*.md` and `AD-030_implementation_findings_001.md` are not the same doc."""
+    names = governed.assign_names([
+        "docs/design/AD-030_implementation_findings_001.md",
+        "docs/design/AD-030_governed_documents_as_graph_content.md",
+    ])
+    assert names["docs/design/AD-030_governed_documents_as_graph_content.md"] == "AD-030"
+    assert names["docs/design/AD-030_implementation_findings_001.md"] == (
+        "AD-030_implementation_findings_001"
+    )
+    assert len(set(names.values())) == 2
+
+
+def test_name_assignment_does_not_depend_on_input_order():
+    paths = [
+        "docs/design/AD-030_implementation_findings_001.md",
+        "docs/design/AD-030_governed_documents_as_graph_content.md",
+        "docs/design/AD-013_documentation_as_traceability.md",
+    ]
+    assert governed.assign_names(paths) == governed.assign_names(list(reversed(paths)))
+
+
+@neo4j_tests
+def test_a_name_derivation_change_reaches_the_graph(project, neo4j_driver, domain_config):
+    """The hash covers the FILE; a name is derived, so it can move without the hash moving."""
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (d:Artifact:Document) SET d.name = 'STALE'")
+    report = _sync(project, neo4j_driver, domain_config)
+    assert report.documents_updated == 1
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        name = session.run("MATCH (d:Artifact:Document) RETURN d.name AS n").single()["n"]
+    assert name == "AD-900"
+
+
+@neo4j_tests
+def test_a_name_only_change_does_not_flag_edges_suspect(
+    project, neo4j_driver, domain_config
+):
+    """A suspect flag that fires on non-events is one people learn to clear without reading."""
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (d:Artifact:Document) SET d.name = 'STALE'")
+    report = _sync(project, neo4j_driver, domain_config)
+    assert report.documents_updated == 1
+    assert report.edges_suspect == 0
+
+
+# ---------------------------------------------------------------------------
+# Retirement, and what a retired ruling may no longer do
+# ---------------------------------------------------------------------------
+
+@neo4j_tests
+def test_a_child_the_ledger_no_longer_holds_is_retired_not_deleted(
+    project, neo4j_driver, domain_config
+):
+    """161 rulings left the corpus in one pattern change. Deleting them would lose the record."""
+    _sync(project, neo4j_driver, domain_config)
+    ledger = project / "governed" / "ledger" / "events.jsonl"
+    ledger.write_text("\n".join(l for l in ledger_lines() if '"Ruling"' not in l) + "\n")
+
+    report = _sync(project, neo4j_driver, domain_config)
+    assert report.nodes_retired.get("Ruling") == 1
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        row = session.run(
+            "MATCH (r:Artifact:Ruling) RETURN r.state AS state, count(r) AS n"
+        ).single()
+    assert row["state"] == "retired" and row["n"] == 1
+
+
+@neo4j_tests
+def test_a_retired_ruling_cannot_constrain_a_new_task(
+    project, neo4j_driver, domain_config
+):
+    """It binds nothing; returning it would assert an obligation no document imposes."""
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (r:Artifact:Ruling) SET r.state = 'retired'")
+    assert governed.read_rulings(neo4j_driver, NEO4J_DB) == []
+    assert len(governed.read_rulings(neo4j_driver, NEO4J_DB, include_non_binding=True)) == 1
+
+
+@neo4j_tests
+def test_a_partial_sync_never_retires(project, neo4j_driver, domain_config):
+    """A `--only` run has seen one document and knows nothing about the rest of the corpus."""
+    _sync(project, neo4j_driver, domain_config)
+    ledger = project / "governed" / "ledger" / "events.jsonl"
+    ledger.write_text("\n".join(l for l in ledger_lines() if '"Ruling"' not in l) + "\n")
+    report = _sync(project, neo4j_driver, domain_config,
+                   only="docs/design/AD-900_fixture.md")
+    assert report.nodes_retired == {}
+
+
+# ---------------------------------------------------------------------------
+# `seldon cc constrain`: the backfill for tasks registered before the gate
+# ---------------------------------------------------------------------------
+
+@neo4j_tests
+def test_cc_constrain_writes_edges_for_an_already_registered_task(
+    project, neo4j_driver, domain_config
+):
+    """eb359760 was registered through a stale MCP server and got zero edges."""
+    _sync(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        session.run("MATCH (r:Artifact:Ruling) SET r.text = $t", t=RPE_RULING["text"])
+
+    task = project / "cc_tasks" / "2026-09-12_already.md"
+    task.parent.mkdir(parents=True, exist_ok=True)
+    task.write_text(
+        "# CC Task\n\n**Governing doc:** AD-900\n\nAdd a per-set RPE field so each set records "
+        "its own RPE alongside the session intensity construct.\n"
+    )
+    task_id = create_artifact(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="ResearchTask",
+        properties={"description": "already registered",
+                    "source_file": "cc_tasks/2026-09-12_already.md"},
+        actor="desktop", authority="accepted",
+    )
+
+    result = CliRunner().invoke(cc_group, ["constrain", task_id[:8]])
+    assert result.exit_code == 0, result.output
+    assert "AD-900-R1" in result.output
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        n = session.run(
+            "MATCH (t:Artifact:ResearchTask)-[c:CONSTRAINED_BY]->() RETURN count(c) AS n"
+        ).single()["n"]
+    assert n == 1
+
+
+@neo4j_tests
+def test_cc_constrain_dry_run_writes_nothing(project, neo4j_driver, domain_config):
+    _sync(project, neo4j_driver, domain_config)
+    task = project / "cc_tasks" / "2026-09-12_already.md"
+    task.parent.mkdir(parents=True, exist_ok=True)
+    task.write_text("# CC Task\n\n**Governing doc:** AD-900\n\nAD-900-R1 applies here.\n")
+    task_id = create_artifact(
+        project_dir=project, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, artifact_type="ResearchTask",
+        properties={"description": "x", "source_file": "cc_tasks/2026-09-12_already.md"},
+        actor="desktop", authority="accepted",
+    )
+    result = CliRunner().invoke(cc_group, ["constrain", task_id[:8], "--dry-run"])
+    assert result.exit_code == 0, result.output
+    assert "AD-900-R1" in result.output
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        n = session.run(
+            "MATCH ()-[c:CONSTRAINED_BY]->() RETURN count(c) AS n"
+        ).single()["n"]
+    assert n == 0
+
+
+def test_cc_constrain_refuses_both_or_neither():
+    for args in (["constrain"], ["constrain", "abc", "--all"]):
+        result = CliRunner().invoke(cc_group, args)
+        assert result.exit_code == 1
+        assert "not both and not neither" in result.output
+
+
+# ---------------------------------------------------------------------------
+# AD-030-R17: the Squiddy pin
+# ---------------------------------------------------------------------------
+
+def test_pyproject_declares_no_squiddy_dependency():
+    """R17 supersedes the pyproject clause of R10: Squiddy is build-time for `governed/` only."""
+    text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "squiddy" not in text.lower()
+
+
+@needs_governed_graph
+def test_the_pin_names_a_commit():
+    import sys as _sys
+
+    _sys.path.insert(0, str(GOVERNED_DIR))
+    import check_pin
+
+    pin = check_pin.read_pin(GOVERNED_DIR)
+    assert len(pin["SQUIDDY_COMMIT"]) == 40
+    assert all(ch in "0123456789abcdef" for ch in pin["SQUIDDY_COMMIT"])
+
+
+@needs_governed_graph
+def test_an_absent_pin_is_fatal(tmp_path):
+    """An absent pin is not 'unpinned by default'; it is a build nobody has stated."""
+    import sys as _sys
+
+    _sys.path.insert(0, str(GOVERNED_DIR))
+    import check_pin
+
+    with pytest.raises(SystemExit, match="no squiddy.pin"):
+        check_pin.read_pin(tmp_path)
+
+
+@needs_governed_graph
+def test_every_build_target_depends_on_the_pin_check():
+    """A graph built against an unpinned kit is not reproducible, and the ledger is append-only."""
+    makefile = (GOVERNED_DIR / "Makefile").read_text(encoding="utf-8")
+    for target in ("catalog", "admit", "plan", "sweep", "schema"):
+        assert f"\n{target}: check-squiddy" in makefile, target

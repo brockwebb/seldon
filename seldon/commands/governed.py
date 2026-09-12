@@ -57,6 +57,9 @@ def render_report(report: governed.SyncReport) -> str:
     if report.edges_created:
         lines.append("  Edges created: " + ", ".join(
             f"{t} {n}" for t, n in sorted(report.edges_created.items())))
+    if report.nodes_retired:
+        lines.append("  Nodes retired (no longer in the ledger): " + ", ".join(
+            f"{t} {n}" for t, n in sorted(report.nodes_retired.items())))
     if report.linked_legacy:
         lines.append(f"  Matched to an existing ArchitecturalDecision or DesignNote: "
                      f"{report.linked_legacy}")

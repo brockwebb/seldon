@@ -1004,7 +1004,7 @@ def seldon_cc_register(
         return f"Warning: CC task already registered (id: {existing_id[:8]}...). No duplicate created."
 
     # AD-030-R9, the task half: refuse a task that cites no decision, before registering it.
-    refusal = enforce_design_reference(task_path, config)
+    refusal = enforce_design_reference(task_path, config, MCP_ACTOR)
     if refusal and not refusal.startswith("WARNING"):
         driver.close()
         return (

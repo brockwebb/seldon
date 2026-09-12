@@ -42,7 +42,7 @@ def r9_refusal_text(violation: R9Violation) -> str:
     Returns:
         Multi-line text for stderr.
     """
-    ids = ", ".join(f"`{tid[:8]}`" for tid in violation.verdict.desktop_task_ids)
+    ids = ", ".join(f"`{tid[:8]}`" for tid in violation.verdict.gated_task_ids)
     return (
         f"ERROR: {violation}\n"
         f"  Desktop-created tasks in this window: {ids}\n"

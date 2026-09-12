@@ -526,20 +526,28 @@ def _get_artifact_file_hash(
 # AD-030: the rulings a task is constrained by
 # ---------------------------------------------------------------------------
 
-def enforce_design_reference(task_path: Path, config: dict) -> str | None:
-    """Check AD-030-R9's task half: a CC task names the decision it implements.
+def enforce_design_reference(task_path: Path, config: dict, actor: str = "cc") -> str | None:
+    """Check AD-030-R9's task half: a filed task names the decision it implements.
+
+    Who is checked is AD-030-R11's allow-list of one: every actor but `cc`. CC executes decisions
+    someone else made; anything else filing a task is deciding, and a decision owes a design note.
+    An unrecognised actor string is gated, not waved through — that is the whole point of stating
+    the rule as what is exempt rather than as what is caught.
 
     Args:
         task_path: The task file.
         config: Parsed seldon.yaml.
+        actor: The actor that will be recorded as `created_by` on the task.
 
     Returns:
-        None when the task names an `AD-` or `DN-` identifier, or when the project has set
-        `handoff.require_design_note: false`. Otherwise the refusal text.
+        None when the actor is exempt, when the task names an `AD-` or `DN-` identifier, or when
+        the project has set `handoff.require_design_note: false`. Otherwise the refusal text.
     """
     from seldon.core.governed import R9_TASK_MESSAGE, references_a_design_note
-    from seldon.core.handoff import handoff_settings
+    from seldon.core.handoff import actor_is_gated, handoff_settings
 
+    if not actor_is_gated(actor):
+        return None
     text = task_path.read_text(encoding="utf-8", errors="replace")
     if references_a_design_note(text):
         return None
@@ -558,6 +566,7 @@ def constraining_rulings(
     task_path: Path,
     task_id: str,
     session_id: str | None,
+    dry_run: bool = False,
 ) -> tuple[list, int]:
     """Find the rulings this task is constrained by, and record them (AD-030).
 
@@ -575,6 +584,7 @@ def constraining_rulings(
         task_path: The task file.
         task_id: The registered task's artifact id.
         session_id: Session id stamped on the events.
+        dry_run: Find and return the matches, write no edges.
 
     Returns:
         `(matches, edges_written)`. An empty list when the graph holds no rulings yet, which is
@@ -590,8 +600,8 @@ def constraining_rulings(
         rulings,
         governed.ruling_match_threshold(config),
     )
-    if not matches:
-        return [], 0
+    if not matches or dry_run:
+        return matches, 0
     written = governed.write_constrained_by(
         project_dir=project_dir, driver=driver, database=database,
         domain_config=domain_config, task_id=task_id, task_type="ResearchTask",
@@ -822,13 +832,20 @@ def cc_complete(filepath, note, allow_untracked):
 @click.argument("filepath")
 @click.option("--description", default=None, help="Override auto-extracted description")
 @click.option(
+    "--actor",
+    default="cc",
+    show_default=True,
+    help="Who is filing this task. Recorded as created_by. Every actor but `cc` owes a "
+         "design-note reference (AD-030-R11), so declaring a non-CC caller here is what gates it.",
+)
+@click.option(
     "--allow-untracked",
     is_flag=True,
     default=False,
     help="Proceed even though git cannot recover the task file. "
          "The task will become an undescribable stub if the file is lost.",
 )
-def cc_register(filepath, description, allow_untracked):
+def cc_register(filepath, description, actor, allow_untracked):
     """Register a CC task file as a proposed ResearchTask in the graph.
 
     Use at task creation time to track the task before execution.
@@ -871,7 +888,7 @@ def cc_register(filepath, description, allow_untracked):
     # AD-030-R9, the task half: refuse a task that cites no decision, BEFORE registering it.
     # Refusing after the write would leave a task in the graph that the check says should not be
     # there.
-    refusal = enforce_design_reference(task_path, config)
+    refusal = enforce_design_reference(task_path, config, actor)
     if refusal and refusal.startswith("WARNING"):
         click.echo(refusal, err=True)
     elif refusal:
@@ -918,7 +935,7 @@ def cc_register(filepath, description, allow_untracked):
                 "file_hash": content_hash,
                 "hash_scope": HASH_SCOPE_SPEC,
             },
-            actor="cc",
+            actor=actor,
             authority="accepted",
             session_id=session_id,
         )
@@ -935,6 +952,97 @@ def cc_register(filepath, description, allow_untracked):
         click.echo(render_rulings(matches, written))
     finally:
         driver.close()
+
+
+@cc_group.command("constrain")
+@click.argument("target", required=False)
+@click.option("--all", "do_all", is_flag=True, default=False,
+              help="Every registered task whose source file is on disk.")
+@click.option("--dry-run", is_flag=True, default=False, help="Report; write nothing.")
+def cc_constrain(target, do_all, dry_run):
+    """Write the `constrained_by` edges for a task that is already registered (AD-030).
+
+    `seldon cc register` does this at registration. This is for the tasks that were registered
+    BEFORE the gate shipped, and for one that went through a stale MCP server process: their
+    rulings are just as binding, and a task whose constraints exist only in the text of a file is
+    the state AD-030 exists to end.
+
+    TARGET is an artifact-id prefix or a task file path. Use --all for every registered task whose
+    source file still resolves on disk.
+    """
+    project_dir = Path.cwd()
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    domain_config = _get_domain_config(config)
+    session_id = get_current_session(project_dir)
+
+    if bool(target) == bool(do_all):
+        click.echo("ERROR: give a TARGET or --all, not both and not neither.", err=True)
+        driver.close()
+        raise SystemExit(1)
+
+    try:
+        tasks = _constrain_targets(driver, database, project_dir, target, do_all)
+        if not tasks:
+            click.echo("No registered task matches, or none has a source file on disk.", err=True)
+            raise SystemExit(1)
+
+        total_edges = 0
+        for task_id, rel_path, task_path in tasks:
+            matches, written = constraining_rulings(
+                project_dir=project_dir, config=config, driver=driver, database=database,
+                domain_config=domain_config, task_path=task_path, task_id=task_id,
+                session_id=session_id, dry_run=dry_run,
+            )
+            total_edges += written
+            prefix = "[dry-run] " if dry_run else ""
+            click.echo(f"\n{prefix}{task_id[:8]}  {rel_path}")
+            click.echo(render_rulings(matches, written))
+        click.echo(f"\n{len(tasks)} task(s), {total_edges} constrained_by edge(s) "
+                   f"{'that would be written' if dry_run else 'written'}.")
+    finally:
+        driver.close()
+
+
+def _constrain_targets(
+    driver, database: str, project_dir: Path, target: str | None, do_all: bool
+) -> list[tuple[str, str, Path]]:
+    """Resolve what `cc constrain` should run over.
+
+    Args:
+        driver: Neo4j driver.
+        database: Database name.
+        project_dir: Project root.
+        target: Artifact-id prefix or task file path, or None.
+        do_all: Take every registered task with a resolvable source file.
+
+    Returns:
+        `(artifact_id, source_file, absolute_path)` per task, source files that are not on disk
+        dropped — a task whose spec was lost has no text to match against, which is a fact about
+        the file rather than an error here.
+    """
+    with driver.session(database=database) as session:
+        if do_all:
+            records = session.run(
+                "MATCH (t:Artifact:ResearchTask) WHERE t.source_file IS NOT NULL "
+                "RETURN t.artifact_id AS id, t.source_file AS sf ORDER BY t.created_at"
+            ).data()
+        else:
+            records = session.run(
+                "MATCH (t:Artifact:ResearchTask) "
+                "WHERE t.artifact_id STARTS WITH $t OR t.source_file = $t "
+                "RETURN t.artifact_id AS id, t.source_file AS sf",
+                t=target,
+            ).data()
+
+    out = []
+    for record in records:
+        rel = record["sf"]
+        path = project_dir / rel
+        if path.is_file():
+            out.append((record["id"], rel, path))
+    return out
 
 
 def _find_by_artifact_id_prefix(

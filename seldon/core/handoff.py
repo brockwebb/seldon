@@ -50,11 +50,36 @@ REPORTED_DIRS = (DESIGN_DIR, "cc_tasks")
 #: Directory holding handoff documents.
 HANDOFFS_DIR = "handoffs"
 
+#: THE ALLOW-LIST OF ONE (AD-030-R11). The R9 design-note gate binds every actor except `cc`.
+#:
+#: It was a deny-list on `desktop` at first, which is the same thing only while `desktop` is the
+#: only other actor that exists. An autonomous agent, a script, a typo in an actor string — each
+#: would have escaped the gate silently, and an unknown actor escaping a gate silently is the
+#: failure mode AD-030 section 2 describes. Stated as what is exempt, the list cannot rot: a new
+#: actor is gated by default and someone has to decide to exempt it.
+#:
+#: `cc` is exempt because CC executes decisions someone else made. Anything else that files a task
+#: is deciding, and a decision owes a design note.
+EXEMPT_ACTORS = frozenset({"cc"})
+
 #: Actor stamped on artifacts created through the MCP tools (Desktop sessions).
 #: Matches `seldon.mcp_server.MCP_ACTOR`; duplicated as a constant rather than
 #: imported because importing the MCP server pulls in the `mcp` package, which
 #: this module must not require.
 DESKTOP_ACTOR = "desktop"
+
+
+def actor_is_gated(actor: str | None) -> bool:
+    """Whether an actor owes a design note when it files a task (AD-030-R11).
+
+    Args:
+        actor: The actor string on the creating event, or None.
+
+    Returns:
+        True for every actor but `cc`. A missing actor is gated: an event that does not say who
+        wrote it is exactly the case the allow-list exists to catch.
+    """
+    return (actor or "") not in EXEMPT_ACTORS
 
 #: Refusal text for AD-030-R9. Fixed wording — Desktop threads and the CLI both
 #: quote it, and the operator greps for it.
@@ -412,11 +437,12 @@ def events_in_window(project_dir: Path, window: SessionWindow) -> list[dict]:
     ]
 
 
-def desktop_task_ids(events: Iterable[dict]) -> list[str]:
-    """Return ids of ResearchTasks a Desktop session created in these events.
+def gated_task_ids(events: Iterable[dict]) -> list[str]:
+    """Return ids of ResearchTasks a gated actor created in these events.
 
-    This is the AD-030-R9 trigger: a Desktop thread that filed tasks was a
-    design session, whether or not it called itself one.
+    This is the AD-030-R9 trigger: a session that filed tasks was a design session, whether or not
+    it called itself one. Which actors count is AD-030-R11's allow-list of one — see
+    :func:`actor_is_gated`.
 
     Args:
         events: Events already restricted to the window.
@@ -428,7 +454,7 @@ def desktop_task_ids(events: Iterable[dict]) -> list[str]:
     for event in events:
         if event.get("event_type") != "artifact_created":
             continue
-        if event.get("actor") != DESKTOP_ACTOR:
+        if not actor_is_gated(event.get("actor")):
             continue
         payload = event.get("payload") or {}
         if payload.get("artifact_type") != "ResearchTask":
@@ -548,12 +574,12 @@ class R9Verdict:
 
     Attributes:
         violated: True when Desktop filed tasks and wrote no design note.
-        desktop_task_ids: Ids of the Desktop-created tasks in the window.
+        gated_task_ids: Ids of the tasks a gated actor created in the window.
         design_notes: Design-note files found in the window.
     """
 
     violated: bool
-    desktop_task_ids: tuple[str, ...] = ()
+    gated_task_ids: tuple[str, ...] = ()
     design_notes: tuple[str, ...] = ()
 
 
@@ -581,11 +607,11 @@ def check_r9(
     Returns:
         The verdict, carrying the evidence on both sides.
     """
-    task_ids = desktop_task_ids(events)
+    task_ids = gated_task_ids(events)
     notes = design_notes_written(project_dir, window, driver, database)
     return R9Verdict(
         violated=bool(task_ids) and not notes,
-        desktop_task_ids=tuple(task_ids),
+        gated_task_ids=tuple(task_ids),
         design_notes=tuple(notes),
     )
 

@@ -178,24 +178,57 @@ def compiled_rules(domain: dict, key: str, pattern_field: str = "pattern") -> li
     return out
 
 
-def classify_ruling(text: str, rules: list[tuple[dict, re.Pattern]]) -> dict | None:
-    """Return the first configured ruling pattern this text matches.
+def classify_ruling(
+    text: str,
+    rules: list[tuple[dict, re.Pattern]],
+    force_rules: list[tuple[dict, re.Pattern]] | None = None,
+    default_force: str = "binding",
+) -> dict | None:
+    """Return the configured ruling pattern this text matches, and the force it carries.
 
-    Precedence is declaration order: the specific forms (a numbered ruling identifier) are
-    declared before the general ones (a bare MUST), so a numbered ruling is classified as what it
-    is rather than as whichever modal verb it happens to contain.
+    TWO QUESTIONS, ANSWERED SEPARATELY (AD-030-R16). *Is this a Ruling?* is decided by position —
+    a ruling identifier or the BINDING banner in the heading or the first token — because deciding
+    it by vocabulary made every paragraph containing "must" a ruling and left the corpus with no
+    rulings in it. *What force does it carry?* is then read from the text of a block already known
+    to be a ruling, which R16 does not forbid and which is the only thing that distinguishes a
+    prohibition from a recommendation.
+
+    Precedence is declaration order in both lists.
 
     Args:
         text: The block's verbatim text.
-        rules: Compiled ruling rules.
+        rules: Compiled ruling-classification rules.
+        force_rules: Compiled force rules, or None to use `default_force` for everything.
+        default_force: Force for a ruling that states its force no more precisely than by being one.
 
     Returns:
-        `{"name", "force"}` for the matching rule, or None when the text is not deontic.
+        `{"name", "force"}` for the matching rule, or None when the block is not a ruling.
     """
     for rule, pattern in rules:
         if pattern.search(text):
-            return {"name": rule["name"], "force": rule["force"]}
+            return {"name": rule["name"], "force": deontic_force(text, force_rules, default_force)}
     return None
+
+
+def deontic_force(
+    text: str,
+    force_rules: list[tuple[dict, re.Pattern]] | None,
+    default_force: str = "binding",
+) -> str:
+    """Read the force of a block already classified as a Ruling.
+
+    Args:
+        text: The ruling's verbatim text.
+        force_rules: Compiled force rules, in precedence order.
+        default_force: Returned when no rule matches.
+
+    Returns:
+        One of the DeonticForce values.
+    """
+    for rule, pattern in force_rules or ():
+        if pattern.search(text):
+            return rule["force"]
+    return default_force
 
 
 #: A document's own label for a ruling, e.g. `AD-030-R9`.
@@ -481,6 +514,8 @@ def emit(entry: dict, resolved: dict | None, graph, classes: dict) -> list:
     doc_hash = entry.get("sha256") or sha256_text(plain)
 
     ruling_rules = compiled_rules(domain, "ruling_patterns")
+    force_rules = compiled_rules(domain, "force_patterns")
+    default_force = domain.get("default_force", "binding")
     ident_rules = compiled_rules(domain, "identifier_patterns")
     cito_markers = domain.get("cito_markers") or []
     inline_pattern = re.compile(domain["inline_citation_pattern"]) if domain.get("inline_citation_pattern") else None
@@ -540,7 +575,7 @@ def emit(entry: dict, resolved: dict | None, graph, classes: dict) -> list:
         section_id = section_by_block_idx.get(block["idx"])
 
         if kind in ("heading", *_PROSE_KINDS):
-            match = classify_ruling(text, ruling_rules)
+            match = classify_ruling(text, ruling_rules, force_rules, default_force)
             if match:
                 ordinal = len(rulings)
                 identifier = ruling_identifier(text)
@@ -645,30 +680,56 @@ def emit(entry: dict, resolved: dict | None, graph, classes: dict) -> list:
 _RESOLVABLE_KINDS = ("AD", "DN")
 
 
-def document_index(graph) -> dict[str, str]:
-    """Map every resolvable identifier to the Document that is it.
+def document_index(graph) -> tuple[dict[str, str], dict[str, str]]:
+    """Map the two things a header field can name to the Documents that are them.
 
     A governed design document names itself in its filename — `docs/design/AD-030_*.md` is AD-030 —
-    which is the only claim this index makes. A document whose filename carries no identifier is
-    simply absent from it.
+    which is the only claim the identifier half makes. The path half exists because a header field
+    does not always use an identifier: the findings note's `Depends on:` names two RESULT files by
+    repo-relative path, and resolving only identifiers dropped both edges silently.
 
     Args:
         graph: The loaded graph.
 
     Returns:
-        Identifier to document id, e.g. `{"AD-030": "docs_design_ad_030_..."}`.
+        `(by_identifier, by_path)` — e.g. `{"AD-030": "docs_design_ad_030_..."}` and
+        `{"cc_tasks/x_RESULT.md": "cc_tasks_x_result"}`.
     """
     from squiddy import manifest as mf
 
     _s, _m, docs = mf.load_manifest(graph.manifest_path)
-    index: dict[str, str] = {}
+    by_identifier: dict[str, str] = {}
+    by_path: dict[str, str] = {}
     for entry in docs:
         rel = entry.get("source_url") or ""
+        if rel:
+            by_path[rel] = entry["id"]
         name = rel.rsplit("/", 1)[-1]
         match = re.match(r"^((?:AD|DN)-\d+)", name)
         if match:
-            index.setdefault(match.group(1), entry["id"])
-    return index
+            by_identifier.setdefault(match.group(1), entry["id"])
+    return by_identifier, by_path
+
+
+#: A repo-relative markdown path as a header field writes one, backticked or bare.
+_PATH_REF_RE = re.compile(r"`?([A-Za-z0-9_./-]+\.md)`?")
+
+
+def path_references(text: str) -> list[str]:
+    """Every repo-relative markdown path a header field names.
+
+    Args:
+        text: The header field's value.
+
+    Returns:
+        Paths in order of first appearance, deduplicated.
+    """
+    out: list[str] = []
+    for match in _PATH_REF_RE.finditer(text or ""):
+        path = match.group(1)
+        if path not in out:
+            out.append(path)
+    return out
 
 
 def emit_layer(entry: dict, resolved: dict | None, graph, classes: dict, layer: str,
@@ -702,17 +763,24 @@ def emit_layer(entry: dict, resolved: dict | None, graph, classes: dict, layer: 
     parsed = load_parsed(graph, doc_id)
     plain = parsed["plain_text"]
     ident_rules = compiled_rules(domain, "identifier_patterns")
-    index = document_index(graph)
+    index, by_path = document_index(graph)
     in_graph = context.get("in_graph") or set()
 
     edges: list = []
     seen: set[tuple[str, str, str]] = set()
     abstained: dict[str, int] = {}
 
+    def _admitted(target: str | None) -> str | None:
+        """Keep a target only when it is another admitted Document of this graph."""
+        return target if target and target != doc_id and target in in_graph else None
+
     def resolve(identifier: str) -> str | None:
         """The Document id an identifier names, when this graph holds one."""
-        target = index.get(identifier)
-        return target if target and target != doc_id and target in in_graph else None
+        return _admitted(index.get(identifier))
+
+    def resolve_path(path: str) -> str | None:
+        """The Document id a repo-relative path names, when this graph holds one."""
+        return _admitted(by_path.get(path))
 
     # ---- header fields: Extends, Depends on ------------------------------
     header_edge_rules = domain.get("header_edges") or []
@@ -721,10 +789,15 @@ def emit_layer(entry: dict, resolved: dict | None, graph, classes: dict, layer: 
         raw = fields.get(rule["field"])
         if not raw:
             continue
-        for ref in identifier_references(raw, ident_rules):
-            target = resolve(ref["identifier"])
+        # A header field names its targets by identifier OR by path, and a document is free to mix
+        # the two in one field. Both are resolved; each target yields at most one edge.
+        candidates = [
+            (ref["identifier"], resolve(ref["identifier"]))
+            for ref in identifier_references(raw, ident_rules)
+        ] + [(path, resolve_path(path)) for path in path_references(raw)]
+        for label, target in candidates:
             if target is None:
-                abstained[ref["identifier"]] = abstained.get(ref["identifier"], 0) + 1
+                abstained[label] = abstained.get(label, 0) + 1
                 continue
             key = (rule["edge"], doc_id, target)
             if key in seen:
