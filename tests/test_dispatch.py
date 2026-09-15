@@ -545,3 +545,34 @@ def test_the_claim_path_walks_proposed_through_accepted():
     for target in CLAIM_PATH["proposed"]:
         assert target in sm[state]
         state = target
+
+
+def test_the_first_dirty_path_is_not_truncated(project):
+    """**The defect the dry pass found.** `git status --porcelain` writes `XY PATH`, and an
+    unstaged modification is `" M path"`. Stripping the whole blob removes the leading space of
+    the FIRST line only, so `ln[3:]` eats one character of exactly one path — `CLAUDE.md` came
+    back as `LAUDE.md` in a live criteria vector.
+
+    Two files, both unstaged, because one file cannot tell a truncation of the first entry from
+    a truncation of every entry.
+    """
+    (project / "alpha.txt").write_text("a", encoding="utf-8")
+    (project / "beta.txt").write_text("b", encoding="utf-8")
+    _commit(project, "add two")
+    (project / "alpha.txt").write_text("a2", encoding="utf-8")
+    (project / "beta.txt").write_text("b2", encoding="utf-8")
+    tree = D.tree_state(project)
+    assert sorted(tree["dirty_paths"]) == ["alpha.txt", "beta.txt"]
+    assert tree["dirty_count"] == 2
+
+
+def test_a_staged_and_an_unstaged_path_are_both_read_whole(project):
+    """`M  path` (staged) and ` M path` (unstaged) differ in which column carries the letter,
+    and both are three characters before the name."""
+    (project / "staged.txt").write_text("s", encoding="utf-8")
+    (project / "unstaged.txt").write_text("u", encoding="utf-8")
+    _commit(project, "add two more")
+    (project / "staged.txt").write_text("s2", encoding="utf-8")
+    subprocess.run(["git", "add", "staged.txt"], cwd=project, check=True, capture_output=True)
+    (project / "unstaged.txt").write_text("u2", encoding="utf-8")
+    assert sorted(D.tree_state(project)["dirty_paths"]) == ["staged.txt", "unstaged.txt"]

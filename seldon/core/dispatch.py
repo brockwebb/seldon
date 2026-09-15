@@ -278,8 +278,14 @@ def tree_state(project_dir: Path) -> dict:
     not actionable and "the tree was dirty on these three paths" is.
     """
     branch = git(project_dir, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
-    porcelain = git(project_dir, "status", "--porcelain").stdout.strip()
-    paths = [ln[3:] for ln in porcelain.splitlines() if ln]
+    # NOT `.strip()` on the porcelain output. Every line is `XY PATH` with X and Y each
+    # possibly a space, so an unstaged modification is `" M path"` — and stripping the whole
+    # blob removes the leading space of the FIRST line only, after which `ln[3:]` eats the
+    # first character of that one path and no other. Found by running the dry pass and reading
+    # `LAUDE.md` in the criteria vector; a defect that corrupts exactly one entry of a
+    # diagnostic list is one no amount of staring at the code finds.
+    porcelain = git(project_dir, "status", "--porcelain").stdout
+    paths = [ln[3:] for ln in porcelain.split("\n") if ln.strip()]
     return {"branch": branch, "dirty": bool(paths), "dirty_paths": paths[:20],
             "dirty_count": len(paths)}
 
