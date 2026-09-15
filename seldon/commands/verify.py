@@ -765,13 +765,46 @@ def check_references(driver, database: str, project_dir: Path) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 def check_stale_artifacts(driver, database: str) -> CheckResult:
-    """Find artifacts in stale state and report blast radius."""
+    """Find artifacts in stale state and report blast radius.
+
+    **An artifact carrying a `withdrawn_reason` is not stale, it is withdrawn**, and the two
+    are different facts. `stale` means "something this artifact was derived from moved and
+    nobody has said what that means" — a drift, and a thing to fix. A withdrawal is a recorded
+    DECISION: the value stands as measured and the project has said, on the artifact, that it
+    is no longer the current instrument's answer.
+
+    They share a state because the Result state machine has no `withdrawn`
+    (`proposed -> [verified, rejected]`, `verified -> [published, stale]`,
+    `published -> [stale]`, `stale -> [verified]`) and `stale` is the reachable terminal from
+    `published`. Adding a state to a machine several projects share, to name something a
+    property already names, would be the heavier change; teaching this check the distinction
+    is the smaller one. Found by `ai-readiness-kg` DD-066, which withdrew five published
+    Results deliberately and then could not get a clean `seldon verify`.
+
+    Withdrawn artifacts are reported — they are listed by name and counted — and they do not
+    make the check a warning on their own.
+    """
     with driver.session(database=database) as session:
         records = session.run(
             "MATCH (a:Artifact {state: 'stale'}) RETURN a"
         ).data()
 
+    withdrawn = [r for r in records
+                 if str(dict(r["a"]).get("withdrawn_reason") or "").strip()]
+    records = [r for r in records if r not in withdrawn]
+
     if not records:
+        if withdrawn:
+            names = [dict(r["a"]).get("name", "?") for r in withdrawn]
+            return CheckResult(
+                name="Stale artifacts",
+                symbol="pass",
+                summary=f"None stale; {len(withdrawn)} withdrawn by decision "
+                        f"({', '.join(names[:3])}"
+                        f"{', …' if len(names) > 3 else ''})",
+                details=[f"{dict(r['a']).get('name', '?')} — "
+                         f"{dict(r['a']).get('withdrawn_reason')}" for r in withdrawn[:20]],
+            )
         return CheckResult(
             name="Stale artifacts",
             symbol="pass",

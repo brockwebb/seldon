@@ -539,3 +539,68 @@ class TestStrictMode:
             runner = CliRunner()
             result = runner.invoke(verify_command, [])
         assert result.exit_code == 1
+
+
+# ------------------------------------- withdrawn is not stale (ai-readiness-kg DD-066)
+
+def test_a_withdrawn_artifact_is_reported_and_does_not_warn(neo4j_driver, clean_test_db):
+    """`stale` carries two different facts because the Result state machine has no
+    `withdrawn`, and only one of them is a thing to fix.
+
+    A drift — something upstream moved and nobody said what it means — is a warning. A
+    withdrawal is a recorded decision with its reason ON the artifact. `ai-readiness-kg`
+    DD-066 withdrew five published Results deliberately and could not then get a clean
+    `seldon verify`; a check that cannot tell a decision from a defect trains its reader to
+    ignore it.
+    """
+    from seldon.commands.verify import check_stale_artifacts
+    from tests.testdb import TEST_DATABASE
+    with neo4j_driver.session(database=TEST_DATABASE) as s:
+        s.run("CREATE (:Artifact:Result {artifact_id: 'w1', name: 'withdrawn_one', "
+              "state: 'stale', withdrawn_reason: 'leg withdrawn, DD-066', "
+              "withdrawn_by: 'cc_tasks/x.md'})")
+    out = check_stale_artifacts(neo4j_driver, TEST_DATABASE)
+    assert out.symbol == "pass", out.summary
+    assert "withdrawn by decision" in out.summary
+    assert "withdrawn_one" in out.summary
+
+
+def test_a_genuinely_stale_artifact_still_warns(neo4j_driver, clean_test_db):
+    """**The half that must not move.** Loosening the check is only safe if the condition it
+    was built for still fires."""
+    from seldon.commands.verify import check_stale_artifacts
+    from tests.testdb import TEST_DATABASE
+    with neo4j_driver.session(database=TEST_DATABASE) as s:
+        s.run("CREATE (:Artifact:Result {artifact_id: 's1', name: 'drifted_one', "
+              "state: 'stale'})")
+    out = check_stale_artifacts(neo4j_driver, TEST_DATABASE)
+    assert out.symbol == "warn", out.summary
+    assert "drifted_one" in out.summary
+
+
+def test_a_withdrawal_does_not_hide_a_drift_beside_it(neo4j_driver, clean_test_db):
+    """Both present: the drift still warns and the withdrawal is still reported."""
+    from seldon.commands.verify import check_stale_artifacts
+    from tests.testdb import TEST_DATABASE
+    with neo4j_driver.session(database=TEST_DATABASE) as s:
+        s.run("CREATE (:Artifact:Result {artifact_id: 'w2', name: 'withdrawn_two', "
+              "state: 'stale', withdrawn_reason: 'by decision'})")
+        s.run("CREATE (:Artifact:Result {artifact_id: 's2', name: 'drifted_two', "
+              "state: 'stale'})")
+    out = check_stale_artifacts(neo4j_driver, TEST_DATABASE)
+    assert out.symbol == "warn"
+    assert "drifted_two" in out.summary
+    assert "withdrawn_two" not in out.summary, (
+        "a withdrawn artifact was counted as a drift")
+
+
+def test_an_empty_withdrawn_reason_is_not_a_withdrawal(neo4j_driver, clean_test_db):
+    """A blank property is a property nobody filled in, not a decision."""
+    from seldon.commands.verify import check_stale_artifacts
+    from tests.testdb import TEST_DATABASE
+    with neo4j_driver.session(database=TEST_DATABASE) as s:
+        s.run("CREATE (:Artifact:Result {artifact_id: 's3', name: 'blank_reason', "
+              "state: 'stale', withdrawn_reason: '   '})")
+    out = check_stale_artifacts(neo4j_driver, TEST_DATABASE)
+    assert out.symbol == "warn"
+    assert "blank_reason" in out.summary
