@@ -768,7 +768,7 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
             + ("  **STOP FILE PRESENT**" if stop.exists() else "")
         )
         lease = D.read_lease(root / cfg["lease_file"])
-        if lease:
+        if lease and lease.get("holder"):
             alive = isinstance(lease.get("pid"), int) and D.pid_alive(lease["pid"])
             lines.append(
                 f"**Lease:** {lease.get('holder')} (holder "
@@ -776,7 +776,12 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
                 f"{', task ' + str(lease['task']) if lease.get('task') else ''}"
             )
         else:
-            lines.append("**Lease:** free")
+            # A lease file with no holder is a lease that was RELEASED, not one whose holder
+            # died. Reporting the second would tell the operator to reap a healthy lease after
+            # every ordinary pass — twelve times an hour — and an operator trained to reap on
+            # sight will reap a real one without looking.
+            released = (lease or {}).get("released_at")
+            lines.append("**Lease:** free" + (f" (last released {released})" if released else ""))
 
         # One row per task the dispatcher has finished, newest last, with the three facts the
         # finish check turns on: exit code, RESULT present, and the state the graph showed.

@@ -183,7 +183,10 @@ def dispatch_status(as_json):
     click.echo(f"  stop file   : {cfg['stop_file']} "
                f"{'PRESENT' if payload['stop_file_present'] else 'absent'}")
     click.echo(f"  standing band: {band:,} tokens  <- {cfg['standing_band_ref']}")
-    click.echo(f"  lease        : {lease_body.get('holder') if lease_body else 'free'}")
+    held = (lease_body or {}).get("holder")
+    click.echo(f"  lease        : {held or 'free'}"
+               + (f" (released {lease_body['released_at']})"
+                  if not held and (lease_body or {}).get("released_at") else ""))
     click.echo(f"  claim        : {claim['artifact_id'][:8] + ' by ' + claim['claimed_by'] if claim else 'none'}")
     click.echo(f"  open tasks   : {len(rows)}  candidates: {payload['candidates']}  "
                f"eligible: {len(payload['eligible'])}")

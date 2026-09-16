@@ -576,3 +576,63 @@ def test_a_staged_and_an_unstaged_path_are_both_read_whole(project):
     subprocess.run(["git", "add", "staged.txt"], cwd=project, check=True, capture_output=True)
     (project / "unstaged.txt").write_text("u2", encoding="utf-8")
     assert sorted(D.tree_state(project)["dirty_paths"]) == ["staged.txt", "unstaged.txt"]
+
+
+# ============================================== the lease records its release, not a dead PID
+
+def test_a_released_lease_reports_free_and_not_a_dead_holder(project):
+    """The lease file is the lease's RECORD; the flock is its guard.
+
+    A body left naming the holder of a finished pass makes every reader — `status`, `seldon go`
+    — report a lease held by a dead PID and tell the operator to run `lease reap`. That is a
+    false alarm after every ordinary pass, twelve times an hour at a five-minute poll, and an
+    operator trained to reap on sight will reap a real one without looking. Found by reading
+    the first brief after the dispatcher was enabled.
+    """
+    path = project / ".seldon" / "dispatch.lock"
+    with D.Lease(path) as lease:
+        held = D.read_lease(path)
+        assert held["holder"].startswith("dispatcher:") and held["pid"] == os.getpid()
+        lease.heartbeat(task="t1")
+        assert D.read_lease(path)["task"] == "t1"
+
+    released = D.read_lease(path)
+    assert released["holder"] is None and released["pid"] is None
+    assert released["task"] is None
+    assert released["last_holder"].startswith("dispatcher:")
+    assert released["released_at"]
+
+
+def test_reaping_a_released_lease_reports_not_held_rather_than_reaping(project):
+    """`no_lease_file` and `not_held` are different facts, and an operator who asked to reap
+    wants to know which one they are looking at."""
+    path = project / ".seldon" / "dispatch.lock"
+    assert D.reap_lease(path)["reason"] == "no_lease_file"
+    with D.Lease(path):
+        pass
+    out = D.reap_lease(path)
+    assert out["reaped"] is False and out["reason"] == "not_held"
+    assert out["last_holder"].startswith("dispatcher:")
+    assert path.is_file(), "a released lease file is kept: the flock needs a stable inode"
+
+
+def test_a_released_lease_can_be_taken_again(project):
+    """The whole point of keeping the file. Two passes in a row must each acquire it."""
+    path = project / ".seldon" / "dispatch.lock"
+    for _ in range(3):
+        with D.Lease(path) as lease:
+            assert D.read_lease(path)["pid"] == os.getpid()
+    assert D.read_lease(path)["holder"] is None
+
+
+def test_a_lease_whose_holder_died_is_still_reaped(project):
+    """The release path must not make the reap path unreachable: a holder that was KILLED
+    leaves a body naming it, with a dead PID, and that is the case `lease reap` exists for."""
+    path = project / ".seldon" / "dispatch.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"holder": "dispatcher:host:999999", "pid": 999999,
+                                "acquired_at": "2026-09-16T00:00:00Z", "task": "t1"}) + "\n",
+                    encoding="utf-8")
+    out = D.reap_lease(path)
+    assert out["reaped"] is True and out["reason"] == "holder_gone"
+    assert not path.exists()

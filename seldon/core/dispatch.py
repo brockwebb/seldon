@@ -431,6 +431,22 @@ class Lease:
 
     def __exit__(self, *exc) -> bool:
         if self._fh is not None:
+            # RECORD THE RELEASE, do not just drop the flock. The file is the lease's *record*
+            # and the flock is its *guard*; leaving the body naming a holder whose process has
+            # since exited makes every reader — `status`, `seldon go` — report a lease held by
+            # a dead PID and tell the operator to run `lease reap`. That is a false alarm after
+            # every ordinary pass, and an operator who is told to reap a healthy lease twelve
+            # times an hour will reap a real one without looking.
+            #
+            # The file is kept rather than unlinked so the flock has a stable inode: two passes
+            # racing on a path that is deleted between them can each open a different file and
+            # each take "the" lock.
+            body = read_lease(self.path)
+            self.write({"holder": None, "pid": None, "task": None,
+                        "last_holder": body.get("holder"),
+                        "acquired_at": body.get("acquired_at"),
+                        "released_at": datetime.now(timezone.utc).isoformat()
+                        .replace("+00:00", "Z")})
             fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
             self._fh.close()
             self._fh = None
@@ -456,6 +472,13 @@ def reap_lease(path: Path) -> dict:
     body = read_lease(path)
     if not body:
         return {"reaped": False, "reason": "no_lease_file", "holder": None}
+    if body.get("holder") is None and not body.get("unparseable"):
+        # Released cleanly by its holder on exit. There is nothing to reap, and saying so is
+        # not the same as saying there is no lease file — an operator who asked to reap wants
+        # to know which of the two they are looking at.
+        return {"reaped": False, "reason": "not_held", "holder": None,
+                "last_holder": body.get("last_holder"),
+                "released_at": body.get("released_at")}
     pid = body.get("pid")
     if isinstance(pid, int) and pid_alive(pid):
         return {"reaped": False, "reason": "holder_alive", "holder": body.get("holder"),
