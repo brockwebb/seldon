@@ -33,6 +33,8 @@ from typing import Any
 
 import yaml
 
+from seldon.core import cadence as C
+
 #: DN-006 decision 3, as corrected by this build's ADDENDUM_01 to that note. The marker survey
 #: over 34 addenda in `ai-readiness-kg/cc_tasks/` found a `**Status:**` field in the first ten
 #: lines to be an existing habit (5 files) with an upper-case verb vocabulary — `AMENDS` in
@@ -108,6 +110,11 @@ EVENT_LAUNCHED = "dispatch_launched"
 EVENT_FINISHED = "dispatch_finished"
 EVENT_REFUSED = "dispatch_refused"
 EVENT_OBSERVED_STOP = "dispatch_observed_stop"
+#: DN-006 decision 8's. A cadence that created a task asserted that a period was due and that
+#: nothing had served it yet; that is a judgement and it goes on the log. A cadence that created
+#: NOTHING writes no event, for decision 7's reason — a five-minute poll that logged its own
+#: silence would bury the assertions in it.
+EVENT_CADENCE_CREATED = "cadence_created"
 
 #: Refusal reasons. A closed set, so `status` and the log speak one vocabulary.
 REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_band",
@@ -147,6 +154,10 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.enabled must be a bool, got {block['enabled']!r}: a kill switch that "
             f"can be a truthy string is a kill switch nobody can read")
+    # DN-006 decision 8. Optional — a project with no schedule has no `cadence:` key — but an
+    # entry that IS there is validated here, so an unreadable rule refuses at config load and
+    # not at 00:00 on the first Monday, unattended, at the only moment it mattered.
+    block["cadence"] = C.validate_cadence(block.get("cadence"))
     return block
 
 
@@ -288,6 +299,55 @@ def tree_state(project_dir: Path) -> dict:
     paths = [ln[3:] for ln in porcelain.split("\n") if ln.strip()]
     return {"branch": branch, "dirty": bool(paths), "dirty_paths": paths[:20],
             "dirty_count": len(paths)}
+
+
+def stage(project_dir: Path, paths: list) -> subprocess.CompletedProcess:
+    """`git add` exactly these paths. Never `-A`.
+
+    A dispatcher that staged the whole tree would commit whatever else happened to be lying in
+    the checkout, under a message saying it created a task file.
+    """
+    return git(project_dir, "add", "--", *[str(p) for p in paths])
+
+
+def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
+    """Commit exactly these paths, and report what happened as values.
+
+    **Why the dispatcher commits at all.** DN-006 decision 8 says the rendered task "flows
+    through decisions 2 to 5 like any other task" — and decision 2's c1 requires the task file
+    to be git-tracked while c7 requires the working tree to be clean. A rendered file that is
+    never committed fails both, forever, for every task in the queue: the cadence would create
+    January's cycle and then wedge the dispatcher until a person came and committed it, which
+    is the exact latency this whole mechanism exists to remove. The commit is entailed by
+    decision 8, not added to it; DN-006 ADDENDUM_02 records that the note does not say so.
+
+    Pathspec-limited (`git commit -- <paths>`), so a tree that is dirty for some other reason
+    keeps its other changes and this commit contains only what the cadence wrote. Nothing is
+    pushed: a push is an outward-facing act, and the dispatched session pushes its own work at
+    the end of its task as `CLAUDE.md` §10 already requires.
+    """
+    # A path the project ignores is dropped rather than staged: `git add` on an ignored path
+    # is an error, and it would abort a commit for a file the project has deliberately said it
+    # does not track (a test project ignores its event store; the real one tracks it). What is
+    # skipped is reported, so the difference is visible rather than assumed.
+    wanted = [str(p) for p in paths]
+    keep = [p for p in wanted
+            if (Path(project_dir) / p).exists()
+            and git(project_dir, "check-ignore", "-q", "--", p).returncode != 0]
+    skipped = [p for p in wanted if p not in keep]
+    if not keep:
+        return {"committed": False, "reason": "nothing_to_commit", "skipped": skipped}
+    added = stage(project_dir, keep)
+    if added.returncode != 0:
+        return {"committed": False, "reason": "git_add_failed", "stderr": added.stderr.strip(),
+                "skipped": skipped}
+    done = git(project_dir, "commit", "-m", message, "--", *keep)
+    if done.returncode != 0:
+        return {"committed": False, "reason": "git_commit_failed",
+                "stderr": (done.stderr or done.stdout).strip(), "skipped": skipped}
+    head = git(project_dir, "rev-parse", "--short", "HEAD").stdout.strip()
+    return {"committed": True, "reason": None, "commit": head, "message": message,
+            "committed_paths": keep, "skipped": skipped}
 
 
 def is_tracked(project_dir: Path, path: Path) -> bool:

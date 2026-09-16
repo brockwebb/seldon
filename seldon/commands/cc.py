@@ -834,6 +834,125 @@ def cc_complete(filepath, note, allow_untracked):
         driver.close()
 
 
+def register_task_file(
+    *,
+    project_dir: Path,
+    config: dict,
+    driver,
+    database: str,
+    domain_config,
+    session_id: str | None,
+    task_path: Path,
+    description: str | None = None,
+    actor: str = "cc",
+    allow_untracked: bool = False,
+    emit=None,
+) -> dict:
+    """Register a task FILE as a proposed ResearchTask, and return what was done.
+
+    Factored out of :func:`cc_register` so the standing dispatcher's cadence
+    (DN-006 decision 8: "renders the template, registers it, and lets it flow
+    through decisions 2 to 5 like any other task") registers through **this**
+    code path rather than a second one that would drift from it. Every gate the
+    command applies — git recoverability, AD-030-R9's design-note reference, the
+    duplicate check, the spec-scoped hash, the constraining rulings — applies to
+    a cadence instance too, because they are the same lines.
+
+    Args:
+        project_dir: Project root.
+        config: Parsed seldon.yaml.
+        driver: Neo4j driver, owned and closed by the caller.
+        database: Database name.
+        domain_config: Loaded domain configuration.
+        session_id: Session id stamped on the events.
+        task_path: Absolute path to the task file.
+        description: Override the auto-extracted description.
+        actor: Recorded as ``created_by``. Every actor but ``cc`` owes a design
+            note (AD-030-R11), which is what gates a non-CC caller.
+        allow_untracked: Proceed although git cannot recover the file.
+        emit: Callable for human-readable progress, or None for silence. The
+            cadence runs unattended and has an event log instead.
+
+    Returns:
+        ``{"artifact_id", "name", "rel_path", "description", "existing",
+        "rulings", "edges_written", "warning"}``. ``existing`` is True when the
+        file was already registered, in which case nothing was created.
+
+    Raises:
+        FileNotFoundError: The task file does not exist.
+        ValueError: Git cannot recover the file and ``allow_untracked`` is
+            False, or the task cites no design note while one is required.
+    """
+    say = emit or (lambda _msg: None)
+    if not task_path.exists():
+        raise FileNotFoundError(f"file not found: {task_path}")
+    try:
+        rel_path = str(task_path.relative_to(project_dir))
+    except ValueError:
+        rel_path = str(task_path)
+
+    status = _git_tracking_status(project_dir, task_path)
+    if status != GIT_TRACKED and not allow_untracked:
+        raise ValueError(
+            f"refusing to register {rel_path}: "
+            f"{_UNTRACKED_REASONS.get(status, status)}. "
+            f"{_UNTRACKED_REMEDIES.get(status, '')}"
+        )
+
+    refusal = enforce_design_reference(task_path, config, actor)
+    if refusal and not refusal.startswith("WARNING"):
+        raise ValueError(f"{refusal} File: {rel_path}")
+    warning = refusal if refusal else None
+
+    existing_id = _find_existing(driver, database, rel_path)
+    if existing_id:
+        say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "
+            "No duplicate created.")
+        return {"artifact_id": existing_id, "name": _name_from_filepath(rel_path),
+                "rel_path": rel_path, "description": None, "existing": True,
+                "rulings": [], "edges_written": 0, "warning": warning}
+
+    name = _name_from_filepath(rel_path)
+    if description is None:
+        description, source = _extract_description_with_source(task_path)
+        _warn_if_description_suspicious(task_path, description, source)
+    # Hash the SPEC only. Findings are appended after execution by convention,
+    # so a whole-file hash would guarantee that every correctly-executed task is
+    # divergent at completion time.
+    content_hash = _spec_hash(task_path)
+    artifact_id = create_artifact(
+        project_dir=project_dir,
+        driver=driver,
+        database=database,
+        domain_config=domain_config,
+        artifact_type="ResearchTask",
+        properties={
+            "description": description,
+            "name": name,
+            "source_file": rel_path,
+            "file_hash": content_hash,
+            "hash_scope": HASH_SCOPE_SPEC,
+        },
+        actor=actor,
+        authority="accepted",
+        session_id=session_id,
+    )
+    say(f"Registered: {name}")
+    say(f"  source_file: {rel_path}")
+    say(f"  id: {artifact_id[:8]}...")
+    say("  state: proposed")
+    matches, written = constraining_rulings(
+        project_dir=project_dir, config=config, driver=driver, database=database,
+        domain_config=domain_config, task_path=task_path, task_id=artifact_id,
+        session_id=session_id,
+    )
+    say("")
+    say(render_rulings(matches, written))
+    return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path,
+            "description": description, "existing": False, "rulings": matches,
+            "edges_written": written, "warning": warning}
+
+
 @cc_group.command("register")
 @click.argument("filepath")
 @click.option("--description", default=None, help="Override auto-extracted description")
@@ -883,6 +1002,10 @@ def cc_register(filepath, description, actor, allow_untracked):
     except ValueError:
         rel_path = str(task_path)
 
+    # The CLI's own gate, kept here rather than inside `register_task_file`: this one WARNS on
+    # a tracked file (being in the index is not being in history) and exits the process on an
+    # untracked one. The library form raises instead, because a `SystemExit` inside an
+    # unattended dispatcher pass would kill the pass rather than report the refusal.
     try:
         _enforce_git_tracking(
             project_dir, task_path, rel_path, "cc register", allow_untracked
@@ -891,73 +1014,30 @@ def cc_register(filepath, description, actor, allow_untracked):
         driver.close()
         raise
 
-    # AD-030-R9, the task half: refuse a task that cites no decision, BEFORE registering it.
-    # Refusing after the write would leave a task in the graph that the check says should not be
-    # there.
-    refusal = enforce_design_reference(task_path, config, actor)
-    if refusal and refusal.startswith("WARNING"):
-        click.echo(refusal, err=True)
-    elif refusal:
+    try:
+        outcome = register_task_file(
+            project_dir=project_dir, config=config, driver=driver, database=database,
+            domain_config=domain_config, session_id=session_id, task_path=task_path,
+            description=description, actor=actor, allow_untracked=allow_untracked,
+            emit=lambda msg: click.echo(msg, err=msg.startswith("Warning:")),
+        )
+    except ValueError as exc:
+        # AD-030-R9, the task half: a task that cites no decision is refused BEFORE it is
+        # registered, so a refusal never leaves a task in the graph the check says should not
+        # be there.
         click.echo(
-            f"ERROR: {refusal}\n"
-            f"  File: {rel_path}\n"
+            f"ERROR: {exc}\n"
             f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
             f"  Override for this project: handoff.require_design_note: false in seldon.yaml.",
             err=True,
         )
-        driver.close()
         raise SystemExit(1)
-
-    existing_id = _find_existing(driver, database, rel_path)
-    if existing_id:
-        click.echo(
-            f"Warning: CC task already registered (id: {existing_id[:8]}...). "
-            "No duplicate created.",
-            err=True,
-        )
-        driver.close()
-        raise SystemExit(0)
-
-    name = _name_from_filepath(rel_path)
-    if description is None:
-        description, source = _extract_description_with_source(task_path)
-        _warn_if_description_suspicious(task_path, description, source)
-    # Hash the SPEC only. Findings are appended after execution by convention,
-    # so a whole-file hash would guarantee that every correctly-executed task is
-    # divergent at completion time.
-    content_hash = _spec_hash(task_path)
-
-    try:
-        artifact_id = create_artifact(
-            project_dir=project_dir,
-            driver=driver,
-            database=database,
-            domain_config=domain_config,
-            artifact_type="ResearchTask",
-            properties={
-                "description": description,
-                "name": name,
-                "source_file": rel_path,
-                "file_hash": content_hash,
-                "hash_scope": HASH_SCOPE_SPEC,
-            },
-            actor=actor,
-            authority="accepted",
-            session_id=session_id,
-        )
-        click.echo(f"Registered: {name}")
-        click.echo(f"  source_file: {rel_path}")
-        click.echo(f"  id: {artifact_id[:8]}...")
-        click.echo(f"  state: proposed")
-        matches, written = constraining_rulings(
-            project_dir=project_dir, config=config, driver=driver, database=database,
-            domain_config=domain_config, task_path=task_path, task_id=artifact_id,
-            session_id=session_id,
-        )
-        click.echo("")
-        click.echo(render_rulings(matches, written))
     finally:
         driver.close()
+    if outcome["warning"]:
+        click.echo(outcome["warning"], err=True)
+    if outcome["existing"]:
+        raise SystemExit(0)
 
 
 @cc_group.command("constrain")

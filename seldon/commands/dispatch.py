@@ -32,6 +32,7 @@ from pathlib import Path
 import click
 
 from seldon.config import get_current_session, get_neo4j_driver, load_project_config
+from seldon.core import cadence as C
 from seldon.core import dispatch as D
 from seldon.core.artifacts import transition_task
 from seldon.core.events import append_event, make_event
@@ -59,7 +60,20 @@ CLAIM_PATH = {"proposed": ["accepted", "in_progress"], "accepted": ["in_progress
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return _utcnow().isoformat().replace("+00:00", "Z")
+
+
+def _utcnow() -> datetime:
+    """The pass's clock, as one seam.
+
+    Everything time-dependent in a pass — the cadence's "is this period due", the instance's
+    date, the timestamps on the events — reads the clock through here, so a test can freeze it
+    at a hand-checked instant and exercise the real calendar rather than whatever today
+    happens to be. The scan harness has the same seam for the same reason (`scan/clock.py`):
+    a schedule whose behaviour can only be tested during the first week of a month is a
+    schedule that is untested for three weeks out of four.
+    """
+    return datetime.now(timezone.utc)
 
 
 def _open_project():
@@ -146,6 +160,7 @@ def dispatch_status(as_json):
         cfg, band, tree, lease_body, claim, rows = _survey(project_dir, config, driver, database)
     finally:
         driver.close()
+    cadence_rows = _cadence_rows(project_dir, cfg)
     payload = {"enabled": cfg["enabled"], "branch": tree["branch"],
                "configured_branch": cfg["branch"], "tree_dirty": tree["dirty"],
                "tree_dirty_count": tree["dirty_count"],
@@ -157,6 +172,7 @@ def dispatch_status(as_json):
                "open_tasks": len(rows),
                "candidates": sum(1 for r in rows if r["candidate"]),
                "eligible": [r["task_id"] for r in rows if r["eligible"]],
+               "cadence": cadence_rows,
                "tasks": rows}
     if as_json:
         click.echo(json.dumps(payload, indent=1, default=str))
@@ -171,6 +187,14 @@ def dispatch_status(as_json):
     click.echo(f"  claim        : {claim['artifact_id'][:8] + ' by ' + claim['claimed_by'] if claim else 'none'}")
     click.echo(f"  open tasks   : {len(rows)}  candidates: {payload['candidates']}  "
                f"eligible: {len(payload['eligible'])}")
+    for cr in cadence_rows:
+        if cr["before_start"]:
+            served = f"not due (before start_period {cr['start_period']})"
+        else:
+            served = cr["instance"] or ("DUE, no instance" if cr["due"] else "not due")
+        click.echo(f"  cadence      : {cr['cadence']} {cr['period']} due {cr['due_at']} "
+                   f"-> {served}")
+        click.echo(f"                 next: {', '.join(cr['next_due'])}")
     click.echo("")
     for r in rows:
         head = f"  {(r['task_id'] or '?')[:8]}  {r['state']:9s}"
@@ -254,11 +278,150 @@ def _stop_already_observed(project_dir: Path, stop: Path) -> bool:
     return last is not None and abs(float(last) - mtime) < 1e-6
 
 
+def _cadence_rows(project_dir, cfg, now=None) -> list:
+    """Every cadence entry evaluated, whether or not anything is due. Writes nothing."""
+    now = now or _utcnow()
+    return [C.evaluate_entry(project_dir, e, now) for e in (cfg.get("cadence") or [])]
+
+
+def _cadence(project_dir, config, driver, database, domain_config, session_id, cfg, tree,
+             claim, dry_run) -> list:
+    """DN-006 decision 8, evaluated BEFORE candidacy: a due period with no instance on disk
+    gets one, and the instance then flows through decision 2 like any other task.
+
+    The gate on creating anything is deliberately the same shape as c6, c7 and c8 — enabled
+    (already checked by the caller), no claim in flight, clean tree on the configured branch.
+    The dispatcher writes a file and a commit here, and it must not do that to a checkout
+    somebody or something else is editing: that is the batch-identity class (DD-019) in the one
+    place this design can still reach it.
+
+    A cadence that creates nothing writes **no event**, for decision 7's reason. `status` and
+    `seldon go` compute the same rows live, so a due-but-blocked schedule is visible to an
+    operator without a line in the log every five minutes for as long as it stays that way.
+    """
+    rows = _cadence_rows(project_dir, cfg)
+    for row in rows:
+        row["created"] = None
+        if not row["due"] or row["instance"]:
+            continue
+        blocked = None
+        if claim is not None:
+            blocked = "claim_in_flight"
+        elif tree["branch"] != cfg["branch"]:
+            blocked = "wrong_branch"
+        elif tree["dirty"]:
+            blocked = "dirty_tree"
+        if blocked:
+            row["created"] = False
+            row["blocked_on"] = blocked
+            click.echo(f"cadence {row['cadence']} {row['period']} is due and NOT created "
+                       f"({blocked})", err=True)
+            continue
+        if dry_run:
+            row["created"] = False
+            row["blocked_on"] = "dry_run"
+            continue
+        entry = next(e for e in cfg["cadence"] if e["name"] == row["cadence"])
+        row.update(_create_instance(project_dir, config, driver, database, domain_config,
+                                    session_id, cfg, entry, row["period"]))
+    return rows
+
+
+def _create_instance(project_dir, config, driver, database, domain_config, session_id, cfg,
+                     entry, period) -> dict:
+    """Render the template, register it through `seldon cc register`'s own code path, record
+    `last_instance`, commit, and put the whole thing on the log as one `cadence_created`.
+
+    Order matters and is not arbitrary: the file is **staged before registration** because
+    `register_task_file` refuses a task file git cannot recover, and the index is what makes it
+    recoverable; the commit comes **after** the event so the commit contains the event line
+    too, and a reader of the log finds the commit that carries its own record.
+
+    Any failure removes the file it wrote and leaves nothing half-created: the next pass
+    re-renders. Nothing is retried inside one pass (DN-006 decision 4's rule, applied one level
+    down).
+    """
+    from seldon.commands.cc import register_task_file
+
+    now = _utcnow()
+    created_at = _now()
+    template = project_dir / entry["template"]
+    if not template.is_file():
+        click.echo(f"cadence {entry['name']}: template {entry['template']} does not exist; "
+                   f"nothing created", err=True)
+        return {"created": False, "blocked_on": "template_missing"}
+    text = template.read_text(encoding="utf-8")
+    unknown = C.unknown_placeholders(text)
+    cycle_name = C.cycle_name_for(entry, now)
+    path = C.instance_path(project_dir, entry, period, now)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rel = str(path.relative_to(project_dir))
+    path.write_text(C.render(text, cycle_name=cycle_name, period=period,
+                             cadence_name=entry["name"], created_at=created_at,
+                             instance_stem=C.instance_stem(entry, period, now)),
+                    encoding="utf-8")
+    staged = D.stage(project_dir, [rel])
+    if staged.returncode != 0:
+        path.unlink(missing_ok=True)
+        click.echo(f"cadence {entry['name']}: git add failed: {staged.stderr.strip()}",
+                   err=True)
+        return {"created": False, "blocked_on": "git_add_failed"}
+    try:
+        outcome = register_task_file(
+            project_dir=project_dir, config=config, driver=driver, database=database,
+            domain_config=domain_config, session_id=session_id, task_path=path,
+            actor=ACTOR, emit=lambda m: click.echo(f"  {m}") if m else None)
+    except Exception as exc:                                        # noqa: BLE001
+        # Reported, never swallowed, and the file goes with it: a rendered task file that is
+        # not in the graph is a task nothing will ever run and a file the next pass would see
+        # as "this period is already served".
+        D.git(project_dir, "rm", "--cached", "-q", "--", rel)
+        path.unlink(missing_ok=True)
+        click.echo(f"cadence {entry['name']}: registration failed, instance removed: "
+                   f"{type(exc).__name__}: {exc}", err=True)
+        return {"created": False, "blocked_on": "register_failed",
+                "error": f"{type(exc).__name__}: {exc}"}
+
+    wrote_back = C.write_last_instance(project_dir / "seldon.yaml", entry["name"], rel)
+    if not wrote_back:
+        click.echo(f"cadence {entry['name']}: could not record last_instance in seldon.yaml; "
+                   f"the instance file is the guard and it exists", err=True)
+    payload = {"cadence": entry["name"], "period": period, "rule": entry["rule"],
+               "task_id": outcome["artifact_id"], "task_file": rel,
+               "cycle_name": cycle_name, "template": entry["template"],
+               "already_registered": outcome["existing"],
+               "last_instance_written": wrote_back,
+               "unknown_placeholders": unknown, "created_at": created_at,
+               "next_due": C.next_due_instants(entry["rule"], now, 3)[0]
+                           .isoformat().replace("+00:00", "Z")}
+    _emit(project_dir, session_id, D.EVENT_CADENCE_CREATED, payload)
+    paths = [rel, config.get("event_store", {}).get("path", "seldon_events.jsonl"),
+             "seldon.yaml"]
+    commit = D.commit_paths(project_dir, paths,
+                            f"chore(cadence): {entry['name']} {period} — "
+                            f"{rel} created by the standing dispatcher")
+    if not commit["committed"]:
+        click.echo(f"cadence {entry['name']}: commit failed ({commit['reason']}): "
+                   f"{commit.get('stderr', '')}", err=True)
+    click.echo(f"cadence {entry['name']} {period}: created {rel} "
+               f"({outcome['artifact_id'][:8]}), commit {commit.get('commit', 'NONE')}")
+    return {"created": True, "task_id": outcome["artifact_id"], "instance": rel,
+            "cycle_name": cycle_name, "commit": commit.get("commit"),
+            "last_instance_written": wrote_back}
+
+
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
+    # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
+    # pass may then launch, so the queue it evaluates is the queue as it stands after the
+    # calendar has had its say.
+    if cfg.get("cadence"):
+        _cadence(project_dir, config, driver, database, domain_config, session_id, cfg, tree,
+                 claim, dry_run)
+        tree = D.tree_state(project_dir)
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body)
                    for t in _tasks(driver, database)])
