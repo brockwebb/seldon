@@ -68,8 +68,25 @@ _ONTOLOGY_EVENT_TYPES = frozenset({"ontology_synced", "ontology_ingested"})
 # migration records would otherwise emit nine WARNINGs on every single replay,
 # which trains an operator to ignore replay warnings — precisely the signal
 # this set exists to keep meaningful.
+#
+# The five `dispatch_*` / `cadence_*` types are the standing dispatcher's log (DN-006
+# decisions 7 and 8). Each records an assertion the dispatcher made — this task was eligible
+# under these criteria at this time; this period was due and nothing had served it — and each
+# projects no graph state of its own, because the state they refer to is already projected by
+# the `artifact_state_changed` of the claim and by the `artifact_created` of the registration.
+# They were emitted without being listed here when `seldon dispatch` shipped, which meant a
+# replay logged one WARNING per dispatch: exactly the noise this set exists to keep out.
 _AUDIT_ONLY_EVENT_TYPES = frozenset(
-    {"paper_fix", "link_case_migrated", "legacy_event_id_assigned"}
+    {
+        "paper_fix",
+        "link_case_migrated",
+        "legacy_event_id_assigned",
+        "dispatch_launched",
+        "dispatch_finished",
+        "dispatch_refused",
+        "dispatch_observed_stop",
+        "cadence_created",
+    }
 )
 
 

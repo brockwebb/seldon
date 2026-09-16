@@ -730,6 +730,100 @@ def _get_pipeline_section(project_dir: str) -> Optional[str]:
         return None
 
 
+def _get_dispatch_section(project_dir: str) -> Optional[str]:
+    """Return the Dispatcher section for `seldon go`, or None when a project has no dispatcher.
+
+    DN-006 decision 8's implementing task, decision 5. This is **operator touchpoint 4** for the
+    automated path — incident notification, informational, never an approval step. A launch the
+    dispatcher blocked is seen the next time a Desktop thread opens, with its log path beside
+    it, and nothing else notifies anyone. That is the whole notification design: no mail, no
+    push, no interruption; the next person to look is told.
+
+    Read from the **event log**, not the graph: `seldon go` degrades gracefully when Neo4j is
+    down, and a brief that loses the dispatcher's state exactly when the machine is unhealthy
+    would be missing at the only moment it mattered. The cadence rows are read from disk for
+    the same reason.
+    """
+    try:
+        import yaml
+
+        from seldon.core import cadence as C
+        from seldon.core import dispatch as D
+        from seldon.core.events import read_events
+
+        seldon_yaml = Path(project_dir) / "seldon.yaml"
+        if not seldon_yaml.exists():
+            return None
+        with open(seldon_yaml) as f:
+            config = yaml.safe_load(f) or {}
+        if not config.get("dispatch"):
+            return None
+        root = Path(project_dir)
+        cfg = D.load_dispatch_config(root, config)
+
+        lines = ["## Dispatcher", ""]
+        stop = root / cfg["stop_file"]
+        lines.append(
+            f"**Enabled:** {cfg['enabled']}"
+            + ("  **STOP FILE PRESENT**" if stop.exists() else "")
+        )
+        lease = D.read_lease(root / cfg["lease_file"])
+        if lease:
+            alive = isinstance(lease.get("pid"), int) and D.pid_alive(lease["pid"])
+            lines.append(
+                f"**Lease:** {lease.get('holder')} (holder "
+                f"{'alive' if alive else 'GONE — `seldon dispatch lease reap`'})"
+                f"{', task ' + str(lease['task']) if lease.get('task') else ''}"
+            )
+        else:
+            lines.append("**Lease:** free")
+
+        # One row per task the dispatcher has finished, newest last, with the three facts the
+        # finish check turns on: exit code, RESULT present, and the state the graph showed.
+        finished, blocked = {}, {}
+        for ev in read_events(root):
+            t = ev.get("event_type")
+            p = ev.get("payload", {})
+            if t == D.EVENT_FINISHED:
+                finished[p.get("task_id")] = p
+                if not p.get("ok"):
+                    blocked[p.get("task_id")] = p
+            elif t == D.EVENT_LAUNCHED:
+                blocked.pop(p.get("task_id"), None)
+        if finished:
+            lines.append("")
+            lines.append("**Last dispatch per task:**")
+            for tid, p in finished.items():
+                lines.append(
+                    f"- `{(tid or '?')[:8]}` exit={p.get('exit_code')} "
+                    f"result={'yes' if p.get('result_present') else 'NO'} "
+                    f"graph={p.get('graph_state_observed')} — `{p.get('log_path')}`"
+                )
+        else:
+            lines.append("**Last dispatch per task:** *(the dispatcher has launched nothing)*")
+        if blocked:
+            lines.append("")
+            lines.append("**Blocked by the dispatcher — read the log before re-queueing:**")
+            for tid, p in blocked.items():
+                lines.append(f"- `{(tid or '?')[:8]}` exit={p.get('exit_code')} "
+                             f"— `{p.get('log_path')}`")
+
+        for entry in cfg.get("cadence") or []:
+            row = C.evaluate_entry(root, entry, datetime.now(timezone.utc))
+            if row["before_start"]:
+                served = f"not due (before start_period {row['start_period']})"
+            else:
+                served = row["instance"] or (
+                    "**DUE, no instance**" if row["due"] else "not due")
+            lines.append("")
+            lines.append(f"**Cadence `{row['cadence']}`:** period {row['period']}, due "
+                         f"{row['due_at']} → {served}")
+            lines.append(f"  Next: {', '.join(row['next_due'])}")
+        return "\n".join(lines)
+    except Exception:
+        return None
+
+
 def _resolve_project_dir(project_dir: str) -> str:
     """Resolve project_dir, falling back to SELDON_DEFAULT_PROJECT if project_dir is '.'."""
     if project_dir != ".":
@@ -802,6 +896,11 @@ def assemble_go_context(
     if pipeline is not None:
         sections.append(pipeline)
 
+    # Section 5.6 — Dispatcher (omitted entirely for a project with no `dispatch:` block)
+    dispatcher = _get_dispatch_section(project_dir)
+    if dispatcher is not None:
+        sections.append(dispatcher)
+
     # Section 6 — Agent Roles (optional — omit if no roles exist)
     agent_roles = _get_agent_roles_section(project_dir)
     if agent_roles is not None:
@@ -873,6 +972,7 @@ def assemble_go_context_as_dict(
         "r9_notice": _get_r9_notice(project_dir),
         "project_state": project_state,
         "audit_pipeline": _get_pipeline_section(project_dir),
+        "dispatch": _get_dispatch_section(project_dir),
         "agent_roles": agent_roles,
         "available_commands": available_commands,
     }

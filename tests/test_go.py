@@ -120,6 +120,10 @@ def test_go_json_output_has_expected_keys(tmp_path):
         "r9_notice",
         "project_state",
         "audit_pipeline",
+        # The standing dispatcher's state (DN-006 decision 5 of the cadence task). Present for
+        # every project and None for one with no `dispatch:` block — a key that appeared only
+        # sometimes would make a consumer guess.
+        "dispatch",
         "agent_roles",
         "available_commands",
     }
@@ -340,3 +344,127 @@ def test_pipeline_behavioral_contract_rules_present():
     from seldon.commands.go import _ROLE_SECTION
     assert "verify by reading the relevant convention document" in _ROLE_SECTION
     assert "query the graph first" in _ROLE_SECTION
+
+
+# ---------------------------------------------------------------------------
+# The Dispatcher section — operator touchpoint 4, informational, never a gate
+# ---------------------------------------------------------------------------
+#
+# `ai-readiness-kg/cc_tasks/2026-09-16_cadence_and_enable.md` decision 5. These need no Neo4j
+# BY DESIGN: the section is read from the event log and from disk, so a brief still carries the
+# dispatcher's state when the graph is down — which is exactly when a blocked launch matters
+# most. A section that needed the database would go missing at the only moment it was wanted.
+
+import json as _json                                                       # noqa: E402
+import uuid as _uuid                                                       # noqa: E402
+from datetime import datetime as _dt, timezone as _tz                      # noqa: E402
+
+import yaml as _yaml                                                       # noqa: E402
+
+from seldon.commands.go import _get_dispatch_section                       # noqa: E402
+
+
+def _dispatch_project(tmp_path, *, cadence=True, enabled=True) -> Path:
+    doc = {
+        "event_store": {"path": "seldon_events.jsonl"},
+        "neo4j": {"database": "t", "uri": "bolt://localhost:7687"},
+        "project": {"domain": "research", "name": "t", "slug": "t"},
+        "dispatch": {"enabled": enabled, "branch": "main",
+                     "standing_band_ref": "controls.yaml#spend.daily_tokens",
+                     "poll_interval_s": 300, "permission_mode": "bypassPermissions",
+                     "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
+                     "lease_file": ".seldon/dispatch.lock"},
+    }
+    if cadence:
+        doc["dispatch"]["cadence"] = [{
+            "name": "scan_cycle",
+            "rule": {"monthly_first_weekday": "monday", "at_utc": "00:00"},
+            "template": "cc_tasks/templates/scan_cycle.md",
+            "instances_dir": "cc_tasks", "cycle_name_format": "scan_{date}",
+            "start_period": "2026-01", "last_instance": ""}]
+    (tmp_path / "seldon.yaml").write_text(_yaml.safe_dump(doc), encoding="utf-8")
+    (tmp_path / "controls.yaml").write_text(
+        _yaml.safe_dump({"spend": {"daily_tokens": 55_000_000}}), encoding="utf-8")
+    (tmp_path / "cc_tasks").mkdir(exist_ok=True)
+    return tmp_path
+
+
+def _event(tmp_path, event_type, payload):
+    line = {"event_id": str(_uuid.uuid4()), "event_type": event_type,
+            "timestamp": _dt.now(_tz.utc).isoformat().replace("+00:00", "Z"),
+            "session_id": "s", "actor": "dispatcher", "authority": "accepted",
+            "payload": payload}
+    with open(tmp_path / "seldon_events.jsonl", "a", encoding="utf-8") as fh:
+        fh.write(_json.dumps(line) + "\n")
+
+
+def test_a_project_with_no_dispatch_block_gets_no_dispatcher_section(tmp_path):
+    """The section is omitted entirely, not rendered empty: `seldon go` serves every Seldon
+    project and most of them have no dispatcher."""
+    (tmp_path / "seldon.yaml").write_text(
+        _yaml.safe_dump({"project": {"name": "t", "slug": "t"}}), encoding="utf-8")
+    assert _get_dispatch_section(str(tmp_path)) is None
+
+
+def test_the_dispatcher_section_reports_enabled_the_lease_and_the_cadence(tmp_path):
+    p = _dispatch_project(tmp_path)
+    out = _get_dispatch_section(str(p))
+    assert "## Dispatcher" in out
+    assert "**Enabled:** True" in out
+    assert "**Lease:** free" in out
+    assert "the dispatcher has launched nothing" in out
+    assert "**Cadence `scan_cycle`:**" in out and "Next:" in out
+
+
+def test_a_stop_file_is_on_the_face_of_the_brief(tmp_path):
+    p = _dispatch_project(tmp_path)
+    (p / ".seldon").mkdir(exist_ok=True)
+    (p / ".seldon" / "DISPATCH_STOP").write_text("halt\n", encoding="utf-8")
+    assert "STOP FILE PRESENT" in _get_dispatch_section(str(p))
+
+
+def test_a_blocked_launch_is_surfaced_with_its_log_path(tmp_path):
+    """DN-006's operator touchpoint 4. A task the dispatcher moved to `blocked` is seen the
+    next time a Desktop thread opens, with the log beside it, and nothing else notifies
+    anyone — no mail, no push, no interruption. The next person to look is told."""
+    p = _dispatch_project(tmp_path)
+    _event(p, "dispatch_launched", {"task_id": "abc12345-x", "source_file": "cc_tasks/a.md"})
+    _event(p, "dispatch_finished", {"task_id": "abc12345-x", "exit_code": 2,
+                                    "result_present": False, "graph_state_observed": "blocked",
+                                    "ok": False, "log_path": "logs/dispatch/a.log"})
+    out = _get_dispatch_section(str(p))
+    assert "Blocked by the dispatcher" in out
+    assert "`abc12345`" in out and "logs/dispatch/a.log" in out
+    assert "exit=2" in out and "result=NO" in out
+
+
+def test_a_task_that_was_relaunched_and_finished_cleanly_is_no_longer_blocked(tmp_path):
+    """A later launch of the same task clears it: the brief reports the CURRENT state of each
+    task, not every failure the task ever had. The history stays on the log."""
+    p = _dispatch_project(tmp_path)
+    _event(p, "dispatch_launched", {"task_id": "abc12345-x"})
+    _event(p, "dispatch_finished", {"task_id": "abc12345-x", "exit_code": 2, "ok": False,
+                                    "result_present": False, "log_path": "logs/dispatch/a.log"})
+    _event(p, "dispatch_launched", {"task_id": "abc12345-x"})
+    _event(p, "dispatch_finished", {"task_id": "abc12345-x", "exit_code": 0, "ok": True,
+                                    "result_present": True, "graph_state_observed": "completed",
+                                    "log_path": "logs/dispatch/a.log"})
+    out = _get_dispatch_section(str(p))
+    assert "Blocked by the dispatcher" not in out
+    assert "exit=0" in out and "result=yes" in out
+
+
+def test_a_served_cadence_period_shows_its_instance(tmp_path):
+    p = _dispatch_project(tmp_path)
+    period = f"{_dt.now(_tz.utc):%Y-%m}"
+    (p / "cc_tasks" / f"2026-01-01_scan_cycle_{period}.md").write_text("x", encoding="utf-8")
+    out = _get_dispatch_section(str(p))
+    assert f"2026-01-01_scan_cycle_{period}.md" in out
+    assert "DUE, no instance" not in out
+
+
+def test_the_dispatcher_section_is_in_the_assembled_brief_and_in_the_json(tmp_path):
+    p = _dispatch_project(tmp_path)
+    assert "## Dispatcher" in assemble_go_context(project_dir=str(p), brief=True)
+    assert "## Dispatcher" in assemble_go_context_as_dict(
+        project_dir=str(p), brief=True)["dispatch"]
