@@ -704,18 +704,24 @@ def test_the_dispatcher_commits_the_registration_record_with_the_file_it_records
 
     assert _run(project, ["once"]).exit_code == 0
 
-    names = _git(project, "show", "--name-only", "--pretty=", "HEAD").stdout
+    # Looked up by message, not read off HEAD: the dispatcher's own record commits
+    # (`dispatch_launched`, `dispatch_finished`) now follow it in the same pass.
+    sha = _git(project, "log", "--pretty=%H", "--grep=^register: cc_tasks/t4.md").stdout.split()
+    assert len(sha) == 1
+    names = _git(project, "show", "--name-only", "--pretty=", sha[0]).stdout
     assert "cc_tasks/t4.md" in names and "seldon_events.jsonl" in names
 
     # The point of the whole decision: c7 is TRUE at the moment candidacy is evaluated. Read
-    # off the launch event's own vector, because by the end of the pass the tree is dirty
-    # again — `dispatch_launched` and `dispatch_finished` are appended to the tracked store
-    # AFTER this commit, and nothing in this task commits them. That residue is real and it is
-    # reported in this task's RESULT rather than papered over here: what decision 3 claims is
-    # that a REGISTRATION no longer wedges the queue, and that is what this asserts.
+    # off the launch event's own vector.
     launched = _events(project, D.EVENT_LAUNCHED)
     assert launched and launched[0]["payload"]["criteria"]["c7"]["ok"] is True
     assert launched[0]["payload"]["criteria"]["c7"]["dirty_paths"] == []
+
+    # And the residue this assertion used to document is gone: the launch and finish lines
+    # are committed by the dispatcher too (`cc_tasks/2026-09-16_dispatcher_commits_its_record.md`
+    # decision 1), so the pass ends with the store clean. (Only the store: this stub session
+    # leaves its RESULT uncommitted, and that is the session's to commit, not the dispatcher's.)
+    assert _git(project, "status", "--porcelain", "--", "seldon_events.jsonl").stdout == ""
 
 
 def test_the_dispatcher_commits_nothing_else_that_is_lying_in_the_checkout(

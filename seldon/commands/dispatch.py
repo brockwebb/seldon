@@ -1,7 +1,9 @@
 """`seldon dispatch` — the standing dispatcher.
 
 Implements `ai-readiness-kg/docs/design/2026-09-15_DN-006_standing_dispatcher.md` decisions 1
-to 7, 9 and 10. Decision 8 (cadence) is a later task and is deliberately absent.
+to 10 (decision 8, the cadence, landed with `cc_tasks/2026-09-16_cadence_and_enable.md`), and
+the rule that the dispatcher commits and pushes every line it writes to the tracked event store
+(`cc_tasks/2026-09-16_dispatcher_commits_its_record.md`, DN-006 ADDENDUM_04).
 
     seldon dispatch once        one evaluation pass, at most one launch, exit
     seldon dispatch status      the live criteria vector for every candidate
@@ -140,6 +142,87 @@ def _emit(project_dir, session_id, event_type, payload):
     append_event(project_dir, make_event(event_type=event_type, actor=ACTOR,
                                          authority="accepted", payload=payload,
                                          session_id=session_id))
+
+
+def _store_rel(config) -> str:
+    return config.get("event_store", {}).get("path", "seldon_events.jsonl")
+
+
+def _record_own_lines(project_dir, config, cfg) -> dict:
+    """Commit the lines the dispatcher appended to the tracked event store, and only those.
+
+    `ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 1, closing
+    DN-006 ADDENDUM_03 §4: `dispatch_finished` is appended AFTER the dispatched session has
+    committed and pushed, so before this every completed dispatch left the store modified by a
+    line only the dispatcher wrote — and the cadence gates creation on a clean tree, so that one
+    line could block cycle 5.
+
+    **Callers hold the lease.** A held lease is how a pass knows no dispatched session is
+    working in the checkout; a `git commit` beside a working session is DD-019's class and an
+    `index.lock` collision besides. The three lines written WITHOUT the lease are therefore
+    never committed where they are written, and the next pass that holds the lease commits them
+    first (`_pass`):
+
+    * `lease_held` — written while a session is in flight; that session's own commit, or the
+      finish pass's, carries it.
+    * `dispatch_observed_stop` — the operator has stopped the world, and a commit and a push
+      are writes the STOP file exists to prevent.
+    * `api_key_present` — the DD-007 refusal comes before the lease and touches nothing else
+      (`test_an_api_key_refuses_before_any_claim`). The launchd wrapper unsets both variables,
+      so this is reachable only from a hand-run pass.
+
+    Pathspec-limited to the store (`D.commit_paths`), and only when every appended line is the
+    dispatcher's (`D.own_appended_lines`). The message names each event type and task id, so
+    `git log` reads as the log's own index. No event is written for the commit: git records it.
+    """
+    store = _store_rel(config)
+    if D.tree_state(project_dir)["branch"] != cfg["branch"]:
+        return {"committed": False, "reason": "wrong_branch"}
+    own = D.own_appended_lines(project_dir, store, ACTOR)
+    if not own["ok"]:
+        if own["reason"] not in ("clean", "untracked"):
+            detail = {"not_own_lines": "not dispatcher-only (also written by "
+                                       f"{', '.join(own.get('foreign_actors', []))})",
+                      "not_append_only": "not append-only against HEAD",
+                      "unparseable": "an appended line does not parse"}[own["reason"]]
+            click.echo(f"record: {store} NOT committed: {detail}", err=True)
+        return {"committed": False, "reason": own["reason"]}
+    types = list(dict.fromkeys(e.get("event_type") for e in own["events"]))
+    ids = list(dict.fromkeys(
+        str(p.get("task_id") or p.get("artifact_id"))[:8]
+        for p in ((e.get("payload") or {}) for e in own["events"])
+        if p.get("task_id") or p.get("artifact_id")))
+    message = (f"record: {', '.join(types)} {', '.join(ids) or '-'} — "
+               f"{len(own['events'])} line(s) written by the standing dispatcher")
+    outcome = D.commit_paths(project_dir, [store], message)
+    if outcome["committed"]:
+        click.echo(f"record: {message} -> {outcome['commit']}")
+    else:
+        click.echo(f"record: {store} NOT committed ({outcome['reason']}): "
+                   f"{outcome.get('stderr', '')}", err=True)
+    return outcome
+
+
+def _push(project_dir, cfg) -> dict:
+    """Decision 2: push whatever the branch is ahead by. A failure is reported on stdout, where
+    the wrapper's log carries it, and is NOT a refusal and NOT an event — the next pass under
+    the lease retries it because the branch is still ahead, and git records the beginning."""
+    if D.tree_state(project_dir)["branch"] != cfg["branch"]:
+        return {"pushed": False, "reason": "wrong_branch"}
+    out = D.push_if_ahead(project_dir)
+    if out["pushed"]:
+        click.echo(f"push: pushed {out['ahead']} commit(s)")
+    elif out["reason"] == "push_failed":
+        click.echo(f"push FAILED ({out['ahead']} commit(s) ahead; retried next pass): "
+                   f"{out.get('stderr', '')}")
+    elif out["reason"] == "no_upstream":
+        click.echo(f"push: branch {cfg['branch']} has no upstream; nothing pushed")
+    return out
+
+
+def _record_and_push(project_dir, config, cfg) -> None:
+    _record_own_lines(project_dir, config, cfg)
+    _push(project_dir, cfg)
 
 
 @click.group("dispatch")
@@ -373,8 +456,19 @@ def _cadence(project_dir, config, driver, database, domain_config, session_id, c
         if blocked:
             row["created"] = False
             row["blocked_on"] = blocked
+            # The reason AND its evidence, so a blocked tick is readable from the wrapper's
+            # log alone (decision 3 of the dispatcher-commits-its-record task): after the
+            # dispatcher commits its own lines, the paths are the operator's or a session's.
+            evidence = {"dirty_tree": f": {', '.join(tree['dirty_paths'])}"
+                                      + (f" (+{tree['dirty_count'] - len(tree['dirty_paths'])}"
+                                         f" more)" if tree["dirty_count"]
+                                         > len(tree["dirty_paths"]) else ""),
+                        "wrong_branch": f": on {tree['branch']}, configured {cfg['branch']}",
+                        "claim_in_flight": f": {claim['artifact_id'][:8]} by "
+                                           f"{claim['claimed_by']}" if claim else ""}
+            row["blocked_evidence"] = evidence[blocked].lstrip(": ")
             click.echo(f"cadence {row['cadence']} {row['period']} is due and NOT created "
-                       f"({blocked})", err=True)
+                       f"({blocked}){evidence[blocked]}", err=True)
             continue
         if dry_run:
             row["created"] = False
@@ -532,8 +626,14 @@ def _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run) ->
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
-    tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
+    # The dispatcher's own leftovers FIRST, before anything reads the tree: lines an earlier
+    # pass appended and did not commit — a pass that died between append and commit, or a
+    # dispatcher process still running the code from before decision 1 existed. With no claim
+    # in flight and the lease held, nothing else is working in the checkout.
+    if claim is None and not dry_run:
+        _record_own_lines(project_dir, config, cfg)
+    tree = D.tree_state(project_dir)
     # Registered-but-uncommitted task files BEFORE the cadence and before candidacy: the
     # cadence gates creation on a clean tree, and an untracked task file is one of the things
     # making it dirty, so committing first is what lets a due period be served in the same pass.
@@ -579,6 +679,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
             if reason:
                 click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
                            f"{','.join(r['failed'])}  {r['source_file']}")
+        # Decision 2's retry: whatever this pass or an earlier one committed and could not
+        # push is pushed now. A no-op when the branch is level with its upstream.
+        if not dry_run and claim is None:
+            _push(project_dir, cfg)
         return
 
     chosen = eligible[0]
@@ -602,6 +706,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
               {"task_id": chosen["task_id"], "reason": "claim_failed",
                "error": claimed["error"], "from_state": chosen["state"]})
         click.echo(f"claim failed for {chosen['task_id'][:8]}: {claimed['error']}", err=True)
+        _record_and_push(project_dir, config, cfg)
         return
 
     lease.heartbeat(task=chosen["task_id"])
@@ -613,6 +718,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
            "log_path": str(log_path.relative_to(project_dir)),
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now()})
+    # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the
+    # session starts, so it opens on a clean, level tree. Left for the session, they were the
+    # dirt it found on opening and the lines its own final commit had to carry.
+    _record_and_push(project_dir, config, cfg)
     click.echo(f"launching {chosen['task_id'][:8]} {rel} -> "
                f"{log_path.relative_to(project_dir)}")
 
@@ -636,8 +745,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
                    f"graph={graph_state} -> blocked", err=True)
+        _record_and_push(project_dir, config, cfg)
         return
     click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
+    _record_and_push(project_dir, config, cfg)
 
 
 def _launch_cmd(cfg: dict, prompt: str) -> list:
