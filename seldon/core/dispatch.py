@@ -322,9 +322,10 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
     decision 8, not added to it; DN-006 ADDENDUM_02 records that the note does not say so.
 
     Pathspec-limited (`git commit -- <paths>`), so a tree that is dirty for some other reason
-    keeps its other changes and this commit contains only what the cadence wrote. Nothing is
-    pushed: a push is an outward-facing act, and the dispatched session pushes its own work at
-    the end of its task as `CLAUDE.md` §10 already requires.
+    keeps its other changes and this commit contains only what the cadence wrote. This function
+    does not push; the pass pushes separately (`push_if_ahead`), after every commit it makes
+    and on every pass that finds the branch still ahead
+    (`ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 2).
     """
     # A path the project ignores is dropped rather than staged: `git add` on an ignored path
     # is an error, and it would abort a commit for a file the project has deliberately said it
@@ -348,6 +349,77 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
     head = git(project_dir, "rev-parse", "--short", "HEAD").stdout.strip()
     return {"committed": True, "reason": None, "commit": head, "message": message,
             "committed_paths": keep, "skipped": skipped}
+
+
+def own_appended_lines(project_dir: Path, store_rel: str, actor: str) -> dict:
+    """Is the store's uncommitted change made ONLY of lines this actor appended?
+
+    The precondition for the dispatcher committing its own record
+    (`ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 1). The
+    pathspec on the commit limits WHICH FILE is committed; this limits WHOSE LINES. Two checks,
+    both against HEAD's blob rather than a textual diff, because the store is append-only and
+    that contract is exactly what they test:
+
+    * the working copy **begins with HEAD's bytes** — anything else is an in-place edit, and
+      the dispatcher does not put its name on one;
+    * every appended line **parses and carries `actor == <actor>`** — a line a session or an
+      operator wrote and did not commit is their finding to surface (c7 surfaces it), not a
+      line to launder under a dispatcher message.
+
+    Returns values, never raises on a state: `{ok, reason, events}` with `reason` one of
+    `None`, `clean`, `untracked`, `not_append_only`, `unparseable`, `not_own_lines`.
+    """
+    path = Path(project_dir) / store_rel
+    if not path.is_file() or not is_tracked(Path(project_dir), path):
+        return {"ok": False, "reason": "untracked", "events": []}
+    head = subprocess.run(["git", "show", f"HEAD:{store_rel}"], cwd=project_dir,
+                          capture_output=True)
+    if head.returncode != 0:
+        return {"ok": False, "reason": "untracked", "events": []}
+    work = path.read_bytes()
+    if work == head.stdout:
+        return {"ok": False, "reason": "clean", "events": []}
+    if not work.startswith(head.stdout):
+        return {"ok": False, "reason": "not_append_only", "events": []}
+    events, foreign = [], []
+    for raw in work[len(head.stdout):].decode("utf-8").splitlines():
+        if not raw.strip():
+            continue
+        try:
+            ev = json.loads(raw)
+        except json.JSONDecodeError:
+            return {"ok": False, "reason": "unparseable", "events": events}
+        (events if ev.get("actor") == actor else foreign).append(ev)
+    if foreign:
+        return {"ok": False, "reason": "not_own_lines", "events": events,
+                "foreign_actors": sorted({str(e.get("actor")) for e in foreign})}
+    return {"ok": True, "reason": None, "events": events}
+
+
+def push_if_ahead(project_dir: Path) -> dict:
+    """Push the current branch when it is ahead of its upstream; otherwise do nothing.
+
+    Decision 2 of the same task: the dispatcher pushes what it commits, and a failed push is
+    retried by the next pass whenever the branch is still ahead. "Ahead" is read from git
+    (`rev-list --count @{u}..HEAD`), never remembered, so the retry needs no state of its own.
+    Returns `{pushed, reason, ahead, stderr?}`; `reason` is `None`, `up_to_date`,
+    `no_upstream` or `push_failed`. Never raises: an offline machine is an ordinary state.
+    """
+    count = git(project_dir, "rev-list", "--count", "@{u}..HEAD")
+    if count.returncode != 0:
+        return {"pushed": False, "reason": "no_upstream", "ahead": None,
+                "stderr": count.stderr.strip()}
+    ahead = int(count.stdout.strip() or 0)
+    if ahead == 0:
+        return {"pushed": False, "reason": "up_to_date", "ahead": 0}
+    # `GIT_TERMINAL_PROMPT=0`: a launchd pass has no terminal, and a credential prompt would
+    # hang the pass until the next one collided with its lease.
+    done = subprocess.run(["git", "push", "--quiet"], cwd=project_dir, capture_output=True,
+                          text=True, env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
+    if done.returncode != 0:
+        return {"pushed": False, "reason": "push_failed", "ahead": ahead,
+                "stderr": (done.stderr or done.stdout).strip()}
+    return {"pushed": True, "reason": None, "ahead": ahead}
 
 
 def is_tracked(project_dir: Path, path: Path) -> bool:

@@ -176,9 +176,11 @@ def test_a_due_period_renders_registers_commits_and_the_task_is_then_eligible(
 
     # Committed, by the pass, pathspec-limited — and `last_instance` recorded in place.
     assert D.is_tracked(project, inst)
-    log = subprocess.run(["git", "log", "-1", "--pretty=%s"], cwd=project,
-                         capture_output=True, text=True).stdout.strip()
-    assert log.startswith("chore(cadence): scan_cycle ")
+    # Searched, not read off HEAD: the same pass launches the instance, and the dispatcher's
+    # own record commits for the launch and the finish follow the cadence's.
+    log = subprocess.run(["git", "log", "--pretty=%s"], cwd=project,
+                         capture_output=True, text=True).stdout.splitlines()
+    assert sum(m.startswith("chore(cadence): scan_cycle ") for m in log) == 1
     assert yaml.safe_load((project / "seldon.yaml").read_text())[
         "dispatch"]["cadence"][0]["last_instance"] == rel
 
