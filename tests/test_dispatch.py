@@ -527,7 +527,47 @@ def test_the_launch_command_is_the_protocol_sentence_with_the_permission_mode():
     assert prompt == (
         "Read CLAUDE.md, then execute cc_tasks/2026-09-15_standing_dispatcher.md. Glob and "
         "read all sibling 2026-09-15_standing_dispatcher_ADDENDUM*.md files before starting; "
-        "an addendum can amend or SUPERSEDE the base task.")
+        "an addendum can amend or SUPERSEDE the base task. "
+        "This session is headless: there is no next turn and ending it ends the process. "
+        "Poll every detached command to its EXIT line inside this turn; never use "
+        "background-task mode or wait to be notified.")
+
+
+def test_the_launch_prompt_carries_the_headless_clause_verbatim():
+    """`ai-readiness-kg/cc_tasks/2026-09-16_headless_session_polls_to_completion.md` decision 1.
+
+    The first session on `c609b1e1` backgrounded its suite, ended its turn to be notified, and
+    under `claude -p` the turn end was the process end: no RESULT. The clause is in the launch,
+    not the task file, because it is true of every dispatched session and of no interactive one.
+    """
+    from seldon.commands.dispatch import DISPATCH_LINE, HEADLESS_CLAUSE
+    assert HEADLESS_CLAUSE == (
+        "This session is headless: there is no next turn and ending it ends the process. "
+        "Poll every detached command to its EXIT line inside this turn; never use "
+        "background-task mode or wait to be notified.")
+    prompt = DISPATCH_LINE.format(rel="cc_tasks/x.md", stem="x")
+    assert prompt.endswith(" " + HEADLESS_CLAUSE)
+    assert prompt.count(HEADLESS_CLAUSE) == 1
+
+
+def test_the_launched_session_has_background_tasks_disabled(tmp_path, monkeypatch):
+    """The mechanical guard under the prose clause (same task, decision 3). Claude Code
+    documents `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` as disabling `run_in_background` on Bash
+    and subagent tools, auto-backgrounding and Ctrl+B (code.claude.com/docs/en/env-vars). The
+    child gets it even when the parent environment says otherwise, and the API-key strip
+    still holds beside it."""
+    from seldon.commands.dispatch import HEADLESS_ENV, _run
+    assert HEADLESS_ENV == {"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS": "1"}
+    monkeypatch.setenv("CLAUDE_CODE_DISABLE_BACKGROUND_TASKS", "0")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-x")
+    log = tmp_path / "t.log"
+    code = _run(["sh", "-c",
+                 'echo "bg=$CLAUDE_CODE_DISABLE_BACKGROUND_TASKS key=${ANTHROPIC_API_KEY:-}"'],
+                tmp_path, log)
+    assert code == 0
+    text = log.read_text(encoding="utf-8")
+    assert "bg=1 key=\n" in text
+    assert "EXIT=0" in text
 
 
 def test_the_claim_path_walks_proposed_through_accepted():

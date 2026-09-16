@@ -48,10 +48,28 @@ ACTOR = "dispatcher"
 #: The CC dispatch line `CLAUDE.md` prescribes, verbatim. The prompt is not composed here for
 #: taste; it is the protocol's own sentence, and a dispatcher that paraphrased it would be
 #: sending a session a different instruction from the one an operator sends.
+#:
+#: The one addition is `HEADLESS_CLAUSE`, which the operator's line does not carry because it
+#: is false of an interactive session: under `claude -p` a turn end is the process end, and
+#: the first session on `c609b1e1` (2026-09-16T14:44:47Z) backgrounded its suite, ended its
+#: turn to be notified, and died with no RESULT. `ai-readiness-kg` `CLAUDE.md` states the same
+#: sentence under "Headless sessions" and a test there asserts the two are byte-identical.
+HEADLESS_CLAUSE = (
+    "This session is headless: there is no next turn and ending it ends the process. "
+    "Poll every detached command to its EXIT line inside this turn; never use "
+    "background-task mode or wait to be notified."
+)
 DISPATCH_LINE = (
     "Read CLAUDE.md, then execute {rel}. Glob and read all sibling {stem}_ADDENDUM*.md files "
-    "before starting; an addendum can amend or SUPERSEDE the base task."
+    "before starting; an addendum can amend or SUPERSEDE the base task. " + HEADLESS_CLAUSE
 )
+
+#: The mechanical guard under the clause. Claude Code documents
+#: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` as disabling "all background task functionality,
+#: including the `run_in_background` parameter on Bash and subagent tools, auto-backgrounding,
+#: and the Ctrl+B shortcut" (code.claude.com/docs/en/env-vars; checked against CLI 2.1.273).
+#: Not a tunable: a dispatched session with background tasks enabled is the defect.
+HEADLESS_ENV = {"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS": "1"}
 
 #: `proposed` has no edge to `in_progress` on the ResearchTask state machine
 #: (`seldon/domain/research.yaml`: proposed -> [accepted, rejected, superseded, withdrawn]).
@@ -776,9 +794,11 @@ def _run(cmd: list, project_dir: Path, log_path: Path) -> int:
     narrating. Here the narration is the point.
 
     `ANTHROPIC_API_KEY` is stripped from the child's environment as well as refused in the
-    parent's: the pass could have started before a shell exported one.
+    parent's: the pass could have started before a shell exported one. `HEADLESS_ENV` is laid
+    over the result so an inherited value cannot re-enable background tasks.
     """
     env = {k: v for k, v in os.environ.items() if k not in D.API_KEY_VARS}
+    env.update(HEADLESS_ENV)
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
         fh.flush()
