@@ -2,7 +2,11 @@
 Shared fixtures for Seldon test suite.
 
 Neo4j fixtures:
-- Skip tests (not fail) if Neo4j is unreachable.
+- FAIL (not skip) when Neo4j is unreachable or its credentials are unresolved, unless
+  SELDON_TESTS_ALLOW_NEO4J_SKIP=1 excuses the tier explicitly. A skipped tier reported as a
+  green suite was the defect (ai-readiness-kg/cc_tasks/2026-09-16_neo4j_fixture_fails_not_skips.md:
+  an ordinary shell printed `1177 passed, 730 skipped, EXIT=0`).
+- Credentials come from `seldon.config.resolve_neo4j_credentials`, the resolver production uses.
 - Use a dedicated, per-process database to avoid polluting production databases
   and to keep concurrent pytest processes from wiping each other's fixtures.
   The name is resolved once in `tests/testdb.py` — see that module for the
@@ -15,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from seldon.config import NEO4J_CREDENTIAL_ENV_PAIRS, resolve_neo4j_credentials
 from tests.testdb import (
     TEST_DATABASE,
     TEST_DATABASE_IS_EPHEMERAL,
@@ -44,43 +49,54 @@ def sample_artifact_id():
 __all__ = ["TEST_DATABASE", "TEST_PROJECT_DATABASE"]
 
 
+#: The only way to excuse the Neo4j tier. Nothing on the development machine sets it; an
+#: environment with no Neo4j (CI) sets it on purpose, and the excuse is then on the record.
+ALLOW_NEO4J_SKIP_ENV = "SELDON_TESTS_ALLOW_NEO4J_SKIP"
+
+
 def _neo4j_creds():
-    return (
-        os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-        os.getenv("NEO4J_USERNAME", "neo4j"),
-        os.getenv("NEO4J_PASSWORD", "password"),
-    )
+    """Return ``(uri, username, password)``; either credential may be ``None`` (unresolved)."""
+    username, password = resolve_neo4j_credentials()
+    return os.getenv("NEO4J_URI", "bolt://localhost:7687"), username, password
 
 
-def _neo4j_reachable() -> bool:
-    """Return True if Neo4j is reachable, False otherwise."""
+def _neo4j_unavailable_reason():
+    """Return why the Neo4j tier cannot run, or ``None`` when it can."""
+    uri, username, password = _neo4j_creds()
+    if username is None or password is None:
+        pairs = " or ".join(f"{u}/{p}" for u, p in NEO4J_CREDENTIAL_ENV_PAIRS)
+        missing = [n for n, v in (("username", username), ("password", password)) if v is None]
+        return (f"Neo4j credentials unresolved ({' and '.join(missing)}): export {pairs}. "
+                "No file is read for them (seldon/.env is loaded only by "
+                "load_project_config, never by the test suite).")
     try:
         from neo4j import GraphDatabase
-        uri, username, password = _neo4j_creds()
         driver = GraphDatabase.driver(uri, auth=(username, password))
-        with driver.session() as session:
-            session.run("RETURN 1")
-        driver.close()
-        return True
-    except Exception:
-        return False
+        try:
+            with driver.session() as session:
+                session.run("RETURN 1")
+        finally:
+            driver.close()
+    except Exception as exc:  # any connect/auth failure is the reason, reported verbatim
+        return f"Neo4j not usable at {uri} as {username!r}: {type(exc).__name__}: {exc}"
+    return None
 
 
 @pytest.fixture(scope="session")
 def neo4j_available():
+    """Session-scoped gate for every Neo4j-backed test.
+
+    Fails when the tier cannot run. Skips only when ``SELDON_TESTS_ALLOW_NEO4J_SKIP=1``: a
+    skipped test is a distinct outcome so a reader can refuse to count it (TAP ``# SKIP``,
+    JUnit ``<skipped/>``), and an excused test is excused explicitly, by someone, on the record.
     """
-    Session-scoped check. Behavior when Neo4j is unreachable:
-    - NEO4J_PASSWORD is explicitly set → FAIL (you configured credentials, Neo4j is expected up)
-    - NEO4J_PASSWORD not set → SKIP (CI / no Neo4j environment, graceful degradation)
-    """
-    if not _neo4j_reachable():
-        if os.getenv("NEO4J_PASSWORD"):
-            pytest.fail(
-                "Neo4j not reachable but NEO4J_PASSWORD is set — is Neo4j running? "
-                f"(URI: {os.getenv('NEO4J_URI', 'bolt://localhost:7687')})"
-            )
-        pytest.skip("Neo4j not reachable — skipping Neo4j tests")
-    return True
+    reason = _neo4j_unavailable_reason()
+    if reason is None:
+        return True
+    if os.getenv(ALLOW_NEO4J_SKIP_ENV) == "1":
+        pytest.skip(f"{reason} (excused by {ALLOW_NEO4J_SKIP_ENV}=1)")
+    pytest.fail(f"{reason} Set {ALLOW_NEO4J_SKIP_ENV}=1 only to excuse the Neo4j tier "
+                "on purpose.", pytrace=False)
 
 
 @pytest.fixture(scope="session")

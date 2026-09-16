@@ -784,25 +784,40 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
             lines.append("**Lease:** free" + (f" (last released {released})" if released else ""))
 
         # One row per task the dispatcher has finished, newest last, with the three facts the
-        # finish check turns on: exit code, RESULT present, and the state the graph showed.
-        finished, blocked = {}, {}
+        # finish check turned on: exit code, RESULT present, and the state the graph showed.
+        # The row reports the task's CURRENT state, replayed from `artifact_state_changed` on
+        # this same log (the graph is a projection of it, so this is the graph's state without
+        # needing the graph). `graph_state_observed` is only what the dispatcher saw at finish;
+        # another actor may have moved the task since, and a brief that prints the finish-time
+        # state lists a completed task as blocked (the `c609b1e1` case,
+        # ai-readiness-kg/cc_tasks/2026-09-16_neo4j_fixture_fails_not_skips.md decision 4).
+        finished, blocked, current = {}, {}, {}
         for ev in read_events(root):
             t = ev.get("event_type")
             p = ev.get("payload", {})
-            if t == D.EVENT_FINISHED:
+            if t == "artifact_state_changed":
+                current[p.get("artifact_id")] = p.get("to_state")
+            elif t == D.EVENT_FINISHED:
                 finished[p.get("task_id")] = p
                 if not p.get("ok"):
                     blocked[p.get("task_id")] = p
             elif t == D.EVENT_LAUNCHED:
                 blocked.pop(p.get("task_id"), None)
+        # A failed finish stays on the blocked list unless the log shows the task has since
+        # left `blocked`. An unknown state (no transition on the log) is not a resolved one.
+        blocked = {tid: p for tid, p in blocked.items()
+                   if current.get(tid) in (None, "blocked")}
         if finished:
             lines.append("")
             lines.append("**Last dispatch per task:**")
             for tid, p in finished.items():
+                state = current.get(tid) or "unknown"
+                observed = p.get("graph_state_observed")
+                at_finish = f" (at finish: {observed})" if observed != state else ""
                 lines.append(
                     f"- `{(tid or '?')[:8]}` exit={p.get('exit_code')} "
                     f"result={'yes' if p.get('result_present') else 'NO'} "
-                    f"graph={p.get('graph_state_observed')} — `{p.get('log_path')}`"
+                    f"state={state}{at_finish} — `{p.get('log_path')}`"
                 )
         else:
             lines.append("**Last dispatch per task:** *(the dispatcher has launched nothing)*")
@@ -811,6 +826,7 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
             lines.append("**Blocked by the dispatcher — read the log before re-queueing:**")
             for tid, p in blocked.items():
                 lines.append(f"- `{(tid or '?')[:8]}` exit={p.get('exit_code')} "
+                             f"state={current.get(tid) or 'unknown'} "
                              f"— `{p.get('log_path')}`")
 
         for entry in cfg.get("cadence") or []:

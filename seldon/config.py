@@ -61,6 +61,25 @@ def load_project_config(project_dir: Optional[Path] = None) -> dict:
         return yaml.safe_load(f)
 
 
+#: Environment variable pairs that carry Neo4j credentials, in priority order. The first pair
+#: is Seldon's own spelling; the second is the one the rest of this machine's projects export.
+NEO4J_CREDENTIAL_ENV_PAIRS = (("NEO4J_USERNAME", "NEO4J_PASSWORD"), ("NEO4J_USER", "NEO4J_PASS"))
+
+
+def resolve_neo4j_credentials() -> tuple[Optional[str], Optional[str]]:
+    """Return ``(username, password)`` from the environment, ``None`` for whichever is unset.
+
+    The one credential resolver: production (`get_neo4j_driver`) and the test suite's Neo4j
+    fixture both call it, so the suite cannot read a different spelling from the code it tests
+    (ai-readiness-kg/cc_tasks/2026-09-16_neo4j_fixture_fails_not_skips.md decision 1). Each
+    field takes the first pair in ``NEO4J_CREDENTIAL_ENV_PAIRS`` that sets it. Callers decide
+    what an unresolved field means; this function supplies no default.
+    """
+    username = next((os.getenv(u) for u, _ in NEO4J_CREDENTIAL_ENV_PAIRS if os.getenv(u)), None)
+    password = next((os.getenv(p) for _, p in NEO4J_CREDENTIAL_ENV_PAIRS if os.getenv(p)), None)
+    return username, password
+
+
 def get_neo4j_driver(config: dict):
     """Create and return a Neo4j driver from project config + env variables.
 
@@ -69,8 +88,9 @@ def get_neo4j_driver(config: dict):
     """
     from neo4j import GraphDatabase
     uri = config["neo4j"]["uri"]
-    username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
-    password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
+    resolved_username, resolved_password = resolve_neo4j_credentials()
+    username = resolved_username or "neo4j"
+    password = resolved_password or "password"
 
     extra_kwargs = {}
     try:

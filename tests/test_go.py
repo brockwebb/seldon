@@ -468,3 +468,58 @@ def test_the_dispatcher_section_is_in_the_assembled_brief_and_in_the_json(tmp_pa
     assert "## Dispatcher" in assemble_go_context(project_dir=str(p), brief=True)
     assert "## Dispatcher" in assemble_go_context_as_dict(
         project_dir=str(p), brief=True)["dispatch"]
+
+
+def _state(tmp_path, artifact_id, from_state, to_state, actor="cc"):
+    line = {"event_id": str(_uuid.uuid4()), "event_type": "artifact_state_changed",
+            "timestamp": _dt.now(_tz.utc).isoformat().replace("+00:00", "Z"),
+            "session_id": "s", "actor": actor, "authority": "accepted",
+            "payload": {"artifact_id": artifact_id, "artifact_type": "ResearchTask",
+                        "from_state": from_state, "to_state": to_state}}
+    with open(tmp_path / "seldon_events.jsonl", "a", encoding="utf-8") as fh:
+        fh.write(_json.dumps(line) + "\n")
+
+
+def test_a_blocked_task_completed_by_another_actor_is_reported_at_its_current_state(tmp_path):
+    """`ai-readiness-kg/cc_tasks/2026-09-16_neo4j_fixture_fails_not_skips.md` decision 4. The
+    `c609b1e1` case: the dispatcher finished a launch with `ok: false` and moved the task to
+    `blocked`; a hand-dispatched session later walked it `blocked -> in_progress -> completed`.
+    The brief printed `graph=in_progress` (the state the dispatcher saw at finish) and listed
+    the task as blocked, at a time the graph held `completed`. The row reports the artifact's
+    current state, replayed from the same event log the graph is projected from, and a task no
+    longer in `blocked` is not listed as blocked."""
+    p = _dispatch_project(tmp_path)
+    tid = "c609b1e1-b294-4a75-931a-6e314ab1669b"
+    _state(p, tid, "proposed", "accepted", actor="dispatcher")
+    _state(p, tid, "accepted", "in_progress", actor="dispatcher")
+    _event(p, "dispatch_launched", {"task_id": tid})
+    _event(p, "dispatch_finished", {"task_id": tid, "exit_code": 0, "ok": False,
+                                    "result_present": False,
+                                    "graph_state_observed": "in_progress",
+                                    "log_path": "logs/dispatch/c.log"})
+    _state(p, tid, "in_progress", "blocked", actor="dispatcher")
+    out = _get_dispatch_section(str(p))
+    assert "Blocked by the dispatcher" in out and "state=blocked" in out
+
+    _state(p, tid, "blocked", "in_progress")
+    _state(p, tid, "in_progress", "completed")
+    out = _get_dispatch_section(str(p))
+    assert "Blocked by the dispatcher" not in out
+    assert "state=completed" in out
+    assert "graph=in_progress" not in out
+    # The finish-time observation is kept beside the current state when they differ: it is
+    # the fact the dispatcher's finish check turned on.
+    assert "at finish: in_progress" in out
+
+
+def test_a_failed_finish_with_no_state_history_stays_listed_as_blocked(tmp_path):
+    """Absent evidence that the task left `blocked`, the brief keeps it on the blocked list:
+    the section is an incident notice, and an unknown state is not a resolved one."""
+    p = _dispatch_project(tmp_path)
+    _event(p, "dispatch_launched", {"task_id": "abc12345-x"})
+    _event(p, "dispatch_finished", {"task_id": "abc12345-x", "exit_code": 2, "ok": False,
+                                    "result_present": False, "graph_state_observed": "blocked",
+                                    "log_path": "logs/dispatch/a.log"})
+    out = _get_dispatch_section(str(p))
+    assert "Blocked by the dispatcher" in out
+    assert "state=unknown" in out
