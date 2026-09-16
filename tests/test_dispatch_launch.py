@@ -90,11 +90,12 @@ def project(tmp_path):
     return p
 
 
-def _stub(project: Path, *, exit_code=0, write_result=True, complete=True, task_id=None):
+def _stub(project: Path, *, exit_code=0, write_result=True, complete=True, task_id=None,
+          stem="t1"):
     """A shell script standing in for `claude -p`. Writes what a real CC session writes."""
     lines = ["#!/bin/sh", 'echo "stub cc: $*"']
     if write_result:
-        lines.append(f'printf "# RESULT\\n" > {project}/cc_tasks/t1_RESULT.md')
+        lines.append(f'printf "# RESULT\\n" > {project}/cc_tasks/{stem}_RESULT.md')
     if complete and task_id:
         lines.append(
             f'{sys_executable()} -c "'
@@ -457,3 +458,336 @@ def test_lease_reap_refuses_a_live_holder_through_the_cli(project, neo4j_driver,
     assert res.exit_code == 1
     assert "holder_alive" in res.output
     assert lock.is_file()
+
+
+# ======================================================= decision 1: one event per assertion
+#
+# `ai-readiness-kg/cc_tasks/2026-09-16_dispatch_idempotence.md` decision 1, and DN-006
+# ADDENDUM_03 §1. The rule these tests hold is not "refusals are silent" and not "refusals are
+# logged": it is **a standing condition is recorded once, when it begins, and a condition whose
+# beginning is already recorded somewhere a stranger can read is not recorded again here.**
+#
+# `lease_held` is the case that was wrong. The lease file is gitignored runtime state, so a
+# lease acquisition is recorded NOWHERE else — which is why it earns one event — and it lasts
+# for as long as a dispatched session runs, which is why it must not earn one per pass. At a
+# five-minute poll a 23-minute suite run inside a dispatched session wrote five.
+
+
+def _lease_refusals(project):
+    return [e["payload"] for e in _events(project, D.EVENT_REFUSED)
+            if e["payload"].get("reason") == "lease_held"]
+
+
+def test_a_held_lease_is_refused_once_per_acquisition_and_not_once_per_pass(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """Twelve passes an hour for the length of a session, against one acquisition: one event.
+
+    This is the defect `cc_tasks/2026-09-16_publication_guards_RESULT.md` §0 found from inside
+    the first dispatched session — the lease its own dispatcher held made every five-minute
+    pass write a refusal, and the suite that ran inside that session could not be green."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _register(project, neo4j_driver, domain_config)
+    _stub(project)
+    log = project / "seldon_events.jsonl"
+    with D.Lease(project / ".seldon" / "dispatch.lock"):
+        assert _run(project, ["once"]).exit_code == 0
+        after_first = log.read_bytes() if log.exists() else b""
+        for _ in range(5):
+            assert _run(project, ["once"]).exit_code == 0
+        after_rest = log.read_bytes() if log.exists() else b""
+
+    assert len(_lease_refusals(project)) == 1, "one acquisition, one refusal"
+    assert after_rest == after_first, "a pass over a lease already recorded wrote to the log"
+
+
+def test_the_refusal_names_the_acquisition_it_is_about(project, neo4j_driver, domain_config,
+                                                       clean_test_db, monkeypatch):
+    """`acquired_at` is what makes "once per acquisition" checkable by a reader and by the
+    suppression itself. A refusal that named only the holder would suppress a genuinely new
+    lease taken by a recycled PID on the same host."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _register(project, neo4j_driver, domain_config)
+    _stub(project)
+    lock = project / ".seldon" / "dispatch.lock"
+    with D.Lease(lock):
+        _run(project, ["once"])
+        body = D.read_lease(lock)
+    payload = _lease_refusals(project)[0]
+    assert payload["holder"] == body["holder"]
+    assert payload["acquired_at"] == body["acquired_at"]
+    assert payload["task_in_flight"] == body["task"]
+
+
+def test_a_second_acquisition_is_refused_again_because_the_condition_changed(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """"Once when it begins, again only when it changes." A new lease is a new beginning, and
+    a suppression that swallowed it would make a log in which the second session that ever
+    collided with a running one is invisible."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _register(project, neo4j_driver, domain_config)
+    _stub(project)
+    lock = project / ".seldon" / "dispatch.lock"
+    for _ in range(2):
+        with D.Lease(lock):
+            assert _run(project, ["once"]).exit_code == 0
+            assert _run(project, ["once"]).exit_code == 0
+    refusals = _lease_refusals(project)
+    assert len(refusals) == 2, [r["acquired_at"] for r in refusals]
+    assert refusals[0]["acquired_at"] != refusals[1]["acquired_at"]
+
+
+# ============================================== decision 2: the invariant is idempotence, not
+#                                                emptiness, and it never skips
+#
+# `test_a_pass_in_a_launchd_shaped_environment_reaches_the_queue_and_writes_no_event` in
+# `ai-readiness-kg/tests/test_dispatch_config.py` asserted single-pass emptiness in the only
+# environment the dispatcher has, and that environment always has a task in flight. The claim
+# that holds in EVERY state — nothing eligible, a task in flight, a STOP file, a dirty tree,
+# disabled — is that a second pass changes nothing. Here it is under each condition, so the
+# project-side test is asserting something this side has already pinned.
+
+
+@pytest.fixture
+def standing_condition(request, project):
+    """Put the checkout into one named standing condition and leave it there."""
+    which = request.param
+    if which == "lease_held":
+        lease = D.Lease(project / ".seldon" / "dispatch.lock").__enter__()
+        yield which
+        lease.__exit__(None, None, None)
+        return
+    if which == "stop_file":
+        (project / ".seldon").mkdir(exist_ok=True)
+        (project / ".seldon" / "DISPATCH_STOP").write_text("operator", encoding="utf-8")
+    elif which == "dirty_tree":
+        (project / "scratch.txt").write_text("x", encoding="utf-8")
+    elif which == "disabled":
+        doc = yaml.safe_load((project / "seldon.yaml").read_text())
+        doc["dispatch"]["enabled"] = False
+        (project / "seldon.yaml").write_text(yaml.safe_dump(doc), encoding="utf-8")
+    elif which != "nothing_eligible":
+        raise AssertionError(f"unknown standing condition {which!r}")
+    yield which
+
+
+@pytest.mark.parametrize("standing_condition",
+                         ["nothing_eligible", "lease_held", "stop_file", "dirty_tree",
+                          "disabled"],
+                         indirect=True)
+def test_a_second_pass_under_a_standing_condition_leaves_the_event_log_byte_identical(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch,
+        standing_condition):
+    """Two passes, nothing changed between them, every condition the dispatcher can be in.
+
+    Each condition is allowed its ONE event on the first pass — that is decision 1's rule, not
+    an exception to it. What no condition is allowed is a second."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    if standing_condition == "nothing_eligible":
+        (project / "cc_tasks" / "bare.md").write_text("# bare\n", encoding="utf-8")
+        _git(project, "add", "-A")
+        _git(project, "commit", "-m", "bare")
+        _register(project, neo4j_driver, domain_config, rel="cc_tasks/bare.md")
+    else:
+        _register(project, neo4j_driver, domain_config)
+    _stub(project)
+    log = project / "seldon_events.jsonl"
+
+    assert _run(project, ["once"]).exit_code == 0
+    after_first = log.read_bytes() if log.exists() else b""
+    assert _run(project, ["once"]).exit_code == 0
+    after_second = log.read_bytes() if log.exists() else b""
+
+    assert after_second == after_first, (
+        f"a second pass under {standing_condition} wrote to the event log")
+    assert not _events(project, D.EVENT_LAUNCHED)
+
+
+# ================================== decision 3: a registered task file is committed by the
+#                                    dispatcher, not by a person
+#
+# DN-006 decision 2 asks c1 for a git-TRACKED task file and c7 for a CLEAN tree. A Desktop
+# session that registers a task satisfies neither: it writes an untracked file and it appends
+# the `artifact_created` line that records the registration to the event store, which this
+# project tracks. Both are the registration's own footprint, and until somebody committed them
+# the task could never be dispatched — and neither could any OTHER task, because c7 is a fact
+# about the checkout rather than about the task being evaluated. That is the same wedge
+# DN-006 ADDENDUM_02 §1 found in the cadence, one step earlier in the life of a task.
+
+
+def _author(project, stem, body=None):
+    path = project / "cc_tasks" / f"{stem}.md"
+    path.write_text(body or TASK_BODY.format(stem=stem), encoding="utf-8")
+    return path
+
+
+def _head_message(project):
+    return _git(project, "log", "-1", "--pretty=%s").stdout.strip()
+
+
+def _untracked(project):
+    return [ln[3:] for ln in _git(project, "status", "--porcelain").stdout.split("\n")
+            if ln.startswith("??")]
+
+
+def test_the_dispatcher_commits_a_registered_task_file_nobody_committed(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """The whole of decision 3, in the order it happens: authored, registered, untracked; one
+    pass; tracked, committed, and eligible on the criteria that were failing."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project, stem="t2")
+    path = _author(project, "t2")
+    tid = _register(project, neo4j_driver, domain_config, rel="cc_tasks/t2.md")
+    assert not D.is_tracked(project, path)
+
+    res = _run(project, ["status", "--json"])
+    row = next(r for r in json.loads(res.output)["tasks"] if r["task_id"] == tid)
+    assert row["criteria"]["c1"]["git_tracked"] is False
+    assert row["criteria"]["c7"]["ok"] is False
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    assert D.is_tracked(project, path), "the registered file is still untracked"
+    assert _head_message(project).startswith("register: cc_tasks/t2.md")
+
+    # And then the SAME pass launches it. The commit runs before candidacy for this reason:
+    # a task freed by a pass is a task that pass may serve, which is the cadence's shape
+    # (DN-006 decision 8) applied to a Desktop-authored file. The launch event carries the
+    # criteria vector, so "eligible on c1 and c7" is read off the log rather than re-computed.
+    launched = _events(project, D.EVENT_LAUNCHED)
+    assert [e["payload"]["task_id"] for e in launched] == [tid]
+    criteria = launched[0]["payload"]["criteria"]
+    assert criteria["c1"]["git_tracked"] is True
+    assert criteria["c7"]["ok"] is True
+    assert criteria["c7"]["dirty_paths"] == []
+
+
+def test_an_untracked_addendum_beside_a_registered_task_is_committed_with_it(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """An addendum is c3's evidence, and c3 is the criterion that stops a superseded task being
+    executed. A dispatcher that committed the base file and left the addendum behind would
+    hand a session a task whose supersession notice is sitting untracked beside it."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project)
+    _author(project, "t3")
+    add = project / "cc_tasks" / "t3_ADDENDUM_01.md"
+    add.write_text("# ADDENDUM 01\n\n**Date:** 2026-09-16. **Status:** AMENDS.\n",
+                   encoding="utf-8")
+    _register(project, neo4j_driver, domain_config, rel="cc_tasks/t3.md")
+
+    assert _run(project, ["once"]).exit_code == 0
+    assert D.is_tracked(project, add), "the addendum was left untracked beside its base task"
+    assert "cc_tasks/t3_ADDENDUM_01.md" in _git(
+        project, "show", "--name-only", "--pretty=", "HEAD").stdout
+
+
+def test_the_dispatcher_commits_the_registration_record_with_the_file_it_records(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch, tmp_path):
+    """The event store goes in the same commit, and it is not scope creep — it is the other
+    half of the same footprint.
+
+    `seldon cc register` writes the file AND appends `artifact_created` to the event store. In
+    this project the store is tracked, so committing only the file leaves c7 false on a line
+    that describes the very file just committed, and decision 3 would be a mechanism that
+    cannot make a single task dispatchable. The cadence already commits its instance and the
+    store together for this reason (DN-006 ADDENDUM_02 §1, "the commit carries its own record
+    on the log")."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # This project's fixture gitignores the store; the real one tracks it, which is the case
+    # that matters, so the fixture is changed to match the project the rule was written for.
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    _git(project, "add", "-A")
+    _git(project, "commit", "-m", "track the event store")
+    _stub(project, stem="t4")
+    _author(project, "t4")
+    _register(project, neo4j_driver, domain_config, rel="cc_tasks/t4.md")
+    assert D.tree_state(project)["dirty"] is True
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    names = _git(project, "show", "--name-only", "--pretty=", "HEAD").stdout
+    assert "cc_tasks/t4.md" in names and "seldon_events.jsonl" in names
+
+    # The point of the whole decision: c7 is TRUE at the moment candidacy is evaluated. Read
+    # off the launch event's own vector, because by the end of the pass the tree is dirty
+    # again — `dispatch_launched` and `dispatch_finished` are appended to the tracked store
+    # AFTER this commit, and nothing in this task commits them. That residue is real and it is
+    # reported in this task's RESULT rather than papered over here: what decision 3 claims is
+    # that a REGISTRATION no longer wedges the queue, and that is what this asserts.
+    launched = _events(project, D.EVENT_LAUNCHED)
+    assert launched and launched[0]["payload"]["criteria"]["c7"]["ok"] is True
+    assert launched[0]["payload"]["criteria"]["c7"]["dirty_paths"] == []
+
+
+def test_the_dispatcher_commits_nothing_else_that_is_lying_in_the_checkout(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """"Anything else untracked or modified stays c7's business." A dispatcher that swept the
+    tree would commit whoever's work-in-progress happened to be in it, under a message saying
+    it registered a task file — the `git add -A` the cadence already refuses to do."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project)
+    _author(project, "t5")
+    _register(project, neo4j_driver, domain_config, rel="cc_tasks/t5.md")
+    (project / "somebody_elses_work.py").write_text("x = 1\n", encoding="utf-8")
+    (project / "cc_tasks" / "not_registered.md").write_text("# nobody registered me\n",
+                                                            encoding="utf-8")
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    names = _git(project, "show", "--name-only", "--pretty=", "HEAD").stdout
+    assert "cc_tasks/t5.md" in names
+    assert "somebody_elses_work.py" not in names
+    assert "not_registered.md" not in names
+    assert set(_untracked(project)) == {"somebody_elses_work.py",
+                                        "cc_tasks/not_registered.md"}
+
+
+def test_a_registered_file_that_is_already_tracked_is_not_committed_again(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """Idempotence at the commit, which is what keeps decision 2's second pass byte-identical
+    in git as well as in the log: the trigger is `untracked`, not `registered`."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project)
+    _register(project, neo4j_driver, domain_config)          # cc_tasks/t1.md, committed
+    head = _git(project, "rev-parse", "HEAD").stdout.strip()
+    assert _run(project, ["once", "--dry-run"]).exit_code == 0
+    assert _git(project, "rev-parse", "HEAD").stdout.strip() == head
+
+
+def test_the_dispatcher_does_not_commit_into_a_checkout_a_claim_is_in_flight_in(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """The cadence's gate, for the cadence's reason (DN-006 ADDENDUM_02 §1): writing a commit
+    into a checkout something else is editing is DD-019's batch-identity class in the one place
+    this design can still reach it. A claim in flight means a dispatched session owns the tree.
+    """
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project)
+    tid = _register(project, neo4j_driver, domain_config)
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        s.run("MATCH (t:ResearchTask {artifact_id:$i}) SET t.state='in_progress', "
+              "t.claimed_by='dispatcher:elsewhere:1' RETURN t", i=tid)
+    _author(project, "t6")
+    _register(project, neo4j_driver, domain_config, rel="cc_tasks/t6.md")
+    head = _git(project, "rev-parse", "HEAD").stdout.strip()
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    assert _git(project, "rev-parse", "HEAD").stdout.strip() == head
+    assert not D.is_tracked(project, project / "cc_tasks" / "t6.md")
+
+
+def test_the_commit_is_reported_on_stdout_where_the_wrapper_log_carries_it(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """No new event type. A commit is recorded by git, and the registration it commits is
+    already on the log as `artifact_created`; a third record of the same fact is the thing
+    decision 1 spent this task removing. What a reader needs is the line in the pass's own
+    output, which is what `logs/airkg_dispatch.log` keeps."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _stub(project)
+    _author(project, "t7")
+    _register(project, neo4j_driver, domain_config, rel="cc_tasks/t7.md")
+    before = len(_events(project))
+    res = _run(project, ["once"])
+    assert "register:" in res.output and "cc_tasks/t7.md" in res.output
+    kinds = [e["event_type"] for e in _events(project)[before:]]
+    assert "cadence_created" not in kinds
+    assert D.EVENT_REFUSED not in kinds

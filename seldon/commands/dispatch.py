@@ -254,9 +254,29 @@ def dispatch_once(dry_run):
         try:
             lease = D.Lease(project_dir / cfg["lease_file"]).__enter__()
         except D.LeaseHeld as held:
-            _emit(project_dir, session_id, D.EVENT_REFUSED,
-                  {"task_id": None, "reason": "lease_held", "holder": held.body.get("holder"),
-                   "task_in_flight": held.body.get("task")})
+            # ONE event per lease ACQUISITION, and never one per pass — the STOP file's
+            # treatment three lines above, for the STOP file's reason. A held lease is a
+            # STANDING CONDITION: it lasts for as long as the dispatched session it belongs to
+            # runs, and a five-minute poll wrote THREE identical refusals for one acquisition
+            # inside the first session this dispatcher ever launched
+            # (`ai-readiness-kg/cc_tasks/2026-09-16_publication_guards_RESULT.md` §0; the
+            # three are still on that project's log, at 04:27:49Z, 04:36:55Z and 04:38:55Z,
+            # all naming holder `dispatcher:HexagonMBP.local:71841`).
+            #
+            # It earns its ONE event rather than the silence `dirty_tree` and `disabled` get,
+            # and the difference is the rule DN-006 ADDENDUM_03 states: a standing condition is
+            # recorded here only when its beginning is recorded NOWHERE ELSE a reader can
+            # reach. `.seldon/dispatch.lock` is gitignored runtime state that the next
+            # acquisition overwrites, so an acquisition leaves no other trace unless the pass
+            # that took it went on to launch something. A dirty tree, a disabled flag and an
+            # over-band header are all facts about tracked files, and git already says when
+            # each began.
+            if not _lease_acquisition_already_refused(project_dir, held.body):
+                _emit(project_dir, session_id, D.EVENT_REFUSED,
+                      {"task_id": None, "reason": "lease_held",
+                       "holder": held.body.get("holder"),
+                       "acquired_at": held.body.get("acquired_at"),
+                       "task_in_flight": held.body.get("task")})
             click.echo(f"lease held by {held.body.get('holder')}; exiting")
             return
         try:
@@ -268,17 +288,53 @@ def dispatch_once(dry_run):
         driver.close()
 
 
+def _last_payload(project_dir: Path, event_type: str, where=None) -> dict | None:
+    """The payload of the most recent event of this type, or None.
+
+    The single read behind both once-per-appearance suppressions below. LAST rather than ANY,
+    because the question each of them asks is "is the condition on the log the one in front of
+    me now" — a condition that ended and began again is a new assertion and gets a new line.
+    """
+    from seldon.core.events import read_events
+    last = None
+    for ev in read_events(project_dir):
+        if ev.get("event_type") != event_type:
+            continue
+        payload = ev.get("payload") or {}
+        if where is not None and not where(payload):
+            continue
+        last = payload
+    return last
+
+
 def _stop_already_observed(project_dir: Path, stop: Path) -> bool:
     """Has this STOP-file appearance already been recorded? Compares the file's mtime with the
     last `dispatch_observed_stop`, so removing and re-creating the file is a new appearance and
     a file left in place for a week is one."""
-    from seldon.core.events import read_events
+    last = _last_payload(project_dir, D.EVENT_OBSERVED_STOP)
     mtime = stop.stat().st_mtime
-    last = None
-    for ev in read_events(project_dir):
-        if ev.get("event_type") == D.EVENT_OBSERVED_STOP:
-            last = ev["payload"].get("stop_mtime")
-    return last is not None and abs(float(last) - mtime) < 1e-6
+    return (last is not None and last.get("stop_mtime") is not None
+            and abs(float(last["stop_mtime"]) - mtime) < 1e-6)
+
+
+def _lease_acquisition_already_refused(project_dir: Path, body: dict) -> bool:
+    """Has THIS lease acquisition already been refused once? The STOP file's mtime comparison,
+    against the acquisition's identity instead.
+
+    `acquired_at` and not the holder alone: `dispatcher:<host>:<pid>` recycles, and a suppression
+    keyed on it would swallow a genuinely new collision taken by a reused PID — silence about
+    the one event in this whole branch that is worth a line.
+    """
+    holder, acquired = body.get("holder"), body.get("acquired_at")
+    if holder is None and acquired is None:
+        # A lease file with no body at all. Nothing to key on, so nothing is suppressed: an
+        # unreadable lease that blocks a pass is exactly the state an operator must see.
+        return False
+    last = _last_payload(project_dir, D.EVENT_REFUSED,
+                         where=lambda p: p.get("reason") == "lease_held")
+    if last is None:
+        return False
+    return (last.get("holder"), last.get("acquired_at")) == (holder, acquired)
 
 
 def _cadence_rows(project_dir, cfg, now=None) -> list:
@@ -413,11 +469,77 @@ def _create_instance(project_dir, config, driver, database, domain_config, sessi
             "last_instance_written": wrote_back}
 
 
+def _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run) -> list:
+    """DN-006 ADDENDUM_03 §2: a registered task file is committed by the dispatcher, not by a
+    person.
+
+    **The wedge this removes.** `seldon cc register` leaves two things behind: an untracked
+    task file, and an `artifact_created` line appended to the event store, which this project
+    tracks. Decision 2's c1 wants the file git-tracked and c7 wants the tree clean, so a
+    Desktop session that registers a task produces a task that can never be dispatched — and
+    blocks every OTHER task in the queue at the same time, because c7 is a fact about the
+    checkout and not about the task being evaluated. That is the wedge ADDENDUM_02 §1 found in
+    the cadence, one step earlier in the life of a task, and the commit is entailed by
+    decision 2 in exactly the way it was entailed by decision 8.
+
+    **Both halves of the footprint go in one commit.** The task file, any untracked
+    `<stem>_ADDENDUM*.md` beside it (c3's evidence: a dispatcher that committed a base task and
+    left its supersession notice untracked would hand a session a task the notice forbids), and
+    the event store, whose modified line is the record of the very registration being
+    committed. Committing the file alone leaves c7 false on that line and makes this mechanism
+    incapable of freeing a single task.
+
+    **What it will not touch.** Anything else untracked or modified stays c7's business
+    (`git add -A` is what the cadence already refuses); and it writes nothing into a checkout
+    with a dispatcher claim in flight or on a branch that is not the configured one, for
+    DD-019's reason.
+
+    **No event.** The commit is recorded by git and the registration by `artifact_created`; a
+    third record of one fact is what decision 1 spent this task removing. The pass names it on
+    stdout, which is what the launchd wrapper's log carries.
+    """
+    if dry_run or claim is not None or tree["branch"] != cfg["branch"]:
+        return []
+    store = config.get("event_store", {}).get("path", "seldon_events.jsonl")
+    done = []
+    for task in tasks:
+        rel = task.get("source_file")
+        if not rel:
+            continue
+        path = project_dir / rel
+        if not path.is_file() or D.is_tracked(project_dir, path):
+            continue
+        paths = [rel]
+        paths += [str(a.relative_to(project_dir)) for a in D.addenda_for(path)
+                  if not D.is_tracked(project_dir, a)]
+        paths.append(store)
+        outcome = D.commit_paths(project_dir, paths,
+                                 f"register: {rel} — registered task file committed by the "
+                                 f"standing dispatcher")
+        if outcome["committed"]:
+            click.echo(f"register: {rel} committed as {outcome['commit']} "
+                       f"({len(outcome['committed_paths'])} path(s))")
+        else:
+            # Reported, never swallowed. A failure here leaves the file exactly as the
+            # registration left it; the next pass tries again, and `status` still shows why
+            # the task is ineligible.
+            click.echo(f"register: {rel} NOT committed ({outcome['reason']}): "
+                       f"{outcome.get('stderr', '')}", err=True)
+        done.append({"source_file": rel, **outcome})
+    return done
+
+
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
+    # Registered-but-uncommitted task files BEFORE the cadence and before candidacy: the
+    # cadence gates creation on a clean tree, and an untracked task file is one of the things
+    # making it dirty, so committing first is what lets a due period be served in the same pass.
+    tasks = _tasks(driver, database)
+    if _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run):
+        tree = D.tree_state(project_dir)
     # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
     # pass may then launch, so the queue it evaluates is the queue as it stands after the
     # calendar has had its say.
