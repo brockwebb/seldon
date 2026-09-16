@@ -428,16 +428,32 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
 
     eligible = [r for r in rows if r["eligible"]]
     if not eligible:
-        # DN-006 decision 7: a pass in which nothing is eligible writes NO event. The log
-        # records assertions, and "nothing to do" is not one — a five-minute poll that logged
-        # its own silence would bury the assertions in it.
-        blocked = [r for r in rows if r["candidate"] and D.first_refusal_reason(r)]
-        for r in blocked:
-            _emit(project_dir, session_id, D.EVENT_REFUSED,
-                  {"task_id": r["task_id"], "reason": D.first_refusal_reason(r),
-                   "criteria": r["criteria"]})
+        # DN-006 decision 7, taken literally: **a pass in which nothing is eligible writes NO
+        # event.** The log records assertions, and "nothing to do" is not one.
+        #
+        # This branch used to emit one `dispatch_refused` per blocked candidate, and it was
+        # wrong in the way only a path that has never run can be wrong. Every reason reachable
+        # from here — `dirty_tree`, `above_band`, `network_undeclared`, `disabled`,
+        # `stop_file` — is a STANDING CONDITION, re-evaluated every five minutes and unchanged
+        # until somebody edits a file. A working tree is dirty for as long as a session is
+        # working in it, so the first enabled pass over a two-candidate queue would have
+        # written two events, and the next 5-minute pass two more, for hours: the poll logging
+        # its own silence, which is the exact thing the comment above it forbade. Worse, the
+        # event store is a TRACKED file here, so writing to it keeps the tree dirty, which
+        # keeps the refusal true — a loop that feeds itself.
+        #
+        # Nothing is lost. Every one of those reasons is a live property of a task file or of
+        # the checkout, and `seldon dispatch status` computes all of them on demand with their
+        # values. The refusals that DO reach the log are the ones that are occurrences rather
+        # than states: `lease_held`, `api_key_present` and `claim_failed`, each emitted at its
+        # own site above.
         click.echo(f"nothing eligible ({len(rows)} open, "
                    f"{sum(1 for r in rows if r['candidate'])} candidate(s))")
+        for r in rows:
+            reason = D.first_refusal_reason(r) if r["candidate"] else None
+            if reason:
+                click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
+                           f"{','.join(r['failed'])}  {r['source_file']}")
         return
 
     chosen = eligible[0]

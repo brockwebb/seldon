@@ -342,7 +342,10 @@ def test_a_pass_with_nothing_eligible_writes_no_event(project, neo4j_driver, dom
     """DN-006 decision 7, asserted by BYTE comparison as the task file asks. The log records
     assertions; "nothing to do" is not one."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    # Registered, but its file is not a candidate: no headers at all.
+    # Registered, but its file is not a candidate: no headers at all. The companion case — a
+    # real CANDIDATE blocked by a standing condition — is
+    # `test_a_dirty_tree_refuses_the_candidate_names_the_paths_and_writes_no_event`, and it is
+    # the case this test alone did not cover, which is how the defect it now guards survived.
     (project / "cc_tasks" / "bare.md").write_text("# bare task\n\nno headers here\n",
                                                   encoding="utf-8")
     _git(project, "add", "-A")
@@ -357,19 +360,55 @@ def test_a_pass_with_nothing_eligible_writes_no_event(project, neo4j_driver, dom
     assert after == before, "a pass with nothing eligible wrote to the log"
 
 
-def test_a_dirty_tree_refuses_the_candidate_and_names_the_paths(project, neo4j_driver,
-                                                                domain_config, clean_test_db,
-                                                                monkeypatch):
+def test_a_dirty_tree_refuses_the_candidate_names_the_paths_and_writes_no_event(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """A refusal on a STANDING CONDITION is reported, not logged.
+
+    `dirty_tree` is true for as long as a session is working in the checkout, and a pass fires
+    every five minutes. One event per blocked candidate per pass is the poll logging its own
+    silence — which decision 7 forbids — and here it feeds itself: the event store is a tracked
+    file, so writing to it keeps the tree dirty, which keeps the refusal true.
+
+    Nothing is lost. The reason and its whole criteria vector are live properties that
+    `status` computes on demand, and this pass names them on stdout, which is what the launchd
+    wrapper's log carries."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     tid = _register(project, neo4j_driver, domain_config)
     _stub(project)
     (project / "scratch.txt").write_text("x", encoding="utf-8")
+    log = project / "seldon_events.jsonl"
+    before = log.read_bytes() if log.exists() else b""
+
     res = _run(project, ["once"])
     assert res.exit_code == 0
     assert _state(neo4j_driver, tid)[0] == "proposed"
-    refused = _events(project, D.EVENT_REFUSED)
-    assert [r["payload"]["reason"] for r in refused] == ["dirty_tree"]
-    assert refused[0]["payload"]["criteria"]["c7"]["dirty_paths"] == ["scratch.txt"]
+    assert "nothing eligible" in res.output
+    assert "dirty_tree" in res.output and "cc_tasks/t1.md" in res.output
+
+    after = log.read_bytes() if log.exists() else b""
+    assert after == before, "a standing-condition refusal was written to the log"
+    assert not _events(project, D.EVENT_REFUSED)
+
+    # `status` still has the whole vector, values and all.
+    out = _run(project, ["status"]).output
+    assert '"dirty_paths": ["scratch.txt"]' in out
+
+
+def test_ten_passes_over_a_dirty_tree_leave_the_log_byte_identical(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """The condition that made the old behaviour a defect, at the scale it happens on: a
+    five-minute poll across a two-hour session is twenty-four passes. The log must be the same
+    bytes after all of them."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _register(project, neo4j_driver, domain_config)
+    _stub(project)
+    (project / "scratch.txt").write_text("x", encoding="utf-8")
+    log = project / "seldon_events.jsonl"
+    before = log.read_bytes() if log.exists() else b""
+    for _ in range(10):
+        assert _run(project, ["once"]).exit_code == 0
+    after = log.read_bytes() if log.exists() else b""
+    assert after == before
 
 
 # ==================================================================================== status
