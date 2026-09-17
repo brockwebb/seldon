@@ -42,7 +42,9 @@ def _no_inherited_session_identity(monkeypatch):
     that wants an environment id sets it itself.
     """
     import seldon.config as config
-    for var in config.SESSION_ENV_VARS:
+    # The CC markers too: `resolve_cli_actor` reads them, and a suite run from a CC session
+    # would otherwise stamp `cc` where a terminal run stamps `human`.
+    for var in (*config.SESSION_ENV_VARS, *config.CC_ENV_MARKERS):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr(config, "_process_session_id", None)
 

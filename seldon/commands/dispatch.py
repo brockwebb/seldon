@@ -761,13 +761,13 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
     graph_state = _state_of(driver, database, chosen["task_id"])
     ok = code == 0 and result_path.is_file() and graph_state == "completed"
-    _emit(project_dir, session_id, D.EVENT_FINISHED,
-          {"task_id": chosen["task_id"], "child_session_id": child_session_id,
-           "exit_code": code, "wall_clock_s": wall,
-           "result_present": result_path.is_file(),
-           "result_path": str(result_path.relative_to(project_dir)),
-           "graph_state_observed": graph_state, "ok": ok,
-           "log_path": str(log_path.relative_to(project_dir))})
+    finish = {"task_id": chosen["task_id"], "child_session_id": child_session_id,
+              "exit_code": code, "wall_clock_s": wall,
+              "result_present": result_path.is_file(),
+              "result_path": str(result_path.relative_to(project_dir)),
+              "graph_state_observed": graph_state, "ok": ok,
+              "log_path": str(log_path.relative_to(project_dir))}
+    _emit(project_dir, session_id, D.EVENT_FINISHED, finish)
     if not ok:
         # Blocked, never retried. The next OODA reads the log and decides; a loop that cannot
         # see why the last attempt failed cannot decide anything and would spend on each guess.
@@ -775,10 +775,71 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
                    f"graph={graph_state} -> blocked", err=True)
-        _record_and_push(project_dir, config, cfg)
-        return
-    click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
+    else:
+        click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
+    # After the finish record and after the walk to `blocked`, so what the operator is told is
+    # already on the log; before the commit, so a `dispatch_notify_failed` ships with it.
+    _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
     _record_and_push(project_dir, config, cfg)
+
+
+def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
+    """Run `dispatch.notify`, the operator's finish signal, once per finished task.
+
+    `ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md` decision 1. Prior art: cron's
+    `MAILTO`, systemd's `OnSuccess=`/`OnFailure=`, a CI runner's status post — the runner owns
+    the notification and configuration names the channel, so a desktop banner and a phone push
+    are the same code path with a different string in `seldon.yaml`.
+
+    The outcome reaches the command through `SELDON_NOTIFY_*` ENVIRONMENT variables and never by
+    substitution into the command text, which is how git hooks and systemd units hand a command
+    its context: a task name is data, and data interpolated into a shell line is an injection.
+
+    Run through `/bin/sh -c` in its own process group with stdin closed, and killed as a group
+    at `notify_timeout_s`. **Nothing here may alter the dispatch record or raise**: a missing,
+    failing or hanging notifier is one `dispatch_notify_failed` event and the pass goes on.
+    """
+    command = cfg.get("notify")
+    if not command:
+        return
+    env = dict(os.environ)
+    env.update({
+        "SELDON_NOTIFY_TASK_ID": str(finish["task_id"]),
+        "SELDON_NOTIFY_TASK_NAME": str(task_name),
+        "SELDON_NOTIFY_OK": "true" if finish["ok"] else "false",
+        # The word a notification body wants, so a template needs no shell conditional.
+        "SELDON_NOTIFY_OUTCOME": "ok" if finish["ok"] else "blocked",
+        "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
+        "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
+        "SELDON_NOTIFY_WALL_SECONDS": str(finish["wall_clock_s"]),
+    })
+    timeout = cfg["notify_timeout_s"]
+    failure = None
+    try:
+        proc = subprocess.Popen(["/bin/sh", "-c", command], cwd=project_dir, env=env,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, start_new_session=True, text=True)
+        try:
+            output, _ = proc.communicate(timeout=timeout)
+            if proc.returncode != 0:
+                failure = {"reason": "nonzero_exit", "exit_code": proc.returncode,
+                           "output_tail": (output or "")[-500:]}
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, 9)
+            output, _ = proc.communicate()
+            failure = {"reason": "timeout", "timeout_s": timeout,
+                       "output_tail": (output or "")[-500:]}
+    except Exception as exc:                                        # noqa: BLE001
+        # Reported on the log, never swallowed and never raised: the finish is recorded and the
+        # lease must still be released by the caller.
+        failure = {"reason": "error", "error": f"{type(exc).__name__}: {exc}"}
+    if failure is None:
+        click.echo(f"notify: sent ({finish['task_id'][:8]} "
+                   f"{'ok' if finish['ok'] else 'blocked'})")
+        return
+    _emit(project_dir, session_id, D.EVENT_NOTIFY_FAILED,
+          {"task_id": finish["task_id"], "command": command, **failure})
+    click.echo(f"notify FAILED ({failure['reason']}) for {finish['task_id'][:8]}", err=True)
 
 
 def _launch_cmd(cfg: dict, prompt: str) -> list:

@@ -111,6 +111,31 @@ def get_neo4j_driver(config: dict):
 #: propagation), never recovered from a mutable file.
 SESSION_ENV_VARS = ("SELDON_SESSION_ID", "CLAUDE_CODE_SESSION_ID")
 
+#: Environment variables Claude Code sets in every shell it spawns, interactive or headless
+#: (code.claude.com/docs/en/env-vars: `CLAUDECODE` is "1"; `CLAUDE_CODE_SESSION_ID` is the
+#: session's id). Either one means a command is running inside a CC session. Set by
+#: ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md decision 2, after two Issues filed
+#: and resolved by headless CC sessions were recorded as human acts.
+CC_ENV_MARKERS = ("CLAUDECODE", "CLAUDE_CODE_SESSION_ID")
+
+
+def resolve_cli_actor() -> str:
+    """The actor a CLI command that anyone may run should stamp: `cc` inside a Claude Code
+    session, `human` otherwise.
+
+    For commands with no fixed caller (`issue create`, `issue update`). Commands whose name
+    fixes the caller keep their literal actor — `cc complete` is `cc` by definition, the MCP
+    tools are `desktop`, the dispatcher is `dispatcher`. An empty value, or `CLAUDECODE=0`, is
+    not a session.
+    """
+    marker = os.environ.get("CLAUDECODE", "")
+    if marker and marker != "0":
+        return "cc"
+    if os.environ.get("CLAUDE_CODE_SESSION_ID"):
+        return "cc"
+    return "human"
+
+
 #: How long `.seldon/current_session.json` is evidence of a live session. A claim of a live
 #: session older than one working day is not evidence of one: the file's authority is bounded
 #: by age, as a lease or lockfile's is (Chubby, Burrows OSDI 2006). Set by
