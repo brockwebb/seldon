@@ -10,7 +10,7 @@ from pathlib import Path
 
 import click
 
-from seldon.config import get_neo4j_driver, load_project_config
+from seldon.config import end_session, get_neo4j_driver, load_project_config
 from seldon.core.handoff import (
     R9Violation,
     build_handoff,
@@ -78,6 +78,9 @@ def handoff_command(slug, summary, next_action, force, dry_run):
 
     Refuses to close a Desktop session that created tasks and wrote no design
     note (AD-030-R9), unless handoff.require_design_note is false in seldon.yaml.
+
+    A written handoff ends the session file, as closeout does; a dry run or a
+    refusal leaves it alone.
     """
     project_dir = Path.cwd()
     config = load_project_config(project_dir)
@@ -115,6 +118,10 @@ def handoff_command(slug, summary, next_action, force, dry_run):
             click.echo(f"ERROR: {exc}", err=True)
             raise SystemExit(1)
         click.echo(f"Wrote {written}")
+        # `seldon handoff` is how a Desktop session closes (AD-030-R9), so it ends the session
+        # file exactly as `seldon closeout` does; before this a file outlived its session by
+        # weeks (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 3).
+        end_session(project_dir)
 
     click.echo("")
     click.echo("## Resume block")

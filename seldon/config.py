@@ -4,7 +4,7 @@ import json
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -103,21 +103,78 @@ def get_neo4j_driver(config: dict):
     return GraphDatabase.driver(uri, auth=(username, password), **extra_kwargs)
 
 
-def start_session(project_dir: Optional[Path] = None) -> str:
-    """Start a session. If one already exists, return its ID without overwriting."""
+#: Environment variables that carry a session id set by the process that started this one, in
+#: resolution order. `SELDON_SESSION_ID` is what the dispatcher gives the session it launches;
+#: `CLAUDE_CODE_SESSION_ID` is what Claude Code sets in every Bash call of an interactive or
+#: headless session. Prior art: a trace identity is created at the root process and propagated
+#: to children through the environment (W3C Trace Context `traceparent`; OpenTelemetry context
+#: propagation), never recovered from a mutable file.
+SESSION_ENV_VARS = ("SELDON_SESSION_ID", "CLAUDE_CODE_SESSION_ID")
+
+#: How long `.seldon/current_session.json` is evidence of a live session. A claim of a live
+#: session older than one working day is not evidence of one: the file's authority is bounded
+#: by age, as a lease or lockfile's is (Chubby, Burrows OSDI 2006). Set by
+#: ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 1(d), after one
+#: project's file held the same id for 25 days and stamped 34,137 events with it.
+SESSION_FILE_MAX_AGE = timedelta(hours=24)
+
+#: The id of this process, when a long-lived process (the MCP server, the dispatcher) has bound
+#: one with `bind_process_session`. Held in memory only, so it dies with the process.
+_process_session_id: Optional[str] = None
+
+
+def bind_process_session(session_id: Optional[str] = None) -> str:
+    """Bind this process's session id, generating one if none is given; return the bound id.
+
+    Idempotent: once bound, later calls without an argument return the same id. Called once
+    at startup by processes that write events on behalf of callers who carry no environment
+    id of their own (decision 1(c)).
+    """
+    global _process_session_id
+    if session_id is not None:
+        _process_session_id = session_id
+    elif _process_session_id is None:
+        _process_session_id = str(uuid.uuid4())
+    return _process_session_id
+
+
+def process_session_id() -> Optional[str]:
+    """Return the id this process inherited or bound, or ``None`` when it has neither.
+
+    Cases (a) to (c) of the resolution order: `SELDON_SESSION_ID`, then
+    `CLAUDE_CODE_SESSION_ID`, then the in-memory id from `bind_process_session`. An empty
+    environment value is not an id. No file is read.
+    """
+    for var in SESSION_ENV_VARS:
+        value = os.environ.get(var)
+        if value:
+            return value
+    return _process_session_id
+
+
+def _session_file(project_dir: Optional[Path]) -> Path:
     base = Path(project_dir) if project_dir else Path.cwd()
-    seldon_dir = base / ".seldon"
-    seldon_dir.mkdir(exist_ok=True)
-    session_file = seldon_dir / "current_session.json"
+    return base / ".seldon" / "current_session.json"
 
-    # If session already active, return existing
-    if session_file.exists():
-        with open(session_file) as f:
-            data = json.load(f)
-        if "session_id" in data:
-            return data["session_id"]
 
-    # Otherwise create new
+def _is_fresh(data: Optional[dict], now: datetime) -> bool:
+    """True when a session file's record is recent enough to stand for a live session.
+
+    A record with no id, or no parseable `started_at`, is not evidence of anything.
+    """
+    if not data or not data.get("session_id"):
+        return False
+    try:
+        started = datetime.fromisoformat(str(data["started_at"]).replace("Z", "+00:00"))
+    except (KeyError, ValueError):
+        return False
+    if started.tzinfo is None:
+        started = started.replace(tzinfo=timezone.utc)
+    return now - started <= SESSION_FILE_MAX_AGE
+
+
+def _write_new_session(session_file: Path) -> str:
+    session_file.parent.mkdir(exist_ok=True)
     session_id = str(uuid.uuid4())
     data = {
         "session_id": session_id,
@@ -128,16 +185,36 @@ def start_session(project_dir: Optional[Path] = None) -> str:
     return session_id
 
 
-def get_current_session(project_dir: Optional[Path] = None) -> Optional[str]:
-    """Return the active session_id, or None if no session file exists."""
+def start_session(project_dir: Optional[Path] = None) -> str:
+    """Start a file session. A fresh one already on disk is kept; a stale one is replaced."""
+    session_file = _session_file(project_dir)
     data = get_current_session_data(project_dir)
-    return data["session_id"] if data else None
+    if _is_fresh(data, datetime.now(timezone.utc)):
+        return data["session_id"]
+    return _write_new_session(session_file)
+
+
+def get_current_session(project_dir: Optional[Path] = None) -> str:
+    """Return the session id an event written now should carry.
+
+    Resolution order (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md
+    decision 1): (a) `SELDON_SESSION_ID`; (b) `CLAUDE_CODE_SESSION_ID`; (c) this process's
+    bound id; (d) `.seldon/current_session.json` if younger than `SESSION_FILE_MAX_AGE`;
+    (e) otherwise a fresh id, written to that file so the rest of the working day agrees.
+    """
+    inherited = process_session_id()
+    if inherited:
+        return inherited
+    return start_session(project_dir)
 
 
 def get_current_session_data(project_dir: Optional[Path] = None) -> Optional[dict]:
-    """Return full session dict (session_id, started_at), or None if no session."""
-    base = Path(project_dir) if project_dir else Path.cwd()
-    session_file = base / ".seldon" / "current_session.json"
+    """Return the session file's record (session_id, started_at) as written, or None.
+
+    Reads the file only, with no freshness bound: this is the record, not the resolution.
+    Writers want `get_current_session`.
+    """
+    session_file = _session_file(project_dir)
     if not session_file.exists():
         return None
     with open(session_file) as f:

@@ -29,6 +29,24 @@ from tests.testdb import (
     sweep_stale_test_databases,
 )
 
+# ── Session identity isolation ────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def _no_inherited_session_identity(monkeypatch):
+    """Run every test with no session id inherited from the process that launched pytest.
+
+    `get_current_session` reads `SELDON_SESSION_ID` and `CLAUDE_CODE_SESSION_ID` before any
+    file (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 1), and
+    a suite run from inside a Claude Code session inherits the second. Left in place, every
+    file-based session test would read the runner's id instead of the file it wrote. A test
+    that wants an environment id sets it itself.
+    """
+    import seldon.config as config
+    for var in config.SESSION_ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(config, "_process_session_id", None)
+
+
 # ── Event store fixtures ──────────────────────────────────────────────────────
 
 @pytest.fixture

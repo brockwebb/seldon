@@ -263,9 +263,13 @@ def closeout_command(summary):
     domain_config = _get_domain_config(config)
     database = config["neo4j"]["database"]
 
+    # The events to summarise are the ones this session wrote, and they carry the resolved id
+    # (environment, then the session file), so filter on that and not on the file alone.
+    session_id = get_current_session(project_dir)
     session_data = get_current_session_data(project_dir)
-    session_id = session_data["session_id"] if session_data else None
-    started_at = session_data["started_at"] if session_data else "unknown"
+    started_at = (session_data["started_at"]
+                  if session_data and session_data.get("session_id") == session_id
+                  else "unknown")
 
     if summary is None:
         summary = click.prompt("Session summary")

@@ -28,12 +28,15 @@ import os
 import shlex
 import subprocess
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
 import click
 
-from seldon.config import get_current_session, get_neo4j_driver, load_project_config
+from seldon.config import (
+    bind_process_session, get_current_session, get_neo4j_driver, load_project_config,
+)
 from seldon.core import cadence as C
 from seldon.core import dispatch as D
 from seldon.core.artifacts import transition_task
@@ -97,6 +100,10 @@ def _utcnow() -> datetime:
 
 
 def _open_project():
+    # The dispatcher's own events carry this process's id, never a session file another
+    # process left (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md
+    # decisions 1(c) and 2). An id inherited from the environment still wins over it.
+    bind_process_session()
     config = load_project_config()
     project_dir = Path.cwd()
     driver = get_neo4j_driver(config)
@@ -729,8 +736,12 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
 
     lease.heartbeat(task=chosen["task_id"])
     cmd = _launch_cmd(cfg, prompt)
+    # The child's root session id, minted here and handed down through the environment, so a
+    # reader can join the session's `cc` events to this launch (decision 2).
+    child_session_id = str(uuid.uuid4())
     _emit(project_dir, session_id, D.EVENT_LAUNCHED,
           {"task_id": chosen["task_id"], "source_file": rel,
+           "child_session_id": child_session_id,
            "claimed_by": claimed["claimed_by"], "transitions": claimed["transitions"],
            "criteria": chosen["criteria"], "framework_layer": chosen["framework_layer"],
            "log_path": str(log_path.relative_to(project_dir)),
@@ -744,14 +755,15 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                f"{log_path.relative_to(project_dir)}")
 
     started = time.monotonic()
-    code = _run(cmd, project_dir, log_path)
+    code = _run(cmd, project_dir, log_path, child_session_id)
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
     graph_state = _state_of(driver, database, chosen["task_id"])
     ok = code == 0 and result_path.is_file() and graph_state == "completed"
     _emit(project_dir, session_id, D.EVENT_FINISHED,
-          {"task_id": chosen["task_id"], "exit_code": code, "wall_clock_s": wall,
+          {"task_id": chosen["task_id"], "child_session_id": child_session_id,
+           "exit_code": code, "wall_clock_s": wall,
            "result_present": result_path.is_file(),
            "result_path": str(result_path.relative_to(project_dir)),
            "graph_state_observed": graph_state, "ok": ok,
@@ -786,7 +798,7 @@ def _launch_cmd(cfg: dict, prompt: str) -> list:
     return cmd
 
 
-def _run(cmd: list, project_dir: Path, log_path: Path) -> int:
+def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str) -> int:
     """Detached, logged, `EXIT=$?` appended.
 
     Working directory is the PROJECT ROOT, so `CLAUDE.md` loads — the exact inverse of
@@ -796,9 +808,13 @@ def _run(cmd: list, project_dir: Path, log_path: Path) -> int:
     `ANTHROPIC_API_KEY` is stripped from the child's environment as well as refused in the
     parent's: the pass could have started before a shell exported one. `HEADLESS_ENV` is laid
     over the result so an inherited value cannot re-enable background tasks.
+
+    `SELDON_SESSION_ID` is set to `child_session_id`, overriding anything inherited: it is the
+    first entry of the session resolution order, so every event the child writes carries it.
     """
     env = {k: v for k, v in os.environ.items() if k not in D.API_KEY_VARS}
     env.update(HEADLESS_ENV)
+    env["SELDON_SESSION_ID"] = child_session_id
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
         fh.flush()
