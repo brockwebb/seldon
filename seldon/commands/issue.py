@@ -14,7 +14,7 @@ from seldon.core.graph import get_artifact, find_any_artifact_by_name
 from seldon.core.issue_utils import (
     ISSUE_ENUMS, eisenhower_quadrant, validate_issue_enum,
 )
-from seldon.domain.loader import load_domain_config
+from seldon.domain.loader import load_domain_config, validate_relationship
 
 
 def _get_domain_config(config: dict):
@@ -69,6 +69,22 @@ def issue_create(description, issue_type, importance, urgency, detection, target
     session_id = get_current_session(project_dir)
 
     try:
+        # Every link is resolved and validated before the first append: a refused link writes
+        # nothing, not an Issue with its links missing (Issue 7af77cb8;
+        # ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 4).
+        targets = []
+        refs = [r.strip() for r in (affects or "").split(",") if r.strip()]
+        for ref in refs:
+            target_node = _resolve_artifact(driver, database, ref)
+            if target_node is None:
+                raise ValueError(f"artifact '{ref}' not found for AFFECTS; nothing written")
+            try:
+                validate_relationship(domain_config, "affects", "Issue",
+                                      target_node["artifact_type"])
+            except ValueError as exc:
+                raise ValueError(f"AFFECTS '{ref}': {exc}; nothing written") from exc
+            targets.append(target_node)
+
         issue_id = create_artifact(
             project_dir=project_dir, driver=driver, database=database,
             domain_config=domain_config, artifact_type="Issue",
@@ -85,24 +101,16 @@ def issue_create(description, issue_type, importance, urgency, detection, target
         )
 
         links_created = []
-        if affects:
-            for ref in affects.split(","):
-                ref = ref.strip()
-                if not ref:
-                    continue
-                target_node = _resolve_artifact(driver, database, ref)
-                if target_node is None:
-                    click.echo(f"Warning: artifact '{ref}' not found — skipping AFFECTS link", err=True)
-                    continue
-                create_link(
-                    project_dir=project_dir, driver=driver, database=database,
-                    domain_config=domain_config,
-                    from_id=issue_id, to_id=target_node["artifact_id"],
-                    from_type="Issue", to_type=target_node["artifact_type"],
-                    rel_type="affects", actor="human", authority="accepted",
-                    session_id=session_id,
-                )
-                links_created.append(f"AFFECTS {target_node.get('name', target_node['artifact_id'][:8])}")
+        for target_node in targets:
+            create_link(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config,
+                from_id=issue_id, to_id=target_node["artifact_id"],
+                from_type="Issue", to_type=target_node["artifact_type"],
+                rel_type="affects", actor="human", authority="accepted",
+                session_id=session_id,
+            )
+            links_created.append(f"AFFECTS {target_node.get('name', target_node['artifact_id'][:8])}")
 
         quadrant = eisenhower_quadrant(importance, urgency)
         click.echo(f"Created Issue: {issue_id}")

@@ -198,6 +198,44 @@ def test_a_clean_task_is_claimed_launched_and_finished(project, neo4j_driver, do
     assert "Read CLAUDE.md, then execute cc_tasks/t1.md" in text
 
 
+def test_the_child_session_id_is_propagated_and_recorded(project, neo4j_driver, domain_config,
+                                                         clean_test_db, monkeypatch):
+    """`ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md` decision 2.
+
+    The child sees a fresh `SELDON_SESSION_ID`; `dispatch_launched` and `dispatch_finished`
+    carry it as `child_session_id`; the child's own events carry it as `session_id`; the
+    dispatcher's events carry the dispatcher's id, which is a different one. A stale session
+    file in the checkout is what the defect looked like and must be read by nobody here.
+    """
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    (project / ".seldon").mkdir(exist_ok=True)
+    (project / ".seldon" / "current_session.json").write_text(json.dumps(
+        {"session_id": "stale-file-id", "started_at": "2026-08-22T14:00:52Z"}))
+    tid = _register(project, neo4j_driver, domain_config)
+    stub = _stub(project, task_id=tid)
+    seen = project / "logs" / "child_env.txt"
+    text = stub.read_text(encoding="utf-8").replace(
+        'echo "stub cc: $*"', f'echo "stub cc: $*"\nprintf "%s" "$SELDON_SESSION_ID" > {seen}')
+    stub.write_text(text, encoding="utf-8")
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    child = seen.read_text(encoding="utf-8")
+    assert child
+    launched = _events(project, D.EVENT_LAUNCHED)[0]
+    finished = _events(project, D.EVENT_FINISHED)[0]
+    assert launched["payload"]["child_session_id"] == child
+    assert finished["payload"]["child_session_id"] == child
+
+    dispatcher_ids = {e["session_id"] for e in _events(project) if e["actor"] == "dispatcher"}
+    assert len(dispatcher_ids) == 1
+    assert child not in dispatcher_ids and "stale-file-id" not in dispatcher_ids
+
+    cc_events = [e for e in _events(project) if e["actor"] == "cc"]
+    assert cc_events, "the stub walks the task to completed as actor cc"
+    assert {e["session_id"] for e in cc_events} == {child}
+
+
 def test_the_launch_runs_from_the_project_root_so_claude_md_loads(project, neo4j_driver,
                                                                   domain_config,
                                                                   clean_test_db, monkeypatch):

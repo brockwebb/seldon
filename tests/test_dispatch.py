@@ -560,13 +560,17 @@ def test_the_launched_session_has_background_tasks_disabled(tmp_path, monkeypatc
     assert HEADLESS_ENV == {"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS": "1"}
     monkeypatch.setenv("CLAUDE_CODE_DISABLE_BACKGROUND_TASKS", "0")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-x")
+    monkeypatch.setenv("SELDON_SESSION_ID", "inherited-id")
     log = tmp_path / "t.log"
     code = _run(["sh", "-c",
-                 'echo "bg=$CLAUDE_CODE_DISABLE_BACKGROUND_TASKS key=${ANTHROPIC_API_KEY:-}"'],
-                tmp_path, log)
+                 'echo "bg=$CLAUDE_CODE_DISABLE_BACKGROUND_TASKS key=${ANTHROPIC_API_KEY:-}'
+                 ' sid=$SELDON_SESSION_ID"'],
+                tmp_path, log, "child-id")
     assert code == 0
     text = log.read_text(encoding="utf-8")
-    assert "bg=1 key=\n" in text
+    # The child's session id is the one the dispatcher minted, never an inherited one
+    # (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 2).
+    assert "bg=1 key= sid=child-id\n" in text
     assert "EXIT=0" in text
 
 

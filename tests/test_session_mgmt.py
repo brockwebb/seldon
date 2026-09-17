@@ -30,8 +30,12 @@ def test_get_current_session_returns_session_id(tmp_path):
     assert get_current_session(tmp_path) == session_id
 
 
-def test_get_current_session_none_when_no_session(tmp_path):
-    assert get_current_session(tmp_path) is None
+def test_get_current_session_starts_one_when_no_session(tmp_path):
+    """No file and no inherited id: a fresh id, written to the file (resolution case (e),
+    ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 1)."""
+    assert get_current_session_data(tmp_path) is None
+    sid = get_current_session(tmp_path)
+    assert get_current_session_data(tmp_path)["session_id"] == sid
 
 
 def test_get_current_session_data_has_started_at(tmp_path):
@@ -44,7 +48,7 @@ def test_get_current_session_data_has_started_at(tmp_path):
 def test_end_session_clears_file(tmp_path):
     start_session(tmp_path)
     end_session(tmp_path)
-    assert get_current_session(tmp_path) is None
+    assert get_current_session_data(tmp_path) is None
 
 
 def test_end_session_noop_when_no_session(tmp_path):

@@ -25,12 +25,20 @@ def make_event(
     payload: Dict[str, Any],
     session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Construct a new event dict with generated event_id and timestamp."""
+    """Construct a new event dict with generated event_id and timestamp.
+
+    A caller that passes no ``session_id`` gets the id this process inherited or bound
+    (`seldon.config.process_session_id`), so an MCP tool call carries its server's id and a
+    dispatched session's call carries the id the dispatcher gave it. Only a process with
+    neither falls back to a per-event uuid, the pre-2026-09-16 behaviour.
+    """
+    from seldon.config import process_session_id
+
     return {
         "event_id": str(uuid.uuid4()),
         "event_type": event_type,
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "session_id": session_id or str(uuid.uuid4()),
+        "session_id": session_id or process_session_id() or str(uuid.uuid4()),
         "actor": actor,
         "authority": authority,
         "payload": payload,

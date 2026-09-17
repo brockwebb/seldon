@@ -1104,6 +1104,10 @@ def seldon_handoff(
         written = write_handoff(document, force=force)
     except FileExistsError as exc:
         return f"Error: {exc}"
+    # A session closed by the documented command leaves no live session file behind (decision 3).
+    from seldon.config import end_session
+
+    end_session(Path(resolved))
 
     lines = [*document.warnings, f"Wrote {written}", ""]
     lines.extend(["## Resume block", "", document.resume, ""])
@@ -1474,6 +1478,12 @@ def seldon_query(
 
 
 def main():
+    # Case (c) of the session resolution order: every call this server writes carries one id
+    # for the server's lifetime, unless the environment names a root session
+    # (ai-readiness-kg/cc_tasks/2026-09-16_session_id_names_the_process.md decision 1).
+    from seldon.config import bind_process_session
+
+    bind_process_session()
     mcp.run(transport="stdio")
 
 
