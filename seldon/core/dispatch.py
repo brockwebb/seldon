@@ -115,6 +115,17 @@ EVENT_OBSERVED_STOP = "dispatch_observed_stop"
 #: NOTHING writes no event, for decision 7's reason — a five-minute poll that logged its own
 #: silence would bury the assertions in it.
 EVENT_CADENCE_CREATED = "cadence_created"
+#: The finish notification's failure (ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md
+#: decision 1). A notifier that ran is not an event: the finish it reports is already on the log.
+#: A notifier that did not run, failed or hung is one, because it is the only trace that the
+#: operator was never told.
+EVENT_NOTIFY_FAILED = "dispatch_notify_failed"
+
+#: How long the finish notifier may run before it is killed. Decision 1 of the task above: a
+#: desktop or push notifier returns in well under a second, and a notifier that is still running
+#: after thirty has hung — it must not hold the lease, and with it every later pass, hostage.
+#: Overridable per project as `dispatch.notify_timeout_s`.
+NOTIFY_TIMEOUT_S_DEFAULT = 30
 
 #: Refusal reasons. A closed set, so `status` and the log speak one vocabulary.
 REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_band",
@@ -158,6 +169,19 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     # entry that IS there is validated here, so an unreadable rule refuses at config load and
     # not at 00:00 on the first Monday, unattended, at the only moment it mattered.
     block["cadence"] = C.validate_cadence(block.get("cadence"))
+    # The finish notifier. Optional; a value that IS there must be a non-empty command string,
+    # checked here so an unusable notifier refuses at load and not after an hour-long task has
+    # finished with nobody to tell.
+    notify = block.get("notify")
+    if notify is not None and (not isinstance(notify, str) or not notify.strip()):
+        raise DispatchConfigError(
+            f"dispatch.notify must be a non-empty shell command string, got {notify!r}")
+    block["notify"] = notify
+    timeout = block.get("notify_timeout_s", NOTIFY_TIMEOUT_S_DEFAULT)
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
+        raise DispatchConfigError(
+            f"dispatch.notify_timeout_s must be a positive number of seconds, got {timeout!r}")
+    block["notify_timeout_s"] = timeout
     return block
 
 

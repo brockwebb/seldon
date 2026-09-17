@@ -6,7 +6,9 @@ from pathlib import Path
 
 import click
 
-from seldon.config import load_project_config, get_neo4j_driver, get_current_session
+from seldon.config import (
+    get_current_session, get_neo4j_driver, load_project_config, resolve_cli_actor,
+)
 from seldon.core.artifacts import (
     create_artifact, create_link, transition_state, update_artifact,
 )
@@ -67,6 +69,9 @@ def issue_create(description, issue_type, importance, urgency, detection, target
     domain_config = _get_domain_config(config)
     database = config["neo4j"]["database"]
     session_id = get_current_session(project_dir)
+    # Who ran this, from the process environment: a CC session is `cc`, a terminal is `human`
+    # (ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md decision 2).
+    actor = resolve_cli_actor()
 
     try:
         # Every link is resolved and validated before the first append: a refused link writes
@@ -96,7 +101,7 @@ def issue_create(description, issue_type, importance, urgency, detection, target
                 "detection_method": detection,
                 "target": target,
             },
-            actor="human", authority="accepted",
+            actor=actor, authority="accepted",
             session_id=session_id,
         )
 
@@ -107,7 +112,7 @@ def issue_create(description, issue_type, importance, urgency, detection, target
                 domain_config=domain_config,
                 from_id=issue_id, to_id=target_node["artifact_id"],
                 from_type="Issue", to_type=target_node["artifact_type"],
-                rel_type="affects", actor="human", authority="accepted",
+                rel_type="affects", actor=actor, authority="accepted",
                 session_id=session_id,
             )
             links_created.append(f"AFFECTS {target_node.get('name', target_node['artifact_id'][:8])}")
@@ -221,6 +226,9 @@ def issue_update(issue_id, state, urgency, resolution_notes):
     domain_config = _get_domain_config(config)
     database = config["neo4j"]["database"]
     session_id = get_current_session(project_dir)
+    # Who ran this, from the process environment: a CC session is `cc`, a terminal is `human`
+    # (ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md decision 2).
+    actor = resolve_cli_actor()
 
     with driver.session(database=database) as sess:
         node = get_artifact(sess, issue_id)
@@ -242,7 +250,7 @@ def issue_update(issue_id, state, urgency, resolution_notes):
             update_artifact(
                 project_dir=project_dir, driver=driver, database=database,
                 artifact_id=issue_id, properties=props,
-                actor="human", authority="accepted",
+                actor=actor, authority="accepted",
                 session_id=session_id,
             )
 
@@ -253,7 +261,7 @@ def issue_update(issue_id, state, urgency, resolution_notes):
                 project_dir=project_dir, driver=driver, database=database,
                 domain_config=domain_config, artifact_id=issue_id,
                 artifact_type="Issue", current_state=old_state, new_state=state,
-                actor="human", authority="accepted",
+                actor=actor, authority="accepted",
                 session_id=session_id,
             )
             click.echo(f"Updated Issue: {issue_id[:8]}...")

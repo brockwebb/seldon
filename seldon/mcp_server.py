@@ -969,11 +969,13 @@ def seldon_cc_register(
             file must still be committed with its RESULT, or the graph keeps a
             task whose source can never be recovered.
     """
-    from seldon.commands.cc import (
-        _find_existing, _name_from_filepath, _extract_description,
-        constraining_rulings, enforce_design_reference, render_rulings,
-    )
-    from seldon.core.artifacts import create_artifact
+    # Registration goes through `register_task_file`, the ONE code path `seldon cc register`
+    # and the dispatcher's cadence already use. This tool used to carry its own copy, and the
+    # copy wrote no `file_hash`, so every Desktop-authored task reached `cc complete` with its
+    # immutability check skipped (ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md
+    # decision 3). `allow_untracked` concerns git recoverability only; the bytes on disk are
+    # hashed either way.
+    from seldon.commands.cc import _find_existing, register_task_file, render_rulings
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
     p = Path(project_dir)
@@ -991,6 +993,8 @@ def seldon_cc_register(
     except ValueError:
         rel_path = str(task_path)
 
+    # This tool's own git guard, which returns text rather than raising; having passed it (or
+    # been overridden), the library's guard is told the question is settled.
     refusal = _mcp_git_tracking_error(
         p, task_path, rel_path, "seldon_cc_register", allow_untracked
     )
@@ -998,52 +1002,38 @@ def seldon_cc_register(
         driver.close()
         return refusal
 
-    existing_id = _find_existing(driver, database, rel_path)
-    if existing_id:
-        driver.close()
-        return f"Warning: CC task already registered (id: {existing_id[:8]}...). No duplicate created."
-
-    # AD-030-R9, the task half: refuse a task that cites no decision, before registering it.
-    refusal = enforce_design_reference(task_path, config, MCP_ACTOR)
-    if refusal and not refusal.startswith("WARNING"):
-        driver.close()
+    try:
+        # Checked before the design-reference gate, as this tool always has: an already
+        # registered file is reported as such, whatever its header says.
+        existing_id = _find_existing(driver, database, rel_path)
+        if existing_id:
+            return (f"Warning: CC task already registered (id: {existing_id[:8]}...). "
+                    "No duplicate created.")
+        outcome = register_task_file(
+            project_dir=p, config=config, driver=driver, database=database,
+            domain_config=domain_config, session_id=None, task_path=task_path,
+            actor=MCP_ACTOR, allow_untracked=True,
+        )
+    except ValueError as exc:
+        # AD-030-R9, the task half: a task that cites no decision is refused before it is
+        # registered.
         return (
-            f"Error: {refusal}\n"
-            f"  File: {rel_path}\n"
+            f"Error: {exc}\n"
             f"  Fix: cite the AD or DN this task implements in the task file's header."
         )
-
-    name = _name_from_filepath(rel_path)
-    description = _extract_description(task_path)
-
-    try:
-        artifact_id = create_artifact(
-            project_dir=p, driver=driver, database=database,
-            domain_config=domain_config, artifact_type="ResearchTask",
-            properties={
-                "description": description,
-                "name": name,
-                "source_file": rel_path,
-            },
-            actor="desktop", authority="accepted",
-        )
-        matches, written = constraining_rulings(
-            project_dir=p, config=config, driver=driver, database=database,
-            domain_config=domain_config, task_path=task_path, task_id=artifact_id,
-            session_id=None,
-        )
-        lines = [
-            f"Registered: {name}",
-            f"  source_file: {rel_path}",
-            f"  id: {artifact_id[:8]}...",
-            f"  state: proposed",
-        ]
-        if refusal:
-            lines.append(refusal)
-        lines.extend(["", render_rulings(matches, written)])
-        return "\n".join(lines)
     finally:
         driver.close()
+
+    lines = [
+        f"Registered: {outcome['name']}",
+        f"  source_file: {outcome['rel_path']}",
+        f"  id: {outcome['artifact_id'][:8]}...",
+        f"  state: proposed",
+    ]
+    if outcome["warning"]:
+        lines.append(outcome["warning"])
+    lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
