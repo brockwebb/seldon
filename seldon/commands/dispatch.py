@@ -775,10 +775,12 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
                    f"graph={graph_state} -> blocked", err=True)
-    else:
-        click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
-    # After the finish record and after the walk to `blocked`, so what the operator is told is
-    # already on the log; before the commit, so a `dispatch_notify_failed` ships with it.
+        # After the walk to `blocked`, so what the operator is told is already on the log;
+        # before the commit, so a `dispatch_notify_failed` ships with it.
+        _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
+        _record_and_push(project_dir, config, cfg)
+        return
+    click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
     _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
     _record_and_push(project_dir, config, cfg)
 
