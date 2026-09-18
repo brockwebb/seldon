@@ -90,12 +90,36 @@ _LAYER_VALUE_RE = re.compile(r"§\s?2\.[1-5]\b|\bTier\s+[MOD]\b|\bnone\b", re.IG
 _ZERO_RE = re.compile(r"\bzero\b", re.IGNORECASE)
 _TOKENS_RE = re.compile(r"(?P<n>\d[\d,_]*(?:\.\d+)?)\s*(?P<suffix>[MmKk])?\s*(?:tokens?|$|[ .,;)])")
 
-#: `**Network:** none` is the only value that passes without a cadence provenance. DN-006
-#: decision 5's second limb (a task created by the cadence rule) is decision 8's work and is not
-#: implemented here; a task carrying that provenance is recognised so the criterion does not
-#: have to change when it arrives.
-_NETWORK_NONE_RE = re.compile(r"\bnone\b", re.IGNORECASE)
+#: The Network header's grammar (ai-readiness-kg/cc_tasks/2026-09-18_network_allowlist.md
+#: decision 1, amending DN-006 decision 2). Network is a declared budget, like Spend, and not a
+#: binary: a task either contacts no host, or names the exact hosts it may contact, or carries
+#: the cadence provenance decision 8 writes. `beyond git push` is implied by all three.
+#:
+#: The shape is an egress allowlist, the way CI runners and build sandboxes declare network
+#: (Nix and Bazel deny by default and allow named fetches). It is DECLARATIVE: macOS offers no
+#: cheap per-process egress filter, so the dispatcher enforces nothing at the socket. The
+#: session-side fetch helper refuses off-list hosts and logs every request, and the RESULT
+#: quotes that log — the same standing as the Spend header, a declared budget audited after.
+NETWORK_GRAMMAR = ("`**Network:** none` (optionally followed by prose, e.g. `none beyond "
+                   "git push`), or `**Network:** allowlist: host1, host2, ...` with exact "
+                   "hostnames (no wildcards, no schemes, no paths, no ports), or "
+                   "`**Network:** <hosts>, under cadence <name>`")
+
+#: `none` must LEAD the value. It used to match anywhere, so `the hosts in §2, none else`
+#: passed as if it declared no network; every surveyed task file that meant none says so
+#: first (`none.`, `none beyond git push`, `NONE — ...`, a backticked `none`).
+_NETWORK_NONE_RE = re.compile(r"^[\s`*_]*none\b", re.IGNORECASE)
+#: The child's copy of a launched task's allowlist, comma-separated. The session-side fetch
+#: helper refuses any host not on it and refuses to run at all when it is unset; the dispatcher
+#: strips any inherited value, so a `none` task never runs with a stale list.
+NETWORK_ALLOWLIST_ENV = "SELDON_NETWORK_ALLOWLIST"
 _NETWORK_CADENCE_RE = re.compile(r"under\s+cadence\s+\S+", re.IGNORECASE)
+_NETWORK_ALLOWLIST_RE = re.compile(r"^[\s`*_]*allowlist\s*:(?P<hosts>.*)$", re.IGNORECASE)
+#: RFC 1123 host names: dot-separated labels of letters, digits and inner hyphens, each at most
+#: 63 characters, the whole at most 253. Compared case-insensitively (RFC 4343) and stored
+#: lower-case, so the child's list and the helper's comparison speak one spelling.
+_HOSTNAME_RE = re.compile(
+    r"^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$")
 
 #: Predecessor states that let a successor run (DN-006 decision 2, c2). `blocked` and `rejected`
 #: are deliberately absent: a successor whose predecessor is blocked is a successor whose
@@ -249,10 +273,43 @@ def spend_tokens(value: str | None) -> int | None:
     return int(n * mult)
 
 
-def network_declared_none(value: str | None) -> bool:
+def parse_network(value: str | None) -> dict:
+    """The Network header against `NETWORK_GRAMMAR`: `{kind, hosts, error}`.
+
+    `kind` is `none`, `allowlist` or `cadence` when the value parses and `None` when it does
+    not, in which case `error` says which part failed and quotes the grammar. `hosts` is the
+    parsed allowlist, lower-cased and de-duplicated in order, and empty for the other kinds.
+    """
     if value is None:
-        return False
-    return bool(_NETWORK_NONE_RE.search(value) or _NETWORK_CADENCE_RE.search(value))
+        return {"kind": None, "hosts": [], "error": f"no Network header; expected {NETWORK_GRAMMAR}"}
+    m = _NETWORK_ALLOWLIST_RE.match(value)
+    if m:
+        raw = m.group("hosts").strip()
+        # A sentence-ending period after the last host is prose, not a trailing-dot FQDN.
+        raw = raw[:-1] if raw.endswith(".") else raw
+        items = [h.strip().strip("`").strip() for h in raw.split(",")]
+        if not raw or not any(items):
+            return {"kind": None, "hosts": [],
+                    "error": f"allowlist names no host; expected {NETWORK_GRAMMAR}"}
+        bad = [h for h in items if not _HOSTNAME_RE.match(h.lower())]
+        if bad:
+            return {"kind": None, "hosts": [],
+                    "error": (f"allowlist entries are not exact hostnames: "
+                              f"{', '.join(repr(b) for b in bad)}; expected {NETWORK_GRAMMAR}")}
+        hosts = list(dict.fromkeys(h.lower() for h in items))
+        return {"kind": "allowlist", "hosts": hosts, "error": None}
+    if _NETWORK_NONE_RE.search(value):
+        return {"kind": "none", "hosts": [], "error": None}
+    if _NETWORK_CADENCE_RE.search(value):
+        return {"kind": "cadence", "hosts": [], "error": None}
+    return {"kind": None, "hosts": [],
+            "error": f"Network header {value!r} does not parse; expected {NETWORK_GRAMMAR}"}
+
+
+def network_declared_none(value: str | None) -> bool:
+    """True for the two forms that name no host of their own: `none` and the cadence
+    provenance. An allowlist is declared, and passes c5, but is not `none`."""
+    return parse_network(value)["kind"] in ("none", "cadence")
 
 
 def layer_named(value: str | None) -> bool:
@@ -628,8 +685,11 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     c["c4"] = {"spend_header": headers[HEADER_SPEND], "declared_tokens": tokens,
                "standing_band": band, "band_ref": cfg["standing_band_ref"],
                "ok": tokens is not None and tokens <= band}
-    c["c5"] = {"network_header": headers[HEADER_NETWORK],
-               "ok": network_declared_none(headers[HEADER_NETWORK])}
+    net = parse_network(headers[HEADER_NETWORK])
+    c["c5"] = {"network_header": headers[HEADER_NETWORK], "network_kind": net["kind"],
+               "network_allowlist": net["hosts"], "ok": net["kind"] is not None}
+    if net["error"]:
+        c["c5"]["message"] = net["error"]
     c["c6"] = {"in_progress_claim": claim_in_flight,
                "lease_task": lease_body.get("task"),
                "lease_holder": lease_body.get("holder"),

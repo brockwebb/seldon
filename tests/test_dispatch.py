@@ -350,6 +350,64 @@ def test_c5_accepts_the_cadence_provenance_decision_8_will_write(project):
     assert _evaluate(project, f)["criteria"]["c5"]["ok"]
 
 
+# ai-readiness-kg/cc_tasks/2026-09-18_network_allowlist.md decisions 1 and 2: the Network header
+# is a declared budget, `none` or an exact-host allowlist, and anything else fails c5 with a
+# message that quotes the grammar.
+
+def test_c5_passes_an_allowlist_and_records_the_parsed_hosts(project):
+    f = _task_file(project, "allowlisted",
+                   network="allowlist: raw.githubusercontent.com, GitHub.com, archive.org")
+    _commit(project)
+    row = _evaluate(project, f)
+    assert row["eligible"], row["failed"]
+    c5 = row["criteria"]["c5"]
+    assert c5["network_kind"] == "allowlist"
+    assert c5["network_allowlist"] == ["raw.githubusercontent.com", "github.com", "archive.org"]
+    assert "message" not in c5
+
+
+def test_c5_none_records_an_empty_allowlist(project):
+    f = _task_file(project, "none_beyond_push", network="none beyond `git push`.")
+    _commit(project)
+    c5 = _evaluate(project, f)["criteria"]["c5"]
+    assert c5["ok"] and c5["network_kind"] == "none" and c5["network_allowlist"] == []
+
+
+@pytest.mark.parametrize("value,fragment", [
+    ("allowlist: https://github.com", "'https://github.com'"),
+    ("allowlist: github.com/brockwebb", "'github.com/brockwebb'"),
+    ("allowlist: *.github.com", "'*.github.com'"),
+    ("allowlist: github.com:443", "'github.com:443'"),
+    ("allowlist: the NOAA hosts", "'the NOAA hosts'"),
+    ("allowlist:", "names no host"),
+    ("allowlist: github.com,, archive.org", "''"),
+])
+def test_c5_refuses_an_allowlist_that_is_not_exact_hostnames(project, value, fragment):
+    f = _task_file(project, "bad_allowlist", network=value)
+    _commit(project)
+    row = _evaluate(project, f)
+    assert row["failed"] == ["c5"]
+    assert D.first_refusal_reason(row) == "network_undeclared"
+    msg = row["criteria"]["c5"]["message"]
+    assert fragment in msg and D.NETWORK_GRAMMAR in msg
+
+
+def test_c5_refuses_a_none_that_does_not_lead_the_value(project):
+    """`none` used to match anywhere in the header, so prose that named hosts and then said
+    `none else` read as a task that contacts nothing."""
+    f = _task_file(project, "buried_none", network="the NOAA hosts in §2 and none else.")
+    _commit(project)
+    row = _evaluate(project, f)
+    assert row["failed"] == ["c5"]
+    assert D.NETWORK_GRAMMAR in row["criteria"]["c5"]["message"]
+
+
+@pytest.mark.parametrize("value", ["none.", "NONE — no host of any kind was contacted",
+                                   "`none`", "none for this task.", "none beyond Neo4j."])
+def test_c5_still_passes_every_surveyed_none_spelling(value):
+    assert D.parse_network(value)["kind"] == "none"
+
+
 def test_c6_fails_while_a_dispatcher_claim_is_in_flight(project):
     """Concurrency is one (DD-019). Two runners on one queue is the batch-identity defect at
     runner grain, and that one spent 22.0M against a 12M ceiling."""

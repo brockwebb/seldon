@@ -236,6 +236,53 @@ def test_the_child_session_id_is_propagated_and_recorded(project, neo4j_driver, 
     assert {e["session_id"] for e in cc_events} == {child}
 
 
+def _stub_records_allowlist(project: Path, tid: str) -> Path:
+    stub = _stub(project, task_id=tid)
+    seen = project / "logs" / "child_allowlist.txt"
+    text = stub.read_text(encoding="utf-8").replace(
+        'echo "stub cc: $*"',
+        f'echo "stub cc: $*"\nprintf "%s" "${{SELDON_NETWORK_ALLOWLIST-UNSET}}" > {seen}')
+    stub.write_text(text, encoding="utf-8")
+    return seen
+
+
+def test_an_allowlist_task_is_launched_with_its_hosts(project, neo4j_driver, domain_config,
+                                                      clean_test_db, monkeypatch):
+    """ai-readiness-kg/cc_tasks/2026-09-18_network_allowlist.md decision 2: c5 passes an
+    allowlist task, `dispatch_launched` records the parsed list, and the child sees it as
+    `SELDON_NETWORK_ALLOWLIST`, comma-separated."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("SELDON_NETWORK_ALLOWLIST", "inherited.example.org")
+    body = TASK_BODY.format(stem="t1").replace(
+        "**Network:** none.", "**Network:** allowlist: github.com, Archive.org")
+    (project / "cc_tasks" / "t1.md").write_text(body, encoding="utf-8")
+    _git(project, "commit", "-am", "allowlist")
+    tid = _register(project, neo4j_driver, domain_config)
+    seen = _stub_records_allowlist(project, tid)
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    pl = _events(project, D.EVENT_LAUNCHED)[0]["payload"]
+    assert pl["network_allowlist"] == ["github.com", "archive.org"]
+    assert pl["criteria"]["c5"]["network_kind"] == "allowlist"
+    assert seen.read_text(encoding="utf-8") == "github.com,archive.org"
+
+
+def test_a_none_task_never_inherits_an_allowlist(project, neo4j_driver, domain_config,
+                                                 clean_test_db, monkeypatch):
+    """The variable is stripped from the child's environment unless the task declared an
+    allowlist: a list left in the dispatcher's shell must not license a `none` task's fetch."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("SELDON_NETWORK_ALLOWLIST", "inherited.example.org")
+    tid = _register(project, neo4j_driver, domain_config)
+    seen = _stub_records_allowlist(project, tid)
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    assert _events(project, D.EVENT_LAUNCHED)[0]["payload"]["network_allowlist"] == []
+    assert seen.read_text(encoding="utf-8") == "UNSET"
+
+
 def test_the_launch_runs_from_the_project_root_so_claude_md_loads(project, neo4j_driver,
                                                                   domain_config,
                                                                   clean_test_db, monkeypatch):

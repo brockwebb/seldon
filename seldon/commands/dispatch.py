@@ -704,6 +704,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
             if reason:
                 click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
                            f"{','.join(r['failed'])}  {r['source_file']}")
+                if reason == "network_undeclared":
+                    click.echo(f"      {r['criteria']['c5'].get('message', '')}")
         # Decision 2's retry: whatever this pass or an earlier one committed and could not
         # push is pushed now. A no-op when the branch is level with its upstream.
         if not dry_run and claim is None:
@@ -744,6 +746,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
            "child_session_id": child_session_id,
            "claimed_by": claimed["claimed_by"], "transitions": claimed["transitions"],
            "criteria": chosen["criteria"], "framework_layer": chosen["framework_layer"],
+           "network_allowlist": chosen["criteria"]["c5"]["network_allowlist"],
            "log_path": str(log_path.relative_to(project_dir)),
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now()})
@@ -755,7 +758,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                f"{log_path.relative_to(project_dir)}")
 
     started = time.monotonic()
-    code = _run(cmd, project_dir, log_path, child_session_id)
+    code = _run(cmd, project_dir, log_path, child_session_id,
+                network_allowlist=chosen["criteria"]["c5"]["network_allowlist"])
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
@@ -861,7 +865,8 @@ def _launch_cmd(cfg: dict, prompt: str) -> list:
     return cmd
 
 
-def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str) -> int:
+def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
+         network_allowlist: list | None = None) -> int:
     """Detached, logged, `EXIT=$?` appended.
 
     Working directory is the PROJECT ROOT, so `CLAUDE.md` loads — the exact inverse of
@@ -874,10 +879,18 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str) ->
 
     `SELDON_SESSION_ID` is set to `child_session_id`, overriding anything inherited: it is the
     first entry of the session resolution order, so every event the child writes carries it.
+
+    `SELDON_NETWORK_ALLOWLIST` carries the task's parsed allowlist, comma-separated
+    (ai-readiness-kg/cc_tasks/2026-09-18_network_allowlist.md decision 2). It is stripped
+    whenever the task declared no allowlist, so an inherited list can never license a `none`
+    task's fetches: the helper that reads it refuses to run when it is unset.
     """
-    env = {k: v for k, v in os.environ.items() if k not in D.API_KEY_VARS}
+    env = {k: v for k, v in os.environ.items()
+           if k not in D.API_KEY_VARS and k != D.NETWORK_ALLOWLIST_ENV}
     env.update(HEADLESS_ENV)
     env["SELDON_SESSION_ID"] = child_session_id
+    if network_allowlist:
+        env[D.NETWORK_ALLOWLIST_ENV] = ",".join(network_allowlist)
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
         fh.flush()
