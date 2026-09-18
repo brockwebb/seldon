@@ -1030,6 +1030,8 @@ def seldon_cc_register(
         f"  id: {outcome['artifact_id'][:8]}...",
         f"  state: proposed",
     ]
+    if outcome["source_commit"]:
+        lines.append(f"  source_commit: {outcome['source_commit']}")
     if outcome["warning"]:
         lines.append(outcome["warning"])
     lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])

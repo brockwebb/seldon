@@ -645,7 +645,46 @@ def _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run) ->
             click.echo(f"register: {rel} NOT committed ({outcome['reason']}): "
                        f"{outcome.get('stderr', '')}", err=True)
         done.append({"source_file": rel, **outcome})
+    record = _commit_registration_records(project_dir, store)
+    if record is not None:
+        done.append(record)
     return done
+
+
+def _commit_registration_records(project_dir, store) -> dict | None:
+    """Commit the store when it holds the uncommitted record of a registration that committed
+    its own file (`ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md` decision 4).
+
+    Registration now commits an untracked task file by path and writes `artifact_created`
+    with `source_commit` AFTER that commit, so the line cannot be in it. The loop above keys on
+    an untracked file and never sees such a task; without this, the one line keeps c7 false for
+    the whole queue — decision 3's wedge, one commit later. The store is committed on the same
+    terms the loop above has always committed it with a task file (whole file, pathspec to the
+    store alone, only with no claim in flight — the caller's gate), and only when it is
+    append-only against HEAD: an in-place edit is not a registration's footprint.
+
+    Returns the commit outcome, or None when there is no such record to commit.
+    """
+    appended = D.appended_events(project_dir, store)
+    if not appended["ok"]:
+        return None
+    records = [e for e in appended["events"]
+               if e.get("event_type") == "artifact_created"
+               and (e.get("payload") or {}).get("artifact_type") == "ResearchTask"
+               and ((e.get("payload") or {}).get("properties") or {}).get("source_commit")]
+    if not records:
+        return None
+    names = ", ".join(f"{e['payload']['properties'].get('source_file')} "
+                      f"({str(e['payload'].get('artifact_id'))[:8]})" for e in records)
+    outcome = D.commit_paths(project_dir, [store],
+                             f"register: record of {names} — registration line committed by "
+                             f"the standing dispatcher")
+    if outcome["committed"]:
+        click.echo(f"register: record of {names} committed as {outcome['commit']}")
+    else:
+        click.echo(f"register: record of {names} NOT committed ({outcome['reason']}): "
+                   f"{outcome.get('stderr', '')}", err=True)
+    return {"source_file": store, **outcome}
 
 
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,

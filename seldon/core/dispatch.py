@@ -432,6 +432,38 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
             "committed_paths": keep, "skipped": skipped}
 
 
+def appended_events(project_dir: Path, store_rel: str) -> dict:
+    """The events appended to the tracked store since HEAD, whoever wrote them.
+
+    The append-only half of :func:`own_appended_lines`, shared with the registration-record
+    sweep (`ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md`). Checked against
+    HEAD's blob: the working copy must begin with HEAD's bytes, and every appended line must
+    parse. Returns `{ok, reason, events}` with `reason` one of `None`, `clean`, `untracked`,
+    `not_append_only`, `unparseable`; never raises on a state.
+    """
+    path = Path(project_dir) / store_rel
+    if not path.is_file() or not is_tracked(Path(project_dir), path):
+        return {"ok": False, "reason": "untracked", "events": []}
+    head = subprocess.run(["git", "show", f"HEAD:{store_rel}"], cwd=project_dir,
+                          capture_output=True)
+    if head.returncode != 0:
+        return {"ok": False, "reason": "untracked", "events": []}
+    work = path.read_bytes()
+    if work == head.stdout:
+        return {"ok": False, "reason": "clean", "events": []}
+    if not work.startswith(head.stdout):
+        return {"ok": False, "reason": "not_append_only", "events": []}
+    events = []
+    for raw in work[len(head.stdout):].decode("utf-8").splitlines():
+        if not raw.strip():
+            continue
+        try:
+            events.append(json.loads(raw))
+        except json.JSONDecodeError:
+            return {"ok": False, "reason": "unparseable", "events": events}
+    return {"ok": True, "reason": None, "events": events}
+
+
 def own_appended_lines(project_dir: Path, store_rel: str, actor: str) -> dict:
     """Is the store's uncommitted change made ONLY of lines this actor appended?
 
@@ -450,26 +482,11 @@ def own_appended_lines(project_dir: Path, store_rel: str, actor: str) -> dict:
     Returns values, never raises on a state: `{ok, reason, events}` with `reason` one of
     `None`, `clean`, `untracked`, `not_append_only`, `unparseable`, `not_own_lines`.
     """
-    path = Path(project_dir) / store_rel
-    if not path.is_file() or not is_tracked(Path(project_dir), path):
-        return {"ok": False, "reason": "untracked", "events": []}
-    head = subprocess.run(["git", "show", f"HEAD:{store_rel}"], cwd=project_dir,
-                          capture_output=True)
-    if head.returncode != 0:
-        return {"ok": False, "reason": "untracked", "events": []}
-    work = path.read_bytes()
-    if work == head.stdout:
-        return {"ok": False, "reason": "clean", "events": []}
-    if not work.startswith(head.stdout):
-        return {"ok": False, "reason": "not_append_only", "events": []}
+    appended = appended_events(project_dir, store_rel)
+    if not appended["ok"]:
+        return appended
     events, foreign = [], []
-    for raw in work[len(head.stdout):].decode("utf-8").splitlines():
-        if not raw.strip():
-            continue
-        try:
-            ev = json.loads(raw)
-        except json.JSONDecodeError:
-            return {"ok": False, "reason": "unparseable", "events": events}
+    for ev in appended["events"]:
         (events if ev.get("actor") == actor else foreign).append(ev)
     if foreign:
         return {"ok": False, "reason": "not_own_lines", "events": events,
