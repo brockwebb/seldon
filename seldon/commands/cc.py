@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 import subprocess
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -482,6 +483,45 @@ def _enforce_git_tracking(
     raise SystemExit(1)
 
 
+def _commit_registered_file(
+    project_dir: Path, rel_path: str, task_id: str, name: str
+) -> tuple[str | None, str | None]:
+    """Commit exactly one untracked task file, by path, and return ``(sha, failure)``.
+
+    ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md decision 1. Registration used
+    to leave the file untracked for the standing dispatcher's next pass to commit (DN-006
+    ADDENDUM_03 §2), and a pass that finds the lease held exits — so a file registered while a
+    dispatched session ran stayed untracked for that session's whole life, in the tree the
+    session's protected-paths checks read. Committing here closes that window at its source.
+
+    **Why this is safe beside a running session** (decision 2): ``git commit -- <path>`` is
+    git's ``--only`` mode — it commits that path's working-tree content and leaves every other
+    index entry as it was, so a session's staged, modified or untracked work is neither
+    committed nor unstaged. HEAD moves under the session; nothing it holds conflicts with a
+    file it never wrote.
+
+    **A failed commit leaves the file untracked again**, not merely staged: the dispatcher's
+    fallback sweep (decision 4) keys on ``git ls-files``, which counts the index, so a file
+    left staged would read as tracked and never be committed by anyone.
+
+    Returns:
+        ``(full_sha, None)`` on success; ``(None, reason)`` when git refused — a hook, an
+        ``index.lock`` held by the session's own commit — in which case registration proceeds
+        with ``source_commit: null`` exactly as before this existed.
+    """
+    added = _git(project_dir, "add", "--", rel_path)
+    if added.returncode != 0:
+        return None, f"git add failed: {(added.stderr or added.stdout).strip()}"
+    message = (f"register: {rel_path} — task {task_id[:8]} ({name}) committed by its "
+               f"registration")
+    done = _git(project_dir, "commit", "-q", "-m", message, "--", rel_path)
+    if done.returncode != 0:
+        _git(project_dir, "rm", "--cached", "-q", "--", rel_path)
+        return None, f"git commit failed: {(done.stderr or done.stdout).strip()}"
+    head = _git(project_dir, "rev-parse", "HEAD")
+    return head.stdout.strip(), None
+
+
 def _find_existing(driver, database: str, rel_path: str) -> str | None:
     """Return artifact_id of any ResearchTask with matching source_file, or None."""
     with driver.session(database=database) as session:
@@ -875,8 +915,10 @@ def register_task_file(
 
     Returns:
         ``{"artifact_id", "name", "rel_path", "description", "existing",
-        "rulings", "edges_written", "warning"}``. ``existing`` is True when the
-        file was already registered, in which case nothing was created.
+        "rulings", "edges_written", "warning", "source_commit"}``. ``existing`` is
+        True when the file was already registered, in which case nothing was
+        created. ``source_commit`` is the full sha of the path-scoped commit this
+        registration made of an untracked file, else None.
 
     Raises:
         FileNotFoundError: The task file does not exist.
@@ -910,7 +952,8 @@ def register_task_file(
             "No duplicate created.")
         return {"artifact_id": existing_id, "name": _name_from_filepath(rel_path),
                 "rel_path": rel_path, "description": None, "existing": True,
-                "rulings": [], "edges_written": 0, "warning": warning}
+                "rulings": [], "edges_written": 0, "warning": warning,
+                "source_commit": None}
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -920,6 +963,19 @@ def register_task_file(
     # so a whole-file hash would guarantee that every correctly-executed task is
     # divergent at completion time.
     content_hash = _spec_hash(task_path)
+    # Every refusal is behind us, so a commit made now is never of a file that then fails to
+    # register. Only an UNTRACKED file is committed: a tracked or staged one is its author's
+    # to commit, an ignored one cannot be added, and outside a work tree there is no commit.
+    # `source_commit` is on every registration so that null reads as "registration did not
+    # commit this file" rather than as a field an older writer never knew about.
+    artifact_id = str(uuid.uuid4())
+    source_commit = None
+    if status == GIT_UNTRACKED:
+        source_commit, failure = _commit_registered_file(project_dir, rel_path, artifact_id,
+                                                         name)
+        if failure:
+            say(f"Warning: {rel_path} was not committed at registration ({failure}); "
+                "the standing dispatcher's next pass commits it.")
     artifact_id = create_artifact(
         project_dir=project_dir,
         driver=driver,
@@ -932,15 +988,19 @@ def register_task_file(
             "source_file": rel_path,
             "file_hash": content_hash,
             "hash_scope": HASH_SCOPE_SPEC,
+            "source_commit": source_commit,
         },
         actor=actor,
         authority="accepted",
         session_id=session_id,
+        artifact_id=artifact_id,
     )
     say(f"Registered: {name}")
     say(f"  source_file: {rel_path}")
     say(f"  id: {artifact_id[:8]}...")
     say("  state: proposed")
+    if source_commit:
+        say(f"  source_commit: {source_commit}")
     matches, written = constraining_rulings(
         project_dir=project_dir, config=config, driver=driver, database=database,
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
@@ -950,7 +1010,7 @@ def register_task_file(
     say(render_rulings(matches, written))
     return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path,
             "description": description, "existing": False, "rulings": matches,
-            "edges_written": written, "warning": warning}
+            "edges_written": written, "warning": warning, "source_commit": source_commit}
 
 
 @cc_group.command("register")

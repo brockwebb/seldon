@@ -882,3 +882,77 @@ def test_the_commit_is_reported_on_stdout_where_the_wrapper_log_carries_it(
     kinds = [e["event_type"] for e in _events(project)[before:]]
     assert "cadence_created" not in kinds
     assert D.EVENT_REFUSED not in kinds
+
+
+# ============================ ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md
+#
+# Registration now commits the untracked file it registers (decision 1), so the sweep above —
+# keyed on an UNTRACKED file — no longer fires for a Desktop registration. The other half of the
+# footprint is still there: the `artifact_created` line in the tracked event store, written
+# after the commit it names. Left alone, that one line keeps c7 false for every task in the
+# queue, which is decision 3's wedge reborn. The sweep therefore also commits the store when an
+# uncommitted appended line records a registration that committed its own file.
+
+
+def test_the_record_of_a_self_committing_registration_is_committed_by_the_next_pass(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    from seldon.commands.cc import register_task_file
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (project / "seldon_events.jsonl").write_text("", encoding="utf-8")   # tracked, as here
+    _git(project, "add", "-A")
+    _git(project, "commit", "-m", "track the event store")
+    _stub(project, stem="t9")
+    path = _author(project, "t9")
+    config = yaml.safe_load((project / "seldon.yaml").read_text())
+    outcome = register_task_file(
+        project_dir=project, config=config, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, session_id=None, task_path=path, allow_untracked=True)
+
+    assert outcome["source_commit"]
+    assert D.is_tracked(project, path)
+    assert D.tree_state(project)["dirty_paths"] == ["seldon_events.jsonl"]
+
+    res = _run(project, ["once"])
+    assert res.exit_code == 0
+
+    shas = _git(project, "log", "--pretty=%H", "--grep=^register: record").stdout.split()
+    assert len(shas) == 1, res.output
+    assert len(shas) == 1
+    assert _git(project, "show", "--name-only", "--pretty=", shas[0]).stdout.split() == [
+        "seldon_events.jsonl"]
+    assert outcome["artifact_id"][:8] in _git(project, "log", "-1", "--pretty=%s",
+                                              shas[0]).stdout
+    launched = _events(project, D.EVENT_LAUNCHED)
+    assert [e["payload"]["task_id"] for e in launched] == [outcome["artifact_id"]]
+    assert launched[0]["payload"]["criteria"]["c7"]["ok"] is True
+
+
+def test_a_record_is_not_committed_while_a_claim_is_in_flight(
+        project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
+    """The session in flight owns the tree; its own end-of-task commit of the store carries
+    the line, as it carries every line written beside it."""
+    from seldon.commands.cc import register_task_file
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    _git(project, "add", "-A")
+    _git(project, "commit", "-m", "track the event store")
+    _stub(project)
+    tid = _register(project, neo4j_driver, domain_config)
+    _git(project, "add", "seldon_events.jsonl")
+    _git(project, "commit", "-m", "t1's record")
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        s.run("MATCH (t:ResearchTask {artifact_id:$i}) SET t.state='in_progress', "
+              "t.claimed_by='dispatcher:elsewhere:1' RETURN t", i=tid)
+    path = _author(project, "t10")
+    config = yaml.safe_load((project / "seldon.yaml").read_text())
+    register_task_file(
+        project_dir=project, config=config, driver=neo4j_driver, database=NEO4J_DB,
+        domain_config=domain_config, session_id=None, task_path=path, allow_untracked=True)
+    head = _git(project, "rev-parse", "HEAD").stdout.strip()
+
+    assert _run(project, ["once"]).exit_code == 0
+
+    assert _git(project, "rev-parse", "HEAD").stdout.strip() == head

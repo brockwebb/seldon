@@ -7,8 +7,10 @@ Skipping immutability check." — the "immutable once written" line was unenforc
 the files the Desktop writes. `allow_untracked` is a statement about git recoverability; it was
 never a reason to skip hashing the bytes on disk.
 
-The sequence under test is the one the standing dispatcher runs: register untracked, commit the
-file as the dispatcher does (`D.commit_paths`, which does not change its bytes), then complete.
+The sequence under test: register untracked, which now commits the file by path at registration
+(`ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md` decision 1 — before that, the
+dispatcher's `D.commit_paths` did it on its next pass), then complete. Neither commit changes the
+file's bytes, and the hash must survive either.
 """
 from __future__ import annotations
 
@@ -65,10 +67,11 @@ def _register_and_commit(repo: Path, neo4j_driver):
     out = seldon_cc_register(filepath=REL, project_dir=str(repo), allow_untracked=True)
     assert "Registered" in out, out
     node = _node(neo4j_driver, REL)
-    before = (repo / REL).read_bytes()
-    commit = D.commit_paths(repo, [REL], "register: probe")
-    assert commit["committed"], commit
-    assert (repo / REL).read_bytes() == before, "the dispatcher's commit changed the bytes"
+    assert D.is_tracked(repo, repo / REL), "registration did not commit the untracked file"
+    committed = subprocess.run(["git", "show", f"HEAD:{REL}"], cwd=repo, check=True,
+                               capture_output=True).stdout
+    assert (repo / REL).read_bytes() == committed == BODY.encode("utf-8"), (
+        "the registration's commit changed the bytes")
     return node
 
 

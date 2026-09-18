@@ -69,9 +69,15 @@ def create_artifact(
     actor: str,
     authority: str,
     session_id: Optional[str] = None,
+    artifact_id: Optional[str] = None,
 ) -> str:
     """
     Validate, write JSONL event, then write Neo4j node.
+
+    ``artifact_id`` is minted here unless the caller passes one. A caller passes one when
+    something must name the artifact before its creation event is written — `seldon cc
+    register` commits the task file under a message naming the task, then records that
+    commit on the creation event (ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md).
 
     Returns the new artifact_id.
 
@@ -105,7 +111,7 @@ def create_artifact(
         except FileNotFoundError:
             pass  # No seldon.yaml — allow (e.g., when init is running for master DB itself)
 
-    artifact_id = str(uuid.uuid4())
+    artifact_id = artifact_id or str(uuid.uuid4())
     initial_state = domain_config.get_initial_state(artifact_type)
 
     event = make_event(
