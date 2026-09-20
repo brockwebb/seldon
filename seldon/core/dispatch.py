@@ -121,6 +121,79 @@ _NETWORK_ALLOWLIST_RE = re.compile(r"^[\s`*_]*allowlist\s*:(?P<hosts>.*)$", re.I
 _HOSTNAME_RE = re.compile(
     r"^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$")
 
+#: The OPTIONAL fourth header, read by `seldon cc register` and not by candidacy
+#: (ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence_after.md decision 3).
+#:
+#: **What it closes.** DN-007 records that SEQUENCING lines are "read into `precedes` edges
+#: inconsistently". They are not read at all: a repo-wide `grep -rn -i sequencing seldon/` on
+#: 2026-09-19 returned zero hits. `cc register` wrote no edge, dispatcher readiness reads
+#: `precedes` edges only, and every such edge in ai-readiness-kg's graph was written by a
+#: Desktop session calling `seldon_task_chain` by hand, when it remembered to. The sentence at
+#: the end of a SEQUENCING line — "Not launched before `X.md` is `completed` on the graph" — is
+#: prose the dispatcher cannot see, the same class as a supersession stated only in prose
+#: (DN-006 ADDENDUM_01).
+#:
+#: Prior art, and the reason this is a separate header rather than a parser for the prose:
+#: systemd's `After=` is an ORDERING-only declaration, deliberately separate from `Requires=`
+#: (systemd.unit(5)) — which is exactly what `precedes` is, order and not requirement; Make
+#: declares prerequisites where the scheduler reads them; Airflow's `set_upstream` is a call,
+#: not a docstring. Every one of them puts the ordering in the machine-read place and leaves
+#: the comment as a comment. The name is taken from systemd for that reason.
+HEADER_AFTER = "After"
+AFTER_GRAMMAR = ("`**After:** none`, or `**After:** <ref>[, <ref> ...]` where each ref is a "
+                 "cc_tasks file stem (with or without `.md`) or an artifact id prefix of 8 or "
+                 "more hex characters")
+#: `none` must LEAD the value, for the reason `_NETWORK_NONE_RE` gives: a `none` matched
+#: anywhere would read "after the scan, none of the report tasks" as declaring no predecessor.
+_AFTER_NONE_RE = re.compile(r"^[\s`*_]*none\b", re.IGNORECASE)
+#: A ref: a path-free stem, optionally `.md`, optionally backticked, optionally with a
+#: `cc_tasks/` prefix that is stripped. No globs and no directories, so a ref names one file.
+_AFTER_REF_RE = re.compile(r"^(?:cc_tasks/)?(?P<stem>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.md)?$")
+#: An artifact id prefix. Eight hex characters is what `short()` prints and what every task
+#: file and commit message in these projects quotes.
+AFTER_ID_MIN_HEX = 8
+_AFTER_ID_RE = re.compile(r"^[0-9a-f]{%d,}$" % AFTER_ID_MIN_HEX)
+
+
+def parse_after(value: str | None) -> dict:
+    """The After header against :data:`AFTER_GRAMMAR`: `{kind, refs, error}`.
+
+    `kind` is `none` or `refs` when the value parses, and `None` when it does not — in which
+    case `error` says which part failed and quotes the grammar. The header is OPTIONAL: a
+    `value` of None is `{"kind": "absent"}`, which means no edges, as before this existed.
+    """
+    if value is None:
+        return {"kind": "absent", "refs": [], "error": None}
+    stripped = value.strip()
+    if not stripped:
+        return {"kind": None, "refs": [],
+                "error": f"After header is empty; expected {AFTER_GRAMMAR}"}
+    if _AFTER_NONE_RE.match(stripped):
+        return {"kind": "none", "refs": [], "error": None}
+    # A trailing sentence period is prose, the way it is in the Network header's allowlist.
+    stripped = stripped[:-1] if stripped.endswith(".") else stripped
+    items = [r.strip().strip("`").strip() for r in stripped.split(",")]
+    refs, bad = [], []
+    for item in items:
+        m = _AFTER_REF_RE.match(item)
+        if not item or not m:
+            bad.append(item)
+            continue
+        stem = m.group("stem")
+        if stem not in refs:
+            refs.append(stem)
+    if bad:
+        return {"kind": None, "refs": [],
+                "error": (f"After header entries are not refs: "
+                          f"{', '.join(repr(b) for b in bad)}; expected {AFTER_GRAMMAR}")}
+    return {"kind": "refs", "refs": refs, "error": None}
+
+
+def after_ref_is_id(ref: str) -> bool:
+    """True when a ref may also be read as an artifact id prefix."""
+    return bool(_AFTER_ID_RE.match(ref))
+
+
 #: Predecessor states that let a successor run (DN-006 decision 2, c2). `blocked` and `rejected`
 #: are deliberately absent: a successor whose predecessor is blocked is a successor whose
 #: premise nobody has checked.
@@ -139,6 +212,24 @@ EVENT_OBSERVED_STOP = "dispatch_observed_stop"
 #: NOTHING writes no event, for decision 7's reason — a five-minute poll that logged its own
 #: silence would bury the assertions in it.
 EVENT_CADENCE_CREATED = "cadence_created"
+#: A candidate refused on the same criterion for `dispatch.stuck_after_passes` consecutive
+#: passes (ADDENDUM_01 to ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence
+#: _after.md, decision 6b). The incident: 84 consecutive passes over seven hours printed
+#: `65e5da0e dirty_tree: c7`, exit 0, no event, no notification, while one untracked task file
+#: sat in `cc_tasks/`. Every refusal reason reachable from the quiet branch is a STANDING
+#: condition, so decision 7 rightly forbids logging each pass — but a queue that can stop needs
+#: a staleness alarm SEPARATE from its failure alarm. Prior art: the dead man's switch; Nagios
+#: freshness checks; Prometheus `absent()` with a `for:` duration. A healthy exit code on a
+#: pass that has refused the same candidate 84 times is the case those exist for.
+EVENT_STUCK = "dispatch_stuck"
+#: Passes on one criterion before the alarm. `seldon.yaml dispatch.stuck_after_passes`; at the
+#: standing `poll_interval_s: 300` the default is fifteen minutes. **No measured basis**, like
+#: `poll_interval_s` itself, and it says so in the config file.
+STUCK_AFTER_PASSES_DEFAULT = 3
+#: Where the streak is kept. Under `.seldon/`, which is gitignored: a count of passes is local
+#: state and not a project record. The EVENT is the record.
+STUCK_STATE_FILE = "dispatch_stuck.json"
+
 #: The finish notification's failure (ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md
 #: decision 1). A notifier that ran is not an event: the finish it reports is already on the log.
 #: A notifier that did not run, failed or hung is one, because it is the only trace that the
@@ -206,6 +297,14 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.notify_timeout_s must be a positive number of seconds, got {timeout!r}")
     block["notify_timeout_s"] = timeout
+    # Decision 6b. Optional with a default, so installing this build changes no config file;
+    # a value that IS there is validated at load for `notify_timeout_s`'s reason.
+    stuck = block.get("stuck_after_passes", STUCK_AFTER_PASSES_DEFAULT)
+    if isinstance(stuck, bool) or not isinstance(stuck, int) or stuck < 1:
+        raise DispatchConfigError(
+            f"dispatch.stuck_after_passes must be a positive whole number of passes, got "
+            f"{stuck!r}")
+    block["stuck_after_passes"] = stuck
     return block
 
 
@@ -464,8 +563,19 @@ def appended_events(project_dir: Path, store_rel: str) -> dict:
     return {"ok": True, "reason": None, "events": events}
 
 
-def own_appended_lines(project_dir: Path, store_rel: str, actor: str) -> dict:
-    """Is the store's uncommitted change made ONLY of lines this actor appended?
+#: Who may have written an uncommitted line the dispatcher is willing to commit
+#: (ADDENDUM_01 decision 6a). `dispatcher` is its own record. `desktop` is the MCP tools':
+#: `seldon_task_create` and `seldon_task_chain` append to a TRACKED store, and a Desktop
+#: session that used one and then went away left the tree dirty — which is c7 false for the
+#: WHOLE queue, not just for the task it touched. A `cc` line is deliberately NOT here: a
+#: dispatched session's uncommitted event is the DD-019 class and the refusal is the guard.
+COMMITTABLE_ACTORS = ("dispatcher", "desktop")
+
+
+def own_appended_lines(project_dir: Path, store_rel: str, actor) -> dict:
+    """Is the store's uncommitted change made ONLY of lines these actors appended?
+
+    `actor` is one actor string or an iterable of them.
 
     The precondition for the dispatcher committing its own record
     (`ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 1). The
@@ -482,12 +592,13 @@ def own_appended_lines(project_dir: Path, store_rel: str, actor: str) -> dict:
     Returns values, never raises on a state: `{ok, reason, events}` with `reason` one of
     `None`, `clean`, `untracked`, `not_append_only`, `unparseable`, `not_own_lines`.
     """
+    allowed = {actor} if isinstance(actor, str) else set(actor)
     appended = appended_events(project_dir, store_rel)
     if not appended["ok"]:
         return appended
     events, foreign = [], []
     for ev in appended["events"]:
-        (events if ev.get("actor") == actor else foreign).append(ev)
+        (events if ev.get("actor") in allowed else foreign).append(ev)
     if foreign:
         return {"ok": False, "reason": "not_own_lines", "events": events,
                 "foreign_actors": sorted({str(e.get("actor")) for e in foreign})}
@@ -518,6 +629,127 @@ def push_if_ahead(project_dir: Path) -> dict:
         return {"pushed": False, "reason": "push_failed", "ahead": ahead,
                 "stderr": (done.stderr or done.stdout).strip()}
     return {"pushed": True, "reason": None, "ahead": ahead}
+
+
+def lease_is_held(project_dir: Path, cfg: dict) -> bool:
+    """Is a dispatcher pass — and therefore possibly a dispatched session — working here?
+
+    Read from the lease's RECORD plus PID liveness, never from age: the DD-022 orphan rule,
+    which `reap_lease` already follows. A stale body naming a dead PID is not a held lease.
+    """
+    body = read_lease(Path(project_dir) / cfg["lease_file"])
+    if not body or body.get("holder") is None:
+        return False
+    pid = body.get("pid")
+    return not isinstance(pid, int) or pid_alive(pid)
+
+
+def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str = "desktop",
+                          actors=COMMITTABLE_ACTORS) -> dict:
+    """Commit the lines `by` just appended to the tracked event store, path-scoped.
+
+    ADDENDUM_01 decision 6a to
+    `ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence_after.md`.
+
+    **What it closes.** `seldon cc register` has committed its own footprint since
+    `2026-09-18_registration_commits`, for a reason that is not special to registration: the
+    event store is a TRACKED file in this project, and a write to it that nobody commits keeps
+    c7 false for the WHOLE queue — not for the task that was touched, for every task behind it.
+    Every other MCP write tool appends to the same file and committed nothing. `_record_own_lines`
+    then refuses the file, by name, as "not dispatcher-only (also written by desktop)".
+
+    **Deferred, never forced.** Nothing is committed while a lease is held: a `git commit`
+    beside a working dispatched session is DD-019's class and an `index.lock` collision
+    besides. The next pass that holds the lease commits what it finds, which is why
+    `COMMITTABLE_ACTORS` now includes `desktop`. Nothing is committed either when the project
+    has no `dispatch:` block (the dispatcher is opt-in per project and this is its hygiene),
+    when the store is untracked, or when a `cc` line is in the append — that last one is the
+    DD-019 guard and it stays.
+
+    Returns:
+        `{committed, reason, ...}` — `reason` one of `None`, `no_dispatch_block`,
+        `lease_held`, `wrong_branch`, or whatever `own_appended_lines` / `commit_paths`
+        reported. **Never raises**: a tool that did its work must not fail on its bookkeeping.
+    """
+    try:
+        cfg = load_dispatch_config(Path(project_dir), config)
+    except (DispatchConfigError, OSError):
+        return {"committed": False, "reason": "no_dispatch_block"}
+    store = (config or {}).get("event_store", {}).get("path", "seldon_events.jsonl")
+    if lease_is_held(project_dir, cfg):
+        return {"committed": False, "reason": "lease_held"}
+    if tree_state(project_dir)["branch"] != cfg["branch"]:
+        return {"committed": False, "reason": "wrong_branch"}
+    own = own_appended_lines(Path(project_dir), store, actors)
+    if not own["ok"]:
+        return {"committed": False, "reason": own["reason"],
+                "foreign_actors": own.get("foreign_actors", [])}
+    types = list(dict.fromkeys(e.get("event_type") for e in own["events"]))
+    ids = list(dict.fromkeys(
+        str(pl.get("task_id") or pl.get("artifact_id") or pl.get("id"))[:8]
+        for pl in ((e.get("payload") or {}) for e in own["events"])
+        if pl.get("task_id") or pl.get("artifact_id") or pl.get("id")))
+    message = (f"{actor}: {', '.join(types)} {', '.join(ids) or '-'} — "
+               f"{len(own['events'])} line(s) written by {by}")
+    return commit_paths(Path(project_dir), [store], message)
+
+
+# ------------------------------------------------------------------- the stuck-queue alarm
+
+def read_stuck_state(project_dir: Path, cfg: dict) -> dict:
+    path = Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+    if not path.is_file():
+        return {}
+    try:
+        body = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except json.JSONDecodeError:
+        # A corrupt streak file re-arms the alarm rather than silencing it: the failure
+        # direction of a staleness alarm must be "tell them again", never "stay quiet".
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
+def write_stuck_state(project_dir: Path, cfg: dict, state: dict) -> None:
+    path = Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def advance_stuck(previous: dict, refusals: dict, threshold: int, now: str) -> tuple:
+    """One pass's refusals against the previous streaks: `(state, alarms)`.
+
+    Pure, so the whole re-arm rule is testable without a clock, a graph or a notifier.
+
+    Args:
+        previous: The state file's contents.
+        refusals: `{task_id: {"criterion": str, "detail": ...}}` for this pass.
+        threshold: `dispatch.stuck_after_passes`.
+        now: Timestamp stamped on a new streak and on the alarm.
+
+    Returns:
+        The state to persist, and the task ids to raise the alarm for in this pass.
+
+    A streak re-arms when the criterion CHANGES or CLEARS — a task that stops being refused
+    drops out of the state entirely, so the same criterion recurring later alarms again. The
+    alarm fires exactly once per streak: that is the difference between a staleness alarm and
+    the per-pass refusal logging DN-006 decision 7 forbids.
+    """
+    state, alarms = {}, []
+    for task_id, row in refusals.items():
+        prior = previous.get(task_id) or {}
+        same = prior.get("criterion") == row["criterion"]
+        passes = (prior.get("passes", 0) + 1) if same else 1
+        notified = bool(prior.get("notified")) if same else False
+        entry = {"criterion": row["criterion"], "passes": passes, "notified": notified,
+                 "first_seen": prior.get("first_seen", now) if same else now}
+        if passes >= threshold and not notified:
+            entry["notified"] = True
+            entry["notified_at"] = now
+            alarms.append(task_id)
+        elif same and prior.get("notified_at"):
+            entry["notified_at"] = prior["notified_at"]
+        state[task_id] = entry
+    return state, alarms
 
 
 def is_tracked(project_dir: Path, path: Path) -> bool:

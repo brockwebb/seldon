@@ -480,21 +480,42 @@ def test_a_dirty_tree_refuses_the_candidate_names_the_paths_and_writes_no_event(
     assert '"dirty_paths": ["scratch.txt"]' in out
 
 
-def test_ten_passes_over_a_dirty_tree_leave_the_log_byte_identical(
+def test_ten_passes_over_a_dirty_tree_write_one_line_and_then_nothing(
         project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
     """The condition that made the old behaviour a defect, at the scale it happens on: a
-    five-minute poll across a two-hour session is twenty-four passes. The log must be the same
-    bytes after all of them."""
+    five-minute poll across a two-hour session is twenty-four passes.
+
+    **Amended by ADDENDUM_01 decision 6b**, and the amendment is the whole point of that
+    decision. This used to require the log to be byte-identical after all ten. It now requires
+    exactly ONE line — a `dispatch_stuck` at `stuck_after_passes` — and byte-identity for every
+    pass after it. The two claims are different facts and decision 7's argument only covers the
+    first: a poll that logs its own silence buries the assertions in the log, and a record that
+    the queue has STOPPED is the opposite of silence. 84 consecutive passes with exit 0 and no
+    event is what this exists to stop (`logs/airkg_dispatch.log`, 2026-09-20T03:00Z..09:56Z).
+    """
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     _register(project, neo4j_driver, domain_config)
     _stub(project)
     (project / "scratch.txt").write_text("x", encoding="utf-8")
     log = project / "seldon_events.jsonl"
     before = log.read_bytes() if log.exists() else b""
+    threshold = D.load_dispatch_config(project)["stuck_after_passes"]
+    for _ in range(threshold - 1):
+        assert _run(project, ["once"]).exit_code == 0
+    assert log.read_bytes() == before, "a standing-condition refusal was logged per pass"
+
+    assert _run(project, ["once"]).exit_code == 0
+    stuck = _events(project, D.EVENT_STUCK)
+    assert len(stuck) == 1
+    assert stuck[0]["payload"]["criterion"] == "dirty_tree"
+    assert stuck[0]["payload"]["dirty_paths"] == ["scratch.txt"]
+
+    # And then silence again, for as long as the condition stands.
+    settled = log.read_bytes()
     for _ in range(10):
         assert _run(project, ["once"]).exit_code == 0
-    after = log.read_bytes() if log.exists() else b""
-    assert after == before
+    assert log.read_bytes() == settled, "the alarm re-fired on an unchanged criterion"
+    assert not _events(project, D.EVENT_REFUSED)
 
 
 # ==================================================================================== status

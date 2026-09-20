@@ -327,7 +327,12 @@ def test_a_line_somebody_else_wrote_is_never_committed_by_the_dispatcher(
     assert res.exit_code == 0
     assert _git(project, "rev-parse", "HEAD").stdout.strip() == head
     assert _store_status(project) != ""
-    assert "not dispatcher-only" in res.output
+    # ADDENDUM_01 decision 6a widened `COMMITTABLE_ACTORS` to dispatcher AND desktop, so the
+    # message names the actor it found rather than saying "not dispatcher-only". The claim
+    # this test makes is unchanged and is the one that matters: a `cc` line is never
+    # committed by the dispatcher, because that one is DD-019's class.
+    assert "written by cc" in res.output
+    assert "not one of dispatcher, desktop" in res.output
 
 
 def test_nothing_outside_the_store_is_ever_staged_or_committed(

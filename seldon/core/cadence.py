@@ -325,15 +325,137 @@ def render(template_text: str, *, cycle_name: str, period: str, cadence_name: st
     return out
 
 
-def unknown_placeholders(template_text: str) -> list:
-    """`{word}` placeholders the renderer does not define, EXCLUDING the four it does.
+def unknown_placeholders(template_text: str, declared=()) -> list:
+    """`{word}` placeholders the renderer does not define, EXCLUDING the five it does and any
+    the template declares (see :func:`declared_vars`).
 
-    Reported by the config/template check rather than by `render`, because a false positive
-    here is a brace in a code fence and the right response to one is a human reading it, not a
-    pass that refuses at 00:00 on the first Monday.
+    Reported by the config/template check rather than by the unattended `render`, because a
+    false positive here is a brace in a code fence and the right response to one is a human
+    reading it, not a pass that refuses at 00:00 on the first Monday. Fenced lines are
+    therefore skipped outright: a task file body is markdown full of JSON, Cypher and shell,
+    and every brace in those is a false positive by construction.
     """
-    return sorted({m for m in _ANY_PLACEHOLDER_RE.findall(template_text)
-                   if m not in TEMPLATE_FIELDS})
+    known = set(TEMPLATE_FIELDS) | set(declared)
+    return sorted({m for line in _unfenced_lines(template_text)
+                   for m in _ANY_PLACEHOLDER_RE.findall(line)
+                   if m not in known})
+
+
+def _unfenced_lines(template_text: str) -> list:
+    """Every line outside a ``` fence. Nothing cleverer: an unclosed fence swallows the rest
+    of the file, which is the conservative direction — it under-reports placeholders in a
+    malformed template rather than refusing a well-formed one."""
+    out, fenced = [], False
+    for line in template_text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            out.append(line)
+    return out
+
+
+# --------------------------------------------------------- variables a template declares
+
+#: A template may declare extra placeholders on ONE line within its first ten, the same window
+#: the dispatcher reads an addendum's `**Status:**` marker in (DN-006 decision 3):
+#:
+#:     <!-- seldon:vars target, network_hosts -->
+#:
+#: **Why a declaration and not just `--var` on the command line.** `TEMPLATE_FIELDS` is closed
+#: so that a typo in a template fails loudly at render rather than shipping a task file with
+#: `{typo}` in its body. An open `--var` would reopen exactly that hole from the other side: a
+#: caller who mistyped `--var targte=BEA` would get a silent no-op. With the declaration, the
+#: template states its own interface and both directions are checked against it — an undeclared
+#: `--var` and a declared var nobody supplied are each a refusal that names the variable.
+#:
+#: Prior art: this is the shape every template engine that cares uses — a Helm chart's
+#: `values.schema.json`, a Terraform module's `variable` blocks, a GitHub Actions composite
+#: action's `inputs:`. The template declares its parameters; the caller supplies them; the
+#: engine refuses a mismatch in either direction.
+_VARS_DECL_RE = re.compile(r"<!--\s*seldon:vars\s+(?P<names>[^>]*?)\s*-->")
+#: How far into a template the declaration must appear.
+VARS_DECL_WINDOW_LINES = 10
+_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+#: A hand render is a PERSON asking, and a schedule firing is the calendar asking. They are
+#: different assertions and they get different event types, so `dispatch.cadence` keeps meaning
+#: what DN-006 decision 8 says it means: a cadence that created nothing writes no event, and
+#: `cadence_created` is only ever a schedule's own judgement that a period was due.
+EVENT_CADENCE_RENDERED = "cadence_rendered"
+
+
+def declared_vars(template_text: str) -> list:
+    """The extra placeholders this template declares, in declaration order.
+
+    Raises:
+        CadenceRenderError: The declaration line is present but malformed.
+    """
+    head = template_text.splitlines()[:VARS_DECL_WINDOW_LINES]
+    names: list = []
+    for line in head:
+        m = _VARS_DECL_RE.search(line)
+        if not m:
+            continue
+        raw = [n.strip() for n in m.group("names").split(",")]
+        bad = [n for n in raw if not _VAR_NAME_RE.match(n)]
+        if bad or not any(raw):
+            raise CadenceRenderError(
+                f"the `seldon:vars` declaration names {', '.join(repr(b) for b in bad) or 'nothing'}; "
+                f"expected a comma-separated list of identifiers, e.g. "
+                f"`<!-- seldon:vars target, network_hosts -->`")
+        for n in raw:
+            if n in TEMPLATE_FIELDS:
+                raise CadenceRenderError(
+                    f"the `seldon:vars` declaration names {n!r}, which is one of the five "
+                    f"fields the renderer already substitutes "
+                    f"({', '.join(TEMPLATE_FIELDS)})")
+            if n not in names:
+                names.append(n)
+    return names
+
+
+def render_with_vars(template_text: str, *, variables: dict, **fields) -> str:
+    """`render` plus the template's declared variables, with both directions checked.
+
+    Args:
+        template_text: The template.
+        variables: `{name: value}` from the caller, e.g. `--var target=BEA`.
+        **fields: The five `TEMPLATE_FIELDS`, as :func:`render` takes them.
+
+    Raises:
+        CadenceRenderError: A supplied variable the template does not declare, a declared
+            variable nobody supplied, or a `{word}` outside a code fence that is neither a
+            field nor a declared variable. Each names the variable, so a refusal is one edit
+            away from a render.
+    """
+    declared = declared_vars(template_text)
+    undeclared = [k for k in variables if k not in declared]
+    if undeclared:
+        raise CadenceRenderError(
+            f"--var {', '.join(repr(k) for k in sorted(undeclared))} "
+            f"{'is' if len(undeclared) == 1 else 'are'} not declared by this template; it "
+            f"declares {', '.join(declared) or 'nothing'}. Declare it on a "
+            f"`<!-- seldon:vars ... -->` line in the template's first "
+            f"{VARS_DECL_WINDOW_LINES} lines, or drop the --var")
+    missing = [n for n in declared if n not in variables]
+    if missing:
+        raise CadenceRenderError(
+            f"this template declares {', '.join(repr(n) for n in missing)} and "
+            f"{'no value was' if len(missing) == 1 else 'no values were'} supplied; "
+            f"pass --var {missing[0]}=<value>")
+    unknown = unknown_placeholders(template_text, declared)
+    if unknown:
+        raise CadenceRenderError(
+            f"{', '.join(repr(u) for u in unknown)} "
+            f"{'is a placeholder' if len(unknown) == 1 else 'are placeholders'} nobody "
+            f"defines: not one of {', '.join(TEMPLATE_FIELDS)} and not declared by this "
+            f"template. Fix the typo, or declare it on a `<!-- seldon:vars ... -->` line")
+    out = render(template_text, **fields)
+    if not declared:
+        return out
+    var_re = re.compile(r"\{(" + "|".join(re.escape(n) for n in declared) + r")\}")
+    return var_re.sub(lambda m: str(variables[m.group(1)]), out)
 
 
 def evaluate_entry(project_dir: Path, entry: dict, now: datetime) -> dict:

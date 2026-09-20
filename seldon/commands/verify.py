@@ -38,6 +38,12 @@ from seldon.config import (
     get_shared_ontology_sources,
     ONTOLOGY_MASTER_DB,
 )
+from seldon.core.graph import get_stale_artifacts
+from seldon.core.staleness import (
+    partition_stale,
+    resolver_for_session,
+    stale_label,
+)
 from seldon.domain.loader import load_domain_config
 from seldon.paper.build import REFERENCE_PATTERN
 from seldon.paper.glossary_check import find_vocabulary_rule_files, run_glossary_check
@@ -764,58 +770,67 @@ def check_references(driver, database: str, project_dir: Path) -> CheckResult:
 # Check 5: Stale artifacts
 # ---------------------------------------------------------------------------
 
+def _first_labels(artifacts, limit: int = 3) -> list:
+    """Up to `limit` names, with an ellipsis standing for the rest."""
+    names = [stale_label(a) for a in artifacts]
+    return names[:limit] + (["…"] if len(names) > limit else [])
+
+
 def check_stale_artifacts(driver, database: str) -> CheckResult:
     """Find artifacts in stale state and report blast radius.
 
-    **An artifact carrying a `withdrawn_reason` is not stale, it is withdrawn**, and the two
-    are different facts. `stale` means "something this artifact was derived from moved and
-    nobody has said what that means" — a drift, and a thing to fix. A withdrawal is a recorded
-    DECISION: the value stands as measured and the project has said, on the artifact, that it
-    is no longer the current instrument's answer.
+    **A `stale` artifact that records a DECISION is not drift**, and the two are different
+    facts. `stale` means "something this artifact was derived from moved and nobody has said
+    what that means" — a drift, and a thing to fix. A withdrawal (`withdrawn_reason`) and a
+    supersession with a live successor (`superseded_by`) are recorded decisions: the value
+    stands as measured and the project has said, on the artifact, what replaced it or why it
+    was retired.
 
-    They share a state because the Result state machine has no `withdrawn`
-    (`proposed -> [verified, rejected]`, `verified -> [published, stale]`,
+    They share a state because the Result state machine has no `withdrawn` and no
+    `superseded` (`proposed -> [verified, rejected]`, `verified -> [published, stale]`,
     `published -> [stale]`, `stale -> [verified]`) and `stale` is the reachable terminal from
     `published`. Adding a state to a machine several projects share, to name something a
     property already names, would be the heavier change; teaching this check the distinction
-    is the smaller one. Found by `ai-readiness-kg` DD-066, which withdrew five published
-    Results deliberately and then could not get a clean `seldon verify`.
+    is the smaller one, and it is the one every package registry makes — see the prior-art
+    note on :mod:`seldon.core.staleness`. Found first by `ai-readiness-kg` DD-066, which
+    withdrew five published Results deliberately and then could not get a clean
+    `seldon verify`; then again on 2026-09-19, when 36 superseded ones did the same.
 
-    Withdrawn artifacts are reported — they are listed by name and counted — and they do not
-    make the check a warning on their own.
+    Three counts are reported — stale, withdrawn by decision, superseded by decision — and
+    only the FIRST makes this a warning. A `superseded_by` that does not resolve is not a
+    decision and stays in the first count, with the reason on its detail line.
     """
     with driver.session(database=database) as session:
-        records = session.run(
-            "MATCH (a:Artifact {state: 'stale'}) RETURN a"
-        ).data()
+        part = partition_stale(get_stale_artifacts(session), resolver_for_session(session))
 
-    withdrawn = [r for r in records
-                 if str(dict(r["a"]).get("withdrawn_reason") or "").strip()]
-    records = [r for r in records if r not in withdrawn]
+        # Counts always; NAMES only when nothing is drifting. A summary that listed 36
+        # superseded names beside three drifted ones would bury the three that need a
+        # reader — and the detail lines carry every name either way.
+        decided_note = ""
+        if part.decided:
+            decided_note = (f"{len(part.withdrawn)} withdrawn by decision, "
+                            f"{len(part.superseded)} superseded by decision")
+        decided_details = (
+            [f"{stale_label(a)} — withdrawn: {a.get('withdrawn_reason')}"
+             for a in part.withdrawn[:20]]
+            + [f"{stale_label(a)} — superseded by {a.get('superseded_by')}"
+               for a in part.superseded[:20]])
 
-    if not records:
-        if withdrawn:
-            names = [dict(r["a"]).get("name", "?") for r in withdrawn]
+        if not part.undecided:
+            named = "; ".join(
+                f"{len(group)} {word} by decision ({', '.join(_first_labels(group))})"
+                for group, word in ((part.withdrawn, "withdrawn"),
+                                    (part.superseded, "superseded")) if group)
             return CheckResult(
                 name="Stale artifacts",
                 symbol="pass",
-                summary=f"None stale; {len(withdrawn)} withdrawn by decision "
-                        f"({', '.join(names[:3])}"
-                        f"{', …' if len(names) > 3 else ''})",
-                details=[f"{dict(r['a']).get('name', '?')} — "
-                         f"{dict(r['a']).get('withdrawn_reason')}" for r in withdrawn[:20]],
+                summary=f"None stale; {named}" if named else "None",
+                details=decided_details,
             )
-        return CheckResult(
-            name="Stale artifacts",
-            symbol="pass",
-            summary="None",
-        )
 
-    details = []
-    with driver.session(database=database) as session:
-        for rec in records:
-            node = dict(rec["a"])
-            name = node.get("name", node.get("artifact_id", "?")[:8])
+        details = []
+        for node, reason in part.undecided:
+            name = stale_label(node)
             # Count direct dependents (incoming edges)
             dep_result = session.run(
                 "MATCH (dep:Artifact)-[]->(a:Artifact {artifact_id: $id}) "
@@ -823,18 +838,21 @@ def check_stale_artifacts(driver, database: str) -> CheckResult:
                 id=node["artifact_id"],
             ).data()
             dep_names = [d["name"] for d in dep_result if d["name"]]
+            line = f"{name} — {reason}" if reason else name
             if dep_names:
-                details.append(f"{name} (impacts: {', '.join(dep_names[:3])})")
-            else:
-                details.append(name)
+                line += f" (impacts: {', '.join(dep_names[:3])})"
+            details.append(line)
 
-    count = len(records)
-    summary_items = details[:3]
+    count = len(part.undecided)
+    summary_items = [stale_label(a) for a, _ in part.undecided[:3]]
+    summary = f"{count} stale: {', '.join(summary_items)}"
+    if decided_note:
+        summary += f"; {decided_note}"
     return CheckResult(
         name="Stale artifacts",
         symbol="warn",
-        summary=f"{count} stale: {', '.join(summary_items)}",
-        details=details,
+        summary=summary,
+        details=details + decided_details,
     )
 
 
