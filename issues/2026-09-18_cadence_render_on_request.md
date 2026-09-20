@@ -43,3 +43,35 @@ criterion) admits it by regex and does not check that `<name>` is a configured c
 on-request instance is still eligible after the schedule is removed. That is the behaviour this
 project wants today. It is recorded here because a later tightening of c5 to "a configured cadence"
 would silently make every on-request cycle ineligible.
+
+---
+
+## Resolved 2026-09-20 — `seldon cadence list|check|render`
+
+`ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence_after.md` decision 2,
+landed in `seldon/commands/cadence.py` (commit `33f70c6`).
+
+    seldon cadence render (<cadence-name> | --template <path>) [--var k=v ...]
+                          [--period P] [--cycle-name N] [--out-dir D] [--write] [--register]
+
+Without `--write` it prints and touches nothing. `--write` refuses to overwrite; `--register`
+implies it and goes through `register_task_file`, the same function `seldon cc register` and the
+cadence pass already use. A hand render writes `cadence_rendered`, never `cadence_created`, so
+the log still distinguishes a person asking from a schedule firing (DN-006 decision 8 keeps its
+meaning). `tests/test_cadence_render_command.py` asserts the stdout render is **byte-identical**
+to what `_create_instance` writes for the same entry and instant.
+
+The four typed values this issue is about come from the entry when one is named. With
+`--template` there is no rule and no `cycle_name_format`, so `--period` and `--cycle-name` are
+**required** rather than defaulted: a dated measurement may not carry a date nobody chose.
+
+The five `TEMPLATE_FIELDS` stay closed. A template that needs more declares them on one line in
+its first ten — `<!-- seldon:vars target, network_hosts -->` — and an undeclared `--var`, a
+declared var nobody supplied, and any other `{word}` outside a code fence each refuse by name.
+That is the shape Helm's `values.schema.json`, Terraform `variable` blocks and a composite
+action's `inputs:` all use: the template declares its interface and the engine checks both
+directions.
+
+**The "Also" above still stands**, unchanged: c5 admits `under cadence <name>` by regex without
+checking that the name is configured, and that is what lets an on-request instance stay eligible
+after the schedule is removed.
