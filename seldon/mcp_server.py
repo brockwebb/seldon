@@ -1,6 +1,8 @@
 """Seldon MCP server — tools for Desktop/AI session housekeeping."""
 from __future__ import annotations
 
+import functools
+import inspect
 import os
 import re
 from pathlib import Path
@@ -58,6 +60,82 @@ def _resolve_artifact_id(driver, database: str, id_prefix: str) -> str | None:
 
 # Actor recorded on events written by the MCP tools. The CLI writes 'human'.
 MCP_ACTOR = "desktop"
+
+
+# ---------------------------------------------------------------------------
+# A write tool commits the line it appended
+# ---------------------------------------------------------------------------
+#
+# ADDENDUM_01 decision 6a to
+# `ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence_after.md`.
+#
+# The event store is a TRACKED file in the project this runs against, and the standing
+# dispatcher refuses to launch anything while the working tree is dirty (DN-006 decision 2,
+# c7 — a fact about the CHECKOUT, not about the task being evaluated). So a Desktop session
+# that called one of these tools and then went away left a queue that could not move, with a
+# healthy exit code on every pass.
+#
+# `seldon cc register` has committed its own footprint since `2026-09-18_registration_commits`
+# for exactly this reason. Nothing about that argument was special to registration; it is the
+# rule for every write to the journal, and this is it applied to the rest of them.
+#
+# **Deferred while a lease is held**, never forced: see `commit_journal_append`. What the tool
+# could not commit, the next dispatcher pass commits, which is why `desktop` joined
+# `dispatcher` in `COMMITTABLE_ACTORS`.
+
+
+def _project_path(project_dir: str) -> str:
+    """`_resolve_project`'s path resolution alone, with no driver and no config load."""
+    if project_dir == ".":
+        env_path = os.environ.get("SELDON_DEFAULT_PROJECT")
+        if env_path and (Path(env_path) / "seldon.yaml").exists():
+            return env_path
+    return project_dir
+
+
+def _commit_append(project_dir: str, tool: str) -> str | None:
+    """Commit this tool's append, and return the one line to add to its reply, or None.
+
+    **Never raises and never alters the tool's outcome.** A tool that did its work must not
+    report failure because its bookkeeping could not run; what it must not do is stay silent
+    about it, which is why the un-committable cases return a line naming the reason.
+    """
+    from seldon.config import load_project_config
+    from seldon.core.dispatch import commit_journal_append
+
+    try:
+        p = Path(_project_path(project_dir))
+        config = load_project_config(p)
+        outcome = commit_journal_append(p, config, by=f"the {tool} MCP tool", actor=MCP_ACTOR)
+    except Exception as exc:                                        # noqa: BLE001
+        # Reported in the reply, never swallowed and never raised.
+        return f"  (event store not committed: {type(exc).__name__}: {exc})"
+    if outcome.get("committed"):
+        return f"  committed {outcome.get('commit')} — {outcome.get('message')}"
+    if outcome.get("reason") in (None, "clean", "untracked", "nothing_to_commit",
+                                 "no_dispatch_block"):
+        return None
+    return (f"  event store NOT committed ({outcome['reason']}); "
+            f"the standing dispatcher's next pass commits it")
+
+
+def _commits_its_append(fn):
+    """Decorate a write tool so it commits the line it just appended (decision 6a)."""
+    signature = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        out = fn(*args, **kwargs)
+        try:
+            bound = signature.bind(*args, **kwargs)
+            bound.apply_defaults()
+            where = bound.arguments.get("project_dir", ".")
+        except TypeError:
+            where = "."
+        note = _commit_append(where, fn.__name__)
+        return f"{out}\n{note}" if note else out
+
+    return wrapper
 
 
 def _walk_task_to_completed(
@@ -194,6 +272,7 @@ def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_create(
     description: str,
     project_dir: str = ".",
@@ -251,6 +330,7 @@ def seldon_task_create(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_update(
     task_id: str,
     state: str,
@@ -320,6 +400,7 @@ def seldon_task_update(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_withdraw(
     task_id: str,
     reason: str,
@@ -341,6 +422,7 @@ def seldon_task_withdraw(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_supersede(
     task_id: str,
     reason: str,
@@ -367,6 +449,7 @@ def seldon_task_supersede(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_close(
     task_id: str,
     project_dir: str = ".",
@@ -560,6 +643,7 @@ def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_precede(
     before_id: str,
     after_id: str,
@@ -584,6 +668,7 @@ def seldon_task_precede(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_chain(
     task_ids: list[str],
     project_dir: str = ".",
@@ -606,6 +691,7 @@ def seldon_task_chain(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_task_unprecede(
     before_id: str,
     after_id: str,
@@ -642,6 +728,7 @@ def seldon_task_unprecede(
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
+@_commits_its_append
 def seldon_issue_create(
     name: str,
     description: str,
@@ -714,6 +801,7 @@ def seldon_issue_create(
 
 
 @mcp.tool()
+@_commits_its_append
 def seldon_issue_update(
     issue_id: str,
     project_dir: str = ".",
@@ -1016,7 +1104,11 @@ def seldon_cc_register(
         )
     except ValueError as exc:
         # AD-030-R9, the task half: a task that cites no decision is refused before it is
-        # registered.
+        # registered. An `**After:**` refusal comes back the same way with its own fix line.
+        from seldon.commands.cc import AFTER_UNRESOLVED
+        if str(exc).startswith(AFTER_UNRESOLVED):
+            return (f"Error: {exc}\n"
+                    f"  Fix: name a registered task, or drop the **After:** header.")
         return (
             f"Error: {exc}\n"
             f"  Fix: cite the AD or DN this task implements in the task file's header."
@@ -1032,8 +1124,13 @@ def seldon_cc_register(
     ]
     if outcome["source_commit"]:
         lines.append(f"  source_commit: {outcome['source_commit']}")
+    if outcome.get("after"):
+        lines.append(f"  after: {', '.join(p[:8] for p in outcome['after'])} "
+                     f"({outcome['after_edges']} precedes edge(s) written)")
     if outcome["warning"]:
         lines.append(outcome["warning"])
+    if outcome.get("sequencing_warning"):
+        lines.append(outcome["sequencing_warning"])
     lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])
     return "\n".join(lines)
 

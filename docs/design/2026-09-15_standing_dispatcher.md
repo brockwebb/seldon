@@ -74,6 +74,21 @@ Each criterion is recorded as a **value**, never a boolean summary: "the tree wa
 actionable and "the tree was dirty on these three paths" is. The whole vector goes on the
 `dispatch_launched` event, so a stranger can replay why anything ran.
 
+**A fourth header, `**After:**`, is optional and is read by `seldon cc register`, not by
+candidacy.** `**After:** none`, or `**After:** <ref>[, <ref> ...]` where each ref is a
+`cc_tasks` file stem (with or without `.md`) or an artifact id prefix of 8 or more hex
+characters. Each ref resolves to exactly one ResearchTask and gets one `precedes` edge, written
+through `add_chain` so self-loops and cycles are refused by the code that already refuses them;
+an unresolvable or ambiguous ref refuses the registration as `after_unresolved` with the
+grammar quoted and writes nothing. Absent means no edges, as before it existed.
+
+It is here because dispatcher readiness (c2) reads `precedes` edges and **nothing reads
+SEQUENCING** — a repo-wide `grep -rn -i sequencing seldon/` on 2026-09-19 returned zero hits,
+so "Not launched before `X.md` is `completed` on the graph" was prose. `cc register` warns when
+a task has no `After` header and its SEQUENCING line states an ordering; it never guesses an
+edge from a sentence. The name is systemd's: `After=` is ordering-only, deliberately separate
+from `Requires=` (systemd.unit(5)), which is exactly what `precedes` is.
+
 ## Events
 
 On the project's own Seldon log: `dispatch_launched`, `dispatch_finished`, `dispatch_refused`,

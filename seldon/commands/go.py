@@ -415,13 +415,21 @@ def _format_project_state(briefing_data: dict) -> str:
     lines.extend(_format_precedence(briefing_data.get("precedence") or {}))
 
     lines.append("")
+    # The UNDECIDED set, the same one `seldon verify` warns on and `seldon status` prints —
+    # one predicate, in `seldon.core.staleness`. A withdrawal and a supersession that resolves
+    # are decisions, counted on their own line so a reader can tell a record from a drift.
     lines.append(f"**Stale Artifacts:** {len(stale)}")
     for r in stale:
         rid = r.get("artifact_id", "?")[:8]
         val = r.get("value", "?")
         units = r.get("units", "")
         desc = r.get("description", "")
-        lines.append(f"- {rid}...  {val} {units}  {desc}")
+        why = r.get("_undecided_reason", "")
+        lines.append(f"- {rid}...  {val} {units}  {desc}  [{why}]")
+    decided = briefing_data.get("stale_decided") or {"withdrawn": [], "superseded": []}
+    if decided["withdrawn"] or decided["superseded"]:
+        lines.append(f"**Decided, not drifted:** {len(decided['withdrawn'])} withdrawn, "
+                     f"{len(decided['superseded'])} superseded")
 
     lines.append("")
     lines.append(f"**Incomplete Provenance:** {len(incomplete)}")

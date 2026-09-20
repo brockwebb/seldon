@@ -12,6 +12,11 @@ from seldon.core.artifacts import create_artifact, open_states
 from seldon.core.events import read_events
 from seldon.core.graph import graph_stats, get_stale_artifacts
 from seldon.core.precedence import chain_lines, precedence_view, render_node, short
+from seldon.core.staleness import (
+    partition_stale,
+    resolver_for_session,
+    stale_label,
+)
 from seldon.domain.loader import load_domain_config
 from seldon.commands.docs import run_docs_check
 
@@ -30,8 +35,14 @@ def _get_domain_config(config: dict):
 
 def get_briefing_data(driver, database: str, domain_config=None) -> dict:
     """Query graph for briefing data. Returns dict with keys:
-    open_tasks, stale_artifacts, incomplete_provenance, docs_health, graph_stats,
-    citation_health, open_issues, precedence
+    open_tasks, stale_artifacts, stale_decided, incomplete_provenance, docs_health,
+    graph_stats, citation_health, open_issues, precedence
+
+    `stale_artifacts` is the UNDECIDED set only — the same set `seldon verify` warns on and
+    `seldon status` prints, through the one predicate in `seldon.core.staleness`. Each carries
+    `_undecided_reason`. What was decided (withdrawn, or superseded by something that
+    resolves) is counted separately under `stale_decided`, because a supersession with a live
+    successor is a record and not a thing to fix.
 
     `precedence` is the AD-029 view: `ready` task ids, `chains`, and the
     `waits_on` map. It is assembled by `seldon.core.precedence.precedence_view`
@@ -55,8 +66,12 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             ).data()
             t["_blocks"] = [dict(r["target"]) for r in blocked]
 
-        # 2. Stale results
-        stale = get_stale_artifacts(session)
+        # 2. Stale results — the undecided ones. See the docstring.
+        part = partition_stale(get_stale_artifacts(session), resolver_for_session(session))
+        stale = []
+        for artifact, reason in part.undecided:
+            artifact["_undecided_reason"] = reason
+            stale.append(artifact)
 
         # 3. Incomplete provenance: Results with no GENERATED_BY Script and no DERIVED_FROM source
         no_script_records = session.run(
@@ -109,6 +124,7 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
     return {
         "open_tasks": open_tasks,
         "stale_artifacts": stale,
+        "stale_decided": {"withdrawn": part.withdrawn, "superseded": part.superseded},
         "incomplete_provenance": no_script,
         "docs_health": docs_data,
         "graph_stats": stats,
@@ -198,9 +214,16 @@ def briefing_command():
             units = r.get("units", "")
             rid = r.get("artifact_id", "?")[:8]
             desc = r.get("description", "")
-            click.echo(f"  ⚠ {rid}...  {val} {units}  {desc}")
+            why = r.get("_undecided_reason", "")
+            click.echo(f"  ⚠ {rid}...  {val} {units}  {desc}  [{why}]")
     else:
         click.echo("  (none)")
+    decided = data.get("stale_decided") or {"withdrawn": [], "superseded": []}
+    if decided["withdrawn"] or decided["superseded"]:
+        click.echo(f"  decided, not drifted: {len(decided['withdrawn'])} withdrawn, "
+                   f"{len(decided['superseded'])} superseded")
+        for r in decided["superseded"]:
+            click.echo(f"    superseded  {stale_label(r)} -> {r.get('superseded_by')}")
 
     click.echo(f"\nINCOMPLETE PROVENANCE ({len(no_script)}):")
     if no_script:

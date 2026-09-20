@@ -4,6 +4,7 @@ from seldon.commands.init import init_command
 from seldon.commands.status import status_command
 from seldon.commands.rebuild import rebuild_command
 from seldon.commands.artifact import artifact_group
+from seldon.commands.cadence import cadence_group
 from seldon.commands.link import link_group
 from seldon.commands.result import result_group
 from seldon.commands.task import task_group
@@ -52,3 +53,4 @@ main.add_command(glossary_group, name="glossary")
 main.add_command(audit_dispatch_command, name="audit-dispatch")
 main.add_command(events_group, name="events")
 main.add_command(dispatch_group, name="dispatch")
+main.add_command(cadence_group, name="cadence")

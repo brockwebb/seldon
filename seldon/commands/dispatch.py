@@ -196,18 +196,26 @@ def _record_own_lines(project_dir, config, cfg) -> dict:
       (`test_an_api_key_refuses_before_any_claim`). The launchd wrapper unsets both variables,
       so this is reachable only from a hand-run pass.
 
-    Pathspec-limited to the store (`D.commit_paths`), and only when every appended line is the
-    dispatcher's (`D.own_appended_lines`). The message names each event type and task id, so
-    `git log` reads as the log's own index. No event is written for the commit: git records it.
+    Pathspec-limited to the store (`D.commit_paths`), and only when every appended line was
+    written by one of `D.COMMITTABLE_ACTORS` (`D.own_appended_lines`). The message names each
+    event type and task id, so `git log` reads as the log's own index. No event is written for
+    the commit: git records it.
+
+    **`desktop` joined `dispatcher` in that set** with ADDENDUM_01 decision 6a. An MCP write
+    tool now commits its own append, so a line reaching here is one whose tool could not — it
+    ran while a session held the lease. Refusing it, as this did, left the tree dirty and c7
+    false for the whole queue, which is a Desktop housekeeping call stopping the dispatcher.
+    A `cc` line still refuses: that one is DD-019's class and the guard stays.
     """
     store = _store_rel(config)
     if D.tree_state(project_dir)["branch"] != cfg["branch"]:
         return {"committed": False, "reason": "wrong_branch"}
-    own = D.own_appended_lines(project_dir, store, ACTOR)
+    own = D.own_appended_lines(project_dir, store, D.COMMITTABLE_ACTORS)
     if not own["ok"]:
         if own["reason"] not in ("clean", "untracked"):
-            detail = {"not_own_lines": "not dispatcher-only (also written by "
-                                       f"{', '.join(own.get('foreign_actors', []))})",
+            detail = {"not_own_lines": "written by "
+                                       f"{', '.join(own.get('foreign_actors', []))}, which is "
+                                       f"not one of {', '.join(D.COMMITTABLE_ACTORS)}",
                       "not_append_only": "not append-only against HEAD",
                       "unparseable": "an appended line does not parse"}[own["reason"]]
             click.echo(f"record: {store} NOT committed: {detail}", err=True)
@@ -714,6 +722,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body)
                    for t in _tasks(driver, database)])
+    # The staleness alarm, before the eligible/ineligible split so a candidate that has been
+    # refused for hours is heard about whether or not some OTHER task launched this pass.
+    _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
 
     eligible = [r for r in rows if r["eligible"]]
     if not eligible:
@@ -745,6 +756,11 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                            f"{','.join(r['failed'])}  {r['source_file']}")
                 if reason == "network_undeclared":
                     click.echo(f"      {r['criteria']['c5'].get('message', '')}")
+                if reason == "dirty_tree":
+                    # ADDENDUM_01 decision 6b: name the DIRT, not only the task. The task file
+                    # is not why c7 failed and printing only it sent seven hours of log lines
+                    # pointing at the wrong file.
+                    click.echo(f"      dirty: {', '.join(_dirty_paths(tree)) or '(branch)'}")
         # Decision 2's retry: whatever this pass or an earlier one committed and could not
         # push is pushed now. A no-op when the branch is level with its upstream.
         if not dry_run and claim is None:
@@ -828,6 +844,78 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     _record_and_push(project_dir, config, cfg)
 
 
+#: How many dirty paths a refusal line and a stuck alarm name. Ten is ADDENDUM_01's own
+#: number ("the dirty paths (`git status --short`, first ten)"); `tree_state` already caps its
+#: list at twenty and reports the true count beside it, so nothing is hidden by either.
+STUCK_DIRTY_PATHS_SHOWN = 10
+
+
+def _dirty_paths(tree: dict) -> list:
+    paths = list(tree.get("dirty_paths") or [])[:STUCK_DIRTY_PATHS_SHOWN]
+    extra = tree.get("dirty_count", len(paths)) - len(paths)
+    return paths + ([f"(+{extra} more)"] if extra > 0 else [])
+
+
+def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
+    """ADDENDUM_01 decision 6b: a candidate refused on the same criterion for N consecutive
+    passes raises the notifier ONCE, writes one `dispatch_stuck`, and re-arms when the
+    criterion changes or clears.
+
+    **Why this is not the per-pass refusal logging decision 7 forbids.** Decision 7's argument
+    is that a standing condition re-logged every five minutes buries the assertions in the
+    log — and it is right. This writes one event per STREAK, not one per pass: 84 passes over
+    seven hours produce exactly one `dispatch_stuck`, and a 85th produces none. The thing
+    decision 7 removed was a record of silence; this is a record of a queue that has stopped,
+    which is the opposite fact.
+
+    Writes nothing on a dry run, and nothing while a claim is in flight — a session working in
+    the checkout makes the tree dirty by design, and alarming on that would train the operator
+    to ignore the alarm, which is the only way a staleness alarm can fail.
+    """
+    if dry_run or claim is not None:
+        return []
+    refusals = {}
+    for row in rows:
+        if not row.get("candidate"):
+            continue
+        reason = D.first_refusal_reason(row)
+        if reason:
+            refusals[row["task_id"]] = {"criterion": reason, "row": row}
+    previous = D.read_stuck_state(project_dir, cfg)
+    state, alarms = D.advance_stuck(
+        previous, {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
+        cfg["stuck_after_passes"], _now())
+    D.write_stuck_state(project_dir, cfg, state)
+    for task_id in alarms:
+        row = refusals[task_id]["row"]
+        entry = state[task_id]
+        dirty = _dirty_paths(tree)
+        payload = {"task_id": task_id, "name": row.get("name"),
+                   "source_file": row.get("source_file"),
+                   "criterion": entry["criterion"], "failed": row.get("failed"),
+                   "passes": entry["passes"], "threshold": cfg["stuck_after_passes"],
+                   "first_seen": entry["first_seen"], "dirty_paths": dirty,
+                   "dirty_count": tree.get("dirty_count"),
+                   "poll_interval_s": cfg.get("poll_interval_s")}
+        _emit(project_dir, session_id, D.EVENT_STUCK, payload)
+        click.echo(f"STUCK: {str(task_id)[:8]} refused as {entry['criterion']} for "
+                   f"{entry['passes']} consecutive passes since {entry['first_seen']}; "
+                   f"dirty: {', '.join(dirty) or '(none)'}", err=True)
+        _run_notifier(project_dir, session_id, cfg, {
+            "SELDON_NOTIFY_TASK_ID": str(task_id),
+            "SELDON_NOTIFY_TASK_NAME": str(row.get("name") or row.get("source_file") or "?"),
+            "SELDON_NOTIFY_OK": "false",
+            "SELDON_NOTIFY_OUTCOME": "stuck",
+            "SELDON_NOTIFY_CRITERION": entry["criterion"],
+            "SELDON_NOTIFY_PASSES": str(entry["passes"]),
+            "SELDON_NOTIFY_DIRTY_PATHS": ", ".join(dirty),
+            "SELDON_NOTIFY_RESULT_PATH": "",
+            "SELDON_NOTIFY_LOG_PATH": "",
+            "SELDON_NOTIFY_WALL_SECONDS": "0",
+        }, task_id=task_id, label="stuck")
+    return alarms
+
+
 def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
     """Run `dispatch.notify`, the operator's finish signal, once per finished task.
 
@@ -844,11 +932,7 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
     at `notify_timeout_s`. **Nothing here may alter the dispatch record or raise**: a missing,
     failing or hanging notifier is one `dispatch_notify_failed` event and the pass goes on.
     """
-    command = cfg.get("notify")
-    if not command:
-        return
-    env = dict(os.environ)
-    env.update({
+    _run_notifier(project_dir, session_id, cfg, {
         "SELDON_NOTIFY_TASK_ID": str(finish["task_id"]),
         "SELDON_NOTIFY_TASK_NAME": str(task_name),
         "SELDON_NOTIFY_OK": "true" if finish["ok"] else "false",
@@ -857,7 +941,23 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
         "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
         "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
         "SELDON_NOTIFY_WALL_SECONDS": str(finish["wall_clock_s"]),
-    })
+    }, task_id=finish["task_id"],
+        label="ok" if finish["ok"] else "blocked")
+
+
+def _run_notifier(project_dir, session_id, cfg, env_updates: dict, task_id: str,
+                  label: str) -> None:
+    """The notify channel itself, shared by the finish signal and the stuck alarm.
+
+    One code path, because a stuck alarm that went out by a second mechanism would be a second
+    thing to configure, a second thing to time out, and a second thing that can silently not
+    exist.
+    """
+    command = cfg.get("notify")
+    if not command:
+        return
+    env = dict(os.environ)
+    env.update(env_updates)
     timeout = cfg["notify_timeout_s"]
     failure = None
     try:
@@ -879,12 +979,11 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
         # lease must still be released by the caller.
         failure = {"reason": "error", "error": f"{type(exc).__name__}: {exc}"}
     if failure is None:
-        click.echo(f"notify: sent ({finish['task_id'][:8]} "
-                   f"{'ok' if finish['ok'] else 'blocked'})")
+        click.echo(f"notify: sent ({str(task_id)[:8]} {label})")
         return
     _emit(project_dir, session_id, D.EVENT_NOTIFY_FAILED,
-          {"task_id": finish["task_id"], "command": command, **failure})
-    click.echo(f"notify FAILED ({failure['reason']}) for {finish['task_id'][:8]}", err=True)
+          {"task_id": task_id, "command": command, "label": label, **failure})
+    click.echo(f"notify FAILED ({failure['reason']}) for {str(task_id)[:8]}", err=True)
 
 
 def _launch_cmd(cfg: dict, prompt: str) -> list:

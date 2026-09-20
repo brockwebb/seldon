@@ -7,6 +7,11 @@ import click
 from seldon.config import load_project_config, get_neo4j_driver
 from seldon.core.events import event_count
 from seldon.core.graph import graph_stats, get_stale_artifacts
+from seldon.core.staleness import (
+    partition_stale,
+    resolver_for_session,
+    stale_label,
+)
 
 
 @click.command("status")
@@ -21,7 +26,10 @@ def status_command():
 
     with driver.session(database=database) as session:
         stats = graph_stats(session)
-        stale = get_stale_artifacts(session)
+        # ONE predicate with `verify`, `briefing` and `go` (seldon.core.staleness): a
+        # decided supersession or withdrawal is a record, not drift, and four renderers
+        # with four filters is how one count comes to mean four things.
+        stale = partition_stale(get_stale_artifacts(session), resolver_for_session(session))
         open_tasks = session.run(
             "MATCH (t:ResearchTask) WHERE t.state IN ['proposed','accepted','in_progress'] "
             "RETURN t.artifact_id AS id, t.state AS state ORDER BY t.state"
@@ -52,9 +60,16 @@ def status_command():
     else:
         click.echo("\nNo open tasks.")
 
-    if stale:
-        click.echo(f"\nStale artifacts ({len(stale)}):")
-        for a in stale:
-            click.echo(f"  {a.get('artifact_type', '?'):<20} {a['artifact_id']}")
+    if stale.undecided:
+        click.echo(f"\nStale artifacts ({len(stale.undecided)}):")
+        for a, reason in stale.undecided:
+            click.echo(f"  {a.get('artifact_type', '?'):<20} {a['artifact_id']}  {reason}")
     else:
         click.echo("No stale artifacts.")
+    if stale.decided:
+        click.echo(f"Decided, not drifted: {len(stale.withdrawn)} withdrawn, "
+                   f"{len(stale.superseded)} superseded")
+        for a in stale.withdrawn:
+            click.echo(f"  withdrawn   {stale_label(a)}: {a.get('withdrawn_reason')}")
+        for a in stale.superseded:
+            click.echo(f"  superseded  {stale_label(a)} -> {a.get('superseded_by')}")

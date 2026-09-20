@@ -12,6 +12,13 @@ import click
 
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
+from seldon.core.dispatch import (
+    AFTER_GRAMMAR,
+    HEADER_AFTER,
+    after_ref_is_id,
+    parse_after,
+    _header_value,
+)
 from seldon.domain.loader import load_domain_config
 
 
@@ -310,6 +317,131 @@ def _warn_if_description_suspicious(
         "  Consider adding a description section or using --description to override.",
         err=True,
     )
+
+
+# ---------------------------------------------------------------------------
+# The `**After:**` header — ordering the dispatcher can read
+# ---------------------------------------------------------------------------
+#
+# Decision 3 of `ai-readiness-kg/cc_tasks/2026-09-19_seldon_hygiene_superseded_cadence_after.md`.
+# The grammar lives beside the other task-file headers in `seldon.core.dispatch`; what lives
+# here is the RESOLUTION of a ref to a task, and the write — through `add_chain`, the one
+# function `seldon task precede`, `seldon task chain` and `seldon_task_chain` already use, so
+# self-loops and cycles are refused by the code that already refuses them.
+#
+# A refusal writes NOTHING. Resolution runs before `create_artifact`, so an unresolvable ref
+# leaves no half-registered task behind — the same standing `network_undeclared` has at the
+# dispatcher: refuse with the grammar quoted, change nothing.
+
+#: The refusal reason, so a log and a message speak one word for it.
+AFTER_UNRESOLVED = "after_unresolved"
+
+#: Decision 4: SEQUENCING stays prose, and this catches the sentence in it that is trying to
+#: be an edge. A WARNING and never a refusal — Seldon does not guess an edge from a sentence,
+#: and a task whose SEQUENCING says something the author did not mean as ordering is not a
+#: task to refuse. It fires only when there is no `After` header to have said it properly.
+_SEQUENCING_LINE_RE = re.compile(r"^.*\*\*SEQUENCING[^*]*\*\*(?P<rest>.*)$",
+                                 re.IGNORECASE | re.MULTILINE)
+_SEQUENCING_ORDER_RE = re.compile(r"\b(?:not\s+)?(?:launched|run|executed)\s+"
+                                  r"(?:before|after|until)\b", re.IGNORECASE)
+_SEQUENCING_TASKFILE_RE = re.compile(r"(?:cc_tasks/)?(\d{4}-\d{2}-\d{2}_[A-Za-z0-9._-]+)\.md")
+
+
+def sequencing_lint(text: str, own_stem: str) -> str | None:
+    """The warning decision 4 asks for, or None.
+
+    Args:
+        text: The task file.
+        own_stem: This file's own stem, so a SEQUENCING line that names only itself does not
+            fire.
+    """
+    if _header_value(text, HEADER_AFTER) is not None:
+        return None
+    for m in _SEQUENCING_LINE_RE.finditer(text):
+        rest = m.group("rest")
+        others = [s for s in _SEQUENCING_TASKFILE_RE.findall(rest) if s != own_stem]
+        if _SEQUENCING_ORDER_RE.search(rest) or others:
+            named = f" It names {', '.join(sorted(set(others)))}." if others else ""
+            return (f"Warning: this task's SEQUENCING line states an ordering nothing "
+                    f"reads.{named} A dispatcher reads `precedes` edges only; SEQUENCING is "
+                    f"prose. Declare it in an `**After:**` header ({AFTER_GRAMMAR}) "
+                    f"and `cc register` writes the edge.")
+    return None
+
+
+def resolve_after_refs(driver, database: str, refs) -> list:
+    """Each ref to exactly one ResearchTask id, in the order given.
+
+    A ref is tried BOTH ways when it could be either — a stem and an id prefix — and the union
+    must be one artifact. Trying one interpretation first would make the answer depend on the
+    order of two rules nobody can see from the task file.
+
+    Raises:
+        ValueError: A ref that resolves to nothing or to more than one task. The message
+            carries `after_unresolved` and the grammar, and the caller writes nothing.
+    """
+    resolved: list = []
+    with driver.session(database=database) as session:
+        for ref in refs:
+            rows = session.run(
+                "MATCH (t:Artifact:ResearchTask) "
+                "WHERE t.source_file = $md OR t.source_file = $stem "
+                "   OR t.source_file ENDS WITH $suffix "
+                "RETURN DISTINCT t.artifact_id AS id, t.source_file AS src",
+                md=f"cc_tasks/{ref}.md", stem=ref, suffix=f"/{ref}.md",
+            ).data()
+            ids = {r["id"]: r["src"] for r in rows}
+            if after_ref_is_id(ref):
+                by_id = session.run(
+                    "MATCH (t:Artifact:ResearchTask) WHERE t.artifact_id STARTS WITH $p "
+                    "RETURN t.artifact_id AS id, t.source_file AS src", p=ref).data()
+                ids.update({r["id"]: r["src"] for r in by_id})
+            if not ids:
+                raise ValueError(
+                    f"{AFTER_UNRESOLVED}: After ref {ref!r} names no registered ResearchTask. "
+                    f"Grammar: {AFTER_GRAMMAR}. Nothing was written.")
+            if len(ids) > 1:
+                shown = ", ".join(f"{i[:8]} ({s})" for i, s in sorted(ids.items()))
+                raise ValueError(
+                    f"{AFTER_UNRESOLVED}: After ref {ref!r} is ambiguous — it names "
+                    f"{len(ids)} tasks: {shown}. Grammar: {AFTER_GRAMMAR}. "
+                    f"Nothing was written.")
+            resolved.append(next(iter(ids)))
+    return resolved
+
+
+def read_after(text: str, driver, database: str) -> list:
+    """The predecessors this task file declares, resolved. `[]` for `none` or an absent header.
+
+    Raises:
+        ValueError: The header does not parse, or a ref does not resolve to exactly one task.
+    """
+    parsed = parse_after(_header_value(text, HEADER_AFTER))
+    if parsed["kind"] is None:
+        raise ValueError(f"{AFTER_UNRESOLVED}: {parsed['error']} Nothing was written.")
+    if not parsed["refs"]:
+        return []
+    return resolve_after_refs(driver, database, parsed["refs"])
+
+
+def write_after_edges(*, project_dir, driver, database, domain_config, session_id,
+                      predecessor_ids, task_id, actor) -> int:
+    """One `precedes` edge per declared predecessor, through `add_chain`.
+
+    Idempotent: `add_chain` skips a pair that already exists, which is what makes
+    re-registering a task file a no-op rather than a second edge.
+    """
+    from seldon.core.precedence import add_chain
+
+    written = 0
+    for pred in predecessor_ids:
+        result = add_chain(
+            project_dir=project_dir, driver=driver, database=database,
+            domain_config=domain_config, task_ids=[pred, task_id],
+            reason="declared in the task file's **After:** header",
+            actor=actor, authority="accepted", session_id=session_id)
+        written += len(result.created)
+    return written
 
 
 # ---------------------------------------------------------------------------
@@ -915,7 +1047,10 @@ def register_task_file(
 
     Returns:
         ``{"artifact_id", "name", "rel_path", "description", "existing",
-        "rulings", "edges_written", "warning", "source_commit"}``. ``existing`` is
+        "rulings", "edges_written", "warning", "source_commit", "after",
+        "after_edges", "sequencing_warning"}``. ``after`` is the resolved
+        predecessor ids the ``**After:**`` header declared and ``after_edges``
+        how many ``precedes`` edges this call wrote for them. ``existing`` is
         True when the file was already registered, in which case nothing was
         created. ``source_commit`` is the full sha of the path-scoped commit this
         registration made of an untracked file, else None.
@@ -923,7 +1058,11 @@ def register_task_file(
     Raises:
         FileNotFoundError: The task file does not exist.
         ValueError: Git cannot recover the file and ``allow_untracked`` is
-            False, or the task cites no design note while one is required.
+            False, the task cites no design note while one is required, or the
+            ``**After:**`` header does not parse or names a ref that does not
+            resolve to exactly one ResearchTask (``after_unresolved``). Every
+            one of those refuses BEFORE the artifact is created, so a refusal
+            writes nothing.
     """
     say = emit or (lambda _msg: None)
     if not task_path.exists():
@@ -953,7 +1092,14 @@ def register_task_file(
         return {"artifact_id": existing_id, "name": _name_from_filepath(rel_path),
                 "rel_path": rel_path, "description": None, "existing": True,
                 "rulings": [], "edges_written": 0, "warning": warning,
-                "source_commit": None}
+                "source_commit": None, "after": [], "after_edges": 0,
+                "sequencing_warning": None}
+
+    # The `**After:**` header, resolved BEFORE anything is created: an unresolvable ref is a
+    # refusal that writes nothing, the same standing `network_undeclared` has at the
+    # dispatcher (decision 3).
+    text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
+    predecessors = read_after(text, driver, database)
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -1001,6 +1147,16 @@ def register_task_file(
     say("  state: proposed")
     if source_commit:
         say(f"  source_commit: {source_commit}")
+    after_edges = write_after_edges(
+        project_dir=project_dir, driver=driver, database=database,
+        domain_config=domain_config, session_id=session_id,
+        predecessor_ids=predecessors, task_id=artifact_id, actor=actor)
+    if predecessors:
+        say(f"  after: {', '.join(p[:8] for p in predecessors)} "
+            f"({after_edges} precedes edge(s) written)")
+    sequencing_warning = sequencing_lint(text, Path(rel_path).stem)
+    if sequencing_warning:
+        say(sequencing_warning)
     matches, written = constraining_rulings(
         project_dir=project_dir, config=config, driver=driver, database=database,
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
@@ -1010,7 +1166,9 @@ def register_task_file(
     say(render_rulings(matches, written))
     return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path,
             "description": description, "existing": False, "rulings": matches,
-            "edges_written": written, "warning": warning, "source_commit": source_commit}
+            "edges_written": written, "warning": warning, "source_commit": source_commit,
+            "after": predecessors, "after_edges": after_edges,
+            "sequencing_warning": sequencing_warning}
 
 
 @cc_group.command("register")
@@ -1084,13 +1242,21 @@ def cc_register(filepath, description, actor, allow_untracked):
     except ValueError as exc:
         # AD-030-R9, the task half: a task that cites no decision is refused BEFORE it is
         # registered, so a refusal never leaves a task in the graph the check says should not
-        # be there.
-        click.echo(
-            f"ERROR: {exc}\n"
-            f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
-            f"  Override for this project: handoff.require_design_note: false in seldon.yaml.",
-            err=True,
-        )
+        # be there. An `**After:**` refusal reaches here by the same road and needs a
+        # different fix line — quoting the design-note remedy for an unresolvable ref would
+        # send the reader to the wrong header.
+        if str(exc).startswith(AFTER_UNRESOLVED):
+            click.echo(f"ERROR: {exc}\n"
+                       f"  Fix: name a registered task, or drop the **After:** header.",
+                       err=True)
+        else:
+            click.echo(
+                f"ERROR: {exc}\n"
+                f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
+                f"  Override for this project: handoff.require_design_note: false in "
+                f"seldon.yaml.",
+                err=True,
+            )
         raise SystemExit(1)
     finally:
         driver.close()
