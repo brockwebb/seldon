@@ -1,0 +1,22 @@
+[
+ {
+  "command": [
+   "/Users/brock/GitHub/squiddy/.venv/bin/python",
+   "scripts/sel001/arm_h.py"
+  ],
+  "policy": {
+   "policy": "none",
+   "classes": [],
+   "hosts": [],
+   "where": "child",
+   "enforcement": [
+    "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+    "sandbox-exec none profile"
+   ],
+   "sandbox": "applied"
+  },
+  "returncode": 0,
+  "seconds": 193.1,
+  "finished_utc": "2026-10-02T20:50:20Z"
+ }
+]

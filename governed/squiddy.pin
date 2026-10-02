@@ -35,5 +35,11 @@
 # 0.3.3 carries `--reingest` through to the assess stage, which is the stage that decides. Forcing
 # the write stage alone forced nothing: assess stopped the pipeline at `already_admitted` first.
 
-SQUIDDY_COMMIT=5611cf45967edd3d2844f69e45a685f2315bca6d
-SQUIDDY_VERSION=0.3.3
+# 0.8.0 at 4ac50a5 (SEL-001, 2026-10-02): the pin moves with the template's recipe change (the
+# SEL-001 label forms, the front-anchored ruling label, the `ontology` DocKind) and the kit's
+# node-unit index. One pin for all three governed graphs (Seldon, Squiddy, Arnold). From here the
+# pin binds the kit's `squiddy/` tree, not the kit repository's HEAD (check_pin.py `kit_matches`).
+# Re-ingested by reset and a full sweep, the reset path for a recipe change (AD-030-R22).
+
+SQUIDDY_COMMIT=4ac50a571602ba0ac5d457e76b9cfaad8154fad4
+SQUIDDY_VERSION=0.8.0

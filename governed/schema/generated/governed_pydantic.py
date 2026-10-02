@@ -169,6 +169,10 @@ class DocKind(str, Enum):
     """
     handoffs/ — session handoff records.
     """
+    ontology = "ontology"
+    """
+    docs/ontology/ — domain vocabulary and construct rulings (Arnold's intensity constructs and vocabulary decisions; AD-031-R1).
+    """
 
 
 class ManifestState(str, Enum):
@@ -224,6 +228,18 @@ class CitoType(str, Enum):
 
 
 
+class GroundingSpan(ConfiguredBaseModel):
+    """
+    Character offsets into the parsed intermediate's `plain_text`, the sha256 of the located text (so anyone holding the intermediate can verify the slice), and the sha256 of the whole plain text (so a re-parse that moves the offsets is detectable rather than silent).
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/squiddy/schema/core'})
+
+    start: int = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan']} })
+    end: int = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan']} })
+    sha256: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan', 'ManifestEntry', 'Document']} })
+    parsed_sha256: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan']} })
+
+
 class Node(ConfiguredBaseModel):
     """
     A property-graph node keyed by `id`.
@@ -239,6 +255,11 @@ class Node(ConfiguredBaseModel):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Edge(ConfiguredBaseModel):
@@ -257,6 +278,11 @@ class Edge(ConfiguredBaseModel):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class ManifestEntry(ConfiguredBaseModel):
@@ -277,7 +303,7 @@ class ManifestEntry(ConfiguredBaseModel):
     provenance_flag: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry']} })
     acquisition_status: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry']} })
     local_path: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document']} })
-    sha256: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document']} })
+    sha256: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan', 'ManifestEntry', 'Document']} })
     bytes: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry']} })
     retrieved_date: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry']} })
     verification_status: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry']} })
@@ -316,7 +342,7 @@ class Document(Node):
 
     title: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document', 'Citation']} })
     local_path: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document']} })
-    sha256: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document']} })
+    sha256: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['GroundingSpan', 'ManifestEntry', 'Document']} })
     content_hash: Optional[str] = Field(default=None, description="""sha256 of the file as it stood when the assertion was made (AD-030-R4).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Section', 'Ruling', 'Passage']} })
     disposition: Optional[ManifestDisposition] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ManifestEntry', 'Document']} })
     reason: Optional[str] = Field(default=None, description="""Why a declined document was declined, or why a CiTO edge disagrees. Required on both by AD-030-R5 and R7; a refusal with no reason cannot be argued with later.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Supersedes', 'Cites']} })
@@ -339,6 +365,11 @@ class Document(Node):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Section(Node):
@@ -367,6 +398,11 @@ class Section(Node):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Ruling(Node):
@@ -396,6 +432,11 @@ class Ruling(Node):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Citation(Node):
@@ -424,6 +465,11 @@ class Citation(Node):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Passage(Node):
@@ -447,6 +493,11 @@ class Passage(Node):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Contains(Edge):
@@ -464,6 +515,11 @@ class Contains(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class ConstrainedBy(Edge):
@@ -484,6 +540,11 @@ class ConstrainedBy(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Satisfies(Edge):
@@ -501,6 +562,11 @@ class Satisfies(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Supersedes(Edge):
@@ -520,6 +586,11 @@ class Supersedes(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Extends(Edge):
@@ -538,6 +609,11 @@ class Extends(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class DependsOn(Edge):
@@ -556,6 +632,11 @@ class DependsOn(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Mentions(Edge):
@@ -576,6 +657,11 @@ class Mentions(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class Cites(Edge):
@@ -596,6 +682,11 @@ class Cites(Edge):
     asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
     superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
 class GovernedGraph(ConfiguredBaseModel):
@@ -611,6 +702,7 @@ class GovernedGraph(ConfiguredBaseModel):
 
 # Model rebuild
 # see https://pydantic-docs.helpmanual.io/usage/models/#rebuilding-a-model
+GroundingSpan.model_rebuild()
 Node.model_rebuild()
 Edge.model_rebuild()
 ManifestEntry.model_rebuild()

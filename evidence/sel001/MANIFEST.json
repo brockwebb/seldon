@@ -1,0 +1,134 @@
+{
+ "arm_h.log": {
+  "bytes": 1842,
+  "in_git": true,
+  "made_by": "scripts/sel001/arm_h.py",
+  "sha256": "023a02846caf22b96d444a080798ecbab2f23c9654af229d1a7fbdbe8e23561c"
+ },
+ "arm_h_runs.jsonl": {
+  "bytes": 11139513,
+  "in_git": false,
+  "made_by": "scripts/sel001/arm_h.py (under scripts/sel001/offline.py)",
+  "sha256": "0726f9fa08eecab634618619a094f8d895e902750529a1395463d309fd3a94cd"
+ },
+ "arm_o.log": {
+  "bytes": 1059,
+  "in_git": true,
+  "made_by": "scripts/sel001/arm_o.py",
+  "sha256": "0e7b47899b9253d31e5b66974712d00f9b05a2e2edc6131fed1922c198f4ab0e"
+ },
+ "arm_o_runs.jsonl": {
+  "bytes": 5688922,
+  "in_git": false,
+  "made_by": "scripts/sel001/arm_o.py",
+  "sha256": "562328927ac0fefb304752d491ff9bed9604b686e7fb984294e151946d48f54a"
+ },
+ "catalog.json": {
+  "bytes": 2574526,
+  "in_git": false,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "758d922361d5ad478aba498e4c35b856f9fe89e3414573473d2a959cbba0101c"
+ },
+ "egress_arm_h.json": {
+  "bytes": 437,
+  "in_git": true,
+  "made_by": "scripts/sel001/offline.py",
+  "sha256": "01361ef2d91577f4ca927c6f44db02633cbeab2ba4a4f02fdf0884d7be8ea599"
+ },
+ "egress_index_arnold.json": {
+  "bytes": 1185,
+  "in_git": true,
+  "made_by": "scripts/sel001/offline.py",
+  "sha256": "03090c8c26880dc4af6d43d06b5c6eb1a59d43e5dfbcc3b67edc606e15493d5e"
+ },
+ "egress_index_squiddy.json": {
+  "bytes": 1191,
+  "in_git": true,
+  "made_by": "scripts/sel001/offline.py",
+  "sha256": "7168e26f729c281adc7653480764e4c602dc85c132d41fd7bf64226ff5e46461"
+ },
+ "gold_a.jsonl": {
+  "bytes": 774641,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "f86e7a80d55d009a831079178cf4a457e09a9890ed41398309b6ecb688a87d22"
+ },
+ "gold_a_unresolved.jsonl": {
+  "bytes": 2722,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "fc758859e3e389a8625cd16c58d033d8dfda9f1bed4b2d3d33fe740afadf99d2"
+ },
+ "gold_b.jsonl": {
+  "bytes": 5467,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "5587b1ee74cbb54e26cf63a471598c1afc51569af658d73ee02bdc52c4b3cb50"
+ },
+ "gold_b_diagnostics.jsonl": {
+  "bytes": 2241,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "78166468cf31863c58fbb7c714e5fe735df444ac62052b4463316ec6adc4377d"
+ },
+ "gold_c.jsonl": {
+  "bytes": 3838,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "4ae789bd129bfca2196276b3988104a3841080b8884602d279eddfe073d50b2c"
+ },
+ "gold_summary.json": {
+  "bytes": 3053,
+  "in_git": true,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "d5e9083b4a3f130261ed3c76fef652525ea8e213f329aa765db940f3ddd14a29"
+ },
+ "governed_counts.json": {
+  "bytes": 25404,
+  "in_git": true,
+  "made_by": "scripts/sel001/counts.py",
+  "sha256": "644394f1443e893bcf30dac603ebc79f5b428c92a9329dcefc0515120876c46f"
+ },
+ "misses.jsonl": {
+  "bytes": 2143487,
+  "in_git": false,
+  "made_by": "scripts/sel001/score.py",
+  "sha256": "58a2b7bdc99d15f9af17c21d437bb1123075594445fc295b96ee6a638ab5aef1"
+ },
+ "misses.md": {
+  "bytes": 1362000,
+  "in_git": true,
+  "made_by": "scripts/sel001/score.py",
+  "sha256": "b09bf83a143aed54751301e91fe04e10c81caa201d75ed0dff317515b6b1c78c"
+ },
+ "parity_arnold.json": {
+  "bytes": 1048,
+  "in_git": true,
+  "made_by": "python -m squiddy.index parity --mutate (under offline.py)",
+  "sha256": "c3f627a229f79138e145cd1c24967982c794c1a047dbc4a3a1f4c1723acce03a"
+ },
+ "parity_squiddy.json": {
+  "bytes": 1355,
+  "in_git": true,
+  "made_by": "python -m squiddy.index parity --mutate (under offline.py)",
+  "sha256": "3b4a4cf11d53dbc973d0029622e1754f2664bac5d13b2f1c641f7454f0041b81"
+ },
+ "protocol.md": {
+  "bytes": 7433,
+  "in_git": true,
+  "made_by": "written by hand before any run",
+  "sha256": "021a226dacb25c4b8b5899c4c91de78635d76fac7ce6aa714a882187e4a37083"
+ },
+ "queries.jsonl": {
+  "bytes": 2125720,
+  "in_git": false,
+  "made_by": "scripts/sel001/gold.py",
+  "sha256": "91126ec193cce27e8b1e9674652b734bac7f0f68d163d651f4b181b536e45fdc"
+ },
+ "results.json": {
+  "bytes": 15328,
+  "in_git": true,
+  "made_by": "scripts/sel001/score.py",
+  "sha256": "0be385486fcdbeaccdf7dc4fe24c9dc9a5d11f897716485039c153711da4421d"
+ }
+}

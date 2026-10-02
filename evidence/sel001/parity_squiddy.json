@@ -1,0 +1,19 @@
+{
+  "control": {
+    "findings": [
+      "count: the release has 1203 units and the index 1202 rows",
+      "missing: 1 unit(s) of the release are not in the index: ['Section:cc_tasks_2026_09_29_f_001_factory_runner_dag_valves_status_stop_addendum_02#f_001_addendum_02_purpose_becomes_scope_topic_in_the_operator_s_words_anchors_and_exclusions_optional_anchors_as_a_release_coverage_gate_the_served_surface_logs_queries_conops_and_r_102_wording_dn_028_r_129_to_r_131_zero_model_calls_part_a_scope_r_129']",
+      "fingerprint: release db594a5c8142105d != index 220f9dcd3e583d6a"
+    ],
+    "fired": true,
+    "planted": "row Section:cc_tasks_2026_09_29_f_001_factory_runner_dag_valves_status_stop_addendum_02#f_001_addendum_02_purpose_becomes_scope_topic_in_the_operator_s_words_anchors_and_exclusions_optional_anchors_as_a_release_coverage_gate_the_served_surface_logs_queries_conops_and_r_102_wording_dn_028_r_129_to_r_131_zero_model_calls_part_a_scope_r_129 removed from the index"
+  },
+  "db_sha256": "f8cfadb05317da71b5f193328333deadd6587cc6d658f826d3507b829e279928",
+  "expected_units": 1203,
+  "findings": [],
+  "index_manifest": "/Users/brock/GitHub/squiddy/governed/work/index/index_manifest.json",
+  "index_rows": 1203,
+  "pass": true,
+  "row_fingerprint": "db594a5c8142105d77022a78a474798d027f374ceb283cf7ea2a7f47efabaaaa",
+  "vectors": 1203
+}

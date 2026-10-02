@@ -17,8 +17,8 @@ documents:
 
   - id: cc_tasks_2026_03_22_global_citation_catalog
     verification_method: "local governed file, sha256 b6fb49f30229d2a6, 9,575 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-03-22_global_citation_catalog.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-03-22_global_citation_catalog.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -36,8 +36,8 @@ documents:
 
   - id: cc_tasks_2026_04_03_register_glossary_ontology_design_note
     verification_method: "local governed file, sha256 4ace7167c238a733, 1,536 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -55,8 +55,8 @@ documents:
 
   - id: cc_tasks_2026_04_03_verify_glossary_path_resolution
     verification_method: "local governed file, sha256 6bd857705afe72af, 3,860 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_verify_glossary_path_resolution.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_verify_glossary_path_resolution.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -74,8 +74,8 @@ documents:
 
   - id: cc_tasks_2026_04_05_implement_verify_strict_mode
     verification_method: "local governed file, sha256 1e540adca4b99389, 6,659 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-05_implement_verify_strict_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-05_implement_verify_strict_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -93,8 +93,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_cc3_measurement_function_audit
     verification_method: "local governed file, sha256 b1a7f4ce0408cd87, 10,494 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -112,8 +112,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_cc5_sleep_function_architecture
     verification_method: "local governed file, sha256 f1fb2d793f053c91, 17,011 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -131,8 +131,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_phase_c_closure
     verification_method: "local governed file, sha256 6d45064aeef0d547, 8,076 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_phase_c_closure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_phase_c_closure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -150,8 +150,8 @@ documents:
 
   - id: cc_tasks_2026_04_21_investigate_cross_project_contamination
     verification_method: "local governed file, sha256 fa37f2420a3df12a, 7,688 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-21_investigate_cross_project_contamination.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-21_investigate_cross_project_contamination.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -169,8 +169,8 @@ documents:
 
   - id: cc_tasks_2026_06_18_cc_task_researchtask_superseded_terminal
     verification_method: "local governed file, sha256 9c0afe7a445a7b5e, 6,903 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -188,8 +188,8 @@ documents:
 
   - id: cc_tasks_2026_07_04_init_db_name_from_project_name
     verification_method: "local governed file, sha256 a57e8687f9bdde0b, 2,121 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-07-04_init_db_name_from_project_name.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-07-04_init_db_name_from_project_name.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -207,8 +207,8 @@ documents:
 
   - id: cc_tasks_2026_08_29_documentation_artifact_type
     verification_method: "local governed file, sha256 f179daa35f86c59a, 2,060 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-08-29_documentation_artifact_type.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-08-29_documentation_artifact_type.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -226,8 +226,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_paper_build_xref_passthrough_failure
     verification_method: "local governed file, sha256 3906949e268d45ff, 1,913 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -245,8 +245,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_paper_build_xref_passthrough_failure_result
     verification_method: "local governed file, sha256 39cf90f550c2e5d5, 5,206 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_paper_build_xref_passthrough_failure_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -264,8 +264,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_snapshot_artifacts_verify
     verification_method: "local governed file, sha256 0dcb40fe460f8567, 3,361 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -283,8 +283,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_snapshot_artifacts_verify_result
     verification_method: "local governed file, sha256 83de39e5ab59e6b1, 3,697 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_snapshot_artifacts_verify_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -302,8 +302,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_track_cc_tasks
     verification_method: "local governed file, sha256 28023993d45c1122, 1,904 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -321,8 +321,8 @@ documents:
 
   - id: cc_tasks_2026_09_02_track_cc_tasks_result
     verification_method: "local governed file, sha256 17954ed764dc062c, 3,175 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-02_track_cc_tasks_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -340,8 +340,8 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_lanea_subresult
     verification_method: "local governed file, sha256 067bf5d347623fe5, 24,823 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneA_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneA_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -359,8 +359,8 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_laneb_subresult
     verification_method: "local governed file, sha256 6e43a72695c05a54, 15,819 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneB_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneB_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -378,8 +378,8 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_lanec_subresult
     verification_method: "local governed file, sha256 0b3b1e5d30f5b84d, 26,945 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneC_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneC_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -397,8 +397,8 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_laned_subresult
     verification_method: "local governed file, sha256 d6dccfa823d75123, 25,033 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneD_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_laneD_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -416,13 +416,12 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_registry_lifecycle_ontology
     verification_method: "local governed file, sha256 23aa7ee89a591a2c, 12,396 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
-    title: 'CC Task — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small
-      defects'
+    title: 'CC Task — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small defects'
     source_url: cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md
     local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology.md"
     doc_kind: cc_task
@@ -436,13 +435,12 @@ documents:
 
   - id: cc_tasks_2026_09_03_seldon_defect_sweep_registry_lifecycle_ontology_result
     verification_method: "local governed file, sha256 628a4de61e707e98, 15,908 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
-    title: 'RESULT — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small
-      defects'
+    title: 'RESULT — Seldon defect sweep: Result registry contract, task lifecycle, ontology gaps, small defects'
     source_url: cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md
     local_path: "../cc_tasks/2026-09-03_seldon_defect_sweep_registry_lifecycle_ontology_RESULT.md"
     doc_kind: cc_task
@@ -456,13 +454,12 @@ documents:
 
   - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic
     verification_method: "local governed file, sha256 dc84fab73fc2d779, 3,447 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
-    title: 'CC Task — AD-028 amendment: admit uppercase in Result names; make `migrate-names` predictive
-      and atomic'
+    title: 'CC Task — AD-028 amendment: admit uppercase in Result names; make `migrate-names` predictive and atomic'
     source_url: cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md
     local_path: "../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic.md"
     doc_kind: cc_task
@@ -476,8 +473,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic_result
     verification_method: "local governed file, sha256 7d971f0b888cffeb, 13,735 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -495,8 +492,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_ad028_grammar_amendment_migrate_atomic_subresult
     verification_method: "local governed file, sha256 6c1d01d8308a55f1, 16,041 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ad028_grammar_amendment_migrate_atomic_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -514,8 +511,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_ontology_ingest_defects_subresult
     verification_method: "local governed file, sha256 eac6354c14cadd95, 15,647 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ontology_ingest_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_ontology_ingest_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -533,8 +530,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_recoverability_replay_subresult
     verification_method: "local governed file, sha256 476ac1becec3d04c, 10,449 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_recoverability_replay_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_recoverability_replay_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -552,8 +549,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_related_terms_parser_regression_subresult
     verification_method: "local governed file, sha256 7260081bd4862e6a, 22,975 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_related_terms_parser_regression_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_related_terms_parser_regression_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -571,8 +568,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_reltype_case_and_source_provenance_subresult
     verification_method: "local governed file, sha256 4d170b0af607c351, 15,656 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_reltype_case_and_source_provenance_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_reltype_case_and_source_provenance_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -590,8 +587,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_replica_sync_all_subresult
     verification_method: "local governed file, sha256 ece209612cb861bd, 17,471 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_replica_sync_all_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_replica_sync_all_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -609,8 +606,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_resolver_options_and_placeholder_subresult
     verification_method: "local governed file, sha256 9cb4c5501e14e201, 12,310 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_resolver_options_and_placeholder_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_resolver_options_and_placeholder_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -628,8 +625,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_seldon_open_defect_closeout
     verification_method: "local governed file, sha256 863c0707ccb04d57, 2,524 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -647,8 +644,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_seldon_open_defect_closeout_result
     verification_method: "local governed file, sha256 26de57e9e5201d46, 13,313 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -666,8 +663,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_si09_removal_condition_subresult
     verification_method: "local governed file, sha256 5944a6876039e992, 12,254 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_si09_removal_condition_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -685,8 +682,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_small_defects_subresult
     verification_method: "local governed file, sha256 6e4241cddc8fa201, 21,191 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_small_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_small_defects_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -704,8 +701,8 @@ documents:
 
   - id: cc_tasks_2026_09_04_test_db_isolation_subresult
     verification_method: "local governed file, sha256 26adcbd16534485a, 15,537 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_test_db_isolation_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-04_test_db_isolation_SUBRESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -723,8 +720,8 @@ documents:
 
   - id: cc_tasks_2026_09_06_task_precedes_relationship
     verification_method: "local governed file, sha256 d1c7538e1c5160e4, 4,426 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -742,8 +739,8 @@ documents:
 
   - id: cc_tasks_2026_09_06_task_precedes_relationship_result
     verification_method: "local governed file, sha256 58ca3ac8e714bf52, 10,059 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-06_task_precedes_relationship_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -761,8 +758,8 @@ documents:
 
   - id: cc_tasks_2026_09_07_precedence_artifact_labels
     verification_method: "local governed file, sha256 4af49f993a81aacf, 2,079 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -780,8 +777,8 @@ documents:
 
   - id: cc_tasks_2026_09_07_precedence_artifact_labels_result
     verification_method: "local governed file, sha256 3c5d1fa74f70cb10, 10,984 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-07_precedence_artifact_labels_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -799,8 +796,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_findings_reconcile
     verification_method: "local governed file, sha256 7adb6ade5d864f69, 5,320 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -818,8 +815,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_findings_reconcile_addendum_1
     verification_method: "local governed file, sha256 2dee0348cf758151, 1,415 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -837,8 +834,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_findings_reconcile_result
     verification_method: "local governed file, sha256 c46a1b20dbf15fa7, 17,857 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -856,8 +853,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest
     verification_method: "local governed file, sha256 9ea91d6a90257f56, 8,523 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -875,8 +872,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_governed_docs_ingest_result
     verification_method: "local governed file, sha256 883beb3a5d91e02e, 13,104 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -894,8 +891,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest
     verification_method: "local governed file, sha256 482a78c76a6f333f, 5,074 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -913,8 +910,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest_addendum_1
     verification_method: "local governed file, sha256 9f968f6e1d1fcc7b, 2,384 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest_ADDENDUM_1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -930,10 +927,29 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest_result
+    verification_method: "local governed file, sha256 5a3d9dc5e420b8c1, 26,463 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: AD-030 names, supersession syntax, incremental re-ingest, constraint backfill'
+    source_url: cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md
+    local_path: "../cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "5a3d9dc5e420b8c1e38f6618ba045ac8f96fee7626ceb8d80d74ff7d3a6c8fa9"
+    bytes: 26567
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: cc_tasks_2026_09_12_seldon_handoff_tool
     verification_method: "local governed file, sha256 cf0d1a17f7789425, 4,014 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -951,8 +967,8 @@ documents:
 
   - id: cc_tasks_2026_09_12_seldon_handoff_tool_result
     verification_method: "local governed file, sha256 664b27cc66da8d21, 5,741 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -968,10 +984,48 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: cc_tasks_2026_09_28_designnote_cites_citation
+    verification_method: "local governed file, sha256 ff7953d82548b955, 6,697 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-28_designnote_cites_citation.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'CC Task: allow DesignNote as the source of a `cites` edge'
+    source_url: cc_tasks/2026-09-28_designnote_cites_citation.md
+    local_path: "../cc_tasks/2026-09-28_designnote_cites_citation.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "ff7953d82548b955c977d92b1e92318be122123df89ed6f9c2ae6844046ecb36"
+    bytes: 6697
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_02_sel_001_ad031_phase1_governed_graphs_retrieval_tevv
+    verification_method: "local governed file, sha256 01222369df238e25, 3,836 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-02_SEL-001_ad031_phase1_governed_graphs_retrieval_tevv.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-001: AD-031 Phase 1. Governed graphs for Squiddy and Arnold, then measure whether retrieval finds the rulings a task should have seen'
+    source_url: cc_tasks/2026-10-02_SEL-001_ad031_phase1_governed_graphs_retrieval_tevv.md
+    local_path: "../cc_tasks/2026-10-02_SEL-001_ad031_phase1_governed_graphs_retrieval_tevv.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "01222369df238e253108ff3905a43a0be8da63fcf438d7fd88f1d7049afbcce4"
+    bytes: 3836
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: docs_design_2026_03_10_database_as_context_architecture
     verification_method: "local governed file, sha256 fbbf288ed472551c, 8,824 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_database_as_context_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_database_as_context_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -989,8 +1043,8 @@ documents:
 
   - id: docs_design_2026_03_10_fractal_document_graph
     verification_method: "local governed file, sha256 58f00c5f51fe9040, 7,429 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_fractal_document_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_fractal_document_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1008,8 +1062,8 @@ documents:
 
   - id: docs_design_2026_03_10_parallel_decomposition_via_graph
     verification_method: "local governed file, sha256 cc1a6e5ff89671dc, 7,056 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_parallel_decomposition_via_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-03-10_parallel_decomposition_via_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1027,8 +1081,8 @@ documents:
 
   - id: docs_design_2026_04_04_semantic_anchoring_and_narrative_logic
     verification_method: "local governed file, sha256 b7e56d799fbefda8, 16,204 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1046,8 +1100,8 @@ documents:
 
   - id: docs_design_2026_04_05_ad020_calibration_consolidated
     verification_method: "local governed file, sha256 fcd616b6592c47e0, 17,681 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_ad020_calibration_consolidated.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_ad020_calibration_consolidated.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1065,8 +1119,8 @@ documents:
 
   - id: docs_design_2026_04_05_hard_threshold_gating_for_mechanical_qc
     verification_method: "local governed file, sha256 2f0b0c6134162f35, 7,361 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1084,8 +1138,8 @@ documents:
 
   - id: docs_design_2026_04_05_regression_audit_loop
     verification_method: "local governed file, sha256 076cb735e601ee38, 11,371 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_regression_audit_loop.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_regression_audit_loop.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1103,8 +1157,8 @@ documents:
 
   - id: docs_design_2026_04_05_sprint_contracts_for_cc_tasks
     verification_method: "local governed file, sha256 04e75652dd94e10f, 6,510 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1120,10 +1174,48 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: docs_design_2026_09_15_standing_dispatcher
+    verification_method: "local governed file, sha256 b0fa0a7c38c2efd9, 8,772 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-09-15_standing_dispatcher.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: '`seldon dispatch` — the standing dispatcher'
+    source_url: docs/design/2026-09-15_standing_dispatcher.md
+    local_path: "../docs/design/2026-09-15_standing_dispatcher.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "b0fa0a7c38c2efd990209c048e23045534213f0b228f5807c22f024b912d025f"
+    bytes: 8809
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_2026_09_16_cadence
+    verification_method: "local governed file, sha256 03e8ab29e5b35e86, 14,711 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/2026-09-16_cadence.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: '`dispatch.cadence` — a schedule that produces a task'
+    source_url: docs/design/2026-09-16_cadence.md
+    local_path: "../docs/design/2026-09-16_cadence.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "03e8ab29e5b35e861db2c3d0706289bab63eec05a1ea71e8e48e092e4e82c5ac"
+    bytes: 14772
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: docs_design_ad_011_database_driven_paper_assembly
     verification_method: "local governed file, sha256 b1d9585aa9455050, 10,310 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-011_database_driven_paper_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-011_database_driven_paper_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1141,8 +1233,8 @@ documents:
 
   - id: docs_design_ad_012_paper_as_graph_assembly
     verification_method: "local governed file, sha256 4b10bc98dba254a4, 26,138 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-012_paper_as_graph_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-012_paper_as_graph_assembly.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1160,8 +1252,8 @@ documents:
 
   - id: docs_design_ad_013_documentation_as_traceability
     verification_method: "local governed file, sha256 c1d243faa53d3523, 19,158 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-013_documentation_as_traceability.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-013_documentation_as_traceability.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1179,8 +1271,8 @@ documents:
 
   - id: docs_design_ad_014_agent_roles_as_graph_artifacts
     verification_method: "local governed file, sha256 53778f1584761875, 17,213 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-014_agent_roles_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-014_agent_roles_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1198,8 +1290,8 @@ documents:
 
   - id: docs_design_ad_016_paper_qc_severity_tiers
     verification_method: "local governed file, sha256 69c917c50e66f820, 14,018 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-016_paper_qc_severity_tiers.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-016_paper_qc_severity_tiers.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1217,8 +1309,8 @@ documents:
 
   - id: docs_design_ad_017_central_validity_ontology
     verification_method: "local governed file, sha256 145b6e683083cb25, 5,235 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-017_central_validity_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-017_central_validity_ontology.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1236,8 +1328,8 @@ documents:
 
   - id: docs_design_ad_018_document_structure_graph
     verification_method: "local governed file, sha256 6e30da2793d1553e, 7,952 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-018_document_structure_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-018_document_structure_graph.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1255,8 +1347,8 @@ documents:
 
   - id: docs_design_ad_019_agentic_content_audit
     verification_method: "local governed file, sha256 fa764ea156ba5f8f, 23,174 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-019_agentic_content_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-019_agentic_content_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1274,8 +1366,8 @@ documents:
 
   - id: docs_design_ad_020_calibration_001_leibniz_pi
     verification_method: "local governed file, sha256 26cf02623cf862ed, 8,098 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_001_leibniz_pi.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_001_leibniz_pi.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1293,8 +1385,8 @@ documents:
 
   - id: docs_design_ad_020_calibration_002_ch04
     verification_method: "local governed file, sha256 800e4d08483c523e, 5,132 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_002_ch04.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_002_ch04.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1312,8 +1404,8 @@ documents:
 
   - id: docs_design_ad_020_calibration_003_ch05
     verification_method: "local governed file, sha256 847a4bda8679ec21, 10,171 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_003_ch05.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_calibration_003_ch05.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1331,8 +1423,8 @@ documents:
 
   - id: docs_design_ad_020_iterative_content_review_pipeline
     verification_method: "local governed file, sha256 6450faa75566d218, 22,277 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_iterative_content_review_pipeline.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-020_iterative_content_review_pipeline.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1350,8 +1442,8 @@ documents:
 
   - id: docs_design_ad_021_session_continuity_fidelity
     verification_method: "local governed file, sha256 5a3d8685f8c0b118, 13,993 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-021_session_continuity_fidelity.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-021_session_continuity_fidelity.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1369,8 +1461,8 @@ documents:
 
   - id: docs_design_ad_022_cli_default_mcp_exception
     verification_method: "local governed file, sha256 71e67e41390d7f0b, 4,213 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-022_cli_default_mcp_exception.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-022_cli_default_mcp_exception.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1388,8 +1480,8 @@ documents:
 
   - id: docs_design_ad_023_wintermute_sleep_functions
     verification_method: "local governed file, sha256 2d68cb13faf3a360, 7,924 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-023_wintermute_sleep_functions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-023_wintermute_sleep_functions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1407,8 +1499,8 @@ documents:
 
   - id: docs_design_ad_024_observability_as_substrate
     verification_method: "local governed file, sha256 0944a6c23d17d00f, 6,755 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-024_observability_as_substrate.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-024_observability_as_substrate.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1426,8 +1518,8 @@ documents:
 
   - id: docs_design_ad_025_subprojects_as_graph_artifacts
     verification_method: "local governed file, sha256 4278a91ca1738f48, 13,232 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-025_subprojects_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-025_subprojects_as_graph_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1445,8 +1537,8 @@ documents:
 
   - id: docs_design_ad_026_init_templates
     verification_method: "local governed file, sha256 6bd01a2b2ab04cf7, 5,462 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-026_init_templates.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-026_init_templates.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1464,8 +1556,8 @@ documents:
 
   - id: docs_design_ad_027_snapshot_artifacts
     verification_method: "local governed file, sha256 0da8de62008c8fe9, 3,749 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-027_snapshot_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-027_snapshot_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1483,8 +1575,8 @@ documents:
 
   - id: docs_design_ad_028_result_names_and_task_lifecycle
     verification_method: "local governed file, sha256 d83fea50d488a86e, 14,107 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-028_result_names_and_task_lifecycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-028_result_names_and_task_lifecycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1502,8 +1594,8 @@ documents:
 
   - id: docs_design_ad_029_task_precedence
     verification_method: "local governed file, sha256 4d65daf70cc3aa47, 18,109 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-029_task_precedence.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-029_task_precedence.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1521,8 +1613,8 @@ documents:
 
   - id: docs_design_ad_030_governed_documents_as_graph_content
     verification_method: "local governed file, sha256 2290ce7fffffcf1d, 10,778 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_governed_documents_as_graph_content.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_governed_documents_as_graph_content.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1540,8 +1632,8 @@ documents:
 
   - id: docs_design_ad_030_implementation_findings_001
     verification_method: "local governed file, sha256 dc3e60b92f772f7c, 7,555 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_001.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_001.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1559,8 +1651,8 @@ documents:
 
   - id: docs_design_ad_030_implementation_findings_002
     verification_method: "local governed file, sha256 e2e44008f3ed8ac0, 5,238 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_002.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-030_implementation_findings_002.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1576,10 +1668,29 @@ documents:
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
+  - id: docs_design_ad_031_rulings_reach_the_task_by_retrieval
+    verification_method: "local governed file, sha256 6d9469d7893f8b8e, 6,448 characters"
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-031_rulings_reach_the_task_by_retrieval.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-031: Rulings reach the task at registration by retrieval, not by citation (extends AD-030; measured before built)'
+    source_url: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+    local_path: "../docs/design/AD-031_rulings_reach_the_task_by_retrieval.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "6d9469d7893f8b8e65a1cf845278a5ad9ed585b06c706f7c8897157693a57762"
+    bytes: 6450
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
   - id: docs_design_dn_session_continuity_graph_backed_handoffs
     verification_method: "local governed file, sha256 db4446f81a75f833, 14,093 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/DN-session-continuity-graph-backed-handoffs.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/DN-session-continuity-graph-backed-handoffs.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1597,8 +1708,8 @@ documents:
 
   - id: docs_design_ad014_agent_roles
     verification_method: "local governed file, sha256 df06efe9d01821c3, 4,728 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/ad014_agent_roles.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/ad014_agent_roles.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1616,8 +1727,8 @@ documents:
 
   - id: docs_design_agent_tool_design_lessons
     verification_method: "local governed file, sha256 f71c83602cfa3922, 6,151 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/agent_tool_design_lessons.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/agent_tool_design_lessons.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1635,8 +1746,8 @@ documents:
 
   - id: docs_design_conops_agent_swarm_workflow
     verification_method: "local governed file, sha256 d5ef4ec149257ff1, 10,527 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/conops_agent_swarm_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/conops_agent_swarm_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1654,8 +1765,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_cc1_pattern_extraction
     verification_method: "local governed file, sha256 8ee4f7045c649137, 40,119 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1673,8 +1784,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_cc2_infrastructure_state_2026_04_18
     verification_method: "local governed file, sha256 d3512b599cc1dc55, 17,922 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1692,8 +1803,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_cc3_measurement_function_audit
     verification_method: "local governed file, sha256 522b1188ddc5f486, 23,397 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1711,8 +1822,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_cc4_dashboard_design
     verification_method: "local governed file, sha256 1118ddda8708982d, 19,870 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc4_dashboard_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc4_dashboard_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1730,8 +1841,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture
     verification_method: "local governed file, sha256 4ac42d8885d2254f, 37,888 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1749,8 +1860,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_dual_model_verification_2026_04_18
     verification_method: "local governed file, sha256 baadd93781f9952c, 5,552 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1768,8 +1879,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_phase_c_retirement_list
     verification_method: "local governed file, sha256 ebb3ca70f12e728b, 6,792 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_retirement_list.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_retirement_list.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1787,8 +1898,8 @@ documents:
 
   - id: docs_design_evolution_burst_2026_04_phase_c_roadmap_75_15_10
     verification_method: "local governed file, sha256 8261c8307ae6d887, 13,193 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1806,8 +1917,8 @@ documents:
 
   - id: docs_design_guarded_incremental_change_cycle
     verification_method: "local governed file, sha256 f95e08b92d6dba5a, 5,054 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/guarded_incremental_change_cycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/guarded_incremental_change_cycle.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1825,8 +1936,8 @@ documents:
 
   - id: docs_design_paper_authoring_convention
     verification_method: "local governed file, sha256 242a34caf2845c1f, 9,178 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_authoring_convention.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_authoring_convention.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1844,8 +1955,8 @@ documents:
 
   - id: docs_design_paper_foundations_workflow
     verification_method: "local governed file, sha256 8ac80d2f0e007e83, 10,290 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_foundations_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/paper_foundations_workflow.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1863,8 +1974,8 @@ documents:
 
   - id: docs_design_seldon_architectural_decisions
     verification_method: "local governed file, sha256 ff82c6e0b175d6b0, 37,330 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/seldon_architectural_decisions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/seldon_architectural_decisions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1882,8 +1993,8 @@ documents:
 
   - id: docs_requirements_conops
     verification_method: "local governed file, sha256 11c0d59f0d7481b5, 1,426 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/conops.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/conops.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1901,8 +2012,8 @@ documents:
 
   - id: docs_requirements_vision
     verification_method: "local governed file, sha256 4e39e4fe39fd9d1f, 1,528 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/vision.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/requirements/vision.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1920,8 +2031,8 @@ documents:
 
   - id: handoffs_2026_04_04_semantic_anchoring_and_cc_bug
     verification_method: "local governed file, sha256 b8de216534167e60, 7,250 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-04_semantic_anchoring_and_cc_bug.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-04_semantic_anchoring_and_cc_bug.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1939,8 +2050,8 @@ documents:
 
   - id: handoffs_2026_04_07_decision_gates_batch_b
     verification_method: "local governed file, sha256 3de8c4559455d62e, 5,716 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-07_decision_gates_batch_b.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-07_decision_gates_batch_b.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1958,8 +2069,8 @@ documents:
 
   - id: handoffs_2026_04_18_evolution_burst_closeout
     verification_method: "local governed file, sha256 49e56c765742997d, 3,150 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_evolution_burst_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_evolution_burst_closeout.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1977,8 +2088,8 @@ documents:
 
   - id: handoffs_2026_04_18_session_close_75_bucket_shipped
     verification_method: "local governed file, sha256 60636d9bc5e84814, 9,291 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_session_close_75_bucket_shipped.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-04-18_session_close_75_bucket_shipped.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -1996,8 +2107,8 @@ documents:
 
   - id: handoffs_2026_09_12_ad030_governed_documents_design
     verification_method: "local governed file, sha256 ca91831200a28efb, 2,940 characters"
-    retrieved_date: "2026-09-12"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-09-12_ad030_governed_documents_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-09-12."
+    retrieved_date: "2026-10-02"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-09-12_ad030_governed_documents_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -2008,27 +2119,6 @@ documents:
     provenance_flag: local_authored
     sha256: "ca91831200a28efbaa03a529766823c61bbd5780ab9850e6966ca651fcc41841"
     bytes: 2940
-    acquisition: none
-    acquisition_status: "acquired"
-    verification_status: "verified"
-    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
-
-# AD-030-R1: every governed markdown file is a Document node.
-
-  - id: cc_tasks_2026_09_12_ad030_names_supersession_reingest_result
-    verification_method: "local governed file, sha256 5a3d9dc5e420b8c1, 26,463 characters"
-    retrieved_date: "2026-09-12"
-    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 31a3f436285e43c4 recorded, 5a3d9dc5e420b8c1 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-09-12. || PRIOR NOTE, PRESERVED: RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 be71254e0148b096 recorded, 31a3f436285e43c4 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-09-12."
-    kind: local_document
-    stage: "in_graph"
-    disposition: active
-    title: 'RESULT: AD-030 names, supersession syntax, incremental re-ingest, constraint backfill'
-    source_url: cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md
-    local_path: "../cc_tasks/2026-09-12_ad030_names_supersession_reingest_RESULT.md"
-    doc_kind: cc_task
-    provenance_flag: local_authored
-    sha256: "5a3d9dc5e420b8c1e38f6618ba045ac8f96fee7626ceb8d80d74ff7d3a6c8fa9"
-    bytes: 26567
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"

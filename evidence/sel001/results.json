@@ -1,0 +1,586 @@
+{
+ "arms": {
+  "H": {
+   "A": {
+    "by_identifier_kind": {
+     "document": {
+      "pairs": 439,
+      "recall_at_k": 0.0387,
+      "wilson": [
+       0.0243,
+       0.0611
+      ]
+     },
+     "document+ruling": {
+      "pairs": 265,
+      "recall_at_k": 0.366,
+      "wilson": [
+       0.3103,
+       0.4256
+      ]
+     },
+     "ruling": {
+      "pairs": 29,
+      "recall_at_k": 0.2069,
+      "wilson": [
+       0.0985,
+       0.3839
+      ]
+     }
+    },
+    "by_repo": {
+     "arnold": {
+      "pairs": 95,
+      "recall_at_k": 0.1158,
+      "wilson": [
+       0.0659,
+       0.1955
+      ]
+     },
+     "squiddy": {
+      "pairs": 638,
+      "recall_at_k": 0.1708,
+      "wilson": [
+       0.1436,
+       0.202
+      ]
+     }
+    },
+    "hits_at_10": 120,
+    "hits_at_5": 98,
+    "home_node_recall_at_10": {
+     "hits": 120,
+     "pairs_with_home": 733,
+     "recall": 0.1637
+    },
+    "macro_recall_at_10_over_tasks": 0.1986,
+    "mrr_at_10": 0.076,
+    "pairs": 733,
+    "recall_at_10": 0.1637,
+    "recall_at_10_wilson": [
+     0.1387,
+     0.1922
+    ],
+    "recall_at_5": 0.1337,
+    "recall_at_5_wilson": [
+     0.111,
+     0.1603
+    ],
+    "tasks": 82
+   },
+   "B": [
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "KG-004 step 6 / DN-025 R-112",
+     "rank": null,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "KG-004 step 6 / DN-025 R-113",
+     "rank": null,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": true,
+     "label": "KG-005 / DN-025 R-112",
+     "rank": 3,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "SQ-004 / DN-025 R-112",
+     "rank": null,
+     "status": "ruling node exists"
+    },
+    {
+     "containing_section_rank_among_rulings_and_sections": null,
+     "diagnostic": false,
+     "hit": false,
+     "label": "RPE task (pb-03) / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "containing_section_rank_among_rulings_and_sections": null,
+     "diagnostic": true,
+     "hit": false,
+     "label": "pb-04 / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "containing_section_rank_among_rulings_and_sections": null,
+     "diagnostic": true,
+     "hit": false,
+     "label": "pb-01 / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "diagnostic": true,
+     "hit": false,
+     "label": "pb-03 / intensity-constructs section 12 R2 (written 2026-09-12, in response)",
+     "rank": null,
+     "status": "ruling node exists"
+    }
+   ],
+   "C": [
+    {
+     "candidates_at_k": 8,
+     "distinct_documents_at_k": 6,
+     "query_id": "arnold:cc_tasks/2026-06-15_retire-deviation-ceremony.md"
+    },
+    {
+     "candidates_at_k": 7,
+     "distinct_documents_at_k": 6,
+     "query_id": "arnold:cc_tasks/2026-06-11_planning-inputs-audit.md"
+    },
+    {
+     "candidates_at_k": 0,
+     "distinct_documents_at_k": 0,
+     "query_id": "squiddy:cc_tasks/2026-09-12_S-005_kit_v0_spine.md"
+    },
+    {
+     "candidates_at_k": 8,
+     "distinct_documents_at_k": 6,
+     "query_id": "arnold:cc_tasks/2026-07-20_remove-plan-status-ceremony.md"
+    },
+    {
+     "candidates_at_k": 4,
+     "distinct_documents_at_k": 4,
+     "query_id": "arnold:cc_tasks/2026-08-01_mesocycle-amendment.md"
+    },
+    {
+     "candidates_at_k": 1,
+     "distinct_documents_at_k": 1,
+     "query_id": "arnold:cc_tasks/2026-07-18_record-cc-registration-convention.md"
+    },
+    {
+     "candidates_at_k": 3,
+     "distinct_documents_at_k": 3,
+     "query_id": "arnold:cc_tasks/2026-05-24_status-reconciliation-and-diagnostic.md"
+    },
+    {
+     "candidates_at_k": 2,
+     "distinct_documents_at_k": 2,
+     "query_id": "arnold:cc_tasks/2026-08-25_mcp-write-hang-diagnosis.md"
+    },
+    {
+     "candidates_at_k": 2,
+     "distinct_documents_at_k": 2,
+     "query_id": "arnold:cc_tasks/2026-07-09_profile-path-and-openai-script-triage.md"
+    },
+    {
+     "candidates_at_k": 3,
+     "distinct_documents_at_k": 3,
+     "query_id": "arnold:cc_tasks/2026-07-04_fix-postgres-read-transaction-leak.md"
+    },
+    {
+     "candidates_at_k": 3,
+     "distinct_documents_at_k": 3,
+     "query_id": "arnold:cc_tasks/2026-08-20_rep-scheme-prescriptions.md"
+    },
+    {
+     "candidates_at_k": 4,
+     "distinct_documents_at_k": 3,
+     "query_id": "arnold:cc_tasks/2026-07-04_email-workflow-consolidation.md"
+    },
+    {
+     "candidates_at_k": 5,
+     "distinct_documents_at_k": 4,
+     "query_id": "arnold:cc_tasks/2026-04-12_benchmark-schema-and-tools.md"
+    },
+    {
+     "candidates_at_k": 1,
+     "distinct_documents_at_k": 1,
+     "query_id": "arnold:cc_tasks/2026-08-16_hr-fields-polar-weekly-device-wins.md"
+    },
+    {
+     "candidates_at_k": 3,
+     "distinct_documents_at_k": 3,
+     "query_id": "arnold:cc_tasks/2026-06-26_alias-shoulder-rehab-shorthand.md"
+    },
+    {
+     "candidates_at_k": 6,
+     "distinct_documents_at_k": 4,
+     "query_id": "arnold:cc_tasks/2026-07-06_launchd-decommission-morning-brief-repoint-plists.md"
+    },
+    {
+     "candidates_at_k": 8,
+     "distinct_documents_at_k": 7,
+     "query_id": "arnold:cc_tasks/2026-07-27_fix-amend-workout-atomicity-and-set-order.md"
+    },
+    {
+     "candidates_at_k": 4,
+     "distinct_documents_at_k": 4,
+     "query_id": "arnold:cc_tasks/2026-09-14_exercise-identity-quad-raise-and-alias-removal.md"
+    },
+    {
+     "candidates_at_k": 7,
+     "distinct_documents_at_k": 6,
+     "query_id": "arnold:cc_tasks/2026-05-24_fix-endurance-logging-pipeline.md"
+    },
+    {
+     "candidates_at_k": 0,
+     "distinct_documents_at_k": 0,
+     "query_id": "arnold:cc_tasks/2026-09-07_prior-art-survey.md"
+    }
+   ],
+   "bar": {
+    "every_B_pair_at_k": false,
+    "pass": false,
+    "recall_at_10_ge_0_80": false
+   }
+  },
+  "O": {
+   "A": {
+    "by_identifier_kind": {
+     "document": {
+      "pairs": 439,
+      "recall_at_k": 0.0866,
+      "wilson": [
+       0.0637,
+       0.1166
+      ]
+     },
+     "document+ruling": {
+      "pairs": 265,
+      "recall_at_k": 0.5509,
+      "wilson": [
+       0.4908,
+       0.6097
+      ]
+     },
+     "ruling": {
+      "pairs": 29,
+      "recall_at_k": 0.2069,
+      "wilson": [
+       0.0985,
+       0.3839
+      ]
+     }
+    },
+    "by_repo": {
+     "arnold": {
+      "pairs": 95,
+      "recall_at_k": 0.1789,
+      "wilson": [
+       0.1148,
+       0.268
+      ]
+     },
+     "squiddy": {
+      "pairs": 638,
+      "recall_at_k": 0.2712,
+      "wilson": [
+       0.2381,
+       0.3069
+      ]
+     }
+    },
+    "hits_at_10": 190,
+    "hits_at_5": 130,
+    "home_node_recall_at_10": {
+     "hits": 190,
+     "pairs_with_home": 733,
+     "recall": 0.2592
+    },
+    "macro_recall_at_10_over_tasks": 0.3159,
+    "mrr_at_10": 0.1134,
+    "pairs": 733,
+    "recall_at_10": 0.2592,
+    "recall_at_10_wilson": [
+     0.2288,
+     0.2921
+    ],
+    "recall_at_5": 0.1774,
+    "recall_at_5_wilson": [
+     0.1514,
+     0.2067
+    ],
+    "tasks": 82
+   },
+   "B": [
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "KG-004 step 6 / DN-025 R-112",
+     "rank": 78,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "KG-004 step 6 / DN-025 R-113",
+     "rank": 84,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "KG-005 / DN-025 R-112",
+     "rank": 43,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "SQ-004 / DN-025 R-112",
+     "rank": 132,
+     "status": "ruling node exists"
+    },
+    {
+     "diagnostic": false,
+     "hit": false,
+     "label": "RPE task (pb-03) / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "diagnostic": true,
+     "hit": false,
+     "label": "pb-04 / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "diagnostic": true,
+     "hit": false,
+     "label": "pb-01 / intensity-constructs per-set RPE ruling",
+     "rank": null,
+     "status": "parse gap: no Ruling node carries the ruling's text",
+     "why": "parse gap: no Ruling node carries the ruling's text"
+    },
+    {
+     "diagnostic": true,
+     "hit": true,
+     "label": "pb-03 / intensity-constructs section 12 R2 (written 2026-09-12, in response)",
+     "rank": 9,
+     "status": "ruling node exists"
+    }
+   ],
+   "C": [
+    {
+     "above_threshold": 43,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 10,
+     "nonzero": 150,
+     "query_id": "arnold:cc_tasks/2026-06-15_retire-deviation-ceremony.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 78,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 8,
+     "nonzero": 187,
+     "query_id": "arnold:cc_tasks/2026-06-11_planning-inputs-audit.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 106,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 159,
+     "query_id": "squiddy:cc_tasks/2026-09-12_S-005_kit_v0_spine.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 58,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 10,
+     "nonzero": 166,
+     "query_id": "arnold:cc_tasks/2026-07-20_remove-plan-status-ceremony.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 47,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 158,
+     "query_id": "arnold:cc_tasks/2026-08-01_mesocycle-amendment.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 74,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 169,
+     "query_id": "arnold:cc_tasks/2026-07-18_record-cc-registration-convention.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 74,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 174,
+     "query_id": "arnold:cc_tasks/2026-05-24_status-reconciliation-and-diagnostic.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 122,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 193,
+     "query_id": "arnold:cc_tasks/2026-08-25_mcp-write-hang-diagnosis.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 131,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 10,
+     "nonzero": 186,
+     "query_id": "arnold:cc_tasks/2026-07-09_profile-path-and-openai-script-triage.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 46,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 166,
+     "query_id": "arnold:cc_tasks/2026-07-04_fix-postgres-read-transaction-leak.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 99,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 7,
+     "nonzero": 179,
+     "query_id": "arnold:cc_tasks/2026-08-20_rep-scheme-prescriptions.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 84,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 7,
+     "nonzero": 185,
+     "query_id": "arnold:cc_tasks/2026-07-04_email-workflow-consolidation.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 28,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 7,
+     "nonzero": 141,
+     "query_id": "arnold:cc_tasks/2026-04-12_benchmark-schema-and-tools.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 132,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 194,
+     "query_id": "arnold:cc_tasks/2026-08-16_hr-fields-polar-weekly-device-wins.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 29,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 8,
+     "nonzero": 155,
+     "query_id": "arnold:cc_tasks/2026-06-26_alias-shoulder-rehab-shorthand.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 34,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 7,
+     "nonzero": 143,
+     "query_id": "arnold:cc_tasks/2026-07-06_launchd-decommission-morning-brief-repoint-plists.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 176,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 6,
+     "nonzero": 203,
+     "query_id": "arnold:cc_tasks/2026-07-27_fix-amend-workout-atomicity-and-set-order.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 163,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 8,
+     "nonzero": 199,
+     "query_id": "arnold:cc_tasks/2026-09-14_exercise-identity-quad-raise-and-alias-removal.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 57,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 10,
+     "nonzero": 167,
+     "query_id": "arnold:cc_tasks/2026-05-24_fix-endurance-logging-pipeline.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    },
+    {
+     "above_threshold": 148,
+     "candidates_at_k": 10,
+     "distinct_documents_at_k": 9,
+     "nonzero": 201,
+     "query_id": "arnold:cc_tasks/2026-09-07_prior-art-survey.md",
+     "registration_would_bind": 8,
+     "threshold": 0.18
+    }
+   ],
+   "bar": {
+    "every_B_pair_at_k": false,
+    "pass": false,
+    "recall_at_10_ge_0_80": false
+   }
+  }
+ },
+ "k": 10,
+ "k_small": 5,
+ "misses": {
+  "H": {
+   "A": 613,
+   "A_cause_signals": {
+    "granularity: a Section containing the ruling ranked in the top k": 194,
+    "granularity: a sibling ruling of the same document outranked it": 122,
+    "outranked: shares terms with the task and was ranked below k": 1,
+    "retrieval depth: in neither sub-arm's 200 candidates": 610,
+    "vocabulary: the stripped task shares no content term with the ruling": 107
+   },
+   "B": 4
+  },
+  "O": {
+   "A": 543,
+   "A_cause_signals": {
+    "granularity: a sibling ruling of the same document outranked it": 210,
+    "outranked: shares terms with the task and was ranked below k": 285,
+    "vocabulary: the stripped task shares no content term with the ruling": 107
+   },
+   "B": 5
+  }
+ },
+ "wilson_z": 1.96
+}
