@@ -8,7 +8,7 @@ description: >-
   (fss-policy-kg's CONFLICTS_WITH and IMPLEMENTS status discipline, kg/loader.py:282-290), the
   manifest entry with its two status axes (DI-073), and the event envelope of the ledger. A
   domain schema imports this and declares its own classes; it never re-declares these.
-version: 0.1.0
+version: 0.2.0
 license: MIT
 
 prefixes:
@@ -90,6 +90,29 @@ slots:
     range: AssertionStatus
   superseded_by:
     description: The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).
+  # ---- the extractor stamp and the located span (S-007; DN-001 R-14; DI-023) ----
+  prov_extractor:
+    description: >-
+      The instrument that made an extracted assertion, as `<provider>:<alias asked for>`
+      (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is
+      itself the signal.
+  prov_extractor_version:
+    description: >-
+      The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the
+      call that made the assertion; never the alias (DI-023: recording an alias as the model is
+      citing a document that quotes a statute as if it were the statute).
+  prov_prompt_sha256:
+    description: The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.
+  prov_run_id:
+    description: The run id of the extraction that proposed this assertion (also the envelope's run_id).
+  grounding_span:
+    range: GroundingSpan
+    inlined: true
+    description: >-
+      Where in the source the harness located the text behind this assertion. Located and cut by
+      the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor
+      contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a
+      stored assertion.
   # ---- manifest entry ----
   kind:
   stage:
@@ -130,17 +153,35 @@ classes:
   Any:
     class_uri: linkml:Any
 
+  GroundingSpan:
+    description: >-
+      Character offsets into the parsed intermediate's `plain_text`, the sha256 of the located
+      text (so anyone holding the intermediate can verify the slice), and the sha256 of the whole
+      plain text (so a re-parse that moves the offsets is detectable rather than silent).
+    attributes:
+      start:
+        range: integer
+        required: true
+      end:
+        range: integer
+        required: true
+      sha256:
+        required: true
+      parsed_sha256:
+
   Node:
     abstract: true
     description: A property-graph node keyed by `id`.
     slots: [id, prov_wasGeneratedBy, prov_wasDerivedFrom, method, ruling_id, asserted_at, status,
-            superseded_by]
+            superseded_by, prov_extractor, prov_extractor_version, prov_prompt_sha256, prov_run_id,
+            grounding_span]
 
   Edge:
     abstract: true
     description: A property-graph edge from `subject` to `object`; the class is the predicate.
     slots: [subject, object, prov_wasGeneratedBy, prov_wasDerivedFrom, method, ruling_id,
-            asserted_at, status, superseded_by]
+            asserted_at, status, superseded_by, prov_extractor, prov_extractor_version,
+            prov_prompt_sha256, prov_run_id, grounding_span]
 
   ManifestEntry:
     description: One entry per document ever considered (DI-070). The two status axes are required.

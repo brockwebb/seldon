@@ -1,0 +1,109 @@
+{
+ "graphs": {
+  "arnold": {
+   "documents": 278,
+   "rulings": 47,
+   "sections": 3235
+  },
+  "squiddy": {
+   "documents": 155,
+   "rulings": 181,
+   "sections": 867
+  }
+ },
+ "queries": 269,
+ "registered_task_files_missing": [
+  "arnold:cc_tasks/2026-08-13_ZZZ-throwaway-hash-probe.md",
+  "arnold:cc_tasks/2026-08-13_ZZZ-throwaway-spec-tamper.md",
+  "arnold:cc_tasks/2026-08-16_ZZZ-scratch-hash-probe.md"
+ ],
+ "registered_tasks": {
+  "arnold": 186,
+  "squiddy": 86
+ },
+ "set_a": {
+  "pairs": 733,
+  "pairs_by_repo": {
+   "arnold": 95,
+   "squiddy": 638
+  },
+  "pairs_by_via_kind": {
+   "document": 439,
+   "document+ruling": 265,
+   "ruling": 29
+  },
+  "tasks": 82,
+  "tasks_by_repo": {
+   "arnold": 11,
+   "squiddy": 71
+  },
+  "unresolved_by_kind_and_why": {
+   "AD: no document in scope": 16,
+   "DN: document in squiddy states no Ruling": 1,
+   "R: no Ruling in scope carries it": 1
+  },
+  "unresolved_distinct": {
+   "AD-001": 1,
+   "AD-002": 1,
+   "AD-005": 1,
+   "AD-012": 3,
+   "AD-014": 1,
+   "AD-016": 3,
+   "AD-017": 2,
+   "AD-025": 3,
+   "AD-030": 1,
+   "DN-037": 1,
+   "R-17134": 1
+  },
+  "unresolved_identifiers": 18
+ },
+ "set_b": [
+  {
+   "label": "KG-004 step 6 / DN-025 R-112",
+   "status": "ruling node exists"
+  },
+  {
+   "label": "KG-004 step 6 / DN-025 R-113",
+   "status": "ruling node exists"
+  },
+  {
+   "label": "KG-005 / DN-025 R-112",
+   "status": "ruling node exists"
+  },
+  {
+   "label": "SQ-004 / DN-025 R-112",
+   "status": "ruling node exists"
+  },
+  {
+   "label": "RPE task (pb-03) / intensity-constructs per-set RPE ruling",
+   "status": "parse gap: no Ruling node carries the ruling's text"
+  }
+ ],
+ "set_c": {
+  "n": 20,
+  "pool": 149,
+  "sample": [
+   "arnold:cc_tasks/2026-06-15_retire-deviation-ceremony.md",
+   "arnold:cc_tasks/2026-06-11_planning-inputs-audit.md",
+   "squiddy:cc_tasks/2026-09-12_S-005_kit_v0_spine.md",
+   "arnold:cc_tasks/2026-07-20_remove-plan-status-ceremony.md",
+   "arnold:cc_tasks/2026-08-01_mesocycle-amendment.md",
+   "arnold:cc_tasks/2026-07-18_record-cc-registration-convention.md",
+   "arnold:cc_tasks/2026-05-24_status-reconciliation-and-diagnostic.md",
+   "arnold:cc_tasks/2026-08-25_mcp-write-hang-diagnosis.md",
+   "arnold:cc_tasks/2026-07-09_profile-path-and-openai-script-triage.md",
+   "arnold:cc_tasks/2026-07-04_fix-postgres-read-transaction-leak.md",
+   "arnold:cc_tasks/2026-08-20_rep-scheme-prescriptions.md",
+   "arnold:cc_tasks/2026-07-04_email-workflow-consolidation.md",
+   "arnold:cc_tasks/2026-04-12_benchmark-schema-and-tools.md",
+   "arnold:cc_tasks/2026-08-16_hr-fields-polar-weekly-device-wins.md",
+   "arnold:cc_tasks/2026-06-26_alias-shoulder-rehab-shorthand.md",
+   "arnold:cc_tasks/2026-07-06_launchd-decommission-morning-brief-repoint-plists.md",
+   "arnold:cc_tasks/2026-07-27_fix-amend-workout-atomicity-and-set-order.md",
+   "arnold:cc_tasks/2026-09-14_exercise-identity-quad-raise-and-alias-removal.md",
+   "arnold:cc_tasks/2026-05-24_fix-endurance-logging-pipeline.md",
+   "arnold:cc_tasks/2026-09-07_prior-art-survey.md"
+  ],
+  "seed": 20261002
+ }
+}

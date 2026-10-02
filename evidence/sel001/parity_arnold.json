@@ -1,0 +1,19 @@
+{
+  "control": {
+    "findings": [
+      "count: the release has 3560 units and the index 3559 rows",
+      "missing: 1 unit(s) of the release are not in the index: ['Section:cc_tasks_2026_08_16_intensity_constructs_session_rpe_rir#intensity_constructs_session_rpe_technically_anchored_rir_hr_calibration_build_c_migration_relabel_don_t_touch_values']",
+      "fingerprint: release 1f4d85d72775382b != index dea85a05247592f6"
+    ],
+    "fired": true,
+    "planted": "row Section:cc_tasks_2026_08_16_intensity_constructs_session_rpe_rir#intensity_constructs_session_rpe_technically_anchored_rir_hr_calibration_build_c_migration_relabel_don_t_touch_values removed from the index"
+  },
+  "db_sha256": "6dae76336a827c1bf6d3463c0606ee38300e5d99f4406056ac6965ed92e78513",
+  "expected_units": 3560,
+  "findings": [],
+  "index_manifest": "/Users/brock/GitHub/arnold/governed/work/index/index_manifest.json",
+  "index_rows": 3560,
+  "pass": true,
+  "row_fingerprint": "1f4d85d72775382b0c837b28f25650621d55615134a28a50c5a06a08dbdaef28",
+  "vectors": 3560
+}

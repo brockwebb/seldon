@@ -1,0 +1,18 @@
+{"identifier": "AD-001", "kind": "AD", "query_id": "squiddy:cc_tasks/2026-09-11_S-001_harvest.md", "why": "no document in scope"}
+{"identifier": "AD-002", "kind": "AD", "query_id": "squiddy:cc_tasks/2026-09-11_S-001_harvest.md", "why": "no document in scope"}
+{"identifier": "AD-017", "kind": "AD", "query_id": "squiddy:cc_tasks/2026-09-11_S-001_harvest.md", "why": "no document in scope"}
+{"identifier": "AD-017", "kind": "AD", "query_id": "squiddy:cc_tasks/2026-09-11_S-004_od4_identity_spine.md", "why": "no document in scope"}
+{"identifier": "AD-005", "kind": "AD", "query_id": "arnold:cc_tasks/2026-05-02_deerflow-pilot-arnold-coaching-team.md", "why": "no document in scope"}
+{"identifier": "AD-025", "kind": "AD", "query_id": "arnold:cc_tasks/2026-05-02_deerflow-pilot-arnold-coaching-team.md", "why": "no document in scope"}
+{"identifier": "AD-025", "kind": "AD", "query_id": "arnold:cc_tasks/2026-05-03_deploy-morning-brief-claudeclaw-ioc.md", "why": "no document in scope"}
+{"identifier": "AD-025", "kind": "AD", "query_id": "arnold:cc_tasks/2026-05-03_wire-buildrun-emission.md", "why": "no document in scope"}
+{"identifier": "AD-012", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-01_plan-builder-rebuild.addendum-03.md", "why": "no document in scope"}
+{"identifier": "AD-016", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-01_plan-builder-rebuild.addendum-03.md", "why": "no document in scope"}
+{"identifier": "R-17134", "kind": "R", "query_id": "arnold:cc_tasks/2026-09-05_grip-strength-source-corpus.md", "why": "no Ruling in scope carries it"}
+{"identifier": "AD-012", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.addendum-01.md", "why": "no document in scope"}
+{"identifier": "AD-014", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.addendum-01.md", "why": "no document in scope"}
+{"identifier": "AD-016", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.addendum-01.md", "why": "no document in scope"}
+{"identifier": "AD-012", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.md", "why": "no document in scope"}
+{"identifier": "AD-016", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.md", "why": "no document in scope"}
+{"identifier": "AD-030", "kind": "AD", "query_id": "arnold:cc_tasks/2026-09-13_exercise-identity-grouping.md", "why": "no document in scope"}
+{"documents": ["docs_design_2026_10_02_dn_037_harvest_is_its_own_component_tentacle_deferred"], "identifier": "DN-037", "kind": "DN", "query_id": "arnold:cc_tasks/2026-10-02_KG-004_arnold_end_to_end_clean_corpus.md", "why": "document in squiddy states no Ruling"}

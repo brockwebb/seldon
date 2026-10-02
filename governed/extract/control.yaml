@@ -1,0 +1,60 @@
+# governed/extract/control.yaml: this graph's control plane. It declares one block, the served index.
+#
+# THE INDEX (Seldon AD-031-R1; Squiddy DN-025 R-110). Squiddy's hybrid `search` over this graph's own
+# governed documents, so that a task being registered can be checked against the rulings it did not
+# cite. Every retrieval parameter below is the library graph's `index:` block VERBATIM
+# (`graphs/library/extract/control.yaml`, arm A of Q-003, frozen by DN-025 R-110 and S-008 19.2): the
+# pinned encoder, RRF k = 60 over 200 candidates per sub-arm, `tuned: false`, ten documents, three rows
+# each. Nothing here was chosen for this graph, and SEL-001 measures it as frozen (AD-031 section 4).
+#
+# WHAT DIFFERS FROM THE LIBRARY BLOCK, AND WHY.
+#   - `units`: the text units are this graph's Section and Ruling nodes, read from its ledger, not
+#     paragraphs of an acquired PDF (SEL-001 step 3: "Ruling and Section text as units and documents
+#     as metadata rows"). Section text is the heading and its body to the next heading of the same or
+#     shallower level, as the emitter mints it, so a section overlaps its subsections and its rulings.
+#   - `encoder_pin.file`: a byte-identical copy of the library's pin (same sha256), because a graph
+#     reads its pin from inside its own root and this graph lives outside `graphs/`.
+#   - `work_dir`: this graph's own.
+# The dense pilot and progress keys are the library's too; they change when the build reports, never
+# what it builds.
+
+index:
+  work_dir: work/index
+  units:
+    source: ledger_nodes
+    classes: [Section, Ruling]
+    text_field: text
+    doc_field: doc_id
+    span_fields: [span_start, span_end]
+  encoder:
+    model_id: nomic-ai/nomic-embed-text-v1.5
+    revision: e9b6763023c676ca8431644204f50c2b100d9aab
+    trust_remote_repo: nomic-ai/nomic-bert-2048
+    trust_remote_revision: 7710840340a098cfb869c4f65e87cf2b1b70caca
+    dimension: 768
+    query_prefix: 'search_query: '
+    document_prefix: 'search_document: '
+    device: cpu
+    normalize: true
+    max_seq_length: 2048
+    batch_size: 32
+    torch_threads: 8
+  encoder_pin:
+    file: extract/encoder_pin.json
+    sha256: b260301fee037dedd906ecb976737882f8cdf2b19cd3ff3d1db807d3da41227b
+  dense:
+    pad_to: longest
+    progress_rows: 10000
+    progress_seconds: 60
+    pilot_rows: 2000
+    pilot_seed: 20260923
+    wall_seconds_max: 64800
+    retries_per_unit: 2
+  fusion:
+    rrf_k: 60
+    candidates_per_subarm: 200
+    tuned: false
+  top_k_documents: 10
+  rows_per_document: 3
+  text_max_chars: 1000
+  corpus_progress_every: 50

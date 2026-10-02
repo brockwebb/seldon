@@ -1,0 +1,55 @@
+[
+ {
+  "command": [
+   "/Users/brock/GitHub/squiddy/.venv/bin/python",
+   "-m",
+   "squiddy.index",
+   "build",
+   "--graph",
+   "/Users/brock/GitHub/squiddy/governed",
+   "--release",
+   "/Users/brock/GitHub/squiddy/governed/exports/governed_graph_20261002_release_2_2026-10-02.json"
+  ],
+  "policy": {
+   "policy": "none",
+   "classes": [],
+   "hosts": [],
+   "where": "child",
+   "enforcement": [
+    "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+    "sandbox-exec none profile"
+   ],
+   "sandbox": "applied"
+  },
+  "returncode": 0,
+  "seconds": 0.6,
+  "finished_utc": "2026-10-02T20:09:11Z"
+ },
+ {
+  "command": [
+   "/Users/brock/GitHub/squiddy/.venv/bin/python",
+   "-m",
+   "squiddy.index",
+   "parity",
+   "--graph",
+   "/Users/brock/GitHub/squiddy/governed",
+   "--mutate",
+   "--json",
+   "evidence/sel001/parity_squiddy.json"
+  ],
+  "policy": {
+   "policy": "none",
+   "classes": [],
+   "hosts": [],
+   "where": "child",
+   "enforcement": [
+    "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+    "sandbox-exec none profile"
+   ],
+   "sandbox": "applied"
+  },
+  "returncode": 0,
+  "seconds": 0.2,
+  "finished_utc": "2026-10-02T20:09:12Z"
+ }
+]

@@ -55,12 +55,51 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "id": {
                     "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
                     "type": "string"
                 },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
                     "type": [
                         "string",
                         "null"
@@ -176,6 +215,17 @@
                 "cito_type": {
                     "$ref": "#/$defs/CitoType"
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -186,6 +236,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -268,6 +346,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "match_method": {
                     "description": "identifier | concept_overlap",
                     "type": [
@@ -300,6 +389,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -355,6 +472,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -365,6 +493,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -431,6 +587,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -441,6 +608,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -497,7 +692,8 @@
                 "design",
                 "requirements",
                 "cc_task",
-                "handoff"
+                "handoff",
+                "ontology"
             ],
             "title": "DocKind",
             "type": "string"
@@ -552,6 +748,17 @@
                 "doc_kind": {
                     "$ref": "#/$defs/DocKind"
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "id": {
                     "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
                     "type": "string"
@@ -586,6 +793,34 @@
                 "path": {
                     "description": "Repo-relative path, the edit surface. Governed documents stay in place.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -675,6 +910,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -685,6 +931,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -821,6 +1095,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -831,6 +1116,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -946,6 +1259,34 @@
                 }
             },
             "title": "GovernedGraph",
+            "type": "object"
+        },
+        "GroundingSpan": {
+            "additionalProperties": false,
+            "description": "Character offsets into the parsed intermediate's `plain_text`, the sha256 of the located text (so anyone holding the intermediate can verify the slice), and the sha256 of the whole plain text (so a re-parse that moves the offsets is detectable rather than silent).",
+            "properties": {
+                "end": {
+                    "type": "integer"
+                },
+                "parsed_sha256": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sha256": {
+                    "type": "string"
+                },
+                "start": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "start",
+                "end",
+                "sha256"
+            ],
+            "title": "GroundingSpan",
             "type": "object"
         },
         "ManifestDisposition": {
@@ -1097,6 +1438,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "identifier": {
                     "type": "string"
                 },
@@ -1117,6 +1469,34 @@
                 "occurrences": {
                     "type": [
                         "integer",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
                         "null"
                     ]
                 },
@@ -1176,12 +1556,51 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "id": {
                     "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
                     "type": "string"
                 },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
                     "type": [
                         "string",
                         "null"
@@ -1250,12 +1669,51 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "id": {
                     "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
                     "type": "string"
                 },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
                     "type": [
                         "string",
                         "null"
@@ -1350,6 +1808,17 @@
                 "force": {
                     "$ref": "#/$defs/DeonticForce"
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "id": {
                     "description": "The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 \u00a73.1).",
                     "type": "string"
@@ -1370,6 +1839,34 @@
                 },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
                     "type": [
                         "string",
                         "null"
@@ -1467,6 +1964,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -1477,6 +1985,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",
@@ -1543,6 +2079,17 @@
                     "description": "The Document a child node belongs to.",
                     "type": "string"
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "heading": {
                     "type": "string"
                 },
@@ -1577,6 +2124,34 @@
                     "description": "Position in reading order within the document.",
                     "type": [
                         "integer",
+                        "null"
+                    ]
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
                         "null"
                     ]
                 },
@@ -1657,6 +2232,17 @@
                         "null"
                     ]
                 },
+                "grounding_span": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundingSpan"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion."
+                },
                 "method": {
                     "description": "How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).",
                     "type": [
@@ -1667,6 +2253,34 @@
                 "object": {
                     "description": "The id of the target node.",
                     "type": "string"
+                },
+                "prov_extractor": {
+                    "description": "The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_extractor_version": {
+                    "description": "The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_prompt_sha256": {
+                    "description": "The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "prov_run_id": {
+                    "description": "The run id of the extraction that proposed this assertion (also the envelope's run_id).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "prov_wasDerivedFrom": {
                     "description": "The manifest entry or source the assertion was derived from.",

@@ -1,0 +1,7 @@
+# Regenerable from the governed ledgers, the registered tasks and scripts/sel001/ (deterministic), and
+# large: kept on disk, out of git. MANIFEST.json records each one's sha256 and the command that writes it.
+arm_o_runs.jsonl
+arm_h_runs.jsonl
+queries.jsonl
+catalog.json
+misses.jsonl
