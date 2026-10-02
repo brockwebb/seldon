@@ -1,0 +1,55 @@
+# SEL-001: AD-031 Phase 1 retrieval TEVV. Every parameter the harness reads; nothing is chosen in code.
+# Protocol: evidence/sel001/protocol.md (committed before the first arm run).
+
+# Where the evidence goes, relative to the Seldon repository root.
+evidence_dir: evidence/sel001
+
+# The repositories whose CC tasks are scored, and the governed graphs each one's tasks are scored over
+# (AD-031-R1: Arnold's tasks also search Squiddy's graph, because Arnold builds with Squiddy).
+repos:
+  squiddy:
+    root: ~/GitHub/squiddy
+    scope: [squiddy]
+  arnold:
+    root: ~/GitHub/arnold
+    scope: [arnold, squiddy]
+
+# The governed graph directory inside each repository (AD-030; `governed.graph_dir` default).
+graph_dir: governed
+
+# The interpreter that has Squiddy and the pinned encoder. Arm H and the index runs use it.
+squiddy_python: ~/GitHub/squiddy/.venv/bin/python
+
+# AD-031 section 4.
+k: 10
+k_small: 5
+wilson_z: 1.96            # 95 percent (Wilson 1927)
+
+# Gold set C: 20 tasks, seed 20261002 (SEL-001 step 6).
+set_c:
+  n: 20
+  seed: 20261002
+
+# Gold set B: the hand-labelled misses AD-031 section 1 names. `ruling` is a ruling label; `ruling_document` plus
+# `ruling_anchor` names an unlabelled ruling by the verbatim text it must contain.
+set_b:
+  - {label: "KG-004 step 6 / DN-025 R-112", repo: arnold, task_file: cc_tasks/2026-10-02_KG-004_arnold_end_to_end_clean_corpus.md, ruling: R-112}
+  - {label: "KG-004 step 6 / DN-025 R-113", repo: arnold, task_file: cc_tasks/2026-10-02_KG-004_arnold_end_to_end_clean_corpus.md, ruling: R-113}
+  - {label: "KG-005 / DN-025 R-112", repo: arnold, task_file: cc_tasks/2026-10-02_KG-005_extraction_pilot_claims_overlay_smoke.md, ruling: R-112}
+  - {label: "SQ-004 / DN-025 R-112", repo: squiddy, task_file: cc_tasks/2026-10-02_SQ-004_kit_dn039_reservation_cache_grounding.md, ruling: R-112}
+  - {label: "RPE task (pb-03) / intensity-constructs per-set RPE ruling", repo: arnold, task_file: cc_tasks/2026-09-01_pb-03-plan-json-api.md, ruling_document: docs/ontology/intensity-constructs.md, ruling_anchor: "is a CLOSED historical era"}
+
+# Scored like B and reported, never part of B or of the bar (protocol section 3).
+diagnostics_b:
+  - {label: "pb-04 / intensity-constructs per-set RPE ruling", repo: arnold, task_file: cc_tasks/2026-09-01_pb-04-builder-page.md, ruling_document: docs/ontology/intensity-constructs.md, ruling_anchor: "is a CLOSED historical era"}
+  - {label: "pb-01 / intensity-constructs per-set RPE ruling", repo: arnold, task_file: cc_tasks/2026-09-01_pb-01-compact-text-parser.md, ruling_document: docs/ontology/intensity-constructs.md, ruling_anchor: "is a CLOSED historical era"}
+  - {label: "pb-03 / intensity-constructs section 12 R2 (written 2026-09-12, in response)", repo: arnold, task_file: cc_tasks/2026-09-01_pb-03-plan-json-api.md, ruling_document: docs/ontology/intensity-constructs.md, ruling_anchor: "per-set effort is gone from PLANNING too"}
+
+# Standards section 15 for the two arm loops (zero model calls; the only cost is local wall clock).
+run:
+  pilot_units: 20
+  progress_every_units: 25
+  progress_every_seconds: 60
+  wall_seconds_max: 7200
+  # Rows kept per query for scoring and diagnostics: every Ruling candidate, and Section rows to this depth.
+  keep_section_rows: 200

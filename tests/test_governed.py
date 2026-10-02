@@ -1409,3 +1409,214 @@ def test_verify_sees_a_constraint_on_a_ruling_that_no_longer_binds(
     assert check_binding_constraints(
         neo4j_driver, NEO4J_DB, project, _config(project)
     ).symbol == "pass"
+
+
+# ---------------------------------------------------------------------------
+# SEL-001 (AD-031-R1): the label forms Squiddy and Arnold write
+# ---------------------------------------------------------------------------
+#
+# Each form is taken verbatim from the corpus it was found in, three examples per form, and each
+# names the pattern that must classify it. A pattern that admitted the form under a different
+# name would still pass a bare "classifies" test and leave the report's per-pattern counts wrong.
+
+SEL001_LABEL_FORMS = [
+    # Squiddy design notes: a bold run in a list item, the identifier with a parenthesised title.
+    ("- **R-110 (the primary verb is hybrid retrieval with receipts).** `search(question, k)` over",
+     "bold_ruling_label", "R-110"),
+    ("- **R-84 (exclusion at the source).** `_coverage_pending` takes `skip: set[str]`",
+     "bold_ruling_label", "R-84"),
+    ("- **R-86 (concurrency by AIMD, tonight).** New key `rate.papers_in_flight_max` (12)",
+     "bold_ruling_label", "R-86"),
+    # Squiddy: a bold run with a terminator, and a bold run opening a paragraph with a title.
+    ("- **R-40.** Every design note carries a two-part Prior art section.", "bold_ruling_label", "R-40"),
+    ("**R-79 Grounding is measured on what the protocol serves.** The 0.98 grounding floor",
+     "bold_ruling_label", "R-79"),
+    ("**R-80 The graph carries two protocols and says so.** Every Claim carries",
+     "bold_ruling_label", "R-80"),
+    # Arnold design notes: a compound identifier with its title INSIDE the bold.
+    ("**DN-001-R2 RPE.** Per-set RPE does not exist anywhere in the system, including planning",
+     "bold_ruling_label", "DN-001-R2"),
+    ("**DN-002-R1 A plan is optional; its absence is never an error where a log exists.**",
+     "bold_ruling_label", "DN-002-R1"),
+    ("**DN-002-R3 A date holds any number of workouts.** 2026-09-07 holds two.",
+     "bold_ruling_label", "DN-002-R3"),
+    # Arnold addenda: a document-local identifier, bold, with an em dash.
+    ("**R2 — per-set effort is out of the wire contract.** `expand.py` drops `rpe`",
+     "bold_ruling_label", "R2"),
+    # Seldon's own AD-031 writes this form, and no pattern before SEL-001 admitted it.
+    ("- **AD-031-R1. Every repository that registers CC tasks has a governed graph, built on "
+     "commit** (AD-030 R3)", "bold_ruling_label", "AD-031-R1"),
+    # Squiddy founding rulings: a heading that opens with a bare `R-NN`.
+    ("## R-01 A kit, not a system", "bare_ruling_heading", "R-01"),
+    ("## R-15 Four things, one truth", "bare_ruling_heading", "R-15"),
+    ("## R-19 Design before build, because the ledger is append-only", "bare_ruling_heading", "R-19"),
+    # Arnold ontology documents: a heading opening with a document-local `Rn` and an em dash.
+    ("### R1 — nothing is required beyond what a set is", "bare_ruling_heading", "R1"),
+    ("### R2 — per-set effort is gone from PLANNING too", "bare_ruling_heading", "R2"),
+    ('### R3 — no "era" / no super-level above macrocycle', "bare_ruling_heading", "R3"),
+    # Arnold task addenda and summaries: a bare identifier, then a bold title or a terminator.
+    ("R1 **Nothing is required beyond what a set is.** A set = exercise + whatever of",
+     "bare_ruling_label", "R1"),
+    ("R2 **Per-set RPE is gone from planning too.** The 08-16 ruling removed it from the",
+     "bare_ruling_label", "R2"),
+    ("- R1: block = within-workout grouping (canonical word = physical name; superset/",
+     "bare_ruling_label", "R1"),
+]
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text,pattern,identifier", SEL001_LABEL_FORMS)
+def test_sel001_label_forms_classify_under_their_own_pattern(
+    emitter, domain_block, text, pattern, identifier
+):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    match = emitter.classify_ruling(text, rules)
+    assert match is not None and match["name"] == pattern, (text, match)
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text,pattern,identifier", SEL001_LABEL_FORMS)
+def test_sel001_label_is_read_from_the_front(emitter, domain_block, text, pattern, identifier):
+    label = emitter.compiled_label(domain_block)
+    assert emitter.ruling_identifier(text, label) == identifier
+
+
+@needs_governed_graph
+@pytest.mark.parametrize("text", [
+    # Sentences ABOUT a ruling, verbatim from the Squiddy and Arnold corpora: an identifier at the
+    # front with neither bold nor a terminator.
+    "R-26 ordered by citation events per token. H-005 found every work carries the same value,",
+    "R-67 holds extraction, arms, protocols, judges and the daemon.",
+    "- R-89 (DN-020) applied R-38's retention floor per class at 0.002.",
+    "- R-112 makes claims an overlay, with the extraction valve closed by default for future graphs.",
+    "  - R-170's self-test runs first.",
+    '- R-162 said "all nine must pass" without defining "pass".',
+    # A note under a ruling is not the ruling.
+    "### R2-note — literature grounding for the cycle definitions",
+])
+def test_sel001_sentences_about_a_ruling_stay_prose(emitter, domain_block, text):
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    assert emitter.classify_ruling(text, rules) is None, text
+
+
+@needs_governed_graph
+def test_sel001_the_front_label_beats_a_compound_identifier_later_in_the_text(emitter, domain_block):
+    """The search-anywhere fallback alone would label this ruling AD-030-R5."""
+    label = emitter.compiled_label(domain_block)
+    text = ("- **R-112 (claims are an overlay).** A conflict refuses registration unless the task "
+            "names the ruling and supersedes it, AD-030-R5's path.")
+    assert emitter.ruling_identifier(text) == "AD-030-R5"
+    assert emitter.ruling_identifier(text, label) == "R-112"
+
+
+@needs_governed_graph
+def test_sel001_a_banner_keeps_its_fallback_label(emitter, domain_block):
+    """A block whose front carries no identifier is labelled exactly as before the label pattern."""
+    label = emitter.compiled_label(domain_block)
+    text = "**BINDING.** This restates AD-030-R5 for the reader."
+    assert emitter.ruling_identifier(text, label) == emitter.ruling_identifier(text) == "AD-030-R5"
+
+
+@needs_governed_graph
+def test_sel001_no_ad030_ruling_moves(emitter, domain_block):
+    """The label pattern changes no identifier the fallback already assigned in AD-030."""
+    if not AD030.is_file():
+        pytest.skip("AD-030 is not in this checkout")
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    label = emitter.compiled_label(domain_block)
+    for block in AD030.read_text(encoding="utf-8").split("\n\n"):
+        if emitter.classify_ruling(block, rules):
+            assert emitter.ruling_identifier(block, label) == emitter.ruling_identifier(block)
+
+
+@needs_governed_graph
+def test_sel001_ad031_states_three_rulings(emitter, domain_block):
+    """AD-031 writes its rulings as bold list items; before SEL-001 the detector found none."""
+    path = REPO_ROOT / "docs" / "design" / "AD-031_rulings_reach_the_task_by_retrieval.md"
+    if not path.is_file():
+        pytest.skip("AD-031 is not in this checkout")
+    rules = emitter.compiled_rules(domain_block, "ruling_patterns")
+    label = emitter.compiled_label(domain_block)
+    found = {
+        emitter.ruling_identifier(block, label)
+        for block in path.read_text(encoding="utf-8").split("\n")
+        if emitter.classify_ruling(block, rules)
+    }
+    assert found == {"AD-031-R1", "AD-031-R2", "AD-031-R3"}
+
+
+@needs_governed_graph
+def test_sel001_a_label_pattern_without_a_group_is_fatal(emitter):
+    with pytest.raises(SystemExit):
+        emitter.compiled_label({"ruling_label_pattern": r"\AR-\d+"})
+
+
+# ---------------------------------------------------------------------------
+# SEL-001: the pin binds the kit's code, not the kit repository's HEAD
+# ---------------------------------------------------------------------------
+#
+# AD-030-R17 pins the kit by commit because "the extraction is a function of the parser, the assess
+# criterion and the acquire adapter at a specific commit". Exact HEAD equality over-reaches that: a
+# commit to the kit repository that touches only its docs or its own graphs fails every governed
+# graph's build, and a governed graph that lives INSIDE the kit repository (Squiddy's, AD-031-R1) could
+# never pass at all, because the commit that adds it moves HEAD.
+
+def _git(cwd, *args):
+    import subprocess
+
+    return subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True,
+                          text=True).stdout.strip()
+
+
+@pytest.fixture
+def kit_checkout(tmp_path):
+    """A throwaway kit repository: a `squiddy/` package and one other file, one commit."""
+    repo = tmp_path / "kit"
+    (repo / "squiddy").mkdir(parents=True)
+    (repo / "squiddy" / "__init__.py").write_text("VERSION = 1\n")
+    (repo / "README.md").write_text("kit\n")
+    _git(repo, "init", "-q")
+    _git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "add", ".")
+    _git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "kit")
+    return repo
+
+
+def _check_pin():
+    import sys as _sys
+
+    _sys.path.insert(0, str(GOVERNED_DIR))
+    import check_pin
+
+    return check_pin
+
+
+@needs_governed_graph
+def test_sel001_the_pinned_head_passes(kit_checkout):
+    ok, how = _check_pin().kit_matches(kit_checkout, _git(kit_checkout, "rev-parse", "HEAD"))
+    assert ok and "HEAD" in how
+
+
+@needs_governed_graph
+def test_sel001_a_later_commit_outside_the_package_passes(kit_checkout):
+    pinned = _git(kit_checkout, "rev-parse", "HEAD")
+    (kit_checkout / "README.md").write_text("kit, with a governed graph beside it\n")
+    _git(kit_checkout, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qam", "docs")
+    ok, how = _check_pin().kit_matches(kit_checkout, pinned)
+    assert ok and "tree" in how
+
+
+@needs_governed_graph
+def test_sel001_a_later_commit_to_the_package_fails(kit_checkout):
+    pinned = _git(kit_checkout, "rev-parse", "HEAD")
+    (kit_checkout / "squiddy" / "__init__.py").write_text("VERSION = 2\n")
+    _git(kit_checkout, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qam", "parser moved")
+    ok, how = _check_pin().kit_matches(kit_checkout, pinned)
+    assert not ok and "squiddy/" in how
+
+
+@needs_governed_graph
+def test_sel001_an_uncommitted_change_to_the_package_fails_even_at_the_pinned_head(kit_checkout):
+    pinned = _git(kit_checkout, "rev-parse", "HEAD")
+    (kit_checkout / "squiddy" / "__init__.py").write_text("VERSION = 3\n")
+    ok, how = _check_pin().kit_matches(kit_checkout, pinned)
+    assert not ok and "uncommitted" in how

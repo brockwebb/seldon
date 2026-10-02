@@ -20,3 +20,7 @@ ledger/*.bak-*
 # and a release whose row is missing did not happen as far as the graph is concerned.
 exports/*.json
 exports/*.jsonl
+
+# THE LEDGER IS RE-INCLUDED BY NAME (SEL-001). A host repository may ignore `*.jsonl` at its root
+# (Arnold does); without this line the graph's source of truth would be silently left out of git.
+!ledger/events.jsonl

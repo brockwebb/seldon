@@ -48,6 +48,10 @@ enums:
         description: cc_tasks/ — Claude Code task specifications and their RESULT files.
       handoff:
         description: handoffs/ — session handoff records.
+      ontology:
+        description: >-
+          docs/ontology/ — domain vocabulary and construct rulings (Arnold's intensity constructs and
+          vocabulary decisions; AD-031-R1).
 
   ManifestState:
     description: >-

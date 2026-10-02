@@ -43,13 +43,16 @@ This file and its addenda are immutable once read.
 
 ## Part 3. Measure (AD-031 section 4, unchanged)
 
-7. For each task, query the squiddy governed index, plus arnold's for arnold tasks, with the stripped task text at
-   k = 10. Nothing is tuned.
-8. Report:
+7. Run both arms of AD-031 R3 on the stripped task text at k = 10, over squiddy's governed graph plus arnold's for
+   arnold tasks. Nothing is tuned.
+   - **Arm O:** registration's existing concept-overlap scorer, run read-only. Find it in the code; do not
+     reimplement it. Rank by its score.
+   - **Arm H:** Squiddy's hybrid `search` over the index from step 3.
+8. Report, per arm:
    - recall@5 and recall@10 on A, with Wilson intervals;
    - MRR on A;
    - each B pair, hit or miss, with its rank;
-   - C's candidate counts.
+   - C's candidate counts. For arm O, also the count above registration's own binding threshold.
 9. For every A miss and every B miss: the task's top 3 hits and the missed ruling's text. Name the cause where the
    evidence shows it, such as granularity, vocabulary or a parse gap. No fix is applied in this task.
 10. Write `docs/SEL-001_delivery_report.md` in seldon.

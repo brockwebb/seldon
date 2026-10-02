@@ -126,6 +126,16 @@ engine:
       Passage: [text]
     currency_edges: [Supersedes, Extends]
 
+  # THE INDEX'S METADATA DOCUMENTS (SEL-001, AD-031-R1). A graph that builds Squiddy's served index
+  # declares here which manifest fields make one document's metadata row (DN-027 R-128); the index
+  # block itself is `extract/control.yaml`, in the graphs that build one. This entry emits nothing.
+  # The fields are the document's address and what it calls itself, which is all a governed
+  # document's manifest entry knows about it.
+  emit:
+    - metadata_document:
+        fields:
+          common: [id, title, source_url, doc_kind]
+
 domain:
   kinds:
     local_document: a governed markdown file this repository authors and edits in place (AD-030-R4).
@@ -136,6 +146,9 @@ domain:
     - {path: docs/requirements, doc_kind: requirements}
     - {path: cc_tasks, doc_kind: cc_task}
     - {path: handoffs, doc_kind: handoff}
+    # Arnold keeps its domain rulings here (intensity constructs, vocabulary decisions); AD-031-R1
+    # names it. A repository without the directory catalogs nothing from it.
+    - {path: docs/ontology, doc_kind: ontology}
 
   # Where the governed directories are, relative to this graph's root.
   source_root: ".."
@@ -182,6 +195,32 @@ domain:
     - {name: addendum_heading, pattern: '\A\s{0,3}#{1,6}\s+\*{0,2}Addendum\s+\d+-[A-Za-z0-9]+:'}
     - {name: banner_binding_heading, pattern: '\A\s{0,3}#{1,6}\s+.{0,60}?\bBINDING\b'}
     - {name: banner_binding, pattern: '\A\s{0,3}\*{0,2}BINDING\b'}
+    # SEL-001 (AD-031-R1): the label forms Squiddy and Arnold write, which none of the patterns
+    # above admit. Squiddy numbers its rulings `R-NNN` across all its design notes; Arnold labels
+    # `DN-NNN-Rn` with a title inside the bold, and its ontology documents number `R1`, `R2` per
+    # document. Same discipline as above: the identifier is a LABEL only at the front of the
+    # block, and only when markup or a terminator says so. `R-26 ordered by citation events` and
+    # `- R-89 (DN-020) applied ...` open with an identifier and are sentences about a ruling; they
+    # carry neither bold nor a terminator, and stay prose.
+    #
+    # `- **R-110 (the primary verb ...).**`, `- **R-40.** ...`, `**R-79 Grounding is measured ...**`,
+    # `**DN-002-R1 A plan is optional ...**`, `**R2 — per-set effort ...**`: a bold run, in a
+    # paragraph or a list item, that OPENS with a ruling identifier.
+    - {name: bold_ruling_label, pattern: '\A\s{0,3}(?:[-*+]\s+)?\*\*(?:(?:[A-Z]{2,4}-\d+|DN-[A-Za-z0-9_]+)-R\d+|R-?\d+)(?=[\s.:(—–]|\*\*)'}
+    # `## R-15 Four things, one truth`, `### R1 — nothing is required beyond what a set is`. The
+    # lookahead keeps `### R2-note — literature grounding` (a note under R2, not a ruling) out.
+    - {name: bare_ruling_heading, pattern: '\A\s{0,3}#{1,6}\s+\*{0,2}R-?\d+(?=[\s.:(—–]|\*\*|\Z)'}
+    # `R1 **Nothing is required beyond what a set is.**`, `- R1: block = within-workout grouping`:
+    # a bare identifier opening a block, followed by a terminator or by a bold title.
+    - {name: bare_ruling_label, pattern: '\A\s{0,3}(?:[-*+]\s+)?R-?\d+(?:[.:](?:\s|\Z)|\s+\*\*)'}
+
+  # THE RULING'S OWN LABEL, read from the FRONT of a block already classified as a Ruling (SEL-001).
+  # Group 1 is the identifier. Tried before the emitter's search-anywhere fallback, which finds the
+  # leftmost compound identifier (`AD-030-R9`) or `Addendum NNN-X` anywhere in the text: that
+  # fallback would label `- **R-112 (claims are an overlay).** ... AD-030-R5's path` as AD-030-R5.
+  # Every block the fallback labelled before this key existed opens with the same identifier the
+  # fallback found, or with no identifier at all, so no existing ruling's id moves.
+  ruling_label_pattern: '\A\s{0,3}(?:#{1,6}\s+)?(?:[-*+]\s+)?\*{0,2}((?:[A-Z]{2,4}-\d+|DN-[A-Za-z0-9_]+)-R\d+|Addendum\s+\d+-[A-Za-z0-9]+|R-?\d+)(?![A-Za-z0-9-])'
 
   # WHAT KIND OF OBLIGATION A RULING CARRIES, once it has already been classified as one.
   #

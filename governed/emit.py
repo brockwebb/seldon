@@ -237,16 +237,48 @@ def deontic_force(
 _RULING_IDENTIFIER_RE = re.compile(r"\b([A-Z]{2,4}-\d+-R\d+|Addendum\s+\d+-[A-Za-z0-9]+)\b")
 
 
-def ruling_identifier(text: str) -> str | None:
+def compiled_label(domain: dict) -> re.Pattern | None:
+    """Compile the graph's `ruling_label_pattern`, when it declares one.
+
+    Args:
+        domain: The graph's `domain:` block.
+
+    Returns:
+        The compiled pattern, or None when the graph declares none.
+
+    Raises:
+        SystemExit: If the pattern does not compile, or has no group to read the identifier from.
+    """
+    raw = domain.get("ruling_label_pattern")
+    if not raw:
+        return None
+    try:
+        pattern = re.compile(raw)
+    except re.error as exc:
+        raise SystemExit(f"FATAL: domain.ruling_label_pattern does not compile: {exc}")
+    if pattern.groups < 1:
+        raise SystemExit("FATAL: domain.ruling_label_pattern has no group; group 1 is the identifier")
+    return pattern
+
+
+def ruling_identifier(text: str, label: re.Pattern | None = None) -> str | None:
     """Extract the document's own label for a ruling, when it writes one.
+
+    THE FRONT FIRST (SEL-001). A ruling's label opens it, and `label` reads it there. Only when the
+    front carries no label does the search-anywhere fallback run, which is how every ruling was
+    labelled before the label pattern existed: a BINDING banner that cites `AD-030-R5` later in its
+    text is still labelled AD-030-R5, exactly as before.
 
     Args:
         text: The block's verbatim text.
+        label: The compiled `ruling_label_pattern`, or None for the fallback alone.
 
     Returns:
         The identifier, or None.
     """
-    match = _RULING_IDENTIFIER_RE.search(text)
+    match = label.search(text) if label is not None else None
+    if match is None:
+        match = _RULING_IDENTIFIER_RE.search(text)
     return " ".join(match.group(1).split()) if match else None
 
 
@@ -271,6 +303,7 @@ def ruling_blocks(doc_id: str, blocks: list[dict], domain: dict) -> list[dict]:
     rules = compiled_rules(domain, "ruling_patterns")
     force_rules = compiled_rules(domain, "force_patterns")
     default_force = domain.get("default_force", "binding")
+    label = compiled_label(domain)
     out: list[dict] = []
     for block in blocks:
         if block["kind"] not in ("heading", *_PROSE_KINDS):
@@ -278,7 +311,7 @@ def ruling_blocks(doc_id: str, blocks: list[dict], domain: dict) -> list[dict]:
         match = classify_ruling(block["text"], rules, force_rules, default_force)
         if not match:
             continue
-        identifier = ruling_identifier(block["text"])
+        identifier = ruling_identifier(block["text"], label)
         ruling_id = (f"{doc_id}!{slug(identifier)}" if identifier
                      else f"{doc_id}!r{len(out):03d}")
         out.append({"id": ruling_id, "identifier": identifier, "force": match["force"],
