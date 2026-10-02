@@ -33,7 +33,8 @@ STRIP_RES = (COMPOUND_RE, DOC_ID_RE, RULING_RE)
 GLOBAL_LABEL_RE = re.compile(r"^(?:R-\d+|[A-Z]{2,4}-\d+-R\d+)$")
 
 _DATE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[_-]")
-_CODE_RE = re.compile(r"^([A-Z]{1,4}-\d+)(?=$|[_.\- ])")
+#: A task code opening a file name: `KG-004`, `S-001`, and Arnold's lower-case `pb-03`.
+_CODE_RE = re.compile(r"^([A-Za-z]{1,4}-\d+)(?=$|[_.\- ])")
 _CORRECTION_SUFFIX_RE = re.compile(r"(?i)[._-]+(?:addendum|erratum)\b.*$")
 CORRECTION_NAME_RE = re.compile(r"(?i)addendum|erratum|correction|corrective")
 

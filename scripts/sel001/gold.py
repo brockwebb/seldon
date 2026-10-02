@@ -158,13 +158,21 @@ def registered_tasks(repo: str, root: Path) -> list[dict]:
     return [{**r, "repo": repo} for r in rows]
 
 
-def correction_keys(root: Path) -> set[str]:
-    """The family keys some addendum or erratum names: a task in such a family was corrected after it was written."""
-    keys = set()
+def correction_texts(root: Path) -> list[tuple[str, str]]:
+    """`(family key, text)` of every addendum or erratum: what it corrects is its own family, and whatever it names."""
+    out = []
     for p in sorted(list((root / "cc_tasks").glob("*.md")) + list((root / "docs").glob("*.md"))):
         if re.search(r"(?i)addendum|erratum", p.name):
-            keys.add(C.family_key(str(p)))
-    return keys
+            out.append((C.family_key(str(p)), p.read_text(encoding="utf-8")))
+    return out
+
+
+def corrected(task_file: str, corrections: list[tuple[str, str]]) -> bool:
+    """Protocol section 3: a later addendum or erratum names the task, by its code or its slug. Its own family's
+    corrections count by file name; any other correction counts when its text names the task's key."""
+    key = C.family_key(task_file)
+    rx = re.compile(rf"(?<![A-Za-z0-9]){re.escape(key)}(?![0-9])")
+    return any(C.in_family(k, task_file) or rx.search(text) for k, text in corrections)
 
 
 def main() -> int:
@@ -268,13 +276,13 @@ def main() -> int:
     pool = []
     for repo in cfg["repos"]:
         root = Path(cfg["repos"][repo]["root"])
-        corrected = correction_keys(root)
+        corrections = correction_texts(root)
         for t in tasks_all:
             if t["repo"] != repo or t["state"] != "completed":
                 continue
             if not (root / t["file"]).is_file() or C.CORRECTION_NAME_RE.search(Path(t["file"]).name):
                 continue
-            if any(C.in_family(k, t["file"]) for k in corrected):
+            if corrected(t["file"], corrections):
                 continue
             pool.append(f"{repo}:{t['file']}")
     pool = sorted(set(pool))
