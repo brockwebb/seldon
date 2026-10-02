@@ -41,8 +41,9 @@ those is decided here, with its reason.
 
 ## 3. The gold sets
 
-- **Identifiers.** Extracted from the task file by `\b[A-Z]{2,4}-\d+-R\d+\b` (a compound ruling identifier),
-  `\bDN-\d+\b`, `\bAD-\d+\b` and `\bR-\d+\b`. Arnold's document-local `R1`, `R2` are not identifiers outside their
+- **Identifiers.** Extracted from the task file by `\b[A-Z]{2,4}-\d+-R\d+(?![0-9])` (a compound ruling
+  identifier), `\b(?:DN|AD)-\d+(?![0-9])` and `\bR-\d+(?![0-9])`; a token ends where its digits end, so
+  `R-112s` is one. Arnold's document-local `R1`, `R2` are not identifiers outside their
   document and are not extracted.
 - **Resolution.**
   - A ruling identifier (`R-110`, `DN-002-R1`) resolves to the Ruling nodes in scope carrying it as their label.

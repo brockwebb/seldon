@@ -21,10 +21,11 @@ SELDON_ROOT = HERE.parent.parent
 CONFIG = HERE / "sel001.yaml"
 
 #: The identifiers a task cites (protocol section 3). Order matters for stripping: the compound form first, so
-#: `DN-002-R1` is removed whole rather than leaving `-R1` behind.
-COMPOUND_RE = re.compile(r"\b[A-Z]{2,4}-\d+-R\d+\b")
-DOC_ID_RE = re.compile(r"\b(?:DN|AD)-\d+\b")
-RULING_RE = re.compile(r"\bR-\d+\b")
+#: `DN-002-R1` is removed whole rather than leaving `-R1` behind. A token ends where its digits end, so `R-112s` and
+#: `R-170's` lose their identifier too.
+COMPOUND_RE = re.compile(r"\b[A-Z]{2,4}-\d+-R\d+(?![0-9])")
+DOC_ID_RE = re.compile(r"\b(?:DN|AD)-\d+(?![0-9])")
+RULING_RE = re.compile(r"\bR-\d+(?![0-9])")
 STRIP_RES = (COMPOUND_RE, DOC_ID_RE, RULING_RE)
 
 #: A label that names one ruling across a whole graph: Squiddy's `R-nnn`, or a compound `DN-002-R1`. Arnold's
