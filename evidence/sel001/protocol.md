@@ -13,9 +13,10 @@ those is decided here, with its reason.
 - **Scope.** A Squiddy task is scored over Squiddy's governed graph. An Arnold task is scored over Arnold's and
   Squiddy's (AD-031-R1). Seldon's governed graph is not in scope for either; a cited Seldon AD resolves to
   nothing and is reported as such.
-- **The task's own family is excluded from its candidates, in both arms.** A governed document belongs to a
-  task's family when its file stem (date prefix removed) starts with the task's code (`H-009`, `KG-004`), or, for
-  a task with no code, with the task's slug. A task's own file, its addenda, errata and RESULT restate its text;
+- **The task's own family is excluded from its candidates, in both arms.** A governed CC-task document belongs to
+  a task's family when its file stem (date prefix removed) starts with the task's code (`H-009`, `KG-004`,
+  `pb-03`), or, for a task with no code, with the task's slug. Only `cc_tasks/` documents: a design note named
+  after an incident (Squiddy's DN-031 file is `INC-001_...`) is a ruling's home, never the task's own text. A task's own file, its addenda, errata and RESULT restate its text;
   retrieving them is retrieving the query. Nothing else is excluded: the graph is scored as it stands today,
   including documents written after a task (a stated limitation, not a correction).
 - **Only Ruling nodes are candidates.** Phase 2 sends candidate Rulings to a validator (AD-031-R2), so k counts

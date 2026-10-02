@@ -64,7 +64,10 @@ def documents_named(cat: dict, ident: str) -> list[str]:
 
 
 def family_docs(cat: dict, key: str) -> set[str]:
-    return {did for did, d in cat["documents"].items() if d["path"] and C.in_family(key, d["path"])}
+    """The task's own file, addenda, errata and RESULT: CC-task documents in the family. A design note named after
+    an incident (Squiddy's DN-031 is `INC-001_...`) shares the task's code and is a ruling's home, not the task."""
+    return {did for did, d in cat["documents"].items()
+            if d["path"] and d["doc_kind"] == "cc_task" and C.in_family(key, d["path"])}
 
 
 # ------------------------------------------------------------------------------------------------
