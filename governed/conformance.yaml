@@ -1,0 +1,26 @@
+# governed/conformance.yaml: what this governed-documents graph declares to the kit's conformance suite
+# (`python -m squiddy.conformance --graph governed`, run at every release).
+#
+# WHY THIS FILE EXISTS (SEL-001). The template was written against kit 0.3.3, which had no graph-level
+# conformance declarations. Kit 0.8.0 fails a release whose graph declares nothing, because "N/A is a
+# declaration, not a default": the first Squiddy governed-graph sweep (2026-10-02) admitted 155 of 155
+# documents and failed its release on ten undeclared items. Every item below is declared for what this
+# graph is: local markdown parsed at admission, no resolver, no extraction, no raters, no served verbs.
+# The form follows the kit's own non-extracting graph, `squiddy/graphs/registry/conformance.yaml`.
+
+resolution_fields: {not_applicable: true, why: "no resolver runs: every entry is a local governed file (assess criterion local_file_present)"}
+pair_edges: []
+records_ingested: {not_applicable: true, why: "no extraction: Sections, Rulings, Citations and Passages are parsed from the markdown at admission, deterministically"}
+# This graph writes NO positive-control records: its admission stages run no planted control. Its
+# evidence files are named `<stage>_<document id>.json`, so a filename glob for "control" reads a
+# document whose id contains the word (Squiddy's DN-038, "control own segment") as a control record;
+# the first release under `*/**/*control*.json` failed item 5 on exactly that. The window therefore
+# never opens. Should this graph ever write a control, this is the line to change.
+control_records: {since_evidence_dir: "99999999", glob: "*/**/*control*.json"}
+bars: {not_applicable: true, why: "no gate block declares a proportion bar"}
+agreement: {since_evidence_dir: "20261002"}
+raters: {not_applicable: true, why: "no raters: nothing in this graph is judged by a model"}
+control_read_times: {not_applicable: true, why: "no extraction daemon reads a control file here"}
+verb_edge_reads:
+  not_applicable: true
+  why: "no Verbs surface serves this graph: Seldon reads its ledger (`seldon governed sync`), and the served index (`squiddy.index`, where a graph builds one) reads its ledger nodes, not edges"

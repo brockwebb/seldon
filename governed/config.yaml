@@ -75,6 +75,10 @@ engine:
     # and the thing cited is resolved through the identity registry, not by collapsing the acts.
     shared_classes: []
     primary_class_by_kind: {local_document: Document}
+    # Kit 0.8 conformance item 16 (SEL-001): no node here is keyed by a DOI, arXiv or OpenAlex id.
+    # A Citation carries a `doi` it found in the text as a property, never as its key. Declared
+    # empty so the write path's check is a stated choice, not an omission.
+    identifier_keys: []
 
   projection:
     backends:
