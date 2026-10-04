@@ -1,0 +1,15 @@
+seq: 186
+event: amend
+id: seldon:AD-033-R3
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''above'' in "The decision record shall contain required fields id (repository-qualified using the repository''s native scheme, such as"'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 54182f96e5268ce89c8696de9fcebabb148c74b6d87daf0b05433055f1724621
+record_hash: c546edd8ed926d1b7be8ac20320df51f59e8364f002092086bd40b04f54101e4

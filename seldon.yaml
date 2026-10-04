@@ -39,3 +39,33 @@ shared_ontology:
     - validity/VALIDITY_VOCABULARY.md
     - practitioner/PRACTITIONER_VOCABULARY.md
   inheritance: read-only
+
+decisions:
+  # AD-033: the decision register. Records are YAML files under docs/decisions/register/, one per
+  # record event, written only by `seldon decision` (R2); docs/decisions/REGISTER.md is rendered.
+  repository: seldon
+  # Where the other registers live, for records that name them (a seldon record superseding a
+  # squiddy one writes the transition into squiddy's register).
+  repositories:
+    squiddy: ../squiddy
+    arnold: ../arnold
+  # Baseline DB-1 (AD-033-R5): the main HEAD at SEL-002's start. A labeled decision in a design
+  # note absent from this commit's tree must have a record (`seldon verify`).
+  baseline:
+    name: DB-1
+    commit: a6422a0e7cfa3184ab870557c46d99d8962f9669
+  design_notes:
+    - glob: docs/design/AD-*.md
+      pattern: '^(?:\s*[-*]\s*)?\*\*(AD-\d{3}-R\d+)[.:)\s]'
+      id: '{repo}:{label}'
+    - glob: docs/design/AD-*.md
+      pattern: '^(?:\s*[-*]\s*)?\*\*(R\d+)[.:)\s]'
+      id: '{repo}:{doc}-{label}'
+    - glob: docs/design/AD-*.md
+      pattern: '^\*\*(FC-\d{2})\.'
+      id: '{repo}:{doc}-{label}'
+  consumer_roots: [tests, seldon]
+  # AD-033-R9: the conflicts probe re-run on the register (`seldon decision check --probe`).
+  probe:
+    findings: ../squiddy/docs/findings/2026-10-03_operator_audit/probe/conflicts.jsonl
+    exclusions: docs/decisions/probe_exclusions.yaml

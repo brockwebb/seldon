@@ -1,0 +1,16 @@
+seq: 137
+event: amend
+id: seldon:AD-030-R13
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The graph system shall emit a mentions edge only where the target identifier resolves inside the emitting graph. The graph system shall carry every other identifier a document references on the node as identifiers, to be resolved by the consuming graph against its own artifacts. If an identifier resolves nowhere, then the graph system shall abstain on it and report it via seldon governed status rather than emitting it as a dangling edge.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7a3948e176bd911d4052cdd1361285a974954f875cc5f764b058fb0a3f42faea
+record_hash: f05bed58a6e4cffab122c53252805f6e2164325782dd9e4e5840f9b92f479278

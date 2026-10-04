@@ -1,0 +1,16 @@
+seq: 166
+event: amend
+id: seldon:AD-032-FC-16
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Squiddy, Seldon and Arnold decisions shall live in one decision register with repository-qualified ids, where each record shall hold an id, a stand-alone statement in EARS form, a status of proposed, accepted, superseded or deprecated, a supersedes-or-amends field, a scope, a rationale link, consequences, a consumer, check ids or a "review only, because" justification, a control type, a pattern, a decided-by field, and a date. Only accepted records shall bind. A DI row shall reference the decision it mirrors instead of restating it.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: be6ed1c8170be287a1fa7025462691a1429e7fa8ec8a2febce7ddf04fe5d437f
+record_hash: 8dd167d7c107e5a6686a37876165e34b9d8ad658a567b30abcda289389f12639

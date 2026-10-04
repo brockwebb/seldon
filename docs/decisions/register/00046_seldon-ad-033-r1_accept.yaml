@@ -1,0 +1,62 @@
+seq: 46
+event: accept
+id: seldon:AD-033-R1
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R1. The register lives in each repository as files, and Seldon holds the projection.** Each
+    repository that registers tasks (squiddy, seldon, arnold) keeps its decisions under
+    `docs/decisions/register/`, one YAML file per record event, never edited. The files in git are the record of
+    truth. Seldon projects them into `Decision` nodes in that repository's project graph and renders
+    `docs/decisions/REGISTER.md` (generated, never hand-edited). A project reads other repositories' registers by an
+    import list in `seldon.yaml` (`decisions.import: [squiddy]` for arnold); records stay in their home repository and
+    the importing graph holds pointers.
+    - Why files and not Seldon's event store: git is the one store that has not lost records (C6: 451 documents lost
+      in Wintermute; Arnold's `.gitignore` drops Seldon's `*.jsonl`); Nygard and MADR keep records in the repository;
+      the operator's pattern is small specialized stores with a hub of pointers. Why not one central register
+      repository: R-01 and DI-004 (the monolith drift). Why not Squiddy's decision log: process decisions are Seldon's
+      domain, and Squiddy has no knowledge of Seldon (AD-030-R10).
+    - This answers open question 1: both, with the repository files as truth and the Seldon graph as projection.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 102
+  - 115
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R1. The register lives in each repository as files, and Seldon holds the projection.** Each
+      repository that registers tasks (squiddy, seldon, arnold) keeps its decisions under
+      `docs/decisions/register/`, one YAML file per record event, never edited. The files in git are the record of
+      truth. Seldon projects them into `Decision` nodes in that repository's project graph and renders
+      `docs/decisions/REGISTER.md` (generated, never hand-edited). A project reads other repositories' registers by an
+      import list in `seldon.yaml` (`decisions.import: [squiddy]` for arnold); records stay in their home repository and
+      the importing graph holds pointers.
+      - Why files and not Seldon's event store: git is the one store that has not lost records (C6: 451 documents lost
+        in Wintermute; Arnold's `.gitignore` drops Seldon's `*.jsonl`); Nygard and MADR keep records in the repository;
+        the operator's pattern is small specialized stores with a hub of pointers. Why not one central register
+        repository: R-01 and DI-004 (the monolith drift). Why not Squiddy's decision log: process decisions are Seldon's
+        domain, and Squiddy has no knowledge of Seldon (AD-030-R10).
+      - This answers open question 1: both, with the repository files as truth and the Seldon graph as projection.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R1
+consumer:
+- seldon/commands/verify.py
+- seldon/core/decisions.py
+- seldon/domain/decision_register.yaml
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 40bade4ba04b7926bfc975dcf2223876e6d662be8b774bafad67f59accbdaa28
+record_hash: f24eaf4bcc8e0a1b00cae129932b75710e89be8a7dfdef9dc83293489594f339

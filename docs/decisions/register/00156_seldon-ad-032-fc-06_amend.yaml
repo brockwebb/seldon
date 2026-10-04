@@ -1,0 +1,16 @@
+seq: 156
+event: amend
+id: seldon:AD-032-FC-06
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The system shall allow emergent and unexpected optimization to occur rather than suppressing it, shall bound toxic behaviors according to dose, and shall act as an independent observer that keeps behaviors that help and redirects behaviors that do not serve the goal.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 74618a21d785340aa297f43d382d5bee8f5d7e7f28ba96241d1d7301ccef7635
+record_hash: f61a11605228686ac6fcf90562165a0d67f7f902577e9b307a6cbdde7f7f321c

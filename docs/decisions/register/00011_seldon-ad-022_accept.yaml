@@ -1,0 +1,53 @@
+seq: 11
+event: accept
+id: seldon:AD-022
+date: '2026-05-10'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-04-18_cc5_sleep_function_architecture.md
+- cc_tasks/2026-04-18_phase_c_closure.md
+- cc_tasks/2026-09-02_paper_build_xref_passthrough_failure.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  **Default to CLI invocation via bash for all tool use. MCP is justified only by a specific, identifiable need for structured mid-reasoning I/O.**
+
+  The burden of justification is on MCP, not CLI. When designing new tools:
+  1. Build the CLI first.
+  2. Add an MCP wrapper only when CLI-via-bash has demonstrated a concrete reasoning-loop problem that MCP solves.
+
+  When evaluating existing tools:
+  1. MCP registrations without active reasoning-loop use cases are candidates for deregistration.
+  2. Deregistering does not delete the code. The tool remains available as CLI; only the MCP surface is removed. Re-registration is cheap if needed later.
+source:
+  path: docs/design/AD-022_cli_default_mcp_exception.md
+  lines:
+  - 17
+  - 27
+  sha256: 71e67e41390d7f0b7b42ace80515b1f8c06a8002c620d4bf127a6dbe7bb1c3b0
+  text: |-
+    ## Decision
+
+    **Default to CLI invocation via bash for all tool use. MCP is justified only by a specific, identifiable need for structured mid-reasoning I/O.**
+
+    The burden of justification is on MCP, not CLI. When designing new tools:
+    1. Build the CLI first.
+    2. Add an MCP wrapper only when CLI-via-bash has demonstrated a concrete reasoning-loop problem that MCP solves.
+
+    When evaluating existing tools:
+    1. MCP registrations without active reasoning-loop use cases are candidates for deregistration.
+    2. Deregistering does not delete the code. The tool remains available as CLI; only the MCP surface is removed. Re-registration is cheap if needed later.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-022_cli_default_mcp_exception.md
+  anchor: AD-022
+consumer:
+- tests/test_cc_utils.py
+written_by: seldon decision 0.1.0
+prev_hash: a6f4517be7e0cd4f5fc800db2603816790c65360288ea1b7c8cf3c82b043877e
+record_hash: c73690a71f3abd7f47ccc10e005804183ec127c87bb7d58f9613a50b4b3227e9

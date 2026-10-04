@@ -1,0 +1,16 @@
+seq: 127
+event: amend
+id: seldon:AD-030-R3
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The ingest process shall run on commit rather than on a cron schedule, using the pre-commit `seldon verify --fix` command to parse governed files through the Squiddy recipe. The periodic currency sweep shall serve only as a backstop for governed files that bypassed the pre-commit hook, and shall never serve as the primary ingest path.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 6fe26c92c70f43aaf6f16445c05b6b940c6cb1cfea9efb9a7364586555f51c25
+record_hash: 473397f6cd2ba22e76de77997e89ae15879ff31586357124e74aba4c09628047

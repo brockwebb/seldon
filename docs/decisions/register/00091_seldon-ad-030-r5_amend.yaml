@@ -1,0 +1,17 @@
+seq: 91
+event: amend
+id: seldon:AD-030-R5
+date: '2026-10-04'
+decided_by: operator
+operator_stated: true
+receipts:
+- seldon/cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md item 1
+- 'docs/design/AD-033_decision_register.md: AD-033-R11 ''Operator decision 2026-10-04, ending the question.'''
+reason: SEL-002 ADDENDUM 02 item 1
+amendment:
+  clause: 'reading: ''the manifest lives in the graph'' means the graph''s ledger (AD-033-R11)'
+  text: 'Amended by seldon:AD-033-R11: reading: ''the manifest lives in the graph'' means the graph''s ledger (AD-033-R11)'
+  by: seldon:AD-033-R11
+written_by: seldon decision 0.1.0
+prev_hash: e079999f9e1a4e98bfa730f9b4b9a8d2c7ec1a28b1d9389b35b3436da723e3d5
+record_hash: e23b9d6b94f6a2ad94847fd5952bd57e3a1751de0c9df02aa99b1a4908bffd28

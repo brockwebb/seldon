@@ -1,0 +1,44 @@
+seq: 2
+event: accept
+id: seldon:AD-012
+date: '2026-03-15'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## 1. Design Principle
+
+  **Human-in-the-loop at decision points, not approval gates.**
+
+  The system maximizes the proportion of human attention spent on judgment tasks (argument design, validity assessment, voice) versus mechanical tasks (fact-checking, convention compliance, contradiction detection).
+
+  Testable requirement: After deploying this system, measure what percentage of editing time is spent on argument/voice vs. janitorial corrections. Target: flip from ~20/80 to ~80/20.
+
+  ---
+source:
+  path: docs/design/AD-012_paper_as_graph_assembly.md
+  lines:
+  - 10
+  - 18
+  sha256: 4b10bc98dba254a46bab7a085a4e42bf190657ac7df01bf6f8b868b933b2c994
+  text: |-
+    ## 1. Design Principle
+
+    **Human-in-the-loop at decision points, not approval gates.**
+
+    The system maximizes the proportion of human attention spent on judgment tasks (argument design, validity assessment, voice) versus mechanical tasks (fact-checking, convention compliance, contradiction detection).
+
+    Testable requirement: After deploying this system, measure what percentage of editing time is spent on argument/voice vs. janitorial corrections. Target: flip from ~20/80 to ~80/20.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-012_paper_as_graph_assembly.md
+  anchor: AD-012
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 3a4d97c568d3cafad61936dfcb5d13fa4fcf0d77e5ff8a6cf8fc45fea9de0ef2
+record_hash: 99418508b08e0e27f4c854ebd14d7570f4237e3488fc53be2246018bce476c9e

@@ -1,0 +1,17 @@
+seq: 200
+event: amend
+id: seldon:AD-016
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+- evidence/sel002/statements/apply.json
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): re-landed. The validator passed this statement; the write path''s first deictic pattern refused it on a comparative (''at or above'', ''below the floor''), which is not a pointer to other text. First refusal: a statement names no other record by position (AD-033-R3): ''the previous'' in ''The paper QC system shall classify rules into three semantically distinct tiers — '
+changes:
+  statement: The paper QC system shall classify rules into three semantically distinct tiers — Critical, Substantive, and Administrative — each with different build behavior, replacing the previous two-file Tier 2 / Tier 3 classification. The paper QC system shall define all rules in a single per-project paper_qc_config.yaml file, with no global defaults. The paper QC system shall enforce Administrative tier rules using explicit budgets rather than binary bans.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: e056530e107e92beea3ae549f6663213daae2caeafdd2be1f47415aff45e1209
+record_hash: 4c68399d98a7d0566db15af4722f3c57f1356a4b1fcc8d15c9737acc31ab66db

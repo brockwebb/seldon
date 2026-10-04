@@ -1,0 +1,16 @@
+seq: 110
+event: amend
+id: seldon:AD-014
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Role definitions, retrieval profiles, and workflow compositions shall be stored as graph artifacts with provenance, state, and documentation properties, making them queryable, versionable, and projectable, while CLAUDE.md shall remain a thin boot loader that directs the user to the seldon CLI's 'seldon go' command, with all substantive role prompts, retrieval queries, and workflow templates stored in the graph and projected into whatever format the consuming system needs, such as CC task specs, MCP responses, or generated docs.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 41b8ed4f8646e7946130215c3abcda5e84dabb24c7be6a4e5687a925baa66ef7
+record_hash: 887dd7b9606e89403171fcb320d43b38a43d101f48265639aeb8c9e6645b8fe3

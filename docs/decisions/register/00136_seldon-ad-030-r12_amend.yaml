@@ -1,0 +1,16 @@
+seq: 136
+event: amend
+id: seldon:AD-030-R12
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The manifest state for a governed document shall be a projection of the kit's stage axis rather than a separate fifth state machine, such that the kit stage 'cataloged' maps one to one to manifest state 'cataloged', the kit stage 'held' maps one to one to manifest state 'held', the kit stages 'admitting' and 'in_graph' both render as manifest state 'admitted', any kit disposition of the form 'excluded:' renders as manifest state 'declined', and the kit's in-flight stage is never exposed in the manifest state.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 672382fab6981e58908006a8f12beed540e1c56857581ffddeaab2fe03058d7b
+record_hash: 7a3948e176bd911d4052cdd1361285a974954f875cc5f764b058fb0a3f42faea

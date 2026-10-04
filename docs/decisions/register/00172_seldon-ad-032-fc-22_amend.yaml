@@ -1,0 +1,16 @@
+seq: 172
+event: amend
+id: seldon:AD-032-FC-22
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The manifest shall be treated as events stored in the graph, with the YAML manifest rendered from those events; a planted hand edit to the rendered YAML shall fail a two-way drift gate.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: ad5cee75d49b69f20853d91c8e383e64a50b048a32e5a0db65043b47dfc47ebb
+record_hash: 7be479e760302610111aa302a6457e56801436adae6427c4d052fc917520387e

@@ -1,0 +1,32 @@
+seq: 22
+event: accept
+id: seldon:AD-030-R4
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_findings_reconcile.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R4.** Identity is the content hash, never the path. Governed authored documents stay in place (the path is the edit surface; relocation breaks re-sync). Source documents (PDFs, harvested pages, thread exports) are immutable, may live anywhere, and are resolved by hash. Git holds governed markdown; it does not hold source blobs. Source blobs go to a content-addressed store outside the repository (evaluate DVC and git-annex before writing a mover; both use a plain folder as a remote).'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 41
+  - 41
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R4.** Identity is the content hash, never the path. Governed authored documents stay in place (the path is the edit surface; relocation breaks re-sync). Source documents (PDFs, harvested pages, thread exports) are immutable, may live anywhere, and are resolved by hash. Git holds governed markdown; it does not hold source blobs. Source blobs go to a content-addressed store outside the repository (evaluate DVC and git-annex before writing a mover; both use a plain folder as a remote).'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R4
+consumer:
+- seldon/core/governed.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: c35407ea79fc8d6e01cf8ee619ea6ec4759f969c7e02b74bd1517bc891bb37a1
+record_hash: e429072cef14846bb8f8f3751c76a3dc0b4a896fb199e616f260547a70af1d10

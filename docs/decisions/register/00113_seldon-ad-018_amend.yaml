@@ -1,0 +1,16 @@
+seq: 113
+event: amend
+id: seldon:AD-018
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Seldon's research domain configuration shall be extended with document hierarchy (Chapter/Section/Subsection), Table artifacts, figure/table numbering, cross-reference tracking, and blast radius analysis, scoped to Chapter/Section/Subsection hierarchy, Figure and Table registries with provenance and numbering, and cross-reference edges enabling impact analysis as needed for paper and book authoring. Paragraph-level and Claim-level decomposition from the March 10 design note remains in the parking lot until the Chapter/Section/Subsection, Figure/Table registry, and cross-reference structure proves insufficient.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 3641a62aadadbfad51fc6d45a241f4ea44de0dbdefedbc02d7bf77b41eabe92a
+record_hash: fd1fc07a85be82f99cdca600c62849b55280c0d03298f65464e7d54ff9532e5d

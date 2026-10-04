@@ -1,0 +1,46 @@
+seq: 51
+event: accept
+id: seldon:AD-033-R6
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R6. Every accepted record names its consumer (FC-01), and the gap is counted, not blocked.** At the
+    baseline `consumer` is filled mechanically: the conformance items, tests and code that cite the id. A record with
+    none carries `review_only` with one reason from a closed list: `rationale` (explains, binds nothing);
+    `pre_registration` (consumed by the task that ran it); `dispatch` (to be consumed at dispatch once FC-17 exists);
+    `none` (no consumer yet). `none` is allowed at DB-1 and reported as a coverage figure at every release. The
+    FC-01 gate that refuses `none` is turned on with FC-17, not before, so the baseline is not a blockade.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 157
+  - 163
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R6. Every accepted record names its consumer (FC-01), and the gap is counted, not blocked.** At the
+      baseline `consumer` is filled mechanically: the conformance items, tests and code that cite the id. A record with
+      none carries `review_only` with one reason from a closed list: `rationale` (explains, binds nothing);
+      `pre_registration` (consumed by the task that ran it); `dispatch` (to be consumed at dispatch once FC-17 exists);
+      `none` (no consumer yet). `none` is allowed at DB-1 and reported as a coverage figure at every release. The
+      FC-01 gate that refuses `none` is turned on with FC-17, not before, so the baseline is not a blockade.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R6
+consumer:
+- seldon/core/decisions.py
+- seldon/domain/decision_register.yaml
+written_by: seldon decision 0.1.0
+prev_hash: ccea5cd93cce3a9778f6c4ab2f22b05c8cb5f86d7ca6226351c6515558107545
+record_hash: 15eab14c807c6a922c0a90521c3455ceaf7d2da1753099978fd0d4075b8b5a3d

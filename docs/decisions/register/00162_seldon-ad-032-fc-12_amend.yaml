@@ -1,0 +1,15 @@
+seq: 162
+event: amend
+id: seldon:AD-032-FC-12
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''below'' in ''An estimate for a job shall be the measured per-unit rate, taken from a dry run or ledger window using the same model an'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: b925093f07d60e168a4590129eca44ef54a8f5c1e1fed75d0fbe3c61ea61807e
+record_hash: 24df01b1bf659d9269ee6e7ba15855d28548eb3057c0f5dfe34f3bbce15ed167

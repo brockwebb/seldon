@@ -1,0 +1,128 @@
+[
+ {
+  "id": "seldon:AD-029-A",
+  "lines": [
+   225,
+   344
+  ],
+  "operator_stated": false,
+  "status_line": "Accepted"
+ },
+ {
+  "id": "seldon:phase_c_retirement_list-R1",
+  "lines": [
+   24,
+   29
+  ],
+  "operator_stated": false,
+  "status_line": "Final for this burst"
+ },
+ {
+  "id": "seldon:phase_c_retirement_list-R2",
+  "lines": [
+   31,
+   36
+  ],
+  "operator_stated": true,
+  "status_line": "Final for this burst"
+ },
+ {
+  "id": "seldon:phase_c_retirement_list-R3",
+  "lines": [
+   38,
+   43
+  ],
+  "operator_stated": false,
+  "status_line": "Final for this burst"
+ },
+ {
+  "id": "seldon:phase_c_retirement_list-R4",
+  "lines": [
+   45,
+   51
+  ],
+  "operator_stated": false,
+  "status_line": "Final for this burst"
+ },
+ {
+  "id": "seldon:phase_c_retirement_list-R5",
+  "lines": [
+   53,
+   59
+  ],
+  "operator_stated": false,
+  "status_line": "Final for this burst"
+ },
+ {
+  "id": "arnold:2026-06-27_vocab-T1-block-lock-and-rewrite-R1",
+  "lines": [
+   24,
+   25
+  ],
+  "operator_stated": false,
+  "status_line": "proposed"
+ },
+ {
+  "id": "arnold:2026-06-27_vocab-T1-block-lock-and-rewrite-R2",
+  "lines": [
+   26,
+   28
+  ],
+  "operator_stated": false,
+  "status_line": "proposed"
+ },
+ {
+  "id": "arnold:2026-09-01_plan-builder-rebuild.addendum-02-R1",
+  "lines": [
+   12,
+   17
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ },
+ {
+  "id": "arnold:2026-09-01_plan-builder-rebuild.addendum-02-R2",
+  "lines": [
+   19,
+   23
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ },
+ {
+  "id": "arnold:2026-09-01_plan-builder-rebuild.addendum-02-R3",
+  "lines": [
+   25,
+   27
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ },
+ {
+  "id": "arnold:2026-09-13_exercise-identity-grouping-R1",
+  "lines": [
+   39,
+   41
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ },
+ {
+  "id": "arnold:2026-09-13_exercise-identity-grouping-R2",
+  "lines": [
+   43,
+   48
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ },
+ {
+  "id": "arnold:2026-09-13_exercise-identity-grouping-R3",
+  "lines": [
+   50,
+   51
+  ],
+  "operator_stated": false,
+  "status_line": ""
+ }
+]

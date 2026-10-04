@@ -1,0 +1,49 @@
+seq: 88
+event: supersede
+id: seldon:AD-033-R10
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- seldon/cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md item 3
+- 'docs/design/AD-033_decision_register.md: AD-033-R10 ''Supersedes AD-030-R14.'''
+reason: 'DB-1 seed: SEL-002 ADDENDUM 01 item 3'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R10. The register record is the decision record.** AD-030-R14 made the Document node plus its Ruling
+    nodes the decision record; SEL-001 measured that population as half headings, and a task file's H1 heading sits
+    in it as a binding Ruling (section 1). From DB-1 forward the decision record is the register record, projected as
+    a `Decision` node. Legacy `ArchitecturalDecision` and `DesignNote` nodes (30) stay unmutated, as R14 says; a
+    `Decision` node is one per decision, never one per file, so R14's ban on new per-file decision nodes is kept. The
+    `Decision` label joins Addendum 029-A's label set, and every read that traverses a relationship from it binds
+    `:Artifact`. Supersedes AD-030-R14.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 179
+  - 186
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R10. The register record is the decision record.** AD-030-R14 made the Document node plus its Ruling
+      nodes the decision record; SEL-001 measured that population as half headings, and a task file's H1 heading sits
+      in it as a binding Ruling (section 1). From DB-1 forward the decision record is the register record, projected as
+      a `Decision` node. Legacy `ArchitecturalDecision` and `DesignNote` nodes (30) stay unmutated, as R14 says; a
+      `Decision` node is one per decision, never one per file, so R14's ban on new per-file decision nodes is kept. The
+      `Decision` label joins Addendum 029-A's label set, and every read that traverses a relationship from it binds
+      `:Artifact`. Supersedes AD-030-R14.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R10
+consumer:
+- seldon/core/sync.py
+- seldon/domain/research.yaml
+supersedes:
+- seldon:AD-030-R14
+written_by: seldon decision 0.1.0
+prev_hash: eb3454f0df5246e61979d9e117e53351c3d57d4fad640743e7c0f71bc4ddc9e7
+record_hash: 76263b3a7b0cdac9b0dbf2b58067637e33ced01246c99cb59767797feb5ce3a8

@@ -1,0 +1,16 @@
+seq: 169
+event: amend
+id: seldon:AD-032-FC-19
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: A dispatched task file or addendum, a pre-registration, a design note, and a result shall never be edited; any change to these shall be recorded as a new, superseding record. The dispatcher shall store each task file's sha256 hash at dispatch, and a run shall refuse a mismatch against that stored hash.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: fcb55f5b62706820b1f8c4005d364ef9d04171d25ba6afa44b9785691889c42f
+record_hash: 7d4eac8d61c994cb3a76263acb3d6b6afbdddcd6eb1e6e4fa74e767c79b6daf4

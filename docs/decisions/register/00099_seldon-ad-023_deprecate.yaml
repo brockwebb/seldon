@@ -1,0 +1,15 @@
+seq: 99
+event: deprecate
+id: seldon:AD-023
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- 'probe F28: seldon:AD-023_wintermute_sleep_functions (seldon/docs/design/AD-023_wintermute_sleep_functions.md:1): "Every Wintermute engineering investment must serve these functions"'
+- 'probe F28: DI-066 (squiddy/docs/DECISIONS_INHERITED.md:148): "a homonym gate must precede merge eligibility"'
+- 'probe F28: R-10 (squiddy/docs/design/2026-09-12_founding_rulings.md:82): "Wintermute''s OODA self-healer is the counterexample."'
+- 'seldon/docs/design/AD-033_decision_register.md section 5 F28, F44: ''AD-023 is deprecated (Wintermute mothballed 2026-09-10)'''
+reason: 'Probe F28 (CROSS-REPO): Retire AD-023 (Wintermute mothballed 2026-09-10; DI-137 counterexample); keep it as history.'
+written_by: seldon decision 0.1.0
+prev_hash: 69d2b2093044f68e5a1c0398ef9350c9bd890334c725e3ae0589b72b384bab72
+record_hash: ad499a41ae3e6f33e567accfea9db4dca9fb4cfd90e59497929198e88e5600a9

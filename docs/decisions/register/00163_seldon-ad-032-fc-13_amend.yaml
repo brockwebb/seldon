@@ -1,0 +1,16 @@
+seq: 163
+event: amend
+id: seldon:AD-032-FC-13
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: While a job's projected spend (settled plus reserved) against its estimate is at or under +10%, the job shall continue to run and log. When projected spend crosses +10%, the job shall emit one warning event. If a reservation would cross +20% of the estimate, then the job shall refuse that reservation and pause at the spend touchpoint, resuming only on the operator's dated approval recorded beside the control file; an approval without a date shall be rejected.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 24df01b1bf659d9269ee6e7ba15855d28548eb3057c0f5dfe34f3bbce15ed167
+record_hash: 68af152fa565c9a6b0ee37fb7f4aae8f2df0d066dd6bee79904d3c329f6afa31

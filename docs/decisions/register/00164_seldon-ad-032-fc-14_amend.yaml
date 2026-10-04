@@ -1,0 +1,16 @@
+seq: 164
+event: amend
+id: seldon:AD-032-FC-14
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Each job and lane shall carry a cap in tokens and a cap in calls, and a cap in dollars where billed. A rolling error-rate breaker shall stop a lane, with a starting value of 0.30 over 50 calls recalibrated on this factory's data. If a daily-quota error occurs, then the system shall never retry it.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 68af152fa565c9a6b0ee37fb7f4aae8f2df0d066dd6bee79904d3c329f6afa31
+record_hash: aad942295fb1a64cb6162630ee1721ccf78071810a959c969263ff7cf5c69396

@@ -1,0 +1,52 @@
+seq: 3
+event: accept
+id: seldon:AD-013
+date: '2026-03-15'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## 1. Design Principle
+
+  **An undocumented artifact is an incomplete artifact.**
+
+  Documentation is not a post-hoc deliverable. It is a measurable property of each artifact in the graph, tracked the same way Seldon tracks state, provenance, and staleness. If Seldon can tell you "this Result has no GENERATED_BY link," it should also tell you "this Script has no description of its inputs."
+
+  **Corollary: Documentation is a projection, not a source.**
+
+  Hand-maintained docs/ directories are the docstring equivalent of flat-file registries — they drift. The graph is the source of truth. Documentation files are projections of graph properties, regenerated on demand, same pattern as `seldon paper build`.
+
+  ---
+source:
+  path: docs/design/AD-013_documentation_as_traceability.md
+  lines:
+  - 10
+  - 20
+  sha256: c1d243faa53d352366684c30e4a50f61467a2c867df28054f6a4a6324e397cf6
+  text: |-
+    ## 1. Design Principle
+
+    **An undocumented artifact is an incomplete artifact.**
+
+    Documentation is not a post-hoc deliverable. It is a measurable property of each artifact in the graph, tracked the same way Seldon tracks state, provenance, and staleness. If Seldon can tell you "this Result has no GENERATED_BY link," it should also tell you "this Script has no description of its inputs."
+
+    **Corollary: Documentation is a projection, not a source.**
+
+    Hand-maintained docs/ directories are the docstring equivalent of flat-file registries — they drift. The graph is the source of truth. Documentation files are projections of graph properties, regenerated on demand, same pattern as `seldon paper build`.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_documentation_as_traceability.md
+  anchor: AD-013
+consumer:
+- tests/test_decision_register.py
+- tests/test_docs.py
+- tests/test_governed.py
+- seldon/core/governed.py
+written_by: seldon decision 0.1.0
+prev_hash: 99418508b08e0e27f4c854ebd14d7570f4237e3488fc53be2246018bce476c9e
+record_hash: 87d58bbd0bcac950b2406f2546ae9d0badbbc245f13228b8168f6fcd0e1884e4

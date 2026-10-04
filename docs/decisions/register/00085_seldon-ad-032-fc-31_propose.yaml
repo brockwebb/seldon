@@ -1,0 +1,37 @@
+seq: 85
+event: propose
+id: seldon:AD-032-FC-31
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-31. The board is measured and audited like everything else.** Four measures go in every release report: posts reused by another project (share); problems solved by reuse (count, with receipts); recurrence rate of known lessons (incidents whose problem label matches a confirmed post; target falling); posts carrying receipts (share). A transcript quoted on the board must hash-match its evidence-store copy. A post whose receipts do not resolve is marked unverified and is never served as confirmed. A confirmed post enters FC-26 as a lesson.
+  - Status: proposed.
+  - Rationale: the OpenAI and Hugging Face incident of July 2026: agents formed their own board, and a secondary analysis reports about 7% spoofed transcripts (unverified: not checked against OpenAI's report). A board without receipts is an unaudited channel.
+  - Check: the four measures appear each release; a planted spoofed transcript is flagged unverified.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 244
+  - 247
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-31. The board is measured and audited like everything else.** Four measures go in every release report: posts reused by another project (share); problems solved by reuse (count, with receipts); recurrence rate of known lessons (incidents whose problem label matches a confirmed post; target falling); posts carrying receipts (share). A transcript quoted on the board must hash-match its evidence-store copy. A post whose receipts do not resolve is marked unverified and is never served as confirmed. A confirmed post enters FC-26 as a lesson.
+    - Status: proposed.
+    - Rationale: the OpenAI and Hugging Face incident of July 2026: agents formed their own board, and a secondary analysis reports about 7% spoofed transcripts (unverified: not checked against OpenAI's report). A board without receipts is an unaudited channel.
+    - Check: the four measures appear each release; a planted spoofed transcript is flagged unverified.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-31
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 56b07aca731a353f985c121d13550ec7fbbf94d8caf864a9f2bb3d75a827b9da
+record_hash: 63342510966b0f6b62d4fe6edf3c8c45aca66cc91951eec750c5f5478058610b

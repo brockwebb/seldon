@@ -1,0 +1,38 @@
+seq: 104
+event: accept
+id: seldon:phase_c_retirement_list-R3
+date: '2026-04-18'
+decided_by: desktop
+operator_stated: false
+reason: 'SEL-002: a labeled decision positional parsing bound, which AD-033-R7 would otherwise stop binding (evidence/sel002/positional_rulings_without_record.json)'
+kind: decision
+status: accepted
+statement: |-
+  ### R3. Hermes Agent install (runtime without binary on PATH)
+
+  **Evidence:** CC2 — `~/.hermes/` runtime exists with state.db (frozen 2026-03-04), binary not on PATH. CC3 — "Known broken," parallel experiment superseded by ClaudeClaw.
+  **Action:** Archive `~/.hermes/state.db` (cheap insurance — 1.7 MB class), then remove the runtime directory.
+  **Reversibility:** High. Hermes Agent reinstalls from source if ever needed.
+  **Note:** The LeStat-on-Hermes vision document (`lestat_project_scope.md`, Feb 2026) is a design artifact, not a retirement target. That document's core thesis — autonomous foraging for Wintermute — is now realized through ClaudeClaw. The document stays as historical context.
+source:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  lines:
+  - 38
+  - 43
+  sha256: ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b
+  text: |-
+    ### R3. Hermes Agent install (runtime without binary on PATH)
+
+    **Evidence:** CC2 — `~/.hermes/` runtime exists with state.db (frozen 2026-03-04), binary not on PATH. CC3 — "Known broken," parallel experiment superseded by ClaudeClaw.
+    **Action:** Archive `~/.hermes/state.db` (cheap insurance — 1.7 MB class), then remove the runtime directory.
+    **Reversibility:** High. Hermes Agent reinstalls from source if ever needed.
+    **Note:** The LeStat-on-Hermes vision document (`lestat_project_scope.md`, Feb 2026) is a design artifact, not a retirement target. That document's core thesis — autonomous foraging for Wintermute — is now realized through ClaudeClaw. The document stays as historical context.
+scope:
+- seldon
+rationale:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  anchor: R3
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 60c5db312ade614edbaf32b5a0c3030478068bc556f8945dd4bc9d0824fdf6d6
+record_hash: 6447274283102b9922062e1ed1639170a3bf3b4ce3ce5e3e7a8e60223e8d9f28

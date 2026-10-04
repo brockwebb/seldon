@@ -1,0 +1,45 @@
+seq: 52
+event: accept
+id: seldon:AD-033-R7
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R7. Positional Rulings stop binding.** Once a repository's register exists, `seldon cc register` binds
+    `Decision` records only; positional `Ruling` nodes stay as searchable content and lose `force: binding`. Until
+    SEL-003 picks an arm, registration's binding is labeled advisory in its output. AD-030-R16 and R21 stay in force
+    for prose readers. Supersedes the binding role of AD-030-R16.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 164
+  - 168
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R7. Positional Rulings stop binding.** Once a repository's register exists, `seldon cc register` binds
+      `Decision` records only; positional `Ruling` nodes stay as searchable content and lose `force: binding`. Until
+      SEL-003 picks an arm, registration's binding is labeled advisory in its output. AD-030-R16 and R21 stay in force
+      for prose readers. Supersedes the binding role of AD-030-R16.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R7
+consumer:
+- tests/test_decision_register.py
+- seldon/commands/cc.py
+- seldon/core/decisions.py
+- seldon/core/governed.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 15eab14c807c6a922c0a90521c3455ceaf7d2da1753099978fd0d4075b8b5a3d
+record_hash: 1558ee686de4f1222b68f8b083d743e03a205ad7f4b05a133b6b7b853ae092be

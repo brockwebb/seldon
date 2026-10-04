@@ -1,0 +1,16 @@
+seq: 179
+event: amend
+id: seldon:AD-032-FC-29
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'While a line stop occurs, the line stop process shall run one huddle consisting of: (1) an incident record containing the reading, the specification, and receipts; (2) assignable-cause analysis conducted under FC-09, reading one level down and asking why until the cause is identified as a mechanism; (3) a fix of the root cause; (4) recording the fix as a gate under FC-26, with a planted control that fails on the old code; and (5) resuming by re-running the same command. The huddle process shall ensure that resume restores authorization and never widens it. The huddle process shall not permit an incident to close without a linked gate id and its control run. The huddle process shall count a recurrence of a closed incident''s class in FC-31''s recurrence measure.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 0f5d1f32c33d08eb81175856dff6d8d301cd13b862d1dd7caa26550d2e285ee0
+record_hash: 92395e8a48eaed848bc9c0ecff2b30d85703ca06a2bed41b67b81283235888d2

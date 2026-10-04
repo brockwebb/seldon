@@ -1,0 +1,1 @@
+PASS: killed with 4 writer and 0 validator rows fsynced (4 calls made); resumed to 12 + 12 rows equal to the uninterrupted run; no completed call repeated (24 calls in all, 4 completed before the kill)

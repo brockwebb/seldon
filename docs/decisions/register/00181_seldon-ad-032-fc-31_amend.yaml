@@ -1,0 +1,16 @@
+seq: 181
+event: amend
+id: seldon:AD-032-FC-31
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The release report for the board shall include four measures: the share of posts reused by another project; the count of problems solved by reuse, with receipts; the recurrence rate of known lessons, defined as incidents whose problem label matches a confirmed post, with a falling target; and the share of posts carrying receipts. A transcript quoted on the board shall hash-match its evidence-store copy. If a post''s receipts do not resolve, then the board shall mark the post unverified and shall never serve it as confirmed. When a post is confirmed, the board shall enter it into FC-26 as a lesson.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: cc23a34a7c16acd99566a2e3e4de8daf1785733a477dc746792d540b92612194
+record_hash: 02949770b0cfcb6c9164edb779a189bc2b5ba7e67ff15e3bbb2c5aa4c2144d8c

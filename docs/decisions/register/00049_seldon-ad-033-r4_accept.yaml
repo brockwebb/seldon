@@ -1,0 +1,47 @@
+seq: 49
+event: accept
+id: seldon:AD-033-R4
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R4. Status is a lifecycle, and it is derived.** Statuses are MADR's: proposed, accepted, rejected,
+    deprecated, superseded. A record never changes after it is written. A status change is a new transition record;
+    a superseded status is derived from the later record that names it. Only accepted records bind. Desktop
+    decisions under L4 are accepted when registered (decided_by desktop); the operator overrides by a superseding
+    record, never by an edit. `proposed` is for a decision that waits on a named measurement, and names it.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 137
+  - 142
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R4. Status is a lifecycle, and it is derived.** Statuses are MADR's: proposed, accepted, rejected,
+      deprecated, superseded. A record never changes after it is written. A status change is a new transition record;
+      a superseded status is derived from the later record that names it. Only accepted records bind. Desktop
+      decisions under L4 are accepted when registered (decided_by desktop); the operator overrides by a superseding
+      record, never by an edit. `proposed` is for a decision that waits on a named measurement, and names it.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R4
+consumer:
+- seldon/commands/verify.py
+- seldon/core/decisions.py
+- seldon/domain/decision_register.yaml
+- seldon/domain/research.yaml
+- seldon/mcp_server.py
+written_by: seldon decision 0.1.0
+prev_hash: 8ddbc8a5f536f8657e356a4e5844135f7f126453acb7a9cd4c2f959b12820162
+record_hash: 081e712fd17dac7c50dab424945acd6e387445797f2c96f97e0eb1ac199c6dd4

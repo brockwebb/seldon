@@ -1,0 +1,897 @@
+{
+ "selection_rule": "SEL-002 Part B: every decision in the five ontology documents SEL-001 F6 names; in intensity-constructs.md the per-set RPE decisions (lines 47-66) and its labeled R1 to R3 (section 12); in the 2026-06-27 reversal record its labeled rulings. Spans located by a read-only reader and checked here against the files (non-empty, in range, non-overlapping).",
+ "documents": [
+  {
+   "file": "2026-06-27_vocab-decision-block-cycle-reversal.md",
+   "status_line": {
+    "line": 5,
+    "text": "**Status:** RULED / final"
+   },
+   "decider_receipts": [
+    {
+     "line": 4,
+     "text": "**Decider:** Brock"
+    }
+   ],
+   "decisions": [
+    {
+     "start": 36,
+     "end": 43,
+     "label": "R1",
+     "gist": "\"block\" is the within-workout grouping; kinds are polymorphic subtypes via block_type; reverses D1",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 45,
+     "end": 79,
+     "label": "R2",
+     "gist": "Cycle base type with cycle_type; full relabel :Block to :Cycle, block_id to cycle_id, tools renamed, seed real anchors only",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 81,
+     "end": 86,
+     "label": "R2-note",
+     "gist": "Literature-grounded durations and semantics define macro/meso/microcycle cycle_type meanings",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 88,
+     "end": 91,
+     "label": "R3",
+     "gist": "No era or super-level above macrocycle; multiple macro efforts are separate cycles",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 109,
+     "end": 130,
+     "label": "D11",
+     "gist": "Multi-objective concurrent-cycle model parked as D11 proposed; do not build in vocab cleanup",
+     "ruled_status": "open"
+    }
+   ]
+  },
+  {
+   "file": "canonical-exercise-creation.md",
+   "status_line": {
+    "line": 3,
+    "text": "**Status:** Active convention. Ratified by Brock 2026-06-11."
+   },
+   "decider_receipts": [
+    {
+     "line": 3,
+     "text": "**Status:** Active convention. Ratified by Brock 2026-06-11."
+    }
+   ],
+   "decisions": [
+    {
+     "start": 4,
+     "end": 5,
+     "label": null,
+     "gist": "Supersedes the open questions in the 2026-06-07 canonical-exercise-creation design brief",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 14,
+     "end": 18,
+     "label": "ruling-1",
+     "gist": "Alias-first resolution: exact name, exact alias, fuzzy candidates only; never auto-accept non-exact match",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 19,
+     "end": 21,
+     "label": "ruling-2",
+     "gist": "Many names, one node: aliases on node may point into any namespace, no migration",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 22,
+     "end": 23,
+     "label": "ruling-3",
+     "gist": "New canonicals only in CANONICAL:ARNOLD:; FFDB and EXERCISE namespaces frozen for additions",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 24,
+     "end": 27,
+     "label": "ruling-4",
+     "gist": "Minimum create shape: name, common-name alias, at least one TARGETS/INVOLVES link, provenance; no orphans",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 28,
+     "end": 31,
+     "label": "ruling-5",
+     "gist": "Resolution accepts descriptions; no web search in the server",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 32,
+     "end": 34,
+     "label": "ruling-6",
+     "gist": "Global alias/name uniqueness enforced at write; violation errors naming conflicting holder",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 40,
+     "end": 52,
+     "label": null,
+     "gist": "resolve_exercises match_type contract; only exact_name/exact_alias auto-accept; callers surface candidates, no CUSTOM orphans",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 54,
+     "end": 56,
+     "label": null,
+     "gist": "One normalization function used identically in exact tiers and uniqueness checks",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 58,
+     "end": 64,
+     "label": null,
+     "gist": "Surplus-token penalty re-ranks fuzzy candidates only; never auto-selects",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 70,
+     "end": 78,
+     "label": null,
+     "gist": "Aliases stored as string-array node property Exercise.aliases, not alias relationship nodes",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 79,
+     "end": 83,
+     "label": null,
+     "gist": "No new index added for aliases; revisit only if corpus grows orders of magnitude",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 94,
+     "end": 96,
+     "label": null,
+     "gist": "Alias of existing node goes via add_alias, uniqueness checked first, effect-verified read-back",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 97,
+     "end": 101,
+     "label": null,
+     "gist": "create_canonical_exercise anti-dup gate: refuse on exact hit; require confirmed_new for non-exact candidates",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 103,
+     "end": 108,
+     "label": null,
+     "gist": "Creation id CANONICAL:ARNOLD:<SLUG>, no silent suffixing, links required, zero-link result is hard error",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 112,
+     "end": 131,
+     "label": "ruling-7",
+     "gist": "Every resolved none must end in alias write-back, new canonical, or logged decision; otherwise a defect",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 133,
+     "end": 140,
+     "label": null,
+     "gist": "Enforcement locus is session-close check in workout-logging skill; resolver-side tracker rejected for now",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 142,
+     "end": 147,
+     "label": null,
+     "gist": "Operator looks up unambiguous common movements and writes back; reserve Brock for genuinely ambiguous cases",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 168,
+     "end": 178,
+     "label": null,
+     "gist": "Defined home and update semantics for each kind of movement metadata (description, instructions, sources, meta_, UseContext)",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 180,
+     "end": 186,
+     "label": null,
+     "gist": "meta_ prefix convention: flat snake_case keys, scalar values only, reader rebuilds map",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 188,
+     "end": 202,
+     "label": null,
+     "gist": "Use contexts are UseContext nodes via SUITED_FOR, closed vocabulary; adding a term is deliberate code plus migration",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 204,
+     "end": 216,
+     "label": null,
+     "gist": "update_canonical_exercise is sanctioned update path; cannot write source, sources append-only, omitted fields untouched",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 218,
+     "end": 221,
+     "label": null,
+     "gist": "Structural edits ARNOLD-only; text enrichment allowed on any node including frozen imports",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 223,
+     "end": 224,
+     "label": null,
+     "gist": "ADR-012 applies to create and update: read-back inside transaction, failed assertion rolls back",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 226,
+     "end": 230,
+     "label": null,
+     "gist": "Property-drift cleanup is a separate audit task; description backfill on demand only",
+     "ruled_status": "open"
+    },
+    {
+     "start": 234,
+     "end": 243,
+     "label": null,
+     "gist": "Namespace freeze table: ARNOLD forward; FFDB and EXERCISE frozen, aliasable, never extended",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 249,
+     "end": 251,
+     "label": null,
+     "gist": "Fuzzy auto-accept in resolve_exercises is retired",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 252,
+     "end": 254,
+     "label": null,
+     "gist": "log_workout auto-trust and CUSTOM orphan creation retired; unresolved exercises return clarification without writing",
+     "ruled_status": "ruled"
+    }
+   ]
+  },
+  {
+   "file": "intensity-constructs.md",
+   "status_line": {
+    "line": 3,
+    "text": "**Status:** Active contract. Ruled by Brock 2026-08-16; **amended 2026-09-12"
+   },
+   "decider_receipts": [
+    {
+     "line": 3,
+     "text": "**Status:** Active contract. Ruled by Brock 2026-08-16; **amended 2026-09-12"
+    }
+   ],
+   "decisions": [
+    {
+     "start": 47,
+     "end": 52,
+     "label": null,
+     "gist": "Per-set sets.rpe deliberately not migrated into session_rpe",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 54,
+     "end": 55,
+     "label": null,
+     "gist": "Never mix sets.rpe and workouts.session_rpe in one aggregate",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 57,
+     "end": 62,
+     "label": null,
+     "gist": "sets.rpe is a CLOSED historical era; no capture surface for per-set RPE anywhere",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 64,
+     "end": 66,
+     "label": null,
+     "gist": "Existing 430 sets.rpe values kept; amend_workout is correction path, not capture path",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 329,
+     "end": 347,
+     "label": "R1",
+     "gist": "Nothing required beyond exercise plus reps/load/duration; no defaults, placeholders, prompts; date and sport_type exceptions",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 354,
+     "end": 376,
+     "label": "R2",
+     "gist": "Per-set effort removed from planning: rpe dropped from plan contract, grammar, builder; columns kept, rendered nowhere",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 378,
+     "end": 395,
+     "label": "R3",
+     "gist": "Storage stays workouts.session_rpe; UI label \"session effort (1-10)\"; \"RPE\" on no GUI surface, test-enforced",
+     "ruled_status": "ruled"
+    }
+   ]
+  },
+  {
+   "file": "progression-policy.md",
+   "status_line": {
+    "line": 3,
+    "text": "**Status:** current. Landed 2026-09-01 with"
+   },
+   "decider_receipts": [],
+   "decisions": [
+    {
+     "start": 10,
+     "end": 17,
+     "label": null,
+     "gist": "Default is maintain; no PROGRESSES edge means the exercise never moves",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 21,
+     "end": 31,
+     "label": null,
+     "gist": "Policy stored as typed PROGRESSES edge Person to Exercise, not ADR-010 Preference prose",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 33,
+     "end": 34,
+     "label": null,
+     "gist": "One edge per (Person, Exercise); set_policy MERGEs so re-declaring replaces",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 36,
+     "end": 36,
+     "label": null,
+     "gist": "PROGRESSES source enum is gui, chat, migration",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 40,
+     "end": 45,
+     "label": null,
+     "gist": "Four policies (maintain, linear_load, linear_reps, double_progression) with required params and effects",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 47,
+     "end": 51,
+     "label": null,
+     "gist": "Pre-write validation fails loud with ProgressionError; no default increment",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 55,
+     "end": 60,
+     "label": null,
+     "gist": "double_progression never fires without execution data; warm-ups excluded; absent evidence carries over unchanged",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 62,
+     "end": 67,
+     "label": null,
+     "gist": "Double-progression reset restores the full rep range, not a bare floor",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 69,
+     "end": 71,
+     "label": null,
+     "gist": "Exercise with no load cannot double-progress; left unchanged and logged",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 73,
+     "end": 86,
+     "label": null,
+     "gist": "apply_policy is pure: no driver, connection or clock; returns new dict, input never mutated",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 88,
+     "end": 90,
+     "label": null,
+     "gist": "Per-set overrides follow the base through a progression",
+     "ruled_status": "ruled"
+    }
+   ]
+  },
+  {
+   "file": "training-domain-vocabulary.md",
+   "status_line": {
+    "line": 15,
+    "text": "**Status:** 🟢 **PARTIALLY RULED.** **D1–D4 and D8 are RULED / final (Brock, 2026-06-20)** — literature-backed, do not relitigate. **D7** was ruled + executed 2026-06-18 (deviation-ceremony retirement). **D5, D6, D9, D10 remain 🟡 PROPOSED** — pending Brock's ruling; he holds taxonomy authority on those."
+   },
+   "decider_receipts": [
+    {
+     "line": 11,
+     "text": "> remain unruled — Brock holds authority; do not resolve them in passing."
+    },
+    {
+     "line": 15,
+     "text": "**Status:** 🟢 **PARTIALLY RULED.** **D1–D4 and D8 are RULED / final (Brock, 2026-06-20)** — literature-backed, do not relitigate. **D7** was ruled + executed 2026-06-18 (deviation-ceremony retirement). **D5, D6, D9, D10 remain 🟡 PROPOSED** — pending Brock's ruling; he holds taxonomy authority on those."
+    }
+   ],
+   "decisions": [
+    {
+     "start": 1,
+     "end": 11,
+     "label": null,
+     "gist": "Binding ADR-013: block is within-workout grouping, cycles are time-spans; D1/D2 superseded; D5/D6/D9/D10/D11 unruled",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 19,
+     "end": 19,
+     "label": null,
+     "gist": "Block-membership data layer naming must conform to rulings recorded here",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 36,
+     "end": 36,
+     "label": null,
+     "gist": "Physical names not auto-renamed; bias is document-and-alias over rename-and-migrate",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 64,
+     "end": 66,
+     "label": null,
+     "gist": "Hierarchy is compositional down time axis AND polymorphic within levels; neither fixed into other",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 138,
+     "end": 138,
+     "label": null,
+     "gist": "EXECUTED_FROM Workout to PlannedWorkout is live plan link, N:1 valid; DEVIATED_FROM removed",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 228,
+     "end": 228,
+     "label": null,
+     "gist": "Decision bias document-and-alias; renames only where collision demonstrably generates bugs",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 232,
+     "end": 232,
+     "label": "D1",
+     "gist": "Within-session grouping term \"segment\"; superseded 2026-06-27, reversed to \"block\"",
+     "ruled_status": "superseded"
+    },
+    {
+     "start": 233,
+     "end": 233,
+     "label": "D2",
+     "gist": "Mesocycle as :Block; superseded 2026-06-27 by :Cycle{cycle_type:'mesocycle'} full relabel",
+     "ruled_status": "superseded"
+    },
+    {
+     "start": 234,
+     "end": 234,
+     "label": "D3",
+     "gist": "Canonical \"workout\"; legacy *_sessions tables frozen legacy synonyms",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 235,
+     "end": 235,
+     "label": "D4",
+     "gist": "sport_type canonical activity term, modality strictly adaptation domain, stop using \"sport\"",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 236,
+     "end": 236,
+     "label": "D5",
+     "gist": "Proposed: Exercise.is_canonical canonical; investigate 4 CanonicalExercise nodes for retirement",
+     "ruled_status": "open"
+    },
+    {
+     "start": 237,
+     "end": 237,
+     "label": "D6",
+     "gist": "Proposed: canonical set subtype field sets.set_category; fold is_warmup later",
+     "ruled_status": "open"
+    },
+    {
+     "start": 238,
+     "end": 238,
+     "label": "D7",
+     "gist": "DEVIATED_FROM removed from docs and dead code; EXECUTED_FROM is plan link, diff computed on demand",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 239,
+     "end": 239,
+     "label": "D8",
+     "gist": "Macrocycle and microcycle documented as implicit mapping; record canonical words, no nodes yet",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 240,
+     "end": 240,
+     "label": "D9",
+     "gist": "Proposed: reserve \"gate\" for pass/fail standard, distinct from MDC change-detection",
+     "ruled_status": "open"
+    },
+    {
+     "start": 241,
+     "end": 241,
+     "label": "D10",
+     "gist": "Orphaned labels (Capacity, FunctionalChain, QualityAttribute, Movement): deferred to Brock, no recommendation",
+     "ruled_status": "open"
+    },
+    {
+     "start": 242,
+     "end": 242,
+     "label": "D11",
+     "gist": "Proposed: multi-objective concurrent-cycle model; build :Cycle foundation only, defer scheduler design",
+     "ruled_status": "open"
+    },
+    {
+     "start": 248,
+     "end": 254,
+     "label": null,
+     "gist": "Block/cycle update: block word equals physical name; mesocycles relabeled to :Cycle; D3/D4/D8 stand",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 256,
+     "end": 275,
+     "label": null,
+     "gist": "Canonical terms table: canonical word, physical anchor, and do-not-use alias per concept",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 285,
+     "end": 292,
+     "label": "R-ID-1",
+     "gist": "Canonical carries standard common name; Brock's terms are aliases; never mint canonical for his phrasing",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 294,
+     "end": 298,
+     "label": "R-ID-2",
+     "gist": "Miscellaneous activity gets ARNOLD canonical with category misc_activity; detail in sets.notes",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 300,
+     "end": 304,
+     "label": "R-ID-3",
+     "gist": "Implement is a dimension: keep exercise_id with sets.equipment unless standard implement node exists",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 314,
+     "end": 318,
+     "label": null,
+     "gist": "Identity invariants enforced: CUSTOM namespace empty, every exercise_id resolves, no name resolving to different id",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 320,
+     "end": 325,
+     "label": null,
+     "gist": "Merges/re-slugs via workout_write.exercises; merged node retired as :RetiredExercise, never deleted",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 343,
+     "end": 343,
+     "label": null,
+     "gist": "Brock disposes; each ruling spawns its own follow-up task",
+     "ruled_status": "ruled"
+    }
+   ]
+  },
+  {
+   "file": "week-template.md",
+   "status_line": {
+    "line": 3,
+    "text": "**Status:** current. Landed 2026-09-01 with"
+   },
+   "decider_receipts": [],
+   "decisions": [
+    {
+     "start": 25,
+     "end": 28,
+     "label": null,
+     "gist": "Monday is weekday 0; the repeat contains no judgement, only clone plus declared policy",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 32,
+     "end": 37,
+     "label": null,
+     "gist": "Graph model: Cycle to WeekTemplate to DayTemplate to BlockTemplate; PlannedWorkout INSTANTIATED_FROM DayTemplate",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 39,
+     "end": 43,
+     "label": null,
+     "gist": "Weekday 0 is Monday; instantiate_week refuses non-Monday week_start",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 45,
+     "end": 52,
+     "label": null,
+     "gist": "Day templates share BlockTemplates by reference; instantiation writes independent snapshot",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 54,
+     "end": 59,
+     "label": null,
+     "gist": "Exactly one WeekTemplate per mesocycle, enforced in code",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 61,
+     "end": 62,
+     "label": null,
+     "gist": "Rest day is absence of a day slot; set_day refuses empty day",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 66,
+     "end": 71,
+     "label": null,
+     "gist": "week_index is 0-based weeks from cycle start Monday, not count of instantiated weeks",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 73,
+     "end": 76,
+     "label": null,
+     "gist": "No fallback to most recent week with data; no previous week means nothing moves",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 82,
+     "end": 88,
+     "label": null,
+     "gist": "Whole-week pre-flight before any write; executed or non-active plans refuse; replace deletes only never-executed",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 89,
+     "end": 94,
+     "label": null,
+     "gist": "Per-day instantiation applies policy (absent means maintain) in one transaction per day, then mirrors",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 95,
+     "end": 100,
+     "label": null,
+     "gist": "No atomicity across days; failure on day N reported with created days, 500 with report",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 102,
+     "end": 112,
+     "label": null,
+     "gist": "Instantiation report shape is the entire audit",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 114,
+     "end": 118,
+     "label": null,
+     "gist": "changes produced by diffing prescription in versus out, not reported by policy",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 120,
+     "end": 124,
+     "label": null,
+     "gist": "Audit stored as JSON string on instantiation_changes, never prefixed onto notes",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 128,
+     "end": 134,
+     "label": null,
+     "gist": "save_day_as_template snapshots blocks as new unpinned BlockTemplates with source planned",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 136,
+     "end": 139,
+     "label": null,
+     "gist": "from-plans snapshots days whose plan prescribes something; others absent as rest days",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 141,
+     "end": 144,
+     "label": null,
+     "gist": "replace defaults false; existing template answers 409; overwrite never implicit",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 146,
+     "end": 160,
+     "label": null,
+     "gist": "Week snapshot all-or-nothing via detached staging template and single-transaction swap",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 162,
+     "end": 165,
+     "label": null,
+     "gist": "Replaced template's day-owned blocks swept after swap, outside transaction; failure leaks logged row",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 167,
+     "end": 170,
+     "label": null,
+     "gist": "delete_week_template removes day-owned blocks only; pinned/authored blocks and instantiated plans untouched",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 174,
+     "end": 181,
+     "label": null,
+     "gist": "Week template route contract, including 404 as normal state for untemplated mesocycle",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 185,
+     "end": 190,
+     "label": null,
+     "gist": "Creating a mesocycle is Brock's declaration; code never invents one from plan history",
+     "ruled_status": "ruled"
+    }
+   ]
+  },
+  {
+   "file": "workout-structure.md",
+   "status_line": {
+    "line": 4,
+    "text": "**Status:** Active  "
+   },
+   "decider_receipts": [],
+   "decisions": [
+    {
+     "start": 5,
+     "end": 5,
+     "label": null,
+     "gist": "Supersedes ADR-006 (Unified Workout Schema)",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 7,
+     "end": 13,
+     "label": null,
+     "gist": "Within-workout grouping is block; cycles never called block; live Postgres schema is ground truth",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 21,
+     "end": 42,
+     "label": null,
+     "gist": "Canonical hierarchy workout to blocks to sets with properties; all set fields nullable",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 46,
+     "end": 52,
+     "label": null,
+     "gist": "One sets table with nullable modality columns; discriminator/child-table pattern rejected",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 54,
+     "end": 56,
+     "label": null,
+     "gist": "Block is general-purpose container; no subtyping, block_type carries meaning",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 58,
+     "end": 71,
+     "label": null,
+     "gist": "Valid block_type vocabulary of eleven values",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 73,
+     "end": 76,
+     "label": null,
+     "gist": "BLOCK_TYPE_VOCAB enforced on every write path; new writes never NULL-typed; DB CHECK unruled",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 86,
+     "end": 100,
+     "label": null,
+     "gist": "Timed schemes captured as one extra.scheme object with closed kind and defined fields",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 102,
+     "end": 110,
+     "label": null,
+     "gist": "Scheme rules: never lists exercises, named workouts are circuit plus label, kind matches block_type, promotion rule",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 112,
+     "end": 117,
+     "label": null,
+     "gist": "Modality and block_type are orthogonal independent axes",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 119,
+     "end": 127,
+     "label": null,
+     "gist": "Deviation tracking computed via execution_vs_plan; no forced explanation at logging",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 129,
+     "end": 131,
+     "label": null,
+     "gist": "extra JSONB escape hatch; keys over 10 occurrences in quarterly audit promoted to columns",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 137,
+     "end": 150,
+     "label": null,
+     "gist": "workouts columns: duration_seconds not minutes, rpe not session_rpe, sport_type never sport; no extra column",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 154,
+     "end": 172,
+     "label": null,
+     "gist": "blocks columns as live; planned_segment_id legacy retire candidate; name/rounds/work_s/rest_s/notes do not exist",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 176,
+     "end": 198,
+     "label": null,
+     "gist": "sets columns; distance_m in meters canonical; pace dropped as column, rendered via render_pace",
+     "ruled_status": "ruled"
+    },
+    {
+     "start": 202,
+     "end": 208,
+     "label": null,
+     "gist": "Neo4j stores planning side, Postgres execution; workouts.plan_id links execution to plan",
+     "ruled_status": "ruled"
+    }
+   ]
+  }
+ ]
+}

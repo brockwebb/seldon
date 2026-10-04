@@ -1,0 +1,16 @@
+seq: 148
+event: amend
+id: seldon:AD-031-R1
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Every repository that registers CC tasks shall have a governed graph, built on commit per AD-030 R3, served with Squiddy's search. Arnold's tasks shall also search Squiddy's governed graph, because Arnold builds with Squiddy.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 5dc0b183466a8f48a9d2053bf578b024677acc73f45186ab150dbe348d142e7b
+record_hash: 97bbdb7244b000452e401b563be2b179f48eefe3c35f1297205ea33b392d68b4

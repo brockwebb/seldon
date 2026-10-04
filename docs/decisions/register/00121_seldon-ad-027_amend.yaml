@@ -1,0 +1,16 @@
+seq: 121
+event: amend
+id: seldon:AD-027
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The seldon.core.artifacts schema shall define a `snapshot: bool` artifact property, defaulting to false, declared on the `Script`, `DataFile`, and `PaperSection` types that carry `content_hash` with a path in research.yaml, representing that the artifact records a file as it stood at registration while the live file is expected to diverge from that recorded content_hash. The seldon.core.artifacts validator shall accept only a real Python bool for the `snapshot` property on both create and update. The CLI shall parse a `-p snapshot=true|false|1|0|yes|no` argument (case-insensitive) into a bool, and shall pass through any other literal unchanged so that the validator refuses it. When verify runs the drift comparison, the verify command shall skip snapshot artifacts from drift checking, shall exclude them from the tracked-file count N, and shall report them informationally in the same summary line in the form "All N tracked files in sync — K snapshot artifacts, drift not checked." The `--fix` command shall never compute or write a hash for a snapshot artifact, shall delegate to `paper sync`, and `sync_section` shall return a status of `snapshot` for a flagged artifact without computing or writing a hash; `paper sync` shall report the count of such artifacts. When a path resolves to a directory, the verify command shall report it as "N path(s) resolve to a directory (schema violation): <path> (<type> <id8>)", shall continue the check, and shall set the result to `fixable=False` unless real drift is also present.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: d51b4ca54773c0e1dd099415b497e25c301f6a2dfeab32fec5312124f1100724
+record_hash: 769782031f8dd3445ed5f795f180c2b38fed4358c8bc24b1dd2e517d3aad95ab

@@ -1,0 +1,37 @@
+seq: 71
+event: propose
+id: seldon:AD-032-FC-17
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-17. Consumption: constraints pushed, knowledge pulled.** Registration and dispatch refuse a task that cites no decision. The dispatcher pastes the task's bound, accepted decisions into its prompt and checks the spec hash on both the CLI and the MCP path. A read-only `decisions_for` verb answers what constrains a draft. Each task names its consumer and its stop condition. At today's size the whole active register goes to a separate validator call; retrieval waits until a context budget forces it.
+  - Status: proposed.
+  - Rationale: FC-01; C7; A:55, A:78; Seldon findings 1, 5 and 6 (A:166, A:170, A:171); stop conditions (G5:399).
+  - Check: a decision-to-consumer matrix gate with coverage at every release; the pre-registered agent-compliance probe at P2 exit (P:25).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 150
+  - 153
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-17. Consumption: constraints pushed, knowledge pulled.** Registration and dispatch refuse a task that cites no decision. The dispatcher pastes the task's bound, accepted decisions into its prompt and checks the spec hash on both the CLI and the MCP path. A read-only `decisions_for` verb answers what constrains a draft. Each task names its consumer and its stop condition. At today's size the whole active register goes to a separate validator call; retrieval waits until a context budget forces it.
+    - Status: proposed.
+    - Rationale: FC-01; C7; A:55, A:78; Seldon findings 1, 5 and 6 (A:166, A:170, A:171); stop conditions (G5:399).
+    - Check: a decision-to-consumer matrix gate with coverage at every release; the pre-registered agent-compliance probe at P2 exit (P:25).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-17
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: e35fa095889ceebb2be1b7f7e9f7cc03cdf6711eb2e179f9cda2062c41bc207b
+record_hash: cc73c49906301b3a79e631c91802d36d121bb36396cbad8d72227a61bd370858

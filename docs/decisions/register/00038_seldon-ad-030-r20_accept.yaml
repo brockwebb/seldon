@@ -1,0 +1,30 @@
+seq: 38
+event: accept
+id: seldon:AD-030-R20
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R20.** A governed document declares its canonical name in a `Name:` header field. The name is the graph identity used by `name`-keyed queries, `EXTENDS` recovery and the ruling ID prefix. When the field is absent, the derivation is the leading identifier of the file stem, with sorted-path-first-claim as the collision tiebreak; a derived name is never authoritative over a declared one. Every design note written from this ruling forward carries the field. Settles reconcile RESULT G2.'
+source:
+  path: docs/design/AD-030_implementation_findings_002.md
+  lines:
+  - 22
+  - 22
+  sha256: e2e44008f3ed8ac0c8c3ae5631fa3a519b6bee56dba832182da14833de2d5fb8
+  text: '**AD-030-R20.** A governed document declares its canonical name in a `Name:` header field. The name is the graph identity used by `name`-keyed queries, `EXTENDS` recovery and the ruling ID prefix. When the field is absent, the derivation is the leading identifier of the file stem, with sorted-path-first-claim as the collision tiebreak; a derived name is never authoritative over a declared one. Every design note written from this ruling forward carries the field. Settles reconcile RESULT G2.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_002.md
+  anchor: AD-030-R20
+consumer:
+- tests/test_governed.py
+- seldon/commands/governed.py
+- seldon/core/governed.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: da531a24bef8627d614ed2607c35943c864a522ab66ced675e890275551bcbc6
+record_hash: 31a6aa97113504ea951e4ff3cf011b3f0f3502f6f3b015c2581ef8cb9e9abe3b

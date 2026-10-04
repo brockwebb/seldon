@@ -1578,3 +1578,156 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------------------
+# The decision register (AD-033-R2): the MCP form of `seldon decision`
+# ---------------------------------------------------------------------------
+#
+# Desktop registers a design note's decisions in the same session that writes the note (AD-033
+# section 4). Every tool below calls the CLI's own `run_write` / `run_read`, so a refusal here is
+# the refusal the CLI gives, word for word. A refusal writes nothing.
+
+def _decision_project_path(project_dir: str) -> Path:
+    return Path(_project_path(project_dir))
+
+
+def _decision_write(project_dir: str, action: str, **kwargs) -> str:
+    from seldon.commands.decision import run_write
+    from seldon.core.decisions import RegisterError
+
+    p = _decision_project_path(project_dir)
+    try:
+        written = run_write(p, action, **kwargs)
+    except RegisterError as exc:
+        return f"REFUSED: {exc}"
+    lines = []
+    for w in written:
+        try:
+            lines.append(f"wrote {w.relative_to(p)}")
+        except ValueError:
+            lines.append(f"wrote {w}")
+    return "\n".join(lines)
+
+
+def _yaml_mapping(text: str, what: str) -> dict | None:
+    import yaml
+
+    if not text or not text.strip():
+        return None
+    data = yaml.safe_load(text)
+    if not isinstance(data, dict):
+        raise ValueError(f"{what} must be a YAML mapping")
+    return data
+
+
+def _receipts(text: str) -> list[str]:
+    return [r.strip() for r in (text or "").split("\n") if r.strip()]
+
+
+@mcp.tool()
+def seldon_decision_propose(record_yaml: str, decided_by: str, project_dir: str = ".",
+                            date: str = "", reason: str = "", receipts: str = "",
+                            operator_stated: bool = False) -> str:
+    """Register a new decision record as proposed (AD-033-R2, R4).
+
+    Args:
+        record_yaml: YAML mapping of the record's fields (id, kind, statement, source{path, lines,
+            sha256, text}, scope, rationale{path, anchor}, consumer or review_only, waits_on, ...).
+        decided_by: operator, desktop, cc:<task id>, or inherited:<repository>.
+        project_dir: Project root.
+        date: YYYY-MM-DD; default today.
+        reason: Why.
+        receipts: One receipt per line.
+        operator_stated: The operator stated it in his own words (requires receipts).
+    """
+    return _decision_write(project_dir, "propose", record=_yaml_mapping(record_yaml, "record_yaml"),
+                           decided_by=decided_by, date=date or None, reason=reason or None,
+                           receipts=_receipts(receipts), operator_stated=operator_stated)
+
+
+@mcp.tool()
+def seldon_decision_accept(decided_by: str, project_dir: str = ".", record_id: str = "",
+                           record_yaml: str = "", date: str = "", reason: str = "",
+                           receipts: str = "", operator_stated: bool = False) -> str:
+    """Register a new record accepted (record_yaml), or accept a proposed one (record_id).
+
+    Desktop decisions under L4 are accepted when registered (AD-033-R4).
+    """
+    return _decision_write(project_dir, "accept", qid=record_id or None,
+                           record=_yaml_mapping(record_yaml, "record_yaml"), decided_by=decided_by,
+                           date=date or None, reason=reason or None, receipts=_receipts(receipts),
+                           operator_stated=operator_stated)
+
+
+@mcp.tool()
+def seldon_decision_reject(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
+                           date: str = "", receipts: str = "") -> str:
+    """Reject a proposed record."""
+    return _decision_write(project_dir, "reject", qid=record_id, decided_by=decided_by,
+                           date=date or None, reason=reason, receipts=_receipts(receipts))
+
+
+@mcp.tool()
+def seldon_decision_deprecate(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
+                              date: str = "", receipts: str = "") -> str:
+    """Withdraw an active record with nothing replacing it."""
+    return _decision_write(project_dir, "deprecate", qid=record_id, decided_by=decided_by,
+                           date=date or None, reason=reason, receipts=_receipts(receipts))
+
+
+@mcp.tool()
+def seldon_decision_supersede(decided_by: str, project_dir: str = ".", record_yaml: str = "",
+                              record_id: str = "", superseded_by: str = "", date: str = "",
+                              reason: str = "", receipts: str = "",
+                              operator_stated: bool = False) -> str:
+    """Register a record that supersedes others (record_yaml naming `supersedes`), or declare
+    record_id superseded by an accepted record (superseded_by). A second supersession of a
+    superseded record is refused, naming the live head of its chain."""
+    return _decision_write(project_dir, "supersede", qid=record_id or None,
+                           record=_yaml_mapping(record_yaml, "record_yaml"),
+                           superseded_by=superseded_by or None, decided_by=decided_by,
+                           date=date or None, reason=reason or None, receipts=_receipts(receipts),
+                           operator_stated=operator_stated)
+
+
+@mcp.tool()
+def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
+                          clause: str = "", text: str = "", by: str = "", changes_yaml: str = "",
+                          date: str = "", receipts: str = "") -> str:
+    """Amend an active record's clause (clause + text, optionally by another record), change its
+    amendable fields (changes_yaml), or both."""
+    amendment = {"clause": clause, "text": text, "by": by or None} if (clause or text) else None
+    return _decision_write(project_dir, "amend", qid=record_id, decided_by=decided_by,
+                           date=date or None, reason=reason, receipts=_receipts(receipts),
+                           amendment=amendment, changes=_yaml_mapping(changes_yaml, "changes_yaml"))
+
+
+@mcp.tool()
+def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
+    """One record as its events say it stands now."""
+    from seldon.commands.decision import run_read
+    from seldon.core.decisions import RegisterError
+    try:
+        return run_read(_decision_project_path(project_dir), "show", qid=record_id)
+    except RegisterError as exc:
+        return f"Error: {exc}"
+
+
+@mcp.tool()
+def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "") -> str:
+    """List records of this repository and its imports, optionally by status or repository."""
+    from seldon.commands.decision import run_read
+    from seldon.core.decisions import RegisterError
+    try:
+        return run_read(_decision_project_path(project_dir), "list", status=status or None,
+                        repo=repo or None)
+    except RegisterError as exc:
+        return f"Error: {exc}"
+
+
+@mcp.tool()
+def seldon_decision_check(project_dir: str = ".") -> str:
+    """The register checks `seldon verify` fails on: chain, hashes, rationale, unregistered labels."""
+    from seldon.commands.decision import run_read
+    return run_read(_decision_project_path(project_dir), "check")

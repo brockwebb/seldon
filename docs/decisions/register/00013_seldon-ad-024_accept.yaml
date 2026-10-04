@@ -1,0 +1,50 @@
+seq: 13
+event: accept
+id: seldon:AD-024
+date: '2026-05-10'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-04-18_cc3_measurement_function_audit.md
+- cc_tasks/2026-04-18_cc5_sleep_function_architecture.md
+- cc_tasks/2026-04-18_phase_c_closure.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  **Observability is a substrate, not a feature. Every gate, every sleep function, every pipeline step that claims value must emit events to the substrate. The substrate is the primary evidence for retention, deprecation, and calibration decisions about Seldon, Wintermute, and related infrastructure.**
+
+  Concretely:
+  1. The CC4 dashboard + SQLite metrics store is the reference implementation of this substrate. Adjacent or future observability work extends this store; it does not build parallel stores.
+  2. Schema is insert-only, dot-notation metric names, JSON dimensions, versioned by `collected_by`. (See CC4 deliverable for full schema.)
+  3. New Seldon/Wintermute components are not considered complete unless they emit appropriate events to the substrate. This is a definition-of-done criterion, not a nice-to-have.
+  4. Decisions about component retention — whether a gate is catching violations, whether a function is producing signal, whether a pipeline is used — are made against substrate data when available, rather than qualitative recall.
+source:
+  path: docs/design/AD-024_observability_as_substrate.md
+  lines:
+  - 16
+  - 24
+  sha256: 0944a6c23d17d00f21ff28fa608e1c01bbc9ece31107c425bbf136f42a82543d
+  text: |-
+    ## Decision
+
+    **Observability is a substrate, not a feature. Every gate, every sleep function, every pipeline step that claims value must emit events to the substrate. The substrate is the primary evidence for retention, deprecation, and calibration decisions about Seldon, Wintermute, and related infrastructure.**
+
+    Concretely:
+    1. The CC4 dashboard + SQLite metrics store is the reference implementation of this substrate. Adjacent or future observability work extends this store; it does not build parallel stores.
+    2. Schema is insert-only, dot-notation metric names, JSON dimensions, versioned by `collected_by`. (See CC4 deliverable for full schema.)
+    3. New Seldon/Wintermute components are not considered complete unless they emit appropriate events to the substrate. This is a definition-of-done criterion, not a nice-to-have.
+    4. Decisions about component retention — whether a gate is catching violations, whether a function is producing signal, whether a pipeline is used — are made against substrate data when available, rather than qualitative recall.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-024_observability_as_substrate.md
+  anchor: AD-024
+consumer:
+- tests/test_verify_observability.py
+- seldon/commands/verify.py
+written_by: seldon decision 0.1.0
+prev_hash: fdc7cea6f799262fd3bc9970a9645489af801678f75f7932d27e5cbcda7382d1
+record_hash: 70bc8324fccf2831607242b6d55d8918cf91dc69be3ae8c5476662bd9a2fe182

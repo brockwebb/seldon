@@ -1,0 +1,16 @@
+seq: 191
+event: amend
+id: seldon:AD-033-R8
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: For each active record, one model call shall write the stand-alone statement from the verbatim source, and a separate validator call shall check that the source entails the statement and that nothing in the source's decision is dropped. If a record fails this check, then the record shall keep the verbatim text as its statement, flagged. The pass shall run through the Squiddy call layer under the DN-042 spend governor (SQ-009), with a 10-record pilot, a measured estimate, and a ceiling.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 24af3823e1179112b9dc42fa3124c48698365617b02f1f2f4e0537fc3da349f0
+record_hash: 8402e4f2fdb5dd2f700bd926d67260af464810359e9cdddca2d98276ef60d3f1

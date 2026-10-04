@@ -1,0 +1,37 @@
+seq: 72
+event: propose
+id: seldon:AD-032-FC-18
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-18. Supersession is declared; the conflicts probe stands.** Supersession and amendment are declared in one sentence-final form readable by Seldon (AD-030-R21, extended to Squiddy ids); nothing else counts. The read-only conflicts probe re-runs at every release and at P1 exit. A governing document may not cite an identifier the manifest records as nonexistent.
+  - Status: proposed.
+  - Rationale: K:75, K:80; A:85.
+  - Check: P1 exit reports zero open contradictions and zero silent supersessions among active decisions (P:24); a planted unresolvable identifier in a governing document fails release.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 155
+  - 158
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-18. Supersession is declared; the conflicts probe stands.** Supersession and amendment are declared in one sentence-final form readable by Seldon (AD-030-R21, extended to Squiddy ids); nothing else counts. The read-only conflicts probe re-runs at every release and at P1 exit. A governing document may not cite an identifier the manifest records as nonexistent.
+    - Status: proposed.
+    - Rationale: K:75, K:80; A:85.
+    - Check: P1 exit reports zero open contradictions and zero silent supersessions among active decisions (P:24); a planted unresolvable identifier in a governing document fails release.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-18
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: cc73c49906301b3a79e631c91802d36d121bb36396cbad8d72227a61bd370858
+record_hash: 6e217860c94be49db26b21944713c5f5fe9753aa407707aa2c9ddaddba8632e6

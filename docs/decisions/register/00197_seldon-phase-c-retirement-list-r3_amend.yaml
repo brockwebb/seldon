@@ -1,0 +1,16 @@
+seq: 197
+event: amend
+id: seldon:phase_c_retirement_list-R3
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The maintainer shall archive the Hermes Agent runtime file ~/.hermes/state.db and then remove the ~/.hermes/ runtime directory, while retaining the lestat_project_scope.md design document as historical context rather than treating it as a retirement target.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 25dc43db66bdf1a21b04bc953e77567f9b346047e0391e51829beaf595a04ef2
+record_hash: 57c092108361a37aa2742ea97d2ccac844c8226af66d36928b39e91921292363

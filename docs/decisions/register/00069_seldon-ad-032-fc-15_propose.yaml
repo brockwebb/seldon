@@ -1,0 +1,37 @@
+seq: 69
+event: propose
+id: seldon:AD-032-FC-15
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-15. Estimate versus actual, charted; lots and lanes.** Every job, nightly and weekly maintenance lanes included, records estimate, actual and their ratio. The release report charts the ratio as an individuals chart with control limits (FC-10). A large corpus runs in rate-limited lots: lot size is the number of units the remaining band absorbs at the measured rate, paced by the token bucket. Agent sessions are metered by a transcript reader as coverage beside the ledger, which stays the cost authority.
+  - Status: proposed.
+  - Rationale: FC-04; Wintermute adopted ccusage as its reference reader (G4:216); agent-session spend is unmeasured in Squiddy (G4:214); one brief pack metered 12.1M against a 4M estimate (G4:218).
+  - Check: conformance fails any job lacking estimate or actual; the chart appears in every release report; a lot planned beyond the remaining band is refused.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 138
+  - 141
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-15. Estimate versus actual, charted; lots and lanes.** Every job, nightly and weekly maintenance lanes included, records estimate, actual and their ratio. The release report charts the ratio as an individuals chart with control limits (FC-10). A large corpus runs in rate-limited lots: lot size is the number of units the remaining band absorbs at the measured rate, paced by the token bucket. Agent sessions are metered by a transcript reader as coverage beside the ledger, which stays the cost authority.
+    - Status: proposed.
+    - Rationale: FC-04; Wintermute adopted ccusage as its reference reader (G4:216); agent-session spend is unmeasured in Squiddy (G4:214); one brief pack metered 12.1M against a 4M estimate (G4:218).
+    - Check: conformance fails any job lacking estimate or actual; the chart appears in every release report; a lot planned beyond the remaining band is refused.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-15
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 264de491251890111023facc78e18ffe90ea71ce169772ffc4bbd20f735da690
+record_hash: dc83453acc391d25e09b5187305deca75cc51c4e2e1991df4b75e76c4cdea6c1

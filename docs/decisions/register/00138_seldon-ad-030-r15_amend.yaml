@@ -1,0 +1,16 @@
+seq: 138
+event: amend
+id: seldon:AD-030-R15
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If a reference lacks a year, a DOI, and 'et al.', then the citation extraction process shall treat it as a mentions candidate rather than a Citation. Design notes shall write every prior-art entry with at least a year. Where an AD-030 section 6 entry (INCOSE/SysML v2, DOORS/ReqIF, PROV-O, OpenCitations, ODK/ROBOT) lacks a year, the correction shall be made in the next design note that cites that entry rather than by editing AD-030.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: f05bed58a6e4cffab122c53252805f6e2164325782dd9e4e5840f9b92f479278
+record_hash: 1bf24afaece2788c8179c1f2b71830fe150f71627d293b8e39242629f0a9ca94

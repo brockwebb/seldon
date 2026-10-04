@@ -1,0 +1,16 @@
+seq: 184
+event: amend
+id: seldon:AD-033-R1
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Each repository that registers tasks (squiddy, seldon, arnold) shall keep its decision register under docs/decisions/register/ as one YAML file per record event, never edited, with the files in git serving as the record of truth. Seldon shall project these files into Decision nodes in that repository''s project graph and shall render docs/decisions/REGISTER.md as a generated file that is never hand-edited. Where a project reads another repository''s register, the project shall declare an import list in seldon.yaml (for example, decisions.import: [squiddy] for arnold), records shall stay in their home repository, and the importing graph shall hold pointers to them.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: f33a98cd9fb37599c450c598f7da04edf5b88657d377c99bb54f12232d5990b0
+record_hash: f6bf70e80851d407c7fbe361c59e19383bba96e594f81a1eedad2789e825e50c

@@ -1,0 +1,16 @@
+seq: 129
+event: amend
+id: seldon:AD-030-R5
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The document manifest shall be maintained in the graph, where every document considered is represented as a Document node from the moment it is cataloged, with states cataloged -> held -> admitted | declined. Declined Document nodes shall carry reason, date, and decided_by properties and shall never receive content edges. The YAML manifest shall be rendered from Document nodes and shall never be hand-edited. Reopening a declined document shall require a new decision node with a supersedes edge citing new evidence. The admission invariant shall be enforced as: no content edge shall exist without an admitted Document node.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: f2d00f95b12058bf3502a2914224f55e061c448831627ef876b96915e4f240d6
+record_hash: c0b399f15737861cd0d43058be5db620c0f766eaa60e34f817e09504340468ee

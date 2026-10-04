@@ -1,0 +1,198 @@
+id: https://github.com/brockwebb/seldon/decision_register
+name: decision_register
+title: the decision register (AD-033)
+description: >-
+  One record per decision event, one YAML file per event, kept in each repository under
+  `docs/decisions/register/` and never edited (AD-033-R1, R2). A file is an EVENT about one record:
+  the create forms (`propose`, `accept` of a new id, `supersede` naming new superseded targets)
+  carry the whole record; the transition forms (`accept` of a proposed id, `reject`, `deprecate`,
+  `supersede` with `superseded_by`) carry only the change; `amend` carries an amendment (a clause
+  of the record changed, by whom) and/or field changes (Part E's stand-alone statement lands this
+  way). Status is never edited: it is derived by folding a record's events in sequence (AD-033-R4).
+
+  THE CHAIN. Every file carries `prev_hash` (the previous file's `record_hash` in that repository,
+  64 zeros for the first) and `record_hash` (sha256 over the file's data minus `record_hash`, the
+  canonical JSON form of Squiddy DN-041's decision log: sort_keys, ensure_ascii false). The file's
+  bytes must also equal the canonical serialization of its data, so any edit, even one that
+  leaves the data equal, is caught.
+
+  WHY LINKML AND A SMALL READER. The governed-documents template states its schema in LinkML
+  (`governed/schema/governed.yaml`), so this register does too (SEL-002 step 1). Seldon does not
+  depend on linkml-runtime (its install pulls a large tree for one validation), so
+  `seldon.core.decisions` reads the subset this file uses (classes, slots, `required`, `range`
+  enums, `multivalued`) and validates against it. A slot or enum added here is enforced without a
+  code change; a construct outside that subset is refused at load, never silently ignored.
+
+  Prior art: Nygard 2011 (one record per decision, never rewritten); MADR 4.0.0 (status
+  vocabulary, decision-makers); Kruchten 2004 (typed relations, cut to the four the probe needed);
+  EIA-649C (baseline and change control); Squiddy DN-041 R-174 (the hash chain).
+version: 0.1.0
+license: MIT
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  register: https://github.com/brockwebb/seldon/decision_register/
+default_prefix: register
+default_range: string
+
+imports:
+  - linkml:types
+
+enums:
+  RegisterEvent:
+    description: The closed list of what one register file can say (AD-033-R2).
+    permissible_values:
+      propose: {description: "A new record, status proposed (it waits on a named measurement, R4)."}
+      accept: {description: "A new record accepted when registered, or a proposed record accepted."}
+      reject: {description: "A proposed record rejected."}
+      supersede: {description: "A new record that supersedes active ones, or an active record declared superseded by another."}
+      amend: {description: "An amendment to an active record's clause, or a change to one of its amendable fields."}
+      deprecate: {description: "An active record withdrawn with nothing replacing it."}
+  DecisionKind:
+    description: AD-033-R3.
+    permissible_values:
+      decision: {description: "A choice or a rule."}
+      requirement: {description: "A numbered requirement (EX-REQ)."}
+      mirror: {description: "A row that points at the record it mirrors and carries no statement of its own (FC-16)."}
+  DecisionStatus:
+    description: MADR 4.0's statuses (AD-033-R4). Only `accepted` binds.
+    permissible_values:
+      proposed: {}
+      accepted: {}
+      rejected: {}
+      deprecated: {}
+      superseded: {}
+  ReviewOnly:
+    description: >-
+      AD-033-R6's closed list, for a record no conformance item, test or code cites.
+    permissible_values:
+      rationale: {description: "Explains; binds nothing."}
+      pre_registration: {description: "Consumed by the task that ran it."}
+      dispatch: {description: "To be consumed at dispatch once FC-17 exists."}
+      none: {description: "No consumer yet. Allowed at DB-1 and counted."}
+  ControlType:
+    description: FC-08 (AD-032).
+    permissible_values:
+      control: {description: "Stops the process on violation."}
+      warning: {description: "Only alerts; the record states why a stop is impossible or harmful."}
+  StatementCheck:
+    description: AD-033-R8, the validator call's verdict on a written statement.
+    permissible_values:
+      passed: {}
+      failed: {}
+
+slots:
+  seq: {range: integer, description: "Position in this repository's register, from 1."}
+  event: {range: RegisterEvent}
+  id:
+    description: >-
+      Repository-qualified, in the repository's native scheme: `squiddy:R-112`, `squiddy:DI-020`,
+      `squiddy:EX-REQ-02`, `squiddy:DN-037-R1`, `seldon:AD-030-R21`, `seldon:AD-032-FC-04`,
+      `arnold:ADR-017`, `arnold:intensity-constructs-B1` (AD-033-R3).
+  date: {description: "ISO date the decision was taken or the event recorded (YYYY-MM-DD)."}
+  decided_by: {description: "operator, desktop, cc:<task id>, or inherited:<repository> (AD-033-R3)."}
+  operator_stated: {range: boolean, description: "True only with a receipt: the source names the operator as decider, or a handoff or notebook quotes him."}
+  receipts: {multivalued: true, description: "Where the decision or the event is evidenced: path and anchor, finding id with its quote."}
+  reason: {description: "Why this event: the finding ids and quotes it applies, or the grounding."}
+  kind: {range: DecisionKind}
+  status: {range: DecisionStatus, description: "The status at creation. Later status is derived (R4), never written here again."}
+  statement: {description: "Stand-alone; EARS when it states behavior, one declarative sentence otherwise (R3). Verbatim body at DB-1 seed."}
+  source: {range: Source}
+  scope: {multivalued: true, description: "Repositories (and `repository:graph`) the record binds."}
+  scope_note: {description: "A scope narrower than the repositories, in words (for example: served components at runtime)."}
+  rationale: {range: Rationale}
+  consumer: {multivalued: true, description: "Conformance items, tests and code that cite the id (R6), as repository-relative paths or item ids."}
+  review_only: {range: ReviewOnly}
+  waits_on: {description: "For a proposed record: the named measurement or phase it waits on (R4)."}
+  supersedes: {multivalued: true, description: "Ids this record supersedes (create form of `supersede`)."}
+  superseded_by: {description: "The active record that supersedes this one (transition form of `supersede`)."}
+  amends: {multivalued: true, range: Amends, description: "Clauses of other records this record amends, at creation."}
+  mirrors: {description: "The record a `mirror` points at (FC-16)."}
+  constrains: {multivalued: true, description: "Ids this record constrains (Kruchten 2004)."}
+  control_type: {range: ControlType}
+  pattern: {description: "The factory design pattern a control record applies (FC-07)."}
+  amendment: {range: Amendment}
+  changes: {range: Changes}
+  written_by: {description: "The command and version that wrote the file."}
+  prev_hash: {description: "The previous file's record_hash in this repository; 64 zeros for the first."}
+  record_hash: {description: "sha256 of this file's data without record_hash (DN-041's form)."}
+  # nested
+  path: {description: "Repository-relative path."}
+  lines: {range: integer, multivalued: true, description: "First and last line, 1-based, inclusive."}
+  sha256: {description: "sha256 of the whole source file at the baseline commit or at registration."}
+  text: {description: "The verbatim span. The full body, never the heading alone."}
+  anchor: {description: "Heading, label or row id inside the file."}
+  target: {description: "The record whose clause is amended."}
+  clause: {description: "Which part of the record: a sentence, an item, a field, or `whole record`."}
+  by: {description: "The record that makes the amendment, when one does; absent when the amendment is this event's own."}
+  statement_check: {range: StatementCheck}
+
+classes:
+  Source:
+    slots: [path, lines, sha256, text]
+    slot_usage:
+      path: {required: true}
+      lines: {required: true}
+      sha256: {required: true}
+      text: {required: true}
+  Rationale:
+    slots: [path, anchor]
+    slot_usage:
+      path: {required: true}
+  Amends:
+    slots: [target, clause]
+    slot_usage:
+      target: {required: true}
+      clause: {required: true}
+  Amendment:
+    slots: [clause, text, by]
+    slot_usage:
+      clause: {required: true}
+      text: {required: true}
+  Changes:
+    description: >-
+      The amendable fields. Anything else on a record is fixed at creation: a different source,
+      id or date is a different record.
+    slots: [statement, statement_check, kind, mirrors, scope, scope_note, consumer, review_only, rationale]
+
+  RegisterFile:
+    description: Every field any event may carry. The event classes below say which are required.
+    slots: [seq, event, id, date, decided_by, operator_stated, receipts, reason, kind, status,
+            statement, source, scope, scope_note, rationale, consumer, review_only, waits_on,
+            supersedes, superseded_by, amends, mirrors, constrains, control_type, pattern,
+            amendment, changes, written_by, prev_hash, record_hash]
+    slot_usage:
+      seq: {required: true}
+      event: {required: true}
+      id: {required: true}
+      date: {required: true}
+      decided_by: {required: true}
+      operator_stated: {required: true}
+      written_by: {required: true}
+      prev_hash: {required: true}
+      record_hash: {required: true}
+
+  DecisionRecord:
+    description: >-
+      The create form: a new id with every field AD-033-R3 requires. `statement` is required
+      unless `kind` is mirror, and a mirror requires `mirrors`; one of `consumer` (non-empty) or
+      `review_only` is required. Those three conditionals are checked in code, named here.
+    is_a: RegisterFile
+    slot_usage:
+      kind: {required: true}
+      source: {required: true}
+      status: {required: true}
+      scope: {required: true}
+      rationale: {required: true}
+
+  Transition:
+    description: accept (of a proposed id), reject, deprecate, or supersede naming `superseded_by`.
+    is_a: RegisterFile
+    slot_usage:
+      reason: {required: true}
+
+  Amend:
+    description: An amendment, field changes, or both; at least one is required (checked in code).
+    is_a: RegisterFile
+    slot_usage:
+      reason: {required: true}

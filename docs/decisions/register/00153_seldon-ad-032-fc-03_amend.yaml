@@ -1,0 +1,16 @@
+seq: 153
+event: amend
+id: seldon:AD-032-FC-03
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: While the development and test phases are underway, the decision backlog review process shall follow those phases, except that read-only probes may run at any time; no decision register record shall change status before P1 opens, and probe output shall land outside every repository.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 9dc2677e6ed141be59f29dd17413bfa945649aa1b81a97b06a64f44c49b56cc1
+record_hash: 5b624ebf8fe1a0669b7bddcd0490bdb3b6b804f669f2585cbfb901c96982436d

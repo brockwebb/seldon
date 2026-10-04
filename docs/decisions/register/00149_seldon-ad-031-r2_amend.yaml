@@ -1,0 +1,16 @@
+seq: 149
+event: amend
+id: seldon:AD-031-R2
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: During task registration, the registration process shall retrieve rulings relevant to the task's text regardless of whether the task cites them. If Phase 1 earns it, the registration process shall send the top-k candidate rulings to a validator call that is separate from the author, and the validator shall return a verdict of constrains, conflicts, or unrelated for each ruling along with the ruling's located receipt. If the validator returns a conflicts verdict, then the registration process shall refuse registration unless the task names the ruling and supersedes it via AD-030 R5's path. If the validator returns a constrains verdict, the registration process shall write constrained_by edges.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 97bbdb7244b000452e401b563be2b179f48eefe3c35f1297205ea33b392d68b4
+record_hash: 009efff39537996be0a99775f9ff2bc08537a9780e7f5953f05108713d51aad7

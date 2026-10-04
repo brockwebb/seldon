@@ -1,0 +1,16 @@
+seq: 155
+event: amend
+id: seldon:AD-032-FC-05
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The project team shall build a central message board for agents as its own distinct component, with measurement established around it, for the purpose of cross-project, cross-solution knowledge exchange.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: e76ae638f167818398ad5d1f358c0477bd2352bcd001ce2e3c19d0ab7a9f6c16
+record_hash: 74618a21d785340aa297f43d382d5bee8f5d7e7f28ba96241d1d7301ccef7635

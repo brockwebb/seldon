@@ -1,0 +1,37 @@
+seq: 79
+event: propose
+id: seldon:AD-032-FC-25
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-25. The why verb.** `squiddy why <id>` (CLI and MCP) returns the chain from a node to its source bytes, extractor and run, authorizing decision and actor.
+  - Status: proposed.
+  - Rationale: A:38, A:48.
+  - Check: `why` resolves end to end on 30 random nodes (P:22).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 192
+  - 195
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-25. The why verb.** `squiddy why <id>` (CLI and MCP) returns the chain from a node to its source bytes, extractor and run, authorizing decision and actor.
+    - Status: proposed.
+    - Rationale: A:38, A:48.
+    - Check: `why` resolves end to end on 30 random nodes (P:22).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-25
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 7ff4659c862d1a8058671c4f5f8fb3e409adee66f2eaf7d22ec70eee3333b931
+record_hash: 0284cf6057766c8f367a940119432be053db90235b5674eeb0beea07596b2c2b

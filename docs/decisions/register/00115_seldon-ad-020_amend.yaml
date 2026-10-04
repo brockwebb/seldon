@@ -1,0 +1,16 @@
+seq: 115
+event: amend
+id: seldon:AD-020
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The review pipeline shall consist of three sequential tiers: Tier 1 Correctness Audit (AD-019), Tier 2 Primary Reader Gates (Practitioner Stress Test and Cognitive Depth Check run as separate passes), and Tier 3 Secondary Lens Sweep (a single consolidated pass applying narrative structure, clarity/jargon audit, visual/spatial gaps, and motivational framing lenses, blended into one output rather than run as separate agents). The pipeline shall converge all tier findings into a single synthesis document that groups findings by topic cluster rather than by gate, tags each finding with its source lens, pre-synthesizes related findings into 4-6 actionable clusters each with a suggested action scope, orders clusters by lens-convergence impact, and structures each cluster as self-contained for serial processing by the author.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 85598b69f0af556df37c556d126449a25eb0193993b7cc81f355de3335bc72ad
+record_hash: 267d5e7b305acf9c3cf9cf376f24cb55d95feb7cbb34b9ec108805ad3ccddc6e

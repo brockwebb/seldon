@@ -1,0 +1,16 @@
+seq: 143
+event: amend
+id: seldon:AD-030-R20
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: A governed document shall declare its canonical name in a `Name:` header field, which serves as the graph identity used by name-keyed queries, EXTENDS recovery, and the ruling ID prefix. If the `Name:` field is absent, then the name shall be derived from the leading identifier of the file stem, with sorted-path-first-claim as the collision tiebreak, and a derived name shall never be authoritative over a declared name. Every design note written from AD-030-R20 forward shall carry the `Name:` field.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 3a29f504e360592e60fd3b5005bcc1b0cdf8ef31dba48929aeab24e1b0808390
+record_hash: 8d442449b5d5836074e34581a77fceb19ffe84650b2eed6602a733d5da1f9f26

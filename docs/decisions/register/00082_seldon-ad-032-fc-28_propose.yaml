@@ -1,0 +1,37 @@
+seq: 82
+event: propose
+id: seldon:AD-032-FC-28
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-28. Andon.** Any gate, task agent, orchestrator or the operator may stop the line on an out-of-spec reading, by gate kill or by touching `STOP`. In-flight work lands, an incident record is written, and the stop waits on nobody. A pull is never counted against the puller.
+  - Status: proposed.
+  - Rationale: jidoka (Ohno 1988); R-103 and conformance item 25 (G5:458, G5:460).
+  - Check: in test, an agent-issued stop on a planted out-of-spec reading halts the line within one item and writes an incident.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 211
+  - 214
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-28. Andon.** Any gate, task agent, orchestrator or the operator may stop the line on an out-of-spec reading, by gate kill or by touching `STOP`. In-flight work lands, an incident record is written, and the stop waits on nobody. A pull is never counted against the puller.
+    - Status: proposed.
+    - Rationale: jidoka (Ohno 1988); R-103 and conformance item 25 (G5:458, G5:460).
+    - Check: in test, an agent-issued stop on a planted out-of-spec reading halts the line within one item and writes an incident.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-28
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 767bcf3d327b5427f58d45cd07d779f967f1a3b50a9fab99013de9877522c0a3
+record_hash: 4c24381d595cb6dc3fe66c8adec3685c65a36b6491029e5a36eada7beba38b39

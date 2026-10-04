@@ -1,0 +1,19 @@
+seq: 92
+event: amend
+id: seldon:AD-030-R16
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- 'probe F05: AD-030-R21 (seldon/docs/design/AD-030_implementation_findings_002.md:24): "Supersession is declared, not inferred."'
+- 'probe F05: AD-030-R21 (seldon/docs/design/AD-030_implementation_findings_002.md:24): "Nothing else is read as supersession."'
+- 'probe F05: R-160 (squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:51): "(revises R-152)"'
+- 'probe F05: AD-031-R1 (seldon/docs/design/AD-031_rulings_reach_the_task_by_retrieval.md:50): "Arnold''s tasks also search Squiddy''s governed graph"'
+reason: 'Probe F05 (CROSS-REPO): Adopt AD-030-R21 form in Squiddy (a sentence-final "Supersedes DN-0xx-R-nn." line per superseding decision, ids qualified by DN) or extend AD-030-R16/R21 patterns to Squiddy''s R-NN and its verbs; then back-annotate the explicit cases in this report.'
+amendment:
+  clause: its binding role
+  text: 'In a repository with a decision register, positional Rulings stop binding; registration binds accepted `Decision` records (AD-033-R7: ''Supersedes the binding role of AD-030-R16''). R16 stays in force for prose readers.'
+  by: seldon:AD-033-R7
+written_by: seldon decision 0.1.0
+prev_hash: e23b9d6b94f6a2ad94847fd5952bd57e3a1751de0c9df02aa99b1a4908bffd28
+record_hash: f938fea840b229aeccc78632dfaecfce28b3fb18e8123426439bb9ef37f48339

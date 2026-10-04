@@ -764,7 +764,16 @@ def constraining_rulings(
         refused as non-binding is dropped from the matches too, so what is reported is what was
         written.
     """
-    from seldon.core import governed
+    from seldon.core import decisions, governed
+
+    # AD-033-R7: once the repository keeps a decision register, registration binds accepted
+    # `Decision` records only (its own and its imports'), labelled advisory until SEL-003 picks
+    # the binding mechanism. Positional Rulings stay searchable content and bind nothing here.
+    if decisions.register_exists(project_dir, config):
+        return bind_decisions(project_dir=project_dir, config=config, driver=driver,
+                              database=database, domain_config=domain_config,
+                              task_text=task_path.read_text(encoding="utf-8", errors="replace"),
+                              task_id=task_id, session_id=session_id, dry_run=dry_run)
 
     rulings = governed.read_rulings(driver, database)
     if not rulings:
@@ -788,6 +797,60 @@ def constraining_rulings(
     return matches, written
 
 
+def bind_decisions(*, project_dir: Path, config: dict, driver, database: str, domain_config,
+                   task_text: str, task_id: str, session_id: str | None,
+                   dry_run: bool = False) -> tuple[list, int]:
+    """Bind a task to the accepted decision records its text names or overlaps (AD-033-R7).
+
+    The match is :func:`seldon.core.decisions.bind`: identifiers first, across imports (an Arnold
+    task naming `R-112` or `squiddy:R-112` resolves to Squiddy's record), then Seldon's overlap
+    score unchanged. An edge is written to the record's projected `Decision` node, and only to an
+    accepted one: the node's state is read at the moment of the write, so a stale caller cannot
+    bind a superseded record (the R-29 case, AD-033 section 1).
+
+    Returns:
+        `(matches, edges_written)`. A match whose record is not projected into this graph yet is
+        reported with no edge; `seldon decision project` projects it.
+    """
+    from seldon.core import decisions, governed
+
+    u = decisions.universe(project_dir, config)
+    matches = decisions.bind(u, task_text, governed.ruling_match_threshold(config))
+    if not matches or dry_run:
+        return matches, 0
+    with driver.session(database=database) as session:
+        nodes = {r["q"]: (r["aid"], r["st"]) for r in session.run(
+            "MATCH (d:Artifact:Decision) WHERE d.decision_id IN $ids "
+            "RETURN d.decision_id AS q, d.artifact_id AS aid, d.state AS st",
+            ids=[m.id for m in matches]).data()}
+    written = 0
+    kept = decisions.Bound()
+    for m in matches:
+        aid, state = nodes.get(m.id, (None, None))
+        if aid is None:
+            m.match_method += " (not projected; run `seldon decision project`)"
+            kept.append(m)
+            continue
+        if state != decisions.BINDING:
+            # The register and the graph disagree about this record; the graph's state is what the
+            # edge would assert, and it does not bind. Refused, never written.
+            continue
+        kept.append(m)
+        if governed._link_exists(driver, database, task_id, aid, "constrained_by"):
+            continue
+        props = {"match_method": m.match_method}
+        if m.match_score is not None:
+            props["match_score"] = m.match_score
+        if m.matched_terms:
+            props["matched_terms"] = m.matched_terms[:12]
+        governed._create_link(project_dir=project_dir, driver=driver, database=database,
+                              domain_config=domain_config, from_id=task_id, to_id=aid,
+                              from_type="ResearchTask", to_type="Decision", rel_type="constrained_by",
+                              session_id=session_id, rel_properties=props)
+        written += 1
+    return kept, written
+
+
 def render_rulings(matches: list, written: int) -> str:
     """Render matched rulings for a CLI or MCP response.
 
@@ -798,6 +861,11 @@ def render_rulings(matches: list, written: int) -> str:
     Returns:
         Multi-line text, or a one-line note when nothing matched.
     """
+    from seldon.core.decisions import Bound, DecisionMatch, render_binding
+
+
+    if isinstance(matches, Bound) or (matches and isinstance(matches[0], DecisionMatch)):
+        return render_binding(matches, written)
     if not matches:
         return ("No ruling in the graph constrains this task. If that is wrong, the ruling is "
                 "not ingested — run `seldon governed sync`.")

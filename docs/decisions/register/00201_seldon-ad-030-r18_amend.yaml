@@ -1,0 +1,17 @@
+seq: 201
+event: amend
+id: seldon:AD-030-R18
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+- evidence/sel002/statements/apply.json
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): re-landed. The validator passed this statement; the write path''s first deictic pattern refused it on a comparative (''at or above'', ''below the floor''), which is not a pointer to other text. First refusal: a statement names no other record by position (AD-033-R3): ''above'' in "When a backfill registers counts, the graph shall record those counts as run outputs with'
+changes:
+  statement: When a backfill registers counts, the graph shall record those counts as run outputs with status 'proposed'. When verification of a governed backfill is performed, the subject shall re-run the sync and then run 'seldon result verify'. If a mismatch occurs during verification, then the subject shall follow AD-028 stale handling. The governed_document_nodes count is stale, with 97 registered and 98 on disk. No count from a governed backfill shall be quoted in a handoff or design note above 'proposed' status until verified.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 4c68399d98a7d0566db15af4722f3c57f1356a4b1fcc8d15c9737acc31ab66db
+record_hash: d97dc4c2cd442e91493eb5148a88691d911141a641a7f41265526dd83f7560f5

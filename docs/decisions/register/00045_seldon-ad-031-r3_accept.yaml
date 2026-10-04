@@ -1,0 +1,42 @@
+seq: 45
+event: accept
+id: seldon:AD-031-R3
+date: '2026-10-02'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-02_SEL-001_ad031_phase1_governed_graphs_retrieval_tevv.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-031-R3. Phase 1 measures retrieval before anything is wired** (SEL-001). Phase 2 is designed only on Phase 1's
+    numbers. Two arms, on the same gold sets:
+    - **arm O:** the existing concept-overlap binding, as registration runs it today;
+    - **arm H:** Squiddy's hybrid `search`.
+
+    If O meets the bar, nothing new is built: Squiddy and Arnold get governed graphs and the existing mechanism.
+source:
+  path: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+  lines:
+  - 59
+  - 64
+  sha256: 6d9469d7893f8b8e65a1cf845278a5ad9ed585b06c706f7c8897157693a57762
+  text: |-
+    - **AD-031-R3. Phase 1 measures retrieval before anything is wired** (SEL-001). Phase 2 is designed only on Phase 1's
+      numbers. Two arms, on the same gold sets:
+      - **arm O:** the existing concept-overlap binding, as registration runs it today;
+      - **arm H:** Squiddy's hybrid `search`.
+
+      If O meets the bar, nothing new is built: Squiddy and Arnold get governed graphs and the existing mechanism.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+  anchor: AD-031-R3
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: ee8a01357a6142048f34c20b465f9b88061ceb8294da0781d09793ece3792154
+record_hash: 40bade4ba04b7926bfc975dcf2223876e6d662be8b774bafad67f59accbdaa28

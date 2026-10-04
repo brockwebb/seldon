@@ -1,0 +1,52 @@
+seq: 47
+event: accept
+id: seldon:AD-033-R2
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R2. One write path, control-type at the source.** Records are written only by `seldon decision`
+    (CLI and MCP): `propose`, `accept`, `reject`, `supersede`, `amend`, `deprecate`, `show`, `list`, `check`. The
+    command validates before writing and refuses: a missing required field; an id already used; a `supersedes` or
+    `amends` target that does not exist or is not active; a second supersession of an already superseded record
+    (forked chain; the refusal names the live head). Each file carries `prev_hash` (the previous record in that
+    repository) and `record_hash`. `seldon verify` fails a file the command did not write (broken chain, hash
+    mismatch) and a labeled decision in a new design note that has no record. Desktop calls the MCP form, so
+    registering a decision is part of writing the note, not a later step.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 116
+  - 124
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R2. One write path, control-type at the source.** Records are written only by `seldon decision`
+      (CLI and MCP): `propose`, `accept`, `reject`, `supersede`, `amend`, `deprecate`, `show`, `list`, `check`. The
+      command validates before writing and refuses: a missing required field; an id already used; a `supersedes` or
+      `amends` target that does not exist or is not active; a second supersession of an already superseded record
+      (forked chain; the refusal names the live head). Each file carries `prev_hash` (the previous record in that
+      repository) and `record_hash`. `seldon verify` fails a file the command did not write (broken chain, hash
+      mismatch) and a labeled decision in a new design note that has no record. Desktop calls the MCP form, so
+      registering a decision is part of writing the note, not a later step.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R2
+consumer:
+- tests/test_decision_register.py
+- seldon/commands/decision.py
+- seldon/commands/verify.py
+- seldon/core/decisions.py
+- seldon/domain/decision_register.yaml
+- seldon/mcp_server.py
+written_by: seldon decision 0.1.0
+prev_hash: f24eaf4bcc8e0a1b00cae129932b75710e89be8a7dfdef9dc83293489594f339
+record_hash: 9d04bd11c9f8abec760f69bfea57f93fc69778b263ba4bb0fc7df95ab80344fb

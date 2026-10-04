@@ -1,0 +1,37 @@
+seq: 75
+event: propose
+id: seldon:AD-032-FC-21
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-21. Envelope v2.** One `make_event` writes every event with actor {kind, id, session}; code {kit_sha, graph_sha, dirty, tool_sha256}; authorization {decision_id, task_id}; correlation and causation ids; `prev_hash` and `event_hash`. Every child run carries `SELDON_TASK_ID`.
+  - Status: proposed.
+  - Rationale: C6; A:34, A:44; Seldon finding 7 (A:172).
+  - Check: every run joins its Seldon task (P:22); a planted event without an actor fails append.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 172
+  - 175
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-21. Envelope v2.** One `make_event` writes every event with actor {kind, id, session}; code {kit_sha, graph_sha, dirty, tool_sha256}; authorization {decision_id, task_id}; correlation and causation ids; `prev_hash` and `event_hash`. Every child run carries `SELDON_TASK_ID`.
+    - Status: proposed.
+    - Rationale: C6; A:34, A:44; Seldon finding 7 (A:172).
+    - Check: every run joins its Seldon task (P:22); a planted event without an actor fails append.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-21
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: da37f115caac707035687a8abe0515bf1ebcc50542ca7acf736f85c2c73344ac
+record_hash: 714fd0a3c5c5f4c4f3207d413ed0273551698b8c23bfe708a2306aa784416245

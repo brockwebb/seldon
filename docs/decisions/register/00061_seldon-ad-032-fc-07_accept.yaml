@@ -1,0 +1,37 @@
+seq: 61
+event: accept
+id: seldon:AD-032-FC-07
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:46: "- Status: accepted (operator, 2026-10-02/03)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-07. Japanese production methods are the front-line design patterns of the factory.**
+  - Status: accepted (operator, 2026-10-02/03).
+  - Check: every control record in the register names its pattern (FC-16 field `pattern`); section 4 maps each pattern to its mechanism.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 45
+  - 47
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-07. Japanese production methods are the front-line design patterns of the factory.**
+    - Status: accepted (operator, 2026-10-02/03).
+    - Check: every control record in the register names its pattern (FC-16 field `pattern`); section 4 maps each pattern to its mechanism.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-07
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: a75e5d56d1ae7b5525c8d22ca922e6f53580577cc48970a6fefbdc45cd203da2
+record_hash: 456ed5f6ec9a3a3241496376f4116cba09f5211a989fc6304308eb006a94a9ee

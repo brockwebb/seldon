@@ -1,0 +1,252 @@
+[
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-242",
+  "by": null,
+  "clause": null,
+  "operator_stated": true,
+  "receipt": "docs/DECISIONS_INHERITED.md:511: \"| DI-242 | DN-030 R-137; the operator's rule of 2026-09-12 (the manifest is the inventory of every document ever considered, declines with reaso...\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-158",
+  "by": "squiddy:DI-260",
+  "clause": "the public allowlist at release",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:R-152",
+  "by": "squiddy:R-160",
+  "clause": "lookup labels",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:R-153",
+  "by": "squiddy:R-161",
+  "clause": "the revised clause",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-152",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-153",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-154",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-155",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-156",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-157",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-158",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-159",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F20",
+  "op": "amend",
+  "target": "squiddy:R-83",
+  "by": "squiddy:R-114",
+  "clause": "item 4 (the verb gate)",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F21",
+  "op": "amend",
+  "target": "arnold:ADR-017",
+  "by": null,
+  "clause": "scope",
+  "operator_stated": true,
+  "receipt": "docs/adr/017-local-first-models.md:5: \"**Deciders:** Brock Webb\"",
+  "why_listed": "target operator-stated; AD-033 section 5 names it"
+ },
+ {
+  "finding": "F25",
+  "op": "amend",
+  "target": "squiddy:R-46",
+  "by": "squiddy:R-125",
+  "clause": "'every future harness use it'",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-20_checkpointing_one_call_runner.md:3: \"Desktop session. Rulings continue from R-45. The operator's instruction, verbatim in substance: we\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F25",
+  "op": "amend",
+  "target": "squiddy:R-47",
+  "by": "squiddy:R-125",
+  "clause": "the check on calls outside the runner",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-20_checkpointing_one_call_runner.md:3: \"Desktop session. Rulings continue from R-45. The operator's instruction, verbatim in substance: we\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F28",
+  "op": "deprecate",
+  "target": "seldon:AD-023",
+  "by": null,
+  "clause": null,
+  "operator_stated": true,
+  "receipt": "docs/design/AD-023_wintermute_sleep_functions.md:29: \"**Commodity capture is explicitly OUT of Wintermute's core.** Per operator decision 2026-04-18, **claude-mem is adopted (Option A)** as the capture layer. Wintermute consumes claude-m...\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F30",
+  "op": "amend",
+  "target": "squiddy:R-41",
+  "by": null,
+  "clause": "the prior-art citation",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-20_internal_prior_art_packs_anchors.md:3: \"Desktop session. Rulings continue from R-39. Written after the operator said, correctly, that\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-44",
+  "by": "squiddy:R-60",
+  "clause": "the ranking clause (usable claims per million tokens)",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-20_balcony_claim_quality_protocol.md:3: \"Desktop session. Rulings continue from R-42. The operator asked for a step back: weigh everything\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-43",
+  "by": "squiddy:R-49",
+  "clause": "the decontextualization dimension",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-20_balcony_claim_quality_protocol.md:3: \"Desktop session. Rulings continue from R-42. The operator asked for a step back: weigh everything\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F35",
+  "op": "amend",
+  "target": "squiddy:R-80",
+  "by": "squiddy:R-107",
+  "clause": "re-extraction of the 525 as the first spend (library)",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F35",
+  "op": "amend",
+  "target": "squiddy:R-81",
+  "by": "squiddy:R-97",
+  "clause": "the daemon runs arm C as its protocol (library)",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F38",
+  "op": "amend",
+  "target": "squiddy:R-180",
+  "by": null,
+  "clause": "the check (cache reads on calls 2 to 5)",
+  "operator_stated": true,
+  "receipt": "docs/design/2026-10-04_DN-042_spend_governor_reserve_bands_measured_estimates.md:3: \"**Date:** 2026-10-04. **Status:** accepted (operator decisions of 2026-10-03, recorded in\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F42",
+  "op": "amend",
+  "target": "arnold:ADR-013",
+  "by": "arnold:ADR-013-A01",
+  "clause": "R2's wording 'microcycle = ~1 wk scheduling unit'",
+  "operator_stated": true,
+  "receipt": "docs/adr/013-canonical-training-vocabulary.md:4: \"**Status:** Accepted (Brock, 2026-06-27)\"",
+  "why_listed": "target operator-stated"
+ },
+ {
+  "finding": "F43",
+  "op": "amend",
+  "target": "squiddy:R-127",
+  "by": null,
+  "clause": "the touchpoint 3 pause for maintenance admission",
+  "operator_stated": false,
+  "receipt": null,
+  "why_listed": "; AD-033 section 5 names it"
+ }
+]

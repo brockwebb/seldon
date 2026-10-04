@@ -1,0 +1,15 @@
+seq: 116
+event: amend
+id: seldon:AD-021
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''CC task completion CLI command and seldon go annotation behavior'', ''Migration triage rules for existing prose task lists'', ''Task parameters like description, state, blocks for seldon_task_create'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 267d5e7b305acf9c3cf9cf376f24cb55d95feb7cbb34b9ec108805ad3ccddc6e
+record_hash: b164bd3476d481735ce428fa5da1c549317f6fd0dbdc6ed38ca302080eedb91b

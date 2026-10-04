@@ -1,0 +1,26 @@
+seq: 33
+event: accept
+id: seldon:AD-030-R15
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R15.** A citation is captured only when the reference carries a year, a DOI, or `et al.`; a bare name is a `mentions` candidate, not a Citation. Design notes therefore write every prior-art entry with at least a year. AD-030 section 6 entries lacking a year (INCOSE/SysML v2, DOORS/ReqIF, PROV-O, OpenCitations, ODK/ROBOT) are corrected in the next design note that cites them, not by editing AD-030. Settles ingest RESULT F8 and extends R9.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 36
+  - 36
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R15.** A citation is captured only when the reference carries a year, a DOI, or `et al.`; a bare name is a `mentions` candidate, not a Citation. Design notes therefore write every prior-art entry with at least a year. AD-030 section 6 entries lacking a year (INCOSE/SysML v2, DOORS/ReqIF, PROV-O, OpenCitations, ODK/ROBOT) are corrected in the next design note that cites them, not by editing AD-030. Settles ingest RESULT F8 and extends R9.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R15
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: aaff5b8cc319c429e0f352aad2bd3eeb0e0000b22a66f9812a51cb84b235e300
+record_hash: c35e6880196fb76aed38b6868357f5c8ea154b841eadb49ceb0cdc5e8248b347

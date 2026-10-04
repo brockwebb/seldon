@@ -1,0 +1,16 @@
+seq: 178
+event: amend
+id: seldon:AD-032-FC-28
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If any gate, task agent, orchestrator, or the operator detects an out-of-spec reading, then the line shall be stopped by gate kill or by touching STOP, in-flight work shall land, an incident record shall be written, the stop shall wait on nobody, and a pull shall never be counted against the puller.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 33d779ab3441059096f563a5104ece29c80d4b3d22a8b3f9c8aac74eeefc3b1a
+record_hash: 0f5d1f32c33d08eb81175856dff6d8d301cd13b862d1dd7caa26550d2e285ee0

@@ -1,0 +1,16 @@
+seq: 183
+event: amend
+id: seldon:AD-032-FC-33
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The system shall maintain an append-only observation log recording each unexpected strategy with agent, task, objective served, expected versus observed behavior, proposed tier, and receipts. An independent rater from a different model family than the observed agent shall review the observation log on a fixed cadence. The operator shall review aggregates rather than individual log items. Each objective adjustment resulting from this review shall be recorded as a decision record per FC-16.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 3b86b562ead85a85efed1aaf21d77ce8d3a8d48deed7fc5171c0f28808471f35
+record_hash: f33a98cd9fb37599c450c598f7da04edf5b88657d377c99bb54f12232d5990b0

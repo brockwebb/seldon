@@ -1,0 +1,16 @@
+seq: 147
+event: amend
+id: seldon:AD-030-R24
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Retired Rulings shall keep their nodes and edges and shall bind nothing. The read_rulings function shall exclude Rulings with status retired and superseded by default.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 79210276908a2c210762ad7420b473331e9570594c2bb1aef3732daa26546e09
+record_hash: 5dc0b183466a8f48a9d2053bf578b024677acc73f45186ab150dbe348d142e7b

@@ -1,0 +1,16 @@
+seq: 204
+event: amend
+id: seldon:AD-029
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- docs/design/AD-029_task_precedence.md:230
+reason: 'AD-029 Addendum 029-A declares ''Amends: AD-029, which specified the edge and its algorithms but said nothing about what a query is allowed to match'' (docs/design/AD-029_task_precedence.md:230); the conflicts probe re-run found the relation unrecorded once 029-A had a record (SEL-002 Part F)'
+amendment:
+  clause: what a query may match
+  text: 'Seldon never reads a relationship by name alone: every node pattern names a label, every relationship traversal binds :Artifact on both endpoints, and destructive scope is enumerated (Addendum 029-A).'
+  by: seldon:AD-029-A
+written_by: seldon decision 0.1.0
+prev_hash: 058fd8d5ebc174e4faf6f7cf31488923e0e00f606d1a29ddfe91b8ad703627f6
+record_hash: 858f099af934c62b8de8854964a7e9eff0f461abb72c29107897e8ba51a9d885

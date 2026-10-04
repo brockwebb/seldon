@@ -1,0 +1,16 @@
+seq: 125
+event: amend
+id: seldon:AD-030-R1
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The decision register shall treat every governed document as graph content, where the markdown file is the serialization of a Document node and parsing it is the single write path, with governed directories consisting of docs/design/, docs/requirements/, cc_tasks/, handoffs/, and lab notebook entries.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 3bcb90c9cb49daa56909acc7de72e0c96814f596f20f8149a3edbb5826a91b7b
+record_hash: 788da3699a6a396964c8df1be12b00e722cace3e0f84de88b1c9b07c636cd15a

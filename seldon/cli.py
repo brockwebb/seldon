@@ -18,6 +18,7 @@ from seldon.commands.ontology import ontology_group
 from seldon.commands.verify import verify_command
 from seldon.commands.issue import issue_group
 from seldon.commands.cc import cc_group
+from seldon.commands.decision import decision_group
 from seldon.commands.glossary import glossary_group
 from seldon.commands.audit_dispatch import audit_dispatch_command
 from seldon.commands.events import events_group
@@ -48,6 +49,7 @@ main.add_command(handoff_command, name="handoff")
 main.add_command(ontology_group, name="ontology")
 main.add_command(verify_command, name="verify")
 main.add_command(issue_group, name="issue")
+main.add_command(decision_group, name="decision")
 main.add_command(cc_group, name="cc")
 main.add_command(glossary_group, name="glossary")
 main.add_command(audit_dispatch_command, name="audit-dispatch")

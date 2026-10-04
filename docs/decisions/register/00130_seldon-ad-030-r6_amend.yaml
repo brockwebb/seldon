@@ -1,0 +1,16 @@
+seq: 130
+event: amend
+id: seldon:AD-030-R6
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: When a citation appears in a governed document, the ingest process shall create a Citation node in state 'proposed' for that citation, and shall create a Passage node recording the section or paragraph identifier, verbatim span, and hash of source text when a span was quoted. Verification of a Citation node shall be recorded as a state transition from 'proposed' to 'verified' carrying method, date, and by. The 'seldon verify' command shall report unverified citations in the same manner it reports unregistered numbers. Design notes shall be permitted to ship with citations in state 'proposed'. The 'seldon paper build' command shall refuse citations in state 'proposed' at Tier 1.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: c0b399f15737861cd0d43058be5db620c0f766eaa60e34f817e09504340468ee
+record_hash: 6855d23980457b00e1846689708b1986694d9446e40f01ef61188ed4918c68fc

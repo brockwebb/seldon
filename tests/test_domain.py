@@ -21,7 +21,7 @@ def test_load_domain_config(research_config):
     # AD-030: + Document, Section, Ruling, Passage. The count is pinned in
     # test_docs.py against the type NAMES, which says what changed when it moves;
     # a bare number here only ever says that something did.
-    assert len(research_config.artifact_types) == 25
+    assert len(research_config.artifact_types) == 26  # AD-033 added Decision
 
 
 def test_validate_artifact_type_valid(research_config):

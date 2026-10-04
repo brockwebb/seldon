@@ -1,0 +1,30 @@
+seq: 26
+event: accept
+id: seldon:AD-030-R8
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_findings_reconcile.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R8.** Cross-graph citation discovery goes through the Squiddy identity registry keyed by DOI and OpenAlex ID. No master bibliography. The verification record stays in the graph that performed it; the registry holds pointers.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 49
+  - 49
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R8.** Cross-graph citation discovery goes through the Squiddy identity registry keyed by DOI and OpenAlex ID. No master bibliography. The verification record stays in the graph that performed it; the registry holds pointers.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R8
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: cb6c22c0e53aa438aebdfeb53db33092fed6016c315f509b2df13722d2717100
+record_hash: 7d6c4b3835abc27f56e9f2d9634f08852eb5c53153918873597d423604d3d99a

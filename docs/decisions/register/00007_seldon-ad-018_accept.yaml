@@ -1,0 +1,45 @@
+seq: 7
+event: accept
+id: seldon:AD-018
+date: '2026-03-28'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  Extend Seldon's research domain config with document hierarchy, Table artifacts, figure/table numbering, cross-reference tracking, and blast radius analysis. Scope is deliberately limited to what's needed for paper and book authoring today — Chapter/Section/Subsection hierarchy, Figure and Table registries with provenance and numbering, and cross-reference edges that enable impact analysis.
+
+  Paragraph-level and Claim-level decomposition (from the March 10 design note) remains in the parking lot until this simpler structure proves insufficient.
+
+  ---
+source:
+  path: docs/design/AD-018_document_structure_graph.md
+  lines:
+  - 11
+  - 17
+  sha256: 6e30da2793d1553ec27fc01708935c88bb0bf232a61e15a07854c19e53a7e3ad
+  text: |-
+    ## Decision
+
+    Extend Seldon's research domain config with document hierarchy, Table artifacts, figure/table numbering, cross-reference tracking, and blast radius analysis. Scope is deliberately limited to what's needed for paper and book authoring today — Chapter/Section/Subsection hierarchy, Figure and Table registries with provenance and numbering, and cross-reference edges that enable impact analysis.
+
+    Paragraph-level and Claim-level decomposition (from the March 10 design note) remains in the parking lot until this simpler structure proves insufficient.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-018_document_structure_graph.md
+  anchor: AD-018
+consumer:
+- tests/test_docs.py
+- tests/test_document_structure.py
+- tests/test_domain.py
+- tests/test_impact.py
+- tests/test_verify.py
+written_by: seldon decision 0.1.0
+prev_hash: 2b31d4e18f7c02b7f31c8e0d53c5c3286ba472ae10313b395f1e53ced19f9669
+record_hash: 7fb65e7fc8e11e8869f1c6d41213d0aa00215ed32089f240f1e2205e067768f1

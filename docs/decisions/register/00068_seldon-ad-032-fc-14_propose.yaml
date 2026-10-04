@@ -1,0 +1,37 @@
+seq: 68
+event: propose
+id: seldon:AD-032-FC-14
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-14. Dual caps and a storm breaker.** Each job and lane carries a cap in tokens and a cap in calls (and in dollars where billed). A rolling error-rate breaker stops the lane; the starting value, 0.30 over 50 calls, comes from Wintermute S20 and is recalibrated on this factory's data. Daily-quota errors are never retried.
+  - Status: proposed.
+  - Rationale: a 120-call cap alone authorized about $85, and a dollar-only lane ran 40,071 requests at 74% errors (G4:117, G4:118); 9,599 quota failures were retried three times (G4:119); Squiddy has no call cap and no breaker (G4:125).
+  - Check: a seeded 429 and 529 storm trips the breaker; a lane declared without a call cap is refused (G4:127).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 133
+  - 136
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-14. Dual caps and a storm breaker.** Each job and lane carries a cap in tokens and a cap in calls (and in dollars where billed). A rolling error-rate breaker stops the lane; the starting value, 0.30 over 50 calls, comes from Wintermute S20 and is recalibrated on this factory's data. Daily-quota errors are never retried.
+    - Status: proposed.
+    - Rationale: a 120-call cap alone authorized about $85, and a dollar-only lane ran 40,071 requests at 74% errors (G4:117, G4:118); 9,599 quota failures were retried three times (G4:119); Squiddy has no call cap and no breaker (G4:125).
+    - Check: a seeded 429 and 529 storm trips the breaker; a lane declared without a call cap is refused (G4:127).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-14
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 15e08dbcb22e19b545dea373e1e7a3550fcda61136a33860b57cfbce0ebdad6e
+record_hash: 264de491251890111023facc78e18ffe90ea71ce169772ffc4bbd20f735da690

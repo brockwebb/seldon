@@ -1,0 +1,31 @@
+seq: 29
+event: accept
+id: seldon:AD-030-R11
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R11.** The R9 design-note gate binds every actor except `cc`. Exemption is an allow-list of one, not a deny-list. A task created by any actor string other than `cc` (`desktop`, an autonomous agent, an unknown value) is gated. Settles handoff RESULT F1. Rationale: CC executes decisions; anything else that files a task is deciding, and unknown actors escaping a gate silently is the failure mode AD-030 section 2 describes.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 28
+  - 28
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R11.** The R9 design-note gate binds every actor except `cc`. Exemption is an allow-list of one, not a deny-list. A task created by any actor string other than `cc` (`desktop`, an autonomous agent, an unknown value) is gated. Settles handoff RESULT F1. Rationale: CC executes decisions; anything else that files a task is deciding, and unknown actors escaping a gate silently is the failure mode AD-030 section 2 describes.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R11
+consumer:
+- tests/test_cadence_pass.py
+- tests/test_governed.py
+- tests/test_handoff.py
+- seldon/commands/cc.py
+- seldon/core/handoff.py
+written_by: seldon decision 0.1.0
+prev_hash: 9b756348918e67224bfdb941dde261c3f6a06839128bf5cc3bc0cad99afc31c4
+record_hash: 00a8411b614c9e067bdf7c3a957e4e53a54632d1851322a57cafd64f8e1a0310

@@ -1,0 +1,222 @@
+{
+ "checks": [
+  {
+   "check": "a planted hand-edited record file fails verify (hash chain)",
+   "file": "00101_squiddy-r-107_accept.yaml",
+   "findings_before": 0,
+   "findings_after": [
+    "docs/decisions/register/00101_squiddy-r-107_accept.yaml: the data does not hash to its record_hash (edited after it was written)"
+   ],
+   "pass": true
+  },
+  {
+   "check": "a planted forked supersession is refused, naming the live head",
+   "refusal": "supersedes target squiddy:R-29 is already superseded by squiddy:R-32; the live head of its chain is squiddy:R-32 (a second supersession would fork the chain; supersede squiddy:R-32 instead)",
+   "pass": true
+  },
+  {
+   "check": "a planted labeled decision in a new note with no record fails verify",
+   "findings_before": [],
+   "findings_after": [
+    "register: docs/design/2026-10-05_DN-099_planted.md (added after DB-1) labels squiddy:R-990, which has no record (AD-033-R2)"
+   ],
+   "pass": true
+  },
+  {
+   "check": "round trip: every one of the 485 probe units resolves to a record with a status",
+   "probe_units": 485,
+   "rows": 485,
+   "unresolved": [],
+   "record_statuses_now": {
+    "accepted": 566,
+    "superseded": 17,
+    "deprecated": 1,
+    "proposed": 8
+   },
+   "pass": true
+  },
+  {
+   "check": "Seldon resolves squiddy:R-112 from an Arnold registration",
+   "identifier_matches": {
+    "KG-004 step 6 plans extraction under squiddy:R-112 and R-113.": [
+     [
+      "squiddy:R-112",
+      "identifier"
+     ],
+     [
+      "squiddy:R-113",
+      "identifier"
+     ]
+    ],
+    "KG-004 step 6 plans extraction under R-112.": [
+     [
+      "squiddy:R-112",
+      "identifier"
+     ]
+    ]
+   },
+   "pass": true
+  },
+  {
+   "check": "the probe re-run on the register: zero open contradictions, zero silent supersessions among active records",
+   "findings": 45,
+   "resolved": 45,
+   "open_contradictions": [],
+   "open_silent_supersessions": [],
+   "reviewed_exclusions": [
+    {
+     "record": "seldon:AD-029",
+     "cites": "seldon:AD-028",
+     "verb": "withdrawn",
+     "sentence": "`withdrawn` (AD-028 — the work was replaced, or its premise was retracted, so",
+     "reason": "AD-029 names `withdrawn`, the ResearchTask terminal state AD-028 defines (\"the work was replaced, or its premise was retracted\"). It uses AD-028's vocabulary; it does not withdraw AD-028."
+    }
+   ],
+   "active_records": 657,
+   "pass": true
+  },
+  {
+   "check": "registration of SQ-009's text against the register binds no superseded record (the R-29 case)",
+   "task": "squiddy/cc_tasks/2026-10-04_SQ-009_kit_dn042_spend_governor.md",
+   "bound": [
+    {
+     "id": "squiddy:R-180",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:R-176",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:R-177",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:R-178",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:R-179",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:R-181",
+     "status": "accepted",
+     "method": "identifier",
+     "score": null
+    },
+    {
+     "id": "squiddy:DI-214",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.467
+    },
+    {
+     "id": "squiddy:R-164",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.379
+    },
+    {
+     "id": "squiddy:R-118",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.36
+    },
+    {
+     "id": "squiddy:DI-020",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.357
+    },
+    {
+     "id": "squiddy:R-136",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.351
+    },
+    {
+     "id": "squiddy:EX-REQ-09",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.333
+    },
+    {
+     "id": "squiddy:R-67",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.333
+    },
+    {
+     "id": "squiddy:R-172",
+     "status": "accepted",
+     "method": "concept_overlap",
+     "score": 0.333
+    }
+   ],
+   "r29_status": "superseded",
+   "r29_superseded_by": "squiddy:R-32",
+   "pass": true
+  },
+  {
+   "check": "ADDENDUM 02: no agent-read file (CLAUDE.md, docs/conventions/, READMEs) names a store other than the ledger as the record of truth",
+   "hits": [],
+   "positive_control": {
+    "It does NOT mandate which store is called \"truth\": fss-policy-kg runs ledger-as-truth; an Arnold graph may run graph-as-truth.": true,
+    "Neo4j is the live authoritative store and JSONL the archive projection.": true,
+    "The manifest is the record, with no other entry point and no other record.": true,
+    "Authoritative list: seldon/domain/result_units_vocabulary.yaml for every project graph": true
+   },
+   "pass": true
+  }
+ ],
+ "all_pass": true,
+ "counts": {
+  "by_repo_status": {
+   "squiddy": {
+    "accepted": 414,
+    "superseded": 12
+   },
+   "seldon": {
+    "accepted": 72,
+    "deprecated": 1,
+    "superseded": 1,
+    "proposed": 21
+   },
+   "arnold": {
+    "accepted": 142,
+    "superseded": 3,
+    "proposed": 8
+   }
+  },
+  "none_consumers": {
+   "squiddy": 172,
+   "seldon": 14,
+   "arnold": 117
+  },
+  "statement_check": {
+   "squiddy": {
+    "passed": 279,
+    "failed": 77
+   },
+   "seldon": {
+    "passed": 72,
+    "failed": 21
+   },
+   "arnold": {
+    "passed": 120,
+    "failed": 30
+   }
+  }
+ }
+}

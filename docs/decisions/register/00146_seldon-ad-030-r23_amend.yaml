@@ -1,0 +1,15 @@
+seq: 146
+event: amend
+id: seldon:AD-030-R23
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''This decision'' in ''Rule R16 shall govern classification only, with the force (binding, prohibition, recommendation) of a block admitted as '''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: cbd4d14cab93c564f7e427e751fa72d17917fe983718a6f1445a1e16fbf99a1b
+record_hash: 79210276908a2c210762ad7420b473331e9570594c2bb1aef3732daa26546e09

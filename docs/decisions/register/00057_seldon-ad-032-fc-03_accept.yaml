@@ -1,0 +1,39 @@
+seq: 57
+event: accept
+id: seldon:AD-032-FC-03
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:27: "- Status: accepted (operator, 2026-10-03; P:8, P:9)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-03. Decision backlog review follows the current development and test phases; read-only probes may run at any time.**
+  - Status: accepted (operator, 2026-10-03; P:8, P:9).
+  - Rationale: enforcing today's register would turn stale decisions into hard refusals; 26 of 45 probe findings touch active work (P:31; K:16).
+  - Check: no register record changes status before P1 opens; probe output lands outside every repository.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 26
+  - 29
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-03. Decision backlog review follows the current development and test phases; read-only probes may run at any time.**
+    - Status: accepted (operator, 2026-10-03; P:8, P:9).
+    - Rationale: enforcing today's register would turn stale decisions into hard refusals; 26 of 45 probe findings touch active work (P:31; K:16).
+    - Check: no register record changes status before P1 opens; probe output lands outside every repository.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-03
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: 078386a9f56d1f84e1a5e41fb12189714c9f03486924bee74164025bbb71f8db
+record_hash: e253eff3ee5acc3daf3d300cda956fa7c92f91287867c101863f057214648f51

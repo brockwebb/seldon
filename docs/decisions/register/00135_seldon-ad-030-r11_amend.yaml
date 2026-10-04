@@ -1,0 +1,15 @@
+seq: 135
+event: amend
+id: seldon:AD-030-R11
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Settles handoff RESULT F1 reference'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 6fb60ba43a6d062c861b54bb7ef2065c2bebc689617d6daa83234b30ed4c29cf
+record_hash: 672382fab6981e58908006a8f12beed540e1c56857581ffddeaab2fe03058d7b

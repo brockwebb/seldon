@@ -1,0 +1,50 @@
+# SEL-002 Part E (AD-033-R8): the statement pass's numbers. Read by scripts/sel002/statements.py; every key required.
+#
+# Two separate calls per record: a WRITER turns the verbatim source into one stand-alone statement, and a VALIDATOR,
+# which sees only the verbatim source and that statement, checks the source entails it and nothing of the decision was
+# dropped. Both through Squiddy's call layer (calls.run_units, calls.invoke) under the DN-042 spend governor.
+
+writer:
+  alias: sonnet                  # the CLI alias; the resolved model is read from every envelope and recorded
+  timeout: 300
+  max_turns: 2
+  effort: low                    # pilot 2 measured up to 4,774 output tokens of thinking for a few lines of JSON
+validator:
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+  effort: low                    # a strict yes/no check; see writer
+
+# The pinned CLI binary every Squiddy model call uses (graphs/library/extract/control.yaml `transport`; DN-006 R-30).
+transport:
+  cli_path: ~/.local/share/squiddy/claude-cli/2.1.278/node_modules/@anthropic-ai/claude-code/bin/claude.exe
+  cli_version: "2.1.278"
+  setting_sources_disabled: true       # H-004 ADDENDUM 01 R-21: the operator's settings and hooks never reach the call
+  nonessential_traffic_disabled: true  # H-005 Part A: no side-model call
+
+# The call layer's loop (constitution section 15).
+policy:
+  in_flight: 3
+  pilot_in_flight: 1             # the pilot measures one call at a time: its cold-start share (1 in 10) is nearer the
+                                 # bulk's (3 in ~575) than three parallel cold starts in ten would be
+  retry_attempts: 2              # a unit whose call fails twice across runs is left, counted, for the report
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1               # an unparseable reply is asked again once inside the unit (Q-003 ADDENDUM 07's rule)
+
+# The pilot (SEL-002 Part E: "Pilot 10 records, estimate, then the run").
+pilot_records: 10
+# A pilot has no measured basis; its estimate is a GUESS, labelled so (constitution 15.4): prompt chars per token
+# from spend.yaml, plus this many output tokens per call, weighted.
+guess_output_tokens: 250
+
+# The declared budget: SEL-002's notional before the pilot, about 3M weighted tokens for the whole pass. The full run is
+# not started when the pilot-measured estimate for the rest, plus the pilot's actual, passes this times (1 + band_stop):
+# that is spend above the declared cap and waits for the operator (constitution; DN-042 R-178).
+budget:
+  declared_weighted_tokens: 3000000
+  band_stop: 0.20
+# Calls are independent prompts with no shared prefix of cacheable length: every call is priced cold (spend.estimate).
+spacing_seconds: null

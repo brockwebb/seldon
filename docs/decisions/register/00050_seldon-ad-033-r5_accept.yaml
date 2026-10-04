@@ -1,0 +1,56 @@
+seq: 50
+event: accept
+id: seldon:AD-033-R5
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R5. Baseline DB-1 (plan action C).** One baseline is established from the three repositories' main
+    HEADs at SEL-002's start, recorded by commit. It holds: the probe's 485 units; DN-037's decisions, given ids
+    `squiddy:DN-037-R1` onward at baseline; AD-032's FC labels (FC-01 to FC-07 accepted, operator-stated; FC-08 to
+    FC-33 proposed); Arnold `docs/adr/` records; and the unlabeled prose decisions SEL-001 named (Arnold
+    intensity-constructs per-set RPE, the five Arnold ontology documents), given ids `arnold:<doc>-B<n>` with their
+    verbatim span. Seed status: the source's stated status where it has one; a decision a dispatched task has
+    executed under is accepted, with that task as the receipt; otherwise accepted. Then the 45 probe findings and the
+    12 drifted mirrors are applied as transition and superseding records, each citing its finding id and quotes,
+    under L4. The probe's dispositions apply as written, except those that offer a choice; section 5 makes those
+    choices. Every disposition that touches an operator-stated record goes on an override list in the delivery report.
+    He is not asked.
+    - This answers open question 2: AD-032's FC labels enter as records at the baseline; the positional parser is not
+      extended for them.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 143
+  - 156
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R5. Baseline DB-1 (plan action C).** One baseline is established from the three repositories' main
+      HEADs at SEL-002's start, recorded by commit. It holds: the probe's 485 units; DN-037's decisions, given ids
+      `squiddy:DN-037-R1` onward at baseline; AD-032's FC labels (FC-01 to FC-07 accepted, operator-stated; FC-08 to
+      FC-33 proposed); Arnold `docs/adr/` records; and the unlabeled prose decisions SEL-001 named (Arnold
+      intensity-constructs per-set RPE, the five Arnold ontology documents), given ids `arnold:<doc>-B<n>` with their
+      verbatim span. Seed status: the source's stated status where it has one; a decision a dispatched task has
+      executed under is accepted, with that task as the receipt; otherwise accepted. Then the 45 probe findings and the
+      12 drifted mirrors are applied as transition and superseding records, each citing its finding id and quotes,
+      under L4. The probe's dispositions apply as written, except those that offer a choice; section 5 makes those
+      choices. Every disposition that touches an operator-stated record goes on an override list in the delivery report.
+      He is not asked.
+      - This answers open question 2: AD-032's FC labels enter as records at the baseline; the positional parser is not
+        extended for them.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R5
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: 081e712fd17dac7c50dab424945acd6e387445797f2c96f97e0eb1ac199c6dd4
+record_hash: ccea5cd93cce3a9778f6c4ab2f22b05c8cb5f86d7ca6226351c6515558107545

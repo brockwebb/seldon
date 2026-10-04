@@ -747,6 +747,10 @@ def sync(
         children_by_doc.setdefault(payload.get("doc_id") or "", []).append((cls, payload))
 
     wanted_docs = {d["id"] for d in documents}
+    # AD-033-R7: once the repository keeps a decision register, a positional Ruling is searchable
+    # content, never binding. The parse's verdict is kept beside it in `positional_force`.
+    from seldon.core.decisions import SEARCHABLE, register_exists
+    demote_rulings = register_exists(project_dir, config)
     id_to_artifact: dict[str, str] = {}
     type_of: dict[str, str] = {}
     changed_documents: list[str] = []
@@ -836,6 +840,9 @@ def sync(
 
         for cls, child in children_by_doc.get(governed_id, []):
             child_props = _child_properties(cls, child, rel_path)
+            if demote_rulings and cls == "Ruling" and child_props.get("force") == "binding":
+                child_props["force"] = SEARCHABLE
+                child_props["positional_force"] = "binding"
             known = have_children.get(child["id"])
             if known and known.get("state") == "retired":
                 # `retired` is terminal by declaration (research.yaml): the span left the document

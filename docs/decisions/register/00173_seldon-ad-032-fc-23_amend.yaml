@@ -1,0 +1,16 @@
+seq: 173
+event: amend
+id: seldon:AD-032-FC-23
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The evidence store shall hold acquisitions, raw model replies, gate rows, exports, held texts, session transcripts and outside documents in a content-addressed, sha256-named store with a per-release BagIt manifest. The evidence store shall run a scheduled fixity audit that writes PREMIS events. Each finding or decision derived from stored content shall carry a located receipt using PROV wasDerivedFrom. Retrieval shall search findings and decisions and shall not search raw transcripts. When a session reaches closeout, transcript capture shall run automatically.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7be479e760302610111aa302a6457e56801436adae6427c4d052fc917520387e
+record_hash: 58aa82becbc94d525990310cd4c560e6023c8c8e08cd9278937ea906c8e3b623

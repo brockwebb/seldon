@@ -1,0 +1,290 @@
+seq: 18
+event: accept
+id: seldon:AD-029
+date: '2026-09-06'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  ### 1. `precedes` is a domain relationship between two ResearchTasks
+
+  ```yaml
+  precedes:
+    from_types: [ResearchTask]
+    to_types: [ResearchTask]
+    cardinality: many_to_many
+    inverse: preceded_by
+    properties:
+      reason:
+        required: false
+  ```
+
+  `A precedes B` means B is not expected to leave `proposed` until A is
+  terminal-complete. The domain version moves `0.2 → 0.3`.
+
+  Stored in **one direction only**. `preceded_by` is a read-name for queries and
+  rendering and is never written as an edge. It is declared as `inverse` rather
+  than as a second relationship type, and `DomainConfig` rejects a config in which
+  an inverse name is also a declared type — two separately-written directions
+  would silently disagree, and there is no cheap way to notice that later.
+
+  `RelationshipConfig` gained `cardinality`, `inverse` and `properties`. Edge
+  property validation is **opt-in by declaration**: a relationship type declaring
+  no property schema accepts anything, which is what keeps pre-AD-029 edges valid
+  (`assumes` carries an undeclared `topic` and `strength`). A type that declares a
+  schema is validated against it.
+
+  ### 2. The subgraph is a DAG, enforced at the one write gate
+
+  Two invariants, checked before any event is appended, so a rejected write leaves
+  nothing in the event log or the graph:
+
+  - **No self-loop.** A task cannot precede itself.
+  - **No cycle.** Adding `A → B` is legal exactly when B cannot already reach A,
+    which makes the check a single breadth-first reachability query in the
+    opposite direction. On rejection the error **names the path that would close
+    the cycle**, shortest-first, because "there is a cycle somewhere" is not
+    actionable.
+
+  The gate lives in `seldon.core.artifacts.create_link`, not in the CLI. Every
+  write path reaches it — `seldon task precede`, `seldon task chain`, the three
+  MCP tools, and the generic `seldon link create` — so none of them can author a
+  cycle. Putting it in the CLI would have left `link create` as an open back door.
+
+  `seldon task chain A B C` writes the consecutive pairs in one call and is
+  **all-or-nothing**: every pair is validated against the graph *plus* the pairs
+  earlier in the same call before the first write, so a chain that goes wrong at
+  its third link writes nothing. An edge that already exists is skipped rather
+  than duplicated, which makes re-running a chain a no-op and therefore safe to
+  keep in a runbook.
+
+  ### 3. A predecessor is satisfied when it is finished *or* abandoned
+
+  Satisfied: `completed`, `verified` (the work was done); `superseded`,
+  `withdrawn` (AD-028 — the work was replaced, or its premise was retracted, so
+  nothing is pending).
+
+  **`rejected` is deliberately not satisfied.** A rejected predecessor is work
+  that was refused, not work that was resolved. A chain hanging off one is a plan
+  that needs revising, and surfacing it is more useful than silently treating the
+  successor as startable. Because enforcement is advisory (§4) this costs nothing:
+  it shows up in `task list` and the briefing and blocks nothing.
+  `seldon task unprecede` retires the edge once the operator agrees the chain is
+  dead.
+
+  A predecessor whose node is missing also counts as unsatisfied, and
+  `seldon verify` reports the dangling endpoint separately.
+
+  ### 4. Enforcement is advisory, and stops at a warning
+
+  `precedes` is advisory for `seldon go` and `task list`, and **warning-only** on
+  state transitions: moving a successor to `accepted` or `in_progress` with an
+  unsatisfied predecessor emits one warning line and proceeds. Gates bind the
+  machine, not the operator. An operator may reorder work, and a hard block would
+  teach them to delete edges — losing the plan to preserve the gate.
+
+  The warning is computed in `transition_task` from the graph as it stood *before*
+  the write (the question is whether starting was legitimate, which is a fact
+  about the prior state) and returned to the caller. The CLI prints it to stderr;
+  the MCP tools append it to their returned text. `walk_to_completed` takes an
+  `on_warning` callback rather than a second return value, so the walk's return
+  contract — the thing both surfaces render and the AD-028 parity test compares —
+  is unchanged.
+
+  ### 5. One computation of "ready", read by every surface
+
+  `precedence_view()` assembles the pairs, states, `waits_on` map, ready list and
+  chains in a single pass. `seldon task list`, `seldon_task_list`,
+  `seldon briefing` and `seldon go` all read it. Three surfaces each deriving
+  readiness from their own queries is how they would come to disagree.
+
+  - **`task list`** gains a `WAITS_ON` column and a `▸` marker for **ready** =
+    open with no unsatisfied predecessor.
+  - **`seldon go` / `seldon_go`** render **Next ready** (in creation order) and
+    **Chains** immediately after open tasks, because that is the question an
+    orienting agent asks next: of these open tasks, which may I start?
+  - A chain is a *weakly connected component* of the subgraph. A component of one
+    node is not rendered — a task with no ordering relation to anything is not a
+    chain, and rendering it as one would bury the real chains. A component that is
+    a simple path renders as `A → B → C`; a **branching** component does not,
+    because rendering a fan-out as a line asserts an ordering the graph does not
+    contain, so its edges are listed one per line instead.
+
+  ### 6. `seldon verify` checks the invariant it cannot enforce retroactively
+
+  A twelfth check, **Precedence**, fails on a cycle, a self-loop, or an edge whose
+  endpoint is missing or is not a ResearchTask. Each of those means a write
+  bypassed the gate — raw Cypher, or a log predating this AD.
+
+  It is **not Tier A**, on the same reasoning as "Relationship types": it reports a
+  property of accumulated graph state rather than of the change in hand, and an
+  executing CC task cannot make it clean by doing its own task correctly. Default
+  `seldon verify` still fails on it (exit 2).
+
+  ### 7. Cycle detection reads the projection, not the log
+
+  The check runs against the Neo4j graph. The graph is the projection of the
+  event-sourced state, every other command reads it, and `seldon verify --replay`
+  is the existing instrument for the case where the two have diverged. Replaying
+  the log on every edge write to answer a reachability question would be a second,
+  slower, separately-maintained source of truth for one query.
+source:
+  path: docs/design/AD-029_task_precedence.md
+  lines:
+  - 43
+  - 166
+  sha256: 4d65daf70cc3aa47524e2380c65696bf8f915f38703214ea98ea106e2c1c25b2
+  text: |-
+    ## Decision
+
+    ### 1. `precedes` is a domain relationship between two ResearchTasks
+
+    ```yaml
+    precedes:
+      from_types: [ResearchTask]
+      to_types: [ResearchTask]
+      cardinality: many_to_many
+      inverse: preceded_by
+      properties:
+        reason:
+          required: false
+    ```
+
+    `A precedes B` means B is not expected to leave `proposed` until A is
+    terminal-complete. The domain version moves `0.2 → 0.3`.
+
+    Stored in **one direction only**. `preceded_by` is a read-name for queries and
+    rendering and is never written as an edge. It is declared as `inverse` rather
+    than as a second relationship type, and `DomainConfig` rejects a config in which
+    an inverse name is also a declared type — two separately-written directions
+    would silently disagree, and there is no cheap way to notice that later.
+
+    `RelationshipConfig` gained `cardinality`, `inverse` and `properties`. Edge
+    property validation is **opt-in by declaration**: a relationship type declaring
+    no property schema accepts anything, which is what keeps pre-AD-029 edges valid
+    (`assumes` carries an undeclared `topic` and `strength`). A type that declares a
+    schema is validated against it.
+
+    ### 2. The subgraph is a DAG, enforced at the one write gate
+
+    Two invariants, checked before any event is appended, so a rejected write leaves
+    nothing in the event log or the graph:
+
+    - **No self-loop.** A task cannot precede itself.
+    - **No cycle.** Adding `A → B` is legal exactly when B cannot already reach A,
+      which makes the check a single breadth-first reachability query in the
+      opposite direction. On rejection the error **names the path that would close
+      the cycle**, shortest-first, because "there is a cycle somewhere" is not
+      actionable.
+
+    The gate lives in `seldon.core.artifacts.create_link`, not in the CLI. Every
+    write path reaches it — `seldon task precede`, `seldon task chain`, the three
+    MCP tools, and the generic `seldon link create` — so none of them can author a
+    cycle. Putting it in the CLI would have left `link create` as an open back door.
+
+    `seldon task chain A B C` writes the consecutive pairs in one call and is
+    **all-or-nothing**: every pair is validated against the graph *plus* the pairs
+    earlier in the same call before the first write, so a chain that goes wrong at
+    its third link writes nothing. An edge that already exists is skipped rather
+    than duplicated, which makes re-running a chain a no-op and therefore safe to
+    keep in a runbook.
+
+    ### 3. A predecessor is satisfied when it is finished *or* abandoned
+
+    Satisfied: `completed`, `verified` (the work was done); `superseded`,
+    `withdrawn` (AD-028 — the work was replaced, or its premise was retracted, so
+    nothing is pending).
+
+    **`rejected` is deliberately not satisfied.** A rejected predecessor is work
+    that was refused, not work that was resolved. A chain hanging off one is a plan
+    that needs revising, and surfacing it is more useful than silently treating the
+    successor as startable. Because enforcement is advisory (§4) this costs nothing:
+    it shows up in `task list` and the briefing and blocks nothing.
+    `seldon task unprecede` retires the edge once the operator agrees the chain is
+    dead.
+
+    A predecessor whose node is missing also counts as unsatisfied, and
+    `seldon verify` reports the dangling endpoint separately.
+
+    ### 4. Enforcement is advisory, and stops at a warning
+
+    `precedes` is advisory for `seldon go` and `task list`, and **warning-only** on
+    state transitions: moving a successor to `accepted` or `in_progress` with an
+    unsatisfied predecessor emits one warning line and proceeds. Gates bind the
+    machine, not the operator. An operator may reorder work, and a hard block would
+    teach them to delete edges — losing the plan to preserve the gate.
+
+    The warning is computed in `transition_task` from the graph as it stood *before*
+    the write (the question is whether starting was legitimate, which is a fact
+    about the prior state) and returned to the caller. The CLI prints it to stderr;
+    the MCP tools append it to their returned text. `walk_to_completed` takes an
+    `on_warning` callback rather than a second return value, so the walk's return
+    contract — the thing both surfaces render and the AD-028 parity test compares —
+    is unchanged.
+
+    ### 5. One computation of "ready", read by every surface
+
+    `precedence_view()` assembles the pairs, states, `waits_on` map, ready list and
+    chains in a single pass. `seldon task list`, `seldon_task_list`,
+    `seldon briefing` and `seldon go` all read it. Three surfaces each deriving
+    readiness from their own queries is how they would come to disagree.
+
+    - **`task list`** gains a `WAITS_ON` column and a `▸` marker for **ready** =
+      open with no unsatisfied predecessor.
+    - **`seldon go` / `seldon_go`** render **Next ready** (in creation order) and
+      **Chains** immediately after open tasks, because that is the question an
+      orienting agent asks next: of these open tasks, which may I start?
+    - A chain is a *weakly connected component* of the subgraph. A component of one
+      node is not rendered — a task with no ordering relation to anything is not a
+      chain, and rendering it as one would bury the real chains. A component that is
+      a simple path renders as `A → B → C`; a **branching** component does not,
+      because rendering a fan-out as a line asserts an ordering the graph does not
+      contain, so its edges are listed one per line instead.
+
+    ### 6. `seldon verify` checks the invariant it cannot enforce retroactively
+
+    A twelfth check, **Precedence**, fails on a cycle, a self-loop, or an edge whose
+    endpoint is missing or is not a ResearchTask. Each of those means a write
+    bypassed the gate — raw Cypher, or a log predating this AD.
+
+    It is **not Tier A**, on the same reasoning as "Relationship types": it reports a
+    property of accumulated graph state rather than of the change in hand, and an
+    executing CC task cannot make it clean by doing its own task correctly. Default
+    `seldon verify` still fails on it (exit 2).
+
+    ### 7. Cycle detection reads the projection, not the log
+
+    The check runs against the Neo4j graph. The graph is the projection of the
+    event-sourced state, every other command reads it, and `seldon verify --replay`
+    is the existing instrument for the case where the two have diverged. Replaying
+    the log on every edge write to answer a reachability question would be a second,
+    slower, separately-maintained source of truth for one query.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-029_task_precedence.md
+  anchor: AD-029
+consumer:
+- tests/test_cypher_unlabelled_lint.py
+- tests/test_domain.py
+- tests/test_governed.py
+- tests/test_handoff.py
+- tests/test_precedence.py
+- tests/test_precedence_cotenancy.py
+- seldon/commands/go.py
+- seldon/commands/session.py
+- seldon/commands/task.py
+- seldon/commands/verify.py
+- seldon/core/artifacts.py
+- seldon/core/handoff.py
+- seldon/core/precedence.py
+- seldon/domain/loader.py
+- seldon/domain/research.yaml
+- seldon/mcp_server.py
+written_by: seldon decision 0.1.0
+prev_hash: 76b7db9d67c1648cd0ef9e0eb966c9d0d43fc04b8a6a961ec31483a5d4bc2606
+record_hash: 8705d00f94eb2ef5a1a690d1f3db8a1f3d5dce00f45cc490da496cd14aeafa8e

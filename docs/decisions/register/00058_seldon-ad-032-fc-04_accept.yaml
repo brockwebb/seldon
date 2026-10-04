@@ -1,0 +1,40 @@
+seq: 58
+event: accept
+id: seldon:AD-032-FC-04
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:32: "- Status: accepted (operator, 2026-10-02/03)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-04. Spend control.** Every job and scheduled lane carries an estimate and spends by reserve-then-settle through one metered chokepoint. At or under +10% over estimate, the job runs and logs. From +10% to +20%, it raises a warning event. Beyond +20%, it stops before spending and needs his dated approval. Estimate versus actual is recorded for every job and charted; this is control, not theater. Large corpora run in rate-limited lots sized to what the budget can absorb; nightly and weekly maintenance lanes carry their own estimates.
+  - Status: accepted (operator, 2026-10-02/03).
+  - Rationale: root cause C3 (section 3).
+  - Check: FC-11 to FC-15.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 31
+  - 34
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-04. Spend control.** Every job and scheduled lane carries an estimate and spends by reserve-then-settle through one metered chokepoint. At or under +10% over estimate, the job runs and logs. From +10% to +20%, it raises a warning event. Beyond +20%, it stops before spending and needs his dated approval. Estimate versus actual is recorded for every job and charted; this is control, not theater. Large corpora run in rate-limited lots sized to what the budget can absorb; nightly and weekly maintenance lanes carry their own estimates.
+    - Status: accepted (operator, 2026-10-02/03).
+    - Rationale: root cause C3 (section 3).
+    - Check: FC-11 to FC-15.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-04
+consumer:
+- seldon:seldon/domain/decision_register.yaml
+written_by: seldon decision 0.1.0
+prev_hash: e253eff3ee5acc3daf3d300cda956fa7c92f91287867c101863f057214648f51
+record_hash: c2e603a5d678951b9d5fe034a0df56205c94ee8dfd99c18dbdeb532442c494ea

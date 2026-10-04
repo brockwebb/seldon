@@ -1,0 +1,15 @@
+seq: 159
+event: amend
+id: seldon:AD-032-FC-09
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''below'' in ''A defect diagnosis shall name the layer below the symptom that it read, and where two components are suspected, both sha'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 2cf4da73a8e851c297978c661f4b86718db6c76140d4df5009101cd81a0cd1df
+record_hash: 69712a18541818cafccbe432861ed043d210b7a42b9150b43e9942339294d7c1

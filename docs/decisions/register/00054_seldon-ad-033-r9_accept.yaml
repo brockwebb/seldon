@@ -1,0 +1,38 @@
+seq: 54
+event: accept
+id: seldon:AD-033-R9
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R9. The conflicts probe stands (FC-18).** The probe is re-run on the register at the end of SEL-002 and
+    at every Squiddy, Seldon and Arnold release. DB-1 exits with zero open contradictions and zero silent
+    supersessions among active records. A governing document may not cite an id the register records as nonexistent.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 175
+  - 178
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R9. The conflicts probe stands (FC-18).** The probe is re-run on the register at the end of SEL-002 and
+      at every Squiddy, Seldon and Arnold release. DB-1 exits with zero open contradictions and zero silent
+      supersessions among active records. A governing document may not cite an id the register records as nonexistent.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R9
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 928599f3f6aa2de35acf305ee0c67503339bd2095c914eb6f857ca79729a9da4
+record_hash: b892e9be9a77ef04746901fd5789bcc5f4d1446cc83bd7a4672ae5df70a97c02

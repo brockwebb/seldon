@@ -1,0 +1,142 @@
+[
+ {
+  "repo": "seldon",
+  "rid": "Addendum 029-A",
+  "doc": "docs/design/AD-029_task_precedence.md",
+  "text": "# Addendum 029-A: Seldon never reads a relationship by name alone",
+  "a": 11562,
+  "b": 11627,
+  "pat": "addendum_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "seldon",
+  "rid": "R1",
+  "doc": "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+  "text": "### R1. LightRAG installation + empty `rag_storage/`",
+  "a": 1005,
+  "b": 1057,
+  "pat": "bare_ruling_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "seldon",
+  "rid": "R2",
+  "doc": "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+  "text": "### R2. claude-mem thedotmack install (v10.5.2)",
+  "a": 1557,
+  "b": 1604,
+  "pat": "bare_ruling_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "seldon",
+  "rid": "R3",
+  "doc": "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+  "text": "### R3. Hermes Agent install (runtime without binary on PATH)",
+  "a": 2173,
+  "b": 2234,
+  "pat": "bare_ruling_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "seldon",
+  "rid": "R4",
+  "doc": "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+  "text": "### R4. Wintermute MCP server \u2014 not registered",
+  "a": 2872,
+  "b": 2918,
+  "pat": "bare_ruling_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "seldon",
+  "rid": "R5",
+  "doc": "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+  "text": "### R5. `seldon-test` and `seldon-test-project` Neo4j databases",
+  "a": 3653,
+  "b": 3716,
+  "pat": "bare_ruling_heading",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R1",
+  "doc": "cc_tasks/2026-06-27_vocab-T1-block-lock-and-rewrite.md",
+  "text": "- R1: block = within-workout grouping (canonical word = physical name; superset/\n  circuit/complex/EMOM/Tabata = `block_type` polymorphic subtypes).",
+  "a": 1068,
+  "b": 1216,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R2",
+  "doc": "cc_tasks/2026-06-27_vocab-T1-block-lock-and-rewrite.md",
+  "text": "- R2: `:Cycle` base type + `cycle_type` enum (macro/meso/micro); full relabel of the\n  4 `:Block` nodes; `block_id`\u2192`cycle_id`; cycle MCP tools; seed-all-three-from-real-\n  anchors (1 macro, 4 meso, micros-from-weeks).",
+  "a": 1217,
+  "b": 1435,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R1",
+  "doc": "cc_tasks/2026-09-01_plan-builder-rebuild.addendum-02.md",
+  "text": "R1 **Nothing is required beyond what a set is.** A set = exercise + whatever of\nreps / load / duration actually happened. Everything else (session effort, workout\nduration, notes, equipment, treatments, failed, pain_scale, rest) is present only\nif given. No defaults, no placeholders, no prompts, no `required` attributes, no\nvalidation that rejects a submission for a missing optional field, no display\nthat calls out absence. Absence is data.",
+  "a": 517,
+  "b": 961,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R2",
+  "doc": "cc_tasks/2026-09-01_plan-builder-rebuild.addendum-02.md",
+  "text": "R2 **Per-set RPE is gone from planning too.** The 08-16 ruling removed it from the\nlogger. pb-03/pb-04 (Desktop spec error) reintroduced `rpe` in the compressed JSON\ncontract and a gear-popover field in the builder. Remove both.\n`PlannedSet.prescribed_rpe` stays as a column (history), is never written by the\nGUI, and is not rendered.",
+  "a": 963,
+  "b": 1298,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R3",
+  "doc": "cc_tasks/2026-09-01_plan-builder-rebuild.addendum-02.md",
+  "text": "R3 **Label.** The whole-workout number stays as `workouts.session_rpe` (Foster CR10;\nBrock's 1\u201310 from \"walk\" to \"collapse\" is that construct). The UI label is\n**\"session effort (1\u201310)\"**. The string \"RPE\" does not appear in any GUI surface.",
+  "a": 1300,
+  "b": 1541,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R1",
+  "doc": "cc_tasks/2026-09-13_exercise-identity-grouping.md",
+  "text": "R1 **`exercise_id` is the identity. `exercise_name` in `sets` is the as-logged\nlabel and is never a grouping key, join key, or filter key on any read surface.**\nDisplay name comes from the Exercise node (`name`) via id.",
+  "a": 2097,
+  "b": 2316,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R2",
+  "doc": "cc_tasks/2026-09-13_exercise-identity-grouping.md",
+  "text": "R2 **Writers store the canonical display name.** `log_workout`, `amend_workout`,\nthe logger form, `mirror_plan_to_postgres`: after resolution, `exercise_name` :=\nthe Exercise node's `name`. The string the user typed is kept, if it differs, in\n`sets.extra.logged_as` (jsonb), so the alias evidence is not lost. No backfill\nrewrite of historical `exercise_name` (history stays as logged; R1 makes it\nharmless).",
+  "a": 2318,
+  "b": 2726,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ },
+ {
+  "repo": "arnold",
+  "rid": "R3",
+  "doc": "cc_tasks/2026-09-13_exercise-identity-grouping.md",
+  "text": "R3 **Mis-resolved sets are corrected by `amend_workout`, never by UPDATE.** Each\ncorrection is one effect-verified amend with the reason in the amend note.",
+  "a": 2728,
+  "b": 2883,
+  "pat": "bare_ruling_label",
+  "verbatim_in_file": true
+ }
+]

@@ -1,0 +1,15 @@
+seq: 142
+event: amend
+id: seldon:AD-030-R19
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Ratifies ingest RESULT F10 as designed behaviour'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 4c111ae72b01e097675e61827eea02de710dbfd98dc61aec3f2d089c05144711
+record_hash: 3a29f504e360592e60fd3b5005bcc1b0cdf8ef31dba48929aeab24e1b0808390

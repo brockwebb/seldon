@@ -1,0 +1,30 @@
+seq: 42
+event: accept
+id: seldon:AD-030-R24
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R24.** Retired Rulings keep their nodes and edges and bind nothing. `read_rulings` excludes `retired` and `superseded` by default. Ratifies reconcile RESULT G1 and the retire-not-delete decision in RESULT section 1.'
+source:
+  path: docs/design/AD-030_implementation_findings_002.md
+  lines:
+  - 30
+  - 30
+  sha256: e2e44008f3ed8ac0c8c3ae5631fa3a519b6bee56dba832182da14833de2d5fb8
+  text: '**AD-030-R24.** Retired Rulings keep their nodes and edges and bind nothing. `read_rulings` excludes `retired` and `superseded` by default. Ratifies reconcile RESULT G1 and the retire-not-delete decision in RESULT section 1.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_002.md
+  anchor: AD-030-R24
+consumer:
+- tests/test_governed.py
+- tests/test_verify_event_log.py
+- seldon/commands/verify.py
+- seldon/core/governed.py
+written_by: seldon decision 0.1.0
+prev_hash: ea1c095e0aa1461e0fe17e898c77a52669ea00dab5c5a65fc6504c91682a6cfe
+record_hash: 5861cd6fe613c4ca4d927e1ccd97f722448ea841dea31c61fa1ea51c6e955e9d

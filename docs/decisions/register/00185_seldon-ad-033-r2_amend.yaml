@@ -1,0 +1,15 @@
+seq: 185
+event: amend
+id: seldon:AD-033-R2
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''the previous'' in ''The seldon decision interface (CLI and MCP) shall be the only write path for decision records, supporting propose, accep'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: f6bf70e80851d407c7fbe361c59e19383bba96e594f81a1eedad2789e825e50c
+record_hash: 54182f96e5268ce89c8696de9fcebabb148c74b6d87daf0b05433055f1724621

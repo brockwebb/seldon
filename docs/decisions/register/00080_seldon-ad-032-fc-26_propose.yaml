@@ -1,0 +1,37 @@
+seq: 80
+event: propose
+id: seldon:AD-032-FC-26
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-26. Every lesson ends as a mechanism.** A lesson (a defect, an incident, an inherited DI row, or a board post confirmed by reuse) closes only as a gate, a test, a dispatcher criterion, or an explicit review-only reason. Each mechanism carries the report and date of the defect that created it. Coverage (lessons with a mechanism over all lessons, inherited rows counted separately) is reported at every release.
+  - Status: proposed.
+  - Rationale: C1; passive lesson repositories go unused (Weber, Aha and Becerra-Fernandez 2001; GAO-02-195; A:67, A:68); X-001 shows conversion works (G1:113).
+  - Check: a conformance gate computes coverage and fails any lesson without a disposition; a planted lesson with none fails it.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 199
+  - 202
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-26. Every lesson ends as a mechanism.** A lesson (a defect, an incident, an inherited DI row, or a board post confirmed by reuse) closes only as a gate, a test, a dispatcher criterion, or an explicit review-only reason. Each mechanism carries the report and date of the defect that created it. Coverage (lessons with a mechanism over all lessons, inherited rows counted separately) is reported at every release.
+    - Status: proposed.
+    - Rationale: C1; passive lesson repositories go unused (Weber, Aha and Becerra-Fernandez 2001; GAO-02-195; A:67, A:68); X-001 shows conversion works (G1:113).
+    - Check: a conformance gate computes coverage and fails any lesson without a disposition; a planted lesson with none fails it.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-26
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 0284cf6057766c8f367a940119432be053db90235b5674eeb0beea07596b2c2b
+record_hash: 42f3d5f0014236cca6f8be8cfd5f76c22e88a0896c0b93c8b1cf2ef34fa939f8

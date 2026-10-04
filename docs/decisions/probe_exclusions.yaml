@@ -1,0 +1,10 @@
+# Reviewed exclusions for the conflicts probe's silent-supersession scan (seldon.core.decisions.
+# conflicts_probe; AD-033-R9). Each entry is a sentence the scan reads as a supersession that is not
+# one, with the reason. An entry is a reviewed judgment, not a dismissal: keep the list short and
+# specific, and remove an entry when its sentence changes.
+- record: seldon:AD-029
+  cites: seldon:AD-028
+  reason: >-
+    AD-029 names `withdrawn`, the ResearchTask terminal state AD-028 defines ("the work was replaced,
+    or its premise was retracted"). It uses AD-028's vocabulary; it does not withdraw AD-028.
+  reviewed: "2026-10-04, SEL-002 (cc:0636b04a)"

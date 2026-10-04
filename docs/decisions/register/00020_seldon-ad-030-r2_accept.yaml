@@ -1,0 +1,33 @@
+seq: 20
+event: accept
+id: seldon:AD-030-R2
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_findings_reconcile.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_ADDENDUM_1.md
+- cc_tasks/2026-09-12_ad030_findings_reconcile_RESULT.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R2.** Prose is authored on disk. Structure, identity, hashes, and links live in the graph. Argued prose (rationale, steps, lab entries) is never authored inside node fields; derived artifacts (RTM, impact reports, results registry, task lists, briefing context, the YAML manifest) are never authored by hand.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 37
+  - 37
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R2.** Prose is authored on disk. Structure, identity, hashes, and links live in the graph. Argued prose (rationale, steps, lab entries) is never authored inside node fields; derived artifacts (RTM, impact reports, results registry, task lists, briefing context, the YAML manifest) are never authored by hand.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R2
+consumer:
+- seldon/commands/handoff.py
+- seldon/core/handoff.py
+- seldon/mcp_server.py
+written_by: seldon decision 0.1.0
+prev_hash: bdef81240f84b185d281739d40f2bc171962460203b7d18084362e003e375ef2
+record_hash: 1e4c26e3c3aa0f7647326b50bd148f3f1670a0cfd79f39140422668c0d19e985
