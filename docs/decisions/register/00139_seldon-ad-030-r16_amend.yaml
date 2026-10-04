@@ -1,0 +1,15 @@
+seq: 139
+event: amend
+id: seldon:AD-030-R16
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''This decision'' in ''A Ruling is defined as a section whose heading or first token carries a ruling identifier (AD-NNN-Rn, DN-…-Rn, a numbere'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 1bf24afaece2788c8179c1f2b71830fe150f71627d293b8e39242629f0a9ca94
+record_hash: 6d342f5cb2d819757995178082d0588d0e8dcfaa7a45c8b8d97b94822b80a34c

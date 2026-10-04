@@ -462,3 +462,24 @@ def test_planted_open_contradiction_is_caught_by_the_probe(tmp_path):
              amendment={"clause": "only stage", "text": "model nodes are declared", "by": "squiddy:R-2"})
     rep = dr.conflicts_probe(_u(root), f, None)
     assert rep.open_contradictions == [] and rep.resolved == {"F99": ["squiddy:R-1"]}
+
+
+@pytest.mark.parametrize("statement,refused", [
+    ("This decision supersedes ADR-006 (Unified Workout Schema).", True),
+    ("The project shall treat ready as met only when all of the following hold.", True),
+    ("As stated above, the kit stores nothing.", True),
+    ("The run shall require pooled grounding at or above 0.98.", False),
+    ("A defect diagnosis shall name the layer below the symptom that it read.", False),
+    ("The system shall read executed sets for the previous week's plans.", False),
+])
+def test_a_statement_points_at_no_other_text_but_comparatives_pass(tmp_path, statement, refused):
+    root = _repo(tmp_path, "squiddy")
+    u = _u(root)
+    _accept(u, "squiddy", "R-1", "Grounding at or above 0.98.")
+    call = lambda: dr.amend(u, "squiddy:R-1", date=DATE, decided_by="cc:x", reason="R8",  # noqa: E731
+                            changes={"statement": statement, "statement_check": "passed"})
+    if refused:
+        with pytest.raises(dr.RegisterError, match="by position"):
+            call()
+    else:
+        call()

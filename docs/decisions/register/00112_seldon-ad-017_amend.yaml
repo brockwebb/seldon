@@ -1,0 +1,16 @@
+seq: 112
+event: amend
+id: seldon:AD-017
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The canonical validity ontology for Seldon shall reside in the main Seldon repo at seldon/ontology/validity/VALIDITY_VOCABULARY.md rather than in any individual project repo. A dedicated master Neo4j database named seldon-ontology shall hold the ingested graph. Project-level Seldon instances shall hold read-only replicas synced from the master database via epoch-based pull.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: c908bc38d69d38cd0778accb3d6b25d9315be40c7e83ee75d97c4961b46c1a1e
+record_hash: 3641a62aadadbfad51fc6d45a241f4ea44de0dbdefedbc02d7bf77b41eabe92a

@@ -1,0 +1,15 @@
+seq: 144
+event: amend
+id: seldon:AD-030-R21
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Settles reconcile RESULT G6'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 8d442449b5d5836074e34581a77fceb19ffe84650b2eed6602a733d5da1f9f26
+record_hash: b9a266ef976d932ba0a208ab832e7d520bb9ef1f0c363f38deab0eb6f2a14249

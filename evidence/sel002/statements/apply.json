@@ -1,0 +1,224 @@
+{
+ "tally": {
+  "failed": 158,
+  "passed": 441
+ },
+ "refused": [
+  {
+   "id": "squiddy:DI-004",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Each project shall have its own database, with no shared infrastructure across projects, because workspace-based isolati'"
+  },
+  {
+   "id": "squiddy:DI-040",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'The drift check in icsp_notebook/kg/drift_check.py shall produce one verdict over two legs: the manifest shall equal the'"
+  },
+  {
+   "id": "squiddy:DI-075",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The membership decision process shall not use a vocabulary-overlap metric to decide document membership, because such a '"
+  },
+  {
+   "id": "squiddy:DI-168",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'A reference resolver shall key a pointer only when internal evidence exists (the identifier is literally inside the cand'"
+  },
+  {
+   "id": "squiddy:DI-173",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in \"A concept layer's label-matchability gate shall reject individual labels, per label at import time, recording the refusi\""
+  },
+  {
+   "id": "squiddy:DI-178",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The extraction cost gate for H-004 shall measure cost as weighted tokens per paper divided by the paper's own text token\""
+  },
+  {
+   "id": "squiddy:DI-216",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"If a grounding span carries fewer than 8 tokens or fewer than 3 tokens outside the node's name, then the ai-readiness-kg\""
+  },
+  {
+   "id": "squiddy:DI-222",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'If a cap halt occurs, then the gate evaluation process shall raise no cap, re-cut no frame, and substitute no cheaper in'"
+  },
+  {
+   "id": "squiddy:R-09",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The identity spine shall implement S-004's five assumptions without an override window: the registry elects an existing \""
+  },
+  {
+   "id": "squiddy:R-17",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the following' in \"TEVV (test, evaluation, verification and validation) is designated as the kit's gate structure rather than a separate ph\""
+  },
+  {
+   "id": "squiddy:R-21",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The evaluation shall compare a fourth remedy, minimal-scaffold invocation (using minimal-scaffold CLI invocation flags s'"
+  },
+  {
+   "id": "squiddy:R-24",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'A refused remedy arm shall be re-verified against the pilot gate using a fixed frame consisting of: the 15 pilot papers '"
+  },
+  {
+   "id": "squiddy:R-38",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The threshold-selection procedure shall adopt a skip threshold that minimizes extractor calls only if it retains at or a'"
+  },
+  {
+   "id": "squiddy:R-41",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The test plan shall evaluate section-bounded paragraph packs with a 1,500-real-token cap, a breadcrumb, and anchors loca'"
+  },
+  {
+   "id": "squiddy:R-43",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in \"The claim quality instrument shall measure entailment, coverage, and decontextualization using ai-readiness-kg's probe p\""
+  },
+  {
+   "id": "squiddy:R-44",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'For the bake-off comparing arm A (per-segment, current, zero extraction cost), arm B (packs with anchors per DN-009 R-41'"
+  },
+  {
+   "id": "squiddy:R-51",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'No operator shall label data manually under the standing rule for controls run in both directions from published human l'"
+  },
+  {
+   "id": "squiddy:R-56",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'Where a published human label exists for a dimension, validation against that human reference replaces the two-LLM agree'"
+  },
+  {
+   "id": "squiddy:R-58",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'In section 18, the controls shall run Plants with a sample size of 30 and an unchanged floor of 0.90, and shall run Newm'"
+  },
+  {
+   "id": "squiddy:R-60",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'The decontextualization judge instrument is held at version 2.1.0 with a status of NOT VALIDATED and shall not be tuned '"
+  },
+  {
+   "id": "squiddy:R-81",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The daemon shall run arm C as its protocol, piloted on the first 20 documents in the coverage-marginal order, with gates'"
+  },
+  {
+   "id": "squiddy:R-89",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'For the 846 completed works, every served unit shall be classified by structural class (reference list, table of content'"
+  },
+  {
+   "id": "squiddy:R-91",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'For the three deferred works, after the reset recorded in L-002, the pre-registered comparison shall run Route B (tier0_'"
+  },
+  {
+   "id": "squiddy:R-101",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'When a user runs `squiddy build <graph>`, the system shall execute the unit-operation DAG end to end as one long-running'"
+  },
+  {
+   "id": "squiddy:R-107",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'The 2-of-20 result shall stand as the final record for release 20260924_q003b_titles under mechanism amendment 3 with a '"
+  },
+  {
+   "id": "squiddy:R-121",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in \"The factory shall pause for the operator in exactly four cases, each recorded as touchpoint <n>: (1) when the pilot's pr\""
+  },
+  {
+   "id": "squiddy:R-122",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the following' in 'F-001 shall build squiddy/factory.py (containing the DAG as data with node, requires, valve key, bucket, completed predi'"
+  },
+  {
+   "id": "squiddy:R-124",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Under DN-025, decisions S-012, S-013, S-014 and H-010 are superseded rather than withdrawn, since each was valid when th'"
+  },
+  {
+   "id": "squiddy:R-136",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the following' in 'The project shall treat \"ready for Arnold\" as met only when all of the following hold: R-134\\'s floor and bound are met; '"
+  },
+  {
+   "id": "squiddy:R-139",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'When an entry is cataloged from an identifier, the system shall record the title, authors, and container of record as th'"
+  },
+  {
+   "id": "squiddy:R-163",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'Before processing its first item, every factory run shall check free space on the data volume and the temp directory aga'"
+  },
+  {
+   "id": "squiddy:R-177",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in \"The squiddy build system shall require every job, defined as a run of squiddy build, a maintenance lane, a task's model \""
+  },
+  {
+   "id": "seldon:AD-016",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the previous' in 'The paper QC system shall classify rules into three semantically distinct tiers \u2014 Critical, Substantive, and Administrat'"
+  },
+  {
+   "id": "seldon:AD-025",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Within a repo-scoped Seldon instance, sub-projects shall be first-class graph artifacts represented as Subproject nodes '"
+  },
+  {
+   "id": "seldon:AD-028",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'In the Seldon project graph, Result.name shall serve as the stable token key resolved by {{result:NAME:field}}, followin'"
+  },
+  {
+   "id": "seldon:AD-030-R16",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'A Ruling is defined as a section whose heading or first token carries a ruling identifier (AD-NNN-Rn, DN-\u2026-Rn, a numbere'"
+  },
+  {
+   "id": "seldon:AD-030-R17",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'Squiddy shall be a build-time dependency of the governed/ graph, pinned by commit in a requirements file or Makefile var'"
+  },
+  {
+   "id": "seldon:AD-030-R18",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in \"When a backfill registers counts, the graph shall record those counts as run outputs with status 'proposed'. When verifi\""
+  },
+  {
+   "id": "seldon:AD-030-R22",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in \"When an admitted governed document's content hash has moved, the kit shall re-ingest that document at the cost of that o\""
+  },
+  {
+   "id": "seldon:AD-030-R23",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'Rule R16 shall govern classification only, with the force (binding, prohibition, recommendation) of a block admitted as '"
+  },
+  {
+   "id": "seldon:AD-032-FC-09",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'A defect diagnosis shall name the layer below the symptom that it read, and where two components are suspected, both sha'"
+  },
+  {
+   "id": "seldon:AD-032-FC-12",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'below' in 'An estimate for a job shall be the measured per-unit rate, taken from a dry run or ledger window using the same model an'"
+  },
+  {
+   "id": "seldon:AD-033-R2",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the previous' in 'The seldon decision interface (CLI and MCP) shall be the only write path for decision records, supporting propose, accep'"
+  },
+  {
+   "id": "seldon:AD-033-R3",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in \"The decision record shall contain required fields id (repository-qualified using the repository's native scheme, such as\""
+  },
+  {
+   "id": "seldon:AD-033-R11",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'For every graph Squiddy builds, every Seldon project, and the decision register, the append-only, hash-chained event led'"
+  },
+  {
+   "id": "arnold:2026-06-27_vocab-decision-block-cycle-reversal-R1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'The within-workout grouping shall be named \"block\", represented as the PG table `blocks` and the Neo4j label `:PlannedBl'"
+  },
+  {
+   "id": "arnold:2026-06-27_vocab-decision-block-cycle-reversal-R3",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The hierarchy shall not define any level above the macrocycle, and multiple macro-scale efforts shall be treated as sepa'"
+  },
+  {
+   "id": "arnold:ADR-013",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'The within-workout grouping shall be canonically named \"block\" (PostgreSQL `blocks` table, Neo4j `:PlannedBlock`), using'"
+  },
+  {
+   "id": "arnold:canonical-exercise-creation-B21",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'above' in 'If log_workout encounters unresolved exercises instead of auto-trusting a search_exercises match with score above 3.0 or'"
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-B1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The within-workout grouping term shall be 'block' (physical blocks / :PlannedBlock, canonical word equal to physical nam\""
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-B2",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Naming used in issue 951b1c3a (block-membership data layer) shall conform to the naming rulings recorded in this decisio'"
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-D5",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Exercise identity shall be defined by the `Exercise` node with the `is_canonical` property as canonical; the 4-node `Can'"
+  },
+  {
+   "id": "arnold:week-template-B10",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the previous' in \"When generating a day's plan, the system shall create an empty plan, then for each block and exercise retrieve the polic\""
+  },
+  {
+   "id": "arnold:workout-structure-B1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'This decision supersedes ADR-006 (Unified Workout Schema).'"
+  }
+ ]
+}

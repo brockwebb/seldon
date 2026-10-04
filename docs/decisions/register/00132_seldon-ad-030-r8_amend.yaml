@@ -1,0 +1,16 @@
+seq: 132
+event: amend
+id: seldon:AD-030-R8
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The Squiddy identity registry shall provide cross-graph citation discovery, keyed by DOI and OpenAlex ID, in place of a master bibliography; each verification record shall remain in the graph that performed the verification, and the registry shall hold pointers to those records.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 234fe9cb08e931dfa32091cba71970c9dcdecade4d2c2f53fb15866e74dbf7b0
+record_hash: c27a9b2565173c5c9f8420c90a3b111be9669950c078aa73aafa93efa67d8451

@@ -1,0 +1,16 @@
+seq: 198
+event: amend
+id: seldon:phase_c_retirement_list-R4
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Because AD-023 is promoted, the Wintermute MCP server shall be re-registered in claude_desktop_config.json so that the wintermute arbitrate interface has a Desktop path, and the prior retirement of server.py is rescinded; re-registration is tracked as a follow-on action rather than a retirement.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 57c092108361a37aa2742ea97d2ccac844c8226af66d36928b39e91921292363
+record_hash: 4154f7369ef734caa8954ecff445f9d3f82e6d26c65ce4b95a1caa848f16b324

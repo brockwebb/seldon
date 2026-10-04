@@ -1,0 +1,16 @@
+seq: 195
+event: amend
+id: seldon:phase_c_retirement_list-R1
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The Wintermute maintainer shall delete the LightRAG packages from the wintermute .venv and delete the rag_storage/ directory, while retaining any associated source notes for their research value.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: ce8a221f24d1b9eaa9e82a3826f24aef8cf9c5d409b5cf34ba1bcc29f368d08c
+record_hash: 332ab4527a3fe4b3dbd66c33917ed1e819f6c52db71aa474252e71daa5977f1e

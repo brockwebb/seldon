@@ -1,0 +1,16 @@
+seq: 128
+event: amend
+id: seldon:AD-030-R4
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Document identity shall be defined as the content hash rather than the file path. Governed authored documents shall remain in place, with the path serving as the edit surface, because relocation breaks re-sync. Source documents such as PDFs, harvested pages, and thread exports shall be treated as immutable, may reside at any location, and shall be resolved by hash. Git shall hold governed markdown and shall not hold source blobs. Source blobs shall be stored in a content-addressed store outside the repository, with DVC and git-annex to be evaluated as options using a plain folder as a remote before writing a custom mover.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 473397f6cd2ba22e76de77997e89ae15879ff31586357124e74aba4c09628047
+record_hash: f2d00f95b12058bf3502a2914224f55e061c448831627ef876b96915e4f240d6

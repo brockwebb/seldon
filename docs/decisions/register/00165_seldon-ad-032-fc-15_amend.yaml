@@ -1,0 +1,15 @@
+seq: 165
+event: amend
+id: seldon:AD-032-FC-15
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Conformance fails any job lacking estimate or actual'', ''A lot planned beyond the remaining band is refused'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: aad942295fb1a64cb6162630ee1721ccf78071810a959c969263ff7cf5c69396
+record_hash: be6ed1c8170be287a1fa7025462691a1429e7fa8ec8a2febce7ddf04fe5d437f

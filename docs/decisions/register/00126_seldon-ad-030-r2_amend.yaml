@@ -1,0 +1,16 @@
+seq: 126
+event: amend
+id: seldon:AD-030-R2
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The project shall author prose on disk while maintaining structure, identity, hashes, and links in the graph. Argued prose, including rationale, steps, and lab entries, shall never be authored inside node fields. Derived artifacts, including the RTM, impact reports, results registry, task lists, briefing context, and the YAML manifest, shall never be authored by hand.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 788da3699a6a396964c8df1be12b00e722cace3e0f84de88b1c9b07c636cd15a
+record_hash: 6fe26c92c70f43aaf6f16445c05b6b940c6cb1cfea9efb9a7364586555f51c25

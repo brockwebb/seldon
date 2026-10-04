@@ -1,0 +1,16 @@
+seq: 131
+event: amend
+id: seldon:AD-030-R7
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Citation edges in the graph shall use the CiTO vocabulary, including the fundamental properties cites_as_evidence, uses_method_in, and extends, and the constraint-driven properties disagrees_with or refutes for prescriptions the operator rejects because the constraint no longer holds under current tooling, each carrying a reason property naming the constraint. If science is rejected, then the subject shall retain it in the graph as a rejected prescription, and reinstatement shall require supersession with evidence.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 6855d23980457b00e1846689708b1986694d9446e40f01ef61188ed4918c68fc
+record_hash: 234fe9cb08e931dfa32091cba71970c9dcdecade4d2c2f53fb15866e74dbf7b0

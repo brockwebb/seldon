@@ -1,0 +1,16 @@
+seq: 170
+event: amend
+id: seldon:AD-032-FC-20
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If a design note or pilot task is submitted for registration without a two-part Prior art section containing an External subsection showing the search performed and an Internal precedent subsection naming the sibling repositories, inherited rows, and board entries searched with empty results included, then the registration process shall refuse the design note or pilot task.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7d4eac8d61c994cb3a76263acb3d6b6afbdddcd6eb1e6e4fa74e767c79b6daf4
+record_hash: 555093af3e5f50cfbebcc80a61edfabc2dc3f5502f3d73f82a4d5e37467c11b9

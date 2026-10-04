@@ -1,0 +1,108 @@
+{
+ "phase": "run",
+ "records": 585,
+ "projection": {
+  "pilot_actual": 393671.0,
+  "writer_estimate": 1333928.125,
+  "validator_estimate": 1094455.0,
+  "projected_total": 2822054.1,
+  "declared_budget": 3000000,
+  "stop_line": 3600000.0,
+  "writer_basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=a0ccc9ea",
+   "node": "sel002_writer_925a621d",
+   "n": 10,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)"
+  },
+  "validator_basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=48109227",
+   "node": "sel002_validator_54101082",
+   "n": 10,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)"
+  }
+ },
+ "writer": {
+  "summary": {
+   "unit": "sel002_writer",
+   "total": 585,
+   "already_done": 10,
+   "done_this_run": 574,
+   "failed_this_run": 1,
+   "exhausted": [],
+   "pending_at_start": 575,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_writer:run:65303a68c70e:sel002_writer_925a621d",
+  "estimate": 1333928.125,
+  "actual": 1486064.75,
+  "ratio": 1.1141,
+  "by_class": {
+   "cache_read": 0,
+   "cache_write": 758419,
+   "input": 1148,
+   "output": 106578
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=a0ccc9ea",
+   "node": "sel002_writer_925a621d",
+   "n": 10,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)",
+   "rate_cold": 2319.875,
+   "rate_warm": 2319.875
+  }
+ },
+ "validator": {
+  "summary": {
+   "unit": "sel002_validator",
+   "total": 584,
+   "already_done": 10,
+   "done_this_run": 573,
+   "failed_this_run": 1,
+   "exhausted": [],
+   "pending_at_start": 574,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_validator:run:65303a68c70e:sel002_validator_54101082",
+  "estimate": 1092551.6,
+  "actual": 1116155.4,
+  "ratio": 1.0216,
+  "by_class": {
+   "cache_read": 0,
+   "cache_write": 702520,
+   "input": 48562,
+   "output": 37508
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=48109227",
+   "node": "sel002_validator_54101082",
+   "n": 10,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)",
+   "rate_cold": 1903.4,
+   "rate_warm": 1903.4
+  }
+ }
+}

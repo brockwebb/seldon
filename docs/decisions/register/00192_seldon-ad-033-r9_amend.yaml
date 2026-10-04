@@ -1,0 +1,16 @@
+seq: 192
+event: amend
+id: seldon:AD-033-R9
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The conflicts probe defined by FC-18 stands and shall be re-run on the register at the end of SEL-002 and at every Squiddy, Seldon and Arnold release, with DB-1 exiting each run with zero open contradictions and zero silent supersessions among active records; a governing document shall not cite an id that the register records as nonexistent.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 8402e4f2fdb5dd2f700bd926d67260af464810359e9cdddca2d98276ef60d3f1
+record_hash: 79098b9d25bc86d0a30a94d1139d168cbc464396dfac15874a2846d7e7e5d467

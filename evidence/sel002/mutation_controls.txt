@@ -2,17 +2,17 @@
 
 | planted test | real code | mutant | under mutant |
 |---|---|---|---|
-| test_planted_hand_edited_record_fails_the_check | pass (1 passed in 0.81s) | no_chain_check | fails, as it must (1 failed in 0.27s) |
-| test_planted_reformatted_record_with_equal_data_fails_the_check | pass (1 passed in 0.75s) | no_chain_check | fails, as it must (1 failed in 0.20s) |
-| test_planted_removed_record_breaks_the_chain | pass (1 passed in 0.68s) | no_chain_check | fails, as it must (1 failed in 0.21s) |
-| test_planted_forked_supersession_is_refused_naming_the_live_head | pass (1 passed in 0.66s) | no_fork_check | fails, as it must (1 failed in 0.23s) |
-| test_planted_supersession_of_a_missing_id_is_refused_and_writes_nothing | pass (1 passed in 0.64s) | no_existence_check | fails, as it must (1 failed in 0.25s) |
-| test_planted_labeled_decision_without_a_record_fails_the_check | pass (1 passed in 0.78s) | no_label_check | fails, as it must (1 failed in 0.22s) |
-| test_planted_arnold_registration_resolves_squiddy_r112 | pass (1 passed in 0.89s) | no_imports | fails, as it must (1 failed in 0.40s) |
-| test_planted_superseded_record_never_binds_the_r29_case | pass (1 passed in 0.74s) | superseded_binds | fails, as it must (1 failed in 0.28s) |
+| test_planted_hand_edited_record_fails_the_check | pass (1 passed in 0.74s) | no_chain_check | fails, as it must (1 failed in 0.37s) |
+| test_planted_reformatted_record_with_equal_data_fails_the_check | pass (1 passed in 0.66s) | no_chain_check | fails, as it must (1 failed in 0.20s) |
+| test_planted_removed_record_breaks_the_chain | pass (1 passed in 0.61s) | no_chain_check | fails, as it must (1 failed in 0.23s) |
+| test_planted_forked_supersession_is_refused_naming_the_live_head | pass (1 passed in 0.75s) | no_fork_check | fails, as it must (1 failed in 0.20s) |
+| test_planted_supersession_of_a_missing_id_is_refused_and_writes_nothing | pass (1 passed in 0.69s) | no_existence_check | fails, as it must (1 failed in 0.25s) |
+| test_planted_labeled_decision_without_a_record_fails_the_check | pass (1 passed in 0.72s) | no_label_check | fails, as it must (1 failed in 0.19s) |
+| test_planted_arnold_registration_resolves_squiddy_r112 | pass (1 passed in 0.89s) | no_imports | fails, as it must (1 failed in 0.37s) |
+| test_planted_superseded_record_never_binds_the_r29_case | pass (1 passed in 0.71s) | superseded_binds | fails, as it must (1 failed in 0.25s) |
 | test_the_decision_label_joins_the_owned_label_set | pass (1 passed in 0.54s) | label_not_owned | fails, as it must (1 failed in 0.07s) |
-| test_projection_leaves_legacy_decision_nodes_unchanged | pass (1 passed in 2.36s) | mutates_legacy | fails, as it must (1 failed in 1.93s) |
-| test_planted_silent_supersession_is_caught_by_the_probe | pass (1 passed in 0.86s) | probe_blind_to_verbs | fails, as it must (1 failed in 0.24s) |
-| test_planted_open_contradiction_is_caught_by_the_probe | pass (1 passed in 0.92s) | probe_ignores_findings | fails, as it must (1 failed in 0.21s) |
+| test_projection_leaves_legacy_decision_nodes_unchanged | pass (1 passed in 2.24s) | mutates_legacy | fails, as it must (1 failed in 1.82s) |
+| test_planted_silent_supersession_is_caught_by_the_probe | pass (1 passed in 0.66s) | probe_blind_to_verbs | fails, as it must (1 failed in 0.21s) |
+| test_planted_open_contradiction_is_caught_by_the_probe | pass (1 passed in 0.75s) | probe_ignores_findings | fails, as it must (1 failed in 0.19s) |
 
 verdict: every control is load-bearing

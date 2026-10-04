@@ -1,0 +1,16 @@
+seq: 158
+event: amend
+id: seldon:AD-032-FC-08
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If the factory adds a control, then the control shall stop the process on violation, unless the control's decision record states why a stop is impossible or harmful, in which case the control may be of warning type.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 8de8d13b30caf0060079ec4197c84f95e270964d041c34e1e04f6741a70141b9
+record_hash: 2cf4da73a8e851c297978c661f4b86718db6c76140d4df5009101cd81a0cd1df

@@ -1,0 +1,17 @@
+seq: 203
+event: amend
+id: seldon:AD-032-FC-12
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+- evidence/sel002/statements/apply.json
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): re-landed. The validator passed this statement; the write path''s first deictic pattern refused it on a comparative (''at or above'', ''below the floor''), which is not a pointer to other text. First refusal: a statement names no other record by position (AD-033-R3): ''below'' in ''An estimate for a job shall be the measured per-unit rate, taken from a dry run or ledger'
+changes:
+  statement: An estimate for a job shall be the measured per-unit rate, taken from a dry run or ledger window using the same model and profile, multiplied by the planned units, and shall be recorded with its basis. If a job has no estimate or has an estimate below the measured floor, then the governor shall refuse the job.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 6b25fcb5932f67f9905670003a1b8c7a382c71297530242b7f6bc3724d201b08
+record_hash: 058fd8d5ebc174e4faf6f7cf31488923e0e00f606d1a29ddfe91b8ad703627f6

@@ -1,0 +1,15 @@
+seq: 140
+event: amend
+id: seldon:AD-030-R17
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''This decision'' in ''Squiddy shall be a build-time dependency of the governed/ graph, pinned by commit in a requirements file or Makefile var'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 6d342f5cb2d819757995178082d0588d0e8dcfaa7a45c8b8d97b94822b80a34c
+record_hash: 2bd65d21c8455f291c8782dd4bdf8345f6dd2efe76edb68a8b0fc51808797118

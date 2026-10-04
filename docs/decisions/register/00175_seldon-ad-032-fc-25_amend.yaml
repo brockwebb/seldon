@@ -1,0 +1,15 @@
+seq: 175
+event: amend
+id: seldon:AD-032-FC-25
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Status: proposed'', ''Check: why resolves end to end on 30 random nodes'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 4ae250ff7d1187651b82e1a27df4f51e8c9e297f46d26b97e279dee105694744
+record_hash: f664b38c0a93e0c6339d6d6ab9094c2f663a09391e3425a185a5685b6e0da234

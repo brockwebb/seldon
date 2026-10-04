@@ -1,0 +1,72 @@
+{
+ "phase": "pilot",
+ "records": 10,
+ "writer": {
+  "summary": {
+   "unit": "sel002_writer",
+   "total": 10,
+   "already_done": 0,
+   "done_this_run": 10,
+   "failed_this_run": 0,
+   "exhausted": [],
+   "pending_at_start": 10,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_writer:pilot:65303a68c70e:sel002_writer_925a621d",
+  "estimate": 14946.25,
+  "actual": 23198.75,
+  "ratio": 1.5521,
+  "by_class": {
+   "cache_read": 0,
+   "cache_write": 12375,
+   "input": 20,
+   "output": 1542
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=a0ccc9ea",
+   "node": "sel002_writer_925a621d",
+   "n": 0,
+   "why": "no measured call for this model, profile and node, and no dry run",
+   "pilot": true,
+   "guess": "declared by the caller, not measured (constitution 15.4)"
+  }
+ },
+ "validator": {
+  "summary": {
+   "unit": "sel002_validator",
+   "total": 10,
+   "already_done": 0,
+   "done_this_run": 10,
+   "failed_this_run": 0,
+   "exhausted": [],
+   "pending_at_start": 10,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_validator:pilot:65303a68c70e:sel002_validator_54101082",
+  "estimate": 16743.75,
+  "actual": 19034.0,
+  "ratio": 1.1368,
+  "by_class": {
+   "cache_read": 0,
+   "cache_write": 10952,
+   "input": 999,
+   "output": 869
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=48109227",
+   "node": "sel002_validator_54101082",
+   "n": 0,
+   "why": "no measured call for this model, profile and node, and no dry run",
+   "pilot": true,
+   "guess": "declared by the caller, not measured (constitution 15.4)"
+  }
+ }
+}

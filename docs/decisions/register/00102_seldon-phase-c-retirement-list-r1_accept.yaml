@@ -1,0 +1,38 @@
+seq: 102
+event: accept
+id: seldon:phase_c_retirement_list-R1
+date: '2026-04-18'
+decided_by: desktop
+operator_stated: false
+reason: 'SEL-002: a labeled decision positional parsing bound, which AD-033-R7 would otherwise stop binding (evidence/sel002/positional_rulings_without_record.json)'
+kind: decision
+status: accepted
+statement: |-
+  ### R1. LightRAG installation + empty `rag_storage/`
+
+  **Evidence:** CC2 — installed in wintermute `.venv`, `rag_storage/` empty, logs frozen 2026-02-14. Spike-and-abandoned; no usable index was ever produced.
+  **Action:** Delete `.venv` LightRAG packages and `rag_storage/` directory. Keep any source notes (research value) but remove the runtime footprint.
+  **Reversibility:** High. LightRAG is a package install; reinstalling takes minutes.
+  **Risk if kept:** Confusion about whether Wintermute has a retrieval layer (it doesn't; this is dead weight).
+source:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  lines:
+  - 24
+  - 29
+  sha256: ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b
+  text: |-
+    ### R1. LightRAG installation + empty `rag_storage/`
+
+    **Evidence:** CC2 — installed in wintermute `.venv`, `rag_storage/` empty, logs frozen 2026-02-14. Spike-and-abandoned; no usable index was ever produced.
+    **Action:** Delete `.venv` LightRAG packages and `rag_storage/` directory. Keep any source notes (research value) but remove the runtime footprint.
+    **Reversibility:** High. LightRAG is a package install; reinstalling takes minutes.
+    **Risk if kept:** Confusion about whether Wintermute has a retrieval layer (it doesn't; this is dead weight).
+scope:
+- seldon
+rationale:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  anchor: R1
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 5752f5482803d1fc79221dfcc5104f63007faf8c08956f8892412a12b4221aa7
+record_hash: ea62144b2613fbf8dac434263f36ff4816886064eb6fa28471e5f994e0e74dbc

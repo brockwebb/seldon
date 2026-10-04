@@ -1,0 +1,15 @@
+seq: 194
+event: amend
+id: seldon:AD-033-R11
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''This decision'' in ''For every graph Squiddy builds, every Seldon project, and the decision register, the append-only, hash-chained event led'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: afde7e17b457d67844913d116f73aa3a3dbaa1433ceccc3ea80f4ccd0a8b70a1
+record_hash: ce8a221f24d1b9eaa9e82a3826f24aef8cf9c5d409b5cf34ba1bcc29f368d08c

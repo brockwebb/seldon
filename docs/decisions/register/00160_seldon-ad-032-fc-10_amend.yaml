@@ -1,0 +1,16 @@
+seq: 160
+event: amend
+id: seldon:AD-032-FC-10
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: For each stage that produces a rate (quarantine, faithfulness, recall, yield, spend ratio), the quality control system shall apply specification limits, set either from the stage's pre-registered bar or the operator's band, and control limits computed from the stage's own baseline, using Shewhart three-sigma limits or a p-chart per lot for attribute rates. When a first reading for a rated stage is produced, the quality control system shall report the reading without gating on it. If a reading on a rated stage falls outside specification limits, then the quality control system shall stop the line per FC-28. If a reading on a rated stage falls outside control limits but within specification limits, then the quality control system shall open a huddle without stopping the line. A quality claim shall rest on lot sampling using Wald SPRT or ISO 2859-1, and shall never rest on a single pilot.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 69712a18541818cafccbe432861ed043d210b7a42b9150b43e9942339294d7c1
+record_hash: 3455b4e5efc8f9f41aee43549295f71e1fade3d8e72923b434600fcf98d819e7

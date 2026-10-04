@@ -1,0 +1,16 @@
+seq: 118
+event: amend
+id: seldon:AD-024
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The CC4 dashboard and SQLite metrics store shall serve as the reference implementation of the observability substrate for Seldon, Wintermute, and related infrastructure, using an insert-only schema with dot-notation metric names, JSON dimensions, and versioning by collected_by. When adjacent or future observability work is undertaken, it shall extend the CC4 metrics store rather than build parallel stores. Every gate, sleep function, and pipeline step that claims value shall emit events to the substrate. A new Seldon or Wintermute component shall not be considered complete unless it emits appropriate events to the substrate, as a definition-of-done criterion. When substrate data is available, decisions about component retention, deprecation, and calibration — including whether a gate is catching violations, whether a function is producing signal, or whether a pipeline is used — shall be made against that substrate data rather than qualitative recall.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: d5a568ae662562602bb3164a82717c698e773a537591e959ab1afa19dd2ca559
+record_hash: a4d3bef68fd8d10f3d34bb002e45f7ae3e95f2ef3e134efa572b9b130a4305d9

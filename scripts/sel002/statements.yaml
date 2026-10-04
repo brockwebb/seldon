@@ -8,12 +8,12 @@ writer:
   alias: sonnet                  # the CLI alias; the resolved model is read from every envelope and recorded
   timeout: 300
   max_turns: 2
-  effort: null                   # no --effort flag: the CLI's default
+  effort: low                    # pilot 2 measured up to 4,774 output tokens of thinking for a few lines of JSON
 validator:
   alias: sonnet
   timeout: 300
   max_turns: 2
-  effort: null
+  effort: low                    # a strict yes/no check; see writer
 
 # The pinned CLI binary every Squiddy model call uses (graphs/library/extract/control.yaml `transport`; DN-006 R-30).
 transport:
@@ -25,6 +25,8 @@ transport:
 # The call layer's loop (constitution section 15).
 policy:
   in_flight: 3
+  pilot_in_flight: 1             # the pilot measures one call at a time: its cold-start share (1 in 10) is nearer the
+                                 # bulk's (3 in ~575) than three parallel cold starts in ten would be
   retry_attempts: 2              # a unit whose call fails twice across runs is left, counted, for the report
   retry_backoff_seconds: 5
   progress_every_seconds: 60

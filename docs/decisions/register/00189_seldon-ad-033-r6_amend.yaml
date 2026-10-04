@@ -1,0 +1,16 @@
+seq: 189
+event: amend
+id: seldon:AD-033-R6
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Every accepted record shall name its consumer per FC-01, filled mechanically at baseline with the conformance items, tests and code that cite the record''s id; if a record has no consumer, then the record shall carry review_only with exactly one reason from a closed list: rationale, pre_registration, dispatch, or none. The reason none shall be allowed at DB-1 and shall be reported as a coverage figure at every release. The FC-01 gate that refuses a reason of none shall remain off until FC-17 exists, and shall be turned on with FC-17.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 970cc1470e1251e1937f96c094e2e3ff1a7bc0e07e4a7420e1e661d11538433a
+record_hash: 0acde8a5de0c9d7ba5012e8527230a3b06897b5e8a281c1ba3fd5db33d22e75a

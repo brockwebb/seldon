@@ -1,0 +1,15 @@
+seq: 122
+event: amend
+id: seldon:AD-028
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''this decision'' in ''In the Seldon project graph, Result.name shall serve as the stable token key resolved by {{result:NAME:field}}, followin'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 769782031f8dd3445ed5f795f180c2b38fed4358c8bc24b1dd2e517d3aad95ab
+record_hash: c70bd8bd7aea8cf5d90a594d4c5ee192554cd8909c3fdc5af48ac402c444dffa

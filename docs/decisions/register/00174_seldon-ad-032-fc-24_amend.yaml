@@ -1,0 +1,16 @@
+seq: 174
+event: amend
+id: seldon:AD-032-FC-24
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Each release shall sign its last event hash plus the index digest and shall store the signed release checkpoint outside the repository. Resets and resegmentation shall be treated as events.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 58aa82becbc94d525990310cd4c560e6023c8c8e08cd9278937ea906c8e3b623
+record_hash: 4ae250ff7d1187651b82e1a27df4f51e8c9e297f46d26b97e279dee105694744

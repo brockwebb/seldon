@@ -1,0 +1,40 @@
+seq: 103
+event: accept
+id: seldon:phase_c_retirement_list-R2
+date: '2026-04-18'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/evolution_burst_2026-04/phase_c_retirement_list.md:35: "**Important:** This retirement is independent of the adopt-vs-extract decision made in Phase C. The operator chose **Option A (adopt claude-mem)**, which means a fresh, supported claude-mem install will follow as p..."'
+reason: 'SEL-002: a labeled decision positional parsing bound, which AD-033-R7 would otherwise stop binding (evidence/sel002/positional_rulings_without_record.json)'
+kind: decision
+status: accepted
+statement: |-
+  ### R2. claude-mem thedotmack install (v10.5.2)
+
+  **Evidence:** CC2 — marked `.orphaned_at` 2026-04-11 by Claude Code plugin framework update. `claude-mem.db` not at expected path. CC3 — "Known broken."
+  **Action:** Remove the orphaned install.
+  **Important:** This retirement is independent of the adopt-vs-extract decision made in Phase C. The operator chose **Option A (adopt claude-mem)**, which means a fresh, supported claude-mem install will follow as part of the 15% roadmap work. What's being retired here is the v10.5.2 install that's already been orphaned — not the adopt decision.
+  **Reversibility:** High.
+source:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  lines:
+  - 31
+  - 36
+  sha256: ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b
+  text: |-
+    ### R2. claude-mem thedotmack install (v10.5.2)
+
+    **Evidence:** CC2 — marked `.orphaned_at` 2026-04-11 by Claude Code plugin framework update. `claude-mem.db` not at expected path. CC3 — "Known broken."
+    **Action:** Remove the orphaned install.
+    **Important:** This retirement is independent of the adopt-vs-extract decision made in Phase C. The operator chose **Option A (adopt claude-mem)**, which means a fresh, supported claude-mem install will follow as part of the 15% roadmap work. What's being retired here is the v10.5.2 install that's already been orphaned — not the adopt decision.
+    **Reversibility:** High.
+scope:
+- seldon
+rationale:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  anchor: R2
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: ea62144b2613fbf8dac434263f36ff4816886064eb6fa28471e5f994e0e74dbc
+record_hash: 60c5db312ade614edbaf32b5a0c3030478068bc556f8945dd4bc9d0824fdf6d6

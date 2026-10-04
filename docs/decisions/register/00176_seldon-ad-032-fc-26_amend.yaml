@@ -1,0 +1,16 @@
+seq: 176
+event: amend
+id: seldon:AD-032-FC-26
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: When a lesson (a defect, an incident, an inherited DI row, or a board post confirmed by reuse) closes, the lesson closure mechanism shall be a gate, a test, a dispatcher criterion, or an explicit review-only reason. Each mechanism shall carry the report and date of the defect that created it. The system shall report coverage (lessons with a mechanism over all lessons, with inherited rows counted separately) at every release.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: f664b38c0a93e0c6339d6d6ab9094c2f663a09391e3425a185a5685b6e0da234
+record_hash: 9824093f9c43732e2ceb7019d88d4a3838ac7e22ac91b35db391f74c9439c5fe

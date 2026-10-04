@@ -1,0 +1,16 @@
+seq: 188
+event: amend
+id: seldon:AD-033-R5
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Baseline DB-1, under plan action C, consists of one baseline established from the three repositories'' main HEADs at SEL-002''s start, recorded by commit, holding: the probe''s 485 units; DN-037''s decisions, given ids squiddy:DN-037-R1 onward at baseline; AD-032''s FC labels (FC-01 to FC-07 accepted, operator-stated; FC-08 to FC-33 proposed); Arnold docs/adr/ records; and the unlabeled prose decisions SEL-001 named (Arnold intensity-constructs per-set RPE, the five Arnold ontology documents), given ids arnold:<doc>-B<n> with their verbatim span. Seed status for each record is the source''s stated status where it has one; a decision a dispatched task has executed under is accepted, with that task as the receipt; otherwise the record is accepted. The 45 probe findings and the 12 drifted mirrors are then applied as transition and superseding records, each citing its finding id and quotes, under L4. The probe''s dispositions apply as written, except those that offer a choice, which section 5 resolves. Every disposition that touches an operator-stated record goes on an override list in the delivery report, and the operator is not asked. AD-032''s FC labels enter as records at the baseline, and the positional parser is not extended for them.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 79be2e770d327fc351532a048a7508398ace03e29e934b086f7e05609ca998d4
+record_hash: 970cc1470e1251e1937f96c094e2e3ff1a7bc0e07e4a7420e1e661d11538433a

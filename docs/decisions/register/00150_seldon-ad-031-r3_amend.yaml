@@ -1,0 +1,16 @@
+seq: 150
+event: amend
+id: seldon:AD-031-R3
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: For Phase 1 of AD-031-R3, retrieval shall be measured before any wiring occurs, evaluating arm O (the existing concept-overlap binding as registration runs it today) and arm H (Squiddy's hybrid search) on the same gold sets; Phase 2 shall be designed only on Phase 1's numbers; and if arm O meets the bar, nothing new shall be built, with Squiddy and Arnold getting governed graphs and the existing mechanism.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 009efff39537996be0a99775f9ff2bc08537a9780e7f5953f05108713d51aad7
+record_hash: ccef0a9cc43eec0423fe313c76b233be5927b9496c06beb4d50a3bcea382a2c4

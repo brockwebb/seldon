@@ -1,0 +1,16 @@
+seq: 133
+event: amend
+id: seldon:AD-030-R9
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: A Desktop design session shall close with a design note rather than a task, with rulings recorded as '##' sections carrying IDs in the AD-030-Rn pattern and citations given inline. Every CC task produced by a design session shall reference a DN- or AD- identifier; seldon_cc_register shall check this lexically and shall refuse the task otherwise. The seldon go command shall print this obligation in the Desktop contract, and at the next orient shall report any Desktop session that registered no DesignNote.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: c27a9b2565173c5c9f8420c90a3b111be9669950c078aa73aafa93efa67d8451
+record_hash: f4f9e1c8279c1d3be4db1948604f570a7f8386c1ab6c717608afd9e87f622207

@@ -1,0 +1,24 @@
+{
+ "squiddy": {
+  "rulings": 181,
+  "without_record": 8,
+  "by_dir": {
+   "cc_tasks": 8
+  }
+ },
+ "seldon": {
+  "rulings": 33,
+  "without_record": 6,
+  "by_dir": {
+   "docs": 6
+  }
+ },
+ "arnold": {
+  "rulings": 47,
+  "without_record": 28,
+  "by_dir": {
+   "cc_tasks": 8,
+   "docs": 20
+  }
+ }
+}

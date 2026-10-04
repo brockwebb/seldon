@@ -1,0 +1,16 @@
+seq: 190
+event: amend
+id: seldon:AD-033-R7
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Once a repository''s register exists, the seldon cc register command shall bind Decision records only. When seldon cc register runs, positional Ruling nodes shall remain as searchable content and shall lose force: binding. While SEL-003 has not picked an arm, seldon cc register shall label its registration''s binding as advisory in its output. AD-030-R16 and AD-030-R21 shall stay in force for prose readers. AD-033-R7 supersedes the binding role of AD-030-R16.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 0acde8a5de0c9d7ba5012e8527230a3b06897b5e8a281c1ba3fd5db33d22e75a
+record_hash: 24af3823e1179112b9dc42fa3124c48698365617b02f1f2f4e0537fc3da349f0

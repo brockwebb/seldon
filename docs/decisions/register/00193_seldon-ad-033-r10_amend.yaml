@@ -1,0 +1,16 @@
+seq: 193
+event: amend
+id: seldon:AD-033-R10
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: From DB-1 forward, the register record shall be the decision record, projected as a Decision node, with one Decision node per decision and never one per file. Legacy ArchitecturalDecision and DesignNote nodes shall stay unmutated. The Decision label shall join Addendum 029-A's label set, and every read that traverses a relationship from a Decision node shall bind :Artifact. AD-033-R10 supersedes AD-030-R14.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 79098b9d25bc86d0a30a94d1139d168cbc464396dfac15874a2846d7e7e5d467
+record_hash: afde7e17b457d67844913d116f73aa3a3dbaa1433ceccc3ea80f4ccd0a8b70a1

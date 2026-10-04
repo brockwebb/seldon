@@ -1,0 +1,16 @@
+seq: 154
+event: amend
+id: seldon:AD-032-FC-04
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Every job and scheduled lane shall carry a cost estimate and shall spend through reserve-then-settle via one metered chokepoint. If actual spend is at or under 10% over the estimate, then the job shall run and log the spend. If actual spend is from 10% up to 20% over the estimate, then the system shall raise a warning event. If actual spend exceeds 20% over the estimate, then the job shall stop before spending and shall require the operator's dated approval to proceed. The system shall record and chart estimate versus actual spend for every job. Large corpora shall run in rate-limited lots sized to what the budget can absorb, and nightly and weekly maintenance lanes shall each carry their own estimates.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 5b624ebf8fe1a0669b7bddcd0490bdb3b6b804f669f2585cbfb901c96982436d
+record_hash: e76ae638f167818398ad5d1f358c0477bd2352bcd001ce2e3c19d0ab7a9f6c16

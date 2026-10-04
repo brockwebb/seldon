@@ -1,0 +1,40 @@
+seq: 105
+event: accept
+id: seldon:phase_c_retirement_list-R4
+date: '2026-04-18'
+decided_by: desktop
+operator_stated: false
+reason: 'SEL-002: a labeled decision positional parsing bound, which AD-033-R7 would otherwise stop binding (evidence/sel002/positional_rulings_without_record.json)'
+kind: decision
+status: accepted
+statement: |-
+  ### R4. Wintermute MCP server — not registered
+
+  **Evidence:** CC2 — code at `~/.wintermute/wintermute-mcp/server.py` updated 2026-04-14/15, but NOT present in `claude_desktop_config.json`. CC3 — zero consumers can reach it.
+  **Action:** **Conditional.** Two paths:
+    - **(a) If AD-023 is promoted (sleep functions are Wintermute's center):** re-register the MCP server so the `wintermute arbitrate` interface has a Desktop path. Retirement **rescinded.**
+    - **(b) If AD-023 is deferred:** deregister the code path formally by moving `server.py` to `_archived/` with a dated README. No point maintaining an unreachable endpoint.
+  **Operator note (2026-04-18):** AD-023 is being promoted this burst, so path (a) applies. Re-registration becomes a follow-on action, not a retirement.
+source:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  lines:
+  - 45
+  - 51
+  sha256: ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b
+  text: |-
+    ### R4. Wintermute MCP server — not registered
+
+    **Evidence:** CC2 — code at `~/.wintermute/wintermute-mcp/server.py` updated 2026-04-14/15, but NOT present in `claude_desktop_config.json`. CC3 — zero consumers can reach it.
+    **Action:** **Conditional.** Two paths:
+      - **(a) If AD-023 is promoted (sleep functions are Wintermute's center):** re-register the MCP server so the `wintermute arbitrate` interface has a Desktop path. Retirement **rescinded.**
+      - **(b) If AD-023 is deferred:** deregister the code path formally by moving `server.py` to `_archived/` with a dated README. No point maintaining an unreachable endpoint.
+    **Operator note (2026-04-18):** AD-023 is being promoted this burst, so path (a) applies. Re-registration becomes a follow-on action, not a retirement.
+scope:
+- seldon
+rationale:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  anchor: R4
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 6447274283102b9922062e1ed1639170a3bf3b4ce3ce5e3e7a8e60223e8d9f28
+record_hash: c3bdb62392232fe5562b8fab7708eda0ba351de31e5a0d173387e9ad849b7e22

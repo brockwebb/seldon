@@ -1,0 +1,16 @@
+seq: 182
+event: amend
+id: seldon:AD-032-FC-32
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The decision register shall classify every unexpected strategy into exactly one of three tiers: Beneficial (serves the goal and stays inside every boundary, to be kept, have its dose recorded, and promoted into standard work through FC-26 once its rate is stable on a chart), Neutral or suboptimal (inside the boundaries but does not serve the goal or serves it at a poor rate, to be observed and redirected by adjusting the objective rather than forbidding the act), or Toxic (breaks a sandbox or egress policy, uses or exposes credentials, edits or fabricates evidence or transcripts, games a gate''s instrument, or spends without a budget, to be enforced by a hard boundary mechanism that stops the line per FC-28). If a beneficial behavior''s rate leaves its control limits, then the beneficial behavior shall be reviewed again.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 02949770b0cfcb6c9164edb779a189bc2b5ba7e67ff15e3bbb2c5aa4c2144d8c
+record_hash: 3b86b562ead85a85efed1aaf21d77ce8d3a8d48deed7fc5171c0f28808471f35

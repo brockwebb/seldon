@@ -1,0 +1,16 @@
+seq: 108
+event: amend
+id: seldon:AD-012
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The system shall apply human-in-the-loop review at decision points rather than approval gates, maximizing the proportion of human attention spent on judgment tasks (argument design, validity assessment, voice) versus mechanical tasks (fact-checking, convention compliance, contradiction detection), with a target of shifting editing time from approximately 20% judgment/80% mechanical to approximately 80% judgment/20% mechanical as measured after deployment.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7a1cccaf1d692c2569bdd0eefb35f4490f2d450f8dacbbd7565635c62434f3f0
+record_hash: 0a204c1e370d8d325e3312cf960817461dc2180b335d99d8e6ae1e1dc808ca70

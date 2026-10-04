@@ -1,0 +1,132 @@
+{
+ "relanded": [
+  "squiddy:DI-075",
+  "squiddy:DI-168",
+  "squiddy:DI-173",
+  "squiddy:R-17",
+  "squiddy:R-21",
+  "squiddy:R-24",
+  "squiddy:R-38",
+  "squiddy:R-41",
+  "squiddy:R-43",
+  "squiddy:R-44",
+  "squiddy:R-51",
+  "squiddy:R-56",
+  "squiddy:R-58",
+  "squiddy:R-81",
+  "squiddy:R-89",
+  "squiddy:R-91",
+  "squiddy:R-101",
+  "squiddy:R-107",
+  "squiddy:R-121",
+  "squiddy:R-122",
+  "squiddy:R-163",
+  "squiddy:R-177",
+  "seldon:AD-016",
+  "seldon:AD-030-R18",
+  "seldon:AD-032-FC-09",
+  "seldon:AD-032-FC-12",
+  "arnold:2026-06-27_vocab-decision-block-cycle-reversal-R3",
+  "arnold:ADR-013",
+  "arnold:canonical-exercise-creation-B21",
+  "arnold:week-template-B10"
+ ],
+ "still_refused": [
+  {
+   "id": "squiddy:DI-004",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Each project shall have its own database, with no shared infrastructure across projects, because workspace-based isolati'"
+  },
+  {
+   "id": "squiddy:DI-040",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'The drift check in icsp_notebook/kg/drift_check.py shall produce one verdict over two legs: the manifest shall equal the'"
+  },
+  {
+   "id": "squiddy:DI-178",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The extraction cost gate for H-004 shall measure cost as weighted tokens per paper divided by the paper's own text token\""
+  },
+  {
+   "id": "squiddy:DI-216",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"If a grounding span carries fewer than 8 tokens or fewer than 3 tokens outside the node's name, then the ai-readiness-kg\""
+  },
+  {
+   "id": "squiddy:DI-222",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'If a cap halt occurs, then the gate evaluation process shall raise no cap, re-cut no frame, and substitute no cheaper in'"
+  },
+  {
+   "id": "squiddy:R-09",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The identity spine shall implement S-004's five assumptions without an override window: the registry elects an existing \""
+  },
+  {
+   "id": "squiddy:R-60",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'The decontextualization judge instrument is held at version 2.1.0 with a status of NOT VALIDATED and shall not be tuned '"
+  },
+  {
+   "id": "squiddy:R-124",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Under DN-025, decisions S-012, S-013, S-014 and H-010 are superseded rather than withdrawn, since each was valid when th'"
+  },
+  {
+   "id": "squiddy:R-136",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'all of the following' in 'The project shall treat \"ready for Arnold\" as met only when all of the following hold: R-134\\'s floor and bound are met; '"
+  },
+  {
+   "id": "squiddy:R-139",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this rule' in 'When an entry is cataloged from an identifier, the system shall record the title, authors, and container of record as th'"
+  },
+  {
+   "id": "seldon:AD-025",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Within a repo-scoped Seldon instance, sub-projects shall be first-class graph artifacts represented as Subproject nodes '"
+  },
+  {
+   "id": "seldon:AD-028",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'In the Seldon project graph, Result.name shall serve as the stable token key resolved by {{result:NAME:field}}, followin'"
+  },
+  {
+   "id": "seldon:AD-030-R16",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'A Ruling is defined as a section whose heading or first token carries a ruling identifier (AD-NNN-Rn, DN-\u2026-Rn, a numbere'"
+  },
+  {
+   "id": "seldon:AD-030-R17",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'Squiddy shall be a build-time dependency of the governed/ graph, pinned by commit in a requirements file or Makefile var'"
+  },
+  {
+   "id": "seldon:AD-030-R22",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in \"When an admitted governed document's content hash has moved, the kit shall re-ingest that document at the cost of that o\""
+  },
+  {
+   "id": "seldon:AD-030-R23",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'Rule R16 shall govern classification only, with the force (binding, prohibition, recommendation) of a block admitted as '"
+  },
+  {
+   "id": "seldon:AD-033-R2",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the previous record' in 'The seldon decision interface (CLI and MCP) shall be the only write path for decision records, supporting propose, accep'"
+  },
+  {
+   "id": "seldon:AD-033-R3",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the note' in \"The decision record shall contain required fields id (repository-qualified using the repository's native scheme, such as\""
+  },
+  {
+   "id": "seldon:AD-033-R11",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'For every graph Squiddy builds, every Seldon project, and the decision register, the append-only, hash-chained event led'"
+  },
+  {
+   "id": "arnold:2026-06-27_vocab-decision-block-cycle-reversal-R1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'The within-workout grouping shall be named \"block\", represented as the PG table `blocks` and the Neo4j label `:PlannedBl'"
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-B1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in \"The within-workout grouping term shall be 'block' (physical blocks / :PlannedBlock, canonical word equal to physical nam\""
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-B2",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Naming used in issue 951b1c3a (block-membership data layer) shall conform to the naming rulings recorded in this decisio'"
+  },
+  {
+   "id": "arnold:training-domain-vocabulary-D5",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'Exercise identity shall be defined by the `Exercise` node with the `is_canonical` property as canonical; the 4-node `Can'"
+  },
+  {
+   "id": "arnold:workout-structure-B1",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'This decision' in 'This decision supersedes ADR-006 (Unified Workout Schema).'"
+  }
+ ]
+}

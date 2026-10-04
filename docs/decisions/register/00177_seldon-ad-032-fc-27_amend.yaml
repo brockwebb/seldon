@@ -1,0 +1,16 @@
+seq: 177
+event: amend
+id: seldon:AD-032-FC-27
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Every gate in the conformance list shall be positive-controlled and non-vacuous: each gate shall register a planted defect it must catch and an empty or unreadable input on which it must raise rather than pass. Suites shall quote skip counts, and a tier that cannot run shall fail. A verdict shall not be cited until its instrument has caught its plant, per methodology 7.6. A meta-gate shall fail any gate in the conformance list that lacks either fixture, and both fixtures shall run every release.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 9824093f9c43732e2ceb7019d88d4a3838ac7e22ac91b35db391f74c9439c5fe
+record_hash: 33d779ab3441059096f563a5104ece29c80d4b3d22a8b3f9c8aac74eeefc3b1a

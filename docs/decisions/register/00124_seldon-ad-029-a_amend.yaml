@@ -1,0 +1,16 @@
+seq: 124
+event: amend
+id: seldon:AD-029-A
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If a Cypher query Seldon issues matches a relationship by name alone without binding a label on every node pattern and binding the :Artifact label on both endpoints of any relationship traversal, then Seldon shall reject that query via the lint in tests/test_cypher_unlabelled_lint.py, except for the single allowlisted query read_half_artifact_edges which is permitted to compare labels across the Seldon/co-tenant boundary; and Seldon shall scope any rebuild's delete operation to seldon.core.sync.SELDON_OWNED_LABELS (the :Artifact label plus the three _*Meta bookkeeping labels) rather than issuing an unscoped MATCH (n) DETACH DELETE n.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 36f8e93c75f686378a3bf543b0127d4ed84ccdccad5dc58056fae0666c8f89ba
+record_hash: 3bcb90c9cb49daa56909acc7de72e0c96814f596f20f8149a3edbb5826a91b7b

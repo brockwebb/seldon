@@ -1,0 +1,16 @@
+seq: 196
+event: amend
+id: seldon:phase_c_retirement_list-R2
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The operator shall remove the orphaned claude-mem thedotmack install (v10.5.2), marked .orphaned_at 2026-04-11 by the Claude Code plugin framework update and confirmed known broken, independent of the Phase C adopt-vs-extract decision in which the operator chose Option A to adopt claude-mem, under which a fresh supported claude-mem install will follow as part of the 15% roadmap work.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 332ab4527a3fe4b3dbd66c33917ed1e819f6c52db71aa474252e71daa5977f1e
+record_hash: 25dc43db66bdf1a21b04bc953e77567f9b346047e0391e51829beaf595a04ef2

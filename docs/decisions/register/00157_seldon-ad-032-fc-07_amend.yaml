@@ -1,0 +1,15 @@
+seq: 157
+event: amend
+id: seldon:AD-032-FC-07
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Section 4 maps each pattern to its mechanism'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: f61a11605228686ac6fcf90562165a0d67f7f902577e9b307a6cbdde7f7f321c
+record_hash: 8de8d13b30caf0060079ec4197c84f95e270964d041c34e1e04f6741a70141b9

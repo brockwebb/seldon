@@ -1,0 +1,16 @@
+seq: 117
+event: amend
+id: seldon:AD-022
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: When designing or evaluating a tool, the agent shall default to CLI invocation via bash for all tool use and shall add an MCP wrapper only when CLI-via-bash has demonstrated a concrete reasoning-loop problem that MCP solves. If an existing MCP registration has no active reasoning-loop use case, then the agent shall treat it as a candidate for deregistration. If an MCP registration is deregistered, then the agent shall retain the underlying tool code as CLI-accessible without deleting it, leaving re-registration available later.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: b164bd3476d481735ce428fa5da1c549317f6fd0dbdc6ed38ca302080eedb91b
+record_hash: d5a568ae662562602bb3164a82717c698e773a537591e959ab1afa19dd2ca559

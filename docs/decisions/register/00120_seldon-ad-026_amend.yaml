@@ -1,0 +1,16 @@
+seq: 120
+event: amend
+id: seldon:AD-026
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The seldon project-init bootstrap state shall be defined as data in YAML template files under seldon/templates/, loaded by seldon.templates.loader, with each template schema requiring at minimum a name key matching the filename stem, a description string, and a bootstrap_tasks list (which may be empty) of task entries each containing a description string and an optional name string, while unrecognized top-level keys shall be preserved in the loaded dict. The seldon init <project_name> command shall accept a --template <name> option defaulting to blank to select which template to apply, a --list-templates option to enumerate available templates and exit, and a --force option to proceed even if the target Neo4j database already contains artifacts. The seldon init command shall record the selected template name at project.template in the generated seldon.yaml. The seldon templates shipped shall include blank, an empty default template for projects where the user writes their own tasks, and paper, containing the five SETUP-01 through SETUP-05 manuscript tasks, selectable via --template paper. The seldon init command shall verify that the target Neo4j database contains no Artifact nodes before proceeding and shall fail loudly if it does, unless the --force option is specified to override this check for explicit re-init.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: dac1abee5137d395da1ae2c746d31bb6ec096a626e508b667e3c2e3119b3839e
+record_hash: d51b4ca54773c0e1dd099415b497e25c301f6a2dfeab32fec5312124f1100724

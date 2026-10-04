@@ -72,8 +72,14 @@ _ORDER: tuple[str, ...] = ()
 
 #: A statement may not point at another record by position (AD-033-R3). Checked on statements
 #: written after the seed (Part E); the seed's statement is the verbatim body, which may.
-_DEICTIC = re.compile(r"\b(?:this (?:note|decision|record|ruling|section|document)|above|below|"
-                      r"the note|the previous|the following)\b", re.I)
+_DEICTIC = re.compile(
+    r"\b(?:this (?:note|decision|record|ruling|section|document|addendum|rule)\b|"
+    r"(?:the|as|see|stated|listed|described|noted|defined|shown|named|given|mentioned)\s+(?:above|below)\b|"
+    r"\b(?:above|below)\s*[.;:]?\s*$|\bthe note\b|\bthe following\s*:|\b(?:all|each|any|one) of the following\b|"
+    r"\bthe (?:previous|preceding) (?:note|decision|record|ruling|section|rule|item|paragraph)s?\b)", re.I)
+# Comparatives are not pointers: "at or above 0.98", "the layer below the symptom", "the previous week" pass. The first
+# form of this pattern refused them (SEL-002 Part E: 30 validator-passed statements refused on "above" or "below" as
+# thresholds; re-landed after the correction, evidence/sel002/statements/reapply.json).
 
 #: Native id forms, used to read an identifier out of task text (R7). A bare form is qualified by
 #: the registering repository first, then by its imports in order.
@@ -1283,6 +1289,9 @@ def project(*, project_dir: Path, config: dict, driver, database: str, domain_co
     for rec in records:
         for t in rec.get("supersedes") or []:
             link(rec.id, t, "supersedes")
+        # A supersession declared by a transition (`superseded_by`) is the same relation from the other end.
+        if rec.superseded_by:
+            link(rec.superseded_by, rec.id, "supersedes")
         for a in rec.get("amends") or []:
             link(rec.id, a["target"], "amends", {"clause": a["clause"]})
         for a in rec.amendments:

@@ -1,0 +1,16 @@
+seq: 134
+event: amend
+id: seldon:AD-030-R10
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Seldon shall depend on Squiddy while Squiddy shall have no knowledge of Seldon, with the coupling expressed as a stream specification rather than awareness: Seldon shall supply a domain schema in LinkML and a manifest entry pointing at a file, and Squiddy shall return ledger events and store nodes conforming to that schema, with each event stamped with the schema version. The dependency shall be pinned in pyproject.toml, and CLAUDE.md shall name the dependency in one line and shall carry no contract. The dependency graph shall remain acyclic.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: f4f9e1c8279c1d3be4db1948604f570a7f8386c1ab6c717608afd9e87f622207
+record_hash: 6fb60ba43a6d062c861b54bb7ef2065c2bebc689617d6daa83234b30ed4c29cf

@@ -1,0 +1,16 @@
+seq: 152
+event: amend
+id: seldon:AD-032-FC-02
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Conversations and outside documents shall be treated as evidence, not knowledge: they shall be archived, hashed, and entered in the manifest, decisions and findings derived from them shall carry receipts, evidence shall never be left in chat, and working files shall live in /Users/brock/GitHub/workbench until filed.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 014f7f91f63206b762c309715909938478a12be23f14e4aacbaea4d34a7dcd8a
+record_hash: 9dc2677e6ed141be59f29dd17413bfa945649aa1b81a97b06a64f44c49b56cc1

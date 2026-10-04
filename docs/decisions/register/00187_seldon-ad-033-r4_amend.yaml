@@ -1,0 +1,16 @@
+seq: 187
+event: amend
+id: seldon:AD-033-R4
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The decision register shall use a lifecycle status model with values proposed, accepted, rejected, deprecated, and superseded, where a record never changes after it is written, a status change is recorded as a new transition record, and a superseded status is derived from the later record that names it. Only accepted records bind. Desktop decisions under L4 shall be accepted when registered with decided_by desktop, and the operator shall override such a decision only by a superseding record, never by an edit. Where a decision waits on a named measurement, the record shall use status proposed and shall name that measurement.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: c546edd8ed926d1b7be8ac20320df51f59e8364f002092086bd40b04f54101e4
+record_hash: 79be2e770d327fc351532a048a7508398ace03e29e934b086f7e05609ca998d4

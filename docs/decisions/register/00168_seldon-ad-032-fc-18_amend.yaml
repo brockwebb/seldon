@@ -1,0 +1,15 @@
+seq: 168
+event: amend
+id: seldon:AD-032-FC-18
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Status: proposed'', ''Check/validation criteria for P1 exit and planted identifier'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: af7daeab88fa235b6490521473c3c6163da1c181c9a3f574b3ffa27a16f902b4
+record_hash: fcb55f5b62706820b1f8c4005d364ef9d04171d25ba6afa44b9785691889c42f

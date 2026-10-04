@@ -1,0 +1,15 @@
+seq: 151
+event: amend
+id: seldon:AD-032-FC-01
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Check via FC-17 matrix: fails decisions with no consumer and no review-only reason'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: ccef0a9cc43eec0423fe313c76b233be5927b9496c06beb4d50a3bcea382a2c4
+record_hash: 014f7f91f63206b762c309715909938478a12be23f14e4aacbaea4d34a7dcd8a

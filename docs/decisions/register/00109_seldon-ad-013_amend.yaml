@@ -1,0 +1,16 @@
+seq: 109
+event: amend
+id: seldon:AD-013
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Seldon shall track documentation completeness as a measurable property of each artifact in the graph, and shall treat documentation files as projections of graph properties regenerated on demand rather than as hand-maintained source-of-truth files.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 0a204c1e370d8d325e3312cf960817461dc2180b335d99d8e6ae1e1dc808ca70
+record_hash: 41b8ed4f8646e7946130215c3abcda5e84dabb24c7be6a4e5687a925baa66ef7

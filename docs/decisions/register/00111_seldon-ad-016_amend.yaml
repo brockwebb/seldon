@@ -1,0 +1,15 @@
+seq: 111
+event: amend
+id: seldon:AD-016
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''the previous'' in ''The paper QC system shall classify rules into three semantically distinct tiers — Critical, Substantive, and Administrat'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 887dd7b9606e89403171fcb320d43b38a43d101f48265639aeb8c9e6645b8fe3
+record_hash: c908bc38d69d38cd0778accb3d6b25d9315be40c7e83ee75d97c4961b46c1a1e

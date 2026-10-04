@@ -1,0 +1,15 @@
+seq: 114
+event: amend
+id: seldon:AD-019
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Issues are typed, prioritized via Eisenhower grid'', ''resolvable via resolved_by edges to ResearchTask'', ''routing findings to correct downstream workflow (search task, design decision, glossary check)'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: fd1fc07a85be82f99cdca600c62849b55280c0d03298f65464e7d54ff9532e5d
+record_hash: 85598b69f0af556df37c556d126449a25eb0193993b7cc81f355de3335bc72ad

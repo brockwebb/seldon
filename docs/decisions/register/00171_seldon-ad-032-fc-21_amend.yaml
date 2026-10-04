@@ -1,0 +1,15 @@
+seq: 171
+event: amend
+id: seldon:AD-032-FC-21
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): check failed, the verbatim statement stays; the validator found it incomplete; dropped: [''Status: proposed'', ''Check: every run joins its Seldon task; planted event without actor fails append'']; added: [''SELDON_TASK_ID described as an environment variable'']'
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: 555093af3e5f50cfbebcc80a61edfabc2dc3f5502f3d73f82a4d5e37467c11b9
+record_hash: ad5cee75d49b69f20853d91c8e383e64a50b048a32e5a0db65043b47dfc47ebb

@@ -1,0 +1,16 @@
+seq: 180
+event: amend
+id: seldon:AD-032-FC-30
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The board shall be its own component with its own repository and store, separate from other components. Agents shall post to the board through one write path that emits an envelope-v2 event carrying the same provenance a graph write carries. Orchestrators shall read the board at task authoring, and task agents shall read the board through a read verb. The board shall require each entry to hold an entry id that is content-addressed, an author agent field identifying agent id, model, and session, a project field identifying the repository, a problem label drawn from a controlled list seeded with the 143 recurrence labels, a claim expressed as one stand-alone statement, evidence receipts expressed as ids in an evidence store, a status of proposed, confirmed by reuse, superseded, or retracted, and links expressing supersedes and reused-by relationships. If a post is planted without an author or project, then the board shall refuse it. The board shall ensure that every evidence receipt on a confirmed post resolves in an evidence store.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 92395e8a48eaed848bc9c0ecff2b30d85703ca06a2bed41b67b81283235888d2
+record_hash: cc23a34a7c16acd99566a2e3e4de8daf1785733a477dc746792d540b92612194

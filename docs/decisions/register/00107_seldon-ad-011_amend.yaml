@@ -1,0 +1,16 @@
+seq: 107
+event: amend
+id: seldon:AD-011
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- evidence/sel002/statements/writer.jsonl
+- evidence/sel002/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (SEL-002 Part E): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if the same result is referenced with inconsistent formatting across sections. The build step shall assemble resolved sections into the final .qmd file and render it via Quarto.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 2fc747e0380883219536a3c8b9b795f88b7b3b3efefcee2b244a4484857c58fd
+record_hash: 7a1cccaf1d692c2569bdd0eefb35f4490f2d450f8dacbbd7565635c62434f3f0

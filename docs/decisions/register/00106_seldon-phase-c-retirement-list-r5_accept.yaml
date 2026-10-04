@@ -1,0 +1,40 @@
+seq: 106
+event: accept
+id: seldon:phase_c_retirement_list-R5
+date: '2026-04-18'
+decided_by: desktop
+operator_stated: false
+reason: 'SEL-002: a labeled decision positional parsing bound, which AD-033-R7 would otherwise stop binding (evidence/sel002/positional_rulings_without_record.json)'
+kind: decision
+status: accepted
+statement: |-
+  ### R5. `seldon-test` and `seldon-test-project` Neo4j databases
+
+  **Evidence:** CC2 — disposable by their own label. No production use.
+  **Action:** Drop both databases after confirming no active references in scripts or configs. Export schema first (cheap insurance).
+  **Reversibility:** High. Test databases regenerate trivially.
+
+  ---
+source:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  lines:
+  - 53
+  - 59
+  sha256: ebb3ca70f12e728b4efcf7226f1e98543ce758d5d6ebeb7dd92181d2688f0d2b
+  text: |-
+    ### R5. `seldon-test` and `seldon-test-project` Neo4j databases
+
+    **Evidence:** CC2 — disposable by their own label. No production use.
+    **Action:** Drop both databases after confirming no active references in scripts or configs. Export schema first (cheap insurance).
+    **Reversibility:** High. Test databases regenerate trivially.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+  anchor: R5
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: c3bdb62392232fe5562b8fab7708eda0ba351de31e5a0d173387e9ad849b7e22
+record_hash: 2fc747e0380883219536a3c8b9b795f88b7b3b3efefcee2b244a4484857c58fd

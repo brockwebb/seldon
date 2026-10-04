@@ -39,7 +39,7 @@ HERE = Path(__file__).resolve().parent
 EVID = HERE.parents[1] / "evidence" / "sel002" / "statements"
 CONFIG = HERE / "statements.yaml"
 
-WRITER_PROMPT = """You write ONE stand-alone statement of a recorded decision, for a decision register.
+WRITER_SYSTEM = """You write ONE stand-alone statement of a recorded decision, for a decision register.
 
 Rules:
 1. If the decision states behavior, use an EARS template (Mavin et al. 2009):
@@ -53,28 +53,37 @@ Rules:
 3. Keep every part of the decision: each rule, condition, exception, threshold and scope it states. Add nothing
    the source does not say. Leave out evidence, citations, history, rationale and examples.
 4. Two or three sentences are allowed only when the decision has that many separate clauses.
+5. If the source is a table row of an inherited decision (id | source | statement | tag), the decision is the
+   statement column as its tag disposes it: carry the tag's adaptation, or its "does not apply", into the
+   statement. Leave out the source column.
 
-Reply with JSON only, no fence: {"statement": "<the statement>", "form": "ubiquitous|event|state|unwanted|optional|declarative"}
+Reply with JSON only, no fence: {"statement": "<the statement>", "form": "ubiquitous|event|state|unwanted|optional|declarative"}"""
 
-Kind of record: <<KIND>>
+#: The record itself, the per-call user message. The instructions above are the system prompt: one cacheable prefix
+#: for every call (DN-042 R-180's idea; here the CLI's own system prompt is already a cache entry of ~8k tokens, so the
+#: combined prefix is far above the 1,024-token minimum that sank SQ-009's smoke run).
+WRITER_USER = """Kind of record: <<KIND>>
 Verbatim source:
 <<<
 <<SOURCE>>
 >>>"""
 
-VALIDATOR_PROMPT = """You check a statement that was written from a recorded decision. You see the decision's verbatim source and the statement.
+VALIDATOR_SYSTEM = """You check a statement that was written from a recorded decision. You see the decision's verbatim source and the statement.
 
 Answer three questions strictly:
 1. entailed: is every claim in the statement supported by the source? (false if the statement adds anything)
 2. complete: does the statement keep every part of the source's decision: each rule, condition, exception,
-   threshold and scope? Evidence, citations, history, rationale and examples may be left out.
+   threshold and scope? Evidence, citations, history, rationale and examples may be left out. For a table row of
+   an inherited decision (id | source | statement | tag), the source column may be left out and the tag's
+   disposition (its adaptation, or "does not apply") is part of the decision.
 3. standalone: can the statement be read alone, without pointing at other text by position ("this", "above",
    "below", "the note", "the following")?
 
-Reply with JSON only, no fence:
-{"entailed": true|false, "complete": true|false, "standalone": true|false, "added": ["..."], "dropped": ["..."]}
+Reply with JSON only, no fence. `added` and `dropped`: at most three items each, each at most twelve words; empty
+lists when nothing was added or dropped:
+{"entailed": true|false, "complete": true|false, "standalone": true|false, "added": ["..."], "dropped": ["..."]}"""
 
-Verbatim source:
+VALIDATOR_USER = """Verbatim source:
 <<<
 <<SOURCE>>
 >>>
@@ -99,10 +108,11 @@ def units_in(evid: Path) -> list[dict]:
     return [json.loads(l) for l in (evid / "units.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
-def client_for(role: dict, tr: dict, mock_responder=None):
+def client_for(role: dict, tr: dict, mock_responder=None, system: str | None = None):
     if mock_responder is not None:
         return mc.MockClient(mock_responder, alias="mock")
     c = mc.ClaudeCLIClient(alias=role["alias"], timeout=int(role["timeout"]), max_turns=int(role["max_turns"]),
+                           system_prompt=system,
                            minimal_scaffold=bool(tr["setting_sources_disabled"]),
                            no_nonessential_traffic=bool(tr["nonessential_traffic_disabled"]),
                            cli_path=tr.get("cli_path"), effort=role.get("effort"))
@@ -121,19 +131,40 @@ def parse_json(content: str) -> dict:
 
 
 def writer_prompt(u: dict) -> str:
-    return WRITER_PROMPT.replace("<<KIND>>", str(u.get("kind"))).replace("<<SOURCE>>", u["source_text"])
+    return WRITER_USER.replace("<<KIND>>", str(u.get("kind"))).replace("<<SOURCE>>", u["source_text"])
 
 
 def validator_prompt(u: dict, statement: str) -> str:
-    return VALIDATOR_PROMPT.replace("<<SOURCE>>", u["source_text"]).replace("<<STATEMENT>>", statement)
+    return VALIDATOR_USER.replace("<<SOURCE>>", u["source_text"]).replace("<<STATEMENT>>", statement)
 
 
 def profile_of(client) -> str:
     return client.spend_profile() if hasattr(client, "spend_profile") else "mock"
 
 
+def node(role: str) -> str:
+    """The spend governor's node for a role, versioned by its prompt template: spend.estimate prices a node from its
+    own ledger history, so a changed prompt must be a new node or it would be priced on the old prompt's calls."""
+    return f"sel002_{role}_{template_sha(role)[:8]}"
+
+
+def template_sha(role: str) -> str:
+    """The prompt's identity: system prompt and user template together."""
+    return calls.sha256_text(WRITER_SYSTEM + "\n" + WRITER_USER if role == "writer" else
+                             VALIDATOR_SYSTEM + "\n" + VALIDATOR_USER)
+
+
+def pilot_sample(units: list[dict], n: int) -> list[dict]:
+    """A stride over the export order (squiddy, seldon, arnold; each in id order), so the pilot spans the three
+    registers and the range of source lengths rather than the first n rows of one table."""
+    if n >= len(units):
+        return list(units)
+    step = len(units) / n
+    return [units[int(i * step)] for i in range(n)]
+
+
 def writer_units(units: list[dict], client, alias: str, control_sha: str) -> list[calls.Unit]:
-    tpl = calls.sha256_text(WRITER_PROMPT)
+    tpl = template_sha("writer")
     return [calls.Unit(key=calls.unit_key("sel002_writer", u["id"], u["source_sha256"], control_sha, role="writer",
                                           prompt_sha256=tpl, model=alias, transport=profile_of(client)),
                        item=u["id"], payload={"u": u}, weight=float(len(u["source_text"]))) for u in units]
@@ -141,7 +172,7 @@ def writer_units(units: list[dict], client, alias: str, control_sha: str) -> lis
 
 def validator_units(units: list[dict], statements: dict[str, str], client, alias: str,
                     control_sha: str) -> list[calls.Unit]:
-    tpl = calls.sha256_text(VALIDATOR_PROMPT)
+    tpl = template_sha("validator")
     out = []
     for u in units:
         st = statements.get(u["id"])
@@ -184,9 +215,9 @@ def check_validator(p: dict) -> None:
             raise ValueError(f"the validator's reply has no boolean {k}")
 
 
-def policy_of(c: dict) -> calls.Policy:
+def policy_of(c: dict, pilot: bool = False) -> calls.Policy:
     p = c["policy"]
-    return calls.Policy(in_flight=int(p["in_flight"]), retry_attempts=int(p["retry_attempts"]),
+    return calls.Policy(in_flight=int(p["pilot_in_flight"] if pilot else p["in_flight"]), retry_attempts=int(p["retry_attempts"]),
                         retry_backoff_seconds=float(p["retry_backoff_seconds"]),
                         progress_every_seconds=float(p["progress_every_seconds"]),
                         progress_every_units=int(p["progress_every_units"]), pilot_units=0,
@@ -233,12 +264,12 @@ def run_phase(phase: str, evid: Path, mock=None) -> dict:
     c = cfg()
     units = units_in(evid)
     n_pilot = int(c["pilot_records"])
-    chosen = units[:n_pilot] if phase == "pilot" else units
-    wcl = client_for(c["writer"], c["transport"], mock)
-    vcl = client_for(c["validator"], c["transport"], mock)
+    chosen = pilot_sample(units, n_pilot) if phase == "pilot" else units
+    wcl = client_for(c["writer"], c["transport"], mock, WRITER_SYSTEM)
+    vcl = client_for(c["validator"], c["transport"], mock, VALIDATOR_SYSTEM)
     walias, valias = (c["writer"]["alias"], c["validator"]["alias"]) if mock is None else ("mock", "mock")
     control_sha = calls.sha256_obj({k: c[k] for k in ("writer", "validator", "transport")})
-    pol = policy_of(c)
+    pol = policy_of(c, pilot=(phase == "pilot" and mock is None))
     wck, vck = calls.Checkpoint(evid / "writer.jsonl"), calls.Checkpoint(evid / "validator.jsonl")
     wunits = writer_units(chosen, wcl, walias, control_sha)
     wdo = make_do(wcl, lambda u: writer_prompt(u.payload["u"]), c["policy"]["parse_retries"], check_writer)
@@ -252,20 +283,28 @@ def run_phase(phase: str, evid: Path, mock=None) -> dict:
         out["validator"] = pass_("validator", vunits, vdo, vck, None, False, 0, pol)
         return out
     todo_w = [u for u in wunits if not wck.completed(u.key)]
-    if phase == "run":
+    if phase == "validate":
+        # The validator pass alone: a writer job stopped at its ceiling (DN-042 R-178) stays stopped until the
+        # operator's dated approval; the statements already written still get their separate check.
+        out["writer"] = {"skipped": f"validator-only run; {len(todo_w)} writer unit(s) not run"}
+    elif phase == "run":
         # THE ESTIMATE FOR THE REST, MEASURED ON THE PILOT (spend.estimate over the ledger's history for this node),
         # checked against the declared budget BEFORE any call of the bulk.
-        ew = spend.estimate(walias, profile_of(wcl), "sel002_writer", max(1, len(todo_w)),
+        ew = spend.estimate(walias, profile_of(wcl), node("writer"), max(1, len(todo_w)),
                             spacing_seconds=c["spacing_seconds"])
-        ev = spend.estimate(valias, profile_of(vcl), "sel002_validator", max(1, len(todo_w)),
+        ev = spend.estimate(valias, profile_of(vcl), node("validator"), max(1, len(todo_w)),
                             spacing_seconds=c["spacing_seconds"])
         if ew["estimate"] is None or ev["estimate"] is None:
             raise SystemExit("FATAL: no measured basis for the bulk; run `pilot` first")
-        pilot = json.loads((evid / "pilot.json").read_text())
-        spent = float(pilot["writer"]["actual"]) + float(pilot["validator"]["actual"])
+        # EVERY pilot's spend counts against the budget, not only the last one's (stricter than the first draft of
+        # this check; the earlier pilots' files are kept as pilot_v*.json).
+        spent = 0.0
+        for pf in sorted(evid.glob("pilot*.json")) + sorted(evid.glob("run_*.json")):   # pilots and earlier runs
+            pj = json.loads(pf.read_text())
+            spent += sum(float(pj[r]["actual"]) for r in ("writer", "validator") if "actual" in (pj.get(r) or {}))
         projected = spent + float(ew["estimate"]) + float(ev["estimate"])
         cap = float(c["budget"]["declared_weighted_tokens"]) * (1 + float(c["budget"]["band_stop"]))
-        out["projection"] = {"pilot_actual": spent, "writer_estimate": ew["estimate"],
+        out["projection"] = {"spent_before_this_run": spent, "writer_estimate": ew["estimate"],
                              "validator_estimate": ev["estimate"], "projected_total": round(projected, 1),
                              "declared_budget": c["budget"]["declared_weighted_tokens"], "stop_line": cap,
                              "writer_basis": ew["basis"], "validator_basis": ev["basis"]}
@@ -274,12 +313,15 @@ def run_phase(phase: str, evid: Path, mock=None) -> dict:
             (evid / "run_refused.json").write_text(json.dumps(out, indent=1))
             raise SystemExit(f"STOP: the pilot-measured projection {projected:,.0f} passes the declared budget's stop "
                              f"line {cap:,.0f}; spend above the declared cap waits for the operator")
-        wspec = job_spec(f"sel002_writer:run:{control_sha[:12]}", "sel002_writer", wcl, walias, max(1, len(todo_w)),
+        # The job id names the pending set: a re-run of the same pending units resumes under the same job, a later
+        # run over a different set (retries, new records) is a new job (the governor refuses a changed spec).
+        wset = calls.sha256_text("\n".join(sorted(u.key for u in todo_w)))[:10]
+        wspec = job_spec(f"sel002_writer:run:{control_sha[:12]}:{node('writer')}:{wset}", node("writer"), wcl, walias, max(1, len(todo_w)),
                          1.25 * float(ew["estimate"]), evid, c)
         out["writer"] = pass_("writer", wunits, wdo, wck, wspec, False, 0, pol) if todo_w else {"skipped": "all done"}
     else:
         g = guess(chosen, writer_prompt, c)
-        wspec = job_spec(f"sel002_writer:pilot:{control_sha[:12]}", "sel002_writer", wcl, walias, len(chosen),
+        wspec = job_spec(f"sel002_writer:pilot:{control_sha[:12]}:{node('writer')}", node("writer"), wcl, walias, len(chosen),
                          10 * g, evid, c)
         out["writer"] = pass_("writer", wunits, wdo, wck, wspec, True, g, pol)
     st = statements_from(wck, wunits)
@@ -287,16 +329,17 @@ def run_phase(phase: str, evid: Path, mock=None) -> dict:
     vdo = make_do(vcl, lambda u: validator_prompt(u.payload["u"], u.payload["statement"]),
                   c["policy"]["parse_retries"], check_validator)
     todo_v = [u for u in vunits if not vck.completed(u.key)]
-    if phase == "run":
-        ev2 = spend.estimate(valias, profile_of(vcl), "sel002_validator", max(1, len(todo_v)),
+    if phase in ("run", "validate"):
+        ev2 = spend.estimate(valias, profile_of(vcl), node("validator"), max(1, len(todo_v)),
                              spacing_seconds=c["spacing_seconds"])
-        vspec = job_spec(f"sel002_validator:run:{control_sha[:12]}", "sel002_validator", vcl, valias,
+        vset = calls.sha256_text("\n".join(sorted(u.key for u in todo_v)))[:10]
+        vspec = job_spec(f"sel002_validator:run:{control_sha[:12]}:{node('validator')}:{vset}", node("validator"), vcl, valias,
                          max(1, len(todo_v)), 1.25 * float(ev2["estimate"]), evid, c)
         out["validator"] = pass_("validator", vunits, vdo, vck, vspec, False, 0, pol) if todo_v else {"skipped": "all done"}
     else:
         g = guess([u.payload["u"] | {"_st": u.payload["statement"]} for u in vunits],
                   lambda x: validator_prompt(x, x["_st"]), c)
-        vspec = job_spec(f"sel002_validator:pilot:{control_sha[:12]}", "sel002_validator", vcl, valias,
+        vspec = job_spec(f"sel002_validator:pilot:{control_sha[:12]}:{node('validator')}", node("validator"), vcl, valias,
                          len(vunits), 10 * g, evid, c)
         out["validator"] = pass_("validator", vunits, vdo, vck, vspec, True, g, pol)
     (evid / f"{phase}.json").write_text(json.dumps(out, indent=1, default=str), encoding="utf-8")
@@ -308,14 +351,15 @@ def report(evid: Path) -> dict:
     units = units_in(evid)
     control_sha = calls.sha256_obj({k: c[k] for k in ("writer", "validator", "transport")})
 
-    class _P:                                   # the keys need only the profile string the run used
-        def __init__(self, p): self.p = p
-        def spend_profile(self): return self.p
+    # The keys are built exactly as the run built them: from the configured clients' transport profiles (the CLI is
+    # probed for its version, no model is called). Rows under older prompts or profiles are kept in the checkpoints as
+    # history and match no current key.
+    wcl = client_for(c["writer"], c["transport"], None, WRITER_SYSTEM)
+    vcl = client_for(c["validator"], c["transport"], None, VALIDATOR_SYSTEM)
     wck, vck = calls.Checkpoint(evid / "writer.jsonl"), calls.Checkpoint(evid / "validator.jsonl")
-    prof = next((r["key_fields"].get("transport") for r in wck.all_rows() if r.get("key_fields")), "mock")
-    wunits = writer_units(units, _P(prof), c["writer"]["alias"], control_sha)
+    wunits = writer_units(units, wcl, c["writer"]["alias"], control_sha)
     st = statements_from(wck, wunits)
-    vunits = validator_units(units, st, _P(prof), c["validator"]["alias"], control_sha)
+    vunits = validator_units(units, st, vcl, c["validator"]["alias"], control_sha)
     verdicts = {}
     for u in vunits:
         r = vck.completed(u.key)
@@ -348,7 +392,7 @@ def report(evid: Path) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("phase", choices=["pilot", "run", "report"])
+    ap.add_argument("phase", choices=["pilot", "run", "validate", "report"])
     ap.add_argument("--evid", default=str(EVID))
     ap.add_argument("--mock", action="store_true", help="the kill test's offline client (no spend, no network)")
     a = ap.parse_args(argv)
