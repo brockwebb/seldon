@@ -1,0 +1,37 @@
+seq: 73
+event: propose
+id: seldon:AD-032-FC-19
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-19. Dispatched records are immutable.** A dispatched task file or addendum, a pre-registration, a design note and a result are never edited; a change is a new, superseding record.
+  - Status: proposed.
+  - Rationale: G5:94 to G5:107.
+  - Check: the dispatcher stores each task file's sha256 at dispatch, and a run refuses a mismatch.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 160
+  - 163
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-19. Dispatched records are immutable.** A dispatched task file or addendum, a pre-registration, a design note and a result are never edited; a change is a new, superseding record.
+    - Status: proposed.
+    - Rationale: G5:94 to G5:107.
+    - Check: the dispatcher stores each task file's sha256 at dispatch, and a run refuses a mismatch.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-19
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 6e217860c94be49db26b21944713c5f5fe9753aa407707aa2c9ddaddba8632e6
+record_hash: 98f9afcc2c875fefaf7cd9b95d9e8bb41b230ef6f1dc26f552aabfe695767025

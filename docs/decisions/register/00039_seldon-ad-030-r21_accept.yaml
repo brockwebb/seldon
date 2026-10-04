@@ -1,0 +1,28 @@
+seq: 39
+event: accept
+id: seldon:AD-030-R21
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R21.** Supersession is declared, not inferred. A ruling that replaces another carries the declaration as its final sentence in the form `Supersedes AD-NNN-Rn.` (hyphenated ruling ID, sentence-final). Recovery is a single pattern over ruling text: `Supersedes` followed by one or more ruling IDs. Whole-document supersession uses a `Supersedes:` header field with document names. Nothing else is read as supersession. Settles reconcile RESULT G6.'
+source:
+  path: docs/design/AD-030_implementation_findings_002.md
+  lines:
+  - 24
+  - 24
+  sha256: e2e44008f3ed8ac0c8c3ae5631fa3a519b6bee56dba832182da14833de2d5fb8
+  text: '**AD-030-R21.** Supersession is declared, not inferred. A ruling that replaces another carries the declaration as its final sentence in the form `Supersedes AD-NNN-Rn.` (hyphenated ruling ID, sentence-final). Recovery is a single pattern over ruling text: `Supersedes` followed by one or more ruling IDs. Whole-document supersession uses a `Supersedes:` header field with document names. Nothing else is read as supersession. Settles reconcile RESULT G6.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_002.md
+  anchor: AD-030-R21
+consumer:
+- tests/test_governed.py
+- seldon/domain/decision_register.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 31a6aa97113504ea951e4ff3cf011b3f0f3502f6f3b015c2581ef8cb9e9abe3b
+record_hash: ee2f28c95d7d428955709073fae3bb65b6b7bd33c76cdddc1fefd4ddb63522e1

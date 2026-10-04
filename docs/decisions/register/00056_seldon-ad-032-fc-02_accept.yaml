@@ -1,0 +1,39 @@
+seq: 56
+event: accept
+id: seldon:AD-032-FC-02
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:22: "- Status: accepted (operator, 2026-10-03; P:10, P:14)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-02. Conversations and outside documents are evidence, not knowledge.** They are archived, hashed and entered in the manifest; decisions and findings derived from them carry receipts. Evidence is never left in chat; working files live in `/Users/brock/GitHub/workbench` until filed.
+  - Status: accepted (operator, 2026-10-03; P:10, P:14).
+  - Rationale: decisions made in chat failed to reach the executor in three projects (G5:430 to G5:442).
+  - Check: FC-23.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 21
+  - 24
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-02. Conversations and outside documents are evidence, not knowledge.** They are archived, hashed and entered in the manifest; decisions and findings derived from them carry receipts. Evidence is never left in chat; working files live in `/Users/brock/GitHub/workbench` until filed.
+    - Status: accepted (operator, 2026-10-03; P:10, P:14).
+    - Rationale: decisions made in chat failed to reach the executor in three projects (G5:430 to G5:442).
+    - Check: FC-23.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-02
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: 29971c3b8746c670aabf2c65b254661b7be34b2ce11af459cce6357db994501b
+record_hash: 078386a9f56d1f84e1a5e41fb12189714c9f03486924bee74164025bbb71f8db

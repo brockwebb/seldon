@@ -1,0 +1,42 @@
+seq: 44
+event: accept
+id: seldon:AD-031-R2
+date: '2026-10-02'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-02_SEL-001_ad031_phase1_governed_graphs_retrieval_tevv.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-031-R2. Registration retrieves rulings for the task's text, whether the task cites them or not.**
+    - Phase 2, if Phase 1 earns it: the top-k candidate Rulings go to a validator call. The validator returns
+      `constrains`, `conflicts` or `unrelated` for each, with the ruling's located receipt.
+    - A `conflicts` verdict refuses registration unless the task names the ruling and supersedes it (AD-030 R5's path).
+    - `constrains` writes `constrained_by` edges.
+    - The validator is a separate call from the author (the work does not grade itself).
+source:
+  path: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+  lines:
+  - 53
+  - 58
+  sha256: 6d9469d7893f8b8e65a1cf845278a5ad9ed585b06c706f7c8897157693a57762
+  text: |-
+    - **AD-031-R2. Registration retrieves rulings for the task's text, whether the task cites them or not.**
+      - Phase 2, if Phase 1 earns it: the top-k candidate Rulings go to a validator call. The validator returns
+        `constrains`, `conflicts` or `unrelated` for each, with the ruling's located receipt.
+      - A `conflicts` verdict refuses registration unless the task names the ruling and supersedes it (AD-030 R5's path).
+      - `constrains` writes `constrained_by` edges.
+      - The validator is a separate call from the author (the work does not grade itself).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+  anchor: AD-031-R2
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: 500024c5bcb6925d60ef4b5c4883eb7f3fd4d1727b70e716ee0fac713f0334b1
+record_hash: ee8a01357a6142048f34c20b465f9b88061ceb8294da0781d09793ece3792154

@@ -1,0 +1,34 @@
+seq: 28
+event: accept
+id: seldon:AD-030-R10
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_findings_reconcile.md
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest.md
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R10.** Seldon depends on Squiddy; Squiddy has no knowledge of Seldon. The coupling is a stream specification, not awareness: Seldon supplies a domain schema (LinkML) and a manifest entry pointing at a file; Squiddy returns ledger events and store nodes conforming to that schema, each event stamped with the schema version. The dependency is pinned in `pyproject.toml`; CLAUDE.md names it in one line and carries no contract. The dependency graph stays acyclic. Rationale: Wintermute''s ingest became a monolith when it knew its callers.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 53
+  - 53
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R10.** Seldon depends on Squiddy; Squiddy has no knowledge of Seldon. The coupling is a stream specification, not awareness: Seldon supplies a domain schema (LinkML) and a manifest entry pointing at a file; Squiddy returns ledger events and store nodes conforming to that schema, each event stamped with the schema version. The dependency is pinned in `pyproject.toml`; CLAUDE.md names it in one line and carries no contract. The dependency graph stays acyclic. Rationale: Wintermute''s ingest became a monolith when it knew its callers.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R10
+consumer:
+- tests/test_governed.py
+- seldon/commands/verify.py
+- seldon/core/decisions.py
+- seldon/core/governed.py
+written_by: seldon decision 0.1.0
+prev_hash: b451041f0bfc1eefdd23e91eaf55f90d6ed9e6c103e80278794f017ec797fae7
+record_hash: 9b756348918e67224bfdb941dde261c3f6a06839128bf5cc3bc0cad99afc31c4

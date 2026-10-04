@@ -1,0 +1,302 @@
+seq: 14
+event: accept
+id: seldon:AD-025
+date: '2026-05-10'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  **Sub-projects are first-class graph artifacts within a repo-scoped Seldon instance. The `seldon.yaml` is reduced to bootstrap-only configuration. All sub-project metadata — paths, conventions, document type, lifecycle state — lives in the graph as `Subproject` nodes. All non-ontology artifacts belong to exactly one sub-project or to the repo as a whole, via an explicit `BELONGS_TO` edge.**
+
+  ### 1. `Subproject` artifact type
+
+  New artifact type registered in the research domain config. Properties:
+
+  - `artifact_id` (UUID)
+  - `slug` (unique within repo, matches directory name)
+  - `name` (display name)
+  - `document_type` (`academic_paper`, `book_chapter`, `policy_brief`, `presentation`, `position_paper`, etc. — drives audit gate selection per existing `GATE_PROFILES`)
+  - `paths` (map property: `paper`, `sections`, `book`, `slides`, `handout`, `assets`, etc. — sub-project-specific directory locations, relative to repo root)
+  - `conventions` (JSON string: citation style, bibliography path, glossary path, writing rules, prohibited tools, etc.)
+  - `state` (`active`, `dormant`, `retired` — matches existing vocabulary; see userMemory "projects are never retired, only dormant")
+  - `created_at`, `updated_at`
+  - `description` (optional prose)
+
+  ### 2. `BELONGS_TO` edge
+
+  Every non-repo-wide artifact carries a `BELONGS_TO` edge to exactly one `Subproject` node:
+
+  ```
+  (:ResearchTask)-[:BELONGS_TO]->(:Subproject)
+  (:PaperSection)-[:BELONGS_TO]->(:Subproject)
+  (:Result)-[:BELONGS_TO]->(:Subproject)
+  (:Issue)-[:BELONGS_TO]->(:Subproject)
+  (:DesignNote)-[:BELONGS_TO]->(:Subproject)
+  ```
+
+  Artifacts with no `BELONGS_TO` edge are repo-scoped (ontology terms, repo-level ADs, migration events). This mirrors the ontology pattern where project-specific terms simply omit `references_ontology` when no canonical term exists.
+
+  ### 3. Isolation invariant
+
+  **No direct edges between artifacts in different sub-projects.** Cross-sub-project relationships MUST route through:
+
+  - The central ontology (repo-wide, survives promotion), or
+  - An explicit repo-scoped `CrossReference` artifact that names both endpoints and is preserved if either side is promoted.
+
+  This invariant is what makes promotion to standalone repository tractable. Violations are caught by a new `seldon verify` check.
+
+  ### 4. `seldon.yaml` reduced to bootstrap
+
+  After this AD, `seldon.yaml` contains only:
+
+  ```yaml
+  event_store:
+    path: seldon_events.jsonl
+  neo4j:
+    database: seldon-<repo-slug>
+    uri: bolt://localhost:7687
+  project:
+    created_at: ...
+    domain: research
+    name: <repo-name>
+    slug: <repo-slug>
+  shared_ontology:
+    source: /Users/brock/Documents/GitHub/seldon/ontology/
+    vocabularies: [...]
+    inheritance: read-only
+  conventions:     # OPTIONAL: repo-wide defaults only
+    prohibited_tools:
+      - "github:create_or_update_file"
+  ```
+
+  No `paths`, no `review`, no sub-project-specific conventions. The yaml is just enough to connect to the graph; the graph tells you everything else.
+
+  ### 5. Directory structure
+
+  Sub-projects own their own `cc_tasks/`, `handoffs/`, `audits/`, and `CLAUDE.md`:
+
+  ```
+  <repo>/
+  ├── seldon.yaml           # bootstrap
+  ├── CLAUDE.md             # repo-wide conventions only
+  ├── seldon_events.jsonl
+  ├── .seldon/              # session state
+  ├── <subproject-a>/
+  │   ├── CLAUDE.md         # sub-project conventions
+  │   ├── cc_tasks/
+  │   ├── handoffs/
+  │   ├── audits/
+  │   └── <content-dirs>/
+  └── <subproject-b>/
+      ├── CLAUDE.md
+      ├── cc_tasks/
+      ├── handoffs/
+      └── <content-dirs>/
+  ```
+
+  Flat top-level `cc_tasks/` and `handoffs/` at the repo root are eliminated. Migration moves existing files into their sub-project's directory.
+
+  ### 6. Event scoping
+
+  Every event written after this AD lands carries a `subproject_slug` field (null for repo-scoped events). This enables event-log extraction on sub-project promotion via simple filter + replay.
+
+  ### 7. `seldon go` resolution
+
+  - At repo root (cwd = repo): `seldon go` returns a **repo dashboard** — list of `Subproject` nodes, states, last-updated, open task counts, recent activity. A graph query, not a directory walk.
+  - Inside a sub-project directory (cwd = `<repo>/<subproject-slug>/`): `seldon go` auto-scopes to that sub-project — loads its CLAUDE.md, latest handoff from its `handoffs/`, open tasks filtered by `BELONGS_TO`, audit pipeline from its `document_type`.
+  - Explicit override: `seldon go --subproject <slug>` from anywhere.
+
+  ### 8. CLI surface
+
+  New command group:
+
+  - `seldon subproject add <slug> --document-type <type> [--name <name>]` — create `Subproject` node, scaffold directory, create minimal `CLAUDE.md`
+  - `seldon subproject list` — show all sub-projects with state
+  - `seldon subproject show <slug>` — full detail
+  - `seldon subproject update <slug> --state <state>` — lifecycle transitions
+  - `seldon subproject promote <slug> --to <path>` — **DEFERRED**; documented here as known future feature, not built in v1
+
+  Existing commands gain scope awareness:
+  - `seldon task list`, `seldon task create`, `seldon issue *`, `seldon cc register`, `seldon cc complete` — detect sub-project from cwd or accept `--subproject` flag; auto-create `BELONGS_TO` edge.
+  - `seldon paper sync/build/audit`, `seldon verify` — read paths from the active `Subproject` node, not from `seldon.yaml`.
+
+  ### 9. MCP surface
+
+  Per AD-022, MCP is exception, not default. Existing MCP tools (`seldon_go`, `seldon_task_create`, `seldon_cc_register`, `seldon_query`, `seldon_task_list`, `seldon_task_update`, `seldon_task_close`, `seldon_cc_complete`) gain optional `subproject` parameter. When omitted, the tool infers from cwd if possible, otherwise operates repo-wide or errors with a "specify subproject" message.
+
+  ### 10. Migration
+
+  One-time migration for `brock_projects`:
+
+  1. Create `Subproject {slug: 'sfv-paper', ...}` node with properties from current `seldon.yaml`.
+  2. Create `Subproject {slug: 'nsf_aiday2026', document_type: 'presentation', ...}` node.
+  3. Backfill `BELONGS_TO` edges: match all existing Artifacts (ResearchTask, PaperSection, Result, Issue, DesignNote) whose `source_file` prefix or `name` indicates SFV, link to `sfv-paper`.
+  4. Move `brock_projects/cc_tasks/*` → `brock_projects/sfv-paper/cc_tasks/` (all existing tasks are SFV).
+  5. Move `brock_projects/handoffs/*` → `brock_projects/sfv-paper/handoffs/`.
+  6. Update `source_file` properties on migrated CC task artifacts to reflect new paths.
+  7. Strip SFV-specific config from `brock_projects/seldon.yaml` and `brock_projects/CLAUDE.md`.
+  8. Scaffold `nsf_aiday2026/CLAUDE.md`, `nsf_aiday2026/cc_tasks/`, `nsf_aiday2026/handoffs/`, `nsf_aiday2026/slides/`, `nsf_aiday2026/handout/`, `nsf_aiday2026/assets/`.
+  9. Move `nsf_aiday2026/HANDOFF_CC.md` → `nsf_aiday2026/handoffs/2026-04-19_initial_cc_handoff.md` and register.
+  10. Emit a `migration` event capturing the whole operation for provenance.
+
+  Ontology terms, repo-level ADs, and the migration event itself do NOT receive `BELONGS_TO` edges — they are repo-wide by design.
+source:
+  path: docs/design/AD-025_subprojects_as_graph_artifacts.md
+  lines:
+  - 25
+  - 160
+  sha256: 4278a91ca1738f48731abeefcf3aa0f5f045dce013dc9a4eb3aac7b3fba0160e
+  text: |-
+    ## Decision
+
+    **Sub-projects are first-class graph artifacts within a repo-scoped Seldon instance. The `seldon.yaml` is reduced to bootstrap-only configuration. All sub-project metadata — paths, conventions, document type, lifecycle state — lives in the graph as `Subproject` nodes. All non-ontology artifacts belong to exactly one sub-project or to the repo as a whole, via an explicit `BELONGS_TO` edge.**
+
+    ### 1. `Subproject` artifact type
+
+    New artifact type registered in the research domain config. Properties:
+
+    - `artifact_id` (UUID)
+    - `slug` (unique within repo, matches directory name)
+    - `name` (display name)
+    - `document_type` (`academic_paper`, `book_chapter`, `policy_brief`, `presentation`, `position_paper`, etc. — drives audit gate selection per existing `GATE_PROFILES`)
+    - `paths` (map property: `paper`, `sections`, `book`, `slides`, `handout`, `assets`, etc. — sub-project-specific directory locations, relative to repo root)
+    - `conventions` (JSON string: citation style, bibliography path, glossary path, writing rules, prohibited tools, etc.)
+    - `state` (`active`, `dormant`, `retired` — matches existing vocabulary; see userMemory "projects are never retired, only dormant")
+    - `created_at`, `updated_at`
+    - `description` (optional prose)
+
+    ### 2. `BELONGS_TO` edge
+
+    Every non-repo-wide artifact carries a `BELONGS_TO` edge to exactly one `Subproject` node:
+
+    ```
+    (:ResearchTask)-[:BELONGS_TO]->(:Subproject)
+    (:PaperSection)-[:BELONGS_TO]->(:Subproject)
+    (:Result)-[:BELONGS_TO]->(:Subproject)
+    (:Issue)-[:BELONGS_TO]->(:Subproject)
+    (:DesignNote)-[:BELONGS_TO]->(:Subproject)
+    ```
+
+    Artifacts with no `BELONGS_TO` edge are repo-scoped (ontology terms, repo-level ADs, migration events). This mirrors the ontology pattern where project-specific terms simply omit `references_ontology` when no canonical term exists.
+
+    ### 3. Isolation invariant
+
+    **No direct edges between artifacts in different sub-projects.** Cross-sub-project relationships MUST route through:
+
+    - The central ontology (repo-wide, survives promotion), or
+    - An explicit repo-scoped `CrossReference` artifact that names both endpoints and is preserved if either side is promoted.
+
+    This invariant is what makes promotion to standalone repository tractable. Violations are caught by a new `seldon verify` check.
+
+    ### 4. `seldon.yaml` reduced to bootstrap
+
+    After this AD, `seldon.yaml` contains only:
+
+    ```yaml
+    event_store:
+      path: seldon_events.jsonl
+    neo4j:
+      database: seldon-<repo-slug>
+      uri: bolt://localhost:7687
+    project:
+      created_at: ...
+      domain: research
+      name: <repo-name>
+      slug: <repo-slug>
+    shared_ontology:
+      source: /Users/brock/Documents/GitHub/seldon/ontology/
+      vocabularies: [...]
+      inheritance: read-only
+    conventions:     # OPTIONAL: repo-wide defaults only
+      prohibited_tools:
+        - "github:create_or_update_file"
+    ```
+
+    No `paths`, no `review`, no sub-project-specific conventions. The yaml is just enough to connect to the graph; the graph tells you everything else.
+
+    ### 5. Directory structure
+
+    Sub-projects own their own `cc_tasks/`, `handoffs/`, `audits/`, and `CLAUDE.md`:
+
+    ```
+    <repo>/
+    ├── seldon.yaml           # bootstrap
+    ├── CLAUDE.md             # repo-wide conventions only
+    ├── seldon_events.jsonl
+    ├── .seldon/              # session state
+    ├── <subproject-a>/
+    │   ├── CLAUDE.md         # sub-project conventions
+    │   ├── cc_tasks/
+    │   ├── handoffs/
+    │   ├── audits/
+    │   └── <content-dirs>/
+    └── <subproject-b>/
+        ├── CLAUDE.md
+        ├── cc_tasks/
+        ├── handoffs/
+        └── <content-dirs>/
+    ```
+
+    Flat top-level `cc_tasks/` and `handoffs/` at the repo root are eliminated. Migration moves existing files into their sub-project's directory.
+
+    ### 6. Event scoping
+
+    Every event written after this AD lands carries a `subproject_slug` field (null for repo-scoped events). This enables event-log extraction on sub-project promotion via simple filter + replay.
+
+    ### 7. `seldon go` resolution
+
+    - At repo root (cwd = repo): `seldon go` returns a **repo dashboard** — list of `Subproject` nodes, states, last-updated, open task counts, recent activity. A graph query, not a directory walk.
+    - Inside a sub-project directory (cwd = `<repo>/<subproject-slug>/`): `seldon go` auto-scopes to that sub-project — loads its CLAUDE.md, latest handoff from its `handoffs/`, open tasks filtered by `BELONGS_TO`, audit pipeline from its `document_type`.
+    - Explicit override: `seldon go --subproject <slug>` from anywhere.
+
+    ### 8. CLI surface
+
+    New command group:
+
+    - `seldon subproject add <slug> --document-type <type> [--name <name>]` — create `Subproject` node, scaffold directory, create minimal `CLAUDE.md`
+    - `seldon subproject list` — show all sub-projects with state
+    - `seldon subproject show <slug>` — full detail
+    - `seldon subproject update <slug> --state <state>` — lifecycle transitions
+    - `seldon subproject promote <slug> --to <path>` — **DEFERRED**; documented here as known future feature, not built in v1
+
+    Existing commands gain scope awareness:
+    - `seldon task list`, `seldon task create`, `seldon issue *`, `seldon cc register`, `seldon cc complete` — detect sub-project from cwd or accept `--subproject` flag; auto-create `BELONGS_TO` edge.
+    - `seldon paper sync/build/audit`, `seldon verify` — read paths from the active `Subproject` node, not from `seldon.yaml`.
+
+    ### 9. MCP surface
+
+    Per AD-022, MCP is exception, not default. Existing MCP tools (`seldon_go`, `seldon_task_create`, `seldon_cc_register`, `seldon_query`, `seldon_task_list`, `seldon_task_update`, `seldon_task_close`, `seldon_cc_complete`) gain optional `subproject` parameter. When omitted, the tool infers from cwd if possible, otherwise operates repo-wide or errors with a "specify subproject" message.
+
+    ### 10. Migration
+
+    One-time migration for `brock_projects`:
+
+    1. Create `Subproject {slug: 'sfv-paper', ...}` node with properties from current `seldon.yaml`.
+    2. Create `Subproject {slug: 'nsf_aiday2026', document_type: 'presentation', ...}` node.
+    3. Backfill `BELONGS_TO` edges: match all existing Artifacts (ResearchTask, PaperSection, Result, Issue, DesignNote) whose `source_file` prefix or `name` indicates SFV, link to `sfv-paper`.
+    4. Move `brock_projects/cc_tasks/*` → `brock_projects/sfv-paper/cc_tasks/` (all existing tasks are SFV).
+    5. Move `brock_projects/handoffs/*` → `brock_projects/sfv-paper/handoffs/`.
+    6. Update `source_file` properties on migrated CC task artifacts to reflect new paths.
+    7. Strip SFV-specific config from `brock_projects/seldon.yaml` and `brock_projects/CLAUDE.md`.
+    8. Scaffold `nsf_aiday2026/CLAUDE.md`, `nsf_aiday2026/cc_tasks/`, `nsf_aiday2026/handoffs/`, `nsf_aiday2026/slides/`, `nsf_aiday2026/handout/`, `nsf_aiday2026/assets/`.
+    9. Move `nsf_aiday2026/HANDOFF_CC.md` → `nsf_aiday2026/handoffs/2026-04-19_initial_cc_handoff.md` and register.
+    10. Emit a `migration` event capturing the whole operation for provenance.
+
+    Ontology terms, repo-level ADs, and the migration event itself do NOT receive `BELONGS_TO` edges — they are repo-wide by design.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-025_subprojects_as_graph_artifacts.md
+  anchor: AD-025
+consumer:
+- tests/test_docs.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 70bc8324fccf2831607242b6d55d8918cf91dc69be3ae8c5476662bd9a2fe182
+record_hash: 0ef9bddbfaa03505e17910ab946f90f43c4746a0278acf5eaaece589b4b691a7

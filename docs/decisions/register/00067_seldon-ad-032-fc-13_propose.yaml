@@ -1,0 +1,37 @@
+seq: 67
+event: propose
+id: seldon:AD-032-FC-13
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-13. Spend bands.** Against its estimate, a job runs and logs while projected spend (settled plus reserved) is at or under +10%. Crossing +10% emits one warning event. A reservation that would cross +20% is refused; the job pauses at the spend touchpoint and resumes only on the operator's dated approval, recorded beside the control file.
+  - Status: proposed.
+  - Rationale: FC-04; the pause is a recorded touchpoint, not a wait on other jobs (R-121, G5:243).
+  - Check: three planted jobs at +5%, +15% and +25% yield a log line, a warning event and a refusal, with no spend past the last granted reservation; an approval without a date is rejected.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 128
+  - 131
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-13. Spend bands.** Against its estimate, a job runs and logs while projected spend (settled plus reserved) is at or under +10%. Crossing +10% emits one warning event. A reservation that would cross +20% is refused; the job pauses at the spend touchpoint and resumes only on the operator's dated approval, recorded beside the control file.
+    - Status: proposed.
+    - Rationale: FC-04; the pause is a recorded touchpoint, not a wait on other jobs (R-121, G5:243).
+    - Check: three planted jobs at +5%, +15% and +25% yield a log line, a warning event and a refusal, with no spend past the last granted reservation; an approval without a date is rejected.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-13
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: fd2498b61c3a5101b417c80925e978018ada48feef36f993462c312a74c35c33
+record_hash: 15e08dbcb22e19b545dea373e1e7a3550fcda61136a33860b57cfbce0ebdad6e

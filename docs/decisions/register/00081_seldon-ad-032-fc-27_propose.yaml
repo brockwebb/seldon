@@ -1,0 +1,37 @@
+seq: 81
+event: propose
+id: seldon:AD-032-FC-27
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-27. Every gate is positive-controlled and non-vacuous.** Every gate registers a planted defect it must catch and an empty or unreadable input on which it must raise, never pass. Suites quote skip counts, and a tier that cannot run fails. A verdict is not cited until its instrument has caught its plant (methodology 7.6).
+  - Status: proposed.
+  - Rationale: C2; G1:79; G1:58.
+  - Check: a meta-gate fails any gate in the conformance list that lacks either fixture; both fixtures run every release.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 204
+  - 207
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-27. Every gate is positive-controlled and non-vacuous.** Every gate registers a planted defect it must catch and an empty or unreadable input on which it must raise, never pass. Suites quote skip counts, and a tier that cannot run fails. A verdict is not cited until its instrument has caught its plant (methodology 7.6).
+    - Status: proposed.
+    - Rationale: C2; G1:79; G1:58.
+    - Check: a meta-gate fails any gate in the conformance list that lacks either fixture; both fixtures run every release.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-27
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 42f3d5f0014236cca6f8be8cfd5f76c22e88a0896c0b93c8b1cf2ef34fa939f8
+record_hash: 767bcf3d327b5427f58d45cd07d779f967f1a3b50a9fab99013de9877522c0a3

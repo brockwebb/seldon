@@ -1,0 +1,36 @@
+seq: 5
+event: accept
+id: seldon:AD-016
+date: '2026-03-20'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  Replace the current two-file Tier 2 / Tier 3 classification with three semantically distinct tiers — **Critical**, **Substantive**, and **Administrative** — each with different build behavior. All rules live in a single per-project `paper/paper_qc_config.yaml` (no global defaults yet). Administrative rules use explicit budgets rather than binary bans.
+
+  ---
+source:
+  path: docs/design/AD-016_paper_qc_severity_tiers.md
+  lines:
+  - 9
+  - 13
+  sha256: 69c917c50e66f8202f62faef736c438af26d7e0c712a4a396a512d5610e8f333
+  text: |-
+    ## Decision
+
+    Replace the current two-file Tier 2 / Tier 3 classification with three semantically distinct tiers — **Critical**, **Substantive**, and **Administrative** — each with different build behavior. All rules live in a single per-project `paper/paper_qc_config.yaml` (no global defaults yet). Administrative rules use explicit budgets rather than binary bans.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-016_paper_qc_severity_tiers.md
+  anchor: AD-016
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: b54753a6b2d67c5d0d35c22cf80fe4a736b49604c1b7d2e4dfee8038c64aaecc
+record_hash: 387688b8160a21cc97fb6b7fec088c936e32c6705f32fe962a6ce9b6ddbf084f

@@ -1,0 +1,31 @@
+seq: 24
+event: accept
+id: seldon:AD-030-R6
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
+- cc_tasks/2026-09-28_designnote_cites_citation.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R6.** Citations are captured free and verified separately. Any citation appearing in a governed document becomes a Citation node at ingest in state `proposed`, with a Passage node (section or paragraph identifier, verbatim span, hash of source text) when a span was quoted. Verification is a state transition `proposed -> verified` carrying `method`, `date`, `by`. `seldon verify` reports unverified citations as it reports unregistered numbers. Gate intensity follows document type: design notes ship with `proposed` citations; `seldon paper build` refuses them at Tier 1.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 45
+  - 45
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R6.** Citations are captured free and verified separately. Any citation appearing in a governed document becomes a Citation node at ingest in state `proposed`, with a Passage node (section or paragraph identifier, verbatim span, hash of source text) when a span was quoted. Verification is a state transition `proposed -> verified` carrying `method`, `date`, `by`. `seldon verify` reports unverified citations as it reports unregistered numbers. Gate intensity follows document type: design notes ship with `proposed` citations; `seldon paper build` refuses them at Tier 1.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R6
+consumer:
+- seldon/core/governed.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: bf2f92594b038d2196e033abc037b6f36c75ad34f865238c58312eb832e3c648
+record_hash: 6a53a81dffa31cd4ae96165134416c334f2742f06ad3de0d94996e50028a9c5b

@@ -1,0 +1,45 @@
+seq: 4
+event: accept
+id: seldon:AD-014
+date: '2026-03-16'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## 1. Design Principle
+
+  **Instructions come from the graph, not from flat files.**
+
+  Role definitions, retrieval profiles, and workflow compositions are artifacts with the same traceability guarantees as Results, Scripts, and Tasks. They have provenance, state, and documentation properties. They are queryable, versionable, and projectable.
+
+  CLAUDE.md remains a thin boot loader: "you have `seldon` CLI, call `seldon go` for instructions." Everything substantive — role prompts, retrieval queries, workflow templates — lives in the graph and is projected into whatever format the consuming system needs (CC task specs, MCP responses, generated docs).
+
+  ---
+source:
+  path: docs/design/AD-014_agent_roles_as_graph_artifacts.md
+  lines:
+  - 10
+  - 18
+  sha256: 53778f1584761875518377e1ca60b61a26380ae9f1341addb51aef959eda66de
+  text: |-
+    ## 1. Design Principle
+
+    **Instructions come from the graph, not from flat files.**
+
+    Role definitions, retrieval profiles, and workflow compositions are artifacts with the same traceability guarantees as Results, Scripts, and Tasks. They have provenance, state, and documentation properties. They are queryable, versionable, and projectable.
+
+    CLAUDE.md remains a thin boot loader: "you have `seldon` CLI, call `seldon go` for instructions." Everything substantive — role prompts, retrieval queries, workflow templates — lives in the graph and is projected into whatever format the consuming system needs (CC task specs, MCP responses, generated docs).
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-014_agent_roles_as_graph_artifacts.md
+  anchor: AD-014
+consumer:
+- tests/test_agent_roles.py
+written_by: seldon decision 0.1.0
+prev_hash: 87d58bbd0bcac950b2406f2546ae9d0badbbc245f13228b8168f6fcd0e1884e4
+record_hash: b54753a6b2d67c5d0d35c22cf80fe4a736b49604c1b7d2e4dfee8038c64aaecc

@@ -1,0 +1,37 @@
+seq: 66
+event: propose
+id: seldon:AD-032-FC-12
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-12. Estimates are measured, not remembered.** An estimate is the measured per-unit rate (dry run or ledger window, same model and profile) times planned units, recorded with its basis. The governor refuses a job with no estimate and an estimate below that floor.
+  - Status: proposed.
+  - Rationale: estimates from memory, 9 learnings (G4:68); the DD-042 floor guard (G4:145); no kit code computes the floor (G4:153).
+  - Check: a planted job declaring half its measured floor is refused, naming the floor; a job record without an estimate basis fails conformance.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 123
+  - 126
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-12. Estimates are measured, not remembered.** An estimate is the measured per-unit rate (dry run or ledger window, same model and profile) times planned units, recorded with its basis. The governor refuses a job with no estimate and an estimate below that floor.
+    - Status: proposed.
+    - Rationale: estimates from memory, 9 learnings (G4:68); the DD-042 floor guard (G4:145); no kit code computes the floor (G4:153).
+    - Check: a planted job declaring half its measured floor is refused, naming the floor; a job record without an estimate basis fails conformance.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-12
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: a8c79ec4390d0fb139e262d84fcbdaddc9c65f44e91e3cc37c8bc5eb7757716a
+record_hash: fd2498b61c3a5101b417c80925e978018ada48feef36f993462c312a74c35c33

@@ -1,0 +1,37 @@
+seq: 76
+event: propose
+id: seldon:AD-032-FC-22
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-22. Manifest changes are events; the YAML is rendered.**
+  - Status: proposed.
+  - Rationale: A:35, A:45; the operator's earlier decision that the manifest lives in the graph (A:35; K:88, K:89).
+  - Check: a planted hand edit to the rendered YAML fails a two-way drift gate (A:140).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 177
+  - 180
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-22. Manifest changes are events; the YAML is rendered.**
+    - Status: proposed.
+    - Rationale: A:35, A:45; the operator's earlier decision that the manifest lives in the graph (A:35; K:88, K:89).
+    - Check: a planted hand edit to the rendered YAML fails a two-way drift gate (A:140).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-22
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 714fd0a3c5c5f4c4f3207d413ed0273551698b8c23bfe708a2306aa784416245
+record_hash: ef14e47ed7c1d0638de46e921063573e96c1460d8a05790a58966397ec5c9e70

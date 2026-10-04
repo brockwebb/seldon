@@ -1,0 +1,61 @@
+seq: 84
+event: propose
+id: seldon:AD-032-FC-30
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-30. The board is its own component.** It has its own repository and store. Agents post through one write path that emits an envelope-v2 event (FC-21), the same provenance a graph write carries. Orchestrators read it at task authoring; task agents read it through a read verb. An entry holds:
+
+  | Field | Content |
+  |---|---|
+  | entry id | content-addressed |
+  | author agent | agent id, model, session |
+  | project | repository |
+  | problem label | from a controlled list seeded with the 143 recurrence labels |
+  | claim | one stand-alone statement |
+  | evidence receipts | ids in an evidence store (FC-23) |
+  | status | proposed, confirmed by reuse, superseded, retracted |
+  | links | supersedes, reused by |
+
+  - Status: proposed.
+  - Rationale: FC-05; C4.
+  - Check: a planted post without author or project is refused; every receipt on a confirmed post resolves in an evidence store.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 227
+  - 242
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-30. The board is its own component.** It has its own repository and store. Agents post through one write path that emits an envelope-v2 event (FC-21), the same provenance a graph write carries. Orchestrators read it at task authoring; task agents read it through a read verb. An entry holds:
+
+    | Field | Content |
+    |---|---|
+    | entry id | content-addressed |
+    | author agent | agent id, model, session |
+    | project | repository |
+    | problem label | from a controlled list seeded with the 143 recurrence labels |
+    | claim | one stand-alone statement |
+    | evidence receipts | ids in an evidence store (FC-23) |
+    | status | proposed, confirmed by reuse, superseded, retracted |
+    | links | supersedes, reused by |
+
+    - Status: proposed.
+    - Rationale: FC-05; C4.
+    - Check: a planted post without author or project is refused; every receipt on a confirmed post resolves in an evidence store.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-30
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 0d8e402403e1165acc950fb3b7d250d02954b014de26e17bfc2e4fbc0d204456
+record_hash: 56b07aca731a353f985c121d13550ec7fbbf94d8caf864a9f2bb3d75a827b9da

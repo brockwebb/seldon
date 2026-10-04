@@ -1,0 +1,43 @@
+seq: 53
+event: accept
+id: seldon:AD-033-R8
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R8. Statements are written by one call and checked by another.** For each active record a model writes
+    the stand-alone statement from the verbatim source; a separate validator call checks that the source entails the
+    statement and that nothing in the source's decision is dropped. A record that fails keeps the verbatim text as its
+    statement, flagged. The pass runs through the Squiddy call layer under the DN-042 spend governor (SQ-009), with a
+    10-record pilot, a measured estimate and a ceiling.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 169
+  - 174
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R8. Statements are written by one call and checked by another.** For each active record a model writes
+      the stand-alone statement from the verbatim source; a separate validator call checks that the source entails the
+      statement and that nothing in the source's decision is dropped. A record that fails keeps the verbatim text as its
+      statement, flagged. The pass runs through the Squiddy call layer under the DN-042 spend governor (SQ-009), with a
+      10-record pilot, a measured estimate and a ceiling.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R8
+consumer:
+- seldon/domain/decision_register.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 1558ee686de4f1222b68f8b083d743e03a205ad7f4b05a133b6b7b853ae092be
+record_hash: 928599f3f6aa2de35acf305ee0c67503339bd2095c914eb6f857ca79729a9da4

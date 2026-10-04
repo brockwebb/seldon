@@ -1,0 +1,1081 @@
+{
+ "counts": {
+  "squiddy": 419,
+  "seldon": 60,
+  "arnold": 26
+ },
+ "duplicate_ids": [],
+ "heading_only": [
+  "squiddy R-67 squiddy/docs/design/2026-09-23_competency_questions.md:35",
+  "seldon seldon:AD-028_result_names_and_task_lifecycle seldon/docs/design/AD-028_result_names_and_task_lifecycle.md:1",
+  "seldon seldon:AD-029_task_precedence seldon/docs/design/AD-029_task_precedence.md:1",
+  "arnold arnold:002-strength-workout-migration arnold/docs/adr/002-strength-workout-migration.md:1",
+  "arnold arnold:003-exercise-hierarchy arnold/docs/adr/003-exercise-hierarchy.md:1",
+  "arnold arnold:005-hrr-pipeline-architecture arnold/docs/adr/005-hrr-pipeline-architecture.md:1",
+  "arnold arnold:006-unified-workout-schema arnold/docs/adr/006-unified-workout-schema.md:1",
+  "arnold arnold:007-simplified-workout-schema arnold/docs/adr/007-simplified-workout-schema.md:1",
+  "arnold arnold:009-kill-coach-framing-assistant-scope arnold/docs/adr/009-kill-coach-framing-assistant-scope.md:1",
+  "arnold arnold:010-self-learning-system-architecture arnold/docs/adr/010-self-learning-system-architecture.md:1",
+  "arnold arnold:013-canonical-training-vocabulary arnold/docs/adr/013-canonical-training-vocabulary.md:1",
+  "arnold arnold:014-set-equipment-dimension arnold/docs/adr/014-set-equipment-dimension.md:1",
+  "arnold arnold:015-injury-lifecycle-model arnold/docs/adr/015-injury-lifecycle-model.md:1",
+  "arnold arnold:016-exercise-id-convention arnold/docs/adr/016-exercise-id-convention.md:1"
+ ],
+ "draft_status": [
+  "arnold/docs/adr/003-exercise-hierarchy.md :: Proposed",
+  "arnold/docs/adr/004-decision-traces.md :: Proposed",
+  "arnold/docs/adr/008-device-telemetry-layer.md :: Proposed",
+  "seldon/docs/design/AD-021_session_continuity_fidelity.md :: Proposed",
+  "seldon/docs/design/AD-022_cli_default_mcp_exception.md :: Proposed, 2026-04-18. Promoted from governing principle in evolution burst 2026-04.",
+  "seldon/docs/design/AD-023_wintermute_sleep_functions.md :: Proposed, 2026-04-18. Promoted from CC5 deliverable (evolution burst 2026-04) with one edit — claude-mem Option A commit",
+  "seldon/docs/design/AD-024_observability_as_substrate.md :: Proposed, 2026-04-18. Promoted from CC4 deliverable (evolution burst 2026-04) as formalization of already-shipped infras",
+  "seldon/docs/design/AD-025_subprojects_as_graph_artifacts.md :: Proposed, 2026-04-21.",
+  "seldon/docs/design/AD-030_governed_documents_as_graph_content.md :: Draft (Desktop design session; not yet ingested, not yet implemented)",
+  "seldon/docs/design/AD-031_rulings_reach_the_task_by_retrieval.md :: Draft. Desktop design session. Phase 1 (measurement) is dispatched as SEL-001; Phase 2 is not designed",
+  "seldon/docs/design/AD-032_factory_control_design.md :: Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed.",
+  "seldon/docs/design/AD-033_decision_register.md :: Draft. Desktop design session. Implemented by SEL-002 (the register and the baseline, plan action C)."
+ ],
+ "amending_units": [
+  {
+   "id": "R-09",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-12_founding_rulings.md:72",
+   "words": [
+    "override",
+    "overrides"
+   ],
+   "refs": [
+    "DI-152"
+   ]
+  },
+  {
+   "id": "R-15",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-13_store_architecture.md:9",
+   "words": [
+    "replaced"
+   ],
+   "refs": [
+    "DI-001",
+    "DI-004",
+    "DI-005",
+    "DI-007",
+    "DI-010",
+    "DI-011",
+    "DI-040",
+    "DI-110",
+    "R-04"
+   ]
+  },
+  {
+   "id": "R-18",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-13_tevv_and_roadmap.md:24",
+   "words": [
+    "replace",
+    "replaces",
+    "retire"
+   ],
+   "refs": [
+    "DI-013",
+    "DI-023",
+    "DI-026",
+    "DI-053",
+    "DI-098",
+    "DI-137",
+    "R-10",
+    "R-12",
+    "R-13"
+   ]
+  },
+  {
+   "id": "R-32",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-20_after_h006_restarts_reliability.md:7",
+   "words": [
+    "withdrawn"
+   ],
+   "refs": [
+    "DN-006",
+    "R-29"
+   ]
+  },
+  {
+   "id": "R-45",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-20_balcony_claim_quality_protocol.md:93",
+   "words": [
+    "superseded"
+   ],
+   "refs": [
+    "DN-008"
+   ]
+  },
+  {
+   "id": "R-94",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-28_tier0_budgeted_selection_and_value_gate.md:42",
+   "words": [
+    "retired"
+   ],
+   "refs": [
+    "R-38"
+   ]
+  },
+  {
+   "id": "R-108",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_confounded_inspection_one_retest.md:45",
+   "words": [
+    "reverse",
+    "reversed"
+   ],
+   "refs": [
+    "R-109"
+   ]
+  },
+  {
+   "id": "R-115",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:91",
+   "words": [
+    "retire",
+    "supersede"
+   ],
+   "refs": [
+    "R-105",
+    "R-117"
+   ]
+  },
+  {
+   "id": "R-117",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:134",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "R-120"
+   ]
+  },
+  {
+   "id": "R-121",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:179",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "DI-135",
+    "DN-020",
+    "R-102"
+   ]
+  },
+  {
+   "id": "R-124",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:223",
+   "words": [
+    "superseded",
+    "withdrawn"
+   ],
+   "refs": [
+    "DN-003",
+    "DN-025",
+    "R-110",
+    "R-112",
+    "R-113",
+    "R-116",
+    "R-118",
+    "R-18"
+   ]
+  },
+  {
+   "id": "R-112",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-29_served_surface_ruling.md:51",
+   "words": [
+    "retired"
+   ],
+   "refs": [
+    "R-106"
+   ]
+  },
+  {
+   "id": "R-135",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-30_not_ready_for_arnold_library_proving_ground.md:44",
+   "words": [
+    "supersede"
+   ],
+   "refs": [
+    "R-126"
+   ]
+  },
+  {
+   "id": "R-129",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-09-30_scope_not_questions_at_the_input_wall.md:47",
+   "words": [
+    "amended"
+   ],
+   "refs": [
+    "R-102",
+    "R-121"
+   ]
+  },
+  {
+   "id": "R-160",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:51",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "R-152"
+   ]
+  },
+  {
+   "id": "R-161",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:54",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "R-153"
+   ]
+  },
+  {
+   "id": "R-164",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-10-02_DN-036_recall_counts_losses_reader_not_blind.md:34",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "R-162"
+   ]
+  },
+  {
+   "id": "R-172",
+   "repo": "squiddy",
+   "where": "squiddy/docs/design/2026-10-02_DN-040_arnold_follows_its_recipe_extraction_closed_mesh_concepts.md:46",
+   "words": [
+    "superseded"
+   ],
+   "refs": [
+    "DN-038",
+    "DN-039",
+    "R-167",
+    "R-168"
+   ]
+  },
+  {
+   "id": "DI-103",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:183",
+   "words": [
+    "retired"
+   ],
+   "refs": [
+    "DI-018"
+   ]
+  },
+  {
+   "id": "DI-170",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:265",
+   "words": [
+    "retire"
+   ],
+   "refs": [
+    "DI-169"
+   ]
+  },
+  {
+   "id": "DI-171",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:266",
+   "words": [
+    "retired"
+   ],
+   "refs": [
+    "DI-158",
+    "DI-161",
+    "DI-162",
+    "DI-164"
+   ]
+  },
+  {
+   "id": "DI-183",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:280",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "DI-100",
+    "DN-006",
+    "R-29"
+   ]
+  },
+  {
+   "id": "DI-188",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:301",
+   "words": [
+    "replaces"
+   ],
+   "refs": [
+    "DI-100",
+    "DN-015",
+    "R-64",
+    "R-68"
+   ]
+  },
+  {
+   "id": "DI-192",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:316",
+   "words": [
+    "revised"
+   ],
+   "refs": [
+    "DN-015",
+    "R-64"
+   ]
+  },
+  {
+   "id": "DI-204",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:350",
+   "words": [
+    "amended"
+   ],
+   "refs": [
+    "DN-017",
+    "R-77"
+   ]
+  },
+  {
+   "id": "DI-230",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:435",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "DN-022",
+    "R-97",
+    "R-98",
+    "R-99"
+   ]
+  },
+  {
+   "id": "DI-235",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:472",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "DN-022",
+    "DN-023",
+    "R-106",
+    "R-97"
+   ]
+  },
+  {
+   "id": "DI-237",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:482",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "DN-006",
+    "DN-023",
+    "DN-026",
+    "R-103",
+    "R-117",
+    "R-120",
+    "R-121"
+   ]
+  },
+  {
+   "id": "DI-240",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:501",
+   "words": [
+    "retired",
+    "superseded"
+   ],
+   "refs": [
+    "DI-053",
+    "DI-236",
+    "DN-029",
+    "R-134"
+   ]
+  },
+  {
+   "id": "DI-241",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:510",
+   "words": [
+    "retires",
+    "supersede",
+    "superseded"
+   ],
+   "refs": [
+    "DI-050",
+    "DI-053",
+    "DN-026",
+    "DN-029",
+    "R-115",
+    "R-121",
+    "R-135"
+   ]
+  },
+  {
+   "id": "DI-242",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:511",
+   "words": [
+    "amended"
+   ],
+   "refs": [
+    "DI-236",
+    "DN-030",
+    "R-137"
+   ]
+  },
+  {
+   "id": "DI-244",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:513",
+   "words": [
+    "withdrawn"
+   ],
+   "refs": [
+    "DN-030",
+    "R-139"
+   ]
+  },
+  {
+   "id": "DI-256",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:525",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "DN-035",
+    "R-152",
+    "R-160"
+   ]
+  },
+  {
+   "id": "DI-257",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:526",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "DN-035",
+    "R-153",
+    "R-161"
+   ]
+  },
+  {
+   "id": "DI-258",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:527",
+   "words": [
+    "replaces"
+   ],
+   "refs": [
+    "DI-100",
+    "DN-035",
+    "R-162"
+   ]
+  },
+  {
+   "id": "DI-260",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:529",
+   "words": [
+    "retired"
+   ],
+   "refs": [
+    "DN-034",
+    "R-157",
+    "R-159"
+   ]
+  },
+  {
+   "id": "DI-261",
+   "repo": "squiddy",
+   "where": "squiddy/docs/DECISIONS_INHERITED.md:530",
+   "words": [
+    "revises"
+   ],
+   "refs": [
+    "DN-036",
+    "R-162",
+    "R-164"
+   ]
+  },
+  {
+   "id": "seldon:AD-012_paper_as_graph_assembly",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-012_paper_as_graph_assembly.md:1",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-006",
+    "AD-009",
+    "AD-011",
+    "AD-012"
+   ]
+  },
+  {
+   "id": "seldon:AD-020_calibration_001_leibniz_pi",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-020_calibration_001_leibniz_pi.md:1",
+   "words": [
+    "replaced"
+   ],
+   "refs": [
+    "AD-020"
+   ]
+  },
+  {
+   "id": "AD-030-R13",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-030_implementation_findings_001.md:32",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030"
+   ]
+  },
+  {
+   "id": "AD-030-R17",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-030_implementation_findings_001.md:40",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030"
+   ]
+  },
+  {
+   "id": "AD-031-R2",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-031_rulings_reach_the_task_by_retrieval.md:53",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030"
+   ]
+  },
+  {
+   "id": "AD-033-R3",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-033_decision_register.md:125",
+   "words": [
+    "amends",
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030-R21",
+    "AD-032",
+    "ADR-017",
+    "DI-020",
+    "EX-REQ-02",
+    "R-112"
+   ]
+  },
+  {
+   "id": "AD-033-R5",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-033_decision_register.md:143",
+   "words": [
+    "override"
+   ],
+   "refs": [
+    "AD-032",
+    "DN-037"
+   ]
+  },
+  {
+   "id": "AD-033-R7",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-033_decision_register.md:164",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030-R16"
+   ]
+  },
+  {
+   "id": "AD-033-R10",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-033_decision_register.md:179",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030-R14"
+   ]
+  },
+  {
+   "id": "AD-033-R11",
+   "repo": "seldon",
+   "where": "seldon/docs/design/AD-033_decision_register.md:187",
+   "words": [
+    "supersede",
+    "supersedes"
+   ],
+   "refs": [
+    "AD-030-R5",
+    "R-04"
+   ]
+  },
+  {
+   "id": "arnold:013-addendum-01-cycle-duration-is-data",
+   "repo": "arnold",
+   "where": "arnold/docs/adr/013-addendum-01-cycle-duration-is-data.md:1",
+   "words": [
+    "overrides"
+   ],
+   "refs": [
+    "ADR-013"
+   ]
+  },
+  {
+   "id": "arnold:AALL-006-unified-workout-schema",
+   "repo": "arnold",
+   "where": "arnold/docs/adr/AALL-006-unified-workout-schema.md:1",
+   "words": [
+    "superseded"
+   ],
+   "refs": [
+    "ADR-006",
+    "ADR-007"
+   ]
+  },
+  {
+   "id": "arnold:2026-06-27_vocab-decision-block-cycle-reversal",
+   "repo": "arnold",
+   "where": "arnold/docs/ontology/2026-06-27_vocab-decision-block-cycle-reversal.md:1",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "ADR-013"
+   ]
+  },
+  {
+   "id": "arnold:canonical-exercise-creation",
+   "repo": "arnold",
+   "where": "arnold/docs/ontology/canonical-exercise-creation.md:1",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "ADR-012"
+   ]
+  },
+  {
+   "id": "arnold:progression-policy",
+   "repo": "arnold",
+   "where": "arnold/docs/ontology/progression-policy.md:1",
+   "words": [
+    "replaces"
+   ],
+   "refs": [
+    "ADR-010"
+   ]
+  },
+  {
+   "id": "arnold:training-domain-vocabulary",
+   "repo": "arnold",
+   "where": "arnold/docs/ontology/training-domain-vocabulary.md:1",
+   "words": [
+    "retire",
+    "reversed",
+    "superseded"
+   ],
+   "refs": [
+    "ADR-007"
+   ]
+  },
+  {
+   "id": "arnold:workout-structure",
+   "repo": "arnold",
+   "where": "arnold/docs/ontology/workout-structure.md:1",
+   "words": [
+    "supersedes"
+   ],
+   "refs": [
+    "ADR-006",
+    "ADR-013"
+   ]
+  }
+ ],
+ "squiddy_R_without_code_ref": [
+  "R-02",
+  "R-04",
+  "R-05",
+  "R-06",
+  "R-09",
+  "R-10",
+  "R-12",
+  "R-13",
+  "R-18",
+  "R-20",
+  "R-22",
+  "R-24",
+  "R-25",
+  "R-31",
+  "R-34",
+  "R-36",
+  "R-39",
+  "R-40",
+  "R-42",
+  "R-45",
+  "R-49",
+  "R-54",
+  "R-58",
+  "R-61",
+  "R-62",
+  "R-64",
+  "R-65",
+  "R-66",
+  "R-67",
+  "R-68",
+  "R-69",
+  "R-73",
+  "R-74",
+  "R-76",
+  "R-96",
+  "R-97",
+  "R-100",
+  "R-101",
+  "R-104",
+  "R-107",
+  "R-132",
+  "R-133",
+  "R-136",
+  "R-141",
+  "R-145",
+  "R-170",
+  "R-171",
+  "R-172"
+ ],
+ "near_duplicate_pairs": [
+  {
+   "sim": 0.64,
+   "a": "squiddy R-164 squiddy/docs/design/2026-10-02_DN-036_recall_counts_losses_reader_not_blind.md:34",
+   "b": "squiddy DI-261 squiddy/docs/DECISIONS_INHERITED.md:530"
+  },
+  {
+   "sim": 0.624,
+   "a": "squiddy R-144 squiddy/docs/design/2026-10-01_INC-001_huggingface_egress_deny_by_default.md:70",
+   "b": "squiddy DI-248 squiddy/docs/DECISIONS_INHERITED.md:517"
+  },
+  {
+   "sim": 0.618,
+   "a": "squiddy R-140 squiddy/docs/design/2026-09-30_rebuild_is_not_first_build_every_layer_a_node.md:73",
+   "b": "squiddy DI-245 squiddy/docs/DECISIONS_INHERITED.md:514"
+  },
+  {
+   "sim": 0.579,
+   "a": "squiddy R-163 squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:62",
+   "b": "squiddy DI-259 squiddy/docs/DECISIONS_INHERITED.md:528"
+  },
+  {
+   "sim": 0.574,
+   "a": "squiddy R-24 squiddy/docs/design/2026-09-18_after_h004_provenance_frame_order.md:27",
+   "b": "squiddy DI-180 squiddy/docs/DECISIONS_INHERITED.md:277"
+  },
+  {
+   "sim": 0.568,
+   "a": "squiddy R-120 squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:167",
+   "b": "squiddy DI-237 squiddy/docs/DECISIONS_INHERITED.md:482"
+  },
+  {
+   "sim": 0.562,
+   "a": "squiddy R-147 squiddy/docs/design/2026-10-01_DN-032_text_decided_before_admit_gated_before_release.md:44",
+   "b": "squiddy DI-249 squiddy/docs/DECISIONS_INHERITED.md:518"
+  },
+  {
+   "sim": 0.558,
+   "a": "squiddy R-139 squiddy/docs/design/2026-09-30_rebuild_is_not_first_build_every_layer_a_node.md:67",
+   "b": "squiddy DI-244 squiddy/docs/DECISIONS_INHERITED.md:513"
+  },
+  {
+   "sim": 0.551,
+   "a": "squiddy R-165 squiddy/docs/design/2026-10-02_DN-036_recall_counts_losses_reader_not_blind.md:38",
+   "b": "squiddy DI-262 squiddy/docs/DECISIONS_INHERITED.md:531"
+  },
+  {
+   "sim": 0.545,
+   "a": "squiddy R-166 squiddy/docs/design/2026-10-02_DN-036_recall_counts_losses_reader_not_blind.md:44",
+   "b": "squiddy DI-263 squiddy/docs/DECISIONS_INHERITED.md:532"
+  },
+  {
+   "sim": 0.54,
+   "a": "squiddy R-158 squiddy/docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:24",
+   "b": "squiddy DI-260 squiddy/docs/DECISIONS_INHERITED.md:529"
+  },
+  {
+   "sim": 0.534,
+   "a": "squiddy R-28 squiddy/docs/design/2026-09-18_after_h005_order_gate_version.md:8",
+   "b": "squiddy DI-182 squiddy/docs/DECISIONS_INHERITED.md:279"
+  },
+  {
+   "sim": 0.533,
+   "a": "squiddy R-149 squiddy/docs/design/2026-10-01_DN-032_text_decided_before_admit_gated_before_release.md:51",
+   "b": "squiddy DI-251 squiddy/docs/DECISIONS_INHERITED.md:520"
+  },
+  {
+   "sim": 0.521,
+   "a": "squiddy R-23 squiddy/docs/design/2026-09-18_after_h004_provenance_frame_order.md:14",
+   "b": "squiddy DI-179 squiddy/docs/DECISIONS_INHERITED.md:276"
+  },
+  {
+   "sim": 0.51,
+   "a": "squiddy R-69 squiddy/docs/design/2026-09-23_after_q001_paths_not_entities.md:18",
+   "b": "squiddy DI-196 squiddy/docs/DECISIONS_INHERITED.md:331"
+  },
+  {
+   "sim": 0.501,
+   "a": "squiddy R-131 squiddy/docs/design/2026-09-30_scope_not_questions_at_the_input_wall.md:61",
+   "b": "squiddy DI-239 squiddy/docs/DECISIONS_INHERITED.md:492"
+  },
+  {
+   "sim": 0.486,
+   "a": "seldon seldon:AD-020_calibration_002_ch04 seldon/docs/design/AD-020_calibration_002_ch04.md:1",
+   "b": "seldon seldon:AD-020_calibration_003_ch05 seldon/docs/design/AD-020_calibration_003_ch05.md:1"
+  },
+  {
+   "sim": 0.475,
+   "a": "squiddy R-138 squiddy/docs/design/2026-09-30_rebuild_is_not_first_build_every_layer_a_node.md:58",
+   "b": "squiddy DI-243 squiddy/docs/DECISIONS_INHERITED.md:512"
+  },
+  {
+   "sim": 0.469,
+   "a": "squiddy R-143 squiddy/docs/design/2026-10-01_INC-001_huggingface_egress_deny_by_default.md:65",
+   "b": "squiddy DI-247 squiddy/docs/DECISIONS_INHERITED.md:516"
+  },
+  {
+   "sim": 0.467,
+   "a": "squiddy R-160 squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:51",
+   "b": "squiddy DI-256 squiddy/docs/DECISIONS_INHERITED.md:525"
+  },
+  {
+   "sim": 0.466,
+   "a": "squiddy R-73 squiddy/docs/design/2026-09-23_after_q001_paths_not_entities.md:34",
+   "b": "squiddy DI-200 squiddy/docs/DECISIONS_INHERITED.md:335"
+  },
+  {
+   "sim": 0.465,
+   "a": "squiddy R-162 squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:58",
+   "b": "squiddy DI-258 squiddy/docs/DECISIONS_INHERITED.md:527"
+  },
+  {
+   "sim": 0.465,
+   "a": "squiddy R-10 squiddy/docs/design/2026-09-12_founding_rulings.md:82",
+   "b": "squiddy DI-137 squiddy/docs/DECISIONS_INHERITED.md:211"
+  },
+  {
+   "sim": 0.464,
+   "a": "squiddy R-129 squiddy/docs/design/2026-09-30_scope_not_questions_at_the_input_wall.md:47",
+   "b": "squiddy DI-238 squiddy/docs/DECISIONS_INHERITED.md:491"
+  },
+  {
+   "sim": 0.455,
+   "a": "squiddy R-116 squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:123",
+   "b": "squiddy DI-236 squiddy/docs/DECISIONS_INHERITED.md:481"
+  },
+  {
+   "sim": 0.453,
+   "a": "seldon AD-030-R14 seldon/docs/design/AD-030_implementation_findings_001.md:34",
+   "b": "seldon AD-033-R10 seldon/docs/design/AD-033_decision_register.md:179"
+  },
+  {
+   "sim": 0.451,
+   "a": "squiddy R-26 squiddy/docs/design/2026-09-18_after_h004_provenance_frame_order.md:60",
+   "b": "squiddy DI-181 squiddy/docs/DECISIONS_INHERITED.md:278"
+  },
+  {
+   "sim": 0.45,
+   "a": "squiddy R-40 squiddy/docs/design/2026-09-20_internal_prior_art_packs_anchors.md:37",
+   "b": "squiddy EX-REQ-13 squiddy/docs/EXTRACTION_DESIGN_SPEC.md:52"
+  },
+  {
+   "sim": 0.433,
+   "a": "squiddy DI-038 squiddy/docs/DECISIONS_INHERITED.md:110",
+   "b": "squiddy DI-054 squiddy/docs/DECISIONS_INHERITED.md:134"
+  },
+  {
+   "sim": 0.433,
+   "a": "squiddy DI-018 squiddy/docs/DECISIONS_INHERITED.md:58",
+   "b": "arnold arnold:012-effect-verified-writes arnold/docs/adr/012-effect-verified-writes.md:1"
+  },
+  {
+   "sim": 0.43,
+   "a": "squiddy R-137 squiddy/docs/design/2026-09-30_rebuild_is_not_first_build_every_layer_a_node.md:49",
+   "b": "squiddy DI-242 squiddy/docs/DECISIONS_INHERITED.md:511"
+  },
+  {
+   "sim": 0.429,
+   "a": "squiddy R-152 squiddy/docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:33",
+   "b": "squiddy DI-253 squiddy/docs/DECISIONS_INHERITED.md:522"
+  },
+  {
+   "sim": 0.422,
+   "a": "squiddy R-161 squiddy/docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md:54",
+   "b": "squiddy DI-257 squiddy/docs/DECISIONS_INHERITED.md:526"
+  },
+  {
+   "sim": 0.42,
+   "a": "squiddy R-142 squiddy/docs/design/2026-10-01_INC-001_huggingface_egress_deny_by_default.md:59",
+   "b": "squiddy DI-246 squiddy/docs/DECISIONS_INHERITED.md:515"
+  },
+  {
+   "sim": 0.42,
+   "a": "squiddy R-87 squiddy/docs/design/2026-09-25_daemon_livelock_at_size_deferral.md:77",
+   "b": "squiddy DI-206 squiddy/docs/DECISIONS_INHERITED.md:360"
+  },
+  {
+   "sim": 0.418,
+   "a": "squiddy R-109 squiddy/docs/design/2026-09-29_confounded_inspection_one_retest.md:51",
+   "b": "squiddy DI-233 squiddy/docs/DECISIONS_INHERITED.md:454"
+  },
+  {
+   "sim": 0.412,
+   "a": "squiddy DI-253 squiddy/docs/DECISIONS_INHERITED.md:522",
+   "b": "squiddy DI-256 squiddy/docs/DECISIONS_INHERITED.md:525"
+  },
+  {
+   "sim": 0.41,
+   "a": "squiddy R-30 squiddy/docs/design/2026-09-18_after_h005_order_gate_version.md:40",
+   "b": "squiddy DI-184 squiddy/docs/DECISIONS_INHERITED.md:281"
+  },
+  {
+   "sim": 0.4,
+   "a": "squiddy R-65 squiddy/docs/design/2026-09-23_competency_questions.md:27",
+   "b": "squiddy DI-193 squiddy/docs/DECISIONS_INHERITED.md:317"
+  },
+  {
+   "sim": 0.399,
+   "a": "squiddy DI-258 squiddy/docs/DECISIONS_INHERITED.md:527",
+   "b": "squiddy DI-261 squiddy/docs/DECISIONS_INHERITED.md:530"
+  },
+  {
+   "sim": 0.394,
+   "a": "squiddy R-150 squiddy/docs/design/2026-10-01_DN-032_text_decided_before_admit_gated_before_release.md:55",
+   "b": "squiddy DI-252 squiddy/docs/DECISIONS_INHERITED.md:521"
+  },
+  {
+   "sim": 0.391,
+   "a": "squiddy R-146 squiddy/docs/design/2026-10-01_INC-001_huggingface_egress_deny_by_default.md:82",
+   "b": "squiddy EX-REQ-15 squiddy/docs/EXTRACTION_DESIGN_SPEC.md:54"
+  },
+  {
+   "sim": 0.39,
+   "a": "squiddy R-130 squiddy/docs/design/2026-09-30_scope_not_questions_at_the_input_wall.md:55",
+   "b": "squiddy DI-238 squiddy/docs/DECISIONS_INHERITED.md:491"
+  },
+  {
+   "sim": 0.39,
+   "a": "squiddy R-32 squiddy/docs/design/2026-09-20_after_h006_restarts_reliability.md:7",
+   "b": "squiddy DI-183 squiddy/docs/DECISIONS_INHERITED.md:280"
+  },
+  {
+   "sim": 0.388,
+   "a": "squiddy EX-REQ-15 squiddy/docs/EXTRACTION_DESIGN_SPEC.md:54",
+   "b": "squiddy DI-236 squiddy/docs/DECISIONS_INHERITED.md:481"
+  },
+  {
+   "sim": 0.386,
+   "a": "squiddy EX-REQ-15 squiddy/docs/EXTRACTION_DESIGN_SPEC.md:54",
+   "b": "squiddy DI-248 squiddy/docs/DECISIONS_INHERITED.md:517"
+  },
+  {
+   "sim": 0.38,
+   "a": "squiddy R-08 squiddy/docs/design/2026-09-12_founding_rulings.md:65",
+   "b": "squiddy DI-070 squiddy/docs/DECISIONS_INHERITED.md:154"
+  },
+  {
+   "sim": 0.373,
+   "a": "squiddy EX-REQ-14 squiddy/docs/EXTRACTION_DESIGN_SPEC.md:53",
+   "b": "squiddy DI-233 squiddy/docs/DECISIONS_INHERITED.md:454"
+  },
+  {
+   "sim": 0.372,
+   "a": "squiddy R-64 squiddy/docs/design/2026-09-23_competency_questions.md:23",
+   "b": "squiddy DI-185 squiddy/docs/DECISIONS_INHERITED.md:298"
+  },
+  {
+   "sim": 0.365,
+   "a": "squiddy R-118 squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:147",
+   "b": "squiddy DI-236 squiddy/docs/DECISIONS_INHERITED.md:481"
+  },
+  {
+   "sim": 0.365,
+   "a": "squiddy R-70 squiddy/docs/design/2026-09-23_after_q001_paths_not_entities.md:22",
+   "b": "squiddy DI-197 squiddy/docs/DECISIONS_INHERITED.md:332"
+  },
+  {
+   "sim": 0.355,
+   "a": "squiddy DI-074 squiddy/docs/DECISIONS_INHERITED.md:158",
+   "b": "squiddy DI-150 squiddy/docs/DECISIONS_INHERITED.md:224"
+  },
+  {
+   "sim": 0.352,
+   "a": "squiddy R-158 squiddy/docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:24",
+   "b": "squiddy R-159 squiddy/docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:29"
+  },
+  {
+   "sim": 0.351,
+   "a": "squiddy R-77 squiddy/docs/design/2026-09-23_build_the_arms.md:23",
+   "b": "squiddy DI-188 squiddy/docs/DECISIONS_INHERITED.md:301"
+  },
+  {
+   "sim": 0.351,
+   "a": "squiddy R-08 squiddy/docs/design/2026-09-12_founding_rulings.md:65",
+   "b": "squiddy DI-071 squiddy/docs/DECISIONS_INHERITED.md:155"
+  }
+ ],
+ "whole_doc_units": [
+  "seldon seldon:AD-011_database_driven_paper_assembly",
+  "seldon seldon:AD-012_paper_as_graph_assembly",
+  "seldon seldon:AD-013_documentation_as_traceability",
+  "seldon seldon:AD-014_agent_roles_as_graph_artifacts",
+  "seldon seldon:AD-019_agentic_content_audit",
+  "seldon seldon:AD-020_calibration_001_leibniz_pi",
+  "seldon seldon:AD-020_calibration_002_ch04",
+  "seldon seldon:AD-020_calibration_003_ch05",
+  "seldon seldon:AD-020_iterative_content_review_pipeline",
+  "seldon seldon:AD-032_factory_control_design",
+  "arnold arnold:013-addendum-01-cycle-duration-is-data",
+  "arnold arnold:AALL-006-unified-workout-schema",
+  "arnold arnold:2026-06-27_vocab-decision-block-cycle-reversal",
+  "arnold arnold:canonical-exercise-creation",
+  "arnold arnold:intensity-constructs",
+  "arnold arnold:progression-policy",
+  "arnold arnold:week-template",
+  "arnold arnold:workout-structure"
+ ]
+}

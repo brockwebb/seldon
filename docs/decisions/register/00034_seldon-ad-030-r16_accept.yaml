@@ -1,0 +1,27 @@
+seq: 34
+event: accept
+id: seldon:AD-030-R16
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R16.** A Ruling is a section whose heading or first token carries a ruling identifier (`AD-NNN-Rn`, `DN-…-Rn`, a numbered requirement ID) or the `BINDING` banner as a heading token. Deontic words in body prose (`never`, `must`, `BINDING` used as vocabulary) do not classify. The pattern edit lives in `governed/config.yaml` under `domain:`; `matched_pattern` on each Ruling makes the reclassification auditable. Settles ingest RESULT F9. The 168 figure is a pattern count, not a ruling count, and is re-registered after the edit.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 38
+  - 38
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R16.** A Ruling is a section whose heading or first token carries a ruling identifier (`AD-NNN-Rn`, `DN-…-Rn`, a numbered requirement ID) or the `BINDING` banner as a heading token. Deontic words in body prose (`never`, `must`, `BINDING` used as vocabulary) do not classify. The pattern edit lives in `governed/config.yaml` under `domain:`; `matched_pattern` on each Ruling makes the reclassification auditable. Settles ingest RESULT F9. The 168 figure is a pattern count, not a ruling count, and is re-registered after the edit.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R16
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: c35e6880196fb76aed38b6868357f5c8ea154b841eadb49ceb0cdc5e8248b347
+record_hash: da04d71511fcbfccb8955bdeaf3e9b60b17d18c2f273d9b25c71156b79fd3a4e

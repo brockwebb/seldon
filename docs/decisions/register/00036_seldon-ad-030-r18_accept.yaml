@@ -1,0 +1,27 @@
+seq: 36
+event: accept
+id: seldon:AD-030-R18
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R18.** Counts registered by a backfill are run outputs and enter the graph as `proposed`. Verification is a re-run of the sync followed by `seldon result verify`; a mismatch follows AD-028 stale handling. `governed_document_nodes` is already stale (97 registered, 98 on disk). No count from a governed backfill is quoted in a handoff or design note above `proposed` until verified.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 42
+  - 42
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R18.** Counts registered by a backfill are run outputs and enter the graph as `proposed`. Verification is a re-run of the sync followed by `seldon result verify`; a mismatch follows AD-028 stale handling. `governed_document_nodes` is already stale (97 registered, 98 on disk). No count from a governed backfill is quoted in a handoff or design note above `proposed` until verified.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R18
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: bd9c9fb417caed8f4f491890dbd375c58c84835ee87f2a23c12c6985c001fefc
+record_hash: 21e4311f39518f7fb34411638d3a6743eba32912a938436524642ddce1955606

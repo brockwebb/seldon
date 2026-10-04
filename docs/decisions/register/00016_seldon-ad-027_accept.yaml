@@ -1,0 +1,80 @@
+seq: 16
+event: accept
+id: seldon:AD-027
+date: '2026-09-02'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  1. **`snapshot: bool`** is an artifact property, default false, declared on the three types
+     that carry `content_hash` with a path (`Script`, `DataFile`, `PaperSection`) in
+     `research.yaml`, and validated in `seldon.core.artifacts` on both create and update: only a
+     real Python bool is accepted. The CLI parses `-p snapshot=true|false|1|0|yes|no`
+     (case-insensitive) to a bool; any other literal is passed through so the validator refuses
+     it rather than a string `"yes"` being stored and later read as truthy.
+
+     Semantics: the artifact records a file as it stood at registration; `content_hash` is the
+     identity of that state; the live file is expected to diverge.
+
+  2. **`verify` skips snapshot artifacts** in the drift comparison and reports them in the
+     same line, informationally: `All N tracked files in sync — K snapshot artifacts, drift
+     not checked`. They are not counted in N.
+
+  3. **`--fix` never touches a snapshot artifact's hash.** `--fix` delegates to `paper sync`;
+     `sync_section` now returns status `snapshot` for a flagged artifact without computing or
+     writing a hash. `paper sync` reports the count.
+
+  4. **Directory guard.** A path that resolves to a directory is reported as
+     `N path(s) resolve to a directory (schema violation): <path> (<type> <id8>)`, the check
+     continues, and the result is `fixable=False` unless real drift is also present (paper sync
+     cannot repair a registration error).
+source:
+  path: docs/design/AD-027_snapshot_artifacts.md
+  lines:
+  - 28
+  - 51
+  sha256: 0da8de62008c8fe9289bc2cf7d558aa30f59dbfab5e9c8eb8d6de0b07392647f
+  text: |-
+    ## Decision
+
+    1. **`snapshot: bool`** is an artifact property, default false, declared on the three types
+       that carry `content_hash` with a path (`Script`, `DataFile`, `PaperSection`) in
+       `research.yaml`, and validated in `seldon.core.artifacts` on both create and update: only a
+       real Python bool is accepted. The CLI parses `-p snapshot=true|false|1|0|yes|no`
+       (case-insensitive) to a bool; any other literal is passed through so the validator refuses
+       it rather than a string `"yes"` being stored and later read as truthy.
+
+       Semantics: the artifact records a file as it stood at registration; `content_hash` is the
+       identity of that state; the live file is expected to diverge.
+
+    2. **`verify` skips snapshot artifacts** in the drift comparison and reports them in the
+       same line, informationally: `All N tracked files in sync — K snapshot artifacts, drift
+       not checked`. They are not counted in N.
+
+    3. **`--fix` never touches a snapshot artifact's hash.** `--fix` delegates to `paper sync`;
+       `sync_section` now returns status `snapshot` for a flagged artifact without computing or
+       writing a hash. `paper sync` reports the count.
+
+    4. **Directory guard.** A path that resolves to a directory is reported as
+       `N path(s) resolve to a directory (schema violation): <path> (<type> <id8>)`, the check
+       continues, and the result is `fixable=False` unless real drift is also present (paper sync
+       cannot repair a registration error).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-027_snapshot_artifacts.md
+  anchor: AD-027
+consumer:
+- tests/test_verify_snapshot.py
+- seldon/commands/artifact.py
+- seldon/commands/verify.py
+- seldon/core/artifacts.py
+- seldon/domain/research.yaml
+- seldon/paper/sync.py
+written_by: seldon decision 0.1.0
+prev_hash: 282e8bc3b0bf164b3ccf68747b61490e3b5af4ec5c9a7d3f58c4f2766ceaaf63
+record_hash: c74496103944c61a42a9ed0d6f789335cd4b14ebd0608ebbf82089de35d65eed

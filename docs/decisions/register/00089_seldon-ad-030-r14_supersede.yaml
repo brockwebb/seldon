@@ -1,0 +1,14 @@
+seq: 89
+event: supersede
+id: seldon:AD-030-R14
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- seldon/cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md item 3
+- 'docs/design/AD-033_decision_register.md: AD-033-R10 ''Supersedes AD-030-R14.'''
+reason: 'DB-1 seed: SEL-002 ADDENDUM 01 item 3'
+superseded_by: seldon:AD-033-R10
+written_by: seldon decision 0.1.0
+prev_hash: 76263b3a7b0cdac9b0dbf2b58067637e33ced01246c99cb59767797feb5ce3a8
+record_hash: 571cba69dbefe20e92a69fbf37bd0a5cd847773e92986bc33eef24d9cac13c49

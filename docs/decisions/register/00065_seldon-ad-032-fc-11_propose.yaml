@@ -1,0 +1,37 @@
+seq: 65
+event: propose
+id: seldon:AD-032-FC-11
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-11. One metered chokepoint, reserve then settle.** Every external call (model, `claude` CLI, HTTP) reserves its projected cost on one shared, lock-guarded ledger before dispatch and settles the actual after. In-flight reservations count against every cap. A call whose reservation would cross a limit is refused before it is sent.
+  - Status: proposed.
+  - Rationale: C3. ai-readiness-kg DD-022 refused the fifth document with zero overshoot (G4:98, G4:99); Wintermute set the dollar cap at target minus concurrency times call cost (G4:95); Squiddy's bucket stops only after spend crosses (G4:105).
+  - Check: N planted concurrent workers against one ceiling end with zero overshoot; `calls_through_the_layer` (G1:151) stays green and a planted direct spawn fails it.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 118
+  - 121
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-11. One metered chokepoint, reserve then settle.** Every external call (model, `claude` CLI, HTTP) reserves its projected cost on one shared, lock-guarded ledger before dispatch and settles the actual after. In-flight reservations count against every cap. A call whose reservation would cross a limit is refused before it is sent.
+    - Status: proposed.
+    - Rationale: C3. ai-readiness-kg DD-022 refused the fifth document with zero overshoot (G4:98, G4:99); Wintermute set the dollar cap at target minus concurrency times call cost (G4:95); Squiddy's bucket stops only after spend crosses (G4:105).
+    - Check: N planted concurrent workers against one ceiling end with zero overshoot; `calls_through_the_layer` (G1:151) stays green and a planted direct spawn fails it.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-11
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 9f2c39984805924496d1b5274fcf5b5b65fe678b9a8f6179c58d3e9469073009
+record_hash: a8c79ec4390d0fb139e262d84fcbdaddc9c65f44e91e3cc37c8bc5eb7757716a

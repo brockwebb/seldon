@@ -1,0 +1,61 @@
+seq: 8
+event: accept
+id: seldon:AD-019
+date: '2026-04-01'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## 2. Design Principles
+
+  **The audit produces typed outputs, not prose reports.**
+
+  An unsourced factual claim doesn't need the author's judgment — it needs a search task. A thin section needs a design decision. A terminology inconsistency needs a glossary check. The audit pipeline classifies findings and routes them to the correct downstream workflow without requiring the author to manually triage every finding.
+
+  **Findings are Issues, not warnings.**
+
+  Every audit finding becomes an Issue artifact (already defined in `research.yaml`) with `affects` edges to the audited PaperSection. Issues are typed, prioritized via the Eisenhower grid, and resolvable via `resolved_by` edges to ResearchTask artifacts. This means audit findings are tracked, stateful, and queryable — not a prose report that gets read once and forgotten.
+
+  **Cross-section impacts are tracked from day one.**
+
+  If an audit finding in Section 3 implies something is wrong or needs checking in Section 7, that is not a "future enhancement." It is a ResearchTask created immediately, linked to the affected section, and visible in `seldon briefing`. Ignoring cross-section impacts at audit time is how drift compounds into a mess that costs 10x to unwind. The graph exists to prevent exactly this. Use it.
+
+  ---
+source:
+  path: docs/design/AD-019_agentic_content_audit.md
+  lines:
+  - 25
+  - 39
+  sha256: fa764ea156ba5f8f6ed3a17873b1d6d0f61139cc8b40dc47be608e2a0af859c7
+  text: |-
+    ## 2. Design Principles
+
+    **The audit produces typed outputs, not prose reports.**
+
+    An unsourced factual claim doesn't need the author's judgment — it needs a search task. A thin section needs a design decision. A terminology inconsistency needs a glossary check. The audit pipeline classifies findings and routes them to the correct downstream workflow without requiring the author to manually triage every finding.
+
+    **Findings are Issues, not warnings.**
+
+    Every audit finding becomes an Issue artifact (already defined in `research.yaml`) with `affects` edges to the audited PaperSection. Issues are typed, prioritized via the Eisenhower grid, and resolvable via `resolved_by` edges to ResearchTask artifacts. This means audit findings are tracked, stateful, and queryable — not a prose report that gets read once and forgotten.
+
+    **Cross-section impacts are tracked from day one.**
+
+    If an audit finding in Section 3 implies something is wrong or needs checking in Section 7, that is not a "future enhancement." It is a ResearchTask created immediately, linked to the affected section, and visible in `seldon briefing`. Ignoring cross-section impacts at audit time is how drift compounds into a mess that costs 10x to unwind. The graph exists to prevent exactly this. Use it.
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-019_agentic_content_audit.md
+  anchor: AD-019
+consumer:
+- tests/test_mcp_audit.py
+- tests/test_mcp_audit_ingest.py
+- seldon/domain/research.yaml
+- seldon/mcp_server.py
+- seldon/paper/audit_dispatch.py
+written_by: seldon decision 0.1.0
+prev_hash: 7fb65e7fc8e11e8869f1c6d41213d0aa00215ed32089f240f1e2205e067768f1
+record_hash: ebb6d48d69f39524ba92fc84f6cf99e5977b388e5bd9025bdecf66b135836c5d

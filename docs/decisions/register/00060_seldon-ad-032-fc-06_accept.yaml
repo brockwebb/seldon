@@ -1,0 +1,37 @@
+seq: 60
+event: accept
+id: seldon:AD-032-FC-06
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:42: "- Status: accepted (operator, 2026-10-02/03)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-06. Managed perversity.** Emergent and unexpected optimization is welcome and observed, not stamped out. Dose matters. Toxic behaviors are bounded. The system is the independent observer that keeps what helps and redirects what does not serve the goal.
+  - Status: accepted (operator, 2026-10-02/03).
+  - Check: FC-32, FC-33.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 41
+  - 43
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-06. Managed perversity.** Emergent and unexpected optimization is welcome and observed, not stamped out. Dose matters. Toxic behaviors are bounded. The system is the independent observer that keeps what helps and redirects what does not serve the goal.
+    - Status: accepted (operator, 2026-10-02/03).
+    - Check: FC-32, FC-33.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-06
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: 0bc3578b207519444ad88fef00b299ee68ef1ffaca35dfa7db335c6db91c7ced
+record_hash: a75e5d56d1ae7b5525c8d22ca922e6f53580577cc48970a6fefbdc45cd203da2

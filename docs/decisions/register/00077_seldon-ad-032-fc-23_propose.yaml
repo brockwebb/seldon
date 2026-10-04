@@ -1,0 +1,37 @@
+seq: 77
+event: propose
+id: seldon:AD-032-FC-23
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-23. Content-addressed evidence store.** Acquisitions, raw model replies, gate rows, exports, held texts, session transcripts and outside documents enter a sha256-named store with a per-release BagIt manifest and a scheduled fixity audit that writes PREMIS events. Each finding or decision derived from them carries a located receipt (PROV wasDerivedFrom). Retrieval searches findings and decisions, never raw transcripts. Transcript capture runs automatically at session closeout.
+  - Status: proposed.
+  - Rationale: FC-02; A:36, A:46; P:14 (Lee 1997: rationale capture fails when it costs the decider effort).
+  - Check: a planted altered blob is caught by the fixity audit; closeout lists every workbench file not yet filed.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 182
+  - 185
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-23. Content-addressed evidence store.** Acquisitions, raw model replies, gate rows, exports, held texts, session transcripts and outside documents enter a sha256-named store with a per-release BagIt manifest and a scheduled fixity audit that writes PREMIS events. Each finding or decision derived from them carries a located receipt (PROV wasDerivedFrom). Retrieval searches findings and decisions, never raw transcripts. Transcript capture runs automatically at session closeout.
+    - Status: proposed.
+    - Rationale: FC-02; A:36, A:46; P:14 (Lee 1997: rationale capture fails when it costs the decider effort).
+    - Check: a planted altered blob is caught by the fixity audit; closeout lists every workbench file not yet filed.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-23
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: ef14e47ed7c1d0638de46e921063573e96c1460d8a05790a58966397ec5c9e70
+record_hash: 3423650c67c1fab860053c2de88593820c4f321f050c663f2fc1795df1e9af87

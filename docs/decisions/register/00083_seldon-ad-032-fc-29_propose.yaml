@@ -1,0 +1,37 @@
+seq: 83
+event: propose
+id: seldon:AD-032-FC-29
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-29. Huddle.** Every line stop runs one huddle: (1) an incident record with the reading, the specification and receipts; (2) assignable-cause analysis under FC-09, reading one level down and asking why until the cause is a mechanism (Ohno 1988); (3) a fix of the root cause; (4) the fix recorded as a gate under FC-26, with a planted control that fails on the old code; (5) resume by re-running the same command. Resume restores and never widens authorization (G5:482).
+  - Status: proposed.
+  - Rationale: C2, C8; standard work plus PDCA.
+  - Check: an incident cannot close without a linked gate id and its control run; a recurrence of a closed incident's class counts in FC-31's recurrence measure.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 216
+  - 219
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-29. Huddle.** Every line stop runs one huddle: (1) an incident record with the reading, the specification and receipts; (2) assignable-cause analysis under FC-09, reading one level down and asking why until the cause is a mechanism (Ohno 1988); (3) a fix of the root cause; (4) the fix recorded as a gate under FC-26, with a planted control that fails on the old code; (5) resume by re-running the same command. Resume restores and never widens authorization (G5:482).
+    - Status: proposed.
+    - Rationale: C2, C8; standard work plus PDCA.
+    - Check: an incident cannot close without a linked gate id and its control run; a recurrence of a closed incident's class counts in FC-31's recurrence measure.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-29
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 4c24381d595cb6dc3fe66c8adec3685c65a36b6491029e5a36eada7beba38b39
+record_hash: 0d8e402403e1165acc950fb3b7d250d02954b014de26e17bfc2e4fbc0d204456

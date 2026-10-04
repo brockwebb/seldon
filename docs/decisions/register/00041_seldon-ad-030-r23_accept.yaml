@@ -1,0 +1,27 @@
+seq: 41
+event: accept
+id: seldon:AD-030-R23
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R23.** R16 governs classification only. A block admitted as a Ruling has its force (`binding`, `prohibition`, `recommendation`) read from its own text by a separate force pattern list. A ruling identifier classifies a block only when used as a label: sentence-initial and terminated by `.` or `:`, or bolded, or opening a heading. An identifier mentioned inside a sentence, or cited in a heading that discusses it, is a `mentions` target. Ratifies reconcile RESULT G7 and G8.'
+source:
+  path: docs/design/AD-030_implementation_findings_002.md
+  lines:
+  - 28
+  - 28
+  sha256: e2e44008f3ed8ac0c8c3ae5631fa3a519b6bee56dba832182da14833de2d5fb8
+  text: '**AD-030-R23.** R16 governs classification only. A block admitted as a Ruling has its force (`binding`, `prohibition`, `recommendation`) read from its own text by a separate force pattern list. A ruling identifier classifies a block only when used as a label: sentence-initial and terminated by `.` or `:`, or bolded, or opening a heading. An identifier mentioned inside a sentence, or cited in a heading that discusses it, is a `mentions` target. Ratifies reconcile RESULT G7 and G8.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_002.md
+  anchor: AD-030-R23
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: 3a51d0eaedbe4ef63455e625bddad7b78bfcdbf3b24ab5ea9239f56d2f84e691
+record_hash: ea1c095e0aa1461e0fe17e898c77a52669ea00dab5c5a65fc6504c91682a6cfe

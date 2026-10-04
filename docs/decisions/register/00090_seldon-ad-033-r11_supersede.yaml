@@ -1,0 +1,59 @@
+seq: 90
+event: supersede
+id: seldon:AD-033-R11
+date: '2026-10-04'
+decided_by: operator
+operator_stated: true
+receipts:
+- seldon/cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md item 1
+- 'docs/design/AD-033_decision_register.md: AD-033-R11 ''Operator decision 2026-10-04, ending the question.'''
+reason: 'DB-1 seed: SEL-002 ADDENDUM 02 item 1'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R11. The log is the record of truth; Neo4j is the live working store; files are rendered views.**
+    For every graph Squiddy builds, every Seldon project and this register: the authoritative record is the
+    append-only, hash-chained event ledger kept with the repository. Neo4j is the live working store: every read and
+    query goes to it, and the only write into it is a replay of the ledger, proven by the parity gate (S-009, H-001).
+    The manifest is the stream of catalog, assess, admit, decline and supersede events in that ledger; the manifest
+    YAML and `REGISTER.md` are rendered and never hand-edited. AD-030-R5's "the manifest lives in the graph" means
+    the graph's ledger. Grounding: Helland 2015 (CIDR; CACM 2016), the truth is the log and the database is a cache of
+    a subset of it, which is how every database including Neo4j already works (its transaction log); Kleppmann 2017
+    (Designing Data-Intensive Applications, ch. 11 and 12: the log as system of record, databases as derived views);
+    Kreps 2013 (The Log); 21 CFR 11.10(e) and ALCOA+ (an audit trail that never obscures what was recorded); the
+    operator's own requirement that the manifest prove every past decline, which a store updated in place cannot do.
+    Operator decision 2026-10-04, ending the question. Supersedes squiddy:R-04.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 187
+  - 199
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R11. The log is the record of truth; Neo4j is the live working store; files are rendered views.**
+      For every graph Squiddy builds, every Seldon project and this register: the authoritative record is the
+      append-only, hash-chained event ledger kept with the repository. Neo4j is the live working store: every read and
+      query goes to it, and the only write into it is a replay of the ledger, proven by the parity gate (S-009, H-001).
+      The manifest is the stream of catalog, assess, admit, decline and supersede events in that ledger; the manifest
+      YAML and `REGISTER.md` are rendered and never hand-edited. AD-030-R5's "the manifest lives in the graph" means
+      the graph's ledger. Grounding: Helland 2015 (CIDR; CACM 2016), the truth is the log and the database is a cache of
+      a subset of it, which is how every database including Neo4j already works (its transaction log); Kleppmann 2017
+      (Designing Data-Intensive Applications, ch. 11 and 12: the log as system of record, databases as derived views);
+      Kreps 2013 (The Log); 21 CFR 11.10(e) and ALCOA+ (an audit trail that never obscures what was recorded); the
+      operator's own requirement that the manifest prove every past decline, which a store updated in place cannot do.
+      Operator decision 2026-10-04, ending the question. Supersedes squiddy:R-04.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R11
+consumer:
+- tests/test_decision_register.py
+- seldon/core/decisions.py
+supersedes:
+- squiddy:R-04
+written_by: seldon decision 0.1.0
+prev_hash: 571cba69dbefe20e92a69fbf37bd0a5cd847773e92986bc33eef24d9cac13c49
+record_hash: e079999f9e1a4e98bfa730f9b4b9a8d2c7ec1a28b1d9389b35b3436da723e3d5

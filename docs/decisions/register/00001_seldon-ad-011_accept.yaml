@@ -1,0 +1,104 @@
+seq: 1
+event: accept
+id: seldon:AD-011
+date: '2026-03-15'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## AD-011: Database-Driven Paper Assembly (Not Flat Files)
+
+  **Decision:** Paper manuscripts cite Seldon Result artifacts by reference, not by literal value. The build step resolves references against the graph, validates consistency, and fails loudly on mismatches. No manual numbers registry. No manual figure map. The graph IS the registry.
+
+  **Rationale (from direct experience, three iterations):**
+
+  1. **Pragmatics paper v1:** No registry. Numbers drifted between sections. AI editing sessions introduced contradictions. Scorched earth restart required.
+  2. **Pragmatics paper v2:** Manual `numbers_registry.md` with status tracking. Manual `figure_table_map.yaml`. Better, but maintenance burden was high and AI editors still didn't reliably read the registry before writing numbers.
+  3. **Pragmatics paper v3 (final):** Same manual approach with stricter conventions. Worked, but required constant vigilance and manual audits. The registry was the source of truth but nothing *enforced* it.
+
+  **The failure pattern:** AI editing tools operate on flat text. They have no mechanism to check "is this number I'm about to write consistent with the authoritative value?" They operate on vibes and context window, which is stale by definition. Every editing pass is an opportunity for drift.
+
+  **The fix:** Numbers are never written as literals in section files. They're written as references that the build step resolves:
+
+  ```markdown
+  The entropy fitness discovered Leibniz in {{result:entropy_minimal_5_5:value}}/5 seeds
+  ({{result:entropy_minimal_5_5:units}}) within {{result:entropy_minimal_runtime:value}} seconds.
+  ```
+
+  The build step:
+  1. Parses all `{{result:NAME:FIELD}}` references in section files
+  2. Queries Seldon's graph for each referenced Result
+  3. Substitutes the current verified value
+  4. **Fails with a clear error if:**
+     - A referenced result doesn't exist in the graph
+     - A referenced result is in `stale` state
+     - A referenced result is in `proposed` state (not yet verified)
+     - The same result is referenced with inconsistent formatting across sections
+  5. Assembles the resolved sections into the final `.qmd` file
+  6. Renders via Quarto
+
+  **What this eliminates:**
+  - Manual numbers registry (the graph replaces it)
+  - Number drift between sections (references resolve to one value)
+  - AI editors corrupting values (they write references, not values)
+  - Manual audit before submission (the build IS the audit)
+  - Stale figures in the paper (same pattern: `{{figure:F1:path}}` resolves from graph)
+
+  ---
+source:
+  path: docs/design/AD-011_database_driven_paper_assembly.md
+  lines:
+  - 9
+  - 47
+  sha256: b1d9585aa9455050a65439f8fa2c410062217e1e9eb1f874da294df4024bd514
+  text: |-
+    ## AD-011: Database-Driven Paper Assembly (Not Flat Files)
+
+    **Decision:** Paper manuscripts cite Seldon Result artifacts by reference, not by literal value. The build step resolves references against the graph, validates consistency, and fails loudly on mismatches. No manual numbers registry. No manual figure map. The graph IS the registry.
+
+    **Rationale (from direct experience, three iterations):**
+
+    1. **Pragmatics paper v1:** No registry. Numbers drifted between sections. AI editing sessions introduced contradictions. Scorched earth restart required.
+    2. **Pragmatics paper v2:** Manual `numbers_registry.md` with status tracking. Manual `figure_table_map.yaml`. Better, but maintenance burden was high and AI editors still didn't reliably read the registry before writing numbers.
+    3. **Pragmatics paper v3 (final):** Same manual approach with stricter conventions. Worked, but required constant vigilance and manual audits. The registry was the source of truth but nothing *enforced* it.
+
+    **The failure pattern:** AI editing tools operate on flat text. They have no mechanism to check "is this number I'm about to write consistent with the authoritative value?" They operate on vibes and context window, which is stale by definition. Every editing pass is an opportunity for drift.
+
+    **The fix:** Numbers are never written as literals in section files. They're written as references that the build step resolves:
+
+    ```markdown
+    The entropy fitness discovered Leibniz in {{result:entropy_minimal_5_5:value}}/5 seeds
+    ({{result:entropy_minimal_5_5:units}}) within {{result:entropy_minimal_runtime:value}} seconds.
+    ```
+
+    The build step:
+    1. Parses all `{{result:NAME:FIELD}}` references in section files
+    2. Queries Seldon's graph for each referenced Result
+    3. Substitutes the current verified value
+    4. **Fails with a clear error if:**
+       - A referenced result doesn't exist in the graph
+       - A referenced result is in `stale` state
+       - A referenced result is in `proposed` state (not yet verified)
+       - The same result is referenced with inconsistent formatting across sections
+    5. Assembles the resolved sections into the final `.qmd` file
+    6. Renders via Quarto
+
+    **What this eliminates:**
+    - Manual numbers registry (the graph replaces it)
+    - Number drift between sections (references resolve to one value)
+    - AI editors corrupting values (they write references, not values)
+    - Manual audit before submission (the build IS the audit)
+    - Stale figures in the paper (same pattern: `{{figure:F1:path}}` resolves from graph)
+
+    ---
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-011_database_driven_paper_assembly.md
+  anchor: AD-011
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+record_hash: 3a4d97c568d3cafad61936dfcb5d13fa4fcf0d77e5ff8a6cf8fc45fea9de0ef2

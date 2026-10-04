@@ -1,0 +1,37 @@
+seq: 63
+event: propose
+id: seldon:AD-032-FC-09
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-09. Go and see.** (a) A defect diagnosis names the layer below the symptom that it read; where two components are suspected, both run on the same bytes before a cause is named. (b) Counts, status and figures in reports, handoffs and orientation are rendered from live state, never typed. (c) A citation, premise or figure taken from memory, a search snippet or chat enters as unverified until fetched or measured.
+  - Status: proposed.
+  - Rationale: C8. Methodology 7.8 holds (a) as prose only (G2:105); Seldon AD-021 projects status from the graph (G4:409); Seldon AD-030-R6 marks citations proposed until verified (G1:91).
+  - Check: the incident record (FC-29) refuses a diagnosis without a receipt for the layer read; a prose-numeral lint like ai-readiness-kg's (G3:140) runs on reports; every citation record carries verified or unverified.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 106
+  - 109
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-09. Go and see.** (a) A defect diagnosis names the layer below the symptom that it read; where two components are suspected, both run on the same bytes before a cause is named. (b) Counts, status and figures in reports, handoffs and orientation are rendered from live state, never typed. (c) A citation, premise or figure taken from memory, a search snippet or chat enters as unverified until fetched or measured.
+    - Status: proposed.
+    - Rationale: C8. Methodology 7.8 holds (a) as prose only (G2:105); Seldon AD-021 projects status from the graph (G4:409); Seldon AD-030-R6 marks citations proposed until verified (G1:91).
+    - Check: the incident record (FC-29) refuses a diagnosis without a receipt for the layer read; a prose-numeral lint like ai-readiness-kg's (G3:140) runs on reports; every citation record carries verified or unverified.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-09
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 34f1f85c9aabdc13499272a1c54e85c413621907d087095587a93307cea10855
+record_hash: 853e80c2a7efc514a299bb02472ef160305a500d1dcb55578b427164478ec092

@@ -1,0 +1,30 @@
+seq: 25
+event: accept
+id: seldon:AD-030-R7
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-28_designnote_cites_citation.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R7.** Citation edges use the CiTO vocabulary, not an invented one. Fundamentals: `cites_as_evidence`, `uses_method_in`, `extends`. Constraint-driven prescriptions the operator rejects because the constraint no longer holds under current tooling: `disagrees_with` or `refutes`, with a `reason` property naming the constraint. Rejected science stays in the graph as a rejected prescription; reinstatement requires supersession with evidence. This is the queryable form of the artifact engineering standards section 7.5 already requires.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 47
+  - 47
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R7.** Citation edges use the CiTO vocabulary, not an invented one. Fundamentals: `cites_as_evidence`, `uses_method_in`, `extends`. Constraint-driven prescriptions the operator rejects because the constraint no longer holds under current tooling: `disagrees_with` or `refutes`, with a `reason` property naming the constraint. Rejected science stays in the graph as a rejected prescription; reinstatement requires supersession with evidence. This is the queryable form of the artifact engineering standards section 7.5 already requires.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R7
+consumer:
+- seldon/core/handoff.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 6a53a81dffa31cd4ae96165134416c334f2742f06ad3de0d94996e50028a9c5b
+record_hash: cb6c22c0e53aa438aebdfeb53db33092fed6016c315f509b2df13722d2717100

@@ -1,0 +1,37 @@
+seq: 62
+event: propose
+id: seldon:AD-032-FC-08
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-08. Control-type by default.** Every control the factory adds stops the process on violation. A warning-type control is allowed only when its decision record states why a stop is impossible or harmful.
+  - Status: proposed.
+  - Rationale: Shingo 1986; the NIOSH hierarchy ranks engineering controls above administrative ones (A:71); C1.
+  - Check: a register lint fails any control record of type warning without a reason; each control-type gate carries a planted violation that must halt the line (FC-27).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 101
+  - 104
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-08. Control-type by default.** Every control the factory adds stops the process on violation. A warning-type control is allowed only when its decision record states why a stop is impossible or harmful.
+    - Status: proposed.
+    - Rationale: Shingo 1986; the NIOSH hierarchy ranks engineering controls above administrative ones (A:71); C1.
+    - Check: a register lint fails any control record of type warning without a reason; each control-type gate carries a planted violation that must halt the line (FC-27).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-08
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 456ed5f6ec9a3a3241496376f4116cba09f5211a989fc6304308eb006a94a9ee
+record_hash: 34f1f85c9aabdc13499272a1c54e85c413621907d087095587a93307cea10855

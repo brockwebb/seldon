@@ -1,0 +1,39 @@
+seq: 55
+event: accept
+id: seldon:AD-032-FC-01
+date: '2026-10-03'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-032_factory_control_design.md:1: "**Status:** Draft. FC-01 to FC-07 accepted (operator, 2026-10-03); FC-08 to FC-33 proposed."'
+- 'docs/design/AD-032_factory_control_design.md:17: "- Status: accepted (operator, 2026-10-02/03)."'
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  **FC-01. A decision exists only when something consumes it.** A consumer is a dispatch contract, a gate or a coverage measure. Constraints are pushed to tasks; knowledge is pulled.
+  - Status: accepted (operator, 2026-10-02/03).
+  - Rationale: 42 of 168 Squiddy decisions are cited by a gate (A:56); 49 of 173 R-numbers are referenced by no code, test or conformance file, R-04 among them (N:17).
+  - Check: the decision-to-consumer matrix of FC-17 fails any active decision with no consumer and no stated review-only reason.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 16
+  - 19
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-01. A decision exists only when something consumes it.** A consumer is a dispatch contract, a gate or a coverage measure. Constraints are pushed to tasks; knowledge is pulled.
+    - Status: accepted (operator, 2026-10-02/03).
+    - Rationale: 42 of 168 Squiddy decisions are cited by a gate (A:56); 49 of 173 R-numbers are referenced by no code, test or conformance file, R-04 among them (N:17).
+    - Check: the decision-to-consumer matrix of FC-17 fails any active decision with no consumer and no stated review-only reason.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-01
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: b892e9be9a77ef04746901fd5789bcc5f4d1446cc83bd7a4672ae5df70a97c02
+record_hash: 29971c3b8746c670aabf2c65b254661b7be34b2ce11af459cce6357db994501b

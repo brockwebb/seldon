@@ -1,0 +1,59 @@
+seq: 48
+event: accept
+id: seldon:AD-033-R3
+date: '2026-10-04'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-033_decision_register.md:132: "cc-task id, or inherited from a named repository) and `operator_stated` (true when the operator stated it in his"'
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+- cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  - **AD-033-R3. The record.** Required fields: `id` (repository-qualified, the repository's native scheme:
+    `squiddy:R-112`, `squiddy:DI-020`, `squiddy:EX-REQ-02`, `seldon:AD-030-R21`, `seldon:AD-032-FC-04`,
+    `arnold:ADR-017`); `kind` (decision, requirement, mirror); `statement` (stand-alone; EARS when it states behavior,
+    one declarative sentence otherwise; it names no other record by "this", "above" or "the note"); `source` (path,
+    line range, sha256 of the source file, verbatim text); `status`; `scope` (repositories and graphs it binds);
+    `rationale` (path and anchor of the note that argues it); `consumer` (R6); `decided_by` (operator, desktop,
+    cc-task id, or inherited from a named repository) and `operator_stated` (true when the operator stated it in his
+    own words, with the receipt); `date`. Relations, all optional: `supersedes`, `amends` (with the clause),
+    `mirrors` (a DI row points to the record it mirrors and carries no statement of its own, FC-16), `constrains`.
+    Control records add `control_type` (control or warning, FC-08) and `pattern` (FC-07). The relation names are
+    Kruchten's (2004), cut to the ones the probe needed.
+source:
+  path: docs/design/AD-033_decision_register.md
+  lines:
+  - 125
+  - 136
+  sha256: 5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3
+  text: |-
+    - **AD-033-R3. The record.** Required fields: `id` (repository-qualified, the repository's native scheme:
+      `squiddy:R-112`, `squiddy:DI-020`, `squiddy:EX-REQ-02`, `seldon:AD-030-R21`, `seldon:AD-032-FC-04`,
+      `arnold:ADR-017`); `kind` (decision, requirement, mirror); `statement` (stand-alone; EARS when it states behavior,
+      one declarative sentence otherwise; it names no other record by "this", "above" or "the note"); `source` (path,
+      line range, sha256 of the source file, verbatim text); `status`; `scope` (repositories and graphs it binds);
+      `rationale` (path and anchor of the note that argues it); `consumer` (R6); `decided_by` (operator, desktop,
+      cc-task id, or inherited from a named repository) and `operator_stated` (true when the operator stated it in his
+      own words, with the receipt); `date`. Relations, all optional: `supersedes`, `amends` (with the clause),
+      `mirrors` (a DI row points to the record it mirrors and carries no statement of its own, FC-16), `constrains`.
+      Control records add `control_type` (control or warning, FC-08) and `pattern` (FC-07). The relation names are
+      Kruchten's (2004), cut to the ones the probe needed.
+scope:
+- seldon
+- squiddy
+- arnold
+rationale:
+  path: docs/design/AD-033_decision_register.md
+  anchor: AD-033-R3
+consumer:
+- seldon/commands/decision.py
+- seldon/core/decisions.py
+- seldon/domain/decision_register.yaml
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 9d04bd11c9f8abec760f69bfea57f93fc69778b263ba4bb0fc7df95ab80344fb
+record_hash: 8ddbc8a5f536f8657e356a4e5844135f7f126453acb7a9cd4c2f959b12820162

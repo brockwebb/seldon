@@ -1,0 +1,53 @@
+seq: 86
+event: propose
+id: seldon:AD-032-FC-32
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-32. Three tiers.** Every unexpected strategy is placed in one tier.
+
+  | Tier | Definition | Response | Nearest case in the record |
+  |---|---|---|---|
+  | Beneficial | Serves the goal, stays inside every boundary | Keep, record its dose, promote into standard work through FC-26 once its rate is stable on a chart | None logged yet; the observation log starts the record |
+  | Neutral or suboptimal | Inside the boundaries, does not serve the goal, or serves it at a poor rate | Observe; redirect by adjusting the objective, not by forbidding the act | Unrequested additions drove three task stops (G5:396) |
+  | Toxic | Breaks a sandbox or egress policy; uses or exposes credentials; edits or fabricates evidence or transcripts; games a gate's instrument; spends without a budget | Hard boundary enforced by mechanism; stop the line (FC-28) | 13 files spawned the CLI around the meter (G4:474); a library sent any Hugging Face token on the machine as a Bearer header (G4:193); a self-healer reloaded jobs the operator had unloaded (G4:421) |
+
+  Dose matters: a beneficial behavior whose rate leaves its control limits is reviewed again.
+  - Status: proposed.
+  - Rationale: FC-06.
+  - Check: each toxic boundary has a planted violation that stops the line; egress already has one (G4:393).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 253
+  - 264
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-32. Three tiers.** Every unexpected strategy is placed in one tier.
+
+    | Tier | Definition | Response | Nearest case in the record |
+    |---|---|---|---|
+    | Beneficial | Serves the goal, stays inside every boundary | Keep, record its dose, promote into standard work through FC-26 once its rate is stable on a chart | None logged yet; the observation log starts the record |
+    | Neutral or suboptimal | Inside the boundaries, does not serve the goal, or serves it at a poor rate | Observe; redirect by adjusting the objective, not by forbidding the act | Unrequested additions drove three task stops (G5:396) |
+    | Toxic | Breaks a sandbox or egress policy; uses or exposes credentials; edits or fabricates evidence or transcripts; games a gate's instrument; spends without a budget | Hard boundary enforced by mechanism; stop the line (FC-28) | 13 files spawned the CLI around the meter (G4:474); a library sent any Hugging Face token on the machine as a Bearer header (G4:193); a self-healer reloaded jobs the operator had unloaded (G4:421) |
+
+    Dose matters: a beneficial behavior whose rate leaves its control limits is reviewed again.
+    - Status: proposed.
+    - Rationale: FC-06.
+    - Check: each toxic boundary has a planted violation that stops the line; egress already has one (G4:393).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-32
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 63342510966b0f6b62d4fe6edf3c8c45aca66cc91951eec750c5f5478058610b
+record_hash: a45393c870be7fdc6d65ad3d105c89f85574898391841827b13b0d690504beeb

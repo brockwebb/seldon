@@ -1,0 +1,27 @@
+seq: 32
+event: accept
+id: seldon:AD-030-R14
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R14.** A Document node and a decision record are distinct node kinds joined by `seldon_artifact_id`. Existing ArchitecturalDecision and DesignNote nodes (30) are not mutated and not re-minted. From AD-030 forward, no new ArchitecturalDecision or DesignNote node is created for a governed file: the Document node plus its Ruling nodes is the decision record. `seldon docs check` counts Documents whose path is under `docs/design/` alongside legacy decision nodes. Settles ingest RESULT F6.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 34
+  - 34
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R14.** A Document node and a decision record are distinct node kinds joined by `seldon_artifact_id`. Existing ArchitecturalDecision and DesignNote nodes (30) are not mutated and not re-minted. From AD-030 forward, no new ArchitecturalDecision or DesignNote node is created for a governed file: the Document node plus its Ruling nodes is the decision record. `seldon docs check` counts Documents whose path is under `docs/design/` alongside legacy decision nodes. Settles ingest RESULT F6.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R14
+consumer:
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: 153c263d2798882d3d04e84edb2208a6e5cd6fcb304072ee0e3acff1ad020a82
+record_hash: aaff5b8cc319c429e0f352aad2bd3eeb0e0000b22a66f9812a51cb84b235e300

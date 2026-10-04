@@ -1,0 +1,37 @@
+seq: 70
+event: propose
+id: seldon:AD-032-FC-16
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-16. One decision register.** Squiddy, Seldon and Arnold decisions live in one register with repository-qualified ids. Each record holds: id; stand-alone statement in EARS form; status (proposed, accepted, superseded, deprecated); supersedes or amends; scope; rationale link; consequences; consumer; check ids or "review only, because"; control type; pattern; decided by; date. Only accepted records bind. A DI row references the decision it mirrors instead of restating it.
+  - Status: proposed.
+  - Rationale: C5; the schema follows A:81 (Nygard 2011; MADR 4.0; Kruchten 2004; Mavin et al. 2009); 12 DI mirrors have drifted from their R (N:16; K:561 to K:576).
+  - Check: a parser round-trip over the 485 probe units yields zero records without status; Seldon resolves Squiddy ids (K:75); a lint fails an unlabeled "must", "never" or "always" paragraph in a design note (A:81).
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 145
+  - 148
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-16. One decision register.** Squiddy, Seldon and Arnold decisions live in one register with repository-qualified ids. Each record holds: id; stand-alone statement in EARS form; status (proposed, accepted, superseded, deprecated); supersedes or amends; scope; rationale link; consequences; consumer; check ids or "review only, because"; control type; pattern; decided by; date. Only accepted records bind. A DI row references the decision it mirrors instead of restating it.
+    - Status: proposed.
+    - Rationale: C5; the schema follows A:81 (Nygard 2011; MADR 4.0; Kruchten 2004; Mavin et al. 2009); 12 DI mirrors have drifted from their R (N:16; K:561 to K:576).
+    - Check: a parser round-trip over the 485 probe units yields zero records without status; Seldon resolves Squiddy ids (K:75); a lint fails an unlabeled "must", "never" or "always" paragraph in a design note (A:81).
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-16
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: dc83453acc391d25e09b5187305deca75cc51c4e2e1991df4b75e76c4cdea6c1
+record_hash: e35fa095889ceebb2be1b7f7e9f7cc03cdf6711eb2e179f9cda2062c41bc207b

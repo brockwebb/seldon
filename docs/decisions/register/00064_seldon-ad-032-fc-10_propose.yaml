@@ -1,0 +1,37 @@
+seq: 64
+event: propose
+id: seldon:AD-032-FC-10
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-10. Statistical process control on every rated stage.** Each stage that produces a rate (quarantine, faithfulness, recall, yield, spend ratio) carries specification limits (its pre-registered bar or the operator's band) and control limits computed from its own baseline (Shewhart three-sigma; p-chart per lot for attribute rates). A first reading is reported, not gated. A reading outside specification stops the line (FC-28); a reading outside control limits but within specification opens a huddle without stopping. A quality claim rests on lot sampling (Wald SPRT or ISO 2859-1), never on one pilot.
+  - Status: proposed.
+  - Rationale: C2. Gating a rate on its first reading failed at every run (G1:175 to G1:178); one non-random pilot carried 99,105 claims (A:89); lot sampling with p-charts (A:102).
+  - Check: each release renders one chart per rated stage; in test, a planted out-of-control lot opens a huddle and a planted out-of-spec lot stops the line.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 111
+  - 114
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-10. Statistical process control on every rated stage.** Each stage that produces a rate (quarantine, faithfulness, recall, yield, spend ratio) carries specification limits (its pre-registered bar or the operator's band) and control limits computed from its own baseline (Shewhart three-sigma; p-chart per lot for attribute rates). A first reading is reported, not gated. A reading outside specification stops the line (FC-28); a reading outside control limits but within specification opens a huddle without stopping. A quality claim rests on lot sampling (Wald SPRT or ISO 2859-1), never on one pilot.
+    - Status: proposed.
+    - Rationale: C2. Gating a rate on its first reading failed at every run (G1:175 to G1:178); one non-random pilot carried 99,105 claims (A:89); lot sampling with p-charts (A:102).
+    - Check: each release renders one chart per rated stage; in test, a planted out-of-control lot opens a huddle and a planted out-of-spec lot stops the line.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-10
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 853e80c2a7efc514a299bb02472ef160305a500d1dcb55578b427164478ec092
+record_hash: 9f2c39984805924496d1b5274fcf5b5b65fe678b9a8f6179c58d3e9469073009

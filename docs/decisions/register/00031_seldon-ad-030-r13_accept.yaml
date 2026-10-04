@@ -1,0 +1,27 @@
+seq: 31
+event: accept
+id: seldon:AD-030-R13
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R13.** `mentions` edges are emitted only where the target resolves inside the emitting graph. Every other identifier a document references is carried on the node as `identifiers` and resolved by the consuming graph against its own artifacts. Identifiers that resolve nowhere are abstained on and reported by `seldon governed status`, never emitted as dangling edges. Settles ingest RESULT F5 and supersedes the "for every identifier" wording in AD-030 section 4. This is R10 applied to link recovery.'
+source:
+  path: docs/design/AD-030_implementation_findings_001.md
+  lines:
+  - 32
+  - 32
+  sha256: dc3e60b92f772f7cf539116955577a5828e45b2855b268f8bcc32c89461e19f2
+  text: '**AD-030-R13.** `mentions` edges are emitted only where the target resolves inside the emitting graph. Every other identifier a document references is carried on the node as `identifiers` and resolved by the consuming graph against its own artifacts. Identifiers that resolve nowhere are abstained on and reported by `seldon governed status`, never emitted as dangling edges. Settles ingest RESULT F5 and supersedes the "for every identifier" wording in AD-030 section 4. This is R10 applied to link recovery.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_implementation_findings_001.md
+  anchor: AD-030-R13
+consumer:
+- tests/test_governed.py
+written_by: seldon decision 0.1.0
+prev_hash: f6ea95cb7fe21a8dc954150cba6d4fee9daf7c05a868da928da943765191d54e
+record_hash: 153c263d2798882d3d04e84edb2208a6e5cd6fcb304072ee0e3acff1ad020a82

@@ -1,0 +1,37 @@
+seq: 74
+event: propose
+id: seldon:AD-032-FC-20
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-20. Prior art before registration.** Registration refuses a design note or pilot task without the two-part Prior art section: External, with the search shown; Internal precedent, naming the sibling repositories, inherited rows and board entries searched, empty results included.
+  - Status: proposed.
+  - Rationale: C4; the gate is not built (G1:67); ai-readiness-kg ran it as a registration gate (G5:59).
+  - Check: registration of a planted note missing either part is refused; DN-018's omission (A:56) would fail it.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 165
+  - 168
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-20. Prior art before registration.** Registration refuses a design note or pilot task without the two-part Prior art section: External, with the search shown; Internal precedent, naming the sibling repositories, inherited rows and board entries searched, empty results included.
+    - Status: proposed.
+    - Rationale: C4; the gate is not built (G1:67); ai-readiness-kg ran it as a registration gate (G5:59).
+    - Check: registration of a planted note missing either part is refused; DN-018's omission (A:56) would fail it.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-20
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: 98f9afcc2c875fefaf7cd9b95d9e8bb41b230ef6f1dc26f552aabfe695767025
+record_hash: da37f115caac707035687a8abe0515bf1ebcc50542ca7acf736f85c2c73344ac

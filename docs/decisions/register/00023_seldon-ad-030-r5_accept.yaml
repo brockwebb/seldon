@@ -1,0 +1,33 @@
+seq: 23
+event: accept
+id: seldon:AD-030-R5
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest.md
+- cc_tasks/2026-09-12_ad030_governed_docs_ingest_RESULT.md
+- cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R5.** The manifest lives in the graph. Every document ever considered is a Document node from the moment it is cataloged, with states `cataloged -> held -> admitted | declined`. Declined nodes carry `reason`, `date`, `decided_by` and never receive content edges. The YAML manifest is rendered from these nodes and is never hand-edited. Reopening a declined document requires a new decision node with a `supersedes` edge citing new evidence. The admission invariant becomes one query: no content edge without an `admitted` Document node.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 43
+  - 43
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R5.** The manifest lives in the graph. Every document ever considered is a Document node from the moment it is cataloged, with states `cataloged -> held -> admitted | declined`. Declined nodes carry `reason`, `date`, `decided_by` and never receive content edges. The YAML manifest is rendered from these nodes and is never hand-edited. Reopening a declined document requires a new decision node with a `supersedes` edge citing new evidence. The admission invariant becomes one query: no content edge without an `admitted` Document node.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R5
+consumer:
+- tests/test_governed.py
+- seldon/core/governed.py
+- seldon/domain/research.yaml
+written_by: seldon decision 0.1.0
+prev_hash: e429072cef14846bb8f8f3751c76a3dc0b4a896fb199e616f260547a70af1d10
+record_hash: bf2f92594b038d2196e033abc037b6f36c75ad34f865238c58312eb832e3c648

@@ -1,0 +1,37 @@
+seq: 87
+event: propose
+id: seldon:AD-032-FC-33
+date: '2026-10-03'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: proposed
+statement: |-
+  **FC-33. Observe, rate, redirect.** An append-only observation log records each unexpected strategy: agent, task, objective served, expected versus observed, proposed tier, receipts. An independent rater of a different model family from the observed agent reviews the log on a fixed cadence (precedent: ai-readiness-kg DD-037, G1:34). The operator reviews aggregates, not items (G5:312). Every objective adjustment is a decision record (FC-16).
+  - Status: proposed.
+  - Rationale: FC-06; ai-readiness-kg promoted autonomy on statistical control limits (DD-005, G5:222), the precedent for promoting a behavior on evidence.
+  - Check: each release reports log entries by tier; every toxic entry links an incident; every objective change links a decision id; the rater's family differs from the observed agent's.
+source:
+  path: docs/design/AD-032_factory_control_design.md
+  lines:
+  - 266
+  - 269
+  sha256: bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9
+  text: |-
+    **FC-33. Observe, rate, redirect.** An append-only observation log records each unexpected strategy: agent, task, objective served, expected versus observed, proposed tier, receipts. An independent rater of a different model family from the observed agent reviews the log on a fixed cadence (precedent: ai-readiness-kg DD-037, G1:34). The operator reviews aggregates, not items (G5:312). Every objective adjustment is a decision record (FC-16).
+    - Status: proposed.
+    - Rationale: FC-06; ai-readiness-kg promoted autonomy on statistical control limits (DD-005, G5:222), the precedent for promoting a behavior on evidence.
+    - Check: each release reports log entries by tier; every toxic entry links an incident; every objective change links a decision id; the rater's family differs from the observed agent's.
+scope:
+- squiddy
+- seldon
+- arnold
+rationale:
+  path: docs/design/AD-032_factory_control_design.md
+  anchor: FC-33
+review_only: dispatch
+waits_on: P1 to P6 per AD-032 section 8
+written_by: seldon decision 0.1.0
+prev_hash: a45393c870be7fdc6d65ad3d105c89f85574898391841827b13b0d690504beeb
+record_hash: eb3454f0df5246e61979d9e117e53351c3d57d4fad640743e7c0f71bc4ddc9e7

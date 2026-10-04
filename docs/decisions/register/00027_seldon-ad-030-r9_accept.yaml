@@ -1,0 +1,41 @@
+seq: 27
+event: accept
+id: seldon:AD-030-R9
+date: '2026-09-12'
+decided_by: desktop
+operator_stated: false
+receipts:
+- cc_tasks/2026-09-12_seldon_handoff_tool.md
+- cc_tasks/2026-09-12_seldon_handoff_tool_RESULT.md
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: '**AD-030-R9.** A Desktop design session closes with a design note, not a task. Rulings are `##` sections carrying IDs (this document''s `AD-030-Rn` pattern); citations are inline. Every CC task produced by a design session references a `DN-` or `AD-` identifier; `seldon_cc_register` checks this lexically and refuses otherwise. `seldon go` prints the obligation in the Desktop contract and, at the next orient, reports a Desktop session that registered no DesignNote.'
+source:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  lines:
+  - 51
+  - 51
+  sha256: 2290ce7fffffcf1d3e877188ca48484530a2a0edad713f0a1d491cc4a4929940
+  text: '**AD-030-R9.** A Desktop design session closes with a design note, not a task. Rulings are `##` sections carrying IDs (this document''s `AD-030-Rn` pattern); citations are inline. Every CC task produced by a design session references a `DN-` or `AD-` identifier; `seldon_cc_register` checks this lexically and refuses otherwise. `seldon go` prints the obligation in the Desktop contract and, at the next orient, reports a Desktop session that registered no DesignNote.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-030_governed_documents_as_graph_content.md
+  anchor: AD-030-R9
+consumer:
+- tests/test_go.py
+- tests/test_governed.py
+- tests/test_handoff.py
+- tests/test_mcp_tools.py
+- seldon/commands/cc.py
+- seldon/commands/go.py
+- seldon/commands/handoff.py
+- seldon/commands/init.py
+- seldon/core/governed.py
+- seldon/core/handoff.py
+- seldon/domain/research.yaml
+- seldon/mcp_server.py
+written_by: seldon decision 0.1.0
+prev_hash: 7d6c4b3835abc27f56e9f2d9634f08852eb5c53153918873597d423604d3d99a
+record_hash: b451041f0bfc1eefdd23e91eaf55f90d6ed9e6c103e80278794f017ec797fae7

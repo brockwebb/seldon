@@ -1,0 +1,43 @@
+seq: 6
+event: accept
+id: seldon:AD-017
+date: '2026-03-22'
+decided_by: desktop
+operator_stated: false
+reason: DB-1 seed (AD-033-R5)
+kind: decision
+status: accepted
+statement: |-
+  ## Decision
+
+  The canonical validity ontology lives in the **main Seldon repo** (`seldon/ontology/validity/VALIDITY_VOCABULARY.md`), not in any individual project repo. A dedicated master Neo4j database (`seldon-ontology`) holds the ingested graph. Project-level Seldon instances hold read-only replicas synced from master via epoch-based pull.
+source:
+  path: docs/design/AD-017_central_validity_ontology.md
+  lines:
+  - 10
+  - 12
+  sha256: 145b6e683083cb25724c477a6df69e007bf58b1f7b6cc0458ba04e893b37c2f6
+  text: |-
+    ## Decision
+
+    The canonical validity ontology lives in the **main Seldon repo** (`seldon/ontology/validity/VALIDITY_VOCABULARY.md`), not in any individual project repo. A dedicated master Neo4j database (`seldon-ontology`) holds the ingested graph. Project-level Seldon instances hold read-only replicas synced from master via epoch-based pull.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-017_central_validity_ontology.md
+  anchor: AD-017
+consumer:
+- tests/test_docs.py
+- tests/test_domain.py
+- tests/test_ontology.py
+- tests/test_replay_check.py
+- seldon/commands/init.py
+- seldon/commands/ontology.py
+- seldon/commands/paper.py
+- seldon/core/replay_check.py
+- seldon/domain/research.yaml
+- seldon/ontology/parser.py
+- seldon/ontology/practitioner_parser.py
+written_by: seldon decision 0.1.0
+prev_hash: 387688b8160a21cc97fb6b7fec088c936e32c6705f32fe962a6ce9b6ddbf084f
+record_hash: 2b31d4e18f7c02b7f31c8e0d53c5c3286ba472ae10313b395f1e53ced19f9669
