@@ -2123,3 +2123,24 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: docs_design_ad_032_factory_control_design
+    verification_method: "local governed file, sha256 bcac76bd28325fef, 39,543 characters"
+    retrieved_date: "2026-10-04"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-032_factory_control_design.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-04."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: Factory control design (DRAFT)
+    source_url: docs/design/AD-032_factory_control_design.md
+    local_path: "../docs/design/AD-032_factory_control_design.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9"
+    bytes: 39543
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
