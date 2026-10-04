@@ -1,0 +1,50 @@
+{
+ "squiddy": {
+  "own": {
+   "accepted": 196,
+   "with_consumer": 133,
+   "coverage": 0.679,
+   "review_only": {
+    "none": 50,
+    "dispatch": 8,
+    "rationale": 4,
+    "pre_registration": 1
+   }
+  },
+  "inherited_DI": {
+   "accepted": 218,
+   "with_consumer": 91,
+   "coverage": 0.417,
+   "review_only": {
+    "none": 122,
+    "dispatch": 5
+   }
+  }
+ },
+ "seldon": {
+  "own": {
+   "accepted": 66,
+   "with_consumer": 45,
+   "coverage": 0.682,
+   "review_only": {
+    "none": 8,
+    "rationale": 1,
+    "dispatch": 12
+   }
+  },
+  "inherited_DI": null
+ },
+ "arnold": {
+  "own": {
+   "accepted": 134,
+   "with_consumer": 19,
+   "coverage": 0.142,
+   "review_only": {
+    "none": 109,
+    "rationale": 5,
+    "dispatch": 1
+   }
+  },
+  "inherited_DI": null
+ }
+}
