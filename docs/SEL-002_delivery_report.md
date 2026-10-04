@@ -274,7 +274,28 @@ events are in the chain (`evidence/sel002/statements/reapply.json`); a test now 
 
 ## 7. Commits, suites, verify
 
-<!-- filled at merge -->
+All on `feat/SEL-002` in each repository, merged to main with `--no-ff` and pushed (merge commits in the close-out
+commit message).
+
+- **Seldon:** `419c30e` AD-033 filed alone on main, before the branch. On the branch: `913167b` addenda; `9ccd57c`
+  governed export repair; `c78f43c` Part A; `1a19b98` Part B; `4d852f1` Part C and the probe; `3465cbb` Part E harness,
+  plan and SIGKILL test (before any paid call); `f54738c` Part E and F.
+- **Squiddy:** `28dfc9e` Part B; `cd19cef` Part C; `876fc98` CLAUDE.md (ADDENDUM 02 item 3); `e1e770c` harvest walk
+  dispositions; `d0b6400` Part E and the projection events.
+- **Arnold:** `85b0ed3` Part B (and `seldon.yaml` tracked); `93b53a5` Part C; `15864ce` Part E.
+
+**Suites** (each command as the repository documents it):
+
+| Repository | Command | Result |
+|---|---|---|
+| seldon | `python -m dotenv -f .env run -- python -m pytest tests/ -q` | 2,141 passed |
+| squiddy | `.venv/bin/python -m pytest tests -q` | 1,906 passed |
+| arnold | `/opt/anaconda3/envs/arnold/bin/python -m pytest tests/ -q` | 978 passed, 1 failed (pre-existing, fails on main: live data, G11), 4 skipped |
+
+**`seldon verify`:** "Decision register: register verifies; every label registered; projection current" in all three.
+Remaining failures are pre-existing or G2: Seldon "Governed docs: 4 never cataloged" (AD-033, the SEL-002 task and
+its two addenda: the pinned kit refuses the admission, G2); Squiddy "9 never cataloged" (G3); Arnold "4 never
+cataloged" (its own recent task files) and the glossary warning it already carried.
 
 ## 8. Scope kept
 
