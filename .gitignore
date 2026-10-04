@@ -1,9 +1,14 @@
 # === Seldon: Research Writing & Report Assembly ===
 
 # Working directories (gitignored by convention)
-handoffs/
 # cc_tasks/ is intentionally TRACKED (task 2026-09-02_track_cc_tasks): execution
-# records are provenance, not scratch. handoffs/ stays ignored.
+# records are provenance, not scratch.
+# handoffs/ is TRACKED since 2026-10-04 (squiddy SQ-008; operator decision FC-02: evidence is
+# never left outside the record). Arnold's precedent (arnold/.gitignore, tracked since
+# 2026-08-13): data blobs dropped into handoffs/ stay ignored by SIZE, not privacy. Each
+# handoff is scanned with `python -m squiddy.secret_scan` before it is committed.
+handoffs/*.json
+handoffs/*.jsonl
 tmp/
 # Logs from scripts/test_db_concurrency_check.sh
 _conc/
