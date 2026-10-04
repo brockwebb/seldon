@@ -265,3 +265,6 @@ knowledge-base/vector-db/
 knowledge-base/stats-index/
 knowledge-base/2023_ACS_Enriched_Universe.json
 knowledge-base/remaining_bulk_variables.json
+
+# AD-033: the decision register's write lock (fcntl advisory lock; holds nothing)
+docs/decisions/.register.lock

@@ -351,6 +351,9 @@ artifact_types:
       force:
         category: system
         description: "binding, obligation, prohibition or recommendation."
+      positional_force:
+        category: system
+        description: "AD-033-R7: the force the positional parse gave this ruling, kept when a decision register exists in the repository and `force` is set to `searchable` (positional rulings stop binding; the register's accepted records bind)."
       matched_pattern:
         category: system
         description: "Which configured pattern classified this text as deontic. Recorded so a wrong match is a pattern to fix, not a judgement to relitigate."
@@ -396,6 +399,98 @@ artifact_types:
       span_end:
         category: system
         description: "End offset, exclusive."
+
+  # AD-033-R10: the register record is the decision record. One `Decision` node per decision
+  # (never one per file, so AD-030-R14's ban on new per-file decision nodes holds), projected by
+  # `seldon decision project` from the YAML files under docs/decisions/register/, which are the
+  # record (AD-033-R1, R11). Every property is derived from those files: a hand-set value is a
+  # claim no register event made. `state` is the record's derived status (R4).
+  Decision:
+    properties:
+      name:
+        required: true
+        description: "The repository-qualified id (`squiddy:R-112`). Also `decision_id`."
+      decision_id:
+        required: true
+        description: "The repository-qualified id, in the home repository's native scheme (AD-033-R3)."
+      home_repository:
+        required: true
+        description: "The repository whose register holds the record. An imported record's node is a pointer to it."
+      imported:
+        category: system
+        description: "True when this graph holds the record by `decisions.import`, not as its own (AD-033-R1)."
+      kind:
+        category: system
+        description: "decision, requirement or mirror."
+      statement:
+        category: system
+        description: "The stand-alone statement (AD-033-R3, R8); the verbatim body until Part E writes one."
+      statement_check:
+        category: system
+        description: "passed or failed: the validator call's verdict on the written statement (R8)."
+      source_path:
+        category: system
+        description: "Repository-relative path of the verbatim source."
+      source_lines:
+        category: system
+        description: "First and last line of the source span."
+      source_sha256:
+        category: system
+        description: "sha256 of the source file when the record was written."
+      source_text:
+        category: system
+        description: "The verbatim source span, the full body."
+      scope:
+        category: system
+        description: "Repositories the record binds."
+      scope_note:
+        category: system
+        description: "A narrower scope, in words."
+      rationale_path:
+        category: system
+        description: "The note that argues the record."
+      rationale_anchor:
+        category: system
+        description: "Where in that note."
+      consumer:
+        category: system
+        description: "Conformance items, tests and code that cite the id (R6)."
+      review_only:
+        category: system
+        description: "rationale, pre_registration, dispatch or none, for a record with no consumer (R6)."
+      waits_on:
+        category: system
+        description: "What a proposed record waits on (R4)."
+      decided_by:
+        category: system
+        description: "operator, desktop, cc:<task>, or inherited:<repository>."
+      operator_stated:
+        category: system
+        description: "True only with a receipt."
+      decision_date:
+        category: system
+        description: "The record's date."
+      superseded_by:
+        category: system
+        description: "The record that superseded this one."
+      amendments:
+        category: system
+        description: "Each amendment as one line: clause, text, by."
+      mirrors:
+        category: system
+        description: "The record a mirror points at (FC-16)."
+      register_hash:
+        category: system
+        description: "record_hash of the last register event about this record; the projection is current when it matches."
+      control_type:
+        category: system
+        description: "control or warning (FC-08)."
+      pattern:
+        category: system
+        description: "The factory pattern a control record applies (FC-07)."
+      description:
+        category: documentation
+        description: "The statement's first line, for listings."
 
   SRS_Requirement:
     properties:
@@ -873,8 +968,9 @@ relationship_types:
   supersedes:
     # Ruling -> Ruling added (AD-030 section 4): a ruling that replaces an earlier
     # one. Document -> Document covers a design note that replaces another.
-    from_types: [ArchitecturalDecision, Ruling, Document]
-    to_types: [ArchitecturalDecision, Ruling, Document]
+    # Decision -> Decision (AD-033-R3): a register record that replaces an earlier one.
+    from_types: [ArchitecturalDecision, Ruling, Document, Decision]
+    to_types: [ArchitecturalDecision, Ruling, Document, Decision]
     properties:
       reason:
         required: false
@@ -942,8 +1038,10 @@ relationship_types:
     # filed. The defect this closes: on 2026-09-01 a per-set RPE field, retired by a
     # recorded ruling, was reintroduced by a new task because no mechanism made the
     # ruling addressable at task registration.
+    # AD-033-R7: in a repository with a decision register, registration binds `Decision`
+    # records only; positional Rulings stay searchable content and are no longer bound.
     from_types: [ResearchTask, Script, Issue]
-    to_types: [Ruling]
+    to_types: [Ruling, Decision]
     cardinality: many_to_many
     properties:
       match_method:
@@ -990,6 +1088,22 @@ relationship_types:
       occurrences:
         required: false
         description: "How many times the source text names it."
+
+  # AD-033-R3: the register's relations, Kruchten's (2004) cut to the ones the probe needed.
+  amends:
+    from_types: [Decision]
+    to_types: [Decision]
+    properties:
+      clause:
+        required: false
+        description: "Which part of the target the amendment changes."
+  mirrors:
+    # FC-16: a DI row points to the record it mirrors and carries no statement of its own.
+    from_types: [Decision]
+    to_types: [Decision]
+  constrains:
+    from_types: [Decision]
+    to_types: [Decision]
 
 state_machines:
   Result:
@@ -1087,6 +1201,15 @@ state_machines:
     admitted: [stale, retired, superseded]
     stale: [admitted, retired]
     retired: []
+    superseded: []
+
+  # AD-033-R4: MADR's statuses. The register derives them; the projection follows. A record is
+  # created proposed or accepted and every later status is one transition away.
+  Decision:
+    proposed: [accepted, rejected, superseded, deprecated]
+    accepted: [superseded, deprecated]
+    rejected: []
+    deprecated: []
     superseded: []
 
   Passage:

@@ -31,6 +31,10 @@ _META_KEY = "sync_point"
 #: behind a rebuild, which is why `create_artifact` is the single creation path.
 SELDON_OWNED_LABELS = (
     "Artifact",
+    # AD-033-R10 / SEL-002 ADDENDUM 01: the register's projection. Every Decision node also
+    # carries :Artifact (create_artifact's double label), so a rebuild already clears it; it is
+    # named here so the set states every label a Seldon write creates, which is what 029-A asks.
+    "Decision",
     "_SeldonMeta",
     "_OntologyReplicaMeta",
     "_OntologyMeta",

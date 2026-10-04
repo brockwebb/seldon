@@ -37,6 +37,7 @@ def test_artifact_types_has_all_types(research_config):
         "BuildRun", "GeneratedFile",  # AD-025 build harness emission
         "AuditRun", "AuditFinding",  # AD-020 audit pipeline ingest
         "Document", "Section", "Ruling", "Passage",  # AD-030 governed documents
+        "Decision",  # AD-033 decision register projection
     }
     assert set(research_config.artifact_types.keys()) == expected
 

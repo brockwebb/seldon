@@ -196,6 +196,84 @@ def _fix_binding_constraints(project_dir: Path, quiet: bool = False) -> None:
                        f"{row['ruling_identifier'] or row['ruling'][:8]} [{row['state']}]")
 
 
+# ---------------------------------------------------------------------------
+# Check 15: the decision register (AD-033)
+# ---------------------------------------------------------------------------
+
+def check_decisions(driver, database: str, project_dir: Path, config: dict) -> CheckResult:
+    """Fail on a register file the command did not write, an unregistered label, a dangling
+    rationale, a hand-edited REGISTER.md, a stale projection, or a task bound to a record that
+    does not bind (AD-033-R2, R4, R7).
+
+    A project with no `decisions:` block in seldon.yaml passes and says so: the register is per
+    repository, and only squiddy, seldon and arnold keep one (AD-033-R1).
+
+    Returns:
+        A CheckResult named "Decision register". Fixable when every finding is one the projection
+        repairs (a stale node or an un-rendered REGISTER.md); a broken chain or an unregistered
+        label is never fixed by a command, because the fix is a decision.
+    """
+    from seldon.core import decisions as dr
+
+    try:
+        s = dr.settings(project_dir, config)
+    except dr.RegisterError as exc:
+        return CheckResult(name="Decision register", symbol="fail", summary=str(exc))
+    if s is None:
+        return CheckResult(name="Decision register", symbol="pass",
+                           summary="No decision register in this project — skipping (AD-033-R1)")
+    try:
+        findings = dr.check(project_dir, config)
+    except (dr.RegisterError, dr.BrokenRegister) as exc:
+        return CheckResult(name="Decision register", symbol="fail", summary=str(exc)[:300])
+    fixable_only = all("REGISTER.md" in f for f in findings)
+    if not any("chain" in f or "hash" in f or "bytes" in f for f in findings):
+        u = dr.Universe(s)
+        stale = []
+        try:
+            have = {}
+            with driver.session(database=database) as session:
+                for r in session.run("MATCH (d:Artifact:Decision) RETURN d.decision_id AS q, "
+                                     "d.register_hash AS h, d.state AS st").data():
+                    have[r["q"]] = (r["h"], r["st"])
+            for repo in u.scope_repos():
+                for rec in u.records(repo).values():
+                    if have.get(rec.id) != (rec.last_hash, rec.status):
+                        stale.append(rec.id)
+        except (dr.RegisterError, dr.BrokenRegister) as exc:
+            findings.append(f"projection: {exc}")
+            fixable_only = False
+        if stale:
+            findings.append(f"projection: {len(stale)} record(s) not projected as the register "
+                            f"says (first: {', '.join(stale[:5])}); run `seldon decision project`")
+        with driver.session(database=database) as session:
+            bad = session.run(
+                "MATCH (t:Artifact)-[:CONSTRAINED_BY]->(d:Artifact:Decision) "
+                "WHERE d.state <> 'accepted' RETURN t.name AS t, d.decision_id AS d, d.state AS st"
+            ).data()
+        for row in bad:
+            findings.append(f"binding: {row['t']} is bound to {row['d']}, which is {row['st']} "
+                            f"(only accepted records bind, AD-033-R4)")
+            fixable_only = False
+    if not findings:
+        return CheckResult(name="Decision register", symbol="pass",
+                           summary="Register verifies; every label registered; projection current")
+    return CheckResult(name="Decision register", symbol="fail",
+                       summary=f"{len(findings)} register finding(s)", details=findings[:25],
+                       fixable=fixable_only)
+
+
+def _fix_decisions(project_dir: Path, quiet: bool = False) -> None:
+    """Re-project the register and render REGISTER.md (`seldon decision project`)."""
+    result = subprocess.run([sys.executable, "-m", "seldon", "decision", "project"],
+                            cwd=project_dir, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout,
+                                            result.stderr)
+    if not quiet:
+        click.echo("    " + result.stdout.strip().replace("\n", "\n    "))
+
+
 def _fix_governed(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon governed sync` to bring the graph level with the ledger.
 
@@ -247,6 +325,9 @@ SYMBOL_MAP = {
 # task in any project that adopted Seldon with a legacy graph. Default
 # `seldon verify` still surfaces them (see each check for its severity).
 TIER_A_CHECKS = frozenset({
+    # AD-033-R2: a register file the command did not write, or a labeled decision with no
+    # record, is a property of the change in hand.
+    "Decision register",
     "File hashes",
     "Ontology",
     "Glossary",
@@ -1703,6 +1784,7 @@ def _run_all_checks(
         check_event_log(project_dir),
         check_governed(driver, database, project_dir, config),
         check_binding_constraints(driver, database, project_dir, config),
+        check_decisions(driver, database, project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 
@@ -1723,6 +1805,7 @@ def _apply_fixes(
         "Ontology": _fix_ontology,
         "Governed docs": _fix_governed,
         "Binding constraints": _fix_binding_constraints,
+        "Decision register": _fix_decisions,
     }
 
     for r in results:
