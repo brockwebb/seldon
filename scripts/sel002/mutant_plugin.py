@@ -71,5 +71,14 @@ def pytest_configure(config):
             return orig_demote(project_dir=project_dir, driver=driver, database=database,
                                session_id=session_id)
         dr.demote_positional_rulings = demote_and_touch
+    elif name == "probe_blind_to_verbs":
+        import re as _re
+        dr.PROBE_AMEND = _re.compile(r"(?!x)x")
+    elif name == "probe_ignores_findings":
+        orig_probe = dr.conflicts_probe
+
+        def no_findings(u, findings_path, exclusions_path):
+            return orig_probe(u, None, exclusions_path)
+        dr.conflicts_probe = no_findings
     else:
         raise SystemExit(f"unknown SEL002_MUTANT {name!r}")

@@ -552,6 +552,8 @@ class Settings:
     design_notes: list[dict]
     consumer_roots: list[str]
     binding_limit: int
+    probe_findings: Optional[Path] = None
+    probe_exclusions: Optional[Path] = None
 
 
 def settings(project_dir: Path, config: dict) -> Optional[Settings]:
@@ -566,7 +568,7 @@ def settings(project_dir: Path, config: dict) -> Optional[Settings]:
         return None
     root = Path(project_dir).resolve()
     known = {"repository", "register_dir", "rendered", "import", "repositories", "baseline",
-             "design_notes", "consumer_roots", "binding_limit"}
+             "design_notes", "consumer_roots", "binding_limit", "probe"}
     extra = set(block) - known
     if extra:
         raise RegisterError(f"seldon.yaml decisions: unknown key(s) {sorted(extra)}; known {sorted(known)}")
@@ -597,6 +599,8 @@ def settings(project_dir: Path, config: dict) -> Optional[Settings]:
         design_notes=list(block.get("design_notes") or []),
         consumer_roots=list(block.get("consumer_roots") or []),
         binding_limit=int(block.get("binding_limit", 8)),
+        probe_findings=(root / block["probe"]["findings"]).resolve() if (block.get("probe") or {}).get("findings") else None,
+        probe_exclusions=(root / block["probe"]["exclusions"]).resolve() if (block.get("probe") or {}).get("exclusions") else None,
     )
 
 
@@ -1322,3 +1326,122 @@ def decision_artifact_ids(driver, database: str) -> dict[str, str]:
     with driver.session(database=database) as session:
         return {r["qid"]: r["aid"] for r in session.run(
             "MATCH (d:Artifact:Decision) RETURN d.decision_id AS qid, d.artifact_id AS aid").data()}
+
+
+# ---------------------------------------------------------------------------
+# The conflicts probe on the register (AD-033-R9, FC-18)
+# ---------------------------------------------------------------------------
+
+#: The decision probe's amendment verbs and identifier forms, verbatim from its inventory.py
+#: (squiddy/docs/findings/2026-10-03_operator_audit/probe/inventory.py, AMEND and REF), with the
+#: register's DN-NNN-Rn form added to REF so DN-037's records are read too.
+PROBE_AMEND = re.compile(r"\b(amends?|amended|revises?|revised|supersed(?:es|ed|e)|replaces?|replaced|"
+                         r"reverses?|reversed|withdraws?|withdrawn|overrides?|retires?|retired|narrows?|"
+                         r"rescinds?)\b", re.I)
+PROBE_REF = re.compile(r"\b(?:AD-\d{3}(?:-R\d+)?|DN-\d{3}(?:-R\d+)?|R-\d{1,3}|EX-REQ-\d+|DI-\d{3}|ADR-\d{3})\b")
+_SENTENCE = re.compile(r"(?<=[.;])\s+|\n")
+
+
+@dataclass
+class ProbeReport:
+    findings_total: int = 0
+    open_contradictions: list[str] = field(default_factory=list)
+    open_silent_supersessions: list[str] = field(default_factory=list)
+    unrecorded_pairs: list[dict] = field(default_factory=list)
+    excluded_pairs: list[dict] = field(default_factory=list)
+    resolved: dict[str, list[str]] = field(default_factory=dict)
+    active_records: int = 0
+
+    @property
+    def clean(self) -> bool:
+        return not (self.open_contradictions or self.open_silent_supersessions or self.unrecorded_pairs)
+
+
+def conflicts_probe(u: Universe, findings_path: Optional[Path], exclusions_path: Optional[Path]) -> ProbeReport:
+    """Re-run the decision probe on the register.
+
+    Two halves, both over ACTIVE records (proposed or accepted) of every register the universe names:
+      1. The probe's own findings (conflicts.jsonl): a finding is resolved when some register event
+         cites it ("Probe Fnn" in its reason) on one of its records, or none of its records is still
+         active. A contradiction or silent supersession with neither is open.
+      2. A fresh scan for silent supersession: a record whose own sentence uses one of the probe's
+         amendment verbs about another active record must have that relation recorded (supersedes,
+         superseded_by, an amendment by it, or a mirror of a record that has it), or be excluded in
+         the reviewed exclusions file with its reason. A new contradiction in prose is not machine-
+         detectable; it reaches the register as a new probe finding, which half 1 then holds open.
+    """
+    recs: dict[str, Record] = {}
+    events: list[dict] = []
+    for repo in sorted(u.s.repositories):
+        try:
+            recs.update(u.records(repo))
+            events.extend(e for r in u.records(repo).values() for e in r.events)
+        except RegisterError:
+            continue
+    rep = ProbeReport(active_records=sum(1 for r in recs.values() if r.status in ACTIVE))
+    cited: dict[str, set[str]] = {}
+    for e in events:
+        for f in set(re.findall(r"\bprobe (F\d{2})\b", f"{e.get('reason') or ''} {' '.join(e.get('receipts') or [])}", re.I)):
+            cited.setdefault(f.upper(), set()).add(e["id"])
+
+    def qualify(ref: str, home: str) -> Optional[str]:
+        cands = [f"{home}:{ref}"] + [f"{r}:{ref}" for r in sorted(u.s.repositories) if r != home]
+        if re.fullmatch(r"R-\d", ref):
+            cands.append(f"squiddy:R-0{ref[2:]}")
+        return next((c for c in cands if c in recs), None)
+
+    if findings_path and Path(findings_path).is_file():
+        for line in Path(findings_path).read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            x = json.loads(line)
+            rep.findings_total += 1
+            ids = [q for q in (qualify(i.split(":", 1)[-1] if ":" in i else i,
+                                       i.split(":", 1)[0] if ":" in i else "squiddy") for i in x["ids"]) if q]
+            touched = sorted(cited.get(x["finding"], set()) & set(ids)) or sorted(cited.get(x["finding"], set()))
+            still_active = [q for q in ids if recs[q].status in ACTIVE]
+            if touched or not still_active:
+                rep.resolved[x["finding"]] = touched or ["no record still active"]
+            elif x["class"] == "CONTRADICTION":
+                rep.open_contradictions.append(f"{x['finding']}: {', '.join(x['ids'])}")
+            else:
+                rep.open_silent_supersessions.append(f"{x['finding']} ({x['class']}): {', '.join(x['ids'])}")
+
+    excluded = []
+    if exclusions_path and Path(exclusions_path).is_file():
+        excluded = yaml.safe_load(Path(exclusions_path).read_text(encoding="utf-8")) or []
+    excl = {(e["record"], e["cites"]): e["reason"] for e in excluded}
+
+    def related(a: str, b: str, seen: int = 0) -> bool:
+        A, B = recs[a], recs[b]
+        if B.superseded_by == a or A.superseded_by == b:
+            return True
+        if b in (A.get("supersedes") or []) or a in (B.get("supersedes") or []):
+            return True
+        if any(x.get("by") == a for x in B.amendments) or any(x.get("by") == b for x in A.amendments):
+            return True
+        if any(x.get("target") == b for x in A.get("amends") or []):
+            return True
+        if A.get("mirrors") == b or B.get("mirrors") == a:
+            return True
+        if seen < 2 and A.get("kind") == "mirror" and A.get("mirrors") in recs:
+            return related(A.get("mirrors"), b, seen + 1)
+        return False
+
+    for qid, r in sorted(recs.items()):
+        if r.status not in ACTIVE:
+            continue
+        for sent in _SENTENCE.split((r.get("source") or {}).get("text", "")):
+            verb = PROBE_AMEND.search(sent)
+            if not verb:
+                continue
+            for ref in sorted(set(PROBE_REF.findall(sent))):
+                q = qualify(ref, r.home)
+                if not q or q == qid or recs[q].status not in ACTIVE or related(qid, q):
+                    continue
+                row = {"record": qid, "cites": q, "verb": verb.group(0), "sentence": sent.strip()[:200]}
+                if (qid, q) in excl:
+                    rep.excluded_pairs.append({**row, "reason": excl[(qid, q)]})
+                else:
+                    rep.unrecorded_pairs.append(row)
+    return rep

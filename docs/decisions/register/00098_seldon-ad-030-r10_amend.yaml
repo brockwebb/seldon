@@ -1,0 +1,17 @@
+seq: 98
+event: amend
+id: seldon:AD-030-R10
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- 'probe F13: AD-030-R17 (seldon/docs/design/AD-030_implementation_findings_001.md:40): "Supersedes the `pyproject.toml` clause of AD-030 R10"'
+- 'probe F13: AD-030-R21 (seldon/docs/design/AD-030_implementation_findings_002.md:24): "carries the declaration as its final sentence in the form `Supersedes AD-NNN-Rn.`"'
+reason: 'Probe F13 (SILENT SUPERSESSION): Append sentence-final "Supersedes AD-030-R10." to R17 (clause scope stated) and the equivalent to R13.'
+amendment:
+  clause: the pyproject.toml clause
+  text: Superseded by AD-030-R17 (Squiddy is a build-time dependency pinned by commit in the governed graph, absent from pyproject.toml); R10's acyclicity and no-awareness clauses stand.
+  by: seldon:AD-030-R17
+written_by: seldon decision 0.1.0
+prev_hash: 418c5ad7ec8e449640ab4d496da6d80520a153d13aef038d8063486a52d4eb5b
+record_hash: 69d2b2093044f68e5a1c0398ef9350c9bd890334c725e3ae0589b72b384bab72

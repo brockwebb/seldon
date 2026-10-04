@@ -1,0 +1,21 @@
+seq: 100
+event: amend
+id: seldon:AD-024
+date: '2026-10-04'
+decided_by: desktop
+operator_stated: false
+receipts:
+- 'probe F44: seldon:AD-024_observability_as_substrate (seldon/docs/design/AD-024_observability_as_substrate.md:1): "Adjacent or future observability work extends this store; it does not build parallel stores."'
+- 'probe F44: R-119 (squiddy/docs/design/2026-09-29_factory_runner_dag_valves_stop.md:160): "`factory/status.json` holds after every item"'
+- 'seldon/docs/design/AD-033_decision_register.md section 5 F28, F44: ''AD-024 is scoped to Seldon and Wintermute'''
+reason: 'Probe F44 (CROSS-REPO): Keep both if AD-024 is read as Seldon/Wintermute-only (amend it to say so) or retire it with Wintermute; Squiddy should not adopt it silently.'
+amendment:
+  clause: scope
+  text: Scoped to Seldon and Wintermute; Squiddy does not adopt it (it forbids a central control plane, DI-157).
+changes:
+  scope:
+  - seldon
+  scope_note: Seldon and Wintermute only (AD-033 section 5, probe F44)
+written_by: seldon decision 0.1.0
+prev_hash: ad499a41ae3e6f33e567accfea9db4dca9fb4cfd90e59497929198e88e5600a9
+record_hash: ffbe0670a9af1c12c60a94ac4badcde5588a8940e25e897c827721af5314ea91

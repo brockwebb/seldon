@@ -1,0 +1,1482 @@
+[
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-240",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-242",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/DECISIONS_INHERITED.md:511: \"| DI-242 | DN-030 R-137; the operator's rule of 2026-09-12 (the manifest is the inventory of every document ever considered, declines with reaso...\""
+  ]
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-246",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-252",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-178",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-211",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-263",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-260",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "kind",
+  "target": "squiddy:DI-201",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-134",
+  "by": "squiddy:DI-240",
+  "clause": "the fixed padding width",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-131",
+  "by": "squiddy:DI-252",
+  "clause": "the question draw",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-150",
+  "by": "squiddy:DI-252",
+  "clause": "question sets",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-166",
+  "by": "squiddy:DI-263",
+  "clause": "verdict reuse",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-158",
+  "by": "squiddy:DI-260",
+  "clause": "the public allowlist at release",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\""
+  ]
+ },
+ {
+  "finding": "MIRROR",
+  "op": "amend",
+  "target": "squiddy:R-74",
+  "by": "squiddy:DI-201",
+  "clause": "'tool unchanged'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F01",
+  "op": "amend",
+  "target": "squiddy:DI-020",
+  "by": null,
+  "clause": "'extraction is the only stage that calls a model'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F01",
+  "op": "amend",
+  "target": "squiddy:DI-118",
+  "by": null,
+  "clause": "'extraction is the only model call'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F02",
+  "op": "amend",
+  "target": "squiddy:R-102",
+  "by": "squiddy:R-129",
+  "clause": "'what it exists to answer, as a class' (the purpose: wording)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F02",
+  "op": "amend",
+  "target": "squiddy:R-115",
+  "by": "squiddy:R-129",
+  "clause": "the `purpose:` label",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F02",
+  "op": "amend",
+  "target": "squiddy:R-121",
+  "by": "squiddy:R-129",
+  "clause": "item 3's wording",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F02",
+  "op": "amend",
+  "target": "squiddy:R-124",
+  "by": "squiddy:R-129",
+  "clause": "'its purpose: block is the operator's one input'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F02",
+  "op": "amend",
+  "target": "squiddy:DI-237",
+  "by": "squiddy:DI-238",
+  "clause": "'purpose:, which init now requires'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F03",
+  "op": "amend",
+  "target": "squiddy:R-162",
+  "by": "squiddy:R-164",
+  "clause": "the gate clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F03",
+  "op": "supersede",
+  "target": "squiddy:DI-258",
+  "by": "squiddy:DI-261",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F04",
+  "op": "amend",
+  "target": "squiddy:DI-006",
+  "by": "seldon:AD-033-R11",
+  "clause": "which store is truth",
+  "decided_by": "operator",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F05",
+  "op": "amend",
+  "target": "seldon:AD-030-R16",
+  "by": "seldon:AD-033-R7",
+  "clause": "its binding role",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F06",
+  "op": "amend",
+  "target": "squiddy:R-15",
+  "by": "seldon:AD-033-R11",
+  "clause": "the table of four things",
+  "decided_by": "operator",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F07",
+  "op": "amend",
+  "target": "squiddy:R-14",
+  "by": "squiddy:R-172",
+  "clause": "the premise 'extraction is the critical path to the second consumer'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F07",
+  "op": "amend",
+  "target": "squiddy:R-91",
+  "by": "squiddy:R-172",
+  "clause": "the Arnold repeat clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F07",
+  "op": "amend",
+  "target": "squiddy:DI-227",
+  "by": "squiddy:R-172",
+  "clause": "the Arnold repeat clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F08",
+  "op": "amend",
+  "target": "squiddy:DI-035",
+  "by": "squiddy:R-112",
+  "clause": "'not a standing constraint on extraction anywhere'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F08",
+  "op": "amend",
+  "target": "squiddy:DI-037",
+  "by": "squiddy:R-112",
+  "clause": "the scope of the G4 kill",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:R-152",
+  "by": "squiddy:R-160",
+  "clause": "lookup labels",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:R-153",
+  "by": "squiddy:R-161",
+  "clause": "the revised clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:DI-253",
+  "by": "squiddy:R-160",
+  "clause": "lookup labels",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F09",
+  "op": "amend",
+  "target": "squiddy:DI-254",
+  "by": "squiddy:R-161",
+  "clause": "the revised clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F10",
+  "op": "supersede",
+  "target": "squiddy:DI-152",
+  "by": "squiddy:R-168",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "supersede",
+  "target": "squiddy:R-169",
+  "by": "squiddy:R-176",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "supersede",
+  "target": "squiddy:R-170",
+  "by": "squiddy:R-180",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "amend",
+  "target": "squiddy:R-171",
+  "by": "squiddy:R-172",
+  "clause": "its disposition",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "accept",
+  "target": "seldon:AD-032-FC-11",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "accept",
+  "target": "seldon:AD-032-FC-12",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "accept",
+  "target": "seldon:AD-032-FC-13",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "accept",
+  "target": "seldon:AD-032-FC-14",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F11",
+  "op": "accept",
+  "target": "seldon:AD-032-FC-15",
+  "by": null,
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F39",
+  "op": "amend",
+  "target": "squiddy:DI-214",
+  "by": "squiddy:R-176",
+  "clause": "implementation",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F12",
+  "op": "amend",
+  "target": "squiddy:R-64",
+  "by": "squiddy:R-109",
+  "clause": "the judge clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F12",
+  "op": "amend",
+  "target": "squiddy:R-64",
+  "by": "squiddy:R-130",
+  "clause": "the requirement class",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F12",
+  "op": "amend",
+  "target": "squiddy:DI-188",
+  "by": "squiddy:R-109",
+  "clause": "'The judge is Gemini'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F12",
+  "op": "amend",
+  "target": "squiddy:DI-185",
+  "by": "squiddy:R-130",
+  "clause": "the requirement class",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F12",
+  "op": "supersede",
+  "target": "squiddy:DI-204",
+  "by": "squiddy:R-102",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F13",
+  "op": "amend",
+  "target": "seldon:AD-030-R10",
+  "by": "seldon:AD-030-R17",
+  "clause": "the pyproject.toml clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F14",
+  "op": "amend",
+  "target": "squiddy:R-08",
+  "by": "squiddy:R-158",
+  "clause": "the public-only clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F14",
+  "op": "amend",
+  "target": "squiddy:DI-080",
+  "by": "squiddy:R-158",
+  "clause": "the public-only policy",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-97",
+  "by": "squiddy:R-113",
+  "clause": "the S-010 hold",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-107",
+  "by": "squiddy:R-113",
+  "clause": "'DN-022 R-97's hold on Arnold stays until R-109 resolves'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-124",
+  "by": null,
+  "clause": "the S-010 hold (waits on F-001)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-133",
+  "by": null,
+  "clause": "'S-010 waits on both'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-136",
+  "by": null,
+  "clause": "the readiness test",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F15",
+  "op": "amend",
+  "target": "squiddy:R-141",
+  "by": null,
+  "clause": "'S-010 waits on M-002'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-147",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-148",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-149",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-150",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-151",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-152",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-153",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-154",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-155",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-156",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-033_intake_seeded_through_mesh_model_selects_never_authors.md:12: \"- The operator's rule: do not invent what the science has already defined. Search terms are in scope of that rule.\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-157",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-158",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-159",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-01_DN-034_licence_recorded_always_enforced_at_distribution.md:5: \"## 1. The operator's rule (2026-10-01 23:12, in session)\""
+  ]
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-160",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-161",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-162",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-163",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-164",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-165",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F16",
+  "op": "amend",
+  "target": "squiddy:R-166",
+  "by": "squiddy:DN-037-R7",
+  "clause": "whole record",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F17",
+  "op": "amend",
+  "target": "squiddy:DI-132",
+  "by": "squiddy:R-102",
+  "clause": "'never a checkpoint for the operator'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F18",
+  "op": "amend",
+  "target": "squiddy:R-142",
+  "by": "squiddy:DI-246",
+  "clause": "'real network for those hosts only'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F18",
+  "op": "amend",
+  "target": "squiddy:EX-REQ-15",
+  "by": "squiddy:DI-246",
+  "clause": "'where undeclared, PROVEN ABSENT by a closed-network run'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F19",
+  "op": "amend",
+  "target": "squiddy:R-116",
+  "by": "squiddy:DI-242",
+  "clause": "'the ONLY resume test the factory makes'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F20",
+  "op": "amend",
+  "target": "squiddy:R-71",
+  "by": "squiddy:R-114",
+  "clause": "a verb for every path a written question walks",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F20",
+  "op": "amend",
+  "target": "squiddy:DI-198",
+  "by": "squiddy:R-114",
+  "clause": "'A VERB FOR EVERY PATH A WRITTEN QUESTION WALKS'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F20",
+  "op": "amend",
+  "target": "squiddy:R-83",
+  "by": "squiddy:R-114",
+  "clause": "item 4 (the verb gate)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\""
+  ]
+ },
+ {
+  "finding": "F21",
+  "op": "amend",
+  "target": "arnold:ADR-017",
+  "by": null,
+  "clause": "scope",
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/adr/017-local-first-models.md:5: \"**Deciders:** Brock Webb\""
+  ]
+ },
+ {
+  "finding": "F22",
+  "op": "amend",
+  "target": "squiddy:DI-135",
+  "by": "squiddy:R-121",
+  "clause": "'extraction shown for a nod before commit'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F22",
+  "op": "amend",
+  "target": "squiddy:R-105",
+  "by": "squiddy:R-121",
+  "clause": "the acceptance bar's extraction clause",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F23",
+  "op": "amend",
+  "target": "squiddy:DI-235",
+  "by": null,
+  "clause": "'a Result read from the graph's Seldon event log'",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F24",
+  "op": "amend",
+  "target": "squiddy:DI-170",
+  "by": "squiddy:R-139",
+  "clause": "the title precedence",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F25",
+  "op": "amend",
+  "target": "squiddy:R-46",
+  "by": "squiddy:R-125",
+  "clause": "'every future harness use it'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-20_checkpointing_one_call_runner.md:3: \"Desktop session. Rulings continue from R-45. The operator's instruction, verbatim in substance: we\""
+  ]
+ },
+ {
+  "finding": "F25",
+  "op": "amend",
+  "target": "squiddy:R-47",
+  "by": "squiddy:R-125",
+  "clause": "the check on calls outside the runner",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-20_checkpointing_one_call_runner.md:3: \"Desktop session. Rulings continue from R-45. The operator's instruction, verbatim in substance: we\""
+  ]
+ },
+ {
+  "finding": "F26",
+  "op": "amend",
+  "target": "squiddy:DI-157",
+  "by": "squiddy:R-117",
+  "clause": "'the kit must not ship one'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F27",
+  "op": "amend",
+  "target": "squiddy:R-115",
+  "by": "squiddy:R-128",
+  "clause": "the DAG drawing",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F28",
+  "op": "deprecate",
+  "target": "seldon:AD-023",
+  "by": null,
+  "clause": null,
+  "decided_by": "desktop",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/AD-023_wintermute_sleep_functions.md:29: \"**Commodity capture is explicitly OUT of Wintermute's core.** Per operator decision 2026-04-18, **claude-mem is adopted (Option A)** as the capture layer. Wintermute consumes claude-m...\"",
+   "cc_tasks/2026-04-18_cc5_sleep_function_architecture.md"
+  ]
+ },
+ {
+  "finding": "F29",
+  "op": "amend",
+  "target": "squiddy:R-33",
+  "by": "squiddy:EX-REQ-10",
+  "clause": "the premise 'each attempt burns its tokens'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F30",
+  "op": "amend",
+  "target": "squiddy:R-41",
+  "by": null,
+  "clause": "the prior-art citation",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-20_internal_prior_art_packs_anchors.md:3: \"Desktop session. Rulings continue from R-39. Written after the operator said, correctly, that\""
+  ]
+ },
+ {
+  "finding": "F30",
+  "op": "amend",
+  "target": "squiddy:DI-031",
+  "by": null,
+  "clause": "the source citation (methodology 6.1)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F31",
+  "op": "supersede",
+  "target": "squiddy:R-26",
+  "by": "squiddy:R-28",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F31",
+  "op": "supersede",
+  "target": "squiddy:DI-181",
+  "by": "squiddy:DI-182",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F32",
+  "op": "supersede",
+  "target": "squiddy:R-29",
+  "by": "squiddy:R-32",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F32",
+  "op": "supersede",
+  "target": "squiddy:R-27",
+  "by": "squiddy:R-81",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F32",
+  "op": "amend",
+  "target": "squiddy:DI-183",
+  "by": "squiddy:R-81",
+  "clause": "'cost is gated today by the ceiling alone'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F33",
+  "op": "amend",
+  "target": "squiddy:R-89",
+  "by": "squiddy:R-94",
+  "clause": "the drop rule (share under 0.002)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:EX-REQ-02",
+  "by": "squiddy:R-60",
+  "clause": "'instrument PENDING H-009 Part A'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-44",
+  "by": "squiddy:R-60",
+  "clause": "the ranking clause (usable claims per million tokens)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-20_balcony_claim_quality_protocol.md:3: \"Desktop session. Rulings continue from R-42. The operator asked for a step back: weigh everything\""
+  ]
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-43",
+  "by": "squiddy:R-49",
+  "clause": "the decontextualization dimension",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-20_balcony_claim_quality_protocol.md:3: \"Desktop session. Rulings continue from R-42. The operator asked for a step back: weigh everything\""
+  ]
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-50",
+  "by": "squiddy:R-56",
+  "clause": "amended clauses",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F34",
+  "op": "amend",
+  "target": "squiddy:R-51",
+  "by": "squiddy:R-57",
+  "clause": "amended clauses",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F35",
+  "op": "amend",
+  "target": "squiddy:R-80",
+  "by": "squiddy:R-107",
+  "clause": "re-extraction of the 525 as the first spend (library)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\""
+  ]
+ },
+ {
+  "finding": "F35",
+  "op": "amend",
+  "target": "squiddy:R-81",
+  "by": "squiddy:R-97",
+  "clause": "the daemon runs arm C as its protocol (library)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-09-25_extraction_resumes_under_arm_c.md:5: \"## The operator's ruling, recorded\""
+  ]
+ },
+ {
+  "finding": "F36",
+  "op": "amend",
+  "target": "squiddy:DI-176",
+  "by": "squiddy:R-79",
+  "clause": "the extraction unit",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F36",
+  "op": "amend",
+  "target": "squiddy:DI-177",
+  "by": "squiddy:R-79",
+  "clause": "'the extraction unit stays the paragraph'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F36",
+  "op": "amend",
+  "target": "squiddy:DI-031",
+  "by": "squiddy:R-41",
+  "clause": "overlap in the standard",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F37",
+  "op": "supersede",
+  "target": "squiddy:R-31",
+  "by": "squiddy:R-34",
+  "clause": null,
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F38",
+  "op": "amend",
+  "target": "squiddy:R-180",
+  "by": null,
+  "clause": "the check (cache reads on calls 2 to 5)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/design/2026-10-04_DN-042_spend_governor_reserve_bands_measured_estimates.md:3: \"**Date:** 2026-10-04. **Status:** accepted (operator decisions of 2026-10-03, recorded in\""
+  ]
+ },
+ {
+  "finding": "F38",
+  "op": "amend",
+  "target": "squiddy:DI-178",
+  "by": null,
+  "clause": "'prefix cache-read is an API feature R-11 forbids'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F40",
+  "op": "amend",
+  "target": "squiddy:R-63",
+  "by": "squiddy:R-17",
+  "clause": "precedent",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F41",
+  "op": "amend",
+  "target": "squiddy:R-105",
+  "by": "squiddy:R-10",
+  "clause": "precedent",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F42",
+  "op": "amend",
+  "target": "arnold:ADR-013",
+  "by": "arnold:ADR-013-A01",
+  "clause": "R2's wording 'microcycle = ~1 wk scheduling unit'",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": true,
+  "target_operator_receipts": [
+   "docs/adr/013-canonical-training-vocabulary.md:4: \"**Status:** Accepted (Brock, 2026-06-27)\"",
+   "docs/adr/013-canonical-training-vocabulary.md:8: \"**Deciders:** Brock Webb\""
+  ]
+ },
+ {
+  "finding": "F43",
+  "op": "amend",
+  "target": "squiddy:R-127",
+  "by": null,
+  "clause": "the touchpoint 3 pause for maintenance admission",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F44",
+  "op": "amend",
+  "target": "seldon:AD-024",
+  "by": null,
+  "clause": "scope",
+  "decided_by": "desktop",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B1",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B2",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B3",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B5",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B7",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B8",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B9",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B10",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B11",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B12",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B14",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B15",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B16",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B17",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B18",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B19",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B20",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B21",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ },
+ {
+  "finding": "F45",
+  "op": "amend",
+  "target": "arnold:week-template-B22",
+  "by": "arnold:ADR-013-A01",
+  "clause": "scope (the 7-day week)",
+  "decided_by": "cc:0636b04a",
+  "target_operator_stated": false,
+  "target_operator_receipts": []
+ }
+]

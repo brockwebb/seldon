@@ -28,6 +28,8 @@ CONTROLS = [
     ("test_planted_superseded_record_never_binds_the_r29_case", "superseded_binds"),
     ("test_the_decision_label_joins_the_owned_label_set", "label_not_owned"),
     ("test_projection_leaves_legacy_decision_nodes_unchanged", "mutates_legacy"),
+    ("test_planted_silent_supersession_is_caught_by_the_probe", "probe_blind_to_verbs"),
+    ("test_planted_open_contradiction_is_caught_by_the_probe", "probe_ignores_findings"),
 ]
 
 

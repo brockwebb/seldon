@@ -1,0 +1,17 @@
+seq: 94
+event: accept
+id: seldon:AD-032-FC-12
+date: '2026-10-04'
+decided_by: cc:0636b04a
+operator_stated: false
+receipts:
+- 'probe F11: R-169 (squiddy/docs/design/2026-10-02_DN-039_spend_by_reservation_cacheable_prefix_grounding_audit.md:37): "Reserve before dispatch."'
+- 'probe F11: R-170 (squiddy/docs/design/2026-10-02_DN-039_spend_by_reservation_cacheable_prefix_grounding_audit.md:41): "The stable prompt comes first."'
+- 'probe F11: R-172 (squiddy/docs/design/2026-10-02_DN-040_arnold_follows_its_recipe_extraction_closed_mesh_concepts.md:46): "They are not built now."'
+- 'squiddy/docs/design/2026-10-04_DN-042_spend_governor_reserve_bands_measured_estimates.md:3 ''Status: accepted (operator decisions of 2026-10-03, recorded in ... FC-04 and FC-11 to FC-15)'''
+- 'seldon:AD-032-FC-04 (accepted, operator) ''Check: FC-11 to FC-15'''
+- squiddy merge 7076eae (SQ-009 built DN-042 R-176 to R-181)
+reason: 'Probe F11 (SILENT SUPERSESSION): Mark R-169 and R-170 deferred by R-172 (Issue); state R-171''s disposition explicitly in DN-040 before both notes are committed.'
+written_by: seldon decision 0.1.0
+prev_hash: d4f34b8ff545739887ddd66c255f1bd163cca200190b54ceb5bffc095b331292
+record_hash: d88d32b8dea5a279cd3fcf0c34d22619a068695cfce9f18d7db62d4b5388f15c

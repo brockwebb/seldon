@@ -422,3 +422,43 @@ def test_cc_register_binds_accepted_decisions_only_and_says_advisory(tmp_path, n
     assert "squiddy:R-29" not in ids and "squiddy:R-32" in ids
     assert written == len(ids)
     assert "advisory until SEL-003" in render_rulings(matches, written)
+
+
+# ---------------------------------------------------------------------------
+# the conflicts probe on the register (AD-033-R9): positive controls before its verdict is cited
+# ---------------------------------------------------------------------------
+
+def _findings(path: Path, rows: list[dict]) -> Path:
+    path.write_text("".join(__import__("json").dumps(r) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def test_planted_silent_supersession_is_caught_by_the_probe(tmp_path):
+    root = _repo(tmp_path, "squiddy")
+    u = _u(root)
+    _accept(u, "squiddy", "R-1", "The multiple stays a reported number.")
+    _accept(u, "squiddy", "R-2", "The control chart of R-1 is withdrawn.")
+    rep = dr.conflicts_probe(_u(root), None, None)
+    assert [(p["record"], p["cites"]) for p in rep.unrecorded_pairs] == [("squiddy:R-2", "squiddy:R-1")]
+    assert not rep.clean
+    excl = tmp_path / "excl.yaml"
+    excl.write_text("- {record: 'squiddy:R-2', cites: 'squiddy:R-1', reason: reviewed}\n")
+    assert dr.conflicts_probe(_u(root), None, excl).clean
+    dr.transition(_u(root), "supersede", "squiddy:R-1", date=DATE, decided_by="cc:x",
+                  reason="Probe F99: recorded", superseded_by="squiddy:R-2")
+    assert dr.conflicts_probe(_u(root), None, None).clean
+
+
+def test_planted_open_contradiction_is_caught_by_the_probe(tmp_path):
+    root = _repo(tmp_path, "squiddy")
+    u = _u(root)
+    _accept(u, "squiddy", "R-1", "Extraction is the only stage that calls a model.")
+    _accept(u, "squiddy", "R-2", "A model call may choose among the returned descriptors.")
+    f = _findings(tmp_path / "c.jsonl", [{"finding": "F99", "class": "CONTRADICTION",
+                                          "ids": ["R-1", "R-2"], "evidence": []}])
+    rep = dr.conflicts_probe(_u(root), f, None)
+    assert rep.open_contradictions == ["F99: R-1, R-2"]
+    dr.amend(_u(root), "squiddy:R-1", date=DATE, decided_by="cc:x", reason="Probe F99 (CONTRADICTION): amend",
+             amendment={"clause": "only stage", "text": "model nodes are declared", "by": "squiddy:R-2"})
+    rep = dr.conflicts_probe(_u(root), f, None)
+    assert rep.open_contradictions == [] and rep.resolved == {"F99": ["squiddy:R-1"]}

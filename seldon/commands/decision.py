@@ -228,12 +228,36 @@ def list_cmd(status, repo):
 
 
 @decision_group.command("check")
-def check_cmd():
-    """The register checks `seldon verify` fails on."""
+@click.option("--probe", "with_probe", is_flag=True, default=False,
+              help="Also re-run the conflicts probe on the register (AD-033-R9): open contradictions, "
+                   "silent supersessions among active records.")
+def check_cmd(with_probe):
+    """The register checks `seldon verify` fails on (and, with --probe, the conflicts probe)."""
     out = run_read(Path.cwd(), "check")
     click.echo(out)
-    if out != "register: clean":
+    failed = out != "register: clean"
+    if with_probe:
+        text, clean = run_probe(Path.cwd())
+        click.echo(text)
+        failed = failed or not clean
+    if failed:
         raise SystemExit(1)
+
+
+def run_probe(project_dir: Path) -> tuple[str, bool]:
+    """The conflicts probe on the register, rendered; `(text, clean)`."""
+    config = load_project_config(project_dir)
+    u = dr.universe(project_dir, config)
+    if not u.s.probe_findings:
+        raise dr.RegisterError("seldon.yaml decisions.probe.findings names no conflicts file")
+    rep = dr.conflicts_probe(u, u.s.probe_findings, u.s.probe_exclusions)
+    lines = [f"conflicts probe: {rep.findings_total} findings, {len(rep.resolved)} resolved; "
+             f"{rep.active_records} active records; open contradictions {len(rep.open_contradictions)}; "
+             f"open silent supersessions {len(rep.open_silent_supersessions) + len(rep.unrecorded_pairs)}; "
+             f"reviewed exclusions {len(rep.excluded_pairs)}"]
+    lines += [f"  OPEN {x}" for x in rep.open_contradictions + rep.open_silent_supersessions]
+    lines += [f"  UNRECORDED {x['record']} {x['verb']} {x['cites']}: {x['sentence']}" for x in rep.unrecorded_pairs]
+    return "\n".join(lines), rep.clean
 
 
 @decision_group.command("project")

@@ -65,3 +65,7 @@ decisions:
       pattern: '^\*\*(FC-\d{2})\.'
       id: '{repo}:{doc}-{label}'
   consumer_roots: [tests, seldon]
+  # AD-033-R9: the conflicts probe re-run on the register (`seldon decision check --probe`).
+  probe:
+    findings: ../squiddy/docs/findings/2026-10-03_operator_audit/probe/conflicts.jsonl
+    exclusions: docs/decisions/probe_exclusions.yaml
