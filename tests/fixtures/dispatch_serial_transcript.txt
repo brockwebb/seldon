@@ -1,0 +1,83 @@
+## pass: t1 green
+exit=0
+record: record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by the standing dispatcher -> <HEX-3>
+record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by the standing dispatcher -> <HEX-4>
+push: pushed 2 commit(s)
+launching <HEX-1> cc_tasks/t1.md -> logs/dispatch/t1.log
+finished exit=0 in <WALL>s; t1_RESULT.md present; graph completed
+record: record: dispatch_finished <HEX-1> — 1 line(s) written by the standing dispatcher -> <HEX-5>
+push: pushed 2 commit(s)
+
+## pass: t2 fails
+exit=0
+record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by the standing dispatcher -> <HEX-6>
+push: pushed 1 commit(s)
+launching <HEX-2> cc_tasks/t2.md -> logs/dispatch/t2.log
+finished exit=1 result=False graph=in_progress -> blocked
+record: record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by the standing dispatcher -> <HEX-7>
+push: pushed 1 commit(s)
+
+## pass: dirty tree
+exit=0
+record: record: artifact_created <HEX-8> — 1 line(s) written by the standing dispatcher -> <HEX-9>
+nothing eligible (1 open, 1 candidate(s))
+  <HEX-8> dirty_tree: c7  cc_tasks/t3.md
+      dirty: notes.txt
+push: pushed 1 commit(s)
+
+## pass: lease held
+exit=0
+lease held by dispatcher:<HOST>:<PID>; exiting
+
+## events
+{"actor": "desktop", "authority": "accepted", "event_id": "<UUID-1>", "event_type": "artifact_created", "payload": {"artifact_id": "<UUID-2>", "artifact_type": "ResearchTask", "from_state": null, "properties": {"created_at": "<TS>", "description": "stub task t1", "name": "t1", "source_file": "cc_tasks/t1.md"}, "to_state": "proposed"}, "session_id": "<UUID-3>", "timestamp": "<TS>"}
+{"actor": "desktop", "authority": "accepted", "event_id": "<UUID-4>", "event_type": "artifact_created", "payload": {"artifact_id": "<UUID-5>", "artifact_type": "ResearchTask", "from_state": null, "properties": {"created_at": "<TS>", "description": "stub task t2", "name": "t2", "source_file": "cc_tasks/t2.md"}, "to_state": "proposed"}, "session_id": "<UUID-6>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-7>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-2>", "artifact_type": "ResearchTask", "from_state": "proposed", "to_state": "accepted"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-9>", "event_type": "artifact_updated", "payload": {"artifact_id": "<UUID-2>", "properties": {"claimed_at": "<TS>", "claimed_by": "dispatcher:<HOST>:<PID>", "updated_at": "<TS>"}}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-10>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-2>", "artifact_type": "ResearchTask", "from_state": "accepted", "to_state": "in_progress"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-11>", "event_type": "dispatch_launched", "payload": {"child_session_id": "<UUID-12>", "claimed_by": "dispatcher:<HOST>:<PID>", "command": "<PROJ>/bin/claude -p 'Read CLAUDE.md, then execute cc_tasks/t1.md. Glob and read all sibling t1_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified.' --permission-mode bypassPermissions", "criteria": {"c1": {"file_exists": true, "git_tracked": true, "ok": true, "source_file": "cc_tasks/t1.md", "state": "proposed"}, "c2": {"ok": true, "predecessors": 0, "unsatisfied": []}, "c3": {"addenda": [], "ok": true, "superseding": null}, "c4": {"band_ref": "controls.yaml#spend.daily_tokens", "declared_tokens": 0, "ok": true, "spend_header": "zero model calls. **Network:** none.", "standing_band": <HEX-10>}, "c5": {"network_allowlist": [], "network_header": "none.", "network_kind": "none", "ok": true}, "c6": {"in_progress_claim": null, "lease_holder": "dispatcher:<HOST>:<PID>", "lease_task": null, "ok": true}, "c7": {"branch": "main", "configured_branch": "main", "dirty": false, "dirty_count": 0, "dirty_paths": [], "ok": true}, "c8": {"enabled": true, "ok": true, "stop_file": ".seldon/DISPATCH_STOP", "stop_file_present": false}, "c9": {"framework_layer": "\u00a72.2 Tier M", "ok": true}}, "framework_layer": "\u00a72.2 Tier M", "launched_at": "<TS>", "log_path": "logs/dispatch/t1.log", "network_allowlist": [], "permission_mode": "bypassPermissions", "source_file": "cc_tasks/t1.md", "task_id": "<UUID-2>", "transitions": ["proposed -> accepted", "accepted -> in_progress"]}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "cc", "authority": "accepted", "event_id": "<UUID-13>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-2>", "artifact_type": "ResearchTask", "from_state": "in_progress", "to_state": "completed"}, "session_id": "<UUID-12>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-14>", "event_type": "dispatch_finished", "payload": {"child_session_id": "<UUID-12>", "exit_code": 0, "graph_state_observed": "completed", "log_path": "logs/dispatch/t1.log", "ok": true, "result_path": "cc_tasks/t1_RESULT.md", "result_present": true, "task_id": "<UUID-2>", "wall_clock_s": <WALL>}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-15>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-5>", "artifact_type": "ResearchTask", "from_state": "proposed", "to_state": "accepted"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-16>", "event_type": "artifact_updated", "payload": {"artifact_id": "<UUID-5>", "properties": {"claimed_at": "<TS>", "claimed_by": "dispatcher:<HOST>:<PID>", "updated_at": "<TS>"}}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-17>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-5>", "artifact_type": "ResearchTask", "from_state": "accepted", "to_state": "in_progress"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-18>", "event_type": "dispatch_launched", "payload": {"child_session_id": "<UUID-19>", "claimed_by": "dispatcher:<HOST>:<PID>", "command": "<PROJ>/bin/claude -p 'Read CLAUDE.md, then execute cc_tasks/t2.md. Glob and read all sibling t2_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified.' --permission-mode bypassPermissions", "criteria": {"c1": {"file_exists": true, "git_tracked": true, "ok": true, "source_file": "cc_tasks/t2.md", "state": "proposed"}, "c2": {"ok": true, "predecessors": 0, "unsatisfied": []}, "c3": {"addenda": [], "ok": true, "superseding": null}, "c4": {"band_ref": "controls.yaml#spend.daily_tokens", "declared_tokens": 0, "ok": true, "spend_header": "zero model calls. **Network:** none.", "standing_band": <HEX-10>}, "c5": {"network_allowlist": [], "network_header": "none.", "network_kind": "none", "ok": true}, "c6": {"in_progress_claim": null, "lease_holder": "dispatcher:<HOST>:<PID>", "lease_task": null, "ok": true}, "c7": {"branch": "main", "configured_branch": "main", "dirty": false, "dirty_count": 0, "dirty_paths": [], "ok": true}, "c8": {"enabled": true, "ok": true, "stop_file": ".seldon/DISPATCH_STOP", "stop_file_present": false}, "c9": {"framework_layer": "\u00a72.2 Tier M", "ok": true}}, "framework_layer": "\u00a72.2 Tier M", "launched_at": "<TS>", "log_path": "logs/dispatch/t2.log", "network_allowlist": [], "permission_mode": "bypassPermissions", "source_file": "cc_tasks/t2.md", "task_id": "<UUID-5>", "transitions": ["proposed -> accepted", "accepted -> in_progress"]}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-20>", "event_type": "dispatch_finished", "payload": {"child_session_id": "<UUID-19>", "exit_code": 1, "graph_state_observed": "in_progress", "log_path": "logs/dispatch/t2.log", "ok": false, "result_path": "cc_tasks/t2_RESULT.md", "result_present": false, "task_id": "<UUID-5>", "wall_clock_s": <WALL>}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-21>", "event_type": "artifact_state_changed", "payload": {"artifact_id": "<UUID-5>", "artifact_type": "ResearchTask", "from_state": "in_progress", "to_state": "blocked"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "desktop", "authority": "accepted", "event_id": "<UUID-22>", "event_type": "artifact_created", "payload": {"artifact_id": "<UUID-23>", "artifact_type": "ResearchTask", "from_state": null, "properties": {"created_at": "<TS>", "description": "stub task t3", "name": "t3", "source_file": "cc_tasks/t3.md"}, "to_state": "proposed"}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+{"actor": "dispatcher", "authority": "accepted", "event_id": "<UUID-24>", "event_type": "dispatch_refused", "payload": {"acquired_at": "<TS>", "holder": "dispatcher:<HOST>:<PID>", "reason": "lease_held", "task_id": null, "task_in_flight": null}, "session_id": "<UUID-8>", "timestamp": "<TS>"}
+## log t1.log
+=== <TS> | dispatch | <PROJ>/bin/claude -p 'Read CLAUDE.md, then execute cc_tasks/t1.md. Glob and read all sibling t1_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified.' --permission-mode bypassPermissions
+stub cc: -p Read CLAUDE.md, then execute cc_tasks/t1.md. Glob and read all sibling t1_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified. --permission-mode bypassPermissions
+stub cwd: primary
+
+EXIT=0
+
+## log t2.log
+=== <TS> | dispatch | <PROJ>/bin/claude -p 'Read CLAUDE.md, then execute cc_tasks/t2.md. Glob and read all sibling t2_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified.' --permission-mode bypassPermissions
+stub cc: -p Read CLAUDE.md, then execute cc_tasks/t2.md. Glob and read all sibling t2_ADDENDUM*.md files before starting; an addendum can amend or SUPERSEDE the base task. This session is headless: there is no next turn and ending it ends the process. Poll every detached command to its EXIT line inside this turn; never use background-task mode or wait to be notified. --permission-mode bypassPermissions
+stub cwd: primary
+
+EXIT=1
+
+## git log main
+record: artifact_created <HEX-8> — 1 line(s) written by the standing dispatcher
+record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by the standing dispatcher
+record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by the standing dispatcher
+record: dispatch_finished <HEX-1> — 1 line(s) written by the standing dispatcher
+t1: result
+record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by the standing dispatcher
+record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by the standing dispatcher
+task t3
+task t2
+task t1
+init
+
+## git status
+ M seldon_events.jsonl
+?? notes.txt
+
+## graph
+t1 completed
+t2 blocked
+t3 proposed

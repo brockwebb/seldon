@@ -1,0 +1,28 @@
+seq: 205
+event: accept
+id: seldon:AD-034-R1
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 decision 1 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: Independence is declared per task, by resource, and the scheduler never infers it.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 29
+  - 29
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R1. Independence is declared per task, by resource, and the scheduler never infers it.** A task file may carry `**Exclusive:** yes|no` (absent means yes) and `**Touches:** <item>, ...`, where an item is a resource named under `dispatch.resources` in seldon.yaml or a repository-relative path glob, or `none`. A bare word must be a configured resource name, so a typo refuses instead of silently overlapping nothing. `Exclusive: no` requires `Touches`. A declaration that does not parse fails criterion c10 as `concurrency_undeclared`, with the grammar quoted, in serial mode as well as parallel. A header counts only at the start of a line, so a task that quotes the grammar in prose declares nothing. A task with neither header gets no c10 and behaves exactly as before.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R1
+consumer:
+- seldon/core/dispatch.py
+- tests/test_dispatch_concurrency.py
+written_by: seldon decision 0.1.0
+prev_hash: 858f099af934c62b8de8854964a7e9eff0f461abb72c29107897e8ba51a9d885
+record_hash: a2c6a4030624d7a44d60b40abda6cfb58e537ef3741a3916bbd947b9dfa87346

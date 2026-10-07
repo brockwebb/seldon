@@ -790,6 +790,17 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
             # sight will reap a real one without looking.
             released = (lease or {}).get("released_at")
             lines.append("**Lease:** free" + (f" (last released {released})" if released else ""))
+        # SEL-004 (AD-034): one lease per worktree task. Only HELD ones are listed; a released
+        # worktree lease is a finished task, and the finish is on the log.
+        for wl in D.worktree_leases(root, cfg):
+            if not wl["held"]:
+                continue
+            b = wl["body"]
+            lines.append(
+                f"**Worktree:** {wl['stem']} {b.get('worktree')} on {b.get('branch')}, "
+                f"supervisor {b.get('holder')} ("
+                + ("alive" if wl["alive"]
+                   else f"GONE — `seldon dispatch lease reap --task {wl['stem']}`") + ")")
 
         # One row per task the dispatcher has finished, newest last, with the three facts the
         # finish check turned on: exit code, RESULT present, and the state the graph showed.

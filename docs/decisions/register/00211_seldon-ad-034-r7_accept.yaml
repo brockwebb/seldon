@@ -1,0 +1,30 @@
+seq: 211
+event: accept
+id: seldon:AD-034-R7
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: Append-only files merge by union, and the merged content is checked before main moves.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 41
+  - 41
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R7. Append-only files merge by union, and the merged content is checked before main moves.** `.gitattributes` marks them `merge=union`, and that attribute is the only list: the files git merges by union are the files the check reads. Each line the merge added (lines already on main are not the task''s) must parse as a JSON object, and its `dispatch.union_unique_key` (default `event_id`) must not repeat a key already in the file; a failure is `merge_blocked` with reason `union_invalid`.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R7
+consumer:
+- seldon/core/worktree.py
+- .gitattributes
+- tests/test_dispatch_parallel.py
+- tests/test_worktree_shared_state.py
+written_by: seldon decision 0.1.0
+prev_hash: 87d6281443ef2451511719271ed6fa2fbdbd26923565a803ce70e32f87289130
+record_hash: ddd36e446f086273ea4e1599ac057ed5b6ce6d93b08812ef80528c45c6aba404

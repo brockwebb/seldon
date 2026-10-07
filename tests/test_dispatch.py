@@ -487,6 +487,26 @@ def test_fifo_is_the_only_ordering(project):
     assert [r["task_id"] for r in D.fifo(rows)] == ["a", "b", "c"]
 
 
+def test_fifo_orders_evaluated_rows_by_created_at_not_by_task_id(project):
+    """The test above hands `fifo` rows that carry `created_at`; `evaluate`'s rows never did,
+    so the real pass sorted by `("", task_id)`, a random uuid order (found by SEL-004's
+    recorded transcript flipping between runs). The ordering is only real if it survives
+    `evaluate`."""
+    early = _task_file(project, "early")
+    late = _task_file(project, "late")
+    _commit(project)
+    cfg = D.load_dispatch_config(project)
+    band = D.resolve_standing_band(project, cfg["standing_band_ref"])
+    tree = D.tree_state(project)
+    rows = [D.evaluate(project, _row(project, late, artifact_id="0" * 8,
+                                     created_at="2026-09-15T02:00:00Z"),
+                       cfg, band, tree, None, {}),
+            D.evaluate(project, _row(project, early, artifact_id="f" * 8,
+                                     created_at="2026-09-15T01:00:00Z"),
+                       cfg, band, tree, None, {})]
+    assert [r["name"] for r in D.fifo(rows)] == ["early", "late"]
+
+
 # ================================================================================ the lease
 
 def test_a_second_instance_cannot_take_the_lease(project):
@@ -738,3 +758,18 @@ def test_a_lease_whose_holder_died_is_still_reaped(project):
     out = D.reap_lease(path)
     assert out["reaped"] is True and out["reason"] == "holder_gone"
     assert not path.exists()
+
+
+def test_a_serial_task_carrying_a_malformed_concurrency_header_is_refused(project):
+    """SEL-004: a task with neither header gets no c10 (the recorded transcript holds that);
+    a task that carries one has it checked in serial mode too, so a malformed declaration
+    is found when it is written, not when the project opts in to parallel dispatch."""
+    tf = _task_file(project, "bad")
+    tf.write_text(tf.read_text() + "**Exclusive:** perhaps\n", encoding="utf-8")
+    good = _task_file(project, "good")
+    _commit(project)
+    row = _evaluate(project, tf)
+    assert row["eligible"] is False and row["criteria"]["c10"]["ok"] is False
+    assert D.first_refusal_reason(row) == "concurrency_undeclared"
+    assert D.CONCURRENCY_GRAMMAR in row["criteria"]["c10"]["message"]
+    assert "c10" not in _evaluate(project, good)["criteria"]

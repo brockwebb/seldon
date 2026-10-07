@@ -9,6 +9,8 @@ ISSUE_ENUMS = {
         "terminology_inconsistency", "internal_contradiction",
         "missing_content", "stale_content", "structural_flow",
         "style_formatting",
+        # AD-034: a worktree task the parallel dispatcher could not merge onto main.
+        "merge_blocked",
     ],
     "importance": ["high", "medium", "low"],
     "urgency": ["high", "medium", "low"],

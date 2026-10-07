@@ -1,0 +1,29 @@
+seq: 213
+event: accept
+id: seldon:AD-034-R9
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: A worktree task whose supervisor is gone is blocked by the next pass, and its worktree and lease are kept.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 45
+  - 45
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R9. A worktree task whose supervisor is gone is blocked by the next pass, and its worktree and lease are kept.** The pass reads each per-worktree lease. Once the supervisor has taken its flock, liveness is the flock, which the kernel drops at death and which is immune to PID reuse; before that it is the PID the pass recorded. A dead holder, or a lease released while its task is still `in_progress`, moves the task to `blocked` with `dispatch_finished.outcome` `holder_gone` or `released_unfinished`, terminates the process group the supervisor recorded so an orphaned session stops writing and spending, and notifies. The lease file stays for `seldon dispatch lease reap --task <stem>`, which refuses a live holder; nothing is reaped by age.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R9
+consumer:
+- seldon/commands/dispatch_worktree.py
+- seldon/core/dispatch.py
+- tests/test_dispatch_parallel.py
+written_by: seldon decision 0.1.0
+prev_hash: 13afe1337b79f073dcee5133fabc4440e8a1c24c2cc8e2432d6ba48a3f2a45b4
+record_hash: 8353c9cdbfc030325b9ceb9ba578274d82d4327e7439129ead28a235b12df1a6

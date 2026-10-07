@@ -22,6 +22,7 @@ holder is identified and whose release is never inferred from age alone.
 from __future__ import annotations
 
 import fcntl
+import fnmatch
 import json
 import os
 import re
@@ -194,6 +195,258 @@ def after_ref_is_id(ref: str) -> bool:
     return bool(_AFTER_ID_RE.match(ref))
 
 
+# ------------------------------------------------------- concurrency: Exclusive and Touches
+
+#: The two OPTIONAL concurrency headers (seldon `cc_tasks/2026-10-07_SEL-004_worktree_per_task
+#: _dispatch.md` decision 1, AD-034).
+#:
+#: **What it closes.** ai-readiness-kg DN-013-R3 said "the precedes graph already says which
+#: tasks are independent". It does not: a `precedes` edge records an ordering a Desktop wrote
+#: down, and its absence says nothing about whether two tasks write the same files or the same
+#: database. Independence is therefore DECLARED per task, by resource, and the scheduler never
+#: infers it. Prior art: GitHub Actions `concurrency` groups (the author names the lock key)
+#: and the declared outputs of Make and Bazel (the author names what a step writes).
+#:
+#: `Exclusive` defaults to `yes`: a task with neither header runs alone, exactly as every task
+#: did before this existed.
+HEADER_EXCLUSIVE = "Exclusive"
+HEADER_TOUCHES = "Touches"
+CONCURRENCY_HEADERS = (HEADER_EXCLUSIVE, HEADER_TOUCHES)
+CONCURRENCY_GRAMMAR = (
+    "`**Exclusive:** yes` or `**Exclusive:** no` (absent means yes), and "
+    "`**Touches:** none` or `**Touches:** <item>, <item>, ...` where each item is a resource "
+    "named under `dispatch.resources` in seldon.yaml or a repository-relative path glob "
+    "(fnmatch syntax; a trailing `/` means the whole directory; `./name` for a root file "
+    "whose name has no dot; no absolute paths, no `..`, no whitespace). A task with "
+    "`Exclusive: no` must carry `Touches`")
+_EXCLUSIVE_RE = re.compile(r"^[\s`*_]*(?P<v>yes|no)\b", re.IGNORECASE)
+_TOUCHES_NONE_RE = re.compile(r"^[\s`*_]*none\b", re.IGNORECASE)
+#: A bare word is a resource NAME and must be configured: a typo such as `neo4J` that fell
+#: through to a path glob would silently overlap nothing, which is the one failure a lock
+#: declaration may not have.
+_RESOURCE_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
+_GLOB_CHARS = "*?["
+
+
+#: The concurrency headers must START a line (after optional indentation and a list bullet).
+#: Unlike the three required headers, these are read from every candidate in serial mode as
+#: well, and a task file that quotes the grammar in prose (the SEL-004 task does, inside a
+#: list item and backticks) would otherwise be read as a malformed declaration and refused.
+_CONC_HEADER_RE = {
+    name: re.compile(r"(?m)^[ \t]*(?:[-*][ \t]+)?\*\*" + re.escape(name)
+                     + r"[ \t]*:\*\*[ \t]*(?P<value>[^\n]*)$")
+    for name in CONCURRENCY_HEADERS}
+
+
+def parse_concurrency_headers(text: str) -> dict:
+    """The two optional headers as raw values; `None` where absent."""
+    out = {}
+    for name, pattern in _CONC_HEADER_RE.items():
+        m = pattern.search(text)
+        out[name] = m.group("value").strip() if m else None
+    return out
+
+
+def _touch_item(item: str, resources: dict) -> tuple:
+    """`("resource", name)`, `("path", glob)`, or `("error", message)` for one Touches item."""
+    if not item:
+        return ("error", "empty item")
+    if _RESOURCE_NAME_RE.match(item):
+        if item in resources:
+            return ("resource", item)
+        known = ", ".join(sorted(resources)) or "none configured"
+        return ("error", f"unknown resource {item!r} (configured: {known}; write "
+                         f"`./{item}` for a root path)")
+    path = item[2:] if item.startswith("./") else item
+    parts = path.split("/")
+    if (not path or path.startswith("/") or "\\" in path or any(c.isspace() for c in path)
+            or ".." in parts):
+        return ("error", f"{item!r} is not a repository-relative path glob")
+    return ("path", path)
+
+
+def parse_concurrency(exclusive: str | None, touches: str | None, resources: dict) -> dict:
+    """The concurrency declaration against :data:`CONCURRENCY_GRAMMAR`.
+
+    Returns `{declared, exclusive, resources, paths, error}`. `declared` is False when the
+    task carries neither header, which is the pre-SEL-004 task: exclusive, touching
+    everything. `error` names what failed and quotes the grammar, as the Network header's
+    refusal does.
+    """
+    out = {"declared": exclusive is not None or touches is not None, "exclusive": True,
+           "resources": [], "paths": [], "error": None}
+
+    def fail(msg):
+        return {**out, "error": f"{msg}; expected {CONCURRENCY_GRAMMAR}"}
+
+    if exclusive is not None:
+        m = _EXCLUSIVE_RE.match(exclusive)
+        if not m:
+            return fail(f"Exclusive header {exclusive!r} is not yes or no")
+        out["exclusive"] = m.group("v").lower() == "yes"
+    if touches is None:
+        if not out["exclusive"]:
+            return fail("a non-exclusive task must declare Touches")
+        return out
+    raw = touches.strip()
+    if not raw:
+        return fail("Touches header is empty")
+    if _TOUCHES_NONE_RE.match(raw):
+        return out
+    # A sentence-ending period is prose, as in the Network allowlist and the After header.
+    raw = raw[:-1] if raw.endswith(".") else raw
+    for item in (i.strip().strip("`").strip() for i in raw.split(",")):
+        kind, value = _touch_item(item, resources)
+        if kind == "error":
+            return fail(f"Touches item: {value}")
+        bucket = out["resources"] if kind == "resource" else out["paths"]
+        if value not in bucket:
+            bucket.append(value)
+    return out
+
+
+def _literal_bounds(glob: str) -> tuple:
+    """The literal text before the first wildcard and after the last, and whether any exists."""
+    first = min((glob.index(c) for c in _GLOB_CHARS if c in glob), default=None)
+    if first is None:
+        return glob, glob, False
+    ends = [glob.rindex(c) for c in "*?" if c in glob]
+    if "[" in glob and "]" in glob[glob.index("["):]:
+        ends.append(glob.rindex("]"))
+    return glob[:first], glob[max(ends) + 1:], True
+
+
+def _expand_dir(glob: str) -> list:
+    """A trailing `/` is the whole directory; a literal path may be a file or a directory."""
+    if glob.endswith("/"):
+        return [glob + "**"]
+    if not any(c in glob for c in _GLOB_CHARS):
+        return [glob, glob + "/**"]
+    return [glob]
+
+
+def _pair_may_overlap(a: str, b: str) -> bool:
+    pa, sa, wild_a = _literal_bounds(a)
+    pb, sb, wild_b = _literal_bounds(b)
+    if not wild_a and not wild_b:
+        return a == b
+    # One literal side is decided exactly: the only path it names is itself. fnmatch's `*`
+    # crosses `/`, which is broader than a shell glob, so exact here is still conservative.
+    if not wild_a or not wild_b:
+        literal, wild = (a, b) if not wild_a else (b, a)
+        return fnmatch.fnmatchcase(literal, wild)
+    return ((pa.startswith(pb) or pb.startswith(pa))
+            and (sa.endswith(sb) or sb.endswith(sa)))
+
+
+def globs_may_overlap(a: str, b: str) -> bool:
+    """Can some path match both globs? Sound, deliberately not exact.
+
+    Any path matching an fnmatch glob begins with the glob's literal prefix (the text before
+    its first wildcard) and ends with its literal suffix (the text after its last). A path
+    matching both globs therefore begins with both prefixes, so one is a prefix of the other,
+    and the same holds for the suffixes. When either pair is unrelated the globs are disjoint;
+    otherwise they are treated as overlapping. The error is one-sided: an unnecessary wait,
+    never two writers on one file.
+    """
+    a, b = _normalize_glob(a), _normalize_glob(b)
+    return any(_pair_may_overlap(x, y) for x in _expand_dir(a) for y in _expand_dir(b))
+
+
+def _normalize_glob(glob: str) -> str:
+    """One spelling per path: `//` and `.` segments collapsed, and lower-cased because the
+    default macOS file system is case-insensitive, so `Docs/x` and `docs/x` are one file.
+    Lower-casing can only add overlaps, which is the safe direction. A trailing `/` is kept:
+    it means "the whole directory"."""
+    trailing = glob.endswith("/")
+    parts = [p for p in glob.split("/") if p not in ("", ".")]
+    out = "/".join(parts).lower()
+    return out + "/" if trailing and out else out
+
+
+def _all_paths(conc: dict, resources: dict) -> list:
+    paths = list(conc.get("paths") or [])
+    for name in conc.get("resources") or []:
+        paths += list((resources.get(name) or {}).get("paths") or [])
+    return paths
+
+
+def touches_overlap(a: dict, b: dict, resources: dict) -> list:
+    """What two non-exclusive declarations share: resource names, then `glob ~ glob` pairs.
+
+    A named resource's configured paths take part in the path comparison, so `views` and a
+    raw `site/app.js` collide when `views` names `site/`.
+    """
+    shared = [r for r in a.get("resources") or [] if r in (b.get("resources") or [])]
+    for x in _all_paths(a, resources):
+        for y in _all_paths(b, resources):
+            if globs_may_overlap(x, y):
+                pair = f"{x + '**' if x.endswith('/') else x} ~ {y}"
+                if pair not in shared:
+                    shared.append(pair)
+    return shared
+
+
+def plan_launches(candidates: list, running: list, max_parallel: int, resources: dict) -> dict:
+    """Which of the otherwise-eligible candidates launch this pass, and why the rest wait.
+
+    Args:
+        candidates: `{task_id, concurrency}` rows in FIFO order (decision 9), each eligible
+            on every criterion except concurrency.
+        running: `{task_id, concurrency}` for every task a dispatcher claim holds.
+        max_parallel: `dispatch.max_parallel`.
+        resources: `dispatch.resources`.
+
+    Returns:
+        `{"launch": [task_id, ...], "deferred": {task_id: {reason, with, overlap}}}`.
+        `reason` is `exclusive_waits` (an exclusive task waiting for others to finish),
+        `exclusive` (something exclusive holds or is waiting for everything), `overlap`
+        (shared Touches) or `max_parallel`.
+
+    **Waiting tasks hold their resources.** A candidate deferred for any reason reserves what
+    it declared, so a later candidate that overlaps it cannot overtake it when a slot frees:
+    FIFO per resource, the way GitHub Actions queues a concurrency group. A waiting EXCLUSIVE
+    candidate reserves everything, so later candidates wait behind it rather than starve it:
+    writer preference, the second readers-writers problem (Courtois, Heymans and Parnas,
+    CACM 1971).
+    """
+    held = [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in running]
+    slots = max_parallel - len(running)
+    launch, deferred = [], {}
+    for cand in candidates:
+        c = cand["concurrency"]
+        if c["exclusive"]:
+            if held:
+                deferred[cand["task_id"]] = {"reason": "exclusive_waits",
+                                             "with": [h["task_id"] for h in held],
+                                             "overlap": []}
+            elif slots > 0:
+                launch.append(cand["task_id"])
+                slots -= 1
+            held.append(cand)
+            continue
+        excl = [h["task_id"] for h in held if h["concurrency"]["exclusive"]]
+        if excl:
+            deferred[cand["task_id"]] = {"reason": "exclusive", "with": excl, "overlap": []}
+        else:
+            hits = [(h["task_id"], touches_overlap(h["concurrency"], c, resources))
+                    for h in held]
+            hits = [(tid, ov) for tid, ov in hits if ov]
+            if hits:
+                deferred[cand["task_id"]] = {
+                    "reason": "overlap", "with": [tid for tid, _ in hits],
+                    "overlap": list(dict.fromkeys(o for _, ov in hits for o in ov))}
+            elif slots <= 0:
+                deferred[cand["task_id"]] = {"reason": "max_parallel",
+                                             "with": [r["task_id"] for r in running]
+                                             + launch, "overlap": []}
+            else:
+                launch.append(cand["task_id"])
+                slots -= 1
+        held.append(cand)
+    return {"launch": launch, "deferred": deferred}
+
+
 #: Predecessor states that let a successor run (DN-006 decision 2, c2). `blocked` and `rejected`
 #: are deliberately absent: a successor whose predecessor is blocked is a successor whose
 #: premise nobody has checked.
@@ -244,7 +497,10 @@ NOTIFY_TIMEOUT_S_DEFAULT = 30
 
 #: Refusal reasons. A closed set, so `status` and the log speak one vocabulary.
 REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_band",
-                   "network_undeclared", "api_key_present", "claim_failed")
+                   "network_undeclared", "api_key_present", "claim_failed",
+                   # SEL-004: a Exclusive/Touches declaration that does not parse (c10), and a
+                   # task whose worktree path or branch is already taken (c11).
+                   "concurrency_undeclared", "worktree_unavailable")
 
 #: DD-007. The subscription-OAuth gate, the same one `kg/extraction/model_stub.py` enforces at
 #: its own choke point: an inherited API key means a dispatched session would spend against a
@@ -305,7 +561,106 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.stuck_after_passes must be a positive whole number of passes, got "
             f"{stuck!r}")
     block["stuck_after_passes"] = stuck
+    _load_parallel_config(block)
     return block
+
+
+#: `dispatch.max_parallel` when absent: one task at a time, the pre-SEL-004 dispatcher, which
+#: `tests/test_dispatch_serial_transcript.py` holds byte for byte. Nothing changes in any
+#: project until it opts in.
+MAX_PARALLEL_DEFAULT = 1
+
+#: The parallel mode's keys and their defaults (SEL-004, AD-034). Read only when
+#: `max_parallel > 1`, and filled in then so `status` shows the values in force.
+PARALLEL_DEFAULTS = {
+    # Where task worktrees live, under the primary checkout; gitignored.
+    "worktree_dir": ".worktrees",
+    # The branch each task's worktree is created on: `<prefix><task stem>`.
+    "branch_prefix": "task/",
+    # One lease per worktree (decision 2): `<lease_dir>/<stem>.lock`, holder = supervisor.
+    "lease_dir": ".seldon/leases",
+    # Named resources a Touches header may use: name -> {paths: [globs], description}.
+    "resources": {},
+    # Files a worktree session writes in the PRIMARY checkout (decision 5): the pass commits
+    # their appended lines under the file's own flock and c7 does not count them as dirt.
+    "shared_paths": [],
+    # Gitignored files a session needs, symlinked from the primary checkout into each
+    # worktree (a worktree carries no gitignored file; `.env` is the usual one).
+    "worktree_links": [],
+    # Rebase-gate-merge rounds before a task whose main keeps moving is merge_blocked.
+    # **No measured basis**: three is the declared starting value.
+    "merge_attempts": 3,
+    # How long a finishing supervisor waits for the pass lease before it gives up and leaves
+    # the task for the stale-lease path. **No measured basis**; a pass is seconds long.
+    "merge_lock_timeout_s": 600,
+    # The re-gate's wall-clock ceiling. **No measured basis**: ai-readiness-kg's full suite
+    # took 42 minutes on 2026-10-06 (DN-013 §2), and an hour leaves room for it.
+    "gate_timeout_s": 3600,
+    # The field that must be unique across every line of a `merge=union` file (decision 4).
+    "union_unique_key": "event_id",
+}
+
+
+def _relative_glob_list(block: dict, key: str) -> list:
+    value = block.get(key, PARALLEL_DEFAULTS[key])
+    if not isinstance(value, list) or not all(isinstance(v, str) and v for v in value):
+        raise DispatchConfigError(f"dispatch.{key} must be a list of non-empty strings, got "
+                                  f"{value!r}")
+    for v in value:
+        if v.startswith("/") or ".." in v.split("/"):
+            raise DispatchConfigError(f"dispatch.{key} entry {v!r} is not repository-relative")
+    return value
+
+
+def _load_parallel_config(block: dict) -> None:
+    """Validate `max_parallel` always, and the parallel keys when it is above one.
+
+    A parallel config that cannot be honoured refuses at load, never at the first merge: the
+    re-gate needs a `gate_command` (decision 3), and a resource with no readable paths would
+    be a lock that collides with nothing.
+    """
+    n = block.get("max_parallel", MAX_PARALLEL_DEFAULT)
+    if isinstance(n, bool) or not isinstance(n, int) or n < 1:
+        raise DispatchConfigError(f"dispatch.max_parallel must be a positive whole number, got "
+                                  f"{n!r}")
+    block["max_parallel"] = n
+    resources = block.get("resources", PARALLEL_DEFAULTS["resources"])
+    if not isinstance(resources, dict):
+        raise DispatchConfigError(f"dispatch.resources must be a mapping, got {resources!r}")
+    for name, spec in resources.items():
+        if not isinstance(name, str) or not _RESOURCE_NAME_RE.match(name):
+            raise DispatchConfigError(f"dispatch.resources name {name!r} must be a bare word "
+                                      f"({_RESOURCE_NAME_RE.pattern})")
+        paths = (spec or {}).get("paths", []) if isinstance(spec, dict) else None
+        if not isinstance(paths, list) or not all(isinstance(p, str) and p for p in paths):
+            raise DispatchConfigError(f"dispatch.resources.{name} must be a mapping with a "
+                                      f"`paths` list of globs, got {spec!r}")
+    block["resources"] = resources
+    if n == 1:
+        return
+    gate = block.get("gate_command")
+    if not isinstance(gate, str) or not gate.strip():
+        raise DispatchConfigError(
+            "dispatch.max_parallel > 1 requires dispatch.gate_command: the re-gate after a "
+            "rebase (SEL-004 decision 3) has nothing to run otherwise, and a merge that cannot "
+            "be re-gated would be a merge on faith")
+    for key, default in PARALLEL_DEFAULTS.items():
+        if key in ("shared_paths", "worktree_links"):
+            block[key] = _relative_glob_list(block, key)
+        elif key == "resources":
+            continue
+        elif isinstance(default, int):
+            v = block.get(key, default)
+            if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+                raise DispatchConfigError(f"dispatch.{key} must be a positive whole number, "
+                                          f"got {v!r}")
+            block[key] = v
+        else:
+            v = block.get(key, default)
+            if not isinstance(v, str) or not v:
+                raise DispatchConfigError(f"dispatch.{key} must be a non-empty string, got "
+                                          f"{v!r}")
+            block[key] = v
 
 
 def resolve_standing_band(project_dir: Path, ref: str) -> int:
@@ -461,7 +816,7 @@ def git(project_dir: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=project_dir, capture_output=True, text=True)
 
 
-def tree_state(project_dir: Path) -> dict:
+def tree_state(project_dir: Path, exclude=()) -> dict:
     """`{branch, dirty, dirty_paths}` — c7's raw material, recorded as values.
 
     DN-006 decision 2 asks every criterion to be recorded as a value rather than a boolean
@@ -477,6 +832,10 @@ def tree_state(project_dir: Path) -> dict:
     # diagnostic list is one no amount of staring at the code finds.
     porcelain = git(project_dir, "status", "--porcelain").stdout
     paths = [ln[3:] for ln in porcelain.split("\n") if ln.strip()]
+    # SEL-004 decision 5: a shared append-only file (a spend ledger) that worktree sessions
+    # append to in the PRIMARY checkout is not dirt the pass waits on; the pass commits it.
+    if exclude:
+        paths = [p for p in paths if p not in set(exclude)]
     return {"branch": branch, "dirty": bool(paths), "dirty_paths": paths[:20],
             "dirty_count": len(paths)}
 
@@ -799,9 +1158,14 @@ class Lease:
     at runner grain, and that one cost 22.0M tokens against a 12M ceiling.
     """
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, extra: dict | None = None):
         self.path = path
         self._fh = None
+        #: Fields every body this lease writes carries, including the release record. A
+        #: per-worktree lease (SEL-004 decision 2) keeps its task, worktree and branch here so
+        #: a released or orphaned lease still says which task it was; the global lease has
+        #: none, and its bodies are byte-for-byte what they were before.
+        self.extra = dict(extra or {})
 
     def __enter__(self) -> "Lease":
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -814,7 +1178,7 @@ class Lease:
             raise LeaseHeld(read_lease(self.path)) from exc
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         self.write({"holder": holder_id(), "pid": os.getpid(), "acquired_at": now,
-                    "heartbeat_at": now, "task": None})
+                    "heartbeat_at": now, "task": None, **self.extra})
         return self
 
     def write(self, body: dict) -> None:
@@ -848,11 +1212,97 @@ class Lease:
                         "last_holder": body.get("holder"),
                         "acquired_at": body.get("acquired_at"),
                         "released_at": datetime.now(timezone.utc).isoformat()
-                        .replace("+00:00", "Z")})
+                        .replace("+00:00", "Z"), **self.extra})
             fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
             self._fh.close()
             self._fh = None
         return False
+
+
+def acquire_waiting(path: Path, timeout_s: float, poll_s: float = 0.5,
+                    extra: dict | None = None) -> "Lease":
+    """Take a lease, waiting up to `timeout_s` for its holder to release it.
+
+    For the worktree supervisor's finish (SEL-004 decision 3): the merge into main, the events
+    and the commits must not interleave with a pass's, and a pass lasts seconds, so the
+    supervisor waits for the pass rather than refusing. A pass never waits; it still exits on
+    `LeaseHeld`, as decision 6 has it.
+
+    Raises:
+        LeaseHeld: the lease was still held when `timeout_s` ran out.
+    """
+    import time
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            return Lease(path, extra=extra).__enter__()
+        except LeaseHeld:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(poll_s)
+
+
+def worktree_lease_path(project_dir: Path, cfg: dict, stem: str) -> Path:
+    """`<lease_dir>/<stem>.lock`: one lease per worktree (SEL-004 decision 2)."""
+    return Path(project_dir) / cfg.get("lease_dir", ".seldon/leases") / f"{stem}.lock"
+
+
+def flock_held(path: Path) -> bool:
+    """Does some process hold the flock on `path`? Probed with LOCK_NB and released at once.
+
+    The kernel drops a flock when its holder dies, so for a holder known to have taken it this
+    is an exact liveness test, immune to the PID reuse a `kill(pid, 0)` probe is not.
+    """
+    if not Path(path).is_file():
+        return False
+    with Path(path).open("a+", encoding="utf-8") as fh:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return True
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        return False
+
+
+def worktree_holder_alive(path: Path, body: dict) -> bool:
+    """A worktree lease's holder is alive (SEL-004, AD-034-R9).
+
+    Once the supervisor has recorded `supervising: true` it holds the flock for its whole
+    life, so the flock decides. Before that (the moment between the pass starting it and its
+    taking the flock) the PID recorded by the pass is all there is; DD-022's rule applies.
+    """
+    if body.get("holder") is None:
+        return False
+    if body.get("supervising"):
+        return flock_held(path)
+    pid = body.get("pid")
+    return isinstance(pid, int) and pid_alive(pid)
+
+
+def worktree_leases(project_dir: Path, cfg: dict) -> list:
+    """Every per-worktree lease body on disk, with its path, for `status`, `go` and reap."""
+    d = Path(project_dir) / cfg.get("lease_dir", ".seldon/leases")
+    out = []
+    for path in sorted(d.glob("*.lock")) if d.is_dir() else []:
+        body = read_lease(path)
+        out.append({"path": str(path.relative_to(project_dir)), "stem": path.stem,
+                    "body": body, "held": body.get("holder") is not None,
+                    "alive": worktree_holder_alive(path, body)})
+    return out
+
+
+def worktree_state(project_dir: Path, cfg: dict, stem: str) -> dict:
+    """c11's raw material: is this task's worktree path and branch free, and is the worktree
+    directory ignored so a worktree inside the checkout is not c7's dirt."""
+    wt_rel = f"{cfg.get('worktree_dir', '.worktrees')}/{stem}"
+    branch = f"{cfg.get('branch_prefix', 'task/')}{stem}"
+    exists = (Path(project_dir) / wt_rel).exists()
+    branch_exists = git(project_dir, "rev-parse", "--verify", "--quiet",
+                        f"refs/heads/{branch}").returncode == 0
+    ignored = git(project_dir, "check-ignore", "-q", "--", wt_rel).returncode == 0
+    return {"worktree": wt_rel, "exists": exists, "branch": branch,
+            "branch_exists": branch_exists, "ignored": ignored,
+            "ok": ignored and not exists and not branch_exists}
 
 
 def read_lease(path: Path) -> dict:
@@ -892,7 +1342,7 @@ def reap_lease(path: Path) -> dict:
 # ------------------------------------------------------------------------------- evaluation
 
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
-             claim_in_flight: dict | None, lease_body: dict) -> dict:
+             claim_in_flight: dict | None, lease_body: dict, running=None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -903,8 +1353,11 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     task_file = project_dir / source if source else None
     cand = candidacy(task_file) if task_file else {"candidate": False,
                                                    "reason": "no_source_file", "headers": {}}
+    # `created_at` is carried through because `fifo` sorts on it (decision 9). It was dropped
+    # here until SEL-004, so every pass sorted by `("", task_id)`: a random uuid order.
     out = {"task_id": task.get("artifact_id"), "name": task.get("name"),
            "state": task.get("state"), "source_file": source,
+           "created_at": task.get("created_at"),
            "candidate": cand["candidate"], "not_a_candidate_reason": cand["reason"],
            "framework_layer": cand["headers"].get(HEADER_LAYER)}
     if not cand["candidate"]:
@@ -955,6 +1408,31 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     #: documents is worse than a table with a ninth row.
     c["c9"] = {"framework_layer": headers[HEADER_LAYER], "ok": True}
 
+    # SEL-004 (AD-034). Nothing below changes a serial pass for a task with neither header:
+    # c6 keeps its meaning, and c10 and c11 are absent, so the criteria vector is the one the
+    # recorded transcript holds.
+    parallel = cfg.get("max_parallel", MAX_PARALLEL_DEFAULT) > 1
+    raw = parse_concurrency_headers(task_file.read_text(encoding="utf-8",
+                                                        errors="surrogateescape"))
+    conc = parse_concurrency(raw[HEADER_EXCLUSIVE], raw[HEADER_TOUCHES],
+                             cfg.get("resources") or {})
+    out["concurrency"] = conc
+    if parallel:
+        # c6 in parallel mode: no claim in flight IN THIS CHECKOUT (an exclusive task runs
+        # here); claims in worktrees are the running set, and whether this task may run beside
+        # them is decided by `plan_launches`, which updates this criterion.
+        c["c6"] = {"in_place_claim": claim_in_flight, "running": list(running or []),
+                   "max_parallel": cfg["max_parallel"],
+                   "lease_holder": lease_body.get("holder"), "ok": claim_in_flight is None}
+    if conc["declared"] or parallel:
+        c["c10"] = {"declared": conc["declared"], "exclusive": conc["exclusive"],
+                    "resources": conc["resources"], "paths": conc["paths"],
+                    "ok": conc["error"] is None}
+        if conc["error"]:
+            c["c10"]["message"] = conc["error"]
+    if parallel and conc["error"] is None and not conc["exclusive"]:
+        c["c11"] = worktree_state(project_dir, cfg, Path(source).stem)
+
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
     out["failed"] = [k for k, v in c.items() if not v["ok"]]
@@ -975,6 +1453,10 @@ def first_refusal_reason(row: dict) -> str | None:
         return "above_band"
     if not c.get("c5", {}).get("ok", True):
         return "network_undeclared"
+    if not c.get("c10", {}).get("ok", True):
+        return "concurrency_undeclared"
+    if not c.get("c11", {}).get("ok", True):
+        return "worktree_unavailable"
     return None
 
 

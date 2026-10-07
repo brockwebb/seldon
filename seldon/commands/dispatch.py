@@ -9,6 +9,11 @@ the rule that the dispatcher commits and pushes every line it writes to the trac
     seldon dispatch status      the live criteria vector for every candidate
     seldon dispatch lease reap  operator-only; refuses while the holder PID is alive
 
+With `dispatch.max_parallel > 1` (SEL-004, AD-034; `seldon.commands.dispatch_worktree`) a pass
+may launch several non-exclusive tasks, each in its own git worktree under a detached
+supervisor (`seldon dispatch supervise`, hidden) that merges it on green. At the default of 1
+nothing here changes, and `tests/test_dispatch_serial_transcript.py` holds that byte for byte.
+
 **There is no daemon.** launchd is the loop and `once` is the pass, which is the pattern
 `scripts/jobs/biblio_resume_job.py` already runs under in the project this was built for. A
 daemon would add a process to supervise and would not make anything happen sooner than the
@@ -150,13 +155,31 @@ def _claim_in_flight(driver, database) -> dict | None:
     return None
 
 
+def _claims_in_flight(driver, database) -> list:
+    """Every task a dispatcher claim holds `in_progress`, with its source file. SEL-004: in
+    parallel mode several are in flight at once, one per worktree."""
+    q = ("MATCH (t:ResearchTask {state: 'in_progress'}) "
+         "WHERE t.claimed_by STARTS WITH 'dispatcher:' "
+         "RETURN t.artifact_id AS artifact_id, t.claimed_by AS claimed_by, "
+         "       t.claimed_at AS claimed_at, t.source_file AS source_file, t.name AS name "
+         "ORDER BY t.claimed_at")
+    with driver.session(database=database) as s:
+        return [dict(r) for r in s.run(q)]
+
+
 def _survey(project_dir, config, driver, database):
     """Everything a pass needs to decide, gathered once. Shared by `once` and `status` so the
     two can never disagree about what the criteria said."""
     cfg = D.load_dispatch_config(project_dir, config)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
-    tree = D.tree_state(project_dir)
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
+    if cfg["max_parallel"] > 1:
+        # SEL-004: the parallel pass's own survey, plan included, so `status` shows why a
+        # task waits beside the running ones exactly as the next pass would decide it.
+        from seldon.commands import dispatch_worktree as W
+        survey = W.survey(project_dir, cfg, driver, database, band, lease_body)
+        return cfg, band, survey["tree"], lease_body, survey["claim"], survey["rows"]
+    tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
     rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body)
             for t in _tasks(driver, database)]
@@ -289,6 +312,8 @@ def dispatch_status(as_json):
                "candidates": sum(1 for r in rows if r["candidate"]),
                "eligible": [r["task_id"] for r in rows if r["eligible"]],
                "cadence": cadence_rows,
+               "max_parallel": cfg["max_parallel"],
+               "worktree_leases": D.worktree_leases(project_dir, cfg),
                "tasks": rows}
     if as_json:
         click.echo(json.dumps(payload, indent=1, default=str))
@@ -304,6 +329,16 @@ def dispatch_status(as_json):
                + (f" (released {lease_body['released_at']})"
                   if not held and (lease_body or {}).get("released_at") else ""))
     click.echo(f"  claim        : {claim['artifact_id'][:8] + ' by ' + claim['claimed_by'] if claim else 'none'}")
+    if cfg["max_parallel"] > 1:
+        click.echo(f"  max_parallel : {cfg['max_parallel']}  (worktrees under "
+                   f"{cfg['worktree_dir']}/, gate: {cfg['gate_command']})")
+    for wl in payload["worktree_leases"]:
+        b = wl["body"]
+        held = (f"{b.get('holder')} ({'alive' if wl['alive'] else 'GONE — `seldon dispatch '}"
+                f"{'' if wl['alive'] else 'lease reap --task ' + wl['stem'] + '`'})"
+                if wl["held"] else f"released {b.get('released_at')}")
+        click.echo(f"  worktree     : {wl['stem']}  {b.get('worktree')} on {b.get('branch')}  "
+                   f"lease {held}")
     click.echo(f"  open tasks   : {len(rows)}  candidates: {payload['candidates']}  "
                f"eligible: {len(payload['eligible'])}")
     for cr in cadence_rows:
@@ -334,7 +369,8 @@ def dispatch_status(as_json):
 @click.option("--dry-run", is_flag=True,
               help="evaluate and report the chosen task; claim nothing and launch nothing")
 def dispatch_once(dry_run):
-    """One evaluation pass: at most one launch, then exit.
+    """One evaluation pass: at most one launch, then exit (up to max_parallel worktree
+    launches when `dispatch.max_parallel > 1`).
 
     Exit code is 0 in every ordinary outcome, including "nothing eligible", "lease held",
     "disabled" and "STOP file present" — the same contract the burn's cap exhaustion has, so
@@ -697,6 +733,13 @@ def _commit_registration_records(project_dir, store) -> dict | None:
 
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
+    if cfg["max_parallel"] > 1:
+        # SEL-004 (AD-034): worktree per task. Opt-in; at the default of 1 the code below is
+        # the pass, unchanged, and `tests/test_dispatch_serial_transcript.py` holds it to the
+        # recorded transcript of the pre-SEL-004 dispatcher.
+        from seldon.commands import dispatch_worktree as W
+        return W.pass_parallel(project_dir, config, driver, database, domain_config,
+                               session_id, cfg, lease, dry_run)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     claim = _claim_in_flight(driver, database)
     # The dispatcher's own leftovers FIRST, before anything reads the tree: lines an earlier
@@ -749,18 +792,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # own site above.
         click.echo(f"nothing eligible ({len(rows)} open, "
                    f"{sum(1 for r in rows if r['candidate'])} candidate(s))")
-        for r in rows:
-            reason = D.first_refusal_reason(r) if r["candidate"] else None
-            if reason:
-                click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
-                           f"{','.join(r['failed'])}  {r['source_file']}")
-                if reason == "network_undeclared":
-                    click.echo(f"      {r['criteria']['c5'].get('message', '')}")
-                if reason == "dirty_tree":
-                    # ADDENDUM_01 decision 6b: name the DIRT, not only the task. The task file
-                    # is not why c7 failed and printing only it sent seven hours of log lines
-                    # pointing at the wrong file.
-                    click.echo(f"      dirty: {', '.join(_dirty_paths(tree)) or '(branch)'}")
+        _echo_refusals(rows, tree)
         # Decision 2's retry: whatever this pass or an earlier one committed and could not
         # push is pushed now. A no-op when the branch is level with its upstream.
         if not dry_run and claim is None:
@@ -773,7 +805,18 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                                "source_file": chosen["source_file"],
                                "criteria": chosen["criteria"]}, indent=1, default=str))
         return
+    _launch_inplace(project_dir, config, driver, database, domain_config, session_id, cfg,
+                    lease, chosen)
 
+
+def _launch_inplace(project_dir, config, driver, database, domain_config, session_id, cfg,
+                    lease, chosen):
+    """Claim, launch in the project root, wait, finish: DN-006 decisions 4 and 5.
+
+    The whole of a serial pass's launch, and, under `max_parallel > 1`, the launch of an
+    EXCLUSIVE task, which runs alone in the primary checkout with the pass lease held for its
+    whole run, exactly as every task ran before SEL-004 (AD-034).
+    """
     rel = chosen["source_file"]
     stem = Path(rel).stem
     log_dir = project_dir / cfg["log_dir"]
@@ -850,6 +893,27 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
 STUCK_DIRTY_PATHS_SHOWN = 10
 
 
+def _echo_refusals(rows: list, tree: dict) -> None:
+    """One line per refused candidate, with the evidence an operator acts on. Shared by the
+    serial pass and the parallel one (SEL-004), so both logs read the same."""
+    for r in rows:
+        reason = D.first_refusal_reason(r) if r["candidate"] else None
+        if reason:
+            click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
+                       f"{','.join(r['failed'])}  {r['source_file']}")
+            if reason == "network_undeclared":
+                click.echo(f"      {r['criteria']['c5'].get('message', '')}")
+            if reason == "concurrency_undeclared":
+                click.echo(f"      {r['criteria']['c10'].get('message', '')}")
+            if reason == "worktree_unavailable":
+                click.echo(f"      {json.dumps(r['criteria']['c11'])}")
+            if reason == "dirty_tree":
+                # ADDENDUM_01 decision 6b: name the DIRT, not only the task. The task file
+                # is not why c7 failed and printing only it sent seven hours of log lines
+                # pointing at the wrong file.
+                click.echo(f"      dirty: {', '.join(_dirty_paths(tree)) or '(branch)'}")
+
+
 def _dirty_paths(tree: dict) -> list:
     paths = list(tree.get("dirty_paths") or [])[:STUCK_DIRTY_PATHS_SHOWN]
     extra = tree.get("dirty_count", len(paths)) - len(paths)
@@ -916,7 +980,8 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
     return alarms
 
 
-def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
+def _notify(project_dir, session_id, cfg, finish: dict, task_name: str,
+            outcome: str | None = None) -> None:
     """Run `dispatch.notify`, the operator's finish signal, once per finished task.
 
     `ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md` decision 1. Prior art: cron's
@@ -937,12 +1002,12 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str) -> None:
         "SELDON_NOTIFY_TASK_NAME": str(task_name),
         "SELDON_NOTIFY_OK": "true" if finish["ok"] else "false",
         # The word a notification body wants, so a template needs no shell conditional.
-        "SELDON_NOTIFY_OUTCOME": "ok" if finish["ok"] else "blocked",
+        "SELDON_NOTIFY_OUTCOME": outcome or ("ok" if finish["ok"] else "blocked"),
         "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
         "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
         "SELDON_NOTIFY_WALL_SECONDS": str(finish["wall_clock_s"]),
     }, task_id=finish["task_id"],
-        label="ok" if finish["ok"] else "blocked")
+        label=outcome or ("ok" if finish["ok"] else "blocked"))
 
 
 def _run_notifier(project_dir, session_id, cfg, env_updates: dict, task_id: str,
@@ -1004,7 +1069,7 @@ def _launch_cmd(cfg: dict, prompt: str) -> list:
 
 
 def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
-         network_allowlist: list | None = None) -> int:
+         network_allowlist: list | None = None, extra_env: dict | None = None) -> int:
     """Detached, logged, `EXIT=$?` appended.
 
     Working directory is the PROJECT ROOT, so `CLAUDE.md` loads — the exact inverse of
@@ -1029,6 +1094,9 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
     env["SELDON_SESSION_ID"] = child_session_id
     if network_allowlist:
         env[D.NETWORK_ALLOWLIST_ENV] = ",".join(network_allowlist)
+    # SEL-004: a worktree session is run with `project_dir` = its worktree and is told where
+    # the primary checkout is (`seldon.core.worktree.PRIMARY_CHECKOUT_ENV`).
+    env.update(extra_env or {})
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
         fh.flush()
@@ -1092,7 +1160,10 @@ def lease_group():
 
 
 @lease_group.command("reap")
-def lease_reap():
+@click.option("--task", "task_stem", default=None,
+              help="reap a worktree task's lease (`<lease_dir>/<stem>.lock`, SEL-004) instead "
+                   "of the pass lease")
+def lease_reap(task_stem):
     """Release a lease whose holder is gone. **Refuses while the holder PID is alive.**
 
     Operator-only and PID-gated, never age-gated: DD-022's orphan-reap rule adopted unchanged.
@@ -1102,7 +1173,9 @@ def lease_reap():
     project_dir, config, driver, database, _dc, _sid = _open_project()
     driver.close()
     cfg = D.load_dispatch_config(project_dir, config)
-    out = D.reap_lease(project_dir / cfg["lease_file"])
+    path = (D.worktree_lease_path(project_dir, cfg, task_stem) if task_stem
+            else project_dir / cfg["lease_file"])
+    out = D.reap_lease(path)
     click.echo(json.dumps(out, indent=1))
     if not out["reaped"] and out["reason"] == "holder_alive":
         raise SystemExit(1)
@@ -1116,3 +1189,8 @@ def lease_show():
     cfg = D.load_dispatch_config(project_dir, config)
     click.echo(json.dumps(D.read_lease(project_dir / cfg["lease_file"]) or
                           {"lease": "free"}, indent=1))
+
+
+# The worktree supervisor (`seldon dispatch supervise`, SEL-004) registers itself on
+# `dispatch_group` when its module is imported; imported last because it imports this module.
+from seldon.commands import dispatch_worktree as _dispatch_worktree  # noqa: E402,F401
