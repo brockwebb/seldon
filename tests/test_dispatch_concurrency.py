@@ -93,6 +93,11 @@ def test_parse_headers_reads_the_two_optional_headers():
     ("docs/views", "docs/viewsx.md", False),
     ("events/batch-*.jsonl", "events/batch-007.jsonl", True),
     ("events/batch-*.jsonl", "state/spend_ledger.jsonl", False),
+    # Review findings: one file under two spellings. Case counts as one on default APFS.
+    ("src//a.py", "src/a.py", True),
+    ("src/./a.py", "src/a.py", True),
+    ("Docs/x.md", "docs/x.md", True),
+    ("DOCS/**", "docs/x.md", True),
 ])
 def test_globs_may_overlap_is_sound(a, b, overlap):
     """Sound, not exact: a path matching both globs starts with both literal prefixes and
@@ -216,3 +221,36 @@ def test_a_parallel_config_fills_its_declared_defaults(tmp_path):
     cfg = D.load_dispatch_config(tmp_path, _cfg(max_parallel=3, gate_command="make gate"))
     for key, value in D.PARALLEL_DEFAULTS.items():
         assert cfg[key] == value
+
+
+def test_a_header_quoted_in_prose_is_not_a_declaration():
+    """Review finding: the SEL-004 task file itself quotes the grammar inside a list item and
+    backticks. Only a header at the start of a line declares anything."""
+    text = ("**Spend:** zero. **Network:** none.\n"
+            "   - `**Exclusive:** yes|no`, default `yes`.\n"
+            "   - `**Touches:** <resource>, ...`: path globs plus named resources\n"
+            "Prose mentioning **Touches:** kg/** mid-line.\n")
+    assert D.parse_concurrency_headers(text) == {"Exclusive": None, "Touches": None}
+    real = "**Exclusive:** no\n- **Touches:** neo4j\n"
+    assert D.parse_concurrency_headers(real) == {"Exclusive": "no", "Touches": "neo4j"}
+
+
+def test_the_sel004_task_file_itself_declares_nothing():
+    path = (D.Path(__file__).resolve().parents[1] / "cc_tasks"
+            / "2026-10-07_SEL-004_worktree_per_task_dispatch.md")
+    raw = D.parse_concurrency_headers(path.read_text())
+    assert raw == {"Exclusive": None, "Touches": None}
+
+
+def test_a_supervising_holder_is_judged_by_its_flock_not_its_pid(tmp_path):
+    """Review finding: a recycled PID made a dead supervisor look alive. Once it has taken
+    the flock, the flock decides; this process's own (live) PID does not."""
+    import os
+    path = tmp_path / "a.lock"
+    path.write_text("{}")
+    body = {"holder": "dispatcher:h:1", "pid": os.getpid(), "supervising": True}
+    assert D.worktree_holder_alive(path, body) is False
+    with D.Lease(path):
+        assert D.flock_held(path) is True
+    assert D.worktree_holder_alive(path, {**body, "supervising": False}) is True
+    assert D.worktree_holder_alive(path, {**body, "holder": None}) is False

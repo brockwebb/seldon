@@ -143,8 +143,18 @@ def dirty_paths(repo: Path, exclude=()) -> list:
     return [p for p in paths if p not in set(exclude)]
 
 
+def ignored_paths(repo: Path, exclude=()) -> list:
+    """Gitignored paths present in a worktree (`git status --ignored`), minus `exclude`.
+    Removing a merged worktree discards these, so they are named before it is removed."""
+    out = git(repo, "status", "--porcelain", "--ignored").stdout
+    paths = [ln[3:] for ln in out.split("\n") if ln.startswith("!! ")]
+    return [x for x in paths if x.rstrip("/") not in {e.rstrip("/") for e in exclude}]
+
+
 def changed_files(repo: Path, a: str, b: str) -> list:
-    r = git(repo, "diff", "--name-only", a, b)
+    # `--no-renames`: a rename lists both the old and the new path, so a write set never
+    # loses the file the task moved away from.
+    r = git(repo, "diff", "--name-only", "--no-renames", a, b)
     return sorted(p for p in r.stdout.splitlines() if p)
 
 
@@ -184,7 +194,7 @@ def show(repo: Path, rev_: str, path: str) -> bytes | None:
     return r.stdout if r.returncode == 0 else None
 
 
-def check_union_text(data: bytes, key: str) -> dict:
+def check_union_text(data: bytes, key: str, base: bytes | None = None) -> dict:
     """Decision 4's post-merge check on one `merge=union` file's content.
 
     Every non-empty line must parse as a JSON object, and `key` must be unique among the lines
@@ -192,18 +202,37 @@ def check_union_text(data: bytes, key: str) -> dict:
     lost its newline (two records fused into one unparseable line) nor a record both sides
     appended under one id, so the check reads the result rather than trusting the driver.
 
+    With `base` (main's content before the merge) only what the merge ADDED is judged: a line
+    present in `base` is not the branch's, so a defect already on main does not block every
+    task that appends to the file. An added line is still a duplicate when its key is
+    already in `base`.
+
     Returns `{ok, malformed: [line numbers], duplicates: [key values]}`.
     """
-    malformed, seen, dupes = [], set(), []
-    for n, raw in enumerate(data.decode("utf-8", errors="replace").splitlines(), start=1):
-        if not raw.strip():
-            continue
+    def decode(raw):
         try:
             obj = json.loads(raw)
         except json.JSONDecodeError:
-            malformed.append(n)
+            return None
+        return obj if isinstance(obj, dict) else None
+
+    base_lines: dict[str, int] = {}
+    seen: set = set()
+    for raw in (base or b"").decode("utf-8", errors="replace").splitlines():
+        if raw.strip():
+            base_lines[raw] = base_lines.get(raw, 0) + 1
+            obj = decode(raw)
+            if obj is not None and key in obj:
+                seen.add(obj[key])
+    malformed, dupes = [], []
+    for n, raw in enumerate(data.decode("utf-8", errors="replace").splitlines(), start=1):
+        if not raw.strip():
             continue
-        if not isinstance(obj, dict):
+        if base_lines.get(raw, 0) > 0:
+            base_lines[raw] -= 1   # this occurrence came from main
+            continue
+        obj = decode(raw)
+        if obj is None:
             malformed.append(n)
             continue
         if key in obj:

@@ -1,0 +1,28 @@
+seq: 209
+event: accept
+id: seldon:AD-034-R5
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: A worktree task merges on green and is never resolved by the dispatcher.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 37
+  - 37
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R5. A worktree task merges on green and is never resolved by the dispatcher.** When the session exits 0 with its RESULT committed on its branch, the supervisor requires a clean worktree, rebases onto main, reruns `dispatch.gate_command` in the worktree when main changed a file in the task''s write set (`merge=union` files excepted), checks every `merge=union` file the task wrote, checks the task''s spec against its registered hash, then under the pass lease commits any pending record and shared-file lines and fast-forwards main only if main has not moved. A move made only of `merge=union` and `shared_paths` commits is rebased over inside the lease, since it cannot conflict and never triggers a re-gate; any other move, a refused fast-forward or a primary off its branch ends the round, up to `merge_attempts`. A rebase conflict, a red re-gate, an invalid union file, a modified spec, a refused fast-forward or a main that kept moving is `merge_blocked`: the task moves to `blocked`, `dispatch_merge: merge_blocked` is set, an Issue of type `merge_blocked` names the files and links `remediated_by` to the task, the operator is notified, and the worktree and branch stay as the session left them.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R5
+consumer:
+- seldon/commands/dispatch_worktree.py
+- tests/test_dispatch_parallel.py
+written_by: seldon decision 0.1.0
+prev_hash: dd6211c4f1e1423fa650dccbc67605333cb7c3f7f5e9b38f49e3856053c129f1
+record_hash: c2f7fc87d28163962a0e5b4448b7f2f1a511431bb018df8b954301840b47e124

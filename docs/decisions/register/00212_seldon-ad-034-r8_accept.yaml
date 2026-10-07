@@ -1,0 +1,29 @@
+seq: 212
+event: accept
+id: seldon:AD-034-R8
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: A file that must be one file across worktrees resolves to the primary checkout and is appended under its own flock.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 43
+  - 43
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R8. A file that must be one file across worktrees resolves to the primary checkout and is appended under its own flock.** A worktree session resolves such a file (a spend ledger) with `seldon.core.worktree.primary_checkout`, or `$SELDON_PRIMARY_CHECKOUT`, and appends under `seldon.core.worktree.locked`, the flock discipline `kg/spend.py` already uses, so parallel runs share one daily cap. A file listed in `dispatch.shared_paths` is committed by the pass under that flock when it is append-only against HEAD, and its appends are not dirt that c7 waits on.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R8
+consumer:
+- seldon/core/worktree.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_worktree_shared_state.py
+written_by: seldon decision 0.1.0
+prev_hash: ddd36e446f086273ea4e1599ac057ed5b6ce6d93b08812ef80528c45c6aba404
+record_hash: 13afe1337b79f073dcee5133fabc4440e8a1c24c2cc8e2432d6ba48a3f2a45b4

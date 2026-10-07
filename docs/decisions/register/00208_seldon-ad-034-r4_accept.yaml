@@ -1,0 +1,29 @@
+seq: 208
+event: accept
+id: seldon:AD-034-R4
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: Every write to main in the primary checkout happens under the pass lease; each worktree has its own lease, held by its supervisor.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 35
+  - 35
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R4. Every write to main in the primary checkout happens under the pass lease; each worktree has its own lease, held by its supervisor.** The pass lease (`dispatch.lock`) is taken by a pass, which never waits for it, or by a finishing supervisor, which waits up to `merge_lock_timeout_s`. A per-worktree lease (`<lease_dir>/<stem>.lock`) names the supervisor''s PID from the moment the pass starts it, so the next pass never sees a gap; its release record keeps the task, worktree and branch. A worktree session works only in its worktree, so the gates that ask whether a session is working in the primary checkout ask it of the in-place claim alone.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R4
+consumer:
+- seldon/core/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_dispatch_parallel.py
+written_by: seldon decision 0.1.0
+prev_hash: 185e2ba14bcc5499f9121feb56f06279471c46d0f0213aa369bcb1f53d005a0e
+record_hash: dd6211c4f1e1423fa650dccbc67605333cb7c3f7f5e9b38f49e3856053c129f1

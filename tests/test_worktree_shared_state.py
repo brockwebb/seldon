@@ -207,3 +207,14 @@ def test_check_union_text_names_malformed_lines_and_duplicate_ids():
     assert WT.check_union_text(data, "event_id") == {"ok": False, "malformed": [2, 5],
                                                      "duplicates": ["a"]}
     assert WT.check_union_text(b'{"x": 1}\n{"x": 1}\n', "event_id")["ok"] is True
+
+
+def test_check_union_text_against_a_base_reports_only_what_the_branch_added():
+    """Review finding: a duplicate or malformed line already on main must not block every
+    task that appends to the store; only lines the merge added are the task's."""
+    base = b'{"event_id": "a"}\n{"event_id": "a"}\nnot json\n'
+    merged = base + b'{"event_id": "b"}\n'
+    assert WT.check_union_text(merged, "event_id", base=base)["ok"] is True
+    bad = base + b'{"event_id": "b"}\n{"event_id": "b"}\n{"event_id": "a"}\nbroken{\n'
+    assert WT.check_union_text(bad, "event_id", base=base) == {
+        "ok": False, "malformed": [7], "duplicates": ["b", "a"]}

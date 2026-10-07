@@ -239,6 +239,7 @@ AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-02
 AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics — `docs/design/AD-028_result_names_and_task_lifecycle.md`
 AD-029: `precedes` — Task Ordering as a First-Class Relationship — `docs/design/AD-029_task_precedence.md`
 AD-030: Governed Documents as Graph Content — `docs/design/AD-030_governed_documents_as_graph_content.md`
+AD-034: Parallel dispatch, a worktree per task, independence declared by `**Exclusive:**`/`**Touches:**` and never inferred from `precedes` (opt-in, `dispatch.max_parallel`, default 1) — `docs/design/AD-034_worktree_per_task_dispatch.md`
 
 ## Project Templates
 

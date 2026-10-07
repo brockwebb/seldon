@@ -228,9 +228,23 @@ _RESOURCE_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 _GLOB_CHARS = "*?["
 
 
+#: The concurrency headers must START a line (after optional indentation and a list bullet).
+#: Unlike the three required headers, these are read from every candidate in serial mode as
+#: well, and a task file that quotes the grammar in prose (the SEL-004 task does, inside a
+#: list item and backticks) would otherwise be read as a malformed declaration and refused.
+_CONC_HEADER_RE = {
+    name: re.compile(r"(?m)^[ \t]*(?:[-*][ \t]+)?\*\*" + re.escape(name)
+                     + r"[ \t]*:\*\*[ \t]*(?P<value>[^\n]*)$")
+    for name in CONCURRENCY_HEADERS}
+
+
 def parse_concurrency_headers(text: str) -> dict:
     """The two optional headers as raw values; `None` where absent."""
-    return {name: _header_value(text, name) for name in CONCURRENCY_HEADERS}
+    out = {}
+    for name, pattern in _CONC_HEADER_RE.items():
+        m = pattern.search(text)
+        out[name] = m.group("value").strip() if m else None
+    return out
 
 
 def _touch_item(item: str, resources: dict) -> tuple:
@@ -335,7 +349,19 @@ def globs_may_overlap(a: str, b: str) -> bool:
     otherwise they are treated as overlapping. The error is one-sided: an unnecessary wait,
     never two writers on one file.
     """
+    a, b = _normalize_glob(a), _normalize_glob(b)
     return any(_pair_may_overlap(x, y) for x in _expand_dir(a) for y in _expand_dir(b))
+
+
+def _normalize_glob(glob: str) -> str:
+    """One spelling per path: `//` and `.` segments collapsed, and lower-cased because the
+    default macOS file system is case-insensitive, so `Docs/x` and `docs/x` are one file.
+    Lower-casing can only add overlaps, which is the safe direction. A trailing `/` is kept:
+    it means "the whole directory"."""
+    trailing = glob.endswith("/")
+    parts = [p for p in glob.split("/") if p not in ("", ".")]
+    out = "/".join(parts).lower()
+    return out + "/" if trailing and out else out
 
 
 def _all_paths(conc: dict, resources: dict) -> list:
@@ -1221,16 +1247,47 @@ def worktree_lease_path(project_dir: Path, cfg: dict, stem: str) -> Path:
     return Path(project_dir) / cfg.get("lease_dir", ".seldon/leases") / f"{stem}.lock"
 
 
+def flock_held(path: Path) -> bool:
+    """Does some process hold the flock on `path`? Probed with LOCK_NB and released at once.
+
+    The kernel drops a flock when its holder dies, so for a holder known to have taken it this
+    is an exact liveness test, immune to the PID reuse a `kill(pid, 0)` probe is not.
+    """
+    if not Path(path).is_file():
+        return False
+    with Path(path).open("a+", encoding="utf-8") as fh:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return True
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        return False
+
+
+def worktree_holder_alive(path: Path, body: dict) -> bool:
+    """A worktree lease's holder is alive (SEL-004, AD-034-R9).
+
+    Once the supervisor has recorded `supervising: true` it holds the flock for its whole
+    life, so the flock decides. Before that (the moment between the pass starting it and its
+    taking the flock) the PID recorded by the pass is all there is; DD-022's rule applies.
+    """
+    if body.get("holder") is None:
+        return False
+    if body.get("supervising"):
+        return flock_held(path)
+    pid = body.get("pid")
+    return isinstance(pid, int) and pid_alive(pid)
+
+
 def worktree_leases(project_dir: Path, cfg: dict) -> list:
     """Every per-worktree lease body on disk, with its path, for `status`, `go` and reap."""
     d = Path(project_dir) / cfg.get("lease_dir", ".seldon/leases")
     out = []
     for path in sorted(d.glob("*.lock")) if d.is_dir() else []:
         body = read_lease(path)
-        pid = body.get("pid")
         out.append({"path": str(path.relative_to(project_dir)), "stem": path.stem,
                     "body": body, "held": body.get("holder") is not None,
-                    "alive": isinstance(pid, int) and pid_alive(pid)})
+                    "alive": worktree_holder_alive(path, body)})
     return out
 
 

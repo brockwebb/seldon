@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 95 records: accepted 72, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 104 records: accepted 81, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (72)
+## Accepted (81)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -145,6 +145,24 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 95 records: accepte
   - source `docs/design/AD-033_decision_register.md`:179-186; decided by desktop; consumer seldon/core/sync.py, seldon/domain/research.yaml
 - **seldon:AD-033-R11** - **AD-033-R11. The log is the record of truth; Neo4j is the live working store; files are rendered views.** For every graph Squiddy builds, every Seldon project and this register: the authoritative record is the append-only, hash-chained event ledger kept with the repository. Neo4j is the live working store: every read and query goes to it, and the only write into it is a replay of the ledger, proven by the parity gate (S-009, H-001). The manifest is the stream of catalog, assess, admit, decline and supersede events in that ledger; the manifest YAML and `REGISTER.md` are rendered and never ha [...]
   - source `docs/design/AD-033_decision_register.md`:187-199; decided by operator; operator-stated; consumer tests/test_decision_register.py, seldon/core/decisions.py
+- **seldon:AD-034-R1** Independence is declared per task, by resource, and the scheduler never infers it.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:29-29; decided by cc:aa428cde; consumer seldon/core/dispatch.py, tests/test_dispatch_concurrency.py
+- **seldon:AD-034-R2** The planner launches a non-exclusive task only when its Touches is disjoint from everything running or waiting ahead of it.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:31-31; decided by cc:aa428cde; consumer seldon/core/dispatch.py, tests/test_dispatch_concurrency.py, tests/test_dispatch_parallel.py
+- **seldon:AD-034-R3** A non-exclusive task runs in its own worktree; an exclusive task runs in place, alone, as before.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:33-33; decided by cc:aa428cde; consumer seldon/commands/dispatch_worktree.py, tests/test_dispatch_parallel.py, tests/test_dispatch_serial_transcript.py
+- **seldon:AD-034-R4** Every write to main in the primary checkout happens under the pass lease; each worktree has its own lease, held by its supervisor.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:35-35; decided by cc:aa428cde; consumer seldon/core/dispatch.py, seldon/commands/dispatch_worktree.py, tests/test_dispatch_parallel.py
+- **seldon:AD-034-R5** A worktree task merges on green and is never resolved by the dispatcher.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:37-37; decided by cc:aa428cde; consumer seldon/commands/dispatch_worktree.py, tests/test_dispatch_parallel.py
+- **seldon:AD-034-R6** The dispatcher, not the session, completes a worktree task, and only after main carries its work.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:39-39; decided by cc:aa428cde; consumer seldon/commands/dispatch_worktree.py, tests/test_dispatch_parallel.py
+- **seldon:AD-034-R7** Append-only files merge by union, and the merged content is checked before main moves.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:41-41; decided by cc:aa428cde; consumer seldon/core/worktree.py, .gitattributes, tests/test_dispatch_parallel.py, tests/test_worktree_shared_state.py
+- **seldon:AD-034-R8** A file that must be one file across worktrees resolves to the primary checkout and is appended under its own flock.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:43-43; decided by cc:aa428cde; consumer seldon/core/worktree.py, seldon/commands/dispatch_worktree.py, tests/test_worktree_shared_state.py
+- **seldon:AD-034-R9** A worktree task whose supervisor is gone is blocked by the next pass, and its worktree and lease are kept.
+  - source `docs/design/AD-034_worktree_per_task_dispatch.md`:45-45; decided by cc:aa428cde; consumer seldon/commands/dispatch_worktree.py, seldon/core/dispatch.py, tests/test_dispatch_parallel.py
 - **seldon:phase_c_retirement_list-R1** The Wintermute maintainer shall delete the LightRAG packages from the wintermute .venv and delete the rag_storage/ directory, while retaining any associated source notes for their research value.
   - source `docs/design/evolution_burst_2026-04/phase_c_retirement_list.md`:24-29; decided by desktop; review only: none
 - **seldon:phase_c_retirement_list-R2** The operator shall remove the orphaned claude-mem thedotmack install (v10.5.2), marked .orphaned_at 2026-04-11 by the Claude Code plugin framework update and confirmed known broken, independent of the Phase C adopt-vs-extract decision in which the operator chose Option A to adopt claude-mem, under which a fresh supported claude-mem install will follow as part of the 15% roadmap work.

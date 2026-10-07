@@ -112,6 +112,7 @@ STUB = '''#!{python}
 import json, os, re, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0, {repo!r})
+sys.stdout.reconfigure(line_buffering=True)  # a test may wait on a line of this log
 prompt = sys.argv[sys.argv.index("-p") + 1]
 stem = re.search(r"cc_tasks/([A-Za-z0-9_.-]+)\\.md", prompt).group(1)
 spec = json.loads(Path({spec!r}).read_text()).get(stem, {{}})
@@ -123,6 +124,8 @@ def mark(what):
         with open(spec["mark"], "a") as fh:
             fh.write(f"{{stem}} {{what}} {{time.time()}}\\n")
 mark("start")
+if spec.get("pidfile"):
+    Path(spec["pidfile"]).write_text(str(os.getpid()))
 for rel, text in (spec.get("write") or {{}}).items():
     (cwd / rel).parent.mkdir(parents=True, exist_ok=True)
     with open(cwd / rel, "a") as fh:
@@ -130,6 +133,10 @@ for rel, text in (spec.get("write") or {{}}).items():
 for rel, (old, new) in (spec.get("replace") or {{}}).items():
     path = cwd / rel
     path.write_text(path.read_text().replace(old, new))
+for rel, text in (spec.get("primary_append") or {{}}).items():
+    from seldon.core.worktree import locked
+    with locked(Path(os.environ["SELDON_PRIMARY_CHECKOUT"]) / rel) as fh:
+        fh.write(text)
 if spec.get("sleep"):
     time.sleep(spec["sleep"])
 if spec.get("append_event"):

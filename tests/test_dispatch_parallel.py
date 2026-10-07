@@ -348,9 +348,11 @@ def test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept(
     add_task(p, "a", NONEXCL.format(touches="out/a/"))
     write_stub(p, {"a": {"write": {"out/a/1.txt": "partial\n"}, "sleep": 60}})
     ta = register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
+    started = time.monotonic()
     assert _once(p).count("launching") == 1
     log = p / "logs" / "dispatch" / "a.log"
-    _wait(lambda: log.exists() and "stub cwd: worktree" in log.read_text(), "session start")
+    _wait(lambda: log.exists() and "stub cwd: worktree" in log.read_text()
+          and _leases(p)["a"]["body"].get("supervising"), "session start", timeout=20)
     pid = _leases(p)["a"]["body"]["pid"]
     os.killpg(pid, signal.SIGKILL)
     os.waitpid(pid, 0)   # this test process is its parent; in production launchd reaps it
@@ -364,6 +366,9 @@ def test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept(
     lease = _leases(p)["a"]
     assert lease["held"] and not lease["alive"]
     assert "STALE" not in run_cli(p, dispatch_group, ["once"]).output  # marked once
+    # Killed mid-session, not after it: the 60-second session never ran to its end.
+    assert time.monotonic() - started < 30
+    assert "EXIT=" not in log.read_text()
     reap = run_cli(p, dispatch_group, ["lease", "reap", "--task", "a"])
     assert json.loads(reap.output)["reaped"] is True
 
@@ -402,3 +407,52 @@ def test_status_shows_a_running_worktree_and_why_the_next_task_waits(
     assert b["criteria"]["c6"]["deferred"] == {"reason": "overlap", "with": [ta],
                                                "overlap": ["neo4j"]}
     _wait_settled(p, neo4j_driver, ["a"])
+
+
+def test_a_busy_shared_ledger_does_not_cost_a_merge_attempt(tmp_path, neo4j_driver,
+                                                            clean_test_db, dc):
+    """Review finding: the sweep under the pass lease commits ledger lines, which moves main.
+    A move made only of housekeeping commits is rebased over inside the lease, so a task that
+    appends to the shared ledger still merges with `merge_attempts: 1`."""
+    p = _project(tmp_path, merge_attempts=1, shared_paths=["state/spend_ledger.jsonl"])
+    (p / "state").mkdir()
+    (p / "state" / "spend_ledger.jsonl").write_text('{"tokens": 1}\n')
+    git(p, "add", "state/spend_ledger.jsonl")
+    git(p, "commit", "-q", "-m", "ledger")
+    add_task(p, "a", NONEXCL.format(touches="out/a/"))
+    write_stub(p, {"a": {"primary_append": {"state/spend_ledger.jsonl": '{"tokens": 2}\n'},
+                         "write": {"out/a/1.txt": "a\n"}}})
+    register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
+    assert _once(p).count("launching") == 1
+    _wait_settled(p, neo4j_driver, ["a"])
+    fin = _finished(p, "a")[-1]
+    assert fin["outcome"] == "merged" and fin["merge"]["attempts"] == 1, fin
+    assert _show(p, "main", "state/spend_ledger.jsonl") == '{"tokens": 1}\n{"tokens": 2}\n'
+    assert git(p, "status", "--porcelain").stdout == ""
+
+
+def test_a_supervisor_killed_alone_has_its_orphaned_session_terminated(
+        tmp_path, neo4j_driver, clean_test_db, dc):
+    """Review finding: SIGKILL of the supervisor alone left `claude` running, writing into the
+    kept worktree and spending, with nothing to merge it. The next pass marks the task by the
+    flock (not the PID) and terminates the recorded process group."""
+    p = _project(tmp_path)
+    pidfile = tmp_path / "session.pid"
+    add_task(p, "a", NONEXCL.format(touches="out/a/"))
+    write_stub(p, {"a": {"pidfile": str(pidfile), "sleep": 60}})
+    register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
+    assert _once(p).count("launching") == 1
+    _wait(lambda: pidfile.exists() and _leases(p)["a"]["body"].get("supervising"),
+          "session start")
+    session = int(pidfile.read_text())
+    sup = _leases(p)["a"]["body"]["pid"]
+    os.kill(sup, signal.SIGKILL)
+    os.waitpid(sup, 0)
+    assert D.pid_alive(session)
+
+    out = run_cli(p, dispatch_group, ["once"]).output
+    assert "STALE" in out, out
+    fin = _finished(p, "a")[-1]
+    assert fin["outcome"] == "holder_gone" and fin["orphaned_session_terminated"] is True
+    _wait(lambda: not D.pid_alive(session), "orphaned session to exit", timeout=20)
+    assert task_states(neo4j_driver)["a"] == "blocked"

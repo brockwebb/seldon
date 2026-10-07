@@ -1,0 +1,28 @@
+seq: 210
+event: accept
+id: seldon:AD-034-R6
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: The dispatcher, not the session, completes a worktree task, and only after main carries its work.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 39
+  - 39
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R6. The dispatcher, not the session, completes a worktree task, and only after main carries its work.** The worktree prompt tells the session not to run `seldon cc complete`, merge, push or switch branches. After the fast-forward the supervisor walks the task to `completed` with `dispatch_merge: merged`, writes `dispatch_finished` with `outcome: merged`, pushes and removes the worktree. The graph never says `completed` for work that is not on main, so a successor''s c2 cannot open on an unmerged predecessor.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R6
+consumer:
+- seldon/commands/dispatch_worktree.py
+- tests/test_dispatch_parallel.py
+written_by: seldon decision 0.1.0
+prev_hash: c2f7fc87d28163962a0e5b4448b7f2f1a511431bb018df8b954301840b47e124
+record_hash: 87d6281443ef2451511719271ed6fa2fbdbd26923565a803ce70e32f87289130

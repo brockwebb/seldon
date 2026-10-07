@@ -1,0 +1,29 @@
+seq: 206
+event: accept
+id: seldon:AD-034-R2
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: The planner launches a non-exclusive task only when its Touches is disjoint from everything running or waiting ahead of it.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 31
+  - 31
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R2. The planner launches a non-exclusive task only when its Touches is disjoint from everything running or waiting ahead of it.** Candidates are taken in FIFO order by `created_at`. Two declarations overlap when they share a resource name or when any two of their path globs, including each resource''s configured paths, may match one path. The glob test is sound and deliberately not exact: globs are normalised (`//` and `.` segments collapsed, lower-cased because the default macOS file system is case-insensitive), two globs are disjoint only when their literal prefixes, or their literal suffixes, are unrelated, and a literal path against a glob is decided by `fnmatch`. A task deferred for any reason reserves what it declared, so a later overlapping task cannot overtake it. An exclusive task launches only when nothing runs, and while it waits it holds everything (writer preference). `dispatch.max_parallel` caps the running set.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R2
+consumer:
+- seldon/core/dispatch.py
+- tests/test_dispatch_concurrency.py
+- tests/test_dispatch_parallel.py
+written_by: seldon decision 0.1.0
+prev_hash: a2c6a4030624d7a44d60b40abda6cfb58e537ef3741a3916bbd947b9dfa87346
+record_hash: bf59210c08d7b52189d618fe8544df6c1c622096bf0717500fca6fe0278f0c56

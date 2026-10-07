@@ -1,0 +1,29 @@
+seq: 207
+event: accept
+id: seldon:AD-034-R3
+date: '2026-10-07'
+decided_by: cc:aa428cde
+operator_stated: false
+reason: SEL-004 as implemented; AD-034 section 3 (docs/design/AD-034_worktree_per_task_dispatch.md)
+kind: decision
+status: accepted
+statement: A non-exclusive task runs in its own worktree; an exclusive task runs in place, alone, as before.
+source:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  lines:
+  - 33
+  - 33
+  sha256: 1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2
+  text: '- **AD-034-R3. A non-exclusive task runs in its own worktree; an exclusive task runs in place, alone, as before.** Under `max_parallel > 1` a non-exclusive task is claimed, its claim committed to main, and `git worktree add <worktree_dir>/<stem> -b <branch_prefix><stem> <main HEAD>` cut, with a detached supervisor running the session there. An exclusive task runs in the primary checkout with the pass lease held for its whole run, through the same code a serial pass uses. `max_parallel` defaults to 1, and at 1 the pass is the pre-SEL-004 pass, held byte for byte against a recorded transcript.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_worktree_per_task_dispatch.md
+  anchor: AD-034-R3
+consumer:
+- seldon/commands/dispatch_worktree.py
+- tests/test_dispatch_parallel.py
+- tests/test_dispatch_serial_transcript.py
+written_by: seldon decision 0.1.0
+prev_hash: bf59210c08d7b52189d618fe8544df6c1c622096bf0717500fca6fe0278f0c56
+record_hash: 185e2ba14bcc5499f9121feb56f06279471c46d0f0213aa369bcb1f53d005a0e
