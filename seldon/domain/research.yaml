@@ -246,6 +246,9 @@ artifact_types:
       claimed_at:
         category: system
         description: "ISO-8601 UTC timestamp of the accepted -> in_progress transition that set claimed_by. Advisory: staleness is reported, never auto-released. See AD-028."
+      dispatch_merge:
+        category: system
+        description: "What became of a worktree task's branch under the parallel dispatcher: merged (fast-forwarded onto main on green) or merge_blocked (a rebase conflict, a red re-gate or an invalid union file; the task is blocked and an Issue names the files). Absent on tasks run in place. See AD-034."
 
   LabNotebookEntry:
     properties:
@@ -592,7 +595,7 @@ artifact_types:
         description: "What the issue is — the problem statement"
       issue_type:
         required: true
-        description: "Category of problem. Values: factual_error, citation_gap, unsupported_claim, terminology_inconsistency, internal_contradiction, missing_content, stale_content, structural_flow, style_formatting"
+        description: "Category of problem. Values: factual_error, citation_gap, unsupported_claim, terminology_inconsistency, internal_contradiction, missing_content, stale_content, structural_flow, style_formatting, merge_blocked (a worktree task the dispatcher could not merge, AD-034)"
       importance:
         required: true
         description: "Eisenhower importance axis (intrinsic, rarely changes). Values: high, medium, low"

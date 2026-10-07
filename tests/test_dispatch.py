@@ -758,3 +758,18 @@ def test_a_lease_whose_holder_died_is_still_reaped(project):
     out = D.reap_lease(path)
     assert out["reaped"] is True and out["reason"] == "holder_gone"
     assert not path.exists()
+
+
+def test_a_serial_task_carrying_a_malformed_concurrency_header_is_refused(project):
+    """SEL-004: a task with neither header gets no c10 (the recorded transcript holds that);
+    a task that carries one has it checked in serial mode too, so a malformed declaration
+    is found when it is written, not when the project opts in to parallel dispatch."""
+    tf = _task_file(project, "bad")
+    tf.write_text(tf.read_text() + "**Exclusive:** perhaps\n", encoding="utf-8")
+    good = _task_file(project, "good")
+    _commit(project)
+    row = _evaluate(project, tf)
+    assert row["eligible"] is False and row["criteria"]["c10"]["ok"] is False
+    assert D.first_refusal_reason(row) == "concurrency_undeclared"
+    assert D.CONCURRENCY_GRAMMAR in row["criteria"]["c10"]["message"]
+    assert "c10" not in _evaluate(project, good)["criteria"]

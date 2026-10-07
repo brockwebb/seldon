@@ -127,6 +127,9 @@ for rel, text in (spec.get("write") or {{}}).items():
     (cwd / rel).parent.mkdir(parents=True, exist_ok=True)
     with open(cwd / rel, "a") as fh:
         fh.write(text)
+for rel, (old, new) in (spec.get("replace") or {{}}).items():
+    path = cwd / rel
+    path.write_text(path.read_text().replace(old, new))
 if spec.get("sleep"):
     time.sleep(spec["sleep"])
 if spec.get("append_event"):
@@ -147,7 +150,8 @@ if spec.get("complete"):
                       artifact_id=tid, current_state="in_progress", actor="cc")
     d.close()
 if spec.get("commit", True) and spec.get("result", True):
-    paths = [f"cc_tasks/{{stem}}_RESULT.md"] + list((spec.get("write") or {{}}).keys())
+    paths = ([f"cc_tasks/{{stem}}_RESULT.md"] + list((spec.get("write") or {{}}).keys())
+             + list((spec.get("replace") or {{}}).keys()))
     if spec.get("append_event") or spec.get("complete"):
         paths.append("seldon_events.jsonl")
     subprocess.run(["git", "add", "--", *paths], check=True)

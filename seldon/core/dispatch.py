@@ -471,7 +471,10 @@ NOTIFY_TIMEOUT_S_DEFAULT = 30
 
 #: Refusal reasons. A closed set, so `status` and the log speak one vocabulary.
 REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_band",
-                   "network_undeclared", "api_key_present", "claim_failed")
+                   "network_undeclared", "api_key_present", "claim_failed",
+                   # SEL-004: a Exclusive/Touches declaration that does not parse (c10), and a
+                   # task whose worktree path or branch is already taken (c11).
+                   "concurrency_undeclared", "worktree_unavailable")
 
 #: DD-007. The subscription-OAuth gate, the same one `kg/extraction/model_stub.py` enforces at
 #: its own choke point: an inherited API key means a dispatched session would spend against a
@@ -787,7 +790,7 @@ def git(project_dir: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=project_dir, capture_output=True, text=True)
 
 
-def tree_state(project_dir: Path) -> dict:
+def tree_state(project_dir: Path, exclude=()) -> dict:
     """`{branch, dirty, dirty_paths}` — c7's raw material, recorded as values.
 
     DN-006 decision 2 asks every criterion to be recorded as a value rather than a boolean
@@ -803,6 +806,10 @@ def tree_state(project_dir: Path) -> dict:
     # diagnostic list is one no amount of staring at the code finds.
     porcelain = git(project_dir, "status", "--porcelain").stdout
     paths = [ln[3:] for ln in porcelain.split("\n") if ln.strip()]
+    # SEL-004 decision 5: a shared append-only file (a spend ledger) that worktree sessions
+    # append to in the PRIMARY checkout is not dirt the pass waits on; the pass commits it.
+    if exclude:
+        paths = [p for p in paths if p not in set(exclude)]
     return {"branch": branch, "dirty": bool(paths), "dirty_paths": paths[:20],
             "dirty_count": len(paths)}
 
@@ -1125,9 +1132,14 @@ class Lease:
     at runner grain, and that one cost 22.0M tokens against a 12M ceiling.
     """
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, extra: dict | None = None):
         self.path = path
         self._fh = None
+        #: Fields every body this lease writes carries, including the release record. A
+        #: per-worktree lease (SEL-004 decision 2) keeps its task, worktree and branch here so
+        #: a released or orphaned lease still says which task it was; the global lease has
+        #: none, and its bodies are byte-for-byte what they were before.
+        self.extra = dict(extra or {})
 
     def __enter__(self) -> "Lease":
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -1140,7 +1152,7 @@ class Lease:
             raise LeaseHeld(read_lease(self.path)) from exc
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         self.write({"holder": holder_id(), "pid": os.getpid(), "acquired_at": now,
-                    "heartbeat_at": now, "task": None})
+                    "heartbeat_at": now, "task": None, **self.extra})
         return self
 
     def write(self, body: dict) -> None:
@@ -1174,11 +1186,66 @@ class Lease:
                         "last_holder": body.get("holder"),
                         "acquired_at": body.get("acquired_at"),
                         "released_at": datetime.now(timezone.utc).isoformat()
-                        .replace("+00:00", "Z")})
+                        .replace("+00:00", "Z"), **self.extra})
             fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
             self._fh.close()
             self._fh = None
         return False
+
+
+def acquire_waiting(path: Path, timeout_s: float, poll_s: float = 0.5,
+                    extra: dict | None = None) -> "Lease":
+    """Take a lease, waiting up to `timeout_s` for its holder to release it.
+
+    For the worktree supervisor's finish (SEL-004 decision 3): the merge into main, the events
+    and the commits must not interleave with a pass's, and a pass lasts seconds, so the
+    supervisor waits for the pass rather than refusing. A pass never waits; it still exits on
+    `LeaseHeld`, as decision 6 has it.
+
+    Raises:
+        LeaseHeld: the lease was still held when `timeout_s` ran out.
+    """
+    import time
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            return Lease(path, extra=extra).__enter__()
+        except LeaseHeld:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(poll_s)
+
+
+def worktree_lease_path(project_dir: Path, cfg: dict, stem: str) -> Path:
+    """`<lease_dir>/<stem>.lock`: one lease per worktree (SEL-004 decision 2)."""
+    return Path(project_dir) / cfg.get("lease_dir", ".seldon/leases") / f"{stem}.lock"
+
+
+def worktree_leases(project_dir: Path, cfg: dict) -> list:
+    """Every per-worktree lease body on disk, with its path, for `status`, `go` and reap."""
+    d = Path(project_dir) / cfg.get("lease_dir", ".seldon/leases")
+    out = []
+    for path in sorted(d.glob("*.lock")) if d.is_dir() else []:
+        body = read_lease(path)
+        pid = body.get("pid")
+        out.append({"path": str(path.relative_to(project_dir)), "stem": path.stem,
+                    "body": body, "held": body.get("holder") is not None,
+                    "alive": isinstance(pid, int) and pid_alive(pid)})
+    return out
+
+
+def worktree_state(project_dir: Path, cfg: dict, stem: str) -> dict:
+    """c11's raw material: is this task's worktree path and branch free, and is the worktree
+    directory ignored so a worktree inside the checkout is not c7's dirt."""
+    wt_rel = f"{cfg.get('worktree_dir', '.worktrees')}/{stem}"
+    branch = f"{cfg.get('branch_prefix', 'task/')}{stem}"
+    exists = (Path(project_dir) / wt_rel).exists()
+    branch_exists = git(project_dir, "rev-parse", "--verify", "--quiet",
+                        f"refs/heads/{branch}").returncode == 0
+    ignored = git(project_dir, "check-ignore", "-q", "--", wt_rel).returncode == 0
+    return {"worktree": wt_rel, "exists": exists, "branch": branch,
+            "branch_exists": branch_exists, "ignored": ignored,
+            "ok": ignored and not exists and not branch_exists}
 
 
 def read_lease(path: Path) -> dict:
@@ -1218,7 +1285,7 @@ def reap_lease(path: Path) -> dict:
 # ------------------------------------------------------------------------------- evaluation
 
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
-             claim_in_flight: dict | None, lease_body: dict) -> dict:
+             claim_in_flight: dict | None, lease_body: dict, running=None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1284,6 +1351,31 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     #: documents is worse than a table with a ninth row.
     c["c9"] = {"framework_layer": headers[HEADER_LAYER], "ok": True}
 
+    # SEL-004 (AD-034). Nothing below changes a serial pass for a task with neither header:
+    # c6 keeps its meaning, and c10 and c11 are absent, so the criteria vector is the one the
+    # recorded transcript holds.
+    parallel = cfg.get("max_parallel", MAX_PARALLEL_DEFAULT) > 1
+    raw = parse_concurrency_headers(task_file.read_text(encoding="utf-8",
+                                                        errors="surrogateescape"))
+    conc = parse_concurrency(raw[HEADER_EXCLUSIVE], raw[HEADER_TOUCHES],
+                             cfg.get("resources") or {})
+    out["concurrency"] = conc
+    if parallel:
+        # c6 in parallel mode: no claim in flight IN THIS CHECKOUT (an exclusive task runs
+        # here); claims in worktrees are the running set, and whether this task may run beside
+        # them is decided by `plan_launches`, which updates this criterion.
+        c["c6"] = {"in_place_claim": claim_in_flight, "running": list(running or []),
+                   "max_parallel": cfg["max_parallel"],
+                   "lease_holder": lease_body.get("holder"), "ok": claim_in_flight is None}
+    if conc["declared"] or parallel:
+        c["c10"] = {"declared": conc["declared"], "exclusive": conc["exclusive"],
+                    "resources": conc["resources"], "paths": conc["paths"],
+                    "ok": conc["error"] is None}
+        if conc["error"]:
+            c["c10"]["message"] = conc["error"]
+    if parallel and conc["error"] is None and not conc["exclusive"]:
+        c["c11"] = worktree_state(project_dir, cfg, Path(source).stem)
+
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
     out["failed"] = [k for k, v in c.items() if not v["ok"]]
@@ -1304,6 +1396,10 @@ def first_refusal_reason(row: dict) -> str | None:
         return "above_band"
     if not c.get("c5", {}).get("ok", True):
         return "network_undeclared"
+    if not c.get("c10", {}).get("ok", True):
+        return "concurrency_undeclared"
+    if not c.get("c11", {}).get("ok", True):
+        return "worktree_unavailable"
     return None
 
 
