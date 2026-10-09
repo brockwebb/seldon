@@ -738,6 +738,23 @@ def _get_pipeline_section(project_dir: str) -> Optional[str]:
         return None
 
 
+def _dispatch_state(project_dir: str) -> dict:
+    """`seldon.core.dispatch.dispatch_state`, never raising: `seldon go` must render when the
+    config is broken, and a broken config is itself an `off` with its reason."""
+    from seldon.core import dispatch as D
+    try:
+        return D.dispatch_state(Path(project_dir))
+    except Exception as exc:                                        # noqa: BLE001
+        return {"on": False, "why": f"dispatch state unreadable: {type(exc).__name__}: {exc}"}
+
+
+def _get_dispatch_line(project_dir: str) -> str:
+    """`dispatch: on|off`, from state, so a Desktop session knows whether a registered task
+    launches by itself or needs a pasted line (SEL-005, AD-036 section 6.2)."""
+    st = _dispatch_state(project_dir)
+    return f"**dispatch: {'on' if st['on'] else 'off'}** ({st['why']})"
+
+
 def _get_dispatch_section(project_dir: str) -> Optional[str]:
     """Return the Dispatcher section for `seldon go`, or None when a project has no dispatcher.
 
@@ -936,10 +953,11 @@ def assemble_go_context(
     if pipeline is not None:
         sections.append(pipeline)
 
-    # Section 5.6 — Dispatcher (omitted entirely for a project with no `dispatch:` block)
+    # Section 5.6 — Dispatcher. The `dispatch: on|off` line is always present (SEL-005); the
+    # detail below it only for a project with a `dispatch:` block.
     dispatcher = _get_dispatch_section(project_dir)
-    if dispatcher is not None:
-        sections.append(dispatcher)
+    sections.append(_get_dispatch_line(project_dir)
+                    + (f"\n\n{dispatcher}" if dispatcher is not None else ""))
 
     # Section 6 — Agent Roles (optional — omit if no roles exist)
     agent_roles = _get_agent_roles_section(project_dir)
@@ -1013,6 +1031,7 @@ def assemble_go_context_as_dict(
         "project_state": project_state,
         "audit_pipeline": _get_pipeline_section(project_dir),
         "dispatch": _get_dispatch_section(project_dir),
+        "dispatch_state": _dispatch_state(project_dir),
         "agent_roles": agent_roles,
         "available_commands": available_commands,
     }

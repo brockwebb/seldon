@@ -562,6 +562,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.notify must be a non-empty shell command string, got {notify!r}")
     block["notify"] = notify
+    # SEL-005: the launchd job that runs this project's passes. Optional; when given, `seldon go`
+    # reports `dispatch: on` only while that job is loaded, because a config that says enabled with
+    # no job running launches nothing and a Desktop session that believed otherwise would wait.
+    label = block.get("launchd_label")
+    if label is not None and (not isinstance(label, str) or not label.strip()):
+        raise DispatchConfigError(f"dispatch.launchd_label must be a non-empty string, got {label!r}")
+    block["launchd_label"] = label
     timeout = block.get("notify_timeout_s", NOTIFY_TIMEOUT_S_DEFAULT)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
         raise DispatchConfigError(
@@ -675,6 +682,45 @@ def _load_parallel_config(block: dict) -> None:
                 raise DispatchConfigError(f"dispatch.{key} must be a non-empty string, got "
                                           f"{v!r}")
             block[key] = v
+
+
+def launchd_loaded(label: str) -> bool:
+    """Whether the per-user launchd job `label` is loaded (`launchctl print gui/<uid>/<label>`)."""
+    import os
+    import subprocess
+    r = subprocess.run(["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+                       capture_output=True, text=True, check=False)
+    return r.returncode == 0
+
+
+def dispatch_state(project_dir: Path, config: dict | None = None, loaded=None) -> dict:
+    """`{"on": bool, "why": str}`: will a registered task here launch without a pasted line?
+
+    SEL-005 (AD-036 section 6.2): on 2026-10-09 a Desktop session twice said the dispatcher
+    "may pick up" a task in a project that had no dispatcher at all. The answer is read from state
+    every time: a `dispatch:` block that loads, `enabled: true`, no STOP file, and (when the block
+    names its `launchd_label`) that job loaded. Anything else is `off` with the reason.
+    """
+    project_dir = Path(project_dir)
+    if config is None:
+        path = project_dir / "seldon.yaml"
+        config = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    if not (config or {}).get("dispatch"):
+        return {"on": False, "why": "no `dispatch:` block; every task needs a pasted line"}
+    try:
+        cfg = load_dispatch_config(project_dir, config)
+    except DispatchConfigError as exc:
+        return {"on": False, "why": f"the dispatch block does not load: {exc}"}
+    if not cfg["enabled"]:
+        return {"on": False, "why": "dispatch.enabled is false"}
+    if (project_dir / cfg["stop_file"]).exists():
+        return {"on": False, "why": f"STOP file {cfg['stop_file']} present"}
+    label = cfg.get("launchd_label")
+    loaded = loaded or launchd_loaded
+    if label and not loaded(label):
+        return {"on": False, "why": f"launchd job {label} is not loaded"}
+    return {"on": True, "why": (f"enabled, launchd job {label} loaded" if label
+                                 else "enabled (no launchd_label declared to confirm a job)")}
 
 
 def resolve_standing_band(project_dir: Path, ref: str) -> int:
