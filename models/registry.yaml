@@ -6,9 +6,14 @@
 # and every launcher reads the lock through `seldon.models` (R3), never this file's family words
 # and never an alias of its own (R4).
 #
-# `effort` is the CLI's `--effort` level (low, medium, high, xhigh, max), or `default`, which
-# passes no flag: the CLI's own default for the model. `default` is what every launcher that
-# passed no `--effort` before MODEL-001 ran with, so naming it keeps today's behavior.
+# `effort` is the CLI's `--effort` level: one of low, medium, high, xhigh, max. It is a declared
+# input of the instrument, as the model id is (AD-036-R8, extending AD-035 R1, R3, R6), so every
+# role names one and every launcher passes `--effort`. `default` is REFUSED: under AD-035 it passed
+# no flag, so the level a role ran at was whatever the served model's own default happened to be,
+# and the move to the 5.5 lock silently took every opus and sonnet role from high to medium. The
+# levels below are the documented defaults of the models the lock serves today (the
+# `refresh.documented_default_effort` table), so naming them changed no behavior on 2026-10-09;
+# `document_extractor` and `demand_judge` stay `high`, which is what their pilots measured.
 #
 # Each role's `uses` names where the inventory (docs/evidence/model001/inventory.md, 2026-10-09)
 # found it, and what each one ran before MODEL-001, so a later reader can see what the move to the
@@ -20,40 +25,40 @@ schema: 1
 roles:
   primary:
     family: opus
-    effort: default
+    effort: medium
     uses: >-
       Claude Code sessions the seldon dispatcher launches (seldon/commands/dispatch.py). Before:
       whatever `claude` on PATH resolved, or `dispatch.model` if a project set it.
   extractor:
     family: sonnet
-    effort: default
+    effort: medium
     uses: >-
       squiddy per-section extraction (init_defaults.yaml engine.extract.roles.extractor: sonnet,
       which CLI 2.1.278 resolved to claude-sonnet-5); arnold-evidence the same.
   rater:
     family: sonnet
-    effort: default
+    effort: medium
     uses: squiddy rater (engine.extract.roles.rater, sonnet); arnold-evidence the same.
   adjudicator:
     family: opus
-    effort: default
+    effort: medium
     uses: >-
       squiddy adjudicator (engine.extract.roles.adjudicator, opus, which 2.1.278 resolved to
       claude-opus-5); icsp_notebook conflict adjudication and consensus passes (claude-opus-4-8).
   teacher:
     family: opus
-    effort: default
+    effort: medium
     uses: squiddy graphs/library/extract/control.yaml teacher (alias opus, claude-opus-5 under 2.1.278).
   judge:
     family: fable
-    effort: default
+    effort: high
     uses: >-
       The independent judge or rater: squiddy Q-005 judge and arnold-evidence judge
       (claude-fable-5-1); ai-readiness-kg independent raters (er_gold_rate, g1_calibration_rate,
       homograph and link judges' independent samples, claude-fable-5-1).
   background:
     family: haiku
-    effort: default
+    effort: medium
     uses: >-
       The CLI's background and side calls (ANTHROPIC_DEFAULT_HAIKU_MODEL), and cleanup or control
       work: ai-readiness-kg cleanup_model_id and the G1 control consumer (claude-haiku-4-5-20251001).
@@ -65,75 +70,93 @@ roles:
       claude-opus-5, effort high).
   consumer:
     family: opus
-    effort: default
+    effort: medium
     uses: >-
       ai-readiness-kg G1 consumer (assessment/config/g1_consumer.toml model_id claude-opus-5). A
       frozen instrument: a bump re-pilots it (AD-035 R7, H-006 R-30).
   secondary_rater:
     family: sonnet
-    effort: default
+    effort: medium
     uses: ai-readiness-kg probe secondary judge (model_config.yaml secondary_judge_model_id, claude-sonnet-5).
   question_generator:
     family: opus
-    effort: default
+    effort: medium
     uses: arnold-evidence KG-001 downstream test questions (claude-opus-5-5).
   descriptor_selector:
     family: sonnet
-    effort: default
+    effort: medium
     uses: arnold-evidence SEED-001 descriptor selection (claude-sonnet-5-5).
   label_proposer:
     family: sonnet
-    effort: default
+    effort: medium
     uses: arnold-evidence KG-002 lookup label proposals (claude-sonnet-5-5).
   shelf_screener:
     family: sonnet
-    effort: default
+    effort: medium
     uses: arnold-evidence KG-002 shelf screen (claude-sonnet-5-5).
   parser:
     family: sonnet
-    effort: default
+    effort: medium
     uses: >-
       arnold reply and email parsing (config/email_ingest.yaml parse_model claude-sonnet-4-6;
       config/arnold.yaml model claude-sonnet-4-20250514).
   triage:
     family: sonnet
-    effort: default
+    effort: medium
     uses: measuring-ai-economy harvester triage (sources.yaml triage_model claude-sonnet-4-6).
   battery_client:
     family: sonnet
-    effort: default
+    effort: medium
     uses: >-
       icsp_notebook REG battery's default client (tests/reg_battery/runner.py; before MODEL-001
       the CLI alias sonnet). Added from that repository's Part C report.
   critic:
     family: sonnet
-    effort: default
+    effort: medium
     uses: arnold seed Critic (src/arnold/seeding/critic.py; before MODEL-001 the CLI alias sonnet).
   coach:
     family: opus
-    effort: default
+    effort: medium
     uses: arnold morning brief agents (scripts/morning_brief.py; expected claude-opus-4-7) and skycoach.
   exercise_mapper:
     family: sonnet
-    effort: default
+    effort: medium
     uses: >-
       arnold exercise mappers (scripts/importers/map_failures_sonnet45.py, claude-sonnet-4-5;
       scripts/mappers/map_custom_to_canonical.py, claude-3-5-haiku). One role for one task: the
       later failure pass had already moved this task from Haiku up to Sonnet.
   quality_rater_primary:
     family: opus
-    effort: default
+    effort: medium
     uses: squiddy quality controls, primary rater (tools/run_quality_controls.py and the H-011 pilots).
   quality_rater_secondary:
     family: haiku
-    effort: default
+    effort: medium
     uses: squiddy quality controls, secondary rater, a deliberately different, smaller family.
+  register_statement:
+    family: sonnet
+    effort: low
+    uses: >-
+      AD-033-R8's statement writer and its separate validator (scripts/sel002/statements.py's
+      prompts, driven for PA-001 by scripts/pa001/statements_ad035_036.py). SEL-002 ran them on the
+      alias sonnet at effort low: its pilot 2 measured up to 4,774 output tokens of thinking for a
+      few lines of JSON at the default.
+  auditor:
+    family: opus
+    effort: medium
+    uses: >-
+      seldon paper audit's default path (seldon/paper/audit_dispatch.py, the AD-019 content
+      audit). Before PA-001 it launched `claude --print` from PATH with no `--model`, so it ran
+      whatever the interactive CLI defaulted to (opus on the Max plan); MODEL-001's inventory missed
+      it and PA-001's R9 search found it.
   demand_judge:
     family: fable
     effort: high
     uses: >-
       squiddy Q-005 demand judge (graphs/library/judge_run.yaml): Fable at effort high, which is
-      what the sealed rounds measured; the registry's `judge` role is effort default.
+      what the sealed rounds measured. Fable's documented default is also `high`, so `judge` and
+      this role now run at one level; they stay two roles because each is a frozen instrument
+      and a change to either is a re-pilot of that one (AD-035 R7).
 
 # `seldon models refresh` (AD-035 R2). Every value it uses is here, so a change is an edit.
 refresh:
@@ -162,3 +185,20 @@ refresh:
   # not a reason to refuse one).
   auto_on_register: true
   auto_on_dispatch: true
+  # AD-036-R8: each family's DOCUMENTED default effort, for the model the lock served when the
+  # table was read. A product fact, not something a probe can measure, so it is read from the
+  # source below and written here by hand. `refresh` copies it into the lock and records it in the
+  # `models_lock_bumped` event; a family whose newly resolved model is not the one the table was
+  # read for is named as `unverified` in that event, so a bump that moves a default is visible.
+  # A launch that names a lock id instead of a role (`**Model:** claude-...`) runs at this level.
+  documented_default_effort:
+    source: https://code.claude.com/docs/en/model-config
+    retrieved: '2026-10-09'
+    note: >-
+      Default effort moved from high on Opus 5 and Sonnet 5 to medium on the 5.5 models; Fable
+      5.1 defaults to high.
+    families:
+      fable: {model: claude-fable-5-1, effort: high}
+      opus: {model: claude-opus-5-5, effort: medium}
+      sonnet: {model: claude-sonnet-5-5, effort: medium}
+      haiku: {model: claude-haiku-5-5, effort: medium}

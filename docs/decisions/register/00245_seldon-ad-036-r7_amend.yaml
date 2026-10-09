@@ -1,0 +1,15 @@
+seq: 245
+event: amend
+id: seldon:AD-036-R7
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''the note'' in ''When the prior-art tool lands, the `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` command shall'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: feadc7f023f0131b68b7f5dd134c8800ab2a90956f492f11d1ad8ae59fd17c9e
+record_hash: b8745fa35f8463f5704d9a94103a2151eaf4d1b6080061ab6d39e6307dea341d

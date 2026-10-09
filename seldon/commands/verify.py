@@ -263,6 +263,57 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
                        fixable=fixable_only)
 
 
+# ---------------------------------------------------------------------------
+# Check 16: prior-art receipts (AD-036-R4)
+# ---------------------------------------------------------------------------
+
+def check_prior_art(project_dir: Path, config: dict) -> CheckResult:
+    """Fail when a design note outside the AD-036 baseline has no passing prior-art verdict for
+    its current bytes in the governed ledger.
+
+    `seldon verify` is the commit gate (CLAUDE.md: run it before committing), so this is where a
+    note without receipts is refused at commit. The check reads verdicts; it does not run them,
+    because a verification re-runs library searches (seconds each) and `verify` must stay cheap.
+    `--fix` runs `seldon prior-art verify` on each note that has no verdict for its bytes.
+
+    A project with no `prior_art:` block passes and says so: the gate is per project.
+    """
+    from seldon.core import prior_art as pa
+
+    if not isinstance(config.get("prior_art"), dict):
+        return CheckResult(name="Prior art", symbol="pass",
+                           summary="No prior_art block in this project; skipping (AD-036)")
+    try:
+        rows = pa.gate_status(project_dir, config)
+    except pa.PriorArtError as exc:
+        return CheckResult(name="Prior art", symbol="fail", summary=str(exc)[:300])
+    bad = [r for r in rows if not r["ok"]]
+    if not bad:
+        return CheckResult(name="Prior art", symbol="pass",
+                           summary=f"{len(rows)} note(s) outside the baseline, each with a "
+                                   f"passing verdict (AD-036-R4)")
+    fixable = all(r["why"].startswith("no prior-art verdict") for r in bad)
+    return CheckResult(name="Prior art", symbol="fail",
+                       summary=f"{len(bad)} design note(s) without a passing prior-art verdict "
+                               f"(AD-036-R4)",
+                       details=[f"{r['note']}: {r['why']}" for r in bad[:25]], fixable=fixable)
+
+
+def _fix_prior_art(project_dir: Path, quiet: bool = False) -> None:
+    """Run `seldon prior-art verify` on every gated note with no verdict for its current bytes."""
+    from seldon.core import prior_art as pa
+
+    config = load_project_config(project_dir)
+    for r in pa.gate_status(project_dir, config):
+        if r["ok"] or not r["why"].startswith("no prior-art verdict"):
+            continue
+        result = subprocess.run([sys.executable, "-m", "seldon", "prior-art", "verify", r["note"]],
+                                cwd=project_dir, capture_output=True, text=True)
+        if not quiet:
+            click.echo("    " + (result.stdout.strip() or result.stderr.strip()).replace(
+                "\n", "\n    "))
+
+
 def _fix_decisions(project_dir: Path, quiet: bool = False) -> None:
     """Re-project the register and render REGISTER.md (`seldon decision project`)."""
     result = subprocess.run([sys.executable, "-m", "seldon", "decision", "project"],
@@ -341,6 +392,9 @@ TIER_A_CHECKS = frozenset({
     # AD-030-R24. Binary, cheap, and zero in a clean graph: an edge asserting an obligation no
     # document imposes is not a warning to carry forward, and the fix is mechanical.
     "Binding constraints",
+    # AD-036-R4: a design note added without a passing prior-art verdict is a property of the
+    # change in hand; the author who wrote the note is the one who can run the search.
+    "Prior art",
 })
 
 
@@ -1785,6 +1839,7 @@ def _run_all_checks(
         check_governed(driver, database, project_dir, config),
         check_binding_constraints(driver, database, project_dir, config),
         check_decisions(driver, database, project_dir, config),
+        check_prior_art(project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 
@@ -1806,6 +1861,7 @@ def _apply_fixes(
         "Governed docs": _fix_governed,
         "Binding constraints": _fix_binding_constraints,
         "Decision register": _fix_decisions,
+        "Prior art": _fix_prior_art,
     }
 
     for r in results:

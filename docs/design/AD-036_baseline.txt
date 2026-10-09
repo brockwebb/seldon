@@ -1,0 +1,61 @@
+# AD-036-R4 baseline: every gated design note on seldon main at PA-001's merge commit.
+# These are grandfathered, not re-litigated: the prior-art gate (seldon verify, seldon cc register)
+# applies to a note NOT listed here. Written by PA-001 from `seldon.core.prior_art.design_notes`
+# on the branch that merged (feat/PA-001); addenda and errata are exempt by glob and not listed.
+# Never extended: a note added after this list needs a passing `seldon prior-art verify`.
+docs/design/2026-03-10_database_as_context_architecture.md
+docs/design/2026-03-10_fractal_document_graph.md
+docs/design/2026-03-10_parallel_decomposition_via_graph.md
+docs/design/2026-04-04_semantic_anchoring_and_narrative_logic.md
+docs/design/2026-04-05_ad020_calibration_consolidated.md
+docs/design/2026-04-05_hard_threshold_gating_for_mechanical_qc.md
+docs/design/2026-04-05_regression_audit_loop.md
+docs/design/2026-04-05_sprint_contracts_for_cc_tasks.md
+docs/design/2026-09-15_standing_dispatcher.md
+docs/design/2026-09-16_cadence.md
+docs/design/AD-011_database_driven_paper_assembly.md
+docs/design/AD-012_paper_as_graph_assembly.md
+docs/design/AD-013_documentation_as_traceability.md
+docs/design/AD-014_agent_roles_as_graph_artifacts.md
+docs/design/AD-016_paper_qc_severity_tiers.md
+docs/design/AD-017_central_validity_ontology.md
+docs/design/AD-018_document_structure_graph.md
+docs/design/AD-019_agentic_content_audit.md
+docs/design/AD-020_calibration_001_leibniz_pi.md
+docs/design/AD-020_calibration_002_ch04.md
+docs/design/AD-020_calibration_003_ch05.md
+docs/design/AD-020_iterative_content_review_pipeline.md
+docs/design/AD-021_session_continuity_fidelity.md
+docs/design/AD-022_cli_default_mcp_exception.md
+docs/design/AD-023_wintermute_sleep_functions.md
+docs/design/AD-024_observability_as_substrate.md
+docs/design/AD-025_subprojects_as_graph_artifacts.md
+docs/design/AD-026_init_templates.md
+docs/design/AD-027_snapshot_artifacts.md
+docs/design/AD-028_result_names_and_task_lifecycle.md
+docs/design/AD-029_task_precedence.md
+docs/design/AD-030_governed_documents_as_graph_content.md
+docs/design/AD-030_implementation_findings_001.md
+docs/design/AD-030_implementation_findings_002.md
+docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+docs/design/AD-032_factory_control_design.md
+docs/design/AD-033_decision_register.md
+docs/design/AD-034_worktree_per_task_dispatch.md
+docs/design/AD-035_config_driven_model_selection.md
+docs/design/AD-036_prior_art_receipts_gate.md
+docs/design/DN-session-continuity-graph-backed-handoffs.md
+docs/design/ad014_agent_roles.md
+docs/design/agent_tool_design_lessons.md
+docs/design/conops_agent_swarm_workflow.md
+docs/design/evolution_burst_2026-04/cc1_pattern_extraction.md
+docs/design/evolution_burst_2026-04/cc2_infrastructure_state_2026-04-18.md
+docs/design/evolution_burst_2026-04/cc3_measurement_function_audit.md
+docs/design/evolution_burst_2026-04/cc4_dashboard_design.md
+docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+docs/design/evolution_burst_2026-04/dual_model_verification_2026-04-18.md
+docs/design/evolution_burst_2026-04/phase_c_retirement_list.md
+docs/design/evolution_burst_2026-04/phase_c_roadmap_75_15_10.md
+docs/design/guarded_incremental_change_cycle.md
+docs/design/paper_authoring_convention.md
+docs/design/paper_foundations_workflow.md
+docs/design/seldon_architectural_decisions.md

@@ -1,0 +1,16 @@
+seq: 239
+event: amend
+id: seldon:AD-036-R1
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'Every new design note shall carry a `## Prior art` section with two subsections, `### External` and `### Internal`, in which each entry is a receipt: a library receipt names the query string, the index release and its sha256, and one or more returned row ids; an internal receipt names the query string, the repository and its commit sha, and file:line hits; a web receipt names the URL and the retrieval date and is allowed only in External, and an External section containing only web receipts shall also carry at least one library query, even one that found nothing; a finding of "no prior art" shall be recorded as a receipt of the query that found nothing and never as a sentence.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 010ed61bc6eab070a3a92e45784deac13231eb3840456684af42b55baf6eb0bb
+record_hash: 0483575dcd19ea037d37a8e5f2a501eb94cadbe3f341fbc9dfd1f29baf3baf91

@@ -1,0 +1,16 @@
+seq: 235
+event: amend
+id: seldon:AD-035-R5
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If a task's `**Model:**` header, or a `--model` argument in one of its code blocks, names an id not in the current lock, then `seldon cc register` and dispatcher candidacy shall refuse the task and quote the lock in the refusal; prose that cites history is not checked.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: c2a931eb5fc2b8fab8c437e6b0467f6ee95f86206a67e85563bedc065177d99b
+record_hash: 60e013186510772d1263062938e1d3f23f0b71f41c8c06ad9f1fd70d78c318ca

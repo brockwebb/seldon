@@ -1,0 +1,20 @@
+{
+ "tally": {
+  "passed": 14,
+  "failed": 3
+ },
+ "refused": [
+  {
+   "id": "seldon:AD-035-R8",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'this decision' in 'The project does not deploy managed settings (an `availableModels` allowlist or denial of superseded models), because an'"
+  },
+  {
+   "id": "seldon:AD-036-R4",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the note' in 'The gate shall refuse at two points: when `seldon verify` (pre-commit) sees a commit that adds a design note under `docs'"
+  },
+  {
+   "id": "seldon:AD-036-R7",
+   "refusal": "a statement names no other record by position (AD-033-R3): 'the note' in 'When the prior-art tool lands, the `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` command shall'"
+  }
+ ]
+}

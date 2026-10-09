@@ -1,7 +1,8 @@
 """Audit dispatch via `claude --print` (Max OAuth) with LiteLLM fallback.
 
-Default path routes a single audit prompt through the local `claude` CLI,
-which uses the Max-subscription OAuth token. No API key required.
+Default path routes a single audit prompt through the lock's Claude CLI as the
+`auditor` role (AD-035 R3, AD-036-R8), which uses the Max-subscription OAuth token.
+No API key required.
 
 When `AUDIT_MODEL` is set to a non-default value (e.g. `gemini/gemini-2.5-flash`),
 dispatch falls back to LiteLLM so dual-model SPOF-break audits keep working.
@@ -51,15 +52,26 @@ def dispatch(
     return _dispatch_claude_cli(prompt, system)
 
 
+#: The registry role the default path launches as (AD-035 R3, AD-036-R8): model id, CLI and effort
+#: come from the lock and the registry, never from whatever `claude` is on PATH.
+AUDIT_ROLE = "auditor"
+
+
 def _dispatch_claude_cli(prompt: str, system: Optional[str]) -> str:
-    """Invoke `claude --print --output-format json` and return the result text."""
-    cmd = ["claude", "--print", "--output-format", "json"]
+    """Launch the lock's CLI for the `auditor` role with `--print --output-format json` and return
+    the result text. The served model is checked against the requested one (AD-035 R6): a
+    substitution raises rather than returning an answer from a model nobody asked for."""
+    from seldon import models
+
+    spec = models.launch_spec(AUDIT_ROLE)
+    cmd = [spec["cli_path"], "--print", "--output-format", "json", *spec["args"]]
     if system:
         cmd.extend(["--append-system-prompt", system])
     cmd.append(prompt)
 
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
+                             env={**os.environ, **spec["env"]})
     except FileNotFoundError as exc:
         raise RuntimeError(
             "claude CLI not found. Ensure Claude Code is installed and "
@@ -76,8 +88,13 @@ def _dispatch_claude_cli(prompt: str, system: Optional[str]) -> str:
 
     try:
         data = json.loads(res.stdout)
-    except json.JSONDecodeError:
-        return res.stdout.strip()
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("claude --print returned no JSON envelope, so the served model cannot "
+                           f"be checked (AD-035 R6): {res.stdout[:300]!r}") from exc
+    try:
+        models.check_receipt(spec["model"], data, effort=spec["effort"])
+    except models.ModelSubstituted as exc:
+        raise RuntimeError(str(exc)) from exc
     return (data.get("result") or "").strip()
 
 

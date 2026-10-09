@@ -1007,6 +1007,9 @@ def check(project_dir: Path, config: dict) -> list[str]:
         if qid not in recs:
             findings.append(f"register: {path} (added after {s.baseline_name or 'the baseline'}) "
                             f"labels {qid}, which has no record (AD-033-R2)")
+    for rel, line, label in unparsed_labels(s):
+        findings.append(f"{UNPARSED}: {rel}:{line} {label} is in a heading or bold position and "
+                        f"no `decisions.design_notes` pattern captures it (AD-036 section 6.1)")
     rendered = s.root / s.rendered
     if reg.exists():
         want = render_register(u)
@@ -1021,6 +1024,58 @@ def _in_tree(root: Path, commit: str, rel: str) -> bool:
     r = subprocess.run(["git", "-C", str(root), "cat-file", "-e", f"{commit}:{rel}"],
                        capture_output=True, text=True)
     return r.returncode == 0
+
+
+#: AD-036 section 6.1: a ruling label the register cannot see fails under this name.
+UNPARSED = "ruling_label_unparsed"
+#: A ruling label in a heading or bold position at the start of a line: `## AD-035-R1.`,
+#: `### 2. R-40 ...`, `- **R3.**`, `**AD-033-R8.**`. The label forms are AD-036 section 6.1's.
+_LABEL_POSITION_RE = re.compile(
+    r"^(?:#{1,6}\s+(?:\d+(?:\.\d+)*\.?\s+)?|\s*(?:[-*]\s+)?\*\*)"
+    r"(AD-\d{3}-R\d+|R-?\d{1,3})(?![\w-])")
+_FENCE_RE = re.compile(r"^\s*(```|~~~)")
+
+
+def _design_note_paths(s: Settings) -> list[Path]:
+    """Every design note the label check reads: `docs/design/**/*.md` plus each configured glob."""
+    paths = set((s.root / "docs" / "design").rglob("*.md")) if (s.root / "docs" / "design").is_dir() \
+        else set()
+    for fam in s.design_notes:
+        paths |= set(s.root.glob(fam["glob"]))
+    return sorted(p for p in paths if p.is_file())
+
+
+def unparsed_labels(s: Settings, all_notes: bool = False) -> list[tuple[str, int, str]]:
+    """(path, line, label) for each ruling label in a heading or bold position that no configured
+    pattern for that note captures (AD-036 section 6.1).
+
+    The defect this closes: AD-035 was edited before commit from `**AD-035-Rn.**` to
+    `## AD-035-Rn.` headings, the configured pattern reads only the bold form, and so no record
+    was ever required for any AD-035 ruling: a label the register cannot parse is a label it
+    cannot miss. By default only notes absent from the baseline tree are read, as with the
+    missing-record check; `all_notes=True` reads every note (the PA-001 report over all repos).
+    """
+    out = []
+    for p in _design_note_paths(s):
+        rel = p.relative_to(s.root).as_posix()
+        if not all_notes and s.baseline_commit and _in_tree(s.root, s.baseline_commit, rel):
+            continue
+        fams = [f for f in s.design_notes if p in set(s.root.glob(f["glob"]))]
+        pats = [re.compile(f["pattern"]) for f in fams]
+        fence = False
+        for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _FENCE_RE.match(line):
+                fence = not fence
+                continue
+            if fence:
+                continue
+            m = _LABEL_POSITION_RE.match(line)
+            if not m:
+                continue
+            label = m.group(1)
+            if not any((cm := pat.match(line)) and cm.group(1) == label for pat in pats):
+                out.append((rel, n, label))
+    return out
 
 
 def labeled_decisions_after_baseline(s: Settings) -> list[tuple[str, str]]:

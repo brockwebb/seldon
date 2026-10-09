@@ -1,0 +1,39 @@
+seq: 214
+event: accept
+id: seldon:AD-035-R1
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-035_config_driven_model_selection.md:3: "**Date:** 2026-10-09. **Status:** accepted (operator defect, L4 self-executing). **Task:** ResearchTask `6efdd767` (MODEL-001)."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  ## AD-035-R1. One registry, one lock, machine-wide, in this repo
+
+    - `models/registry.yaml` holds intent: role to family, plus effort. Roles are named by use, for example `primary`, `extractor`, `rater`, `adjudicator`, `teacher`, `judge`, `background`.
+    - `models/models.lock.yaml` holds the resolved model id per family, the CLI version that resolved it, the date and the evidence file.
+    - `seldon models show` prints both. A Python accessor `seldon.models.resolve(role)` is the only way any code on this machine gets a model id.
+source:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  lines:
+  - 46
+  - 50
+  sha256: 868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8
+  text: |-
+    ## AD-035-R1. One registry, one lock, machine-wide, in this repo
+
+      - `models/registry.yaml` holds intent: role to family, plus effort. Roles are named by use, for example `primary`, `extractor`, `rater`, `adjudicator`, `teacher`, `judge`, `background`.
+      - `models/models.lock.yaml` holds the resolved model id per family, the CLI version that resolved it, the date and the evidence file.
+      - `seldon models show` prints both. A Python accessor `seldon.models.resolve(role)` is the only way any code on this machine gets a model id.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  anchor: AD-035-R1
+consumer:
+- seldon/core/decisions.py
+written_by: seldon decision 0.1.0
+prev_hash: 8353c9cdbfc030325b9ceb9ba578274d82d4327e7439129ead28a235b12df1a6
+record_hash: 01579dc05a6bdd3a3662bfcd7289d769943a0146596ab6715f74d7d471c2341a

@@ -1,0 +1,31 @@
+{
+ "bound_s": 10.0,
+ "k": 10,
+ "modes": {
+  "cold": {
+   "n": 24,
+   "failed": [],
+   "p95_s": 21.078,
+   "median_s": 19.5908,
+   "max_s": 23.6275,
+   "verdict": "fail"
+  },
+  "warm": {
+   "n": 24,
+   "failed": [],
+   "p95_s": 0.3163,
+   "median_s": 0.2905,
+   "max_s": 6.744,
+   "verdict": "pass"
+  }
+ },
+ "questions": "../squiddy/graphs/library/evidence/20260923_q003/demand_questions.json",
+ "questions_sha256": "34113bf8226d2933698d7fdf61f92acb7582ef4ae601a029b30a2f5add5f3c20",
+ "release_sha256": "fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543",
+ "units": "docs/evidence/pa001/library_latency_units.jsonl",
+ "complete": true,
+ "definition": {
+  "cold": "first search of a fresh process, index open included",
+  "warm": "search after the index is open, one process"
+ }
+}

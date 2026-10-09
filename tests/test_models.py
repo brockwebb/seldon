@@ -68,15 +68,49 @@ def test_the_launcher_env_block_carries_all_four_lock_ids(home):
                    "ANTHROPIC_DEFAULT_HAIKU_MODEL": FIXTURE_IDS["haiku"],
                    "ANTHROPIC_DEFAULT_FABLE_MODEL": FIXTURE_IDS["fable"]}
     spec = M.launch_spec("extractor")
-    assert spec["env"] == env
+    assert spec["env"] == {**env, M.EFFORT_ENV: spec["effort"]}
     assert spec["args"][:2] == ["--model", FIXTURE_IDS["sonnet"]]
     assert json.loads(spec["args"][3]) == {"switchModelsOnFlag": False}
 
 
-def test_effort_other_than_default_is_passed(home):
+def test_every_launch_passes_the_declared_effort_flag_and_env(home):
+    """AD-036-R8: effort is a declared input; every role's launch passes it, twice in agreement."""
     spec = M.launch_spec("document_extractor")
     assert spec["args"][-2:] == ["--effort", "high"]
-    assert "--effort" not in M.launch_spec("primary")["args"]
+    assert spec["env"][M.EFFORT_ENV] == "high"
+    for role in M.role_names():
+        s = M.launch_spec(role)
+        assert s["args"][-2:] == ["--effort", s["effort"]] and s["effort"] in M.EFFORT_LEVELS
+        assert s["env"][M.EFFORT_ENV] == s["effort"]
+
+
+def test_the_registry_names_the_documented_default_for_each_family(home):
+    """AD-036-R8: the levels are the documented defaults of the models the lock serves, except the
+    roles whose own pilots measured another level."""
+    reg = M.load_registry()
+    doc = reg["refresh"]["documented_default_effort"]["families"]
+    assert {f: r["effort"] for f, r in doc.items()} == {
+        "fable": "high", "opus": "medium", "sonnet": "medium", "haiku": "medium"}
+    for name, row in reg["roles"].items():
+        measured = {"document_extractor": "high", "demand_judge": "high",
+                    "register_statement": "low"}       # SEL-002 pilot 2
+        want = measured.get(name, doc[row["family"]]["effort"])
+        assert row["effort"] == want, name
+
+
+def test_effort_default_is_refused(home):
+    reg = yaml.safe_load((home / M.REGISTRY_FILE).read_text())
+    reg["roles"]["primary"]["effort"] = "default"
+    (home / M.REGISTRY_FILE).write_text(yaml.safe_dump(reg, sort_keys=False))
+    with pytest.raises(M.ModelsError, match="AD-036-R8"):
+        M.load_registry()
+
+
+def test_a_lock_id_header_launches_at_the_familys_documented_default(home):
+    spec = M.launch_spec_for(FIXTURE_IDS["fable"])
+    assert spec["role"] is None and spec["effort"] == "high"
+    assert spec["args"][-2:] == ["--effort", "high"]
+    assert M.launch_spec_for(FIXTURE_IDS["opus"])["effort"] == "medium"
 
 
 def test_settings_merge_never_lets_a_caller_switch_models_on(home):
@@ -97,7 +131,9 @@ def test_a_matching_receipt_passes_and_records_side_models(home):
     r = M.check_receipt(FIXTURE_IDS["opus"], _envelope(FIXTURE_IDS["opus"],
                                                        side=FIXTURE_IDS["haiku"]))
     assert r == {"requested": FIXTURE_IDS["opus"], "served": FIXTURE_IDS["opus"],
-                 "side_models": [FIXTURE_IDS["haiku"]], "ok": True}
+                 "side_models": [FIXTURE_IDS["haiku"]], "ok": True, "effort": None}
+    assert M.receipt(FIXTURE_IDS["opus"], _envelope(FIXTURE_IDS["opus"]), effort="medium")[
+        "effort"] == "medium"
 
 
 def test_a_different_served_model_raises_model_substituted(home):
@@ -221,6 +257,12 @@ def test_refresh_bumps_when_a_family_moves_and_names_old_and_new(refresh_home, t
     assert p["old"]["families"]["haiku"] == FIXTURE_IDS["haiku"]
     assert p["new"]["families"]["haiku"] == "claude-haiku-6-0"
     assert p["old"]["cli_version"] == "3.0.1" and p["new"]["cli_version"] == "3.0.2"
+    # AD-036-R8: the bump records each family's documented default effort, and names the family
+    # whose new model the table was not read for.
+    assert p["new"]["documented_default_effort"]["families"]["haiku"] == {
+        "effort": "medium", "documented_for": FIXTURE_IDS["haiku"], "current": False}
+    assert p["documented_default_effort_unverified"] == ["haiku"]
+    assert M.load_lock()["documented_default_effort"]["families"]["opus"]["current"] is True
 
 
 def test_refresh_refuses_a_probe_served_outside_its_family(refresh_home, tmp_path):

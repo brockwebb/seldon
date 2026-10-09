@@ -1,0 +1,86 @@
+{
+ "arnold": {
+  "after_baseline": [],
+  "all_notes": [
+   [
+    "docs/adr/013-canonical-training-vocabulary.md",
+    31,
+    "R1"
+   ],
+   [
+    "docs/adr/013-canonical-training-vocabulary.md",
+    35,
+    "R2"
+   ],
+   [
+    "docs/adr/013-canonical-training-vocabulary.md",
+    47,
+    "R3"
+   ]
+  ]
+ },
+ "seldon": {
+  "after_baseline": [],
+  "all_notes": [
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    24,
+    "R1"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    31,
+    "R2"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    38,
+    "R3"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    45,
+    "R4"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    53,
+    "R5"
+   ]
+  ]
+ },
+ "seldon-sel004": {
+  "after_baseline": [],
+  "all_notes": [
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    24,
+    "R1"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    31,
+    "R2"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    38,
+    "R3"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    45,
+    "R4"
+   ],
+   [
+    "docs/design/evolution_burst_2026-04/phase_c_retirement_list.md",
+    53,
+    "R5"
+   ]
+  ]
+ },
+ "squiddy": {
+  "after_baseline": [],
+  "all_notes": []
+ }
+}

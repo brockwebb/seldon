@@ -1,0 +1,56 @@
+seq: 229
+event: accept
+id: seldon:AD-036-R8
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R8. Effort is a declared input, as the model id is (extends AD-035-R1, R3, R6).**
+    - `effort: default` is refused in `models/registry.yaml`. Each role names a level.
+    - Values are the documented default of the model the lock now serves:
+      - `medium` for opus, sonnet and haiku;
+      - `high` for fable;
+      - `document_extractor` and `demand_judge` stay `high` as measured.
+    - This makes today's behavior explicit and changes nothing.
+    - Launchers pass `--effort`. Receipts record it.
+    - A lock bump records any change in a family's documented default effort.
+    - Basis:
+      - Chen et al. 2023, above: anything that changes the instrument is part of its identity;
+      - code.claude.com/docs/en/model-config, retrieved 2026-10-09: default effort moved from `high` on Opus 5 and Sonnet 5 to `medium` on the 5.5 models.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 124
+  - 135
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R8. Effort is a declared input, as the model id is (extends AD-035-R1, R3, R6).**
+      - `effort: default` is refused in `models/registry.yaml`. Each role names a level.
+      - Values are the documented default of the model the lock now serves:
+        - `medium` for opus, sonnet and haiku;
+        - `high` for fable;
+        - `document_extractor` and `demand_judge` stay `high` as measured.
+      - This makes today's behavior explicit and changes nothing.
+      - Launchers pass `--effort`. Receipts record it.
+      - A lock bump records any change in a family's documented default effort.
+      - Basis:
+        - Chen et al. 2023, above: anything that changes the instrument is part of its identity;
+        - code.claude.com/docs/en/model-config, retrieved 2026-10-09: default effort moved from `high` on Opus 5 and Sonnet 5 to `medium` on the 5.5 models.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R8
+consumer:
+- tests/test_dispatch.py
+- tests/test_dispatch_serial_transcript.py
+- tests/test_models.py
+- seldon/models.py
+written_by: seldon decision 0.1.0
+prev_hash: d2c98d31777d17f6cdee328cd643c404d809a0cd646551f37cf4677c4d0f7089
+record_hash: e276771a6a52454f126ab861d6eb025debc25c5ac37e66cdbe5176e40bf1bd47

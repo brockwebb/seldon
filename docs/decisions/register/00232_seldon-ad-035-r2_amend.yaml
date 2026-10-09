@@ -1,0 +1,16 @@
+seq: 232
+event: amend
+id: seldon:AD-035-R2
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: When `seldon models refresh` runs, it shall resolve "latest in family" using Anthropic's own resolver, the newest Claude Code CLI, by installing the newest Claude Code into a versioned prefix with `npm install --prefix` and never the global install, running one minimal `-p --model <alias> --output-format json` call per family and recording the `modelUsage` model id, writing the lock, appending a `models_lock_bumped` event naming the old and new ids, and committing. The refresh shall cost four short calls, shall run when a task is authored and when a run starts, and its result shall be cached for the day.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: ca7a2be7d4d2030e6a1b82d4b37a18bd09d1332d57f39d0f0c7949b935b8a059
+record_hash: 68758bb27f3f3d544efecb0543c26f49fba9fe970f1c823a8930d66518e9c106

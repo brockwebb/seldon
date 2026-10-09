@@ -64,8 +64,66 @@ decisions:
     - glob: docs/design/AD-*.md
       pattern: '^\*\*(FC-\d{2})\.'
       id: '{repo}:{doc}-{label}'
+    # AD-036 section 6.1: the heading form AD-035 was committed in (`## AD-035-R1. ...`). Without it
+    # the register could not see AD-035's rulings and verify could not miss them.
+    - glob: docs/design/AD-*.md
+      pattern: '^#{2,4}\s+(AD-\d{3}-R\d+)[.:)\s]'
+      id: '{repo}:{label}'
   consumer_roots: [tests, seldon]
   # AD-033-R9: the conflicts probe re-run on the register (`seldon decision check --probe`).
   probe:
     findings: ../squiddy/docs/findings/2026-10-03_operator_audit/probe/conflicts.jsonl
     exclusions: docs/decisions/probe_exclusions.yaml
+
+prior_art:
+  # AD-036: the prior-art receipts gate. `seldon prior-art search|verify` (seldon/core/prior_art.py).
+  # Every query either arm runs, for a search, a verification or the recall control, is appended
+  # here with the corpus identities it ran against (AD-036-R3: "a logged, deterministic tool").
+  log: state/prior_art_queries.jsonl
+  # AD-036-R3's declared internal corpus. Each root is searched at its HEAD commit (git objects,
+  # so a receipt can be re-run at that commit) plus the files on disk the commit does not hold
+  # (gitignored handoffs), which a receipt cites with their content hash.
+  internal_roots:
+    - {name: seldon, path: .}
+    - {name: squiddy, path: ../squiddy}
+    - {name: ai-readiness-kg, path: ../ai-readiness-kg}
+    - {name: arnold, path: ../arnold}
+    - {name: icsp_notebook, path: ../icsp_notebook}
+    # Wintermute keeps its notes flat under docs/ and its handoffs at the top level.
+    - name: wintermute
+      path: ~/.wintermute
+      include: ['docs/**', 'handoffs/**', CLAUDE.md]
+    # The 2026-10-03 cross-project audit. Not a git repository, so its receipts name the digest
+    # of every file searched (`workbench-audit@tree:<sha256>`).
+    - name: workbench-audit
+      path: ../workbench/2026-10-03_audit_and_decision_probe
+      include: ['**']
+  internal:
+    # R3's list, plus each repository's top-level docs/*.md. Added before the recall control ran
+    # (PA-001 Part C pre-registration): a repository's governing specification and decision log
+    # live there (squiddy docs/EXTRACTION_DESIGN_SPEC.md, docs/DECISIONS_INHERITED.md;
+    # ai-readiness-kg docs/design_decisions.md), and an internal search that skips the decision
+    # log is not an internal search. Recorded in AD-036 ADDENDUM 01.
+    default_include: ['docs/design/**', 'docs/research/**', 'docs/decisions/**', 'handoffs/**',
+                      CLAUDE.md, DECISIONS_INHERITED.md, 'docs/*.md']
+    suffixes: [.md, .markdown, .txt, .yaml, .yml]
+    # How many hits a printed receipt cites per repository, and R5's "top 20".
+    top_n: 20
+    # A governed text over 2 MB is a data dump, not a note; skipped files are counted and printed.
+    max_file_bytes: 2000000
+    # BM25's textbook parameters (Robertson and Zaragoza 2009), untuned: ranking only orders the
+    # print-out and R5's top 20; verification is by membership.
+    bm25: {k1: 1.2, b: 0.75}
+  library:
+    # The squiddy library graph whose built index `search` serves (DN-025 R-110).
+    graph: ../squiddy/graphs/library
+    # Documents returned per library query; a receipt's rows must be among them. The served
+    # verb's default is 10; 20 matches the internal arm's top 20.
+    k: 20
+  gate:
+    # AD-036-R4: design notes under this directory need a passing verdict to be committed or to
+    # govern a registered task. Addenda and errata complete or correct a note and are verified
+    # WITH it (a note's addenda are read together with it), so they are not gated alone.
+    design_dir: docs/design
+    baseline: docs/design/AD-036_baseline.txt
+    exempt_globs: ['*_ADDENDUM_*.md', '*_erratum_*.md', '*_ERRATUM_*.md']

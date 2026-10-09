@@ -1,0 +1,42 @@
+seq: 225
+event: accept
+id: seldon:AD-036-R4
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R4. The gate refuses at two points.**
+    - **Commit:** `seldon verify` (pre-commit) refuses a commit that adds a design note under `docs/design/` whose prior-art section is missing, has an empty subsection, or fails R2. The verdict is written to the governed ledger beside the note's hash.
+    - **Registration:** `seldon cc register` refuses a task whose governing note has no passing verdict.
+    - Notes on main at this AD's merge commit are baseline. They are listed and grandfathered, not re-litigated.
+    - The refusal quotes the missing part and names this AD.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 95
+  - 99
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R4. The gate refuses at two points.**
+      - **Commit:** `seldon verify` (pre-commit) refuses a commit that adds a design note under `docs/design/` whose prior-art section is missing, has an empty subsection, or fails R2. The verdict is written to the governed ledger beside the note's hash.
+      - **Registration:** `seldon cc register` refuses a task whose governing note has no passing verdict.
+      - Notes on main at this AD's merge commit are baseline. They are listed and grandfathered, not re-litigated.
+      - The refusal quotes the missing part and names this AD.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R4
+consumer:
+- tests/test_prior_art.py
+- seldon/commands/cc.py
+- seldon/commands/verify.py
+- seldon/core/prior_art.py
+written_by: seldon decision 0.1.0
+prev_hash: 3183b8665dd3dfec40d05ddc7944676386442148ceb04bd2a9868065fc352a2e
+record_hash: 20c315a691e2337031c56f578ff50f18550e902f8e21f86808d6c503a9bfe131

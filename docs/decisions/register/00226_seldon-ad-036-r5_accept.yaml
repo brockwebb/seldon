@@ -1,0 +1,48 @@
+seq: 226
+event: accept
+id: seldon:AD-036-R5
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R5. The internal search tool carries a pre-registered recall control.**
+    - The positive set is the 14 file:line entries of G5 problem 1's timeline and the four ai-readiness-kg §1 and §7 lines cited in section 2: 18 known-relevant locations.
+    - Queries are fixed before the run. One per entry, written from the entry's topic, never from its wording:
+      - "prior art search before design";
+      - "unit of extraction";
+      - "model pin" (bears on "Opus 5 pin");
+      - and so on, one per entry.
+    - The tool passes when Wilson-95 lower bound of recall at top 20 is at or above 0.70.
+    - A failure is reported with the misses and does not block R4. The gate checks presence and verifiability, not search quality. It opens a design task for the governed-graph arm.
+    - The control is re-run on every change to the tool.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 101
+  - 110
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R5. The internal search tool carries a pre-registered recall control.**
+      - The positive set is the 14 file:line entries of G5 problem 1's timeline and the four ai-readiness-kg §1 and §7 lines cited in section 2: 18 known-relevant locations.
+      - Queries are fixed before the run. One per entry, written from the entry's topic, never from its wording:
+        - "prior art search before design";
+        - "unit of extraction";
+        - "model pin" (bears on "Opus 5 pin");
+        - and so on, one per entry.
+      - The tool passes when Wilson-95 lower bound of recall at top 20 is at or above 0.70.
+      - A failure is reported with the misses and does not block R4. The gate checks presence and verifiability, not search quality. It opens a design task for the governed-graph arm.
+      - The control is re-run on every change to the tool.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R5
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 20c315a691e2337031c56f578ff50f18550e902f8e21f86808d6c503a9bfe131
+record_hash: 4b3b5ce0403d9a98796518feb9d784f1a12d9288693f3cd57527f20033106ccb

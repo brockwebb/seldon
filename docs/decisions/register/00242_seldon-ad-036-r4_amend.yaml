@@ -1,0 +1,15 @@
+seq: 242
+event: amend
+id: seldon:AD-036-R4
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''the note'' in ''The gate shall refuse at two points: when `seldon verify` (pre-commit) sees a commit that adds a design note under `docs'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: e9a6f0ac01733c67f9019f208554953e30227249b5d9125a3ed23ac64f7274f5
+record_hash: 9766f5ccfdd015638da5416f7d8e207867ff6fa2926ebe979014e67b364bcb9f

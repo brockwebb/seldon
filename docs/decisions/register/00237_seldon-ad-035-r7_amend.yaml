@@ -1,0 +1,16 @@
+seq: 237
+event: amend
+id: seldon:AD-035-R7
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: While a run is in flight, the system shall keep the run's lock entry until the run ends. When a version bump occurs, the system shall re-pilot each gated or sealed instrument, per H-006 R-30. The system shall keep the ids that sealed records were made with, treating them as history and not as staleness.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 8cc570e161b1c69b623b7ba5e4aa2855721a9c341d5e31c0976543432f205312
+record_hash: aa03e2ba0c28433131a4ad460eebc82436c5cb1af41ad0e306ff8b9f7f65d2c8

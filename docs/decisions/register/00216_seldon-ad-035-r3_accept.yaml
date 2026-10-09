@@ -1,0 +1,34 @@
+seq: 216
+event: accept
+id: seldon:AD-035-R3
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-035_config_driven_model_selection.md:3: "**Date:** 2026-10-09. **Status:** accepted (operator defect, L4 self-executing). **Task:** ResearchTask `6efdd767` (MODEL-001)."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  ## AD-035-R3. Launch from the lock, never from an alias
+
+  Every launcher sets the lock's ids into `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL`, so CLI background work follows the lock too. It passes `--model <id>` for its role and execs the CLI version the lock names. Launchers: the seldon dispatcher, squiddy `model_client` and extraction daemon, ai-readiness-kg and arnold harnesses, and any other model call site the inventory finds.
+source:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  lines:
+  - 57
+  - 59
+  sha256: 868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8
+  text: |-
+    ## AD-035-R3. Launch from the lock, never from an alias
+
+    Every launcher sets the lock's ids into `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL`, so CLI background work follows the lock too. It passes `--model <id>` for its role and execs the CLI version the lock names. Launchers: the seldon dispatcher, squiddy `model_client` and extraction daemon, ai-readiness-kg and arnold harnesses, and any other model call site the inventory finds.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  anchor: AD-035-R3
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: bfb7a78bab0151d9278c8dde52a34ba5d155204bc5bca8c7d9d9cf00da9d85db
+record_hash: f5049fd111388abe53e0dabc1ccefb4e5d2b220c05911df9602e3a628be64363

@@ -1,0 +1,28 @@
+seq: 227
+event: accept
+id: seldon:AD-036-R6
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: '- **AD-036-R6. What the gate does not check, stated so nobody relies on it.** It proves a search happened and that its cited hits exist. It does not prove the author read the hits, weighed them or used them. Han et al. measured reporting, not quality. Quality stays with review (AD-020 multi-lens) and with the operator.'
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 112
+  - 112
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: '- **AD-036-R6. What the gate does not check, stated so nobody relies on it.** It proves a search happened and that its cited hits exist. It does not prove the author read the hits, weighed them or used them. Han et al. measured reporting, not quality. Quality stays with review (AD-020 multi-lens) and with the operator.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R6
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 4b3b5ce0403d9a98796518feb9d784f1a12d9288693f3cd57527f20033106ccb
+record_hash: e7d096340b88c169bb935d1b76d09c5dcaea839440a8a553e446d2744d2a92d4

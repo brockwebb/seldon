@@ -1,0 +1,16 @@
+seq: 246
+event: amend
+id: seldon:AD-036-R8
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The system shall treat effort as a declared input, as the model id is: `models/registry.yaml` shall refuse `effort: default` and name an effort level for each role, set to the documented default effort of the model the lock now serves (`medium` for opus, sonnet and haiku; `high` for fable) except that `document_extractor` and `demand_judge` stay `high` as measured; launchers shall pass `--effort`, receipts shall record it, and a lock bump shall record any change in a family''s documented default effort.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: b8745fa35f8463f5704d9a94103a2151eaf4d1b6080061ab6d39e6307dea341d
+record_hash: 7954e9fc93145196bee4b17c742eacd3827a8cf7093b080c5f5130b4377cf843

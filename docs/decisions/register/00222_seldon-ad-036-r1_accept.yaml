@@ -1,0 +1,40 @@
+seq: 222
+event: accept
+id: seldon:AD-036-R1
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R1. Every new design note carries `## Prior art` with two subsections, `### External` and `### Internal`, and each entry is a receipt.**
+    - A **library receipt** names the query string, the index release and its sha256, and one or more returned row ids.
+    - An **internal receipt** names the query string, the repository and its commit sha, and file:line hits.
+    - A **web receipt** names the URL and the retrieval date. It is allowed in External, but a section of web receipts only must also carry at least one library query, even one that found nothing.
+    - A finding of "no prior art" is a receipt of the query that found nothing. It is never a sentence.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 74
+  - 78
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R1. Every new design note carries `## Prior art` with two subsections, `### External` and `### Internal`, and each entry is a receipt.**
+      - A **library receipt** names the query string, the index release and its sha256, and one or more returned row ids.
+      - An **internal receipt** names the query string, the repository and its commit sha, and file:line hits.
+      - A **web receipt** names the URL and the retrieval date. It is allowed in External, but a section of web receipts only must also carry at least one library query, even one that found nothing.
+      - A finding of "no prior art" is a receipt of the query that found nothing. It is never a sentence.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R1
+consumer:
+- seldon/commands/prior_art.py
+- seldon/core/prior_art.py
+written_by: seldon decision 0.1.0
+prev_hash: 197b7e642eace00f8e343e6c271f503f1568113caa797b44d13aba0f9e956cdd
+record_hash: 283564b4a5fc9670d8783a4e2f8936a2c3aa24b5b71a4dce4343927640da2ed1
