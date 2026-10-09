@@ -1,0 +1,41 @@
+seq: 215
+event: accept
+id: seldon:AD-035-R2
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-035_config_driven_model_selection.md:3: "**Date:** 2026-10-09. **Status:** accepted (operator defect, L4 self-executing). **Task:** ResearchTask `6efdd767` (MODEL-001)."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  ## AD-035-R2. "Latest in family" is resolved by Anthropic's own resolver, the newest CLI
+
+    - `seldon models refresh` installs the newest Claude Code into a versioned prefix (`npm install --prefix`, never the global install).
+    - It runs one minimal `-p --model <alias> --output-format json` per family and records the `modelUsage` model id.
+    - It writes the lock, appends a `models_lock_bumped` event naming old and new ids, and commits.
+    - Cost is four short calls. It runs when a task is authored and when a run starts; the result is cached for the day.
+source:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  lines:
+  - 51
+  - 56
+  sha256: 868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8
+  text: |-
+    ## AD-035-R2. "Latest in family" is resolved by Anthropic's own resolver, the newest CLI
+
+      - `seldon models refresh` installs the newest Claude Code into a versioned prefix (`npm install --prefix`, never the global install).
+      - It runs one minimal `-p --model <alias> --output-format json` per family and records the `modelUsage` model id.
+      - It writes the lock, appends a `models_lock_bumped` event naming old and new ids, and commits.
+      - Cost is four short calls. It runs when a task is authored and when a run starts; the result is cached for the day.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  anchor: AD-035-R2
+consumer:
+- seldon/models.py
+written_by: seldon decision 0.1.0
+prev_hash: 01579dc05a6bdd3a3662bfcd7289d769943a0146596ab6715f74d7d471c2341a
+record_hash: bfb7a78bab0151d9278c8dde52a34ba5d155204bc5bca8c7d9d9cf00da9d85db

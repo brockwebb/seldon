@@ -1,0 +1,47 @@
+seq: 224
+event: accept
+id: seldon:AD-036-R3
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R3. The internal arm searches a declared corpus with a logged, deterministic tool, until governed graphs cover it.**
+    - `seldon prior-art search --internal "<query>"` searches, at each repository's HEAD:
+      - `docs/design`, `docs/research`, `docs/decisions`, `CLAUDE.md`, `DECISIONS_INHERITED.md` and `handoffs`;
+      - in every repository listed under a new `prior_art.internal_roots` key, seeded with seldon, squiddy, ai-readiness-kg, arnold, icsp_notebook, the `~/.wintermute/docs` tree, and the workbench audit folder.
+    - It prints receipts in R1's form and appends the query, the commits and the hits to `state/prior_art_queries.jsonl`.
+    - The match is lexical (ripgrep, case-insensitive, all terms within one paragraph). It is a search, not an admission test, so DI-075 does not bar it. R5 measures its recall.
+    - `seldon prior-art search --library "<query>"` wraps squiddy-library `search` in-process and logs the same way.
+    - Both are exposed as one MCP tool, `seldon_prior_art_search`, so Desktop design sessions use them.
+    - When governed graphs cover the sibling repositories (AD-031-R1, Issue `25da4d06`), a governed-graph arm is added beside the lexical one. It is not substituted, since the lexical arm is the recall control's baseline.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 85
+  - 93
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R3. The internal arm searches a declared corpus with a logged, deterministic tool, until governed graphs cover it.**
+      - `seldon prior-art search --internal "<query>"` searches, at each repository's HEAD:
+        - `docs/design`, `docs/research`, `docs/decisions`, `CLAUDE.md`, `DECISIONS_INHERITED.md` and `handoffs`;
+        - in every repository listed under a new `prior_art.internal_roots` key, seeded with seldon, squiddy, ai-readiness-kg, arnold, icsp_notebook, the `~/.wintermute/docs` tree, and the workbench audit folder.
+      - It prints receipts in R1's form and appends the query, the commits and the hits to `state/prior_art_queries.jsonl`.
+      - The match is lexical (ripgrep, case-insensitive, all terms within one paragraph). It is a search, not an admission test, so DI-075 does not bar it. R5 measures its recall.
+      - `seldon prior-art search --library "<query>"` wraps squiddy-library `search` in-process and logs the same way.
+      - Both are exposed as one MCP tool, `seldon_prior_art_search`, so Desktop design sessions use them.
+      - When governed graphs cover the sibling repositories (AD-031-R1, Issue `25da4d06`), a governed-graph arm is added beside the lexical one. It is not substituted, since the lexical arm is the recall control's baseline.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R3
+consumer:
+- seldon/core/prior_art.py
+written_by: seldon decision 0.1.0
+prev_hash: 1d3689c72900c238e2a1efeec4cbc9031a3aa6d7a23fee5e6147b396756acd4c
+record_hash: 3183b8665dd3dfec40d05ddc7944676386442148ceb04bd2a9868065fc352a2e

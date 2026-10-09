@@ -269,6 +269,43 @@ def test_planted_labeled_decision_without_a_record_fails_the_check(tmp_path):
     assert dr.check(root, _cfg(root)) == []
 
 
+def test_a_heading_form_label_no_pattern_captures_fails_as_unparsed(tmp_path):
+    """AD-036 section 6.1: AD-035 was committed with `## AD-035-Rn.` headings no pattern read, so
+    the register held no record and the check could not miss one. The planted note reproduces
+    that: its labels are uncaptured, so the missing-record check is silent and only the
+    unparsed-label check fails. Adding a pattern for the form turns it into a missing record."""
+    root = _repo(tmp_path, "seldon")
+    (root / "docs/design/AD-099_new.md").write_text(
+        "# AD-099\n\n## 3. Rulings\n\n## AD-099-R1. Launch from the lock\n\nEvery launcher...\n\n"
+        "```\n## AD-099-R7. inside a fence is not a label\n```\n", encoding="utf-8")
+    findings = dr.check(root, _cfg(root))
+    assert [x for x in findings if x.startswith(dr.UNPARSED)] == [
+        f"{dr.UNPARSED}: docs/design/AD-099_new.md:5 AD-099-R1 is in a heading or bold position "
+        "and no `decisions.design_notes` pattern captures it (AD-036 section 6.1)"]
+    assert not any("no record" in x for x in findings)
+    cfg = _cfg(root)
+    cfg["decisions"]["design_notes"].append(
+        {"glob": "docs/design/AD-*.md", "pattern": r"^#{2,4}\s+(AD-\d{3}-R\d+)[.:)\s]",
+         "id": "{repo}:{label}"})
+    (root / "seldon.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    findings = dr.check(root, _cfg(root))
+    assert not any(x.startswith(dr.UNPARSED) for x in findings)
+    assert any("seldon:AD-099-R1, which has no record" in x for x in findings), findings
+
+
+def test_unparsed_labels_reads_only_notes_after_the_baseline_unless_asked(tmp_path):
+    root = _repo(tmp_path, "squiddy", baseline=False)
+    (root / "docs/design/AD-001_old.md").write_text("# x\n\n**R7.** old bold label\n")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-q", "-m", "baseline")
+    cfg = _cfg(root)
+    cfg["decisions"]["baseline"] = {"name": "DB-1", "commit": _git(root, "rev-parse", "HEAD")}
+    (root / "seldon.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    s = dr.settings(root, _cfg(root))
+    assert dr.unparsed_labels(s) == []
+    assert dr.unparsed_labels(s, all_notes=True) == [("docs/design/AD-001_old.md", 3, "R7")]
+
+
 def test_a_rationale_that_resolves_to_no_file_is_refused(tmp_path):
     root = _repo(tmp_path, "squiddy")
     with pytest.raises(dr.RegisterError, match="resolves to no file"):

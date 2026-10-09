@@ -1,0 +1,38 @@
+seq: 223
+event: accept
+id: seldon:AD-036-R2
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R2. Receipts are verified by re-running them, not by trusting a log.**
+    - `seldon prior-art verify <note>` re-runs each library query against the named release and each internal query against the named commit. It passes a receipt only when the cited ids or lines are in the result.
+    - A release or commit that is no longer loadable fails with `release_unavailable`, naming it. The verification is recorded once, at commit (R4), so a later library rebuild does not orphan an accepted note.
+    - Prior art: reproducible builds. A second party re-derives the claim.
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 80
+  - 83
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: |-
+    - **AD-036-R2. Receipts are verified by re-running them, not by trusting a log.**
+      - `seldon prior-art verify <note>` re-runs each library query against the named release and each internal query against the named commit. It passes a receipt only when the cited ids or lines are in the result.
+      - A release or commit that is no longer loadable fails with `release_unavailable`, naming it. The verification is recorded once, at commit (R4), so a later library rebuild does not orphan an accepted note.
+      - Prior art: reproducible builds. A second party re-derives the claim.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R2
+consumer:
+- seldon/commands/prior_art.py
+- seldon/core/prior_art.py
+written_by: seldon decision 0.1.0
+prev_hash: 283564b4a5fc9670d8783a4e2f8936a2c3aa24b5b71a4dce4343927640da2ed1
+record_hash: 1d3689c72900c238e2a1efeec4cbc9031a3aa6d7a23fee5e6147b396756acd4c

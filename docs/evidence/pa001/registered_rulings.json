@@ -1,0 +1,196 @@
+[
+ {
+  "id": "seldon:AD-035-R1",
+  "lines": [
+   46,
+   50
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": [
+   "seldon/core/decisions.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-035-R2",
+  "lines": [
+   51,
+   56
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": [
+   "seldon/models.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-035-R3",
+  "lines": [
+   57,
+   59
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-035-R4",
+  "lines": [
+   60,
+   62
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-035-R5",
+  "lines": [
+   63,
+   65
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-035-R6",
+  "lines": [
+   66,
+   68
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-035-R7",
+  "lines": [
+   69,
+   71
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-035-R8",
+  "lines": [
+   72,
+   74
+  ],
+  "operator_stated": true,
+  "status_line": "",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-036-R1",
+  "lines": [
+   74,
+   78
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "seldon/commands/prior_art.py",
+   "seldon/core/prior_art.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R2",
+  "lines": [
+   80,
+   83
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "seldon/commands/prior_art.py",
+   "seldon/core/prior_art.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R3",
+  "lines": [
+   85,
+   93
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "seldon/core/prior_art.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R4",
+  "lines": [
+   95,
+   99
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "tests/test_prior_art.py",
+   "seldon/commands/cc.py",
+   "seldon/commands/verify.py",
+   "seldon/core/prior_art.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R5",
+  "lines": [
+   101,
+   110
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-036-R6",
+  "lines": [
+   112,
+   112
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-036-R7",
+  "lines": [
+   114,
+   114
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "seldon/core/prior_art.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R8",
+  "lines": [
+   124,
+   135
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": [
+   "tests/test_dispatch.py",
+   "tests/test_dispatch_serial_transcript.py",
+   "tests/test_models.py",
+   "seldon/models.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-036-R9",
+  "lines": [
+   137,
+   137
+  ],
+  "operator_stated": true,
+  "status_line": "Accepted (L4, operator directive 2026-10-09 12:51 ET: \"have we consulted the actual science before we start guessing\").",
+  "consumer": []
+ }
+]

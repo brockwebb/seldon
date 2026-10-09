@@ -1,0 +1,29 @@
+seq: 228
+event: accept
+id: seldon:AD-036-R7
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-036_prior_art_receipts_gate.md:4: "**Status:** Accepted (L4, operator directive 2026-10-09 12:51 ET: "have we consulted the actual science before we start guessing")."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: '- **AD-036-R7. This note is its own first test.** After the tool lands, `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` must pass. Its internal section''s prose is then converted into receipts by re-running each internal search with the tool, recorded in an addendum, never by editing this file. AD-035 is checked the same way and its result recorded in an AD-035 addendum.'
+source:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  lines:
+  - 114
+  - 114
+  sha256: 1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91
+  text: '- **AD-036-R7. This note is its own first test.** After the tool lands, `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` must pass. Its internal section''s prose is then converted into receipts by re-running each internal search with the tool, recorded in an addendum, never by editing this file. AD-035 is checked the same way and its result recorded in an AD-035 addendum.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_prior_art_receipts_gate.md
+  anchor: AD-036-R7
+consumer:
+- seldon/core/prior_art.py
+written_by: seldon decision 0.1.0
+prev_hash: e7d096340b88c169bb935d1b76d09c5dcaea839440a8a553e446d2744d2a92d4
+record_hash: d2c98d31777d17f6cdee328cd643c404d809a0cd646551f37cf4677c4d0f7089

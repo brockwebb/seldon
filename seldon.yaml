@@ -64,6 +64,11 @@ decisions:
     - glob: docs/design/AD-*.md
       pattern: '^\*\*(FC-\d{2})\.'
       id: '{repo}:{doc}-{label}'
+    # AD-036 section 6.1: the heading form AD-035 was committed in (`## AD-035-R1. ...`). Without it
+    # the register could not see AD-035's rulings and verify could not miss them.
+    - glob: docs/design/AD-*.md
+      pattern: '^#{2,4}\s+(AD-\d{3}-R\d+)[.:)\s]'
+      id: '{repo}:{label}'
   consumer_roots: [tests, seldon]
   # AD-033-R9: the conflicts probe re-run on the register (`seldon decision check --probe`).
   probe:

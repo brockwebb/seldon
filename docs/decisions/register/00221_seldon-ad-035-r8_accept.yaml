@@ -1,0 +1,34 @@
+seq: 221
+event: accept
+id: seldon:AD-035-R8
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-035_config_driven_model_selection.md:3: "**Date:** 2026-10-09. **Status:** accepted (operator defect, L4 self-executing). **Task:** ResearchTask `6efdd767` (MODEL-001)."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  ## AD-035-R8. Managed settings: evaluated, not deployed
+
+  An `availableModels` allowlist would also bind the operator's interactive sessions. Denying superseded models would also disable classifier fallback targets. R3 to R6 enforce the order where calls are made, and the receipt proves it. Revisit if a call site is found that R3 cannot reach.
+source:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  lines:
+  - 72
+  - 74
+  sha256: 868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8
+  text: |-
+    ## AD-035-R8. Managed settings: evaluated, not deployed
+
+    An `availableModels` allowlist would also bind the operator's interactive sessions. Denying superseded models would also disable classifier fallback targets. R3 to R6 enforce the order where calls are made, and the receipt proves it. Revisit if a call site is found that R3 cannot reach.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  anchor: AD-035-R8
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 211a69dabb522b7e3fd73fd8b3618be1738dd80c07641832f01472b819b67238
+record_hash: 197b7e642eace00f8e343e6c271f503f1568113caa797b44d13aba0f9e956cdd

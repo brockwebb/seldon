@@ -1,0 +1,34 @@
+seq: 218
+event: accept
+id: seldon:AD-035-R5
+date: '2026-10-09'
+decided_by: operator
+operator_stated: true
+receipts:
+- 'docs/design/AD-035_config_driven_model_selection.md:3: "**Date:** 2026-10-09. **Status:** accepted (operator defect, L4 self-executing). **Task:** ResearchTask `6efdd767` (MODEL-001)."'
+reason: 'PA-001 Part F (AD-036 section 6.1): a labeled ruling the register could not see (AD-035, heading form) or that was committed without a record (AD-036)'
+kind: decision
+status: accepted
+statement: |-
+  ## AD-035-R5. Registration refuses a stale model
+
+  `seldon cc register` and dispatcher candidacy refuse a task whose `**Model:**` header, or whose `--model` argument in a code block, names an id not in the current lock. The refusal quotes the lock. Prose that cites history ("rated by claude-sonnet-5 in S-007") is not checked: it records what happened.
+source:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  lines:
+  - 63
+  - 65
+  sha256: 868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8
+  text: |-
+    ## AD-035-R5. Registration refuses a stale model
+
+    `seldon cc register` and dispatcher candidacy refuse a task whose `**Model:**` header, or whose `--model` argument in a code block, names an id not in the current lock. The refusal quotes the lock. Prose that cites history ("rated by claude-sonnet-5 in S-007") is not checked: it records what happened.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_config_driven_model_selection.md
+  anchor: AD-035-R5
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: f5a68915e9aaea33afc6b849ede0682b8160dc2129fb20a233b3389b4e0197bd
+record_hash: 90158976dbf02f9b0943bdb3e29c234bdc6c77ed459e8808dfa0476bb8e26e55
