@@ -1,0 +1,24 @@
+# The model lock: RESOLUTION, written only by `seldon models refresh` (AD-035 R1, R2).
+# Never edit by hand. Intent is in registry.yaml; this file is what the newest CLI's
+# own alias resolver served, one probe per family, with the evidence file named below.
+schema: 1
+resolved_on: '2026-10-09'
+resolved_at: '2026-10-09T14:45:25.502332Z'
+cli:
+  version: 2.1.295
+  path: /Users/brock/.local/share/seldon/claude-cli/2.1.295/node_modules/.bin/claude
+  npm_package: '@anthropic-ai/claude-code'
+families:
+  fable:
+    alias: fable
+    model: claude-fable-5-1
+  opus:
+    alias: opus
+    model: claude-opus-5-5
+  sonnet:
+    alias: sonnet
+    model: claude-sonnet-5-5
+  haiku:
+    alias: haiku
+    model: claude-haiku-5-5
+evidence: docs/evidence/model001/refresh_2026-10-09.json

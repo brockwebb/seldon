@@ -34,6 +34,7 @@ from typing import Any
 
 import yaml
 
+from seldon import models
 from seldon.core import cadence as C
 
 #: DN-006 decision 3, as corrected by this build's ADDENDUM_01 to that note. The marker survey
@@ -514,6 +515,10 @@ class DispatchConfigError(ValueError):
 
 # --------------------------------------------------------------------------- configuration
 
+#: Dispatch keys AD-035 retired: the lock names the CLI and the model.
+FORBIDDEN_DISPATCH_KEYS = ("cli", "model")
+
+
 def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     """The project's `dispatch:` block, validated. Read at call time, never cached.
 
@@ -532,6 +537,15 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
                 "stop_file", "log_dir", "lease_file"):
         if key not in block:
             raise DispatchConfigError(f"seldon.yaml dispatch block missing {key!r}")
+    # AD-035 R3 and R4: the dispatcher execs the lock's CLI with the lock's id for the task's
+    # role. A `cli` or `model` key here would be a second, unlocked source of both, so it is
+    # refused rather than ignored: an operator who set one must learn it no longer applies.
+    for key in FORBIDDEN_DISPATCH_KEYS:
+        if key in block:
+            raise DispatchConfigError(
+                f"seldon.yaml dispatch.{key} is no longer read: sessions launch the CLI and model "
+                f"in seldon's models/models.lock.yaml, for the task's `**Model:**` role or "
+                f"`primary` (AD-035 R3, R4). Remove the key.")
     if not isinstance(block["enabled"], bool):
         raise DispatchConfigError(
             f"dispatch.enabled must be a bool, got {block['enabled']!r}: a kill switch that "
@@ -789,7 +803,17 @@ def candidacy(task_file: Path) -> dict:
     if not layer_named(headers[HEADER_LAYER]):
         return {"candidate": False, "reason": "framework_layer_names_no_layer",
                 "headers": headers}
-    return {"candidate": True, "reason": None, "headers": headers}
+    # AD-035 R5: a `**Model:**` header or a code-block `--model` naming an id the lock does not
+    # hold is not a candidate. The refusal quotes the lock, as `seldon cc register`'s does.
+    try:
+        model = models.check_task_models(text)
+    except models.ModelsError as exc:
+        return {"candidate": False, "reason": "model_lock_unreadable", "headers": headers,
+                "model": {"errors": [str(exc)]}}
+    if not model["ok"]:
+        return {"candidate": False, "reason": "model_not_in_lock", "headers": headers,
+                "model": model}
+    return {"candidate": True, "reason": None, "headers": headers, "model": model}
 
 
 # ------------------------------------------------------------------------- the addendum scan
@@ -1359,7 +1383,9 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
            "state": task.get("state"), "source_file": source,
            "created_at": task.get("created_at"),
            "candidate": cand["candidate"], "not_a_candidate_reason": cand["reason"],
-           "framework_layer": cand["headers"].get(HEADER_LAYER)}
+           "framework_layer": cand["headers"].get(HEADER_LAYER),
+           # AD-035: what the header asked for (a role, an id) and, when refused, why.
+           "model": cand.get("model")}
     if not cand["candidate"]:
         out["criteria"] = {}
         out["eligible"] = False

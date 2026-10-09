@@ -49,6 +49,26 @@ def _no_inherited_session_identity(monkeypatch):
     monkeypatch.setattr(config, "_process_session_id", None)
 
 
+# ── Model lock isolation (AD-035) ─────────────────────────────────────────────
+
+@pytest.fixture(scope="session")
+def _fixture_models_home(tmp_path_factory):
+    from tests.models_fixture import write_models_home
+    return write_models_home(tmp_path_factory.mktemp("models_home"))
+
+
+@pytest.fixture(autouse=True)
+def _isolated_models_home(monkeypatch, _fixture_models_home):
+    """Every test reads a fixture model lock, never the live one, and never refreshes it.
+
+    The live `models/models.lock.yaml` moves when a model ships, and `cc register` and a
+    dispatch launch call `seldon.models.ensure_fresh`, which against the live registry could make
+    four model calls. The fixture's registry turns both switches off. Set through monkeypatch, so
+    a scaffold that points the variable at its own project's lock is undone after the test.
+    """
+    monkeypatch.setenv("SELDON_MODELS_HOME", str(_fixture_models_home))
+
+
 # ── Event store fixtures ──────────────────────────────────────────────────────
 
 @pytest.fixture

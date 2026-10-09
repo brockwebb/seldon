@@ -31,6 +31,7 @@ from seldon.core.artifacts import create_artifact
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config
 from tests.testdb import TEST_DATABASE
+from tests.models_fixture import shell_receipt, use_stub_cli
 
 NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
@@ -81,12 +82,12 @@ def project(tmp_path):
                      "standing_band_ref": "controls.yaml#spend.daily_tokens",
                      "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                      "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
-                     "lease_file": ".seldon/dispatch.lock",
-                     "cli": str(p / "bin" / "claude")},
+                     "lease_file": ".seldon/dispatch.lock"},
     }), encoding="utf-8")
     (p / "cc_tasks" / "t1.md").write_text(TASK_BODY.format(stem="t1"), encoding="utf-8")
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
+    use_stub_cli(tmp_path, p / "bin" / "claude")
     return p
 
 
@@ -112,6 +113,7 @@ def _stub(project: Path, *, exit_code=0, write_result=True, complete=True, task_
             f"domain_config=load_domain_config(Path({str(RESEARCH_YAML)!r})), "
             f"artifact_id={task_id!r}, current_state='in_progress', actor='cc'); "
             f'd.close()"')
+    lines.append(shell_receipt())
     lines.append(f"exit {exit_code}")
     path = project / "bin" / "claude"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

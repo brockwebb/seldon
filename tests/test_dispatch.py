@@ -43,7 +43,7 @@ def _seldon_yaml(project: Path, **over) -> dict:
              "standing_band_ref": "controls.yaml#spend.daily_tokens",
              "poll_interval_s": 300, "permission_mode": "bypassPermissions",
              "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
-             "lease_file": ".seldon/dispatch.lock", "cli": "claude"}
+             "lease_file": ".seldon/dispatch.lock"}
     block.update(over)
     doc = {"event_store": {"path": "seldon_events.jsonl"},
            "neo4j": {"database": "test", "uri": "bolt://localhost:7687"},
@@ -597,11 +597,17 @@ def test_the_launch_command_is_the_protocol_sentence_with_the_permission_mode():
     """The prompt is `CLAUDE.md`'s own dispatch line, not a paraphrase: a dispatcher that
     reworded it would be sending a session a different instruction from the one an operator
     sends, and the difference would show up only in what the session did."""
+    from seldon import models
     from seldon.commands.dispatch import DISPATCH_LINE, _launch_cmd
     rel = "cc_tasks/2026-09-15_standing_dispatcher.md"
     prompt = DISPATCH_LINE.format(rel=rel, stem=Path(rel).stem)
-    cmd = _launch_cmd({"cli": "claude", "permission_mode": "bypassPermissions"}, prompt)
-    assert cmd == ["claude", "-p", prompt, "--permission-mode", "bypassPermissions"]
+    spec = models.launch_spec("primary")
+    cmd = _launch_cmd({"permission_mode": "bypassPermissions"}, prompt, spec)
+    # MODEL-001 (AD-035 R3, R6): the lock's CLI, the stream whose result carries the receipt,
+    # and the lock's id for `primary` with `switchModelsOnFlag: false`.
+    assert cmd == [spec["cli_path"], "-p", prompt, "--output-format", "stream-json", "--verbose",
+                   "--permission-mode", "bypassPermissions",
+                   "--model", "claude-opus-5-5", "--settings", '{"switchModelsOnFlag":false}']
     assert prompt == (
         "Read CLAUDE.md, then execute cc_tasks/2026-09-15_standing_dispatcher.md. Glob and "
         "read all sibling 2026-09-15_standing_dispatcher_ADDENDUM*.md files before starting; "

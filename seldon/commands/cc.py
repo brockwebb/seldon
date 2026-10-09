@@ -10,6 +10,7 @@ from pathlib import Path
 
 import click
 
+from seldon import models
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
 from seldon.core.dispatch import (
@@ -698,6 +699,26 @@ def _get_artifact_file_hash(
 # AD-030: the rulings a task is constrained by
 # ---------------------------------------------------------------------------
 
+#: The refusal reason when a task names a model the lock does not hold (AD-035 R5).
+MODEL_REFUSAL = "model_not_in_lock"
+
+
+def enforce_task_models(task_path: Path) -> str | None:
+    """AD-035 R5: None, or the refusal text naming each offending value and quoting the lock.
+
+    Only the `**Model:**` header and fenced code blocks are read; prose citing what a past run
+    used is history and is not checked. A task that names no model never reads the lock.
+    """
+    text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
+    try:
+        check = models.check_task_models(text)
+    except models.ModelsError as exc:
+        return f"{MODEL_REFUSAL}: the model lock cannot be read ({exc}); refusing to register."
+    if check["ok"]:
+        return None
+    return f"{MODEL_REFUSAL}: " + "; ".join(check["errors"]) + "."
+
+
 def enforce_design_reference(task_path: Path, config: dict, actor: str = "cc") -> str | None:
     """Check AD-030-R9's task half: a filed task names the decision it implements.
 
@@ -1152,6 +1173,16 @@ def register_task_file(
     if refusal and not refusal.startswith("WARNING"):
         raise ValueError(f"{refusal} File: {rel_path}")
     warning = refusal if refusal else None
+
+    # AD-035 R2 and R5: the lock is refreshed (cached for the day) when a task is authored, then
+    # a `**Model:**` header or code-block `--model` naming an id outside it is refused, quoting
+    # the lock, BEFORE anything is created. A failed refresh keeps the current lock and warns.
+    model_note = models.ensure_fresh("register")
+    if model_note:
+        say(model_note)
+    model_check = enforce_task_models(task_path)
+    if model_check:
+        raise ValueError(f"{model_check} File: {rel_path}")
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:

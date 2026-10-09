@@ -15,6 +15,15 @@ appearance, so ids must also recur in the same places.
 
 To re-record (only ever against a checkout of the pre-change dispatcher):
     SELDON_RECORD_SERIAL_TRANSCRIPT=1 python -m pytest tests/test_dispatch_serial_transcript.py
+
+**Erratum, MODEL-001 (AD-035, 2026-10-09).** The launch deliberately changed: the session is the
+lock's CLI with `--output-format stream-json --verbose` and `--model <id> --settings
+{"switchModelsOnFlag":false}`, its stream ends in a result line, `dispatch_launched` carries a
+`model` block, `dispatch_finished` a `model_receipt`, and the blocked line names the served model.
+The fixture was re-recorded on the MODEL-001 code, and the re-recording was checked to equal the
+pre-change fixture byte for byte once exactly those additions are removed (the strip script and
+its `True` are in `cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md`). Every
+other line, and so the serial behaviour this test exists to hold, is unchanged.
 """
 from __future__ import annotations
 

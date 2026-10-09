@@ -66,11 +66,11 @@ WORKTREE_CLAUSE = (
 #: The per-worktree lease's persistent fields (`D.Lease.extra`): what a released or orphaned
 #: lease still has to say about which task, worktree and branch it guarded.
 LEASE_EXTRA_KEYS = ("worktree_task", "stem", "source_file", "worktree", "branch", "base",
-                    "child_session_id", "linked")
+                    "child_session_id", "linked", "model_spec")
 
 #: `dispatch_finished.outcome` values this module writes, beside the serial `ok` boolean.
 OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
-            "launch_failed",
+            "launch_failed", "model_substituted",
             "holder_gone", "released_unfinished")
 
 #: The ResearchTask property that says what became of a worktree task's branch.
@@ -365,7 +365,11 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     """Everything after a successful claim: record, cut the worktree, start the supervisor."""
     rel, tid = chosen["source_file"], chosen["task_id"]
     stem = Path(rel).stem
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir))
+    # AD-035 R2 and R7: refreshed (cached for the day) before the run; the supervisor launches
+    # with THIS spec, carried in the lease, so a lock bump while it starts changes nothing.
+    refresh_note = S.models.ensure_fresh("dispatch")
+    spec = S._session_spec(project_dir, rel)
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec)
     conc = chosen["concurrency"]
     S._emit(project_dir, session_id, D.EVENT_LAUNCHED,
             {"task_id": tid, "source_file": rel, "child_session_id": child_session_id,
@@ -375,7 +379,8 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "log_path": log_rel, "command": " ".join(shlex.quote(p) for p in cmd),
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
              "mode": "worktree", "worktree": wt_rel, "branch": branch,
-             "touches": {"resources": conc["resources"], "paths": conc["paths"]}})
+             "touches": {"resources": conc["resources"], "paths": conc["paths"]},
+             **S._model_fields(spec, refresh_note)})
     # Committed and pushed BEFORE the worktree is cut, so the task's branch starts from a main
     # that already carries its own claim.
     S._record_and_push(project_dir, config, cfg)
@@ -396,7 +401,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     linked = WT.link(project_dir, wt, cfg["worktree_links"])
     extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": wt_rel,
              "branch": branch, "base": base, "child_session_id": child_session_id,
-             "linked": linked}
+             "linked": linked, "model_spec": spec}
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
     lease_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "seldon", "dispatch", "supervise", tid,
@@ -476,11 +481,14 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
     headers = D.parse_headers((project_dir / rel).read_text(encoding="utf-8",
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir))
+    spec = extra["model_spec"]
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec)
     started = time.monotonic()
+    offset = S._log_offset(log_path)
     code = S._run(cmd, wt, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env={WT.PRIMARY_CHECKOUT_ENV: str(project_dir)})
+                  extra_env={**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir)})
     wall = round(time.monotonic() - started, 3)
+    receipt = S._model_receipt(log_path, offset, spec)
     result_rel = f"cc_tasks/{stem}_RESULT.md"
     committed = WT.show(project_dir, branch, result_rel) is not None
     graph_state = S._state_of(driver, database, task_id)
@@ -489,14 +497,22 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
               "exit_code": code, "wall_clock_s": wall, "result_present": committed,
               "result_path": result_rel, "graph_state_observed": graph_state,
               "log_path": str(log_path.relative_to(project_dir)), "mode": "worktree",
-              "worktree": extra["worktree"], "branch": branch, "base": extra["base"]}
+              "worktree": extra["worktree"], "branch": branch, "base": extra["base"],
+              "model_receipt": receipt}
     name = _task_name(driver, database, task_id) or stem
-    click.echo(f"session exit={code} result_committed={committed} graph={graph_state}")
+    click.echo(f"session exit={code} result_committed={committed} graph={graph_state} "
+               f"model={receipt['served']} (requested {receipt['requested']})")
     try:
         if code != 0 or not committed or graph_state not in ("in_progress", "completed"):
             with _pass_lease(project_dir, cfg):
                 _finish_unmerged(project_dir, config, driver, database, domain_config,
                                  session_id, cfg, finish, name, "session_failed")
+            return
+        if not receipt["ok"]:
+            # AD-035 R6: a branch written by an unverified model is never merged.
+            with _pass_lease(project_dir, cfg):
+                _finish_unmerged(project_dir, config, driver, database, domain_config,
+                                 session_id, cfg, finish, name, "model_substituted")
             return
         _merge(project_dir, config, driver, database, domain_config, session_id, cfg,
                finish, name, extra)

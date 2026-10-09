@@ -1,0 +1,150 @@
+# The model registry: INTENT, one row per role (AD-035 R1).
+#
+# A role is named by its use. It maps to a model FAMILY and an effort, never to a model id: the id
+# the family resolves to is in `models.lock.yaml`, written only by `seldon models refresh` (R2).
+# This is the manifest / lockfile split of npm, Cargo and Poetry: intent here, resolution there,
+# and every launcher reads the lock through `seldon.models` (R3), never this file's family words
+# and never an alias of its own (R4).
+#
+# `effort` is the CLI's `--effort` level (low, medium, high, xhigh, max), or `default`, which
+# passes no flag: the CLI's own default for the model. `default` is what every launcher that
+# passed no `--effort` before MODEL-001 ran with, so naming it keeps today's behavior.
+#
+# Each role's `uses` names where the inventory (docs/evidence/model001/inventory.md, 2026-10-09)
+# found it, and what each one ran before MODEL-001, so a later reader can see what the move to the
+# family's newest member changed. Adding a role is an edit here; a launcher that names a role this
+# file does not hold fails loudly (`seldon.models.UnknownRole`).
+
+schema: 1
+
+roles:
+  primary:
+    family: opus
+    effort: default
+    uses: >-
+      Claude Code sessions the seldon dispatcher launches (seldon/commands/dispatch.py). Before:
+      whatever `claude` on PATH resolved, or `dispatch.model` if a project set it.
+  extractor:
+    family: sonnet
+    effort: default
+    uses: >-
+      squiddy per-section extraction (init_defaults.yaml engine.extract.roles.extractor: sonnet,
+      which CLI 2.1.278 resolved to claude-sonnet-5); arnold-evidence the same.
+  rater:
+    family: sonnet
+    effort: default
+    uses: squiddy rater (engine.extract.roles.rater, sonnet); arnold-evidence the same.
+  adjudicator:
+    family: opus
+    effort: default
+    uses: >-
+      squiddy adjudicator (engine.extract.roles.adjudicator, opus, which 2.1.278 resolved to
+      claude-opus-5); icsp_notebook conflict adjudication and consensus passes (claude-opus-4-8).
+  teacher:
+    family: opus
+    effort: default
+    uses: squiddy graphs/library/extract/control.yaml teacher (alias opus, claude-opus-5 under 2.1.278).
+  judge:
+    family: fable
+    effort: default
+    uses: >-
+      The independent judge or rater: squiddy Q-005 judge and arnold-evidence judge
+      (claude-fable-5-1); ai-readiness-kg independent raters (er_gold_rate, g1_calibration_rate,
+      homograph and link judges' independent samples, claude-fable-5-1).
+  background:
+    family: haiku
+    effort: default
+    uses: >-
+      The CLI's background and side calls (ANTHROPIC_DEFAULT_HAIKU_MODEL), and cleanup or control
+      work: ai-readiness-kg cleanup_model_id and the G1 control consumer (claude-haiku-4-5-20251001).
+  document_extractor:
+    family: opus
+    effort: high
+    uses: >-
+      ai-readiness-kg whole-document extraction (kg/extraction/model_config.yaml model_id
+      claude-opus-5, effort high).
+  consumer:
+    family: opus
+    effort: default
+    uses: >-
+      ai-readiness-kg G1 consumer (assessment/config/g1_consumer.toml model_id claude-opus-5). A
+      frozen instrument: a bump re-pilots it (AD-035 R7, H-006 R-30).
+  secondary_rater:
+    family: sonnet
+    effort: default
+    uses: ai-readiness-kg probe secondary judge (model_config.yaml secondary_judge_model_id, claude-sonnet-5).
+  question_generator:
+    family: opus
+    effort: default
+    uses: arnold-evidence KG-001 downstream test questions (claude-opus-5-5).
+  descriptor_selector:
+    family: sonnet
+    effort: default
+    uses: arnold-evidence SEED-001 descriptor selection (claude-sonnet-5-5).
+  label_proposer:
+    family: sonnet
+    effort: default
+    uses: arnold-evidence KG-002 lookup label proposals (claude-sonnet-5-5).
+  shelf_screener:
+    family: sonnet
+    effort: default
+    uses: arnold-evidence KG-002 shelf screen (claude-sonnet-5-5).
+  parser:
+    family: sonnet
+    effort: default
+    uses: >-
+      arnold reply and email parsing (config/email_ingest.yaml parse_model claude-sonnet-4-6;
+      config/arnold.yaml model claude-sonnet-4-20250514).
+  triage:
+    family: sonnet
+    effort: default
+    uses: measuring-ai-economy harvester triage (sources.yaml triage_model claude-sonnet-4-6).
+  battery_client:
+    family: sonnet
+    effort: default
+    uses: >-
+      icsp_notebook REG battery's default client (tests/reg_battery/runner.py; before MODEL-001
+      the CLI alias sonnet). Added from that repository's Part C report.
+  critic:
+    family: sonnet
+    effort: default
+    uses: arnold seed Critic (src/arnold/seeding/critic.py; before MODEL-001 the CLI alias sonnet).
+  coach:
+    family: opus
+    effort: default
+    uses: arnold morning brief agents (scripts/morning_brief.py; expected claude-opus-4-7) and skycoach.
+  exercise_mapper:
+    family: sonnet
+    effort: default
+    uses: >-
+      arnold exercise mappers (scripts/importers/map_failures_sonnet45.py, claude-sonnet-4-5;
+      scripts/mappers/map_custom_to_canonical.py, claude-3-5-haiku). One role for one task: the
+      later failure pass had already moved this task from Haiku up to Sonnet.
+
+# `seldon models refresh` (AD-035 R2). Every value it uses is here, so a change is an edit.
+refresh:
+  # The npm package whose newest release is Anthropic's own alias resolver.
+  npm_package: "@anthropic-ai/claude-code"
+  # Versioned prefixes: `npm install --prefix <install_root>/<version>`, never the global install,
+  # so no auto-updater replaces a binary a run is executing (squiddy H-006 R-30's measured defect).
+  install_root: ~/.local/share/seldon/claude-cli
+  # The executable inside a prefix. `.bin/claude` is npm's own link to the package's `bin` entry.
+  bin_relpath: node_modules/.bin/claude
+  # One probe per family alias. The families the lock resolves; R3 sets one env var per family.
+  families: [fable, opus, sonnet, haiku]
+  probe_prompt: "Reply with the single word OK."
+  probe_timeout_s: 180
+  npm_timeout_s: 600
+  # The lock is re-resolved at most once per UTC day unless forced (R2: "cached for the day").
+  cache: day
+  # Where each refresh writes its evidence, relative to the seldon repository root.
+  evidence_dir: docs/evidence/model001
+  # Commit the lock, the evidence and the event only when the checkout is on this branch; on any
+  # other branch the files are written and the refresh says it did not commit.
+  commit_branch: main
+  # R2: refresh "runs when a task is authored and when a run starts". `seldon cc register` and the
+  # dispatcher's launch call `seldon.models.ensure_fresh`, which refreshes only past the day's
+  # cache and, if the refresh fails, keeps the current lock and warns (an offline registration is
+  # not a reason to refuse one).
+  auto_on_register: true
+  auto_on_dispatch: true
