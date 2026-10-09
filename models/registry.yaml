@@ -105,6 +105,21 @@ roles:
     uses: >-
       icsp_notebook REG battery's default client (tests/reg_battery/runner.py; before MODEL-001
       the CLI alias sonnet). Added from that repository's Part C report.
+  critic:
+    family: sonnet
+    effort: default
+    uses: arnold seed Critic (src/arnold/seeding/critic.py; before MODEL-001 the CLI alias sonnet).
+  coach:
+    family: opus
+    effort: default
+    uses: arnold morning brief agents (scripts/morning_brief.py; expected claude-opus-4-7) and skycoach.
+  exercise_mapper:
+    family: sonnet
+    effort: default
+    uses: >-
+      arnold exercise mappers (scripts/importers/map_failures_sonnet45.py, claude-sonnet-4-5;
+      scripts/mappers/map_custom_to_canonical.py, claude-3-5-haiku). One role for one task: the
+      later failure pass had already moved this task from Haiku up to Sonnet.
 
 # `seldon models refresh` (AD-035 R2). Every value it uses is here, so a change is an edit.
 refresh:
