@@ -124,6 +124,8 @@ def test_go_json_output_has_expected_keys(tmp_path):
         # every project and None for one with no `dispatch:` block — a key that appeared only
         # sometimes would make a consumer guess.
         "dispatch",
+        # SEL-005: `{"on": bool, "why": str}` for every project, block or not.
+        "dispatch_state",
         "agent_roles",
         "available_commands",
     }
@@ -523,3 +525,44 @@ def test_a_failed_finish_with_no_state_history_stays_listed_as_blocked(tmp_path)
     out = _get_dispatch_section(str(p))
     assert "Blocked by the dispatcher" in out
     assert "state=unknown" in out
+
+
+# ---------------------------------------------------------------------------- SEL-005: on | off
+
+from seldon.commands.go import _get_dispatch_line                                 # noqa: E402
+from seldon.core import dispatch as _D                                             # noqa: E402
+
+
+def test_dispatch_line_is_off_without_a_dispatch_block_and_says_why(tmp_path):
+    """SEL-005: every project shows `dispatch: on|off`; a project with no block is off, and the
+    brief says a pasted line is needed, from state rather than a session's memory."""
+    (tmp_path / "seldon.yaml").write_text(
+        _yaml.safe_dump({"project": {"name": "t", "slug": "t"}}), encoding="utf-8")
+    line = _get_dispatch_line(str(tmp_path))
+    assert line.startswith("**dispatch: off**") and "pasted line" in line
+
+
+def test_dispatch_line_is_on_when_enabled_with_its_job_loaded(tmp_path, monkeypatch):
+    p = _dispatch_project(tmp_path)
+    cfg = _yaml.safe_load((p / "seldon.yaml").read_text())
+    cfg["dispatch"]["launchd_label"] = "com.example.test-dispatch"
+    (p / "seldon.yaml").write_text(_yaml.safe_dump(cfg), encoding="utf-8")
+    monkeypatch.setattr(_D, "launchd_loaded", lambda label: True)
+    st = _D.dispatch_state(p, loaded=lambda label: True)
+    assert st["on"] is True
+    assert _D.dispatch_state(p, loaded=lambda label: False) == {
+        "on": False, "why": "launchd job com.example.test-dispatch is not loaded"}
+
+
+@pytest.mark.parametrize("change,why", [
+    (lambda p, c: c["dispatch"].update(enabled=False), "dispatch.enabled is false"),
+    (lambda p, c: ((p / ".seldon").mkdir(exist_ok=True),
+                   (p / ".seldon" / "DISPATCH_STOP").write_text("x")), "STOP file"),
+])
+def test_dispatch_line_is_off_when_disabled_or_stopped(tmp_path, change, why):
+    p = _dispatch_project(tmp_path)
+    cfg = _yaml.safe_load((p / "seldon.yaml").read_text())
+    change(p, cfg)
+    (p / "seldon.yaml").write_text(_yaml.safe_dump(cfg), encoding="utf-8")
+    st = _D.dispatch_state(p, loaded=lambda label: True)
+    assert st["on"] is False and why in st["why"]

@@ -127,3 +127,64 @@ prior_art:
     design_dir: docs/design
     baseline: docs/design/AD-036_baseline.txt
     exempt_globs: ['*_ADDENDUM_*.md', '*_erratum_*.md', '*_ERRATUM_*.md']
+
+dispatch:
+  # SEL-005 (docs/design/2026-09-15_standing_dispatcher.md "Adopting it in another project";
+  # ai-readiness-kg DN-006; AD-034; AD-036 section 6.2). Values and reasons copied from
+  # ai-readiness-kg's block where they apply; each reason is restated here because this is the file
+  # an operator reads to change it.
+  #
+  # THE KILL SWITCH. Read on EVERY pass, never cached; a bool, not a string. To stop the world
+  # without editing this file: `touch .seldon/DISPATCH_STOP`. While it is true, the operator does
+  # not hand-dispatch in this checkout (DN-006 decision 10): the dispatcher cannot see a session it
+  # did not launch except through c7's clean-tree check.
+  enabled: true
+  # The branch a pass may dispatch on. Any other branch fails c7, together with a dirty tree.
+  branch: main
+  # THE STANDING BAND, as a REFERENCE and never a copied number (DN-006 section 5). SEL-005: the
+  # machine-wide spend configuration of squiddy DN-042 (R-176, one ledger for the machine). Its one
+  # integer token cap is R-179's `job_token_cap_default`, "the token cap of a job whose runner has
+  # no cap of its own to declare", which is what a dispatched Claude Code session is. A task whose
+  # `**Spend:**` declares more is not launched unattended (c4); it waits for a pasted line. The cap
+  # is in weighted tokens and a Spend header in tokens: the comparison is conservative.
+  standing_band_ref: ../squiddy/squiddy/spend.yaml#job_token_cap_default
+  # NO MEASURED BASIS (DN-006 section 5): a pass is a local graph read at zero spend, so polling
+  # often costs nearly nothing and polling rarely costs latency. ai-readiness-kg's starting value.
+  # The plist's StartInterval must equal it; the wrapper refuses when they differ.
+  poll_interval_s: 300
+  # A headless session in any prompting mode blocks forever on its first tool call, having
+  # consumed a claim and produced nothing (ai-readiness-kg DN-006 ADDENDUM_01, from the CLI's own
+  # interface). The CLI and model come from seldon's model lock for the task's `**Model:**` role
+  # or `primary` (AD-035 R3), never from this block.
+  permission_mode: bypassPermissions
+  stop_file: .seldon/DISPATCH_STOP
+  # One instance, by flock, with an identified holder; reaped only by the operator, never by age.
+  lease_file: .seldon/dispatch.lock
+  # One log per dispatched task, `EXIT=` appended. Gitignored: what ships is the RESULT.
+  log_dir: logs/dispatch
+  # The finish signal: a local macOS banner (cron's MAILTO, systemd's OnSuccess=/OnFailure=). The
+  # outcome arrives in the environment, never substituted into this text. A network notifier would
+  # be an outbound send and is deliberately not the default.
+  notify: >-
+    osascript -e 'on run argv' -e 'display notification (item 1 of argv) with title "Seldon"'
+    -e 'end run' "$SELDON_NOTIFY_TASK_NAME: $SELDON_NOTIFY_OUTCOME"
+  notify_timeout_s: 30
+  # The staleness alarm: one `dispatch_stuck` event per streak of this many passes refused on the
+  # same criterion. NO MEASURED BASIS; ai-readiness-kg's value (fifteen minutes at 300 s).
+  stuck_after_passes: 3
+  # AD-034: one task at a time until a project opts into worktrees deliberately.
+  max_parallel: 1
+  # SEL-005: the launchd job that runs the passes (scripts/jobs/com.brock.seldon-dispatch.plist,
+  # installed by symlink). `seldon go` reports `dispatch: on` only while it is loaded.
+  launchd_label: com.brock.seldon-dispatch
+  cadence: []
+
+jobs:
+  # The launchd wrapper's log caps (scripts/jobs/seldon_dispatch.sh), ai-readiness-kg's
+  # `controls.yaml jobs.biblio_resume` values and reasons: 2000 characters per line is the
+  # log-bomb guard set there after one exception wrote ~230,000 lines; 2 MiB per log before
+  # rotation is ~40x a normal run; 30 days of rotated logs.
+  dispatch:
+    log_max_line_chars: 2000
+    log_max_run_bytes: 2097152
+    log_retention_days: 30

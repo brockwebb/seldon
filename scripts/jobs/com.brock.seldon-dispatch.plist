@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  seldon-dispatch: launchd job for the standing dispatcher in /Users/brock/GitHub/seldon (SEL-005).
+  Modelled on ai-readiness-kg scripts/jobs/com.brock.airkg-dispatch.plist.
+
+  launchd IS the loop; `seldon dispatch once` is the pass. There is no daemon to supervise.
+
+  StartInterval is seldon.yaml `dispatch.poll_interval_s` (NO MEASURED BASIS; see that key). The
+  wrapper refuses when the two disagree.
+
+  RunAtLoad false: loading the job must not fire a pass, because a pass can launch a CC session
+  and loading is something an operator does while looking at something else.
+
+  AbandonProcessGroup true (AD-034 premise 5): launchd kills a job's leftover processes in its
+  process group when the job exits; a dispatched session must outlive the pass that launched it.
+
+  Installed by SYMLINK, never a copy, so the installed job and this tracked file are one set of bytes:
+    ln -s /Users/brock/GitHub/seldon/scripts/jobs/com.brock.seldon-dispatch.plist \
+          ~/Library/LaunchAgents/com.brock.seldon-dispatch.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.brock.seldon-dispatch.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.brock.seldon-dispatch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/brock/GitHub/seldon/scripts/jobs/seldon_dispatch.sh</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>300</integer>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>AbandonProcessGroup</key>
+    <true/>
+    <key>WorkingDirectory</key>
+    <string>/Users/brock/GitHub/seldon</string>
+</dict>
+</plist>
