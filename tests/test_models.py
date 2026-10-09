@@ -86,13 +86,15 @@ def test_every_launch_passes_the_declared_effort_flag_and_env(home):
 
 def test_the_registry_names_the_documented_default_for_each_family(home):
     """AD-036-R8: the levels are the documented defaults of the models the lock serves, except the
-    two roles whose pilots measured `high`."""
+    roles whose own pilots measured another level."""
     reg = M.load_registry()
     doc = reg["refresh"]["documented_default_effort"]["families"]
     assert {f: r["effort"] for f, r in doc.items()} == {
         "fable": "high", "opus": "medium", "sonnet": "medium", "haiku": "medium"}
     for name, row in reg["roles"].items():
-        want = "high" if name in ("document_extractor", "demand_judge") else doc[row["family"]]["effort"]
+        measured = {"document_extractor": "high", "demand_judge": "high",
+                    "register_statement": "low"}       # SEL-002 pilot 2
+        want = measured.get(name, doc[row["family"]]["effort"])
         assert row["effort"] == want, name
 
 
