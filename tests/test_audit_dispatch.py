@@ -51,24 +51,42 @@ def _fake_subprocess_result(stdout: str, returncode: int = 0, stderr: str = ""):
     return SimpleNamespace(stdout=stdout, stderr=stderr, returncode=returncode)
 
 
+def _envelope(result: str, served: str = "claude-opus-5-5") -> str:
+    return json.dumps({"result": result, "usage": {"output_tokens": 3},
+                       "modelUsage": {served: {"outputTokens": 3, "inputTokens": 9}}})
+
+
 @patch("subprocess.run")
-def test_dispatch_default_uses_claude_cli(mock_run, monkeypatch):
+def test_dispatch_default_launches_the_lock_cli_as_the_auditor_role(mock_run, monkeypatch):
+    """AD-035 R3 and AD-036-R8 (PA-001): the lock's CLI, the role's id and its declared effort,
+    never `claude` from PATH with the CLI's own default model."""
+    from seldon import models
     monkeypatch.delenv("AUDIT_MODEL", raising=False)
-    mock_run.return_value = _fake_subprocess_result(
-        json.dumps({"result": "findings: []\n"})
-    )
+    mock_run.return_value = _fake_subprocess_result(_envelope("findings: []\n"))
     out = dispatch("audit this", system="you are an auditor")
     assert out == "findings: []"
+    spec = models.launch_spec("auditor")
     cmd = mock_run.call_args[0][0]
-    assert cmd[:4] == ["claude", "--print", "--output-format", "json"]
+    assert cmd[:4] == [spec["cli_path"], "--print", "--output-format", "json"]
+    assert cmd[4:4 + len(spec["args"])] == spec["args"]
+    assert ["--effort", "medium"] == cmd[cmd.index("--effort"):cmd.index("--effort") + 2]
+    assert mock_run.call_args.kwargs["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] == "claude-opus-5-5"
     assert "--append-system-prompt" in cmd
     assert cmd[-1] == "audit this"
 
 
 @patch("subprocess.run")
+def test_dispatch_refuses_a_substituted_model(mock_run, monkeypatch):
+    monkeypatch.delenv("AUDIT_MODEL", raising=False)
+    mock_run.return_value = _fake_subprocess_result(_envelope("x", served="claude-opus-5"))
+    with pytest.raises(RuntimeError, match="model_substituted"):
+        dispatch("x")
+
+
+@patch("subprocess.run")
 def test_dispatch_without_system_omits_append_system_prompt(mock_run, monkeypatch):
     monkeypatch.delenv("AUDIT_MODEL", raising=False)
-    mock_run.return_value = _fake_subprocess_result(json.dumps({"result": "ok"}))
+    mock_run.return_value = _fake_subprocess_result(_envelope("ok"))
     dispatch("user only")
     cmd = mock_run.call_args[0][0]
     assert "--append-system-prompt" not in cmd
@@ -76,10 +94,13 @@ def test_dispatch_without_system_omits_append_system_prompt(mock_run, monkeypatc
 
 
 @patch("subprocess.run")
-def test_dispatch_returns_raw_stdout_when_not_json(mock_run, monkeypatch):
+def test_dispatch_refuses_output_with_no_envelope(mock_run, monkeypatch):
+    """Without the JSON envelope the served model cannot be checked (AD-035 R6), so plain text
+    is refused rather than returned (it was returned before PA-001)."""
     monkeypatch.delenv("AUDIT_MODEL", raising=False)
     mock_run.return_value = _fake_subprocess_result("plain text response\n")
-    assert dispatch("x") == "plain text response"
+    with pytest.raises(RuntimeError, match="no JSON envelope"):
+        dispatch("x")
 
 
 @patch("subprocess.run")

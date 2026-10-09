@@ -133,6 +133,14 @@ roles:
     family: haiku
     effort: medium
     uses: squiddy quality controls, secondary rater, a deliberately different, smaller family.
+  auditor:
+    family: opus
+    effort: medium
+    uses: >-
+      seldon paper audit's default path (seldon/paper/audit_dispatch.py, the AD-019 content
+      audit). Before PA-001 it launched `claude --print` from PATH with no `--model`, so it ran
+      whatever the interactive CLI defaulted to (opus on the Max plan); MODEL-001's inventory missed
+      it and PA-001's R9 search found it.
   demand_judge:
     family: fable
     effort: high
