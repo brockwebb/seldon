@@ -1,0 +1,304 @@
+{
+ "tool": "prior-art/1",
+ "prereg": "docs/evidence/pa001/recall_control_prereg.yaml",
+ "top_k": 20,
+ "n": 18,
+ "found": 8,
+ "recall": 0.4444,
+ "wilson95": [
+  0.2456,
+  0.6628
+ ],
+ "bar_lower_bound": 0.7,
+ "verdict": "fail",
+ "corpora": {
+  "seldon": "695ece7317d388b91dc89c7207ba9b0d9a3cec56",
+  "squiddy": "1cc6fc2d4e7b289737c1bccc210a6166707480ad",
+  "ai-readiness-kg": "7e62f24e23b7ea8a61f9c68de906be3db6b8a162",
+  "arnold": "fa8dc0b03d89021ec3068255493e264f79153273",
+  "icsp_notebook": "a256cae0aac141915c59b54f15c6c7b20c2ab3d5",
+  "wintermute": "2a78c392f4d998227d2433338ea45aee82c67f1e",
+  "workbench-audit": "tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412"
+ },
+ "entries": [
+  {
+   "id": "G5-01",
+   "query": "duplicate work",
+   "root": "wintermute",
+   "path": "docs/2026-06-07_labnote_entity_identity_restructure.md",
+   "line": 105,
+   "hits": 65,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "workbench-audit:cross_project/synthesis/G4_operations.md:413",
+    "arnold:docs/WORKOUT_INGEST_SPEC.md:49",
+    "arnold:docs/WORKOUT_INGEST_SPEC.md:282"
+   ]
+  },
+  {
+   "id": "G5-02",
+   "query": "duplication check skill",
+   "root": "wintermute",
+   "path": "handoffs/2026-06-07_entity_identity_restructure_handoff.md",
+   "line": 55,
+   "hits": 4,
+   "rank_top_k": 3,
+   "rank_anywhere": 3,
+   "top3": [
+    "wintermute:docs/2026-06-07_labnote_entity_identity_restructure.md:100",
+    "workbench-audit:cross_project/synthesis/G5_governance.md:44",
+    "wintermute:handoffs/2026-06-07_entity_identity_restructure_handoff.md:50"
+   ]
+  },
+  {
+   "id": "G5-03",
+   "query": "entity resolution literature",
+   "root": "wintermute",
+   "path": "docs/2026-06-08_labnote_machine_era_kg_entity_resolution.md",
+   "line": 161,
+   "hits": 29,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "wintermute:docs/2026-07-28_labnote_canonicalization-decision-and-er-literature.md:37",
+    "wintermute:docs/research/Entity Resolution for LLM-Extracted Knowledge Graphs  A Literature-Grounded Design Guide.md:1",
+    "workbench-audit:cross_project/synthesis/G5_governance.md:63"
+   ]
+  },
+  {
+   "id": "G5-04",
+   "query": "architecture literature map",
+   "root": "wintermute",
+   "path": "handoffs/2026-06-13_evening_tbox_consolidation_and_architecture_map_handoff.md",
+   "line": 74,
+   "hits": 8,
+   "rank_top_k": 3,
+   "rank_anywhere": 3,
+   "top3": [
+    "wintermute:docs/architecture_literature_map.md:1",
+    "wintermute:handoffs/2026-06-13_evening_tbox_consolidation_and_architecture_map_handoff.md:7",
+    "wintermute:handoffs/2026-06-13_evening_tbox_consolidation_and_architecture_map_handoff.md:62"
+   ]
+  },
+  {
+   "id": "G5-05",
+   "query": "whole document unit prior art",
+   "root": "ai-readiness-kg",
+   "path": "docs/design_decisions.md",
+   "line": 229,
+   "hits": 14,
+   "rank_top_k": 2,
+   "rank_anywhere": 2,
+   "top3": [
+    "seldon:docs/design/AD-036_prior_art_receipts_gate.md:12",
+    "ai-readiness-kg:docs/design_decisions.md:229",
+    "workbench-audit:cross_project/synthesis/G2_construction.md:132"
+   ]
+  },
+  {
+   "id": "G5-06",
+   "query": "unit of extraction",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/2026-08-27_lab_note_unit_of_extraction.md",
+   "line": 12,
+   "hits": 129,
+   "rank_top_k": null,
+   "rank_anywhere": 47,
+   "top3": [
+    "ai-readiness-kg:docs/research/2026-08-27_lab_note_unit_of_extraction.md:1",
+    "squiddy:docs/kg_construction_methodology.md:49",
+    "ai-readiness-kg:docs/research/kg_construction_methodology.md:23"
+   ]
+  },
+  {
+   "id": "G5-07",
+   "query": "prior art search before design",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/kg_construction_methodology.md",
+   "line": 68,
+   "hits": 24,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "workbench-audit:cross_project/synthesis/G5_governance.md:38",
+    "seldon:docs/design/AD-036_prior_art_receipts_gate.md:10",
+    "workbench-audit:cross_project/synthesis/G1_quality.md:61"
+   ]
+  },
+  {
+   "id": "G5-08",
+   "query": "prior-art gate pilots",
+   "root": "ai-readiness-kg",
+   "path": "handoffs/2026-08-29_desktop_session_close.md",
+   "line": 11,
+   "hits": 1,
+   "rank_top_k": 1,
+   "rank_anywhere": 1,
+   "top3": [
+    "ai-readiness-kg:handoffs/2026-08-29_desktop_session_close.md:7"
+   ]
+  },
+  {
+   "id": "G5-09",
+   "query": "TAC KBP guideline",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/ground_truth_rubric.md",
+   "line": 157,
+   "hits": 5,
+   "rank_top_k": 3,
+   "rank_anywhere": 3,
+   "top3": [
+    "ai-readiness-kg:docs/research/ground_truth_rubric.md:212",
+    "ai-readiness-kg:docs/research/ground_truth_rubric.md:138",
+    "ai-readiness-kg:docs/research/ground_truth_rubric.md:155"
+   ]
+  },
+  {
+   "id": "G5-10",
+   "query": "internal precedent search gate",
+   "root": "squiddy",
+   "path": "docs/design/2026-09-20_internal_prior_art_packs_anchors.md",
+   "line": 37,
+   "hits": 19,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "workbench-audit:cross_project/synthesis/G5_governance.md:59",
+    "squiddy:docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1",
+    "seldon:docs/design/AD-032_factory_control_design.md:165"
+   ]
+  },
+  {
+   "id": "G5-11",
+   "query": "rule enforced one repository",
+   "root": "squiddy",
+   "path": "docs/design/2026-09-20_internal_prior_art_packs_anchors.md",
+   "line": 34,
+   "hits": 2,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "seldon:docs/decisions/REGISTER.md:9",
+    "squiddy:docs/decisions/REGISTER.md:9"
+   ]
+  },
+  {
+   "id": "G5-12",
+   "query": "Seldon gate not built",
+   "root": "squiddy",
+   "path": "docs/EXTRACTION_DESIGN_SPEC.md",
+   "line": 52,
+   "hits": 50,
+   "rank_top_k": null,
+   "rank_anywhere": 46,
+   "top3": [
+    "squiddy:CLAUDE.md:75",
+    "seldon:docs/design/AD-036_prior_art_receipts_gate.md:20",
+    "squiddy:docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1"
+   ]
+  },
+  {
+   "id": "G5-13",
+   "query": "inheritance walk gate",
+   "root": "squiddy",
+   "path": "docs/design/2026-09-26_large_works_route_tier0_administrative_layer.md",
+   "line": 107,
+   "hits": 5,
+   "rank_top_k": null,
+   "rank_anywhere": null,
+   "top3": [
+    "workbench-audit:cross_project/synthesis/G5_governance.md:61",
+    "workbench-audit:cross_project/synthesis/G5_governance.md:44",
+    "squiddy:docs/EXTRACTION_DESIGN_SPEC.md:267"
+   ]
+  },
+  {
+   "id": "G5-14",
+   "query": "shelf screen recall",
+   "root": "squiddy",
+   "path": "docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md",
+   "line": 18,
+   "hits": 27,
+   "rank_top_k": null,
+   "rank_anywhere": 24,
+   "top3": [
+    "arnold:docs/KG-008_delivery_report.md:549",
+    "workbench-audit:cross_project/synthesis/G5_governance.md:153",
+    "arnold:docs/SEED-001_delivery_report.md:164"
+   ]
+  },
+  {
+   "id": "M-01",
+   "query": "model identity new instrument",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/kg_construction_methodology.md",
+   "line": 10,
+   "hits": 12,
+   "rank_top_k": 3,
+   "rank_anywhere": 3,
+   "top3": [
+    "seldon:docs/design/AD-036_prior_art_receipts_gate.md:25",
+    "squiddy:docs/kg_construction_methodology.md:34",
+    "ai-readiness-kg:docs/research/kg_construction_methodology.md:8"
+   ]
+  },
+  {
+   "id": "M-02",
+   "query": "prior_art block registration",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/kg_construction_methodology.md",
+   "line": 68,
+   "hits": 8,
+   "rank_top_k": 8,
+   "rank_anywhere": 8,
+   "top3": [
+    "ai-readiness-kg:docs/design_decisions.md:231",
+    "seldon:docs/design/AD-036_prior_art_receipts_gate.md:20",
+    "ai-readiness-kg:docs/research/2026-08-27_lab_note_unit_of_extraction.md:18"
+   ]
+  },
+  {
+   "id": "M-03",
+   "query": "model pin",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/kg_construction_methodology.md",
+   "line": 72,
+   "hits": 113,
+   "rank_top_k": null,
+   "rank_anywhere": 79,
+   "top3": [
+    "ai-readiness-kg:CLAUDE.md:52",
+    "squiddy:docs/K-003_delivery_report.md:11",
+    "squiddy:docs/X-002_delivery_report.md:89"
+   ]
+  },
+  {
+   "id": "M-04",
+   "query": "positive control verdict instrument",
+   "root": "ai-readiness-kg",
+   "path": "docs/research/kg_construction_methodology.md",
+   "line": 55,
+   "hits": 48,
+   "rank_top_k": 3,
+   "rank_anywhere": 3,
+   "top3": [
+    "squiddy:docs/decisions/register/00184_squiddy-ex-req-03_accept.yaml:1",
+    "squiddy:docs/kg_construction_methodology.md:81",
+    "ai-readiness-kg:docs/research/kg_construction_methodology.md:55"
+   ]
+  }
+ ],
+ "misses": [
+  "G5-01",
+  "G5-03",
+  "G5-06",
+  "G5-07",
+  "G5-10",
+  "G5-11",
+  "G5-12",
+  "G5-13",
+  "G5-14",
+  "M-03"
+ ]
+}
