@@ -90,6 +90,9 @@ _AUDIT_ONLY_EVENT_TYPES = frozenset(
         "dispatch_refused",
         "dispatch_observed_stop",
         "cadence_created",
+        # AD-035 R2: the model lock moved. The lock FILE is the state; the event is its audit
+        # trail (old and new ids, the evidence file), and there is no graph node to project.
+        "models_lock_bumped",
     }
 )
 

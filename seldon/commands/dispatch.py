@@ -39,6 +39,7 @@ from pathlib import Path
 
 import click
 
+from seldon import models
 from seldon.config import (
     bind_process_session, get_current_session, get_neo4j_driver, load_project_config,
 )
@@ -835,7 +836,11 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
         return
 
     lease.heartbeat(task=chosen["task_id"])
-    cmd = _launch_cmd(cfg, prompt)
+    # AD-035 R2 and R7: the lock is refreshed (cached for the day) BEFORE the run, and this
+    # run keeps the spec it starts with to the end.
+    refresh_note = models.ensure_fresh("dispatch")
+    spec = _session_spec(project_dir, rel)
+    cmd = _launch_cmd(cfg, prompt, spec)
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).
     child_session_id = str(uuid.uuid4())
@@ -847,7 +852,8 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "network_allowlist": chosen["criteria"]["c5"]["network_allowlist"],
            "log_path": str(log_path.relative_to(project_dir)),
            "command": " ".join(shlex.quote(p) for p in cmd),
-           "permission_mode": cfg["permission_mode"], "launched_at": _now()})
+           "permission_mode": cfg["permission_mode"], "launched_at": _now(),
+           **_model_fields(spec, refresh_note)})
     # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the
     # session starts, so it opens on a clean, level tree. Left for the session, they were the
     # dirt it found on opening and the lines its own final commit had to carry.
@@ -856,19 +862,27 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
                f"{log_path.relative_to(project_dir)}")
 
     started = time.monotonic()
+    offset = _log_offset(log_path)
     code = _run(cmd, project_dir, log_path, child_session_id,
-                network_allowlist=chosen["criteria"]["c5"]["network_allowlist"])
+                network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
+                extra_env=spec["env"])
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
     graph_state = _state_of(driver, database, chosen["task_id"])
-    ok = code == 0 and result_path.is_file() and graph_state == "completed"
+    receipt = _model_receipt(log_path, offset, spec)
+    ok = (code == 0 and result_path.is_file() and graph_state == "completed"
+          and receipt["ok"])
     finish = {"task_id": chosen["task_id"], "child_session_id": child_session_id,
               "exit_code": code, "wall_clock_s": wall,
               "result_present": result_path.is_file(),
               "result_path": str(result_path.relative_to(project_dir)),
               "graph_state_observed": graph_state, "ok": ok,
-              "log_path": str(log_path.relative_to(project_dir))}
+              "log_path": str(log_path.relative_to(project_dir)),
+              "model_receipt": receipt}
+    if not receipt["ok"]:
+        # AD-035 R6: the session's work is not counted as done on an unverified model.
+        finish["failure"] = models.SUBSTITUTED
     _emit(project_dir, session_id, D.EVENT_FINISHED, finish)
     if not ok:
         # Blocked, never retried. The next OODA reads the log and decides; a loop that cannot
@@ -876,7 +890,8 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
         _block(project_dir, driver, database, domain_config, session_id, chosen["task_id"],
                graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
-                   f"graph={graph_state} -> blocked", err=True)
+                   f"graph={graph_state} model={receipt['served']} "
+                   f"(requested {receipt['requested']}) -> blocked", err=True)
         # After the walk to `blocked`, so what the operator is told is already on the log;
         # before the commit, so a `dispatch_notify_failed` ships with it.
         _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
@@ -1051,21 +1066,69 @@ def _run_notifier(project_dir, session_id, cfg, env_updates: dict, task_id: str,
     click.echo(f"notify FAILED ({failure['reason']}) for {str(task_id)[:8]}", err=True)
 
 
-def _launch_cmd(cfg: dict, prompt: str) -> list:
-    """`claude -p "<the dispatch line>"` with the non-interactive permission mode.
+#: AD-035 R6: the session's output is the CLI's event stream, one JSON object per line, ending
+#: in the `result` object whose `modelUsage` is the served-model receipt. `--verbose` is what
+#: `-p` requires for `stream-json`. The log keeps every message the session wrote.
+SESSION_OUTPUT_ARGS = ["--output-format", "stream-json", "--verbose"]
+
+
+def _session_spec(project_dir: Path, rel: str) -> dict:
+    """The launch block for a task (AD-035 R3): its `**Model:**` role or id, else `primary`.
+
+    Candidacy has already refused a header that names an id outside the lock (R5), so what is
+    read here is a role or a current id.
+    """
+    text = (project_dir / rel).read_text(encoding="utf-8", errors="surrogateescape")
+    check = models.check_task_models(text)
+    return models.launch_spec_for(check["role"] or check["model"] or MODEL_ROLE_DEFAULT)
+
+
+#: The role a task with no `**Model:**` header runs as.
+MODEL_ROLE_DEFAULT = "primary"
+
+
+def _launch_cmd(cfg: dict, prompt: str, spec: dict) -> list:
+    """The lock's CLI, `-p "<the dispatch line>"`, the permission mode, and the model block.
 
     The prompt is the protocol's own sentence. The permission mode comes from `seldon.yaml`
     with its reason beside it, never from the plist alone (DN-006 decision 5), so the one
     setting that decides what a dispatched session may do to the checkout is in the file an
-    operator reads to answer that question.
+    operator reads to answer that question. The executable, `--model <id>` and the
+    `switchModelsOnFlag: false` settings come from the model lock (AD-035 R3, R6), never from
+    this project's config: `dispatch.cli` and `dispatch.model` are refused at load.
     """
-    cmd = [cfg.get("cli", "claude"), "-p", prompt]
+    cmd = [spec["cli_path"], "-p", prompt, *SESSION_OUTPUT_ARGS]
     mode = cfg["permission_mode"]
     if mode:
         cmd += ["--permission-mode", mode]
-    if cfg.get("model"):
-        cmd += ["--model", cfg["model"]]
-    return cmd
+    return cmd + list(spec["args"])
+
+
+def _model_receipt(log_path: Path, offset: int, spec: dict) -> dict:
+    """R6: requested and served model for the session whose output starts at `offset` in the log.
+
+    `ok` is False when the stream carried no result object or its answering model is not the
+    requested one; either way the task is not counted as done (`model_substituted`).
+    """
+    with log_path.open("r", encoding="utf-8", errors="replace") as fh:
+        fh.seek(offset)
+        text = fh.read()
+    envelope = models.last_result_envelope(text) or {}
+    r = models.receipt(spec["model"], envelope)
+    r.update({"role": spec["role"], "cli_version": spec["cli_version"],
+              "lock_resolved_on": spec["resolved_on"]})
+    return r
+
+
+def _model_fields(spec: dict, refresh_note: str | None) -> dict:
+    """What `dispatch_launched` records about the model, so a reader need not open the lock."""
+    out = {"model": {"role": spec["role"], "family": spec["family"], "requested": spec["model"],
+                     "effort": spec["effort"], "cli_path": spec["cli_path"],
+                     "cli_version": spec["cli_version"],
+                     "lock_resolved_on": spec["resolved_on"], "lock_evidence": spec["evidence"]}}
+    if refresh_note:
+        out["model"]["refresh"] = refresh_note
+    return out
 
 
 def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
@@ -1095,7 +1158,8 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
     if network_allowlist:
         env[D.NETWORK_ALLOWLIST_ENV] = ",".join(network_allowlist)
     # SEL-004: a worktree session is run with `project_dir` = its worktree and is told where
-    # the primary checkout is (`seldon.core.worktree.PRIMARY_CHECKOUT_ENV`).
+    # the primary checkout is (`seldon.core.worktree.PRIMARY_CHECKOUT_ENV`). AD-035 R3: the
+    # caller's extra env carries the lock's four `ANTHROPIC_DEFAULT_*_MODEL` ids.
     env.update(extra_env or {})
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
@@ -1104,6 +1168,11 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
                               env=env)
         fh.write(f"\nEXIT={proc.returncode}\n")
     return proc.returncode
+
+
+def _log_offset(log_path: Path) -> int:
+    """Where the next session's output will start in its (appended) log."""
+    return log_path.stat().st_size if log_path.exists() else 0
 
 
 def _claim(project_dir, driver, database, domain_config, session_id, row) -> dict:

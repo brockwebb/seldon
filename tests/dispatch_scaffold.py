@@ -66,9 +66,12 @@ def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
                 "standing_band_ref": "controls.yaml#spend.daily_tokens",
                 "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                 "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
-                "lease_file": ".seldon/dispatch.lock",
-                "cli": str(p / "bin" / "claude")}
+                "lease_file": ".seldon/dispatch.lock"}
     dispatch.update(dispatch_extra or {})
+    # AD-035 R3: the dispatcher execs the lock's CLI, so the stub is named by a fixture lock,
+    # not by a `dispatch.cli` key (which is now refused). Undone after the test by conftest's
+    # monkeypatched SELDON_MODELS_HOME.
+    use_stub_lock(tmp_path, p)
     (p / "seldon.yaml").write_text(yaml.safe_dump({
         "event_store": {"path": "seldon_events.jsonl"},
         "neo4j": {"database": NEO4J_DB, "uri": os.getenv("NEO4J_URI",
@@ -86,6 +89,14 @@ def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
     git(p, "push", "-q", "-u", "origin", "main")
     write_stub(p, {})
     return p
+
+
+def use_stub_lock(tmp_path: Path, p: Path) -> Path:
+    """Point SELDON_MODELS_HOME at a fixture lock whose CLI is the project's stub `claude`."""
+    from tests.models_fixture import write_models_home
+    home = write_models_home(tmp_path / "models_home", cli_path=p / "bin" / "claude")
+    os.environ["SELDON_MODELS_HOME"] = str(home)
+    return home
 
 
 def add_task(p: Path, stem: str, extra: str = "", commit: bool = True) -> str:
@@ -124,6 +135,9 @@ def mark(what):
         with open(spec["mark"], "a") as fh:
             fh.write(f"{{stem}} {{what}} {{time.time()}}\\n")
 mark("start")
+if spec.get("dump_env"):
+    Path(spec["dump_env"]).write_text(json.dumps(
+        {{k: v for k, v in os.environ.items() if k.startswith("ANTHROPIC_DEFAULT_")}}))
 if spec.get("pidfile"):
     Path(spec["pidfile"]).write_text(str(os.getpid()))
 for rel, text in (spec.get("write") or {{}}).items():
@@ -165,6 +179,11 @@ if spec.get("commit", True) and spec.get("result", True):
     subprocess.run(["git", "commit", "-q", "-m", f"{{stem}}: result", "--", *paths],
                    check=True)
 mark("end")
+# AD-035 R6: the CLI's stream ends in a result object whose `modelUsage` names the served model.
+# The stub serves what `--model` asked for, unless the spec plants a substitution.
+served = spec.get("served") or sys.argv[sys.argv.index("--model") + 1]
+print(json.dumps({{"type": "result", "subtype": "success", "usage": {{"output_tokens": 1}},
+                  "modelUsage": {{served: {{"outputTokens": 1, "inputTokens": 1}}}}}}))
 sys.exit(spec.get("exit", 0))
 '''
 

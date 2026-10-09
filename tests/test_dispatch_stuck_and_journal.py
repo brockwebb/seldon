@@ -36,6 +36,7 @@ from seldon.core.artifacts import create_artifact
 from seldon.core.events import append_event, make_event
 from seldon.domain.loader import load_domain_config
 from tests.testdb import TEST_DATABASE
+from tests.models_fixture import shell_receipt, use_stub_cli
 
 pytestmark = pytest.mark.usefixtures("neo4j_available", "clean_test_db")
 
@@ -82,8 +83,10 @@ def project(tmp_path):
     (p / STORE).write_text("", encoding="utf-8")
     (p / "cc_tasks" / "t1.md").write_text(TASK_BODY.format(stem="t1"), encoding="utf-8")
     stub = p / "bin" / "claude"
-    stub.write_text("#!/bin/sh\necho 'stub cc'\nexit 0\n", encoding="utf-8")
+    stub.write_text("#!/bin/sh\necho 'stub cc'\n" + shell_receipt() + "\nexit 0\n",
+                    encoding="utf-8")
     stub.chmod(0o755)
+    use_stub_cli(tmp_path, stub)
     (p / "seldon.yaml").write_text(yaml.safe_dump({
         "event_store": {"path": STORE},
         "neo4j": {"database": NEO4J_DB,
@@ -94,7 +97,6 @@ def project(tmp_path):
                      "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                      "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
                      "lease_file": ".seldon/dispatch.lock",
-                     "cli": str(p / "bin" / "claude"),
                      "stuck_after_passes": 3,
                      "notify": f"echo \"$SELDON_NOTIFY_OUTCOME $SELDON_NOTIFY_CRITERION "
                                f"$SELDON_NOTIFY_PASSES $SELDON_NOTIFY_DIRTY_PATHS\" "

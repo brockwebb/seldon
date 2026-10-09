@@ -23,6 +23,7 @@ from seldon.commands.glossary import glossary_group
 from seldon.commands.audit_dispatch import audit_dispatch_command
 from seldon.commands.events import events_group
 from seldon.commands.dispatch import dispatch_group
+from seldon.commands.models import models_group
 
 
 @click.group()
@@ -56,3 +57,4 @@ main.add_command(audit_dispatch_command, name="audit-dispatch")
 main.add_command(events_group, name="events")
 main.add_command(dispatch_group, name="dispatch")
 main.add_command(cadence_group, name="cadence")
+main.add_command(models_group, name="models")

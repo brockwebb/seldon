@@ -50,6 +50,9 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `task chain`      | Order a whole sequence of tasks | `seldon task chain <A> <B> <C> ...` |
 | `task unprecede`  | Retire an ordering that no longer holds | `seldon task unprecede <A> <B>` |
 | `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
+| `models show`     | Which model each role runs on today | `seldon models show` |
+| `models resolve`  | A role's model id, or with `--json` the full launch block | `seldon models resolve <role> [--json]` |
+| `models refresh`  | Re-resolve the lock from the newest CLI (four calls, cached for the day) | `seldon models refresh [--force]` |
 | `cc register`     | When writing a new CC task | `seldon cc register <task-filepath>` |
 
 ## MCP Tools (Desktop Housekeeping)
@@ -239,6 +242,7 @@ AD-027: Snapshot Artifacts Are Exempt From Drift Checking — `docs/design/AD-02
 AD-028: Result Names, Transitional Units Fallback, and ResearchTask Terminal Semantics — `docs/design/AD-028_result_names_and_task_lifecycle.md`
 AD-029: `precedes` — Task Ordering as a First-Class Relationship — `docs/design/AD-029_task_precedence.md`
 AD-030: Governed Documents as Graph Content — `docs/design/AD-030_governed_documents_as_graph_content.md`
+AD-035: Model selection is config-driven, locked and receipted. `models/registry.yaml` maps a role to a family (intent); `models/models.lock.yaml` holds each family's id and the CLI that resolved it (written only by `seldon models refresh`); `seldon.models.resolve(role)` / `launch_spec(role)` is the only way code on this machine gets a model id. Task files name a role in `**Model:**`; `cc register` and dispatch candidacy refuse an id not in the lock. Every launch execs the lock's CLI with `--model <id>`, the four `ANTHROPIC_DEFAULT_*_MODEL` ids and `switchModelsOnFlag: false`, and records the served model (`model_substituted` on a mismatch) — `docs/design/AD-035_config_driven_model_selection.md`
 AD-034: Parallel dispatch, a worktree per task, independence declared by `**Exclusive:**`/`**Touches:**` and never inferred from `precedes` (opt-in, `dispatch.max_parallel`, default 1) — `docs/design/AD-034_worktree_per_task_dispatch.md`
 
 ## Project Templates

@@ -35,6 +35,7 @@ from seldon.core.artifacts import create_artifact
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config
 from tests.testdb import TEST_DATABASE
+from tests.models_fixture import shell_receipt, use_stub_cli
 
 NEO4J_DB = TEST_DATABASE
 RESEARCH_YAML = Path(__file__).parent.parent / "seldon" / "domain" / "research.yaml"
@@ -108,7 +109,6 @@ def project(tmp_path):
                      "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                      "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
                      "lease_file": ".seldon/dispatch.lock",
-                     "cli": str(p / "bin" / "claude"),
                      "cadence": [{
                          "name": "scan_cycle",
                          "rule": {"monthly_first_weekday": "monday", "at_utc": "00:00"},
@@ -124,6 +124,7 @@ def project(tmp_path):
     _git(p, "commit", "-m", "init")
     _git(p, "remote", "add", "origin", str(remote))
     _git(p, "push", "-u", "origin", "main")
+    use_stub_cli(tmp_path, p / "bin" / "claude")
     return p
 
 
@@ -153,6 +154,7 @@ def _stub(project: Path, *, task_id=None, stem="t1", commit=True):
             lines.append(f"git add cc_tasks/{stem}_RESULT.md {STORE}")
             lines.append(f"git commit -q -m 'session: {stem}'")
             lines.append("git push -q")
+    lines.append(shell_receipt())
     lines.append("exit 0")
     path = project / "bin" / "claude"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

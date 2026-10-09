@@ -29,6 +29,7 @@ from seldon.core import cadence as C
 from seldon.core import dispatch as D
 from seldon.core.events import read_events
 from tests.testdb import TEST_DATABASE
+from tests.models_fixture import shell_receipt, use_stub_cli
 
 NEO4J_DB = TEST_DATABASE
 pytestmark = pytest.mark.usefixtures("neo4j_available")
@@ -62,8 +63,7 @@ def _yaml(p: Path, *, cadence=True, enabled=True) -> None:
                      "standing_band_ref": "controls.yaml#spend.daily_tokens",
                      "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                      "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
-                     "lease_file": ".seldon/dispatch.lock",
-                     "cli": str(p / "bin" / "claude")},
+                     "lease_file": ".seldon/dispatch.lock"},
     }
     if cadence:
         doc["dispatch"]["cadence"] = [{
@@ -96,8 +96,10 @@ def project(tmp_path):
     (p / "cc_tasks" / "templates" / "scan_cycle.md").write_text(TEMPLATE, encoding="utf-8")
     _yaml(p)
     stub = p / "bin" / "claude"
-    stub.write_text('#!/bin/sh\necho "stub cc: $*"\nexit 0\n', encoding="utf-8")
+    stub.write_text('#!/bin/sh\necho "stub cc: $*"\n' + shell_receipt() + '\nexit 0\n',
+                    encoding="utf-8")
     stub.chmod(0o755)
+    use_stub_cli(tmp_path, stub)
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
     return p
