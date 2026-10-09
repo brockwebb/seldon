@@ -1,0 +1,101 @@
+# PA-001 Part C: the internal search tool's recall control (AD-036-R5). PRE-REGISTERED.
+#
+# Written and committed BEFORE the internal arm was run on the real corpus. Never edited after the
+# run; a correction is a new file that names this one.
+#
+# Positive set: the 14 file:line entries of G5 problem 1's timeline
+# (workbench/2026-10-03_audit_and_decision_probe/cross_project/synthesis/G5_governance.md:44-57)
+# and the four ai-readiness-kg kg_construction_methodology.md lines AD-036 section 2 cites
+# (section 1; section 7 rules 1 and 5; section 7.6): 18 entries. Section 7 rule 1 (line 68) is
+# ALSO timeline entry 7, so 17 distinct locations carry 18 entries; each entry has its own query.
+#
+# Location resolution: each G5 path was resolved against the operator's machine on 2026-10-09
+# (`.wintermute/` -> ~/.wintermute, `GitHub/<repo>/` and `squiddy/` -> ~/GitHub/<repo>/) and its
+# line read at the commit named under `corpus`. Every cited line still holds the content G5 quotes
+# at the same line number. A location counts as found when a returned paragraph of the same root
+# and path spans its line.
+#
+# Queries: one per entry, written from the entry's TOPIC, never copying the entry's wording.
+# AD-036-R5's three examples are used for the entries they name: "prior art search before
+# design" (the methodology's prior-art-before-pilot rule), "unit of extraction" (the lab note),
+# "model pin" (the Opus 5 pin rule).
+#
+# Tool: seldon/core/prior_art.py, TOOL_VERSION prior-art/1, internal arm, the corpus declared
+# in seldon.yaml `prior_art.internal_roots` with `internal.default_include` (R3's list plus
+# each repository's top-level docs/*.md, added before this file was written, rationale in
+# seldon.yaml). Ranking BM25 k1 1.2, b 0.75, untuned.
+#
+# Statistic: recall at top 20 = (entries whose location is among the top 20 hits of its query)
+# / 18. Interval: Wilson score, 95% (z = 1.959964). Pass bar: the interval's lower bound >= 0.70
+# (AD-036-R5). A failure is reported with its misses and does not block the gate (Part B); it
+# opens a design task for the governed-graph arm.
+#
+# Known before the run, stated so it is not discovered as a surprise: Wintermute's two handoffs
+# and ai-readiness-kg's 2026-08-29 handoff are untracked in their repositories; the corpus reads
+# them from disk. Lexical all-terms matching penalizes a topic query whose words the target does
+# not use; that is what this control measures.
+
+tool: prior-art/1
+top_k: 20
+z: 1.959964
+bar_lower_bound: 0.70
+corpus:
+  # HEAD commits at pre-registration (2026-10-09). The run reports the commits it actually read.
+  wintermute: 2a78c392f4d998227d2433338ea45aee82c67f1e
+  ai-readiness-kg: 7e62f24e23b7ea8a61f9c68de906be3db6b8a162
+  squiddy: 1cc6fc2d4e7b289737c1bccc210a6166707480ad  # main at MODEL-001's merge; a Part E agent may move it before the run
+entries:
+  - {id: G5-01, root: wintermute, path: docs/2026-06-07_labnote_entity_identity_restructure.md, line: 105,
+     topic: "the same work duplicated three times in one session; no check whether it exists",
+     query: "duplicate work"}
+  - {id: G5-02, root: wintermute, path: handoffs/2026-06-07_entity_identity_restructure_handoff.md, line: 55,
+     topic: "a pre-flight existence check proposed as a skill",
+     query: "duplication check skill"}
+  - {id: G5-03, root: wintermute, path: docs/2026-06-08_labnote_machine_era_kg_entity_resolution.md, line: 161,
+     topic: "entity-resolution literature read only after repeated failures",
+     query: "entity resolution literature"}
+  - {id: G5-04, root: wintermute, path: handoffs/2026-06-13_evening_tbox_consolidation_and_architecture_map_handoff.md, line: 74,
+     topic: "mapping architecture components to their literature",
+     query: "architecture literature map"}
+  - {id: G5-05, root: ai-readiness-kg, path: docs/design_decisions.md, line: 229,
+     topic: "a whole-document extraction unit adopted without a prior-art search, at large cost",
+     query: "whole document unit prior art"}
+  - {id: G5-06, root: ai-readiness-kg, path: docs/research/2026-08-27_lab_note_unit_of_extraction.md, line: 12,
+     topic: "the extraction-unit finding was already known in a sibling project",
+     query: "unit of extraction"}
+  - {id: G5-07, root: ai-readiness-kg, path: docs/research/kg_construction_methodology.md, line: 68,
+     topic: "a pilot must carry a prior-art block, refused at registration without it",
+     query: "prior art search before design"}
+  - {id: G5-08, root: ai-readiness-kg, path: handoffs/2026-08-29_desktop_session_close.md, line: 11,
+     topic: "the prior-art gate is in force for new pilots",
+     query: "prior-art gate pilots"}
+  - {id: G5-09, root: ai-readiness-kg, path: docs/research/ground_truth_rubric.md, line: 157,
+     topic: "an annotation guideline re-derived from probe failures instead of read",
+     query: "TAC KBP guideline"}
+  - {id: G5-10, root: squiddy, path: docs/design/2026-09-20_internal_prior_art_packs_anchors.md, line: 37,
+     topic: "searching one's own repositories made a governing rule",
+     query: "internal precedent search gate"}
+  - {id: G5-11, root: squiddy, path: docs/design/2026-09-20_internal_prior_art_packs_anchors.md, line: 34,
+     topic: "a rule enforced in one repository did not reach the others; design notes searched only outside literature",
+     query: "rule enforced one repository"}
+  - {id: G5-12, root: squiddy, path: docs/EXTRACTION_DESIGN_SPEC.md, line: 52,
+     topic: "the requirement that Seldon refuse a note lacking the two-part section, unbuilt",
+     query: "Seldon gate not built"}
+  - {id: G5-13, root: squiddy, path: docs/design/2026-09-26_large_works_route_tier0_administrative_layer.md, line: 107,
+     topic: "a gate requiring the inheritance harvest to walk every predecessor tree",
+     query: "inheritance walk gate"}
+  - {id: G5-14, root: squiddy, path: docs/design/2026-10-02_DN-035_seed001_measured_mapping_context_screen_disk.md, line: 18,
+     topic: "a lexical screen for shelving texts built and measured as failing",
+     query: "shelf screen recall"}
+  - {id: M-01, root: ai-readiness-kg, path: docs/research/kg_construction_methodology.md, line: 10,
+     topic: "a changed model is a different instrument; a mismatched response stops the run",
+     query: "model identity new instrument"}
+  - {id: M-02, root: ai-readiness-kg, path: docs/research/kg_construction_methodology.md, line: 68,
+     topic: "the prior-art block required at pilot registration (section 7 rule 1)",
+     query: "prior_art block registration"}
+  - {id: M-03, root: ai-readiness-kg, path: docs/research/kg_construction_methodology.md, line: 72,
+     topic: "check product facts in vendor documentation before fixing a model choice",
+     query: "model pin"}
+  - {id: M-04, root: ai-readiness-kg, path: docs/research/kg_construction_methodology.md, line: 55,
+     topic: "a verdict cited in a decision needs its instrument positive-controlled",
+     query: "positive control verdict instrument"}
