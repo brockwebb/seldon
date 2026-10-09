@@ -133,6 +133,14 @@ roles:
     family: haiku
     effort: medium
     uses: squiddy quality controls, secondary rater, a deliberately different, smaller family.
+  register_statement:
+    family: sonnet
+    effort: low
+    uses: >-
+      AD-033-R8's statement writer and its separate validator (scripts/sel002/statements.py's
+      prompts, driven for PA-001 by scripts/pa001/statements_ad035_036.py). SEL-002 ran them on the
+      alias sonnet at effort low: its pilot 2 measured up to 4,774 output tokens of thinking for a
+      few lines of JSON at the default.
   auditor:
     family: opus
     effort: medium

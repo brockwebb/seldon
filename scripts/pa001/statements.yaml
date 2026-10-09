@@ -1,0 +1,38 @@
+# PA-001 Part F (AD-033-R8): the statement pass for the 17 records PA-001 registered (AD-035-R1..R8,
+# AD-036-R1..R9). SEL-002's scripts/sel002/statements.yaml with ONE change: each call launches
+# from the model lock by registry role (MODEL-001, AD-035 R3) instead of a CLI alias and a pinned
+# binary. `alias` stays because SEL-002's code uses it as the spend governor's pricing label and in
+# the unit key; it must name the role's family.
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)   # the lock's CLI, id, effort and env block
+  setting_sources_disabled: true       # H-004 ADDENDUM 01 R-21
+  nonessential_traffic_disabled: true  # H-005 Part A
+policy:
+  in_flight: 3
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: the pilot measures before the rest runs. 10 of 17, as in SEL-002.
+pilot_records: 10
+guess_output_tokens: 250
+# The declared budget for this pass: 17 records, two short calls each. SEL-002 measured its whole
+# 575-record pass inside 3M weighted tokens; this is a proportional bound with headroom. Past it
+# times 1.2 the run stops for the operator (DN-042 R-178).
+budget:
+  declared_weighted_tokens: 300000
+  band_stop: 0.20
+spacing_seconds: null
