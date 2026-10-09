@@ -120,6 +120,20 @@ roles:
       arnold exercise mappers (scripts/importers/map_failures_sonnet45.py, claude-sonnet-4-5;
       scripts/mappers/map_custom_to_canonical.py, claude-3-5-haiku). One role for one task: the
       later failure pass had already moved this task from Haiku up to Sonnet.
+  quality_rater_primary:
+    family: opus
+    effort: default
+    uses: squiddy quality controls, primary rater (tools/run_quality_controls.py and the H-011 pilots).
+  quality_rater_secondary:
+    family: haiku
+    effort: default
+    uses: squiddy quality controls, secondary rater, a deliberately different, smaller family.
+  demand_judge:
+    family: fable
+    effort: high
+    uses: >-
+      squiddy Q-005 demand judge (graphs/library/judge_run.yaml): Fable at effort high, which is
+      what the sealed rounds measured; the registry's `judge` role is effort default.
 
 # `seldon models refresh` (AD-035 R2). Every value it uses is here, so a change is an edit.
 refresh:
