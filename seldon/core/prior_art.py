@@ -466,6 +466,9 @@ class Library:
             # The library search is local; nothing here may reach a network (PA-001: Network none).
             os.environ.setdefault("HF_HUB_OFFLINE", "1")
             os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+            # The internal arm forks git after the encoder has loaded; say so up front rather than
+            # let the tokenizer library warn on every fork.
+            os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
             try:
                 from squiddy.config import load_graph
                 from squiddy.serve import Verbs

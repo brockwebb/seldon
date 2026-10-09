@@ -1,0 +1,1169 @@
+{
+ "checklist compliance enforced gate pre-registration systematic review protocol reduces errors": {
+  "receipt": "- library receipt: query \"checklist compliance enforced gate pre-registration systematic review protocol reduces errors\" | release library_graph_20260930_m002_2026-09-30.json sha256:fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543 | rows lesson:2026-04-13_arXiv_2406_14325#p26:184:1058-1341, lesson:2026-04-13_arXiv_2406_14325#p21:138:1384-1675, lesson:2026-04-13_arXiv_2406_14325#p16:104:1865-2521, lesson:2026-02-22_arXiv_2507_21046#p52:710:0-177, lesson:2026-02-22_arXiv_2507_21046#p51:707:2853-3768, lesson:2026-02-22_arXiv_2507_21046#p51:705:1791-2357, lesson:2026-02-22_arXiv_2502_12110#p22:436:25-451, lesson:2026-02-22_arXiv_2502_12110#p22:442:2114-2378, lesson:2026-02-22_arXiv_2502_12110#p22:435:0-23, lesson:2026-02-22_arXiv_2402_12391#p7:116:312-706, lesson:2026-02-22_arXiv_2402_12391#p6:111:2278-2668, lesson:2026-02-22_arXiv_2402_12391#p6:110:1857-2276, lesson:2026-02-22_arXiv_2505_19630#p18:258:1140-1504, lesson:2026-02-22_arXiv_2505_19630#p18:260:1509-1521, lesson:2026-02-22_arXiv_2505_19630#p18:270:1677-1691, lesson:2026-06-16_arXiv_2505_00039#p22:190:754-885, lesson:2026-06-16_arXiv_2505_00039#p19:154:723-1715, lesson:2026-05-09_arXiv_2505_08245#p1:1:37-59, lesson:2026-05-09_arXiv_2505_08245#p34:521:0-204, lesson:2026-05-09_arXiv_2505_08245#p34:529:4820-5057, lesson:2026-02-02_10_3389_frai_2024_1388479#p19:293:1736-1959, lesson:2026-02-02_10_3389_frai_2024_1388479#p19:311:7530-7756, lesson:2026-02-02_arXiv_2501_05435#p1:0:0-46, lesson:2026-02-02_arXiv_2501_05435#p20:236:69-125, lesson:2026-02-02_arXiv_2501_05435#p1:10:2957-3127, lesson:2026-05-09_arXiv_2604_23338#p29:396:1334-1824, lesson:2026-05-09_arXiv_2604_23338#p5:58:508-1132, lesson:2026-05-09_arXiv_2604_23338#p45:652:2296-2539, lesson:2026-03-17_arXiv_2601_21557#p36:617:785-1407, lesson:2026-03-17_arXiv_2601_21557#p34:590:1978-2644, lesson:2026-03-17_arXiv_2601_21557#p20:354:1410-1551, lesson:2026-03-17_arXiv_2602_12670#p17:367:1420-1686, lesson:2026-03-17_arXiv_2602_12670#p37:687:2664-3124, lesson:2026-03-17_arXiv_2602_12670#p17:373:2487-2954, lesson:2026-02-22_arXiv_2504_07952#p5:89:3564-3629, lesson:2026-02-21_arXiv_2506_15672#p33:860:1883-2622, lesson:2026-02-21_arXiv_2506_15672#p31:791:2821-3184, lesson:2026-02-21_arXiv_2506_15672#p8:308:2847-2858, lesson:2026-02-22_arXiv_2411_15692#p9:129:331-398, lesson:2026-02-22_arXiv_2411_15692#p10:147:215-474, lesson:2026-02-22_arXiv_2411_15692#p9:128:309-329, lesson:2026-02-22_arXiv_2507_21035#p42:668:0-96, lesson:2026-02-22_arXiv_2507_21035#p10:137:3660-4436, lesson:2026-02-22_arXiv_2507_21035#p28:416:0-521, lesson:2026-02-22_arXiv_2506_12508#p21:326:476-606, lesson:2026-02-22_arXiv_2506_12508#p5:73:880-951, lesson:2026-02-22_arXiv_2506_12508#p12:285:48-56, lesson:2026-04-16_arXiv_2602_22790#p4:35:2253-2658, lesson:2026-04-16_arXiv_2602_22790#p6:59:1884-2444, lesson:2026-04-16_arXiv_2602_22790#p9:88:539-2379, lesson:2026-06-16_arXiv_2603_15118#p4:42:2719-3201, lesson:2026-06-16_arXiv_2603_15118#p4:41:2351-2717, lesson:2026-06-16_arXiv_2603_15118#p6:146:2675-3747, lesson:2026-04-05_arXiv_2412_09315#p31:250:255-303, lesson:2026-04-05_arXiv_2412_09315#p17:117:2647-3743, lesson:2026-04-05_arXiv_2412_09315#p31:249:234-253",
+  "top": [
+   [
+    "lesson:2026-04-13_arXiv_2406_14325",
+    [
+     "lesson:2026-04-13_arXiv_2406_14325#p26:184:1058-1341",
+     "lesson:2026-04-13_arXiv_2406_14325#p21:138:1384-1675",
+     "lesson:2026-04-13_arXiv_2406_14325#p16:104:1865-2521"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2507_21046",
+    [
+     "lesson:2026-02-22_arXiv_2507_21046#p52:710:0-177",
+     "lesson:2026-02-22_arXiv_2507_21046#p51:707:2853-3768",
+     "lesson:2026-02-22_arXiv_2507_21046#p51:705:1791-2357"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2502_12110",
+    [
+     "lesson:2026-02-22_arXiv_2502_12110#p22:436:25-451",
+     "lesson:2026-02-22_arXiv_2502_12110#p22:442:2114-2378",
+     "lesson:2026-02-22_arXiv_2502_12110#p22:435:0-23"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2402_12391",
+    [
+     "lesson:2026-02-22_arXiv_2402_12391#p7:116:312-706",
+     "lesson:2026-02-22_arXiv_2402_12391#p6:111:2278-2668",
+     "lesson:2026-02-22_arXiv_2402_12391#p6:110:1857-2276"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2505_19630",
+    [
+     "lesson:2026-02-22_arXiv_2505_19630#p18:258:1140-1504",
+     "lesson:2026-02-22_arXiv_2505_19630#p18:260:1509-1521",
+     "lesson:2026-02-22_arXiv_2505_19630#p18:270:1677-1691"
+    ]
+   ],
+   [
+    "lesson:2026-06-16_arXiv_2505_00039",
+    [
+     "lesson:2026-06-16_arXiv_2505_00039#p22:190:754-885",
+     "lesson:2026-06-16_arXiv_2505_00039#p19:154:723-1715"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2505_08245",
+    [
+     "lesson:2026-05-09_arXiv_2505_08245#p1:1:37-59",
+     "lesson:2026-05-09_arXiv_2505_08245#p34:521:0-204",
+     "lesson:2026-05-09_arXiv_2505_08245#p34:529:4820-5057"
+    ]
+   ],
+   [
+    "lesson:2026-02-02_10_3389_frai_2024_1388479",
+    [
+     "lesson:2026-02-02_10_3389_frai_2024_1388479#p19:293:1736-1959",
+     "lesson:2026-02-02_10_3389_frai_2024_1388479#p19:311:7530-7756"
+    ]
+   ],
+   [
+    "lesson:2026-02-02_arXiv_2501_05435",
+    [
+     "lesson:2026-02-02_arXiv_2501_05435#p1:0:0-46",
+     "lesson:2026-02-02_arXiv_2501_05435#p20:236:69-125",
+     "lesson:2026-02-02_arXiv_2501_05435#p1:10:2957-3127"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2604_23338",
+    [
+     "lesson:2026-05-09_arXiv_2604_23338#p29:396:1334-1824",
+     "lesson:2026-05-09_arXiv_2604_23338#p5:58:508-1132",
+     "lesson:2026-05-09_arXiv_2604_23338#p45:652:2296-2539"
+    ]
+   ],
+   [
+    "lesson:2026-03-17_arXiv_2601_21557",
+    [
+     "lesson:2026-03-17_arXiv_2601_21557#p36:617:785-1407",
+     "lesson:2026-03-17_arXiv_2601_21557#p34:590:1978-2644",
+     "lesson:2026-03-17_arXiv_2601_21557#p20:354:1410-1551"
+    ]
+   ],
+   [
+    "lesson:2026-03-17_arXiv_2602_12670",
+    [
+     "lesson:2026-03-17_arXiv_2602_12670#p17:367:1420-1686",
+     "lesson:2026-03-17_arXiv_2602_12670#p37:687:2664-3124",
+     "lesson:2026-03-17_arXiv_2602_12670#p17:373:2487-2954"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2504_07952",
+    [
+     "lesson:2026-02-22_arXiv_2504_07952#p5:89:3564-3629"
+    ]
+   ],
+   [
+    "lesson:2026-02-21_arXiv_2506_15672",
+    [
+     "lesson:2026-02-21_arXiv_2506_15672#p33:860:1883-2622",
+     "lesson:2026-02-21_arXiv_2506_15672#p31:791:2821-3184",
+     "lesson:2026-02-21_arXiv_2506_15672#p8:308:2847-2858"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2411_15692",
+    [
+     "lesson:2026-02-22_arXiv_2411_15692#p9:129:331-398",
+     "lesson:2026-02-22_arXiv_2411_15692#p10:147:215-474",
+     "lesson:2026-02-22_arXiv_2411_15692#p9:128:309-329"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2507_21035",
+    [
+     "lesson:2026-02-22_arXiv_2507_21035#p42:668:0-96",
+     "lesson:2026-02-22_arXiv_2507_21035#p10:137:3660-4436",
+     "lesson:2026-02-22_arXiv_2507_21035#p28:416:0-521"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2506_12508",
+    [
+     "lesson:2026-02-22_arXiv_2506_12508#p21:326:476-606",
+     "lesson:2026-02-22_arXiv_2506_12508#p5:73:880-951",
+     "lesson:2026-02-22_arXiv_2506_12508#p12:285:48-56"
+    ]
+   ],
+   [
+    "lesson:2026-04-16_arXiv_2602_22790",
+    [
+     "lesson:2026-04-16_arXiv_2602_22790#p4:35:2253-2658",
+     "lesson:2026-04-16_arXiv_2602_22790#p6:59:1884-2444",
+     "lesson:2026-04-16_arXiv_2602_22790#p9:88:539-2379"
+    ]
+   ],
+   [
+    "lesson:2026-06-16_arXiv_2603_15118",
+    [
+     "lesson:2026-06-16_arXiv_2603_15118#p4:42:2719-3201",
+     "lesson:2026-06-16_arXiv_2603_15118#p4:41:2351-2717",
+     "lesson:2026-06-16_arXiv_2603_15118#p6:146:2675-3747"
+    ]
+   ],
+   [
+    "lesson:2026-04-05_arXiv_2412_09315",
+    [
+     "lesson:2026-04-05_arXiv_2412_09315#p31:250:255-303",
+     "lesson:2026-04-05_arXiv_2412_09315#p17:117:2647-3743",
+     "lesson:2026-04-05_arXiv_2412_09315#p31:249:234-253"
+    ]
+   ]
+  ]
+ },
+ "LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades": {
+  "receipt": "- library receipt: query \"LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades\" | release library_graph_20260930_m002_2026-09-30.json sha256:fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543 | rows lesson:2026-02-22_arXiv_2506_04405#p22:408:3886-4080, lesson:2026-02-22_arXiv_2401_07128#p20:438:3183-4199, lesson:2026-02-22_arXiv_2401_07128#p8:229:96-130, lesson:2026-02-22_arXiv_2401_07128#p20:439:4201-4392, lesson:2026-02-22_arXiv_2410_15553#p1:13:2258-4124, lesson:2026-02-22_arXiv_2410_15553#p10:200:2341-3477, lesson:2026-02-22_arXiv_2410_15553#p14:282:2528-2821, lesson:2026-05-09_arXiv_2604_01707#p3:84:538-1232, lesson:2026-05-09_arXiv_2604_01707#p2:59:4326-5935, lesson:2026-02-22_arXiv_2508_03341#p1:6:1424-2099, lesson:2026-04-12_arXiv_2403_05530#p33:526:1521-1845, lesson:2026-02-22_arXiv_2504_16891#p4:83:2782-3109, lesson:2026-02-22_arXiv_2505_08638#p21:326:728-928, lesson:2026-02-22_arXiv_2505_08638#p21:341:1533-1726, lesson:2026-02-22_arXiv_2505_08638#p20:303:3455-3552, lesson:2026-06-16_arXiv_2606_08932#p1:38:3296-3937, lesson:2026-06-16_arXiv_2606_08932#p1:40:4441-5440, lesson:2026-03-21_arXiv_2512_16970#p1:8:2010-4560, lesson:2026-03-21_arXiv_2512_16970#p9:185:4063-4262, lesson:2026-03-21_arXiv_2512_16970#p1:2:97-1219, lesson:2026-02-22_arXiv_2310_08740#p5:78:3209-3310, lesson:2026-02-22_arXiv_2310_08740#p5:61:493-988, lesson:2026-02-22_arXiv_2310_08740#p6:115:594-1502, lesson:2026-02-21_arXiv_2506_15672#p20:535:2559-2639, lesson:2026-02-21_arXiv_2506_15672#p32:810:1121-1389, lesson:2026-02-21_arXiv_2506_15672#p34:874:857-913, lesson:2026-04-13_arXiv_2510_00615#p16:405:0-64, lesson:2026-04-13_arXiv_2510_00615#p17:415:0-64, lesson:2026-04-13_arXiv_2510_00615#p19:459:0-64, lesson:2026-04-05_arXiv_2602_20021#p41:345:1888-4335, lesson:2026-04-05_arXiv_2602_20021#p21:142:54-1060, lesson:2026-04-05_arXiv_2602_20021#p41:344:1847-1886, lesson:2026-02-21_arXiv_2404_13501#p22:338:3775-4050, lesson:2026-02-21_arXiv_2404_13501#p13:221:604-876, lesson:2026-02-21_arXiv_2404_13501#p23:339:0-876, lesson:2026-05-09_arXiv_2602_22302#p5:43:2139-2945, lesson:2026-05-09_arXiv_2602_22302#p29:479:249-619, lesson:2026-05-09_arXiv_2602_22302#p29:487:2282-2710, lesson:2026-02-22_arXiv_2410_19100#p16:230:3641-4044, lesson:2026-02-22_arXiv_2410_19100#p1:2:62-103, lesson:2026-02-22_arXiv_2410_19100#p8:133:2169-3372, lesson:2026-02-22_arXiv_2506_01716#p9:211:2745-3644, lesson:2026-02-22_arXiv_2506_01716#p18:312:781-853, lesson:2026-02-22_arXiv_2506_01716#p19:350:611-683, lesson:2026-03-17_arXiv_2602_12670#p37:681:1146-1625, lesson:2026-03-17_arXiv_2602_12670#p37:687:2664-3124, lesson:2026-03-17_arXiv_2602_12670#p11:244:1174-1409, lesson:2026-05-09_10_18653_v1_2024_emnlp_main_1124#p7:127:0-863, lesson:2026-05-09_10_18653_v1_2024_emnlp_main_1124#p13:191:1871-2353",
+  "top": [
+   [
+    "lesson:2026-02-22_arXiv_2506_04405",
+    [
+     "lesson:2026-02-22_arXiv_2506_04405#p22:408:3886-4080"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2401_07128",
+    [
+     "lesson:2026-02-22_arXiv_2401_07128#p20:438:3183-4199",
+     "lesson:2026-02-22_arXiv_2401_07128#p8:229:96-130",
+     "lesson:2026-02-22_arXiv_2401_07128#p20:439:4201-4392"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2410_15553",
+    [
+     "lesson:2026-02-22_arXiv_2410_15553#p1:13:2258-4124",
+     "lesson:2026-02-22_arXiv_2410_15553#p10:200:2341-3477",
+     "lesson:2026-02-22_arXiv_2410_15553#p14:282:2528-2821"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2604_01707",
+    [
+     "lesson:2026-05-09_arXiv_2604_01707#p3:84:538-1232",
+     "lesson:2026-05-09_arXiv_2604_01707#p2:59:4326-5935"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2508_03341",
+    [
+     "lesson:2026-02-22_arXiv_2508_03341#p1:6:1424-2099"
+    ]
+   ],
+   [
+    "lesson:2026-04-12_arXiv_2403_05530",
+    [
+     "lesson:2026-04-12_arXiv_2403_05530#p33:526:1521-1845"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2504_16891",
+    [
+     "lesson:2026-02-22_arXiv_2504_16891#p4:83:2782-3109"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2505_08638",
+    [
+     "lesson:2026-02-22_arXiv_2505_08638#p21:326:728-928",
+     "lesson:2026-02-22_arXiv_2505_08638#p21:341:1533-1726",
+     "lesson:2026-02-22_arXiv_2505_08638#p20:303:3455-3552"
+    ]
+   ],
+   [
+    "lesson:2026-06-16_arXiv_2606_08932",
+    [
+     "lesson:2026-06-16_arXiv_2606_08932#p1:38:3296-3937",
+     "lesson:2026-06-16_arXiv_2606_08932#p1:40:4441-5440"
+    ]
+   ],
+   [
+    "lesson:2026-03-21_arXiv_2512_16970",
+    [
+     "lesson:2026-03-21_arXiv_2512_16970#p1:8:2010-4560",
+     "lesson:2026-03-21_arXiv_2512_16970#p9:185:4063-4262",
+     "lesson:2026-03-21_arXiv_2512_16970#p1:2:97-1219"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2310_08740",
+    [
+     "lesson:2026-02-22_arXiv_2310_08740#p5:78:3209-3310",
+     "lesson:2026-02-22_arXiv_2310_08740#p5:61:493-988",
+     "lesson:2026-02-22_arXiv_2310_08740#p6:115:594-1502"
+    ]
+   ],
+   [
+    "lesson:2026-02-21_arXiv_2506_15672",
+    [
+     "lesson:2026-02-21_arXiv_2506_15672#p20:535:2559-2639",
+     "lesson:2026-02-21_arXiv_2506_15672#p32:810:1121-1389",
+     "lesson:2026-02-21_arXiv_2506_15672#p34:874:857-913"
+    ]
+   ],
+   [
+    "lesson:2026-04-13_arXiv_2510_00615",
+    [
+     "lesson:2026-04-13_arXiv_2510_00615#p16:405:0-64",
+     "lesson:2026-04-13_arXiv_2510_00615#p17:415:0-64",
+     "lesson:2026-04-13_arXiv_2510_00615#p19:459:0-64"
+    ]
+   ],
+   [
+    "lesson:2026-04-05_arXiv_2602_20021",
+    [
+     "lesson:2026-04-05_arXiv_2602_20021#p41:345:1888-4335",
+     "lesson:2026-04-05_arXiv_2602_20021#p21:142:54-1060",
+     "lesson:2026-04-05_arXiv_2602_20021#p41:344:1847-1886"
+    ]
+   ],
+   [
+    "lesson:2026-02-21_arXiv_2404_13501",
+    [
+     "lesson:2026-02-21_arXiv_2404_13501#p22:338:3775-4050",
+     "lesson:2026-02-21_arXiv_2404_13501#p13:221:604-876",
+     "lesson:2026-02-21_arXiv_2404_13501#p23:339:0-876"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2602_22302",
+    [
+     "lesson:2026-05-09_arXiv_2602_22302#p5:43:2139-2945",
+     "lesson:2026-05-09_arXiv_2602_22302#p29:479:249-619",
+     "lesson:2026-05-09_arXiv_2602_22302#p29:487:2282-2710"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2410_19100",
+    [
+     "lesson:2026-02-22_arXiv_2410_19100#p16:230:3641-4044",
+     "lesson:2026-02-22_arXiv_2410_19100#p1:2:62-103",
+     "lesson:2026-02-22_arXiv_2410_19100#p8:133:2169-3372"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2506_01716",
+    [
+     "lesson:2026-02-22_arXiv_2506_01716#p9:211:2745-3644",
+     "lesson:2026-02-22_arXiv_2506_01716#p18:312:781-853",
+     "lesson:2026-02-22_arXiv_2506_01716#p19:350:611-683"
+    ]
+   ],
+   [
+    "lesson:2026-03-17_arXiv_2602_12670",
+    [
+     "lesson:2026-03-17_arXiv_2602_12670#p37:681:1146-1625",
+     "lesson:2026-03-17_arXiv_2602_12670#p37:687:2664-3124",
+     "lesson:2026-03-17_arXiv_2602_12670#p11:244:1174-1409"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_10_18653_v1_2024_emnlp_main_1124",
+    [
+     "lesson:2026-05-09_10_18653_v1_2024_emnlp_main_1124#p7:127:0-863",
+     "lesson:2026-05-09_10_18653_v1_2024_emnlp_main_1124#p13:191:1871-2353"
+    ]
+   ]
+  ]
+ },
+ "PRISMA-S reporting literature search strategy databases search strings dates reproducible search": {
+  "receipt": "- library receipt: query \"PRISMA-S reporting literature search strategy databases search strings dates reproducible search\" | release library_graph_20260930_m002_2026-09-30.json sha256:fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543 | rows lesson:2026-05-09_arXiv_2604_23338#p4:54:1802-2716, lesson:2026-05-09_arXiv_2604_23338#p6:75:578-1184, lesson:2026-05-09_arXiv_2604_23338#p7:82:0-882, lesson:2026-02-02_arXiv_2501_05435#p4:36:519-1392, lesson:2026-02-02_arXiv_2501_05435#p1:10:2957-3127, lesson:2026-02-02_arXiv_2501_05435#p4:46:1695-2014, lesson:2026-02-22_arXiv_2503_00223#p11:276:1326-1873, lesson:2026-02-22_arXiv_2503_00223#p1:50:1937-2598, lesson:2026-02-22_arXiv_2503_00223#p24:446:30-51, lesson:2026-02-22_arXiv_2311_10776#p12:144:1954-2031, lesson:2026-02-11_arXiv_2504_14765#p77:725:0-1137, lesson:2026-02-11_arXiv_2504_14765#p53:479:686-1813, lesson:2026-02-11_arXiv_2504_14765#p15:140:1619-2142, lesson:2026-08-25_arXiv_2606_08317#p2:12:1024-1667, lesson:2026-08-25_arXiv_2606_08317#p15:319:0-1760, lesson:2026-08-25_arXiv_2606_08317#p9:112:758-796, lesson:2026-02-22_arXiv_2502_07960#p14:82:1029-1445, lesson:2026-02-22_arXiv_2502_07960#p3:23:2889-3898, lesson:2026-02-22_arXiv_2502_07960#p17:104:1943-2713, lesson:2026-02-22_arXiv_2405_17631#p19:256:1677-1735, lesson:2026-02-22_arXiv_2405_17631#p21:301:3951-4085, lesson:2026-02-22_arXiv_2405_17631#p21:296:553-1700, lesson:2026-05-09_arXiv_2505_08245#p36:546:3728-3876, lesson:2026-05-09_arXiv_2505_08245#p50:733:1795-2079, lesson:2026-02-22_arXiv_2504_21776#p8:197:469-850, lesson:2026-02-22_arXiv_2504_21776#p31:575:1934-2382, lesson:2026-02-22_arXiv_2504_21776#p1:39:2207-2666, lesson:2026-03-27_arXiv_2407_10239#p11:137:2432-3240, lesson:2026-03-27_arXiv_2407_10239#p12:154:3167-3674, lesson:2026-03-27_arXiv_2407_10239#p5:42:0-1302, lesson:2026-02-21_10_1007_s40747_021_00594_5#p4:56:2611-2626, lesson:2026-02-21_10_1007_s40747_021_00594_5#p7:135:0-1706, lesson:2026-02-22_arXiv_2504_16728#p4:34:3365-4456, lesson:2026-02-22_arXiv_2504_16728#p7:93:796-987, lesson:2026-02-22_arXiv_2404_03683#p12:267:0-760, lesson:2026-02-22_arXiv_2404_03683#p2:49:1345-1360, lesson:2026-02-22_arXiv_2404_03683#p3:54:1413-1983, lesson:2026-03-17_arXiv_2601_21557#p45:766:1030-1110, lesson:2026-03-17_arXiv_2601_21557#p45:767:1112-1247, lesson:2026-03-17_arXiv_2601_21557#p25:455:1830-1908, lesson:2026-04-13_arXiv_2406_14325#p18:115:0-682, lesson:2026-04-13_arXiv_2406_14325#p27:196:1022-1334, lesson:2026-04-13_arXiv_2406_14325#p24:162:644-1186, lesson:2026-02-11_10_17016_feds_2025_044#p35:308:688-1166, lesson:2026-02-11_10_17016_feds_2025_044#p34:281:1204-1680, lesson:2026-02-11_10_17016_feds_2025_044#p47:462:0-34, lesson:2026-02-22_arXiv_2508_07407#p12:211:2696-2724, lesson:2026-02-22_arXiv_2508_07999#p25:413:2606-3502, lesson:2026-02-22_arXiv_2508_07999#p29:447:67-278, lesson:2026-02-22_arXiv_2508_07999#p10:206:951-1016, lesson:2026-02-22_arXiv_2404_05221#p12:161:0-107, lesson:2026-02-22_arXiv_2404_05221#p11:143:0-203",
+  "top": [
+   [
+    "lesson:2026-05-09_arXiv_2604_23338",
+    [
+     "lesson:2026-05-09_arXiv_2604_23338#p4:54:1802-2716",
+     "lesson:2026-05-09_arXiv_2604_23338#p6:75:578-1184",
+     "lesson:2026-05-09_arXiv_2604_23338#p7:82:0-882"
+    ]
+   ],
+   [
+    "lesson:2026-02-02_arXiv_2501_05435",
+    [
+     "lesson:2026-02-02_arXiv_2501_05435#p4:36:519-1392",
+     "lesson:2026-02-02_arXiv_2501_05435#p1:10:2957-3127",
+     "lesson:2026-02-02_arXiv_2501_05435#p4:46:1695-2014"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2503_00223",
+    [
+     "lesson:2026-02-22_arXiv_2503_00223#p11:276:1326-1873",
+     "lesson:2026-02-22_arXiv_2503_00223#p1:50:1937-2598",
+     "lesson:2026-02-22_arXiv_2503_00223#p24:446:30-51"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2311_10776",
+    [
+     "lesson:2026-02-22_arXiv_2311_10776#p12:144:1954-2031"
+    ]
+   ],
+   [
+    "lesson:2026-02-11_arXiv_2504_14765",
+    [
+     "lesson:2026-02-11_arXiv_2504_14765#p77:725:0-1137",
+     "lesson:2026-02-11_arXiv_2504_14765#p53:479:686-1813",
+     "lesson:2026-02-11_arXiv_2504_14765#p15:140:1619-2142"
+    ]
+   ],
+   [
+    "lesson:2026-08-25_arXiv_2606_08317",
+    [
+     "lesson:2026-08-25_arXiv_2606_08317#p2:12:1024-1667",
+     "lesson:2026-08-25_arXiv_2606_08317#p15:319:0-1760",
+     "lesson:2026-08-25_arXiv_2606_08317#p9:112:758-796"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2502_07960",
+    [
+     "lesson:2026-02-22_arXiv_2502_07960#p14:82:1029-1445",
+     "lesson:2026-02-22_arXiv_2502_07960#p3:23:2889-3898",
+     "lesson:2026-02-22_arXiv_2502_07960#p17:104:1943-2713"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2405_17631",
+    [
+     "lesson:2026-02-22_arXiv_2405_17631#p19:256:1677-1735",
+     "lesson:2026-02-22_arXiv_2405_17631#p21:301:3951-4085",
+     "lesson:2026-02-22_arXiv_2405_17631#p21:296:553-1700"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2505_08245",
+    [
+     "lesson:2026-05-09_arXiv_2505_08245#p36:546:3728-3876",
+     "lesson:2026-05-09_arXiv_2505_08245#p50:733:1795-2079"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2504_21776",
+    [
+     "lesson:2026-02-22_arXiv_2504_21776#p8:197:469-850",
+     "lesson:2026-02-22_arXiv_2504_21776#p31:575:1934-2382",
+     "lesson:2026-02-22_arXiv_2504_21776#p1:39:2207-2666"
+    ]
+   ],
+   [
+    "lesson:2026-03-27_arXiv_2407_10239",
+    [
+     "lesson:2026-03-27_arXiv_2407_10239#p11:137:2432-3240",
+     "lesson:2026-03-27_arXiv_2407_10239#p12:154:3167-3674",
+     "lesson:2026-03-27_arXiv_2407_10239#p5:42:0-1302"
+    ]
+   ],
+   [
+    "lesson:2026-02-21_10_1007_s40747_021_00594_5",
+    [
+     "lesson:2026-02-21_10_1007_s40747_021_00594_5#p4:56:2611-2626",
+     "lesson:2026-02-21_10_1007_s40747_021_00594_5#p7:135:0-1706"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2504_16728",
+    [
+     "lesson:2026-02-22_arXiv_2504_16728#p4:34:3365-4456",
+     "lesson:2026-02-22_arXiv_2504_16728#p7:93:796-987"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2404_03683",
+    [
+     "lesson:2026-02-22_arXiv_2404_03683#p12:267:0-760",
+     "lesson:2026-02-22_arXiv_2404_03683#p2:49:1345-1360",
+     "lesson:2026-02-22_arXiv_2404_03683#p3:54:1413-1983"
+    ]
+   ],
+   [
+    "lesson:2026-03-17_arXiv_2601_21557",
+    [
+     "lesson:2026-03-17_arXiv_2601_21557#p45:766:1030-1110",
+     "lesson:2026-03-17_arXiv_2601_21557#p45:767:1112-1247",
+     "lesson:2026-03-17_arXiv_2601_21557#p25:455:1830-1908"
+    ]
+   ],
+   [
+    "lesson:2026-04-13_arXiv_2406_14325",
+    [
+     "lesson:2026-04-13_arXiv_2406_14325#p18:115:0-682",
+     "lesson:2026-04-13_arXiv_2406_14325#p27:196:1022-1334",
+     "lesson:2026-04-13_arXiv_2406_14325#p24:162:644-1186"
+    ]
+   ],
+   [
+    "lesson:2026-02-11_10_17016_feds_2025_044",
+    [
+     "lesson:2026-02-11_10_17016_feds_2025_044#p35:308:688-1166",
+     "lesson:2026-02-11_10_17016_feds_2025_044#p34:281:1204-1680",
+     "lesson:2026-02-11_10_17016_feds_2025_044#p47:462:0-34"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2508_07407",
+    [
+     "lesson:2026-02-22_arXiv_2508_07407#p12:211:2696-2724"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2508_07999",
+    [
+     "lesson:2026-02-22_arXiv_2508_07999#p25:413:2606-3502",
+     "lesson:2026-02-22_arXiv_2508_07999#p29:447:67-278",
+     "lesson:2026-02-22_arXiv_2508_07999#p10:206:951-1016"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2404_05221",
+    [
+     "lesson:2026-02-22_arXiv_2404_05221#p12:161:0-107",
+     "lesson:2026-02-22_arXiv_2404_05221#p11:143:0-203"
+    ]
+   ]
+  ]
+ },
+ "LLM behavior drift over time model version changes reproducibility of results": {
+  "receipt": "- library receipt: query \"LLM behavior drift over time model version changes reproducibility of results\" | release library_graph_20260930_m002_2026-09-30.json sha256:fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543 | rows lesson:2026-03-29_arXiv_2411_15594#p44:613:2025-3138, lesson:2026-03-29_arXiv_2411_15594#p49:649:28-445, lesson:2026-03-29_arXiv_2411_15594#p22:329:2228-3056, lesson:2026-04-07_arXiv_2307_09009#p2:40:494-2812, lesson:2026-04-07_arXiv_2307_09009#p1:8:1723-2355, lesson:2026-04-07_arXiv_2307_09009#p18:714:260-1723, lesson:2026-04-16_arXiv_2601_19934#p14:75:769-889, lesson:2026-04-16_arXiv_2601_19934#p14:79:1532-1755, lesson:2026-04-16_arXiv_2601_19934#p4:22:0-125, lesson:2026-04-16_arXiv_2602_22790#p2:13:1944-2814, lesson:2026-04-16_arXiv_2602_22790#p1:4:1322-1350, lesson:2026-04-16_arXiv_2602_22790#p2:12:1917-1942, lesson:2026-03-27_arXiv_2510_07777#p1:1:237-1881, lesson:2026-03-27_arXiv_2510_07777#p2:17:3852-4291, lesson:2026-03-27_arXiv_2510_07777#p1:2:1883-4683, lesson:2026-05-09_arXiv_2602_22302#p39:644:589-1195, lesson:2026-05-09_arXiv_2602_22302#p7:60:552-1067, lesson:2026-05-09_arXiv_2602_22302#p14:215:1146-1248, lesson:2026-02-22_arXiv_2411_04679#p16:286:78-485, lesson:2026-02-22_arXiv_2411_04679#p16:285:46-76, lesson:2026-05-09_arXiv_2604_23338#p31:432:766-797, lesson:2026-05-09_arXiv_2604_23338#p29:390:448-488, lesson:2026-05-09_arXiv_2604_23338#p55:790:1101-1304, lesson:2026-04-13_arXiv_2601_04170#p10:130:0-233, lesson:2026-04-13_arXiv_2601_04170#p10:137:2767-3245, lesson:2026-04-13_arXiv_2601_04170#p2:22:2687-2933, lesson:2026-05-09_arXiv_2506_16697#p10:106:65-101, lesson:2026-05-09_arXiv_2506_16697#p12:141:2094-2258, lesson:2026-05-09_arXiv_2506_16697#p14:157:2375-3281, lesson:2026-03-01_arXiv_2602_23330#p8:177:3369-4361, lesson:2026-03-01_arXiv_2602_23330#p3:40:589-1962, lesson:2026-06-16_arXiv_2606_15474#p3:21:2322-3078, lesson:2026-06-16_arXiv_2606_15474#p22:447:3164-3247, lesson:2026-06-16_arXiv_2606_15474#p5:80:2518-3129, lesson:2026-05-09_arXiv_2508_04826#p7:164:203-2594, lesson:2026-05-09_arXiv_2508_04826#p1:11:3083-4528, lesson:2026-05-09_arXiv_2508_04826#p1:14:5085-5233, lesson:2026-02-22_arXiv_2505_14963#p14:118:44-110, lesson:2026-02-11_10_17016_feds_2025_044#p26:195:1356-2135, lesson:2026-02-11_10_17016_feds_2025_044#p4:21:407-2378, lesson:2026-02-11_10_17016_feds_2025_044#p36:310:392-2360, lesson:2026-02-22_arXiv_2410_02958#p33:834:1646-1827, lesson:2026-02-22_arXiv_2410_02958#p32:803:509-786, lesson:2026-02-22_arXiv_2410_02958#p33:835:1829-1921, lesson:2026-04-05_arXiv_2603_03823#p14:186:30-671, lesson:2026-04-05_arXiv_2603_03823#p7:135:468-1335, lesson:2026-04-05_arXiv_2603_03823#p6:132:866-2631, lesson:2026-02-22_arXiv_2309_17288#p8:109:3157-3319, lesson:2026-02-22_arXiv_2503_14434#p23:537:3124-3754, lesson:2026-02-22_arXiv_2503_14434#p10:277:2284-4010, lesson:2026-02-22_arXiv_2503_14434#p9:229:87-1811, lesson:2026-02-22_arXiv_2406_04046#p14:236:1040-1522, lesson:2026-02-22_arXiv_2406_04046#p8:153:3431-4106, lesson:2026-02-22_arXiv_2406_04046#p9:171:558-1459",
+  "top": [
+   [
+    "lesson:2026-03-29_arXiv_2411_15594",
+    [
+     "lesson:2026-03-29_arXiv_2411_15594#p44:613:2025-3138",
+     "lesson:2026-03-29_arXiv_2411_15594#p49:649:28-445",
+     "lesson:2026-03-29_arXiv_2411_15594#p22:329:2228-3056"
+    ]
+   ],
+   [
+    "lesson:2026-04-07_arXiv_2307_09009",
+    [
+     "lesson:2026-04-07_arXiv_2307_09009#p2:40:494-2812",
+     "lesson:2026-04-07_arXiv_2307_09009#p1:8:1723-2355",
+     "lesson:2026-04-07_arXiv_2307_09009#p18:714:260-1723"
+    ]
+   ],
+   [
+    "lesson:2026-04-16_arXiv_2601_19934",
+    [
+     "lesson:2026-04-16_arXiv_2601_19934#p14:75:769-889",
+     "lesson:2026-04-16_arXiv_2601_19934#p14:79:1532-1755",
+     "lesson:2026-04-16_arXiv_2601_19934#p4:22:0-125"
+    ]
+   ],
+   [
+    "lesson:2026-04-16_arXiv_2602_22790",
+    [
+     "lesson:2026-04-16_arXiv_2602_22790#p2:13:1944-2814",
+     "lesson:2026-04-16_arXiv_2602_22790#p1:4:1322-1350",
+     "lesson:2026-04-16_arXiv_2602_22790#p2:12:1917-1942"
+    ]
+   ],
+   [
+    "lesson:2026-03-27_arXiv_2510_07777",
+    [
+     "lesson:2026-03-27_arXiv_2510_07777#p1:1:237-1881",
+     "lesson:2026-03-27_arXiv_2510_07777#p2:17:3852-4291",
+     "lesson:2026-03-27_arXiv_2510_07777#p1:2:1883-4683"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2602_22302",
+    [
+     "lesson:2026-05-09_arXiv_2602_22302#p39:644:589-1195",
+     "lesson:2026-05-09_arXiv_2602_22302#p7:60:552-1067",
+     "lesson:2026-05-09_arXiv_2602_22302#p14:215:1146-1248"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2411_04679",
+    [
+     "lesson:2026-02-22_arXiv_2411_04679#p16:286:78-485",
+     "lesson:2026-02-22_arXiv_2411_04679#p16:285:46-76"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2604_23338",
+    [
+     "lesson:2026-05-09_arXiv_2604_23338#p31:432:766-797",
+     "lesson:2026-05-09_arXiv_2604_23338#p29:390:448-488",
+     "lesson:2026-05-09_arXiv_2604_23338#p55:790:1101-1304"
+    ]
+   ],
+   [
+    "lesson:2026-04-13_arXiv_2601_04170",
+    [
+     "lesson:2026-04-13_arXiv_2601_04170#p10:130:0-233",
+     "lesson:2026-04-13_arXiv_2601_04170#p10:137:2767-3245",
+     "lesson:2026-04-13_arXiv_2601_04170#p2:22:2687-2933"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2506_16697",
+    [
+     "lesson:2026-05-09_arXiv_2506_16697#p10:106:65-101",
+     "lesson:2026-05-09_arXiv_2506_16697#p12:141:2094-2258",
+     "lesson:2026-05-09_arXiv_2506_16697#p14:157:2375-3281"
+    ]
+   ],
+   [
+    "lesson:2026-03-01_arXiv_2602_23330",
+    [
+     "lesson:2026-03-01_arXiv_2602_23330#p8:177:3369-4361",
+     "lesson:2026-03-01_arXiv_2602_23330#p3:40:589-1962"
+    ]
+   ],
+   [
+    "lesson:2026-06-16_arXiv_2606_15474",
+    [
+     "lesson:2026-06-16_arXiv_2606_15474#p3:21:2322-3078",
+     "lesson:2026-06-16_arXiv_2606_15474#p22:447:3164-3247",
+     "lesson:2026-06-16_arXiv_2606_15474#p5:80:2518-3129"
+    ]
+   ],
+   [
+    "lesson:2026-05-09_arXiv_2508_04826",
+    [
+     "lesson:2026-05-09_arXiv_2508_04826#p7:164:203-2594",
+     "lesson:2026-05-09_arXiv_2508_04826#p1:11:3083-4528",
+     "lesson:2026-05-09_arXiv_2508_04826#p1:14:5085-5233"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2505_14963",
+    [
+     "lesson:2026-02-22_arXiv_2505_14963#p14:118:44-110"
+    ]
+   ],
+   [
+    "lesson:2026-02-11_10_17016_feds_2025_044",
+    [
+     "lesson:2026-02-11_10_17016_feds_2025_044#p26:195:1356-2135",
+     "lesson:2026-02-11_10_17016_feds_2025_044#p4:21:407-2378",
+     "lesson:2026-02-11_10_17016_feds_2025_044#p36:310:392-2360"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2410_02958",
+    [
+     "lesson:2026-02-22_arXiv_2410_02958#p33:834:1646-1827",
+     "lesson:2026-02-22_arXiv_2410_02958#p32:803:509-786",
+     "lesson:2026-02-22_arXiv_2410_02958#p33:835:1829-1921"
+    ]
+   ],
+   [
+    "lesson:2026-04-05_arXiv_2603_03823",
+    [
+     "lesson:2026-04-05_arXiv_2603_03823#p14:186:30-671",
+     "lesson:2026-04-05_arXiv_2603_03823#p7:135:468-1335",
+     "lesson:2026-04-05_arXiv_2603_03823#p6:132:866-2631"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2309_17288",
+    [
+     "lesson:2026-02-22_arXiv_2309_17288#p8:109:3157-3319"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2503_14434",
+    [
+     "lesson:2026-02-22_arXiv_2503_14434#p23:537:3124-3754",
+     "lesson:2026-02-22_arXiv_2503_14434#p10:277:2284-4010",
+     "lesson:2026-02-22_arXiv_2503_14434#p9:229:87-1811"
+    ]
+   ],
+   [
+    "lesson:2026-02-22_arXiv_2406_04046",
+    [
+     "lesson:2026-02-22_arXiv_2406_04046#p14:236:1040-1522",
+     "lesson:2026-02-22_arXiv_2406_04046#p8:153:3431-4106",
+     "lesson:2026-02-22_arXiv_2406_04046#p9:171:558-1459"
+    ]
+   ]
+  ]
+ },
+ "internal prior art searched": {
+  "receipts": [
+   "- internal receipt: query \"internal prior art searched\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-036_prior_art_receipts_gate.md:10, docs/design/AD-032_factory_control_design.md:165, docs/decisions/register/00074_seldon-ad-032-fc-20_propose.yaml:1, docs/design/AD-036_ADDENDUM_01_self_test.md:21#sha256=174d098d6697, docs/decisions/register/00170_seldon-ad-032-fc-20_amend.yaml:1, docs/decisions/REGISTER.md:213",
+   "- internal receipt: query \"internal prior art searched\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits CLAUDE.md:67, docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1, docs/design/2026-09-23_competency_questions.md:13, docs/design/2026-09-20_internal_prior_art_packs_anchors.md:39, docs/decisions/register/00042_squiddy-r-40_accept.yaml:15, docs/decisions/register/00042_squiddy-r-40_accept.yaml:31, docs/decisions/register/00761_squiddy-r-40_amend.yaml:1, docs/EXTRACTION_DESIGN_SPEC.md:38",
+   "- internal receipt: query \"internal prior art searched\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits none",
+   "- internal receipt: query \"internal prior art searched\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"internal prior art searched\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"internal prior art searched\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"internal prior art searched\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits cross_project/synthesis/G5_governance.md:38#sha256=30a923e2b1ff, design/2026-10-03_factory_control_design_DRAFT.md:164#sha256=6e77a0631484, cross_project/synthesis/G5_governance.md:548#sha256=30a923e2b1ff, cross_project/synthesis/G5_governance.md:11#sha256=30a923e2b1ff"
+  ],
+  "top": [
+   {
+    "root": "workbench-audit",
+    "cite": "cross_project/synthesis/G5_governance.md:38#sha256=30a923e2b1ff",
+    "lines": "38-38",
+    "score": 25.399493
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:10",
+    "lines": "10-10",
+    "score": 21.794212
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-032_factory_control_design.md:165",
+    "lines": "165-168",
+    "score": 16.876613
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "design/2026-10-03_factory_control_design_DRAFT.md:164#sha256=6e77a0631484",
+    "lines": "164-167",
+    "score": 16.876613
+   },
+   {
+    "root": "squiddy",
+    "cite": "CLAUDE.md:67",
+    "lines": "67-73",
+    "score": 16.550837
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1",
+    "lines": "1-26",
+    "score": 15.893367
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/design/2026-09-23_competency_questions.md:13",
+    "lines": "13-13",
+    "score": 15.732781
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/decisions/register/00074_seldon-ad-032-fc-20_propose.yaml:1",
+    "lines": "1-37",
+    "score": 14.842202
+   }
+  ],
+  "total": 19
+ },
+ "model identity gate": {
+  "receipts": [
+   "- internal receipt: query \"model identity gate\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-036_prior_art_receipts_gate.md:25, docs/design/AD-036_prior_art_receipts_gate.md:59, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"model identity gate\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/kg_construction_methodology.md:34, handoffs/2026-09-17_desktop_session_s009_to_h002_library_graph_and_daemon.md:19, docs/decisions/register/00134_squiddy-r-138_accept.yaml:1, docs/S-001_delivery_report.md:128, handoffs/2026-09-12_S003_S004_handoff.md:48, docs/DECISIONS_INHERITED.md:543, docs/H-007_delivery_report.md:417, docs/decisions/register/00859_squiddy-r-138_amend.yaml:1",
+   "- internal receipt: query \"model identity gate\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits docs/design_decisions.md:651, docs/research/kg_construction_methodology.md:8, docs/research/2026-08-22_tevv_stability.md:49, CLAUDE.md:60, docs/design_decisions.md:612",
+   "- internal receipt: query \"model identity gate\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits docs/decisions/REGISTER.md:318, docs/decisions/REGISTER.md:10",
+   "- internal receipt: query \"model identity gate\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"model identity gate\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits docs/research/2026-06-11_lab_notes_taskB_item6_session.md:90, docs/2026-07-04_kg_engine_v01_SPEC.md:292, handoffs/2026-06-13_session_handoff.md:102, docs/2026-07-04_kg_engine_v01_SPEC.md:22, handoffs/2026-06-12_session_handoff.md:88, docs/2026-07-04_kg_engine_v01_SPEC.md:59, docs/research/KG Entity Modeling, Ontology Grounding, and LLM Extraction Architecture.md:166, handoffs/2026-08-14_multi-project-burn-night-g3-queue.md:18",
+   "- internal receipt: query \"model identity gate\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits 2026-10-03_SESSION_NOTEBOOK.md:20#sha256=457205a3d8b9, cross_project/synthesis/G4_operations.md:350#sha256=450610d40d9a, cross_project/synthesis/G2_construction.md:235#sha256=155b85222588, 2026-10-02_squiddy_seldon_audit.md:34#sha256=fa6347788ab9, cross_project/filelist.txt:1#sha256=052b6ef99f8d"
+  ],
+  "top": [
+   {
+    "root": "workbench-audit",
+    "cite": "2026-10-03_SESSION_NOTEBOOK.md:20#sha256=457205a3d8b9",
+    "lines": "20-20",
+    "score": 11.591981
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:25",
+    "lines": "25-27",
+    "score": 9.955812
+   },
+   {
+    "root": "wintermute",
+    "cite": "docs/research/2026-06-11_lab_notes_taskB_item6_session.md:90",
+    "lines": "90-101",
+    "score": 9.516499
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/design_decisions.md:651",
+    "lines": "651-651",
+    "score": 8.677627
+   },
+   {
+    "root": "wintermute",
+    "cite": "docs/2026-07-04_kg_engine_v01_SPEC.md:292",
+    "lines": "292-305",
+    "score": 8.510401
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/kg_construction_methodology.md:34",
+    "lines": "34-36",
+    "score": 8.437061
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/research/kg_construction_methodology.md:8",
+    "lines": "8-10",
+    "score": 8.437061
+   },
+   {
+    "root": "wintermute",
+    "cite": "handoffs/2026-06-13_session_handoff.md:102",
+    "lines": "102-111",
+    "score": 7.656788
+   }
+  ],
+  "total": 48
+ },
+ "product facts pinning": {
+  "receipts": [
+   "- internal receipt: query \"product facts pinning\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-036_prior_art_receipts_gate.md:25",
+   "- internal receipt: query \"product facts pinning\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/kg_construction_methodology.md:94, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"product facts pinning\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits handoffs/2026-08-27_desktop_session_close.md:25#sha256=03a3eb86bad8, docs/research/kg_construction_methodology.md:68",
+   "- internal receipt: query \"product facts pinning\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"product facts pinning\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"product facts pinning\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"product facts pinning\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits none"
+  ],
+  "top": [
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:25",
+    "lines": "25-27",
+    "score": 15.034358
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "handoffs/2026-08-27_desktop_session_close.md:25#sha256=03a3eb86bad8",
+    "lines": "25-29",
+    "score": 13.348473
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/kg_construction_methodology.md:94",
+    "lines": "94-103",
+    "score": 5.716408
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/research/kg_construction_methodology.md:68",
+    "lines": "68-77",
+    "score": 5.716408
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-942",
+    "score": 0.1983
+   }
+  ],
+  "total": 5
+ },
+ "positive-controlled instrument verdict": {
+  "receipts": [
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-032_factory_control_design.md:204, docs/decisions/register/00081_seldon-ad-032-fc-27_propose.yaml:1, docs/decisions/register/00177_seldon-ad-032-fc-27_amend.yaml:1, docs/decisions/REGISTER.md:213",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/decisions/register/00184_squiddy-ex-req-03_accept.yaml:1, docs/decisions/register/00625_squiddy-di-100_amend.yaml:1, docs/decisions/register/00714_squiddy-ex-req-03_amend.yaml:1, docs/kg_construction_methodology.md:81, docs/design/2026-09-20_balcony_claim_quality_protocol.md:67, docs/S-008_rules.md:1760, docs/decisions/register/00036_squiddy-r-43_accept.yaml:29, docs/decisions/register/00277_squiddy-di-100_accept.yaml:1",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits docs/research/kg_construction_methodology.md:55",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"positive-controlled instrument verdict\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits design/2026-10-03_factory_control_design_DRAFT.md:203#sha256=6e77a0631484"
+  ],
+  "top": [
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00184_squiddy-ex-req-03_accept.yaml:1",
+    "lines": "1-27",
+    "score": 14.611785
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00625_squiddy-di-100_amend.yaml:1",
+    "lines": "1-15",
+    "score": 13.159917
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00714_squiddy-ex-req-03_amend.yaml:1",
+    "lines": "1-16",
+    "score": 12.707765
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/kg_construction_methodology.md:81",
+    "lines": "81-81",
+    "score": 12.648873
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/research/kg_construction_methodology.md:55",
+    "lines": "55-55",
+    "score": 12.648873
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/design/2026-09-20_balcony_claim_quality_protocol.md:67",
+    "lines": "67-71",
+    "score": 12.485697
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-032_factory_control_design.md:204",
+    "lines": "204-207",
+    "score": 11.032286
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "design/2026-10-03_factory_control_design_DRAFT.md:203#sha256=6e77a0631484",
+    "lines": "203-206",
+    "score": 11.032286
+   }
+  ],
+  "total": 31
+ },
+ "prior_art block registration": {
+  "receipts": [
+   "- internal receipt: query \"prior_art block registration\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-036_prior_art_receipts_gate.md:20, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"prior_art block registration\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/design/2026-09-20_internal_prior_art_packs_anchors.md:13, docs/kg_construction_methodology.md:94",
+   "- internal receipt: query \"prior_art block registration\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits docs/design_decisions.md:231, docs/research/2026-08-27_lab_note_unit_of_extraction.md:18, docs/research/kg_construction_methodology.md:68",
+   "- internal receipt: query \"prior_art block registration\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"prior_art block registration\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"prior_art block registration\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"prior_art block registration\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits cross_project/synthesis/G5_governance.md:44#sha256=30a923e2b1ff, cross_project/synthesis/G1_quality.md:61#sha256=a20ca28f5c9d"
+  ],
+  "top": [
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/design_decisions.md:231",
+    "lines": "231-231",
+    "score": 16.365121
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:20",
+    "lines": "20-23",
+    "score": 16.179406
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/research/2026-08-27_lab_note_unit_of_extraction.md:18",
+    "lines": "18-21",
+    "score": 11.927681
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/design/2026-09-20_internal_prior_art_packs_anchors.md:13",
+    "lines": "13-28",
+    "score": 8.697683
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "cross_project/synthesis/G5_governance.md:44#sha256=30a923e2b1ff",
+    "lines": "44-57",
+    "score": 8.04133
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "cross_project/synthesis/G1_quality.md:61#sha256=a20ca28f5c9d",
+    "lines": "61-68",
+    "score": 7.818496
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/kg_construction_methodology.md:94",
+    "lines": "94-103",
+    "score": 5.800985
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/research/kg_construction_methodology.md:68",
+    "lines": "68-77",
+    "score": 5.800985
+   }
+  ],
+  "total": 9
+ },
+ "internal search gate": {
+  "receipts": [
+   "- internal receipt: query \"internal search gate\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-032_factory_control_design.md:165, docs/decisions/register/00074_seldon-ad-032-fc-20_propose.yaml:1, docs/design/AD-036_prior_art_receipts_gate.md:25, docs/design/AD-036_prior_art_receipts_gate.md:101, docs/design/AD-032_factory_control_design.md:59, docs/decisions/register/00226_seldon-ad-036-r5_accept.yaml:1, docs/design/AD-036_prior_art_receipts_gate.md:59, docs/decisions/REGISTER.md:213",
+   "- internal receipt: query \"internal search gate\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/design/2026-09-20_internal_prior_art_packs_anchors.md:37, docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1, docs/decisions/register/00042_squiddy-r-40_accept.yaml:15, docs/decisions/register/00042_squiddy-r-40_accept.yaml:1, docs/design/2026-09-20_internal_prior_art_packs_anchors.md:30, docs/design/2026-09-21_decontextualization_instrument_repair.md:75, docs/X-001_delivery_report.md:412, docs/design/2026-09-23_after_q001_paths_not_entities.md:16",
+   "- internal receipt: query \"internal search gate\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits docs/design_decisions.md:231, docs/research/kg_construction_methodology.md:68",
+   "- internal receipt: query \"internal search gate\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits docs/decisions/REGISTER.md:10",
+   "- internal receipt: query \"internal search gate\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"internal search gate\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"internal search gate\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits cross_project/synthesis/G5_governance.md:59#sha256=30a923e2b1ff, design/2026-10-03_factory_control_design_DRAFT.md:164#sha256=6e77a0631484, cross_project/synthesis/G5_governance.md:44#sha256=30a923e2b1ff, design/2026-10-03_factory_control_design_DRAFT.md:58#sha256=6e77a0631484, cross_project/synthesis/G1_quality.md:61#sha256=a20ca28f5c9d"
+  ],
+  "top": [
+   {
+    "root": "squiddy",
+    "cite": "docs/design/2026-09-20_internal_prior_art_packs_anchors.md:37",
+    "lines": "37-37",
+    "score": 15.506774
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "cross_project/synthesis/G5_governance.md:59#sha256=30a923e2b1ff",
+    "lines": "59-59",
+    "score": 12.154136
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00194_squiddy-ex-req-13_accept.yaml:1",
+    "lines": "1-26",
+    "score": 11.864571
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-032_factory_control_design.md:165",
+    "lines": "165-168",
+    "score": 11.862307
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "design/2026-10-03_factory_control_design_DRAFT.md:164#sha256=6e77a0631484",
+    "lines": "164-167",
+    "score": 11.862307
+   },
+   {
+    "root": "ai-readiness-kg",
+    "cite": "docs/design_decisions.md:231",
+    "lines": "231-231",
+    "score": 11.389719
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "cross_project/synthesis/G5_governance.md:44#sha256=30a923e2b1ff",
+    "lines": "44-57",
+    "score": 11.278564
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/register/00042_squiddy-r-40_accept.yaml:15",
+    "lines": "15-29",
+    "score": 10.979075
+   }
+  ],
+  "total": 32
+ },
+ "frozen questions p95": {
+  "receipts": [
+   "- internal receipt: query \"frozen questions p95\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-036_prior_art_receipts_gate.md:120, docs/design/AD-036_prior_art_receipts_gate.md:59",
+   "- internal receipt: query \"frozen questions p95\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits none",
+   "- internal receipt: query \"frozen questions p95\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits none",
+   "- internal receipt: query \"frozen questions p95\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"frozen questions p95\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"frozen questions p95\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"frozen questions p95\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits 2026-10-04_next_actions_plan.md:16#sha256=29e02311ed48"
+  ],
+  "top": [
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:120",
+    "lines": "120-120",
+    "score": 18.581781
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:59",
+    "lines": "59-70",
+    "score": 9.275701
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "2026-10-04_next_actions_plan.md:16#sha256=29e02311ed48",
+    "lines": "16-26",
+    "score": 3.416227
+   }
+  ],
+  "total": 3
+ },
+ "design note citation register refuses": {
+  "receipts": [
+   "- internal receipt: query \"design note citation register refuses\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-030_governed_documents_as_graph_content.md:51, docs/decisions/register/00027_seldon-ad-030-r9_accept.yaml:1, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"design note citation register refuses\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"design note citation register refuses\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits none",
+   "- internal receipt: query \"design note citation register refuses\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits docs/decisions/REGISTER.md:10",
+   "- internal receipt: query \"design note citation register refuses\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"design note citation register refuses\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"design note citation register refuses\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits none"
+  ],
+  "top": [
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-030_governed_documents_as_graph_content.md:51",
+    "lines": "51-51",
+    "score": 17.277892
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/decisions/register/00027_seldon-ad-030-r9_accept.yaml:1",
+    "lines": "1-41",
+    "score": 14.875318
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-209",
+    "score": 6.05531
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-942",
+    "score": 2.830245
+   },
+   {
+    "root": "arnold",
+    "cite": "docs/decisions/REGISTER.md:10",
+    "lines": "10-314",
+    "score": 1.286953
+   }
+  ],
+  "total": 5
+ },
+ "governed pin stale": {
+  "receipts": [
+   "- internal receipt: query \"governed pin stale\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits handoffs/2026-10-04_SEL-002_decision_register_db1.md:19, docs/design/AD-036_prior_art_receipts_gate.md:59, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"governed pin stale\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits docs/EXTRACTION_DESIGN_SPEC.md:205, docs/decisions/REGISTER.md:9",
+   "- internal receipt: query \"governed pin stale\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits none",
+   "- internal receipt: query \"governed pin stale\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits none",
+   "- internal receipt: query \"governed pin stale\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"governed pin stale\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none",
+   "- internal receipt: query \"governed pin stale\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits none"
+  ],
+  "top": [
+   {
+    "root": "seldon",
+    "cite": "handoffs/2026-10-04_SEL-002_decision_register_db1.md:19",
+    "lines": "19-32",
+    "score": 11.768779
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:59",
+    "lines": "59-70",
+    "score": 11.469741
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-209",
+    "score": 3.094411
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/EXTRACTION_DESIGN_SPEC.md:205",
+    "lines": "205-215",
+    "score": 1.487081
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-942",
+    "score": 0.434749
+   }
+  ],
+  "total": 5
+ },
+ "label pattern decisions": {
+  "receipts": [
+   "- internal receipt: query \"label pattern decisions\" | repo seldon@7ef721140a094309ad60b86c69661eb7ebfca9df | hits docs/design/AD-033_decision_register.md:78, docs/design/AD-036_prior_art_receipts_gate.md:141, docs/decisions/REGISTER.md:9, docs/decisions/REGISTER.md:213",
+   "- internal receipt: query \"label pattern decisions\" | repo squiddy@1cc6fc2d4e7b289737c1bccc210a6166707480ad | hits handoffs/2026-10-04_desktop_audit_and_planning_to_decision_layer_design.md:43, docs/decisions/REGISTER.md:9, docs/DECISIONS_INHERITED.md:168, docs/DECISIONS_INHERITED.md:508",
+   "- internal receipt: query \"label pattern decisions\" | repo ai-readiness-kg@7e62f24e23b7ea8a61f9c68de906be3db6b8a162 | hits none",
+   "- internal receipt: query \"label pattern decisions\" | repo arnold@220ccde29831f22f8e38fb2197a922e00a1f7d15 | hits handoffs/2026-07-18_equipment-crud-canonical-quality-diagnosis.md:246, docs/decisions/REGISTER.md:10",
+   "- internal receipt: query \"label pattern decisions\" | repo icsp_notebook@8e2feacb4fb947d0a4b2005eb180e6dfedd27da2 | hits none",
+   "- internal receipt: query \"label pattern decisions\" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits docs/rebuild_probe/manifest_v2.yaml:1, docs/2026-07-28_po-triad-typing-DISTRIBUTION_v2.md:52, docs/tevv/context/A1.txt:1, docs/tevv/context/C1.txt:1, docs/tevv/context/A3.txt:1",
+   "- internal receipt: query \"label pattern decisions\" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits probe/conflicts.md:74#sha256=88bdd64fa65d, 2026-10-04_next_actions_plan.md:16#sha256=29e02311ed48"
+  ],
+  "top": [
+   {
+    "root": "squiddy",
+    "cite": "handoffs/2026-10-04_desktop_audit_and_planning_to_decision_layer_design.md:43",
+    "lines": "43-45",
+    "score": 10.252343
+   },
+   {
+    "root": "arnold",
+    "cite": "handoffs/2026-07-18_equipment-crud-canonical-quality-diagnosis.md:246",
+    "lines": "246-252",
+    "score": 8.912056
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "probe/conflicts.md:74#sha256=88bdd64fa65d",
+    "lines": "74-83",
+    "score": 8.283456
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-033_decision_register.md:78",
+    "lines": "78-99",
+    "score": 7.60517
+   },
+   {
+    "root": "seldon",
+    "cite": "docs/design/AD-036_prior_art_receipts_gate.md:141",
+    "lines": "141-154",
+    "score": 7.476565
+   },
+   {
+    "root": "wintermute",
+    "cite": "docs/rebuild_probe/manifest_v2.yaml:1",
+    "lines": "1-20",
+    "score": 4.812644
+   },
+   {
+    "root": "workbench-audit",
+    "cite": "2026-10-04_next_actions_plan.md:16#sha256=29e02311ed48",
+    "lines": "16-26",
+    "score": 2.68391
+   },
+   {
+    "root": "squiddy",
+    "cite": "docs/decisions/REGISTER.md:9",
+    "lines": "9-942",
+    "score": 2.536964
+   }
+  ],
+  "total": 17
+ }
+}
