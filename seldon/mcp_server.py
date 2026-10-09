@@ -1731,3 +1731,71 @@ def seldon_decision_check(project_dir: str = ".") -> str:
     """The register checks `seldon verify` fails on: chain, hashes, rationale, unregistered labels."""
     from seldon.commands.decision import run_read
     return run_read(_decision_project_path(project_dir), "check")
+
+
+@mcp.tool()
+def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".",
+                            top: int = 0) -> str:
+    """Search the prior art BEFORE writing a design note, and get receipts to paste (AD-036).
+
+    `arm` is `internal` (the operator's own repositories: seldon, squiddy, ai-readiness-kg,
+    arnold, icsp_notebook, Wintermute, the 2026-10-03 audit, at their HEAD commits), `library`
+    (the squiddy library graph of the literature) or `both`. Internal matching is lexical: every
+    query word must occur in one paragraph, so search with a few topic words and run several
+    queries. Each receipt line goes, verbatim, under `### Internal` or `### External` of the
+    note's `## Prior art` section; a query that found nothing is still a receipt (`hits none`),
+    and it is the only accepted form of "no prior art". Every query is logged.
+
+    Args:
+        query: A few topic words. No double quotes.
+        arm: internal, library or both.
+        project_dir: Path to a project whose seldon.yaml has a `prior_art:` block.
+        top: Hits to show per arm (0: the configured top_n).
+    """
+    from seldon.commands.prior_art import run_search
+    from seldon.core.prior_art import PriorArtError
+    arms = ("internal", "library") if arm == "both" else (arm,)
+    out = []
+    for a in arms:
+        try:
+            r = run_search(a, query, top=top or None, project_dir=Path(_project_path(project_dir)))
+        except (PriorArtError, ValueError) as exc:
+            out.append(f"## {a}: error\n{exc}")
+            continue
+        lines = [f"## {a}: {r['total_hits']} hit(s) in {r['seconds']} s"]
+        for h in r["top"]:
+            if a == "internal":
+                lines.append(f"- {h['root']}:{h['cite']} (lines {h['lines']}, score {h['score']})")
+            else:
+                lines.append(f"- {h['doc_id']}: {h['text'][:160]!r}")
+        lines.append("Receipts:")
+        lines.extend(r["receipts"])
+        out.append("\n".join(lines))
+    return "\n\n".join(out)
+
+
+@mcp.tool()
+def seldon_prior_art_verify(note: str, project_dir: str = ".", record: bool = True) -> str:
+    """Re-run every receipt a design note (and its addenda) carries; record the verdict (AD-036).
+
+    A note outside the AD-036 baseline cannot be committed (`seldon verify`) or govern a
+    registered task (`seldon cc register`) without a passing verdict for its current bytes.
+
+    Args:
+        note: Path of the note, relative to the project root.
+        project_dir: Path to project root.
+        record: Write the verdict to the governed ledger (default true).
+    """
+    from seldon.commands.prior_art import run_verify
+    from seldon.core.prior_art import PriorArtError
+    try:
+        v = run_verify(note, record, project_dir=Path(_project_path(project_dir)))
+    except PriorArtError as exc:
+        return f"Error: {exc}"
+    lines = [f"{v['note']} (sha256 {v['sha256'][:12]}): {v['verdict'].upper()}"]
+    lines += [f"- {r['status']} {r['section']} {r['kind']} {r['source']}:{r['line']}"
+              for r in v["receipts"]]
+    lines += [f"PROBLEM: {p}" for p in v["problems"]]
+    if v.get("recorded"):
+        lines.append(f"verdict recorded: event {v['recorded']}")
+    return "\n".join(lines)

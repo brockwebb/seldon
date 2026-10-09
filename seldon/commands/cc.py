@@ -335,6 +335,8 @@ def _warn_if_description_suspicious(
 # dispatcher: refuse with the grammar quoted, change nothing.
 
 #: The refusal reason, so a log and a message speak one word for it.
+#: AD-036-R4: the prefix every prior-art registration refusal starts with.
+PRIOR_ART_REFUSAL = "AD-036-R4"
 AFTER_UNRESOLVED = "after_unresolved"
 
 #: Decision 4: SEQUENCING stays prose, and this catches the sentence in it that is trying to
@@ -1184,6 +1186,17 @@ def register_task_file(
     if model_check:
         raise ValueError(f"{model_check} File: {rel_path}")
 
+    # AD-036-R4, registration: a task governed by a design note of this project that has no
+    # passing prior-art verdict for its current bytes is refused, BEFORE anything is created.
+    # Baseline notes (on main at PA-001's merge) are grandfathered.
+    from seldon.core import prior_art
+    try:
+        prior_art_refusal = prior_art.registration_refusal(task_path, project_dir, config)
+    except prior_art.PriorArtError as exc:
+        prior_art_refusal = f"{PRIOR_ART_REFUSAL}: the gate cannot be evaluated ({exc})"
+    if prior_art_refusal:
+        raise ValueError(f"{prior_art_refusal} File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "
@@ -1344,7 +1357,12 @@ def cc_register(filepath, description, actor, allow_untracked):
         # be there. An `**After:**` refusal reaches here by the same road and needs a
         # different fix line — quoting the design-note remedy for an unresolvable ref would
         # send the reader to the wrong header.
-        if str(exc).startswith(AFTER_UNRESOLVED):
+        if str(exc).startswith(PRIOR_ART_REFUSAL):
+            click.echo(f"ERROR: {exc}\n"
+                       f"  Fix: `seldon prior-art verify <note>` until it passes; a note's "
+                       f"prior-art section is completed by an addendum, never by editing it.",
+                       err=True)
+        elif str(exc).startswith(AFTER_UNRESOLVED):
             click.echo(f"ERROR: {exc}\n"
                        f"  Fix: name a registered task, or drop the **After:** header.",
                        err=True)
