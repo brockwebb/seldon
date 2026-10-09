@@ -1,0 +1,16 @@
+seq: 244
+event: amend
+id: seldon:AD-036-R6
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The gate shall verify only that a search happened and that the hits it cites exist, and it shall not be relied on to establish that the author read, weighed or used the hits; quality remains with review (AD-020 multi-lens) and with the operator.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 2b691907d559c2e40e6dbbd27122018301e02d3af9a8611b2c9f9e6eae1846f6
+record_hash: feadc7f023f0131b68b7f5dd134c8800ab2a90956f492f11d1ad8ae59fd17c9e

@@ -1,0 +1,16 @@
+seq: 240
+event: amend
+id: seldon:AD-036-R2
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: When `seldon prior-art verify <note>` is run, the seldon tool shall re-run each library query against the named release and each internal query against the named commit, and shall pass a receipt only when the cited ids or lines are in the result. If a named release or commit is no longer loadable, then the tool shall fail that receipt with `release_unavailable`, naming the release or commit. The tool shall record the verification once, at commit (R4), so that a later library rebuild does not orphan an accepted note.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 0483575dcd19ea037d37a8e5f2a501eb94cadbe3f341fbc9dfd1f29baf3baf91
+record_hash: 0f3fe1e7d744025ce02469b4764f4f950817eb24d171067da21c7720496ed9ca

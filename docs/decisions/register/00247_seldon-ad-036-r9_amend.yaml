@@ -1,0 +1,16 @@
+seq: 247
+event: amend
+id: seldon:AD-036-R9
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Any test that can reach a model launcher without a fake shall run only under an explicit opt-in variable named in its skip reason, in every repository MODEL-001 touched, and a PATH shim that records invocations shall prove zero model calls by default.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7954e9fc93145196bee4b17c742eacd3827a8cf7093b080c5f5130b4377cf843
+record_hash: ffe8d96db16767cdcccdbc189b4472730922f9d0344a00cacdd40b95d6f10d90

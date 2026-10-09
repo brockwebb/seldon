@@ -1,0 +1,16 @@
+seq: 243
+event: amend
+id: seldon:AD-036-R5
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: The internal search tool shall be subject to a pre-registered recall control whose positive set is the 18 known-relevant locations (the 14 file:line entries of G5 problem 1's timeline plus the four ai-readiness-kg §1 and §7 lines cited in section 2), queried with one query per entry that is fixed before the run and written from the entry's topic, never from its wording; the tool passes when the Wilson-95 lower bound of recall at top 20 is at or above 0.70, and the control shall be re-run on every change to the tool. If the tool fails the control, then the failure shall be reported with the misses, shall not block R4 (because the gate checks presence and verifiability, not search quality), and shall open a design task for the governed-graph arm.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 9766f5ccfdd015638da5416f7d8e207867ff6fa2926ebe979014e67b364bcb9f
+record_hash: 2b691907d559c2e40e6dbbd27122018301e02d3af9a8611b2c9f9e6eae1846f6

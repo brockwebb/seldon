@@ -1,0 +1,15 @@
+seq: 238
+event: amend
+id: seldon:AD-035-R8
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): check failed, the verbatim statement stays; the write path refused the passed statement: a statement names no other record by position (AD-033-R3): ''this decision'' in ''The project does not deploy managed settings (an `availableModels` allowlist or denial of superseded models), because an'''
+changes:
+  statement_check: failed
+written_by: seldon decision 0.1.0
+prev_hash: aa03e2ba0c28433131a4ad460eebc82436c5cb1af41ad0e306ff8b9f7f65d2c8
+record_hash: 010ed61bc6eab070a3a92e45784deac13231eb3840456684af42b55baf6eb0bb

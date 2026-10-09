@@ -1,0 +1,16 @@
+seq: 231
+event: amend
+id: seldon:AD-035-R1
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The repository shall keep one machine-wide model registry and one machine-wide lock: models/registry.yaml holds intent (role to family, plus effort, with roles named by use such as primary, extractor, rater, adjudicator, teacher, judge and background), and models/models.lock.yaml holds the resolved model id per family, the CLI version that resolved it, the date and the evidence file. The command `seldon models show` shall print both files, and the Python accessor `seldon.models.resolve(role)` shall be the only way any code on the machine obtains a model id.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 8178006dcc613d57aa3380267ec180b97e2fa634be5d04027c0b8b6b2a8da5ed
+record_hash: ca7a2be7d4d2030e6a1b82d4b37a18bd09d1332d57f39d0f0c7949b935b8a059

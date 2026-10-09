@@ -1,0 +1,16 @@
+seq: 234
+event: amend
+id: seldon:AD-035-R4
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: If a config value is a model alias or a model id, then the config shall fail conformance, because a config value shall name a registry role instead; desktop sessions and memory shall carry no model ids, and a task file's `**Model:**` header shall name a role.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: a8926c2eea147e17ce8013e90e211b081c39b23bfc1c9579e3c1a5be65a5ade1
+record_hash: c2a931eb5fc2b8fab8c437e6b0467f6ee95f86206a67e85563bedc065177d99b

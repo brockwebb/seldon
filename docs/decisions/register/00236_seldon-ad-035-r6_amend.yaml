@@ -1,0 +1,16 @@
+seq: 236
+event: amend
+id: seldon:AD-035-R6
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: 'The system shall record, for each launched call, the requested model id and the served model id from `modelUsage`; if the served id does not match the requested id, then the system shall stop the unit with the named failure `model_substituted`. The system shall set `switchModelsOnFlag: false` in launched processes, so that a classifier flag becomes a recorded refusal and never a silent model switch.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 60e013186510772d1263062938e1d3f23f0b71f41c8c06ad9f1fd70d78c318ca
+record_hash: 8cc570e161b1c69b623b7ba5e4aa2855721a9c341d5e31c0976543432f205312

@@ -1,0 +1,16 @@
+seq: 233
+event: amend
+id: seldon:AD-035-R3
+date: '2026-10-09'
+decided_by: cc:459f463e
+operator_stated: false
+receipts:
+- docs/evidence/pa001/statements/writer.jsonl
+- docs/evidence/pa001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (PA-001 Part F): written by one call from the verbatim source, checked by a separate call that saw only the source and the statement: entailed, complete, standalone'
+changes:
+  statement: Every launcher (the seldon dispatcher, squiddy `model_client` and extraction daemon, the ai-readiness-kg and arnold harnesses, and any other model call site the inventory finds) shall set the lock's ids into `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, `ANTHROPIC_DEFAULT_HAIKU_MODEL` and `ANTHROPIC_DEFAULT_FABLE_MODEL` so that CLI background work follows the lock, pass `--model <id>` for its role, and exec the CLI version the lock names, never launching from an alias.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 68758bb27f3f3d544efecb0543c26f49fba9fe970f1c823a8930d66518e9c106
+record_hash: a8926c2eea147e17ce8013e90e211b081c39b23bfc1c9579e3c1a5be65a5ade1
