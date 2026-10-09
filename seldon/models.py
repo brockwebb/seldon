@@ -66,8 +66,13 @@ FAMILY_ENV = {
 #: model. Passed through `--settings`, which takes inline JSON.
 LAUNCH_SETTINGS = {"switchModelsOnFlag": False}
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
-#: `effort: default` passes no `--effort` flag.
+#: The registry value AD-035 allowed and AD-036-R8 refuses: it passed no `--effort` flag, so the
+#: level was whatever the served model's own default was. Kept as a name only for the refusal.
 EFFORT_DEFAULT = "default"
+#: The CLI reads this variable as an explicit effort choice of the same rank as `--effort`
+#: (code.claude.com/docs/en/model-config, read 2026-10-09). A launch sets it to the declared level
+#: so an inherited value cannot disagree with the flag.
+EFFORT_ENV = "CLAUDE_CODE_EFFORT_LEVEL"
 #: Variables a probe child must not inherit: credentials (subscription OAuth only, DD-007), the
 #: session identity of a parent Claude Code session, and any family pin, which would make the probe
 #: read back the old lock instead of the binary's own alias table.
@@ -82,7 +87,7 @@ ALIASES = tuple(FAMILY_ENV)
 REGISTRY_REQUIRED_REFRESH = ("npm_package", "install_root", "bin_relpath", "families",
                              "probe_prompt", "probe_timeout_s", "npm_timeout_s", "cache",
                              "evidence_dir", "commit_branch", "auto_on_register",
-                             "auto_on_dispatch")
+                             "auto_on_dispatch", "documented_default_effort")
 
 
 class ModelsError(Exception):
@@ -146,16 +151,43 @@ def load_registry(home: Path | None = None) -> dict:
             raise ModelsError(f"{path}: role {name!r} family {row.get('family')!r} is not one "
                               f"of {sorted(FAMILY_ENV)}")
         effort = row.get("effort")
-        if effort != EFFORT_DEFAULT and effort not in EFFORT_LEVELS:
-            raise ModelsError(f"{path}: role {name!r} effort {effort!r} is not "
-                              f"{EFFORT_DEFAULT!r} or one of {EFFORT_LEVELS}")
+        if effort == EFFORT_DEFAULT:
+            raise ModelsError(f"{path}: role {name!r} effort 'default' is refused (AD-036-R8): "
+                              f"name one of {EFFORT_LEVELS}, the level the role is to run at")
+        if effort not in EFFORT_LEVELS:
+            raise ModelsError(f"{path}: role {name!r} effort {effort!r} is not one of "
+                              f"{EFFORT_LEVELS} (AD-036-R8)")
     refresh_cfg = data.get("refresh")
     if not isinstance(refresh_cfg, dict):
         raise ModelsError(f"{path}: no `refresh:` block")
     missing = [k for k in REGISTRY_REQUIRED_REFRESH if k not in refresh_cfg]
     if missing:
         raise ModelsError(f"{path}: refresh block missing {missing}")
+    _check_documented_defaults(path, refresh_cfg["documented_default_effort"],
+                               refresh_cfg["families"])
     return data
+
+
+def _check_documented_defaults(path: Path, table, families: list) -> None:
+    """AD-036-R8: the documented default effort table names its source and date and one row per
+    family the lock resolves, each with the model it was read for and a known level."""
+    if not isinstance(table, dict) or not table.get("source") or not table.get("retrieved"):
+        raise ModelsError(f"{path}: refresh.documented_default_effort needs `source` and "
+                          f"`retrieved` (AD-036-R8)")
+    rows = table.get("families")
+    if not isinstance(rows, dict) or sorted(rows) != sorted(families):
+        raise ModelsError(f"{path}: refresh.documented_default_effort.families must name exactly "
+                          f"{sorted(families)}")
+    for fam, row in rows.items():
+        if (not isinstance(row, dict) or row.get("effort") not in EFFORT_LEVELS
+                or not str(row.get("model") or "").startswith(f"claude-{fam}-")):
+            raise ModelsError(f"{path}: documented_default_effort row {fam!r} needs a "
+                              f"claude-{fam}-* `model` and an `effort` in {EFFORT_LEVELS}")
+
+
+def documented_default_effort(family: str, home: Path | None = None) -> str:
+    """The family's documented default effort (registry `refresh.documented_default_effort`)."""
+    return load_registry(home)["refresh"]["documented_default_effort"]["families"][family]["effort"]
 
 
 def load_lock(home: Path | None = None) -> dict:
@@ -247,25 +279,35 @@ def launch_spec(role: str, home: Path | None = None) -> dict:
     """Everything a launcher needs to start a CLI call for `role` under R3 and R6.
 
     Returns ``{role, family, effort, model, cli_path, cli_version, resolved_on, evidence, env,
-    args, settings}``. `args` is ``["--model", id, "--settings", json]`` plus ``["--effort", e]``
-    when the role's effort is not ``default``. A launcher execs ``cli_path`` with its own flags
-    and `args`, with `env` laid over the child's environment, and records :func:`receipt`.
+    args, settings}``. `args` is ``["--model", id, "--settings", json, "--effort", level]``:
+    effort is always passed (AD-036-R8), and `env` carries the same level in
+    ``CLAUDE_CODE_EFFORT_LEVEL`` beside the four family ids. A launcher execs ``cli_path`` with its
+    own flags and `args`, with `env` laid over the child's environment, and records
+    :func:`receipt` with ``effort=spec["effort"]``.
     """
     r = resolve_role(role, home)
-    args = ["--model", r.model, "--settings", settings_json()]
-    if r.effort != EFFORT_DEFAULT:
-        args += ["--effort", r.effort]
-    return {"role": r.role, "family": r.family, "effort": r.effort, "model": r.model,
-            "cli_path": r.cli_path, "cli_version": r.cli_version,
-            "resolved_on": r.resolved_on, "evidence": r.evidence,
-            "env": launch_env(home), "args": args, "settings": dict(LAUNCH_SETTINGS)}
+    return _spec(role=r.role, family=r.family, effort=r.effort, model=r.model,
+                 cli_path=r.cli_path, cli_version=r.cli_version, resolved_on=r.resolved_on,
+                 evidence=r.evidence, home=home)
+
+
+def _spec(*, role, family, effort, model, cli_path, cli_version, resolved_on, evidence,
+          home) -> dict:
+    env = launch_env(home)
+    env[EFFORT_ENV] = effort
+    return {"role": role, "family": family, "effort": effort, "model": model,
+            "cli_path": cli_path, "cli_version": cli_version, "resolved_on": resolved_on,
+            "evidence": evidence, "env": env,
+            "args": ["--model", model, "--settings", settings_json(), "--effort", effort],
+            "settings": dict(LAUNCH_SETTINGS)}
 
 
 def launch_spec_for(target: str, home: Path | None = None) -> dict:
     """The launch block for a task's `**Model:**` value: a role, or an id equal to the lock's.
 
-    An id is launched as its family with effort `default` and `role` None; anything else fails
-    loudly, because a header that names neither is refused at registration (R5).
+    An id is launched as its family, at the family's documented default effort (AD-036-R8), with
+    `role` None; anything else fails loudly, because a header that names neither is refused at
+    registration (R5).
     """
     home = _home(home)
     if target in load_registry(home)["roles"]:
@@ -275,12 +317,11 @@ def launch_spec_for(target: str, home: Path | None = None) -> dict:
     if not fams:
         raise ModelsError(f"{target!r} is neither a role nor an id in the lock: {lock_quote(home)}")
     lock = load_lock(home)
-    return {"role": None, "family": fams[0], "effort": EFFORT_DEFAULT, "model": target,
-            "cli_path": str(Path(lock["cli"]["path"]).expanduser()),
-            "cli_version": str(lock["cli"]["version"]), "resolved_on": str(lock.get("resolved_on")),
-            "evidence": lock.get("evidence"), "env": launch_env(home),
-            "args": ["--model", target, "--settings", settings_json()],
-            "settings": dict(LAUNCH_SETTINGS)}
+    return _spec(role=None, family=fams[0], effort=documented_default_effort(fams[0], home),
+                 model=target, cli_path=str(Path(lock["cli"]["path"]).expanduser()),
+                 cli_version=str(lock["cli"]["version"]),
+                 resolved_on=str(lock.get("resolved_on")), evidence=lock.get("evidence"),
+                 home=home)
 
 
 # ---------------------------------------------------------------------------- the receipt
@@ -311,18 +352,22 @@ def served_model(envelope: dict) -> str | None:
                                         int(kv[1].get("inputTokens") or 0)))[0]
 
 
-def receipt(requested: str, envelope: dict) -> dict:
-    """R6's record for one call: `{requested, served, side_models, ok}`."""
+def receipt(requested: str, envelope: dict, effort: str | None = None) -> dict:
+    """R6's record for one call: `{requested, served, side_models, ok, effort}`.
+
+    `effort` is the level the launch passed (`launch_spec(...)["effort"]`, AD-036-R8). None records
+    that the caller did not say, which a reader can see; it is never filled in by guessing.
+    """
     served = served_model(envelope)
     mu = envelope.get("modelUsage") if isinstance(envelope, dict) else None
     side = sorted(k for k in (mu or {}) if k != served) if isinstance(mu, dict) else []
     return {"requested": requested, "served": served, "side_models": side,
-            "ok": served is not None and served == requested}
+            "ok": served is not None and served == requested, "effort": effort}
 
 
-def check_receipt(requested: str, envelope: dict) -> dict:
+def check_receipt(requested: str, envelope: dict, effort: str | None = None) -> dict:
     """The receipt, or :class:`ModelSubstituted` when the served model is not the requested one."""
-    r = receipt(requested, envelope)
+    r = receipt(requested, envelope, effort)
     if not r["ok"]:
         raise ModelSubstituted(r)
     return r
@@ -570,7 +615,10 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     old_ids = {f: r["model"] for f, r in (old or {}).get("families", {}).items()}
     old_cli = str((old or {}).get("cli", {}).get("version") or "")
     new_ids = {f: r["model"] for f, r in families.items()}
-    changed = old is None or old_ids != new_ids or old_cli != version
+    documented = _documented_in_lock(cfg["documented_default_effort"], new_ids)
+    old_documented = (old or {}).get("documented_default_effort")
+    changed = (old is None or old_ids != new_ids or old_cli != version
+               or old_documented != documented)
     root = _repo_root(home)
     evidence_rel = f"{cfg['evidence_dir']}/refresh_{today}.json"
     if (root / evidence_rel).exists():
@@ -579,7 +627,8 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     evidence_path = root / evidence_rel
     lock = {"schema": 1, "resolved_on": today, "resolved_at": _now(),
             "cli": {"version": version, "path": str(cli_path), "npm_package": pkg},
-            "families": families, "evidence": evidence_rel}
+            "families": families, "documented_default_effort": documented,
+            "evidence": evidence_rel}
     same_day_same = (old is not None and not changed and str(old.get("resolved_on")) == today)
     if same_day_same:
         return RefreshOutcome(status="unchanged", lock=old,
@@ -598,8 +647,13 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     if changed:
         from seldon.core.events import append_event, make_event
         event = make_event(EVENT_LOCK_BUMPED, actor="seldon-models", authority="AD-035-R2",
-                           payload={"old": {"families": old_ids, "cli_version": old_cli or None},
-                                    "new": {"families": new_ids, "cli_version": version},
+                           payload={"old": {"families": old_ids, "cli_version": old_cli or None,
+                                            "documented_default_effort": old_documented},
+                                    "new": {"families": new_ids, "cli_version": version,
+                                            "documented_default_effort": documented},
+                                    "documented_default_effort_unverified": sorted(
+                                        f for f, r in documented["families"].items()
+                                        if not r["current"]),
                                     "evidence": evidence_rel, "lock": LOCK_FILE})
         append_event(root, event)
         touched.append("seldon_events.jsonl")
@@ -614,6 +668,17 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     return RefreshOutcome(status="bumped" if changed else "written", lock=lock,
                           evidence=evidence_rel, event=event, committed=committed,
                           messages=msgs)
+
+
+def _documented_in_lock(table: dict, new_ids: dict) -> dict:
+    """The registry's documented-default table as the lock records it (AD-036-R8): per family the
+    level, the model it was documented for, and `current`, false when the lock now serves a model
+    the table was not read for. A refresh cannot measure a documented default; it can only say
+    whether the one on file is about the model being served."""
+    return {"source": table["source"], "retrieved": str(table["retrieved"]),
+            "families": {f: {"effort": r["effort"], "documented_for": r["model"],
+                             "current": new_ids.get(f) == r["model"]}
+                         for f, r in sorted(table["families"].items())}}
 
 
 def _write_lock(home: Path, lock: dict) -> None:

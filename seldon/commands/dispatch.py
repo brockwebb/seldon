@@ -1114,7 +1114,7 @@ def _model_receipt(log_path: Path, offset: int, spec: dict) -> dict:
         fh.seek(offset)
         text = fh.read()
     envelope = models.last_result_envelope(text) or {}
-    r = models.receipt(spec["model"], envelope)
+    r = models.receipt(spec["model"], envelope, effort=spec["effort"])
     r.update({"role": spec["role"], "cli_version": spec["cli_version"],
               "lock_resolved_on": spec["resolved_on"]})
     return r

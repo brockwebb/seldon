@@ -24,6 +24,12 @@ The fixture was re-recorded on the MODEL-001 code, and the re-recording was chec
 pre-change fixture byte for byte once exactly those additions are removed (the strip script and
 its `True` are in `cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md`). Every
 other line, and so the serial behaviour this test exists to hold, is unchanged.
+
+**Erratum, PA-001 (AD-036-R8, 2026-10-09).** Effort is now a declared input: the launch command
+ends `--effort medium` (the `primary` role's level), `dispatch_launched`'s `model.effort` reads
+`medium` where it read `default`, and `dispatch_finished`'s `model_receipt` carries `effort`.
+Re-recorded on the PA-001 code; a per-line diff against the MODEL-001 fixture showed eight changed
+lines, every change one of exactly those three insertions or that one substitution.
 """
 from __future__ import annotations
 

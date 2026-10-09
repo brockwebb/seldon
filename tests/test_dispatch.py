@@ -604,10 +604,12 @@ def test_the_launch_command_is_the_protocol_sentence_with_the_permission_mode():
     spec = models.launch_spec("primary")
     cmd = _launch_cmd({"permission_mode": "bypassPermissions"}, prompt, spec)
     # MODEL-001 (AD-035 R3, R6): the lock's CLI, the stream whose result carries the receipt,
-    # and the lock's id for `primary` with `switchModelsOnFlag: false`.
+    # and the lock's id for `primary` with `switchModelsOnFlag: false`; AD-036-R8 adds the role's
+    # declared effort.
     assert cmd == [spec["cli_path"], "-p", prompt, "--output-format", "stream-json", "--verbose",
                    "--permission-mode", "bypassPermissions",
-                   "--model", "claude-opus-5-5", "--settings", '{"switchModelsOnFlag":false}']
+                   "--model", "claude-opus-5-5", "--settings", '{"switchModelsOnFlag":false}',
+                   "--effort", "medium"]
     assert prompt == (
         "Read CLAUDE.md, then execute cc_tasks/2026-09-15_standing_dispatcher.md. Glob and "
         "read all sibling 2026-09-15_standing_dispatcher_ADDENDUM*.md files before starting; "
