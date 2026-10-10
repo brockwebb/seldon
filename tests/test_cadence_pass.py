@@ -28,6 +28,7 @@ from seldon.commands.dispatch import dispatch_group
 from seldon.core import cadence as C
 from seldon.core import dispatch as D
 from seldon.core.events import read_events
+from tests.dispatch_scaffold import install_commit_gate
 from tests.testdb import TEST_DATABASE
 from tests.models_fixture import shell_receipt, use_stub_cli
 
@@ -100,6 +101,7 @@ def project(tmp_path):
                     encoding="utf-8")
     stub.chmod(0o755)
     use_stub_cli(tmp_path, stub)
+    install_commit_gate(p)
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
     return p

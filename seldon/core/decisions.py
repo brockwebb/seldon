@@ -1060,21 +1060,54 @@ def unparsed_labels(s: Settings, all_notes: bool = False) -> list[tuple[str, int
         rel = p.relative_to(s.root).as_posix()
         if not all_notes and s.baseline_commit and _in_tree(s.root, s.baseline_commit, rel):
             continue
-        fams = [f for f in s.design_notes if p in set(s.root.glob(f["glob"]))]
-        pats = [re.compile(f["pattern"]) for f in fams]
-        fence = False
-        for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _FENCE_RE.match(line):
-                fence = not fence
-                continue
-            if fence:
-                continue
-            m = _LABEL_POSITION_RE.match(line)
-            if not m:
-                continue
-            label = m.group(1)
-            if not any((cm := pat.match(line)) and cm.group(1) == label for pat in pats):
-                out.append((rel, n, label))
+        out.extend(unparsed_labels_in(s, rel, p.read_text(encoding="utf-8", errors="replace")))
+    return out
+
+
+def family_matches(glob: str, rel: str) -> bool:
+    """Does a repository-relative path match a `decisions.design_notes` glob? Path.glob's rules:
+    `*` stays inside one directory, `**` crosses them. Used where the file is a blob, not a path
+    on disk (the commit hook reads the staged bytes, HOOK-001)."""
+    out, i = [], 0
+    while i < len(glob):
+        if glob.startswith("**/", i):
+            out.append("(?:.*/)?")
+            i += 3
+            continue
+        if glob.startswith("**", i):
+            out.append(".*")
+            i += 2
+            continue
+        c = glob[i]
+        out.append("[^/]*" if c == "*" else "[^/]" if c == "?" else re.escape(c))
+        i += 1
+    return re.fullmatch("".join(out), rel) is not None
+
+
+def is_design_note(s: Settings, rel: str) -> bool:
+    """Is this path one the label checks read: `docs/design/**/*.md` or a configured family?"""
+    return (rel.startswith("docs/design/") and rel.endswith(".md")) or \
+        any(family_matches(f["glob"], rel) for f in s.design_notes)
+
+
+def unparsed_labels_in(s: Settings, rel: str, text: str) -> list[tuple[str, int, str]]:
+    """(rel, line, label) for each label in a heading or bold position of `text` that no
+    configured pattern of the note's families captures. `unparsed_labels` for one note's bytes."""
+    pats = [re.compile(f["pattern"]) for f in s.design_notes if family_matches(f["glob"], rel)]
+    out = []
+    fence = False
+    for n, line in enumerate(text.splitlines(), 1):
+        if _FENCE_RE.match(line):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        m = _LABEL_POSITION_RE.match(line)
+        if not m:
+            continue
+        label = m.group(1)
+        if not any((cm := pat.match(line)) and cm.group(1) == label for pat in pats):
+            out.append((rel, n, label))
     return out
 
 
@@ -1089,19 +1122,35 @@ def labeled_decisions_after_baseline(s: Settings) -> list[tuple[str, str]]:
         return []
     out = []
     for fam in s.design_notes:
-        pat = re.compile(fam["pattern"], re.M)
-        doc_re = re.compile(fam.get("doc_id", r"^((?:AD|DN)-\d{3})"))
         for p in sorted(s.root.glob(fam["glob"])):
             rel = p.relative_to(s.root).as_posix()
             if _in_tree(s.root, s.baseline_commit, rel):
                 continue
-            stem = re.sub(r"^\d{4}-\d{2}-\d{2}_", "", p.stem)
-            m = doc_re.search(stem)
-            doc = m.group(1) if m else stem
-            for lm in pat.finditer(p.read_text(encoding="utf-8")):
-                label = lm.group(1)
-                out.append((fam["id"].format(repo=s.repository, label=label, doc=doc), rel))
+            out.extend((qid, rel) for qid in family_labels(s, fam, rel,
+                                                          p.read_text(encoding="utf-8")))
     return sorted(set(out))
+
+
+def labeled_ids_in(s: Settings, rel: str, text: str) -> list[str]:
+    """Every qualified id the configured families label in one note's text (any family whose
+    glob matches `rel`). `labeled_decisions_after_baseline` for one note's bytes."""
+    out = []
+    for fam in s.design_notes:
+        if family_matches(fam["glob"], rel):
+            out.extend(family_labels(s, fam, rel, text))
+    return sorted(set(out))
+
+
+def family_labels(s: Settings, fam: dict, rel: str, text: str) -> list[str]:
+    """The qualified ids one family's pattern labels in `text`, the note's own identifier taken
+    from its filename (`doc_id`, default the AD-/DN- prefix, after any date)."""
+    pat = re.compile(fam["pattern"], re.M)
+    doc_re = re.compile(fam.get("doc_id", r"^((?:AD|DN)-\d{3})"))
+    stem = re.sub(r"^\d{4}-\d{2}-\d{2}_", "", Path(rel).stem)
+    m = doc_re.search(stem)
+    doc = m.group(1) if m else stem
+    return [fam["id"].format(repo=s.repository, label=lm.group(1), doc=doc)
+            for lm in pat.finditer(text)]
 
 
 # ---------------------------------------------------------------------------

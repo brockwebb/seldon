@@ -344,6 +344,70 @@ def _fix_governed(project_dir: Path, quiet: bool = False) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Check 17: the commit hook (AD-036-R4 at the commit point; HOOK-001)
+# ---------------------------------------------------------------------------
+
+def check_commit_hook(project_dir: Path, config: dict) -> CheckResult:
+    """Fail when git will not run the tracked commit gate in this checkout, or when a design note
+    reached this history past it (`hook_bypassed`).
+
+    Not Tier A. Both findings are properties of the checkout or of history, not of the change in
+    hand, like "Relationship types": an agent cannot clear a past bypass by doing its task right,
+    and `--strict` must not block every later task on one. Default `seldon verify` fails on them.
+    `--fix` runs `seldon hooks install` for the first; a bypass is never fixed by a command,
+    because the commit it names already happened. A bypass whose note now passes is `healed`
+    and reported as a warning.
+    """
+    from seldon.core import hooks as H
+
+    try:
+        repo = H.toplevel(project_dir)
+    except H.HookError:
+        return CheckResult(name="Commit hook", symbol="pass",
+                           summary="Not a git repository; skipping (HOOK-001)")
+    try:
+        st = H.status(repo)
+        rows = H.bypassed(repo, config)
+    except Exception as exc:                                        # noqa: BLE001
+        return CheckResult(name="Commit hook", symbol="fail",
+                           summary=f"cannot be checked: {type(exc).__name__}: {exc}"[:300])
+    details = [f"not installed: {p}" for p in st["problems"]]
+    open_rows = [r for r in rows or [] if not r["healed"]]
+    healed = [r for r in rows or [] if r["healed"]]
+    details += [f"{H.BYPASSED}: {r['commit'][:12]} {r['note']} (sha256 {r['sha256'][:12]}): "
+                f"{r['why']}" for r in open_rows[:20]]
+    details += [f"{H.BYPASSED} (healed: the note passes now): {r['commit'][:12]} {r['note']}"
+                for r in healed[:20]]
+    if not st["installed"] or open_rows:
+        parts = []
+        if not st["installed"]:
+            parts.append("not installed (run `seldon hooks install`)")
+        if open_rows:
+            parts.append(f"{len(open_rows)} {H.BYPASSED}")
+        return CheckResult(name="Commit hook", symbol="fail", summary="; ".join(parts),
+                           details=details, fixable=not st["installed"] and not open_rows)
+    if healed:
+        return CheckResult(name="Commit hook", symbol="warn",
+                           summary=f"installed; {len(healed)} {H.BYPASSED}, healed",
+                           details=details)
+    scope = ("no design note committed past it" if rows is not None
+             else "no prior_art gate or no hook in this history, so no bypass audit")
+    return CheckResult(name="Commit hook", symbol="pass",
+                       summary=f"installed ({H.HOOKS_DIR}); {scope}")
+
+
+def _fix_commit_hook(project_dir: Path, quiet: bool = False) -> None:
+    """Run `seldon hooks install` (per-repository config only)."""
+    result = subprocess.run([sys.executable, "-m", "seldon", "hooks", "install"],
+                            cwd=project_dir, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout,
+                                            result.stderr)
+    if not quiet:
+        click.echo("    " + result.stdout.strip().replace("\n", "\n    "))
+
+
+# ---------------------------------------------------------------------------
 # Result data structures
 # ---------------------------------------------------------------------------
 
@@ -1840,6 +1904,7 @@ def _run_all_checks(
         check_binding_constraints(driver, database, project_dir, config),
         check_decisions(driver, database, project_dir, config),
         check_prior_art(project_dir, config),
+        check_commit_hook(project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 
@@ -1862,6 +1927,7 @@ def _apply_fixes(
         "Binding constraints": _fix_binding_constraints,
         "Decision register": _fix_decisions,
         "Prior art": _fix_prior_art,
+        "Commit hook": _fix_commit_hook,
     }
 
     for r in results:

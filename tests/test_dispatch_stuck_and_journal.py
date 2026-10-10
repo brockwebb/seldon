@@ -35,6 +35,7 @@ from seldon.core import dispatch as D
 from seldon.core.artifacts import create_artifact
 from seldon.core.events import append_event, make_event
 from seldon.domain.loader import load_domain_config
+from tests.dispatch_scaffold import install_commit_gate
 from tests.testdb import TEST_DATABASE
 from tests.models_fixture import shell_receipt, use_stub_cli
 
@@ -102,6 +103,7 @@ def project(tmp_path):
                                f"$SELDON_NOTIFY_PASSES $SELDON_NOTIFY_DIRTY_PATHS\" "
                                f">> {p}/notify.log"},
     }, sort_keys=False), encoding="utf-8")
+    install_commit_gate(p)
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
     _git(p, "remote", "add", "origin", str(remote))
