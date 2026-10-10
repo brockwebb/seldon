@@ -364,3 +364,24 @@ def test_the_default_is_three_when_the_key_is_absent(project):
         encoding="utf-8")
     assert D.load_dispatch_config(project)["stuck_after_passes"] == \
         D.STUCK_AFTER_PASSES_DEFAULT
+
+
+def test_a_detached_clean_checkout_alarms_as_wrong_branch_with_the_branch_named(
+        project, neo4j_driver, domain_config):
+    """`ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path.md`: the
+    daily suite's worktree is a detached HEAD with a clean tree, and three passes there wrote
+    `dispatch_stuck{criterion: dirty_tree, dirty_paths: []}`. The criterion is the branch."""
+    _register(project, neo4j_driver, domain_config, commit=True)
+    _git(project, "checkout", "-q", "--detach")
+    outs = [_run(project, ["once"]) for _ in range(3)]
+    for out in outs:
+        assert out.exit_code == 0, out.output
+        assert "dirty_tree" not in out.output, out.output
+    assert "wrong_branch" in outs[0].output
+    assert "branch: HEAD, configured main" in outs[0].output
+    stuck = _events(project, D.EVENT_STUCK)
+    assert len(stuck) == 1, [e["payload"] for e in stuck]
+    payload = stuck[0]["payload"]
+    assert payload["criterion"] == "wrong_branch"
+    assert payload["branch"] == "HEAD" and payload["configured_branch"] == "main"
+    assert payload["dirty_paths"] == []

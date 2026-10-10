@@ -51,7 +51,9 @@ def issue_group():
 @click.option("--detection", required=True, help="How found: " + ", ".join(ISSUE_ENUMS["detection_method"]))
 @click.option("--target", required=True, help="What to fix: " + ", ".join(ISSUE_ENUMS["target"]))
 @click.option("--affects", default=None, help="Comma-separated artifact IDs/names this issue affects")
-def issue_create(description, issue_type, importance, urgency, detection, target, affects):
+@click.option("--name", default=None,
+              help="A short name, which `seldon go` and the graph print beside the id")
+def issue_create(description, issue_type, importance, urgency, detection, target, affects, name):
     """Create a new Issue."""
     try:
         validate_issue_enum("issue_type", issue_type)
@@ -94,6 +96,11 @@ def issue_create(description, issue_type, importance, urgency, detection, target
             project_dir=project_dir, driver=driver, database=database,
             domain_config=domain_config, artifact_type="Issue",
             properties={
+                # `name` only when given: an Issue created without one keeps the shape every
+                # Issue had before the option existed. A job that opens Issues gives one, so
+                # `seldon go` does not print `None` for it (ai-readiness-kg/cc_tasks/
+                # 2026-10-09_main_green_dispatch_stuck_without_a_path.md decision 6).
+                **({"name": name} if name else {}),
                 "description": description,
                 "issue_type": issue_type,
                 "importance": importance,
@@ -119,6 +126,8 @@ def issue_create(description, issue_type, importance, urgency, detection, target
 
         quadrant = eisenhower_quadrant(importance, urgency)
         click.echo(f"Created Issue: {issue_id}")
+        if name:
+            click.echo(f"  name: {name}")
         click.echo(f"  description: {description}")
         click.echo(f"  type: {issue_type}")
         click.echo(f"  quadrant: {quadrant} (importance={importance}, urgency={urgency})")
@@ -154,7 +163,9 @@ def _sort_key(issue: dict) -> tuple:
 @click.option("--importance", default=None, help="Filter by importance (high/medium/low)")
 @click.option("--urgency", default=None, help="Filter by urgency (high/medium/low)")
 @click.option("--type", "issue_type", default=None, help="Filter by issue_type")
-def issue_list(open_only, state, importance, urgency, issue_type):
+@click.option("--json", "as_json", is_flag=True,
+              help="machine-readable: a JSON list of the matching Issues' properties")
+def issue_list(open_only, state, importance, urgency, issue_type, as_json):
     """List Issue artifacts."""
     config = load_project_config()
     driver = get_neo4j_driver(config)
@@ -190,6 +201,11 @@ def issue_list(open_only, state, importance, urgency, issue_type):
 
     issues.sort(key=_sort_key)
 
+    if as_json:
+        import json
+        click.echo(json.dumps(issues, default=str))
+        return
+
     if not issues:
         click.echo("No issues found.")
         return
@@ -214,10 +230,14 @@ def issue_list(open_only, state, importance, urgency, issue_type):
 @click.option("--state", default=None, help="New state to transition to")
 @click.option("--urgency", default=None, help="Update urgency (high/medium/low)")
 @click.option("--resolution-notes", default=None, help="Notes on how the issue was resolved")
-def issue_update(issue_id, state, urgency, resolution_notes):
-    """Update an Issue — transition state or change urgency."""
-    if state is None and urgency is None and resolution_notes is None:
-        click.echo("Error: provide --state, --urgency, or --resolution-notes", err=True)
+@click.option("--description", default=None,
+              help="Replace the description (a job recording a recurrence on the Issue it "
+                   "opened, rather than opening another)")
+def issue_update(issue_id, state, urgency, resolution_notes, description):
+    """Update an Issue — transition state, change urgency, or restate the description."""
+    if state is None and urgency is None and resolution_notes is None and description is None:
+        click.echo("Error: provide --state, --urgency, --resolution-notes or --description",
+                   err=True)
         raise SystemExit(1)
 
     config = load_project_config()
@@ -246,6 +266,8 @@ def issue_update(issue_id, state, urgency, resolution_notes):
             props["urgency"] = urgency
         if resolution_notes:
             props["resolution_notes"] = resolution_notes
+        if description:
+            props["description"] = description
         if props:
             update_artifact(
                 project_dir=project_dir, driver=driver, database=database,
@@ -274,6 +296,8 @@ def issue_update(issue_id, state, urgency, resolution_notes):
             click.echo(f"  urgency: {node.get('urgency', '?')} → {urgency} (quadrant: {new_quad})")
         if resolution_notes:
             click.echo(f"  resolution_notes: {resolution_notes}")
+        if description:
+            click.echo(f"  description: {description}")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

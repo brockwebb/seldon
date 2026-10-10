@@ -304,6 +304,9 @@ def dispatch_status(as_json):
     payload = {"enabled": cfg["enabled"], "branch": tree["branch"],
                "configured_branch": cfg["branch"], "tree_dirty": tree["dirty"],
                "tree_dirty_count": tree["dirty_count"],
+               "tree_read_error": tree.get("read_error"),
+               "stuck_state_file": str(D.stuck_state_path(project_dir, cfg)),
+               "stuck_due": _stuck_due(project_dir, cfg, rows, tree, claim),
                "stop_file": str(cfg["stop_file"]),
                "stop_file_present": (project_dir / cfg["stop_file"]).exists(),
                "standing_band": band, "standing_band_ref": cfg["standing_band_ref"],
@@ -530,6 +533,8 @@ def _cadence(project_dir, config, driver, database, domain_config, session_id, c
         blocked = None
         if claim is not None:
             blocked = "claim_in_flight"
+        elif tree.get("read_error"):
+            blocked = "tree_unreadable"
         elif tree["branch"] != cfg["branch"]:
             blocked = "wrong_branch"
         elif tree["dirty"]:
@@ -545,6 +550,7 @@ def _cadence(project_dir, config, driver, database, domain_config, session_id, c
                                          f" more)" if tree["dirty_count"]
                                          > len(tree["dirty_paths"]) else ""),
                         "wrong_branch": f": on {tree['branch']}, configured {cfg['branch']}",
+                        "tree_unreadable": f": {tree.get('read_error')}",
                         "claim_in_flight": f": {claim['artifact_id'][:8]} by "
                                            f"{claim['claimed_by']}" if claim else ""}
             row["blocked_evidence"] = evidence[blocked].lstrip(": ")
@@ -937,7 +943,12 @@ def _echo_refusals(rows: list, tree: dict) -> None:
                 # ADDENDUM_01 decision 6b: name the DIRT, not only the task. The task file
                 # is not why c7 failed and printing only it sent seven hours of log lines
                 # pointing at the wrong file.
-                click.echo(f"      dirty: {', '.join(_dirty_paths(tree)) or '(branch)'}")
+                click.echo(f"      dirty: {', '.join(_dirty_paths(tree))}")
+            if reason == "wrong_branch":
+                click.echo(f"      branch: {tree.get('branch') or '(none)'}, configured "
+                           f"{r['criteria']['c7'].get('configured_branch')}")
+            if reason == "tree_unreadable":
+                click.echo(f"      git: {tree.get('read_error')}")
 
 
 def _dirty_paths(tree: dict) -> list:
@@ -964,13 +975,14 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
     """
     if dry_run or claim is not None:
         return []
-    refusals = {}
-    for row in rows:
-        if not row.get("candidate"):
-            continue
-        reason = D.first_refusal_reason(row)
-        if reason:
-            refusals[row["task_id"]] = {"criterion": reason, "row": row}
+    if tree.get("read_error"):
+        # A pass that could not read the tree has not observed the queue, so it neither
+        # advances a streak nor clears one: the streak file is not read or written
+        # (ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path.md
+        # decision 3). The line is the trace; the next pass that can read decides.
+        click.echo(f"stuck: not counted; the tree could not be read ({tree['read_error']})")
+        return []
+    refusals = _stuck_refusals(rows)
     previous = D.read_stuck_state(project_dir, cfg)
     state, alarms = D.advance_stuck(
         previous, {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
@@ -986,11 +998,15 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
                    "passes": entry["passes"], "threshold": cfg["stuck_after_passes"],
                    "first_seen": entry["first_seen"], "dirty_paths": dirty,
                    "dirty_count": tree.get("dirty_count"),
+                   "branch": tree.get("branch"), "configured_branch": cfg["branch"],
                    "poll_interval_s": cfg.get("poll_interval_s")}
         _emit(project_dir, session_id, D.EVENT_STUCK, payload)
+        evidence = (f"branch: {tree.get('branch') or '(none)'}, configured {cfg['branch']}"
+                    if entry["criterion"] == "wrong_branch"
+                    else f"dirty: {', '.join(dirty) or '(none)'}")
         click.echo(f"STUCK: {str(task_id)[:8]} refused as {entry['criterion']} for "
                    f"{entry['passes']} consecutive passes since {entry['first_seen']}; "
-                   f"dirty: {', '.join(dirty) or '(none)'}", err=True)
+                   f"{evidence}", err=True)
         _run_notifier(project_dir, session_id, cfg, {
             "SELDON_NOTIFY_TASK_ID": str(task_id),
             "SELDON_NOTIFY_TASK_NAME": str(row.get("name") or row.get("source_file") or "?"),
@@ -1003,6 +1019,35 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
             "SELDON_NOTIFY_LOG_PATH": "",
             "SELDON_NOTIFY_WALL_SECONDS": "0",
         }, task_id=task_id, label="stuck")
+    return alarms
+
+
+def _stuck_refusals(rows: list) -> dict:
+    """`{task_id: {"criterion", "row"}}` for every refused candidate: what a pass counts, and
+    what `status` reads to say which candidates the next pass would alarm on."""
+    refusals = {}
+    for row in rows:
+        if not row.get("candidate"):
+            continue
+        reason = D.first_refusal_reason(row)
+        if reason:
+            refusals[row["task_id"]] = {"criterion": reason, "row": row}
+    return refusals
+
+
+def _stuck_due(project_dir, cfg, rows, tree, claim) -> list:
+    """The candidates the NEXT pass would raise `dispatch_stuck` for, computed without writing:
+    the same refusals `_stuck` would count, advanced against the same streak file with the pure
+    `advance_stuck`. Empty whenever `_stuck` would count nothing (claim in flight, unreadable
+    tree). A pass that writes an event is a pass with something to assert, and this is how a
+    reader of `status` knows one is coming (decision 4 of the task above)."""
+    if claim is not None or tree.get("read_error"):
+        return []
+    refusals = _stuck_refusals(rows)
+    _state, alarms = D.advance_stuck(
+        D.read_stuck_state(project_dir, cfg),
+        {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
+        cfg["stuck_after_passes"], _now())
     return alarms
 
 

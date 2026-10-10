@@ -501,7 +501,20 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "network_undeclared", "api_key_present", "claim_failed",
                    # SEL-004: a Exclusive/Touches declaration that does not parse (c10), and a
                    # task whose worktree path or branch is already taken (c11).
-                   "concurrency_undeclared", "worktree_unavailable")
+                   "concurrency_undeclared", "worktree_unavailable",
+                   # c7's other two halves, which were reported as `dirty_tree` until
+                   # ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path
+                   # .md decision 3: a checkout on another branch (or a detached HEAD) with no
+                   # dirty path, and a git read that failed. `dirty_tree` now always names a path.
+                   "wrong_branch", "tree_unreadable")
+
+#: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
+#: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a
+#: test and the launchd dispatcher in the same checkout) never advance each other's streaks: the
+#: daily suite's three passes in four seconds counted as three polls and raised `dispatch_stuck`
+#: on 2026-10-08 and 2026-10-09 (decision 4 of the task above). The `AIRKG_DISPATCH_LOG`
+#: precedent: one variable, read at the one place the path is computed.
+STUCK_STATE_ENV = "SELDON_DISPATCH_STUCK_STATE"
 
 #: DD-007. The subscription-OAuth gate, the same one `kg/extraction/model_stub.py` enforces at
 #: its own choke point: an inherited API key means a dispatched session would spend against a
@@ -893,14 +906,32 @@ def tree_state(project_dir: Path, exclude=()) -> dict:
     summary, and this is the criterion where the value matters most: "the tree was dirty" is
     not actionable and "the tree was dirty on these three paths" is.
     """
-    branch = git(project_dir, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    rev = git(project_dir, "rev-parse", "--abbrev-ref", "HEAD")
+    branch = rev.stdout.strip()
+    # `--no-optional-locks`: git(1) documents it for exactly this caller, a process that runs
+    # `git status` in the background of a checkout someone else is working in. Without it the
+    # status takes `index.lock` to refresh the index, and a session's own `git commit` in the
+    # same instant fails on the lock.
+    #
     # NOT `.strip()` on the porcelain output. Every line is `XY PATH` with X and Y each
     # possibly a space, so an unstaged modification is `" M path"` — and stripping the whole
     # blob removes the leading space of the FIRST line only, after which `ln[3:]` eats the
     # first character of that one path and no other. Found by running the dry pass and reading
     # `LAUDE.md` in the criteria vector; a defect that corrupts exactly one entry of a
     # diagnostic list is one no amount of staring at the code finds.
-    porcelain = git(project_dir, "status", "--porcelain").stdout
+    status = git(project_dir, "--no-optional-locks", "status", "--porcelain")
+    # A git call that FAILED is a failed read, not a clean tree and not a dirty one. Before
+    # ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path.md decision 3
+    # the return codes were not looked at, so a failed status read as "no paths" and a failed
+    # rev-parse as a wrong branch, and c7 reported either as `dirty_tree`.
+    failed = [(name, r) for name, r in (("rev-parse", rev), ("status", status))
+              if r.returncode != 0]
+    if failed:
+        name, r = failed[0]
+        return {"branch": branch, "dirty": False, "dirty_paths": [], "dirty_count": 0,
+                "read_error": f"git {name} exited {r.returncode}: "
+                              f"{(r.stderr or '').strip()[:200]}"}
+    porcelain = status.stdout
     paths = [ln[3:] for ln in porcelain.split("\n") if ln.strip()]
     # SEL-004 decision 5: a shared append-only file (a spend ledger) that worktree sessions
     # append to in the PRIMARY checkout is not dirt the pass waits on; the pass commits it.
@@ -1125,8 +1156,17 @@ def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str =
 
 # ------------------------------------------------------------------- the stuck-queue alarm
 
+def stuck_state_path(project_dir: Path, cfg: dict) -> Path:
+    """Where the streaks are kept: `$SELDON_DISPATCH_STUCK_STATE` when set, else beside the
+    lease. The one place the path is computed, so a reader and a writer cannot disagree."""
+    override = os.environ.get(STUCK_STATE_ENV)
+    if override:
+        return Path(override).expanduser()
+    return Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+
+
 def read_stuck_state(project_dir: Path, cfg: dict) -> dict:
-    path = Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+    path = stuck_state_path(project_dir, cfg)
     if not path.is_file():
         return {}
     try:
@@ -1139,7 +1179,7 @@ def read_stuck_state(project_dir: Path, cfg: dict) -> dict:
 
 
 def write_stuck_state(project_dir: Path, cfg: dict, state: dict) -> None:
-    path = Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+    path = stuck_state_path(project_dir, cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -1471,7 +1511,10 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     c["c7"] = {"branch": tree["branch"], "configured_branch": cfg["branch"],
                "dirty": tree["dirty"], "dirty_count": tree["dirty_count"],
                "dirty_paths": tree["dirty_paths"],
-               "ok": tree["branch"] == cfg["branch"] and not tree["dirty"]}
+               "ok": (tree["branch"] == cfg["branch"] and not tree["dirty"]
+                      and not tree.get("read_error"))}
+    if tree.get("read_error"):
+        c["c7"]["read_error"] = tree["read_error"]
     c["c8"] = {"enabled": cfg["enabled"], "stop_file": str(cfg["stop_file"]),
                "stop_file_present": stop.exists(),
                "ok": bool(cfg["enabled"]) and not stop.exists()}
@@ -1520,7 +1563,7 @@ def first_refusal_reason(row: dict) -> str | None:
     if not c.get("c8", {}).get("ok", True):
         return "stop_file" if c["c8"]["stop_file_present"] else "disabled"
     if not c.get("c7", {}).get("ok", True):
-        return "dirty_tree"
+        return c7_reason(c["c7"])
     if not c.get("c4", {}).get("ok", True):
         return "above_band"
     if not c.get("c5", {}).get("ok", True):
@@ -1530,6 +1573,22 @@ def first_refusal_reason(row: dict) -> str | None:
     if not c.get("c11", {}).get("ok", True):
         return "worktree_unavailable"
     return None
+
+
+def c7_reason(c7: dict) -> str:
+    """Which half of c7 failed. **`dirty_tree` only when there is a path to name**
+    (ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path.md decision 3).
+
+    The incident: the daily suite's worktree is a detached HEAD, so c7 failed on its branch half
+    with a clean tree, and the pass reported `dirty_tree`, printed `dirty: (branch)`, and after
+    three passes wrote a `dispatch_stuck` whose `dirty_paths` was `[]`. A refusal that names no
+    dirt sends the reader looking for dirt. A dirty tree on the wrong branch is reported as dirty,
+    because the paths are the more specific evidence."""
+    if c7.get("read_error"):
+        return "tree_unreadable"
+    if c7.get("dirty"):
+        return "dirty_tree"
+    return "wrong_branch"
 
 
 def fifo(rows: list) -> list:

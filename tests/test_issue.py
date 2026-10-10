@@ -208,3 +208,52 @@ def test_issue_blocked_by_issue(neo4j_driver, project_dir, domain_config, clean_
             aid=issue1, bid=issue2,
         ).single()
     assert rel is not None
+
+
+# ── The CLI a job drives (ai-readiness-kg daily suite, 2026-10-09 task decision 6) ──────────
+
+
+@pytest.fixture
+def issue_cli_project(tmp_path, monkeypatch):
+    (tmp_path / "seldon.yaml").write_text(
+        "project:\n  name: t\n  domain: research\n"
+        f"neo4j:\n  database: {NEO4J_DB}\n  uri: bolt://localhost:7687\n"
+        "event_store:\n  path: seldon_events.jsonl\n")
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+_CREATE = ["create", "--description", "d1", "--type", "merge_blocked", "--importance", "high",
+           "--urgency", "high", "--detection", "build_failure", "--target", "structure"]
+
+
+@pytest.mark.usefixtures("clean_test_db")
+def test_a_named_issue_lists_as_json_and_takes_a_new_description(issue_cli_project):
+    import json
+    from click.testing import CliRunner
+    from seldon.commands.issue import issue_group
+
+    r = CliRunner().invoke(issue_group, _CREATE + ["--name", "daily suite red: t.py::x"])
+    assert r.exit_code == 0, r.output
+    assert "name: daily suite red: t.py::x" in r.output
+    r = CliRunner().invoke(issue_group, ["list", "--open", "--type", "merge_blocked", "--json"])
+    assert r.exit_code == 0, r.output
+    rows = json.loads(r.output)
+    assert [i["name"] for i in rows] == ["daily suite red: t.py::x"]
+    iid = rows[0]["artifact_id"]
+    r = CliRunner().invoke(issue_group, ["update", iid, "--description", "d1; red again"])
+    assert r.exit_code == 0, r.output
+    rows = json.loads(CliRunner().invoke(
+        issue_group, ["list", "--open", "--type", "merge_blocked", "--json"]).output)
+    assert rows[0]["description"] == "d1; red again" and rows[0]["state"] == "open"
+
+
+@pytest.mark.usefixtures("clean_test_db")
+def test_an_issue_created_without_a_name_has_none(issue_cli_project):
+    import json
+    from click.testing import CliRunner
+    from seldon.commands.issue import issue_group
+
+    assert CliRunner().invoke(issue_group, _CREATE).exit_code == 0
+    rows = json.loads(CliRunner().invoke(issue_group, ["list", "--json"]).output)
+    assert len(rows) == 1 and "name" not in rows[0]
