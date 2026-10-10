@@ -1,0 +1,16 @@
+seq: 248
+event: amend
+id: seldon:AD-036-R7
+date: '2026-10-09'
+decided_by: cc:2ebfb15e
+operator_stated: false
+receipts:
+- docs/evidence/hook001/statements/writer.jsonl
+- docs/evidence/hook001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass re-run with the referent supplied (HOOK-001 Part B): the note''s id and title in the writer''s context, the source verbatim; written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: When the seldon prior-art tool has landed, the command `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` shall pass for design note AD-036, and the prose of that note's internal section shall be converted into receipts by re-running each internal search with the tool and recording the results in an addendum, without editing the AD-036 file. The same check shall be applied to AD-035, with its result recorded in an AD-035 addendum.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: ffe8d96db16767cdcccdbc189b4472730922f9d0344a00cacdd40b95d6f10d90
+record_hash: 991550e015622114ba732e1833a888d908339a3b4c3ea55dd73709c122b4b3bc

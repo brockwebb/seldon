@@ -1,0 +1,37 @@
+{
+ "tally": {
+  "failed": 1,
+  "refused": 1,
+  "passed": 1
+ },
+ "records": [
+  {
+   "id": "seldon:AD-035-R8",
+   "outcome": "validator_failed",
+   "statement": "Seldon shall not deploy managed settings (an `availableModels` allowlist or a denial of superseded models) for model selection, and shall enforce model order at the call sites under R3 to R6 with the receipt as proof; this shall be revisited if a call site is found that R3 cannot reach.",
+   "verdict": {
+    "passed": false,
+    "added": [],
+    "complete": false,
+    "dropped": [
+     "Rationale: allowlist would bind operator's interactive sessions",
+     "Rationale: denying superseded models disables classifier fallback targets"
+    ],
+    "entailed": true,
+    "standalone": true
+   }
+  },
+  {
+   "id": "seldon:AD-036-R4",
+   "outcome": "refused",
+   "statement": "The prior-art gate shall refuse at two points: when `seldon verify` (pre-commit) sees a commit that adds a design note under `docs/design/` whose prior-art section is missing, has an empty subsection, or fails AD-036-R2, it shall refuse the commit and write the verdict to the governed ledger beside the note's hash; when `seldon cc register` is given a task whose governing note has no passing verdict, it shall refuse the registration; design notes on main at the merge commit of AD-036 are baseline, listed and grandfathered rather than re-litigated; and each refusal shall quote the missing part and name AD-036.",
+   "reason": "a statement names no other record by position (AD-033-R3): 'the note' in 'The prior-art gate shall refuse at two points: when `seldon verify` (pre-commit) sees a commit that adds a design note u'"
+  },
+  {
+   "id": "seldon:AD-036-R7",
+   "outcome": "landed",
+   "statement": "When the seldon prior-art tool has landed, the command `seldon prior-art verify docs/design/AD-036_prior_art_receipts_gate.md` shall pass for design note AD-036, and the prose of that note's internal section shall be converted into receipts by re-running each internal search with the tool and recording the results in an addendum, without editing the AD-036 file. The same check shall be applied to AD-035, with its result recorded in an AD-035 addendum.",
+   "record": "[PosixPath('/Users/brock/GitHub/seldon/docs/decisions/register/00248_seldon-ad-036-r7_amend.yaml')]"
+  }
+ ]
+}

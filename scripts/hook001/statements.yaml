@@ -1,0 +1,38 @@
+# HOOK-001 Part B (AD-033-R8): the statement pass re-run for the three records the AD-033-R3 deictic
+# check refused in PA-001 Part F (seldon:AD-035-R8, AD-036-R4, AD-036-R7). PA-001's
+# scripts/pa001/statements.yaml unchanged except the pilot size and the budget: the same roles,
+# transport and policy, so the only new input is the referent (scripts/hook001/statements_referent.py).
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)
+  setting_sources_disabled: true
+  nonessential_traffic_disabled: true
+policy:
+  in_flight: 3
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: three records is below PA-001's pilot of 10, so the pilot is the whole pass,
+# measured as it runs.
+pilot_records: 3
+guess_output_tokens: 250
+# The task's declared spend for this pass: "under 20k weighted" for 3 records. PA-001 measured about
+# 65.5k weighted for 17 records (about 3.9k each), so 3 records project to about 12k. Past it times
+# 1.2 the run stops for the operator (DN-042 R-178).
+budget:
+  declared_weighted_tokens: 20000
+  band_stop: 0.20
+spacing_seconds: null
