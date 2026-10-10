@@ -30,6 +30,7 @@ from seldon.core import dispatch as D
 from seldon.core.artifacts import create_artifact
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config
+from tests.dispatch_scaffold import install_commit_gate
 from tests.testdb import TEST_DATABASE
 from tests.models_fixture import shell_receipt, use_stub_cli
 
@@ -85,6 +86,7 @@ def project(tmp_path):
                      "lease_file": ".seldon/dispatch.lock"},
     }), encoding="utf-8")
     (p / "cc_tasks" / "t1.md").write_text(TASK_BODY.format(stem="t1"), encoding="utf-8")
+    install_commit_gate(p)
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
     use_stub_cli(tmp_path, p / "bin" / "claude")

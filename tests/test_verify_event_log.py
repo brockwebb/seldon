@@ -205,8 +205,10 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     assert "Event log" in names
     assert names[-1] == "Replay"
     # 14 since AD-030-R24 added the binding-constraints check alongside the governed-documents one;
-    # 15 since AD-033 added the decision-register check; 16 since AD-036-R4 added the prior-art one.
+    # 15 since AD-033 added the decision-register check; 16 since AD-036-R4 added the prior-art one;
+    # 17 since HOOK-001 added the commit-hook check.
     assert "Binding constraints" in names
     assert "Decision register" in names
     assert "Prior art" in names
-    assert len(results) == 16
+    assert "Commit hook" in names
+    assert len(results) == 17

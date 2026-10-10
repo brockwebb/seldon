@@ -828,21 +828,35 @@ def verdicts(project_dir: Path, config: dict) -> dict:
     Returns {note: {sha256: payload}} with the newest event winning for each (note, sha256).
     """
     path = governed_ledger(project_dir, config)
-    out: dict = {}
     if path is None or not path.is_file():
-        return out
+        return {}
     with path.open(encoding="utf-8") as fh:
-        for n, line in enumerate(fh, 1):
-            if VERDICT_EVENT not in line:
-                continue
-            try:
-                e = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise PriorArtError(f"corrupt governed ledger line {path}:{n}: {exc}") from exc
-            if e.get("type") != VERDICT_EVENT:
-                continue
-            p = e.get("payload") or {}
-            out.setdefault(p.get("note"), {})[p.get("sha256")] = p
+        return verdicts_from_lines(fh, str(path))
+
+
+def verdicts_from_lines(lines: Iterable[str], where: str) -> dict:
+    """`verdicts` over ledger lines from any source: the file on disk, or a blob read from git's
+    index or a commit (the commit hook judges the STAGED ledger, HOOK-001).
+
+    Args:
+        lines: The ledger's lines, in order.
+        where: How to name the source in an error.
+
+    Raises:
+        PriorArtError: On a verdict line that is not JSON. A corrupt ledger is never half-read.
+    """
+    out: dict = {}
+    for n, line in enumerate(lines, 1):
+        if VERDICT_EVENT not in line:
+            continue
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise PriorArtError(f"corrupt governed ledger line {where}:{n}: {exc}") from exc
+        if e.get("type") != VERDICT_EVENT:
+            continue
+        p = e.get("payload") or {}
+        out.setdefault(p.get("note"), {})[p.get("sha256")] = p
     return out
 
 
@@ -852,8 +866,21 @@ def baseline(s: Settings) -> set:
     """The notes grandfathered by AD-036-R4: every design note on main at PA-001's merge."""
     if not s.baseline.is_file():
         raise PriorArtError(f"the AD-036 baseline list {s.baseline} does not exist")
-    return {ln.strip() for ln in s.baseline.read_text(encoding="utf-8").splitlines()
-            if ln.strip() and not ln.startswith("#")}
+    return baseline_from_text(s.baseline.read_text(encoding="utf-8"))
+
+
+def baseline_from_text(text: str) -> set:
+    """The baseline list's entries: one path per line, `#` comments and blank lines ignored."""
+    return {ln.strip() for ln in text.splitlines() if ln.strip() and not ln.startswith("#")}
+
+
+def is_gated(s: Settings, rel: str) -> bool:
+    """Is this repository-relative path a gated design note (markdown under the design
+    directory, at any depth, and not matching an exempt glob)? The rule `design_notes` walks."""
+    if not rel.endswith(".md") or not rel.startswith(s.design_dir.rstrip("/") + "/"):
+        return False
+    name = rel.rsplit("/", 1)[-1]
+    return not any(_glob_re(g).match(name) for g in s.exempt_globs)
 
 
 def design_notes(s: Settings) -> list[str]:
@@ -886,19 +913,26 @@ def gate_status(project_dir: Path, config: dict, notes: Iterable[str] | None = N
         if not p.is_file():
             rows.append({"note": rel, "sha256": None, "ok": False, "why": "file does not exist"})
             continue
-        sha = _sha(p.read_bytes())
-        v = (have.get(rel) or {}).get(sha)
-        if v is None:
-            why = (f"no prior-art verdict for its current bytes (sha256 {sha[:12]}); run "
-                   f"`seldon prior-art verify {rel}` (AD-036-R4)")
-            rows.append({"note": rel, "sha256": sha, "ok": False, "why": why})
-        elif v.get("verdict") != "pass":
-            rows.append({"note": rel, "sha256": sha, "ok": False,
-                         "why": "prior-art verdict is fail: " + "; ".join(v.get("problems", [])[:3])
-                                + " (AD-036-R4)"})
-        else:
-            rows.append({"note": rel, "sha256": sha, "ok": True, "why": "pass"})
+        rows.append(judge(rel, _sha(p.read_bytes()), have))
     return rows
+
+
+def judge(rel: str, sha: str, have: dict) -> dict:
+    """One note's gate row: does `have` (from `verdicts`) hold a passing verdict for these bytes?
+
+    Shared by `gate_status` (the working tree), the commit hook (the staged blob) and the bypass
+    audit (the blob a past commit carried), so the three cannot disagree about what passes.
+    """
+    v = (have.get(rel) or {}).get(sha)
+    if v is None:
+        why = (f"no prior-art verdict for its current bytes (sha256 {sha[:12]}); run "
+               f"`seldon prior-art verify {rel}` (AD-036-R4)")
+        return {"note": rel, "sha256": sha, "ok": False, "why": why}
+    if v.get("verdict") != "pass":
+        return {"note": rel, "sha256": sha, "ok": False,
+                "why": "prior-art verdict is fail: " + "; ".join(v.get("problems", [])[:3])
+                       + " (AD-036-R4)"}
+    return {"note": rel, "sha256": sha, "ok": True, "why": "pass"}
 
 
 _GOVERNING_BLOCK_RE = re.compile(r"^\*\*Governing:\*\*(.*?)(?=^\*\*[A-Z][^*]*:\*\*|^#|\Z)",

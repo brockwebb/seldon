@@ -44,6 +44,14 @@ def git(p: Path, *a, check=True) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *a], cwd=p, check=check, capture_output=True, text=True)
 
 
+def install_commit_gate(p: Path) -> None:
+    """HOOK-001: a dispatched project carries the tracked commit gate, as every real one does;
+    `seldon dispatch once` refuses a checkout without it. Called before the fixture's first
+    commit, so `.githooks/pre-commit` is tracked from the start."""
+    from seldon.core.hooks import install
+    install(p, python=sys.executable)
+
+
 def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
                  track_store: bool = True, union_store: bool = True) -> Path:
     """A git project with a dispatch block, a tracked event store and a bare origin."""
@@ -80,6 +88,7 @@ def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
         "dispatch": dispatch,
     }), encoding="utf-8")
     (p / "seldon_events.jsonl").write_text("", encoding="utf-8")
+    install_commit_gate(p)
     git(p, "add", "-A")
     git(p, "commit", "-q", "-m", "init")
     origin = tmp_path / "origin.git"

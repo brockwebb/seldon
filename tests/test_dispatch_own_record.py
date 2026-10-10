@@ -34,6 +34,7 @@ from seldon.core import dispatch as D
 from seldon.core.artifacts import create_artifact
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config
+from tests.dispatch_scaffold import install_commit_gate
 from tests.testdb import TEST_DATABASE
 from tests.models_fixture import shell_receipt, use_stub_cli
 
@@ -120,6 +121,7 @@ def project(tmp_path):
                      }]},
     }, sort_keys=False), encoding="utf-8")
     _stub(p)
+    install_commit_gate(p)
     _git(p, "add", "-A")
     _git(p, "commit", "-m", "init")
     _git(p, "remote", "add", "origin", str(remote))

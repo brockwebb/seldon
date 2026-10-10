@@ -404,6 +404,17 @@ def dispatch_once(dry_run):
             click.echo(f"dispatch is {reason}; nothing evaluated")
             return
 
+        # HOOK-001: a dispatched session commits through the same gate as everyone else. The
+        # hook is tracked, so every checkout and worktree carries it; this points git at it when
+        # the repository's config does not (a fresh clone, a moved checkout). A checkout without
+        # the hook launches nothing: a standing condition, so it is printed, not logged.
+        from seldon.core import hooks as H
+        gate = H.ensure_installed(project_dir)
+        if not gate["ok"]:
+            click.echo(f"refused: the commit gate is not installed: {gate['error']} "
+                       f"(run `seldon hooks install`)", err=True)
+            return
+
         try:
             lease = D.Lease(project_dir / cfg["lease_file"]).__enter__()
         except D.LeaseHeld as held:
