@@ -76,7 +76,8 @@ def repo(tmp_path):
                          "top_n": 20, "max_file_bytes": 100000, "bm25": {"k1": 1.2, "b": 0.75}},
             "library": {"graph": str(tmp_path / "nolib"), "k": 20},
             "gate": {"design_dir": "docs/design", "baseline": "docs/design/AD-036_baseline.txt",
-                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"]},
+                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"],
+                     "verdict_ledger_without_governed": "state/verdicts.jsonl"},
         },
     }
     (proj / "seldon.yaml").write_text(yaml.safe_dump(config))
@@ -144,7 +145,7 @@ def test_a_verified_note_commits_when_its_verdict_is_staged_with_it(repo):
     assert _verify_and_record(repo, note).verdict == "pass"
     _git(repo["dir"], "add", "docs/design/AD-099_x.md")
     r = _commit(repo)                       # the verdict is in the working tree only
-    assert r.returncode != 0 and "stage the governed ledger" in r.stderr
+    assert r.returncode != 0 and "stage the verdict ledger governed/ledger/events.jsonl" in r.stderr
     _git(repo["dir"], "add", "governed/ledger/events.jsonl")
     r = _commit(repo)
     assert r.returncode == 0, r.stderr

@@ -72,7 +72,8 @@ def proj(tmp_path):
                          "bm25": {"k1": 1.2, "b": 0.75}},
             "library": {"graph": str(tmp_path / "nolib"), "k": 20},
             "gate": {"design_dir": "docs/design", "baseline": "docs/design/AD-036_baseline.txt",
-                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"]},
+                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"],
+                     "verdict_ledger_without_governed": "state/verdicts.jsonl"},
         },
     }
     return {"dir": project, "config": config, "sha": sha, "tmp": tmp_path}
