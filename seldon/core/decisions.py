@@ -72,14 +72,46 @@ _ORDER: tuple[str, ...] = ()
 
 #: A statement may not point at another record by position (AD-033-R3). Checked on statements
 #: written after the seed (Part E); the seed's statement is the verbatim body, which may.
+#:
+#: Two kinds of pointer, after the distinction between ENDOPHORIC reference (anaphora and cataphora: the referent is
+#: in the text itself) and EXOPHORIC reference (the referent is outside the text) of Halliday and Hasan, Cohesion in
+#: English (1976), cited from knowledge and not in the library; the library holds the coreference framing, "find all
+#: expressions (mentions) that refer to the same entity in a text" (lesson:2026-07-15_arXiv_2306_08302 #p15:476) and
+#: anaphora and cataphora as mention-to-mention links inside a text (lesson:2026-06-13_arXiv_1808_09602 #p12:289);
+#: receipts in SQ-010's evidence. A statement that resolves its own reference stands alone; one that points outside
+#: itself does not.
+#:   - `_DEICTIC`: positional pointers ("above", "below", "the following", "the previous section"). Their referent is
+#:     a position in some other text, never a mention in the statement, so they are refused wherever they occur.
+#:   - `_DEFINITE`: a definite reference to a document-like noun ("this decision", "the note"). It is deictic only
+#:     when the statement has no earlier mention of that noun to be its antecedent. "A design note ... the note's
+#:     hash" is anaphora resolved inside the statement and passes; a bare "the note" refers outside and is refused
+#:     (SQ-010 Part 8, carried from HOOK-001: AD-036-R4's validator-passed statement was refused on exactly that).
 _DEICTIC = re.compile(
-    r"\b(?:this (?:note|decision|record|ruling|section|document|addendum|rule)\b|"
-    r"(?:the|as|see|stated|listed|described|noted|defined|shown|named|given|mentioned)\s+(?:above|below)\b|"
-    r"\b(?:above|below)\s*[.;:]?\s*$|\bthe note\b|\bthe following\s*:|\b(?:all|each|any|one) of the following\b|"
+    r"\b(?:(?:the|as|see|stated|listed|described|noted|defined|shown|named|given|mentioned)\s+(?:above|below)\b|"
+    r"\b(?:above|below)\s*[.;:]?\s*$|\bthe following\s*:|\b(?:all|each|any|one) of the following\b|"
     r"\bthe (?:previous|preceding) (?:note|decision|record|ruling|section|rule|item|paragraph)s?\b)", re.I)
+_DEFINITE = re.compile(
+    r"\b(?:this (note|decision|record|ruling|section|document|addendum|rule)|the (note))\b", re.I)
 # Comparatives are not pointers: "at or above 0.98", "the layer below the symptom", "the previous week" pass. The first
 # form of this pattern refused them (SEL-002 Part E: 30 validator-passed statements refused on "above" or "below" as
 # thresholds; re-landed after the correction, evidence/sel002/statements/reapply.json).
+
+
+def deictic_reference(statement: str) -> Optional[str]:
+    """The first pointer in a statement that needs text outside it (AD-033-R3), or None.
+
+    A positional pointer (`_DEICTIC`) always counts. A definite reference (`_DEFINITE`) counts only when no earlier
+    word of the statement is its head noun, singular or plural: that earlier mention is its antecedent.
+    """
+    m = _DEICTIC.search(statement)
+    if m:
+        return m.group(0)
+    for m in _DEFINITE.finditer(statement):
+        noun = (m.group(1) or m.group(2)).lower()
+        if not re.search(rf"\b{noun}s?\b", statement[:m.start()], re.I):
+            return m.group(0)
+    return None
+
 
 #: Native id forms, used to read an identifier out of task text (R7). A bare form is qualified by
 #: the registering repository first, then by its imports in order.
@@ -832,9 +864,10 @@ def amend(u: Universe, qid: str, *, date: str, decided_by: str, reason: str,
         if bad:
             raise RegisterError(f"fields {sorted(bad)} are fixed at creation; amendable: {list(AMENDABLE)}")
         st = changes.get("statement")
-        if st and _DEICTIC.search(st):
+        pointer = deictic_reference(st) if st else None
+        if pointer:
             raise RegisterError(f"a statement names no other record by position (AD-033-R3): "
-                                f"{_DEICTIC.search(st).group(0)!r} in {st[:120]!r}")
+                                f"{pointer!r} in {st[:120]!r}")
         new_kind = changes.get("kind", rec.get("kind"))
         if new_kind == "mirror" and not changes.get("mirrors", rec.get("mirrors")):
             raise RegisterError("a mirror requires `mirrors`")

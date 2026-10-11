@@ -1,0 +1,38 @@
+# SQ-010 Part 8 (AD-033-R8), carried from HOOK-001: AD-035-R8's statement, re-run with the writer told to keep
+# the reasons the decision itself states (HOOK-001's validator failed it, complete=false, for dropping both).
+# HOOK-001's scripts/hook001/statements.yaml unchanged except the pilot size and the budget: the same roles,
+# transport and policy, so the only new input is the keep-reasons instruction (scripts/sq010/statements_sq010.py).
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)
+  setting_sources_disabled: true
+  nonessential_traffic_disabled: true
+policy:
+  in_flight: 1
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: one record is below any pilot size, so the pilot is the whole pass, measured as it runs.
+pilot_records: 1
+guess_output_tokens: 250
+# SQ-010's declared spend for Part 8's statements: "under 40k weighted" (task file, Spend line). HOOK-001 measured
+# about 12.4k weighted for 3 records (about 4.1k each; PA-001 about 3.9k each), so one record projects to about 4k
+# and a retry of it to about 8k. The declared budget here is 10k, under the task's 40k; past it times 1.2 the run
+# stops for the operator (DN-042 R-178).
+budget:
+  declared_weighted_tokens: 10000
+  band_stop: 0.20
+spacing_seconds: null
