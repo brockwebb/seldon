@@ -223,7 +223,9 @@ def test_all_nine_criteria_pass_on_a_clean_task(project):
     row = _evaluate(project, f)
     assert row["candidate"]
     assert row["eligible"], json.dumps(row["criteria"], indent=1)
-    assert sorted(row["criteria"]) == [f"c{i}" for i in range(1, 10)]
+    # c10 and c11 are SEL-004's, present only when declared or in parallel mode; c12 (free space against the
+    # launch's measured need, SQ-010 ADDENDUM 02 D3.4) is evaluated for every candidate.
+    assert sorted(row["criteria"]) == sorted([f"c{i}" for i in range(1, 10)] + ["c12"])
 
 
 def test_c1_fails_when_the_task_file_is_not_git_tracked(project):

@@ -184,7 +184,7 @@ def test_a_clean_task_is_claimed_launched_and_finished(project, neo4j_driver, do
     assert pl["transitions"] == ["proposed -> accepted", "accepted -> in_progress"]
     assert pl["framework_layer"].startswith("§2.2")
     assert pl["permission_mode"] == "bypassPermissions"
-    assert set(pl["criteria"]) == {f"c{i}" for i in range(1, 10)}
+    assert set(pl["criteria"]) == {f"c{i}" for i in range(1, 10)} | {"c12"}   # c12: SQ-010 ADDENDUM 02 D3.4
     assert all(c["ok"] for c in pl["criteria"].values())
     assert "--permission-mode bypassPermissions" in pl["command"]
 

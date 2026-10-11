@@ -30,10 +30,20 @@ ends `--effort medium` (the `primary` role's level), `dispatch_launched`'s `mode
 `medium` where it read `default`, and `dispatch_finished`'s `model_receipt` carries `effort`.
 Re-recorded on the PA-001 code; a per-line diff against the MODEL-001 fixture showed eight changed
 lines, every change one of exactly those three insertions or that one substitution.
+
+**Erratum, SQ-010 ADDENDUM 02 D3.4 (2026-10-11).** Every candidate now carries criterion c12, free space
+against the launch's measured need, so each `dispatch_launched` criteria vector gains one `"c12": {...}` block
+(two in this scenario). Its `free_bytes` is the conftest fake (10**15), which `normalize` numbers as a HEX token,
+so every later HEX token's number shifts by one. Re-recorded twice on the D3.4 code (byte-identical), and checked
+to equal the pre-change fixture once the two c12 blocks are removed and HEX tokens renumbered by first
+appearance in both. Every other line is unchanged. c12's `footprint_bytes` and `need_bytes` are masked as
+`<BYTES>`: they measure the committed tree, which differs between the two parametrizations by the
+`max_parallel: 1` line in seldon.yaml.
 """
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -86,7 +96,11 @@ def _scenario(tmp_path, driver, dispatch_extra) -> str:
     out.append("## git status\n" + git(p, "status", "--porcelain").stdout)
     out.append("## graph\n" + "\n".join(f"{k} {v}" for k, v in
                                        sorted(task_states(driver).items())))
-    return normalize("\n".join(out), p) + "\n"
+    # c12's byte counts are the size of the committed tree, and the two parametrizations commit different
+    # seldon.yaml files (one has `max_parallel: 1`), so the counts differ by exactly that line. They are the
+    # measurement's inputs, not the serial behaviour this test holds; masked the way wall clock is.
+    text = re.sub(r'"(footprint_bytes|need_bytes)": \d+', r'"\1": <BYTES>', "\n".join(out))
+    return normalize(text, p) + "\n"
 
 
 @pytest.mark.parametrize("dispatch_extra", [{}, {"max_parallel": 1}],

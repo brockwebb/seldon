@@ -49,6 +49,27 @@ def _no_inherited_session_identity(monkeypatch):
     monkeypatch.setattr(config, "_process_session_id", None)
 
 
+# ── Basetemp removal (SQ-010 ADDENDUM 02 D3.3) ────────────────────────────────
+
+from tests.pytest_basetemp import _basetemp_removed_at_session_end  # noqa: E402,F401  (an autouse fixture)
+
+
+# ── Free-space isolation (SQ-010 ADDENDUM 02 D3.4; DN-043 R-184) ──────────────
+
+#: What every test's disk probe reports: a petabyte, so no test's outcome depends on how full this machine is.
+FAKE_FREE_BYTES = 10 ** 15
+
+
+@pytest.fixture(autouse=True)
+def _disk_free_is_a_fake(monkeypatch):
+    """No test reads the machine's free space. The dispatcher's c12 compares free space with a launch's need;
+    on 2026-10-11 squiddy's factory tests failed `ceiling disk` because the real volume was full, an outcome
+    that was the machine's and not the code's. Set through the environment so a child process a test starts
+    reads the same fake. A test that wants a shortfall sets its own value."""
+    from seldon.core import dispatch as D
+    monkeypatch.setenv(D.DISK_FREE_ENV, str(FAKE_FREE_BYTES))
+
+
 # ── Model lock isolation (AD-035) ─────────────────────────────────────────────
 
 @pytest.fixture(scope="session")

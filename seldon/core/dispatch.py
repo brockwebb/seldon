@@ -26,6 +26,7 @@ import fnmatch
 import json
 import os
 import re
+import shutil
 import socket
 import subprocess
 from datetime import datetime, timezone
@@ -595,6 +596,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.stuck_after_passes must be a positive whole number of passes, got "
             f"{stuck!r}")
     block["stuck_after_passes"] = stuck
+    # SQ-010 ADDENDUM 02 D3.4. Optional with a default, so installing this build changes no config file.
+    factor = block.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
+    if isinstance(factor, bool) or not isinstance(factor, (int, float)) or factor < 1:
+        raise DispatchConfigError(
+            f"dispatch.disk_need_factor must be a number of at least 1 (the launch's measured footprint is "
+            f"multiplied by it), got {factor!r}")
+    block["disk_need_factor"] = factor
     _load_parallel_config(block)
     return block
 
@@ -1449,6 +1457,86 @@ def reap_lease(path: Path) -> dict:
     return {"reaped": True, "reason": "holder_gone", "holder": body.get("holder"), "pid": pid}
 
 
+# ------------------------------------------------------------------------------- free space (c12)
+
+#: `dispatch.disk_need_factor` when absent. SQ-010 ADDENDUM 02 D3.4: a launch needs its measured peak footprint
+#: "times 2", not the machine-wide 25 GB floor. The factor is the addendum's margin, not a measurement.
+DISK_NEED_FACTOR_DEFAULT = 2
+
+#: The free-space probe's fake. When set (to a whole number of bytes) the probe reports it for every volume and
+#: never reads the disk: DN-043 R-184 says no test reads the machine's state, and conftest sets it for every test,
+#: in-process and in every child the test starts. The probe's name for itself is recorded in c12, so a production
+#: pass that ever ran under it says so in its own record.
+DISK_FREE_ENV = "SELDON_DISK_FREE_BYTES"
+
+
+def free_bytes(path: Path) -> tuple[int, str]:
+    """`(free bytes, what measured them)` on the volume holding `path`; a path not made yet is measured on its
+    nearest existing parent's volume. The one place the dispatcher reads free space."""
+    fake = os.environ.get(DISK_FREE_ENV)
+    if fake is not None:
+        if not fake.strip().isdigit():
+            raise DispatchConfigError(f"{DISK_FREE_ENV}={fake!r} is not a whole number of bytes")
+        return int(fake), f"env {DISK_FREE_ENV}"
+    q = Path(path)
+    while not q.exists() and q != q.parent:
+        q = q.parent
+    return shutil.disk_usage(q).free, "statvfs"
+
+
+def tree_bytes(project_dir: Path, ref: str) -> int:
+    """The bytes a checkout of `ref` writes: the sum of its blobs' sizes (`git ls-tree -r -l`). Submodule
+    entries carry no size and count 0. Raises `RuntimeError` when git cannot read the ref."""
+    r = git(project_dir, "ls-tree", "-r", "-l", "-z", ref)
+    if r.returncode != 0:
+        raise RuntimeError(f"git ls-tree {ref}: {r.stderr.strip()[:200]}")
+    total = 0
+    for entry in r.stdout.split("\0"):
+        if not entry:
+            continue
+        meta = entry.split("\t", 1)[0].split()
+        if len(meta) == 4 and meta[1] == "blob" and meta[3].isdigit():
+            total += int(meta[3])
+    return total
+
+
+def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
+    """Criterion c12: is there room for this launch? SQ-010 ADDENDUM 02 D3.4.
+
+    **What a launch writes, measured at launch time.** A worktree launch (SEL-004) checks out the configured
+    branch into `dispatch.worktree_dir`: its footprint is that tree, measured exactly from git, and the volume
+    is the worktree directory's. An in-place launch (the serial pass, an exclusive task) creates no checkout.
+    What its session will write cannot be measured before it runs, and the decision taken here, on the
+    grounding below, is that its footprint is the same measured tree, on the project's own volume:
+
+    * The tree is the unit a session's disk use is made of. The incident this answers
+      (squiddy/docs/evidence/sq010/disk_incident.md, 2026-10-11) was one in-place session that made two
+      worktrees and a clean-run clone of its repository, about 4.4 GB on a 1.1 GB tree: copies of the tree.
+    * It is measured, from the commit, every pass, so it follows the repository as it grows; a constant would
+      be a guess and the machine-wide 25 GB floor would refuse a 2 MB repository's launch for a reason that is
+      not that launch's.
+    * It is a lower bound, not the session's peak: a session that copies the tree more than `factor` times
+      can still exhaust the disk. That is why each tool that writes copies checks its own need before it runs
+      (D3.4: squiddy's record-pass and governed repin), rather than the dispatcher pretending to know the
+      session's.
+
+    A tree git cannot measure refuses (`disk_unmeasured`) rather than assuming a need of zero."""
+    factor = cfg.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
+    ref = cfg["branch"]
+    where = Path(project_dir) / cfg.get("worktree_dir", PARALLEL_DEFAULTS["worktree_dir"]) if worktree \
+        else Path(project_dir)
+    out = {"launch": "worktree" if worktree else "in_place", "ref": ref, "path": str(where),
+           "factor": factor}
+    try:
+        footprint = tree_bytes(Path(project_dir), ref)
+    except RuntimeError as exc:
+        return {**out, "read_error": str(exc), "ok": False}
+    free, probe = free_bytes(where)
+    need = int(footprint * factor)
+    return {**out, "footprint_bytes": footprint, "need_bytes": need, "free_bytes": free, "probe": probe,
+            "ok": free >= need}
+
+
 # ------------------------------------------------------------------------------- evaluation
 
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
@@ -1547,6 +1635,10 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
             c["c10"]["message"] = conc["error"]
     if parallel and conc["error"] is None and not conc["exclusive"]:
         c["c11"] = worktree_state(project_dir, cfg, Path(source).stem)
+    # SQ-010 ADDENDUM 02 D3.4: free space against this launch's own measured need, before any claim. A
+    # non-exclusive task under max_parallel > 1 runs in a worktree it creates; every other launch runs here.
+    c["c12"] = disk_state(project_dir, cfg,
+                          worktree=parallel and conc["error"] is None and not conc["exclusive"])
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1562,6 +1654,9 @@ def first_refusal_reason(row: dict) -> str | None:
     c = row.get("criteria") or {}
     if not c.get("c8", {}).get("ok", True):
         return "stop_file" if c["c8"]["stop_file_present"] else "disabled"
+    # Free space is a fact about the machine, not the task: reported ahead of the task-specific reasons.
+    if not c.get("c12", {}).get("ok", True):
+        return "disk_unmeasured" if c["c12"].get("read_error") else "disk_short"
     if not c.get("c7", {}).get("ok", True):
         return c7_reason(c["c7"])
     if not c.get("c4", {}).get("ok", True):
