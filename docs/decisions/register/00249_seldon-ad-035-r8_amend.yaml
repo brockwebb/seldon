@@ -1,0 +1,16 @@
+seq: 249
+event: amend
+id: seldon:AD-035-R8
+date: '2026-10-11'
+decided_by: cc:00682405
+operator_stated: false
+receipts:
+- docs/evidence/sq010/statements/writer.jsonl
+- docs/evidence/sq010/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass re-run with the writer told to keep the reasons the decision states (SQ-010 Part 8, carried from HOOK-001): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: Seldon shall not deploy managed settings, either an `availableModels` allowlist or denial of superseded models, for model selection, because an `availableModels` allowlist would also bind the operator's interactive sessions and denying superseded models would also disable classifier fallback targets; model order is enforced where calls are made by AD-035-R3 to R6 and proven by the receipt, and the decision is to be revisited if a call site is found that R3 cannot reach.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 991550e015622114ba732e1833a888d908339a3b4c3ea55dd73709c122b4b3bc
+record_hash: fd0a316c068ded7c243c96e5d8fbaed45376336fbe678c393883bbb4276e5d13

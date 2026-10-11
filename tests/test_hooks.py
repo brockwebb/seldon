@@ -20,11 +20,17 @@ from seldon.core import hooks as H
 from seldon.core import prior_art as pa
 
 LIB_SHA = "a" * 64
+#: The source root of the seldon package these tests import.
+SRC = Path(H.__file__).resolve().parents[2]
 
 
 def _git(root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
     # GIT_* variables from an enclosing hook would point these commands at another repository.
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    # The hook git runs is `<python> -m seldon hooks pre-commit` in the test repository: without this it
+    # imports whatever seldon is installed (the main checkout), not the code under test, so a hook change
+    # made on a branch or in a worktree was never what these tests ran (found by SQ-010 Part 8b).
+    env["PYTHONPATH"] = os.pathsep.join(x for x in (str(SRC), env.get("PYTHONPATH")) if x)
     return subprocess.run(["git", "-C", str(root), *args], check=check, capture_output=True,
                           text=True, env=env)
 
@@ -316,3 +322,75 @@ def test_the_refusal_test_fails_when_the_hook_is_removed(repo):
     _git(repo["dir"], "config", "--local", "--unset", "core.hooksPath")
     with pytest.raises(AssertionError):
         test_git_commit_itself_refuses_a_planted_note_without_prior_art(repo)
+
+
+# ------------------------------------------------------------------- ruling_label_taken (SQ-010 8b)
+
+HOLDER = "docs/design/AD-099_ADDENDUM_01_holder.md"
+
+
+def _hold_label(repo, label="AD-099-R1"):
+    """Commit a note declaring `label` together with its accepted record, whose source is that note.
+    Addenda are outside the prior-art gate, so only the label checks judge these commits."""
+    from seldon.core import decisions as dr
+    d = repo["dir"]
+    (d / HOLDER).write_text(f"# holder\n\n- **{label}.** The kit stores nothing.\n")
+    u = dr.universe(d, repo["config"])
+    dr.create(u, "accept", {
+        "id": f"t:{label}", "kind": "decision", "statement": "The kit shall store nothing.",
+        "source": {"path": HOLDER, "lines": [3, 3], "sha256": "0" * 64,
+                   "text": f"- **{label}.** The kit stores nothing."},
+        "scope": ["t"], "rationale": {"path": HOLDER, "anchor": label}, "review_only": "none"},
+        date="2026-10-11", decided_by="cc:test")
+    _git(d, "add", "-A", "docs")
+    return _commit(repo)
+
+
+def test_a_note_declaring_its_own_new_label_with_its_record_passes(repo):
+    # Same source: the record names the note that introduces the label. This is the normal commit.
+    r = _hold_label(repo)
+    assert r.returncode == 0, r.stderr
+
+
+def test_a_planted_note_reusing_an_accepted_label_is_refused(repo):
+    assert _hold_label(repo).returncode == 0
+    before = _head(repo)
+    _plant(repo, "AD-099_ADDENDUM_02_reuse.md", "# reuse\n\n- **AD-099-R1.** A different ruling.\n")
+    _git(repo["dir"], "add", "-A", "docs/design")
+    r = _commit(repo)
+    assert r.returncode != 0
+    assert H.LABEL_TAKEN in r.stderr and "t:AD-099-R1" in r.stderr
+    assert HOLDER in r.stderr                              # the refusal names the holder's source
+    assert "AD-099_ADDENDUM_02_reuse.md" in r.stderr
+    assert _head(repo) == before
+
+
+def test_an_addendum_citing_the_label_without_declaring_it_passes(repo):
+    assert _hold_label(repo).returncode == 0
+    _plant(repo, "AD-099_ADDENDUM_02_cite.md",
+           "# correction\n\nAD-099-R1 is renumbered; the ruling labelled AD-099-R1 in the base note is "
+           "unaffected.\n")
+    _git(repo["dir"], "add", "-A", "docs/design")
+    r = _commit(repo)
+    assert r.returncode == 0, r.stderr
+
+
+def test_editing_a_note_that_already_declared_a_taken_label_is_not_rejudged(repo):
+    # A collision committed before the check existed (simulated with --no-verify) does not refuse every
+    # later edit of the colliding note: the check judges what a commit introduces.
+    assert _hold_label(repo).returncode == 0
+    p = _plant(repo, "AD-099_ADDENDUM_02_old.md", "# old\n\n- **AD-099-R1.** An old collision.\n")
+    _git(repo["dir"], "add", "-A", "docs/design")
+    assert _commit(repo, "--no-verify").returncode == 0
+    p.write_text(p.read_text() + "\nAn edit.\n")
+    _git(repo["dir"], "add", "-A", "docs/design")
+    r = _commit(repo)
+    assert r.returncode == 0, r.stderr
+
+
+def test_label_taken_judges_nothing_without_a_decisions_block(repo):
+    cfg = {k: v for k, v in repo["config"].items() if k != "decisions"}
+    _plant(repo, "AD-099_ADDENDUM_02_x.md", "# x\n\n- **AD-099-R1.** A ruling.\n")
+    _git(repo["dir"], "add", "-A", "docs/design")
+    assert H.label_taken_findings(repo["dir"], cfg, ["docs/design/AD-099_ADDENDUM_02_x.md"],
+                                  H.Index(repo["dir"])) == []

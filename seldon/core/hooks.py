@@ -386,6 +386,76 @@ def decision_findings(repo: Path, config: dict, staged: list[str], idx: Index) -
     return out
 
 
+#: SQ-010 ADDENDUM 01 Part 8b: the finding's name, as `ruling_label_unparsed` is the other label check's.
+LABEL_TAKEN = "ruling_label_taken"
+
+
+def label_taken_findings(repo: Path, config: dict, staged: list[str], idx: Index) -> list[str]:
+    """`ruling_label_taken`: a staged design note may not INTRODUCE a ruling label that an accepted
+    record of the staged register already holds for a different source document.
+
+    "Introduces" means the label is declared by the note's staged bytes (a configured
+    `decisions.design_notes` pattern captures it, so it is in a heading or bold position) and was not
+    declared by the note as `HEAD` holds it. So:
+      - a note, addendum or erratum that CITES a label in prose does not declare it and passes;
+      - a note re-declaring a label whose record's source is the note itself passes (an edit);
+      - a note that already declared the label at `HEAD` is not re-judged on every later edit (a
+        collision committed before this check existed is the register's business, not this commit's).
+    The cause (SQ-010 ADDENDUM 01; squiddy DN-043 ADDENDUM 01): DN-043 numbered its first ruling from a
+    handoff's prose instead of the register and reused R-181, which DN-042's accepted record holds; the
+    record check passed, because a record with that id existed.
+
+    Runs in every repository the hook is installed in. A repository without a `decisions:` block has no
+    register to hold a label, so the check has nothing to judge and returns no finding.
+    """
+    from seldon.core import decisions as dr
+
+    try:
+        s = dr.settings(repo, config)
+    except dr.RegisterError:
+        return []                      # decision_findings reports a bad block; one finding, not two
+    if s is None:
+        return []
+    notes = [p for p in staged if dr.is_design_note(s, p)]
+    if not notes:
+        return []
+    head = Index(repo, "HEAD") if _git(repo, "rev-parse", "--verify", "-q", "HEAD",
+                                        check=False).returncode == 0 else None
+    introduced: dict[str, list[str]] = {}
+    for rel in notes:
+        now = set(dr.labeled_ids_in(s, rel, idx.text(rel) or ""))
+        before = set(dr.labeled_ids_in(s, rel, head.text(rel) or "")) if head else set()
+        for qid in sorted(now - before):
+            introduced.setdefault(qid, []).append(rel)
+    if not introduced:
+        return []
+    # Only the files of the introduced ids are read: a register file is named `<seq>_<slug(id)>_<event>.yaml`
+    # (`decisions.file_name`), and squiddy's register is ~900 files.
+    slugs = {dr.slug(q) for q in introduced}
+    reg_files = sorted(p for p in idx.files_under(s.register_dir)
+                       if p.endswith(".yaml") and p.rsplit("/", 1)[-1].split("_", 1)[-1].rsplit("_", 1)[0]
+                       in slugs)
+    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+    events = [yaml.load(raw, Loader=loader) for raw in idx.blobs(reg_files).values() if raw]
+    try:
+        recs = dr.fold(e for e in events if isinstance(e, dict) and e.get("id") in introduced)
+    except dr.BrokenRegister as exc:
+        return [f"Decision register: {LABEL_TAKEN}: the staged register cannot be read: {exc}"]
+    out = []
+    for qid, rels in sorted(introduced.items()):
+        rec = recs.get(qid)
+        if rec is None or rec.status != dr.BINDING:
+            continue
+        holder = (rec.get("source") or {}).get("path")
+        for rel in rels:
+            if holder and holder != rel:
+                out.append(f"Decision register: {LABEL_TAKEN}: {rel} declares {qid}, which the accepted "
+                           f"record {qid} already holds for {holder}. Number the ruling from the register "
+                           f"(`seldon decision list`), or correct it in an addendum that cites the label "
+                           f"without declaring it (SQ-010 ADDENDUM 01)")
+    return out
+
+
 def _staged_register_verify(repo: Path, s, idx: Index, reg_files: list[str]) -> list[str]:
     """The register's chain check (`Register.verify`) over the STAGED register files."""
     from seldon.core import decisions as dr
@@ -416,6 +486,7 @@ def pre_commit(repo: Path) -> tuple[list[str], dict]:
         if config:
             findings += prior_art_findings(repo, config, staged, idx)
             findings += decision_findings(repo, config, staged, idx)
+            findings += label_taken_findings(repo, config, staged, idx)
             summary["checked"] = [k for k in ("prior_art", "decisions") if config.get(k)]
     summary["seconds"] = round(time.monotonic() - started, 3)
     return findings, summary

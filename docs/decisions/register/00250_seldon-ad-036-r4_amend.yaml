@@ -1,0 +1,16 @@
+seq: 250
+event: amend
+id: seldon:AD-036-R4
+date: '2026-10-11'
+decided_by: cc:00682405
+operator_stated: false
+receipts:
+- docs/evidence/hook001/statements/writer.jsonl
+- docs/evidence/hook001/statements/validator.jsonl
+reason: 'AD-033-R8: HOOK-001''s validator-passed statement (entailed, complete, standalone), landed after SQ-010 narrowed the AD-033-R3 check to definite references with no antecedent in the statement; its calls are unchanged and were not re-made'
+changes:
+  statement: 'The prior-art gate shall refuse at two points: when `seldon verify` (pre-commit) sees a commit that adds a design note under `docs/design/` whose prior-art section is missing, has an empty subsection, or fails AD-036-R2, it shall refuse the commit and write the verdict to the governed ledger beside the note''s hash; when `seldon cc register` is given a task whose governing note has no passing verdict, it shall refuse the registration; design notes on main at the merge commit of AD-036 are baseline, listed and grandfathered rather than re-litigated; and each refusal shall quote the missing part and name AD-036.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: fd0a316c068ded7c243c96e5d8fbaed45376336fbe678c393883bbb4276e5d13
+record_hash: ad2eda73a1967934e167f899c0910cd1a4a2fca04a60d59b85a8450dee7d0763

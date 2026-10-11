@@ -520,3 +520,28 @@ def test_a_statement_points_at_no_other_text_but_comparatives_pass(tmp_path, sta
             call()
     else:
         call()
+
+
+
+@pytest.mark.parametrize("statement,refused", [
+    # SQ-010 Part 8 planted pair. Anaphora resolved inside the statement stands alone (endophoric reference) ...
+    ("The prior-art gate shall refuse a commit that adds a design note without a passing verdict, and shall write "
+     "the verdict to the governed ledger beside the note's hash.", False),
+    # ... a definite reference with no antecedent in the statement points outside it (exophoric) and is refused.
+    ("The prior-art gate shall write the verdict to the governed ledger beside the note's hash.", True),
+    ("A decision is recorded once; this decision binds every consumer.", False),
+    ("This decision binds every consumer.", True),
+    # Positional pointers stay refused whatever precedes them: their referent is a position, never a mention.
+    ("A note lists the rules; all of the following hold.", True),
+])
+def test_a_definite_reference_is_refused_only_without_an_antecedent(tmp_path, statement, refused):
+    root = _repo(tmp_path, "squiddy")
+    u = _u(root)
+    _accept(u, "squiddy", "R-1", "Grounding at or above 0.98.")
+    call = lambda: dr.amend(u, "squiddy:R-1", date=DATE, decided_by="cc:x", reason="R8",  # noqa: E731
+                            changes={"statement": statement, "statement_check": "passed"})
+    if refused:
+        with pytest.raises(dr.RegisterError, match="by position"):
+            call()
+    else:
+        call()
