@@ -949,6 +949,15 @@ def _echo_refusals(rows: list, tree: dict) -> None:
                            f"{r['criteria']['c7'].get('configured_branch')}")
             if reason == "tree_unreadable":
                 click.echo(f"      git: {tree.get('read_error')}")
+            if reason == "disk_short":
+                # SQ-010 ADDENDUM 02 D3.4: the need, the free space and where, so the operator knows what to free
+                d = r["criteria"]["c12"]
+                click.echo(f"      disk: need {d['need_bytes']:,} bytes ({d['factor']} x the {d['launch']} "
+                           f"launch's {d['footprint_bytes']:,}-byte tree at {d['ref']}), free "
+                           f"{d['free_bytes']:,} bytes at {d['path']} ({d['probe']})")
+            if reason == "disk_unmeasured":
+                click.echo(f"      disk: the launch's footprint could not be measured: "
+                           f"{r['criteria']['c12'].get('read_error')}")
 
 
 def _dirty_paths(tree: dict) -> list:

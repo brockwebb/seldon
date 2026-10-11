@@ -150,14 +150,25 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                                "running": ids, "deferred": plan["deferred"]},
                               indent=1, default=str))
         return
-    for r in chosen:
+    for n, r in enumerate(chosen):
         if r["concurrency"]["exclusive"]:
             # `plan_launches` launches an exclusive task only when nothing runs, and alone.
             S._launch_inplace(project_dir, config, driver, database, domain_config,
                               session_id, cfg, lease, r)
-        else:
-            _launch_worktree(project_dir, config, driver, database, domain_config, session_id,
-                             cfg, r)
+            continue
+        if n:
+            # SQ-010 ADDENDUM 02 D3.4: c12 was measured before this pass launched anything, and every worktree
+            # launched since has written a tree. Measured again, so a pass that launches several cannot spend
+            # the same free space on each. A shortfall here waits for a later pass, as c12 would make it.
+            again = D.disk_state(project_dir, cfg, worktree=True)
+            if not again["ok"]:
+                r["criteria"]["c12"] = again
+                r["eligible"], r["failed"] = False, list(r["failed"]) + ["c12"]
+                click.echo("  not launched after the launches before it in this pass:")
+                S._echo_refusals([r], tree)
+                continue
+        _launch_worktree(project_dir, config, driver, database, domain_config, session_id,
+                         cfg, r)
 
 
 def survey(project_dir, cfg, driver, database, band, lease_body) -> dict:
