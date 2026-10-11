@@ -20,8 +20,12 @@ launchd-started session may not have seldon on PATH; it is machine state, so it 
 tracked file.
 
 **The staged bytes decide.** The hook judges the index, not the working tree: the staged copy of
-each governed file, the staged `seldon.yaml`, the staged governed ledger (where verdicts live)
-and the staged decision register. An unstaged edit can neither pass nor fail a commit. This is
+each governed file, the staged `seldon.yaml`, the staged governed ledger (where verdicts live;
+in a project with no governed graph, the staged `gate.verdict_ledger_without_governed` file)
+and the staged decision register. One thing is read from disk on purpose: when the staged
+`prior_art:` block is a `ref` to another repository's seldon.yaml (AD-036 ADDENDUM 03), the
+defining file is read where it lies, because it belongs to a repository whose index this commit
+cannot stage. The project's own baseline and verdicts are still read from this index. An unstaged edit can neither pass nor fail a commit. This is
 the property the pre-commit framework (pre-commit.com) buys by stashing unstaged changes; here
 the blobs are read from the index directly, so the working tree is never touched.
 
@@ -289,6 +293,27 @@ def text_of(repo: Path, idx: Index, rel: str) -> Optional[str]:
     return p.read_text(encoding="utf-8") if p.is_file() else None
 
 
+
+def _ignored(repo: Path, rel: str) -> bool:
+    return _git(repo, "check-ignore", "-q", "--", rel, check=False).returncode == 0
+
+
+def verdict_text(repo: Path, idx: Index, rel: str) -> Optional[str]:
+    """The verdict ledger as the commit will hold it (AD-036 ADDENDUM 03).
+
+    Like `text_of`, except for a ledger that is untracked and NOT ignored: that file can be
+    committed, so it counts only once it is staged, and the commit then carries its own receipt
+    (ADDENDUM 02 section 2.2). A project's fallback verdict ledger is born that way: before this
+    rule its first verdict, unstaged, passed the note and was never committed. A gitignored ledger
+    can never be committed, so its working-tree copy is all there is and is read as before.
+    """
+    if _tracked(repo, rel) or idx.rev:
+        return idx.text(rel)
+    if not _ignored(repo, rel):
+        return None
+    p = Path(repo) / rel
+    return p.read_text(encoding="utf-8") if p.is_file() else None
+
 def staged_config(repo: Path, idx: Index) -> dict:
     """seldon.yaml as the commit will hold it. {} when the repository has none."""
     raw = text_of(repo, idx, "seldon.yaml")
@@ -326,12 +351,14 @@ def prior_art_findings(repo: Path, config: dict, staged: list[str], idx: Index) 
     gated = [p for p in gated if p not in base]
     if not gated:
         return []
-    ledger = pa.governed_ledger(repo, config)
+    # The governed ledger, or the fallback verdict ledger in a project with no governed graph
+    # (AD-036 ADDENDUM 03); either way read as the commit will hold it.
+    ledger = pa.verdict_ledger(repo, config)
+    lrel = _rel_to(repo, ledger)
     have: dict = {}
-    if ledger is not None:
-        raw = text_of(repo, idx, _rel_to(repo, ledger))
-        if raw is not None:
-            have = pa.verdicts_from_lines(raw.splitlines(), f"{_rel_to(repo, ledger)} (staged)")
+    raw = verdict_text(repo, idx, lrel)
+    if raw is not None:
+        have = pa.verdicts_from_lines(raw.splitlines(), f"{lrel} (staged)")
     blobs = idx.blobs(gated)
     out = []
     for rel in gated:
@@ -339,7 +366,7 @@ def prior_art_findings(repo: Path, config: dict, staged: list[str], idx: Index) 
         if not row["ok"]:
             why = row["why"]
             if why.startswith("no prior-art verdict"):
-                why += "; then stage the governed ledger with the note"
+                why += f"; then stage the verdict ledger {lrel} with the note"
             out.append(f"Prior art: {rel}: {why}")
     return out
 
@@ -528,15 +555,14 @@ def bypassed(repo: Path, config: dict, rev: str = "HEAD") -> Optional[list[dict]
     at = Index(repo, rev)
     base_text = at.text(_rel_to(repo, s.baseline))
     base = pa.baseline_from_text(base_text) if base_text is not None else set()
-    ledger = pa.governed_ledger(repo, config)
+    ledger = pa.verdict_ledger(repo, config)
     have: dict = {}
-    if ledger is not None:
-        lrel = _rel_to(repo, ledger)
-        raw = at.text(lrel)
-        if raw is None and not _tracked(repo, lrel) and ledger.is_file():
-            raw = ledger.read_text(encoding="utf-8")      # an untracked ledger is never in git
-        if raw is not None:
-            have = pa.verdicts_from_lines(raw.splitlines(), f"{_rel_to(repo, ledger)}@{rev}")
+    lrel = _rel_to(repo, ledger)
+    raw = at.text(lrel)
+    if raw is None and not _tracked(repo, lrel) and ledger.is_file():
+        raw = ledger.read_text(encoding="utf-8")      # an untracked ledger is never in git
+    if raw is not None:
+        have = pa.verdicts_from_lines(raw.splitlines(), f"{lrel}@{rev}")
     parents = _git(repo, "rev-list", "--parents", "-n", "1", a).stdout.split()
     walk = [rev, "--not", parents[1]] if len(parents) > 1 else [rev]
     log = _git(repo, "log", "--no-merges", "--format=%x00%H", "--name-only",

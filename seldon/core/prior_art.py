@@ -40,7 +40,8 @@ store at the named commit, because verification must re-run the search against t
 ripgrep reads only a working tree. The departure is recorded in AD-036 ADDENDUM 01.
 
 **Where verdicts go.** `verify` appends one `provenance` event per run to the governed ledger
-through squiddy's single write path (`squiddy.ledger.append`): the note's path and sha256, every
+(or, in a project with no governed graph, to `gate.verdict_ledger_without_governed`; AD-036
+ADDENDUM 03) through squiddy's single write path (`squiddy.ledger.append`): the note's path and sha256, every
 addendum's, each receipt's status and the overall verdict (AD-036-R4). `provenance` is the kit's
 kind for statements about the graph that no projection imports, so `seldon governed sync` is
 unchanged. `seldon verify` reads the newest verdict for a note's current hash.
@@ -60,6 +61,8 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
+
+import yaml
 
 #: Bumped when the matching, ranking, grammar or verdict rules change. R5's recall control is
 #: re-run on every bump, and every logged query and verdict carries it.
@@ -88,7 +91,10 @@ _ROW_RE = re.compile(r"^\S+#\S+$|^\S+$")
 #: A sentence asserting that nothing was found. Allowed only beside a receipt that found nothing.
 _NO_PRIOR_ART_RE = re.compile(r"\bno\s+(?:internal\s+|external\s+)?(?:prior\s+art|precedent)\b",
                               re.IGNORECASE)
-_NOTE_ID_RE = re.compile(r"^((?:AD|DN)-\d{3})")
+#: A note's identifier, at the start of its name (seldon `AD-036_...`) or after a date prefix
+#: (squiddy `2026-10-10_DN-043_...`). SQ-010 Part 0: anchored at the start only, a date-prefixed note
+#: never found its addenda.
+_NOTE_ID_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}_)?((?:AD|DN)-\d{3})(?=_|\.md$)")
 
 
 class PriorArtError(Exception):
@@ -119,53 +125,142 @@ class Settings:
     design_dir: str
     baseline: Path
     exempt_globs: tuple
+    #: Where a verdict goes in a project that keeps no governed graph (AD-036 ADDENDUM 03).
+    verdict_ledger_without_governed: Path
+    #: The seldon.yaml whose block was used, when the project's block is a `ref`; None when the
+    #: project defines the block itself.
+    defined_in: Optional[Path] = None
 
 
 _REQUIRED = ("log", "internal_roots", "internal", "library", "gate")
 
+#: The key that makes a project's `prior_art:` block a reference (AD-036 ADDENDUM 03).
+REF_KEY = "ref"
+#: What a referencing block may set for itself, and nothing else: one definition, never a copy
+#: (SQ-010 Part 0). The baseline is per project because it lists THAT project's grandfathered
+#: notes; every other key is the machine's one rule and lives only in the file the ref names.
+REF_LOCAL_KEYS = {"ref": None, "gate": ("baseline",)}
 
-def settings(project_dir: Path, config: dict) -> Settings:
-    """The `prior_art:` block of seldon.yaml, validated. Every key is required: a missing one is a
-    configuration error named here, never a default the reader cannot see."""
+
+def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional[Path]]:
+    """The `prior_art:` block this project runs under: its own, or the one its `ref` names.
+
+    A referencing block is `ref: <file>#<dotted.key>` plus `gate.baseline`, the same
+    `<file>#<dotted.path>` form as `dispatch.standing_band_ref` (`seldon.core.dispatch.
+    resolve_standing_band`). The file is relative to the referencing seldon.yaml's directory, and
+    `~` is expanded. It is read from disk even inside the commit hook: the defining file belongs to
+    another repository, whose index this repository's commit cannot stage.
+
+    Returns:
+        `(block, definer_dir, defined_in)`: the block with the project's own baseline merged in,
+        the directory corpus paths resolve against, and the defining file (None for a block the
+        project defines itself, whose definer_dir is the project).
+
+    Raises:
+        PriorArtError: No block; a referencing block that sets anything but `ref` and
+            `gate.baseline`, or omits the baseline; a malformed ref; a missing file or key; a
+            target that is itself a ref (a chain would make "the one definition" two hops away).
+    """
+    project_dir = Path(project_dir).resolve()
     block = config.get("prior_art")
     if not isinstance(block, dict):
         raise PriorArtError("seldon.yaml has no `prior_art:` block (AD-036-R3)")
+    if REF_KEY not in block:
+        return block, project_dir, None
+    ref = block[REF_KEY]
+    if not isinstance(ref, str) or "#" not in ref:
+        raise PriorArtError(f"prior_art.ref {ref!r} is not a reference: expected "
+                            f"`<file>#<dotted.key>` (AD-036 ADDENDUM 03)")
+    rel, dotted = ref.split("#", 1)
+    target = Path(os.path.expanduser(rel))
+    if not target.is_absolute():
+        target = project_dir / target
+    target = target.resolve()
+    extra = sorted(set(block) - set(REF_LOCAL_KEYS))
+    gate_local = block.get("gate") or {}
+    if not isinstance(gate_local, dict):
+        raise PriorArtError("prior_art.gate in a referencing block must be a mapping holding "
+                            "only `baseline`")
+    extra += [f"gate.{k}" for k in sorted(set(gate_local) - set(REF_LOCAL_KEYS["gate"]))]
+    if extra:
+        raise PriorArtError(f"prior_art is a reference to {target}, so it may set only `ref` and "
+                            f"`gate.baseline`; it also sets {extra}. One definition, never a copy: "
+                            f"change those in {target} (AD-036 ADDENDUM 03)")
+    if not gate_local.get("baseline"):
+        raise PriorArtError(f"prior_art is a reference to {target} and sets no `gate.baseline`; "
+                            f"each project lists its own grandfathered notes (AD-036-R4, "
+                            f"ADDENDUM 03)")
+    if not target.is_file():
+        raise PriorArtError(f"prior_art.ref {ref!r} names {target}, which does not exist")
+    node = yaml.safe_load(target.read_text(encoding="utf-8"))
+    for part in dotted.split("."):
+        if not isinstance(node, dict) or part not in node:
+            raise PriorArtError(f"prior_art.ref {ref!r}: {target} has no {dotted!r}")
+        node = node[part]
+    if not isinstance(node, dict):
+        raise PriorArtError(f"prior_art.ref {ref!r} resolves to {type(node).__name__}, not a "
+                            f"prior_art block")
+    if REF_KEY in node:
+        raise PriorArtError(f"prior_art.ref {ref!r} resolves to another reference "
+                            f"({node[REF_KEY]!r}); a ref must name the definition itself, never "
+                            f"a chain (AD-036 ADDENDUM 03)")
+    merged = dict(node)
+    merged["gate"] = {**(node.get("gate") or {}), "baseline": gate_local["baseline"]}
+    return merged, target.parent, target
+
+
+def settings(project_dir: Path, config: dict) -> Settings:
+    """The `prior_art:` block of seldon.yaml, validated. Every key is required: a missing one is a
+    configuration error named here, never a default the reader cannot see.
+
+    The block may be a reference (`resolve_block`). Paths then resolve by origin, the rule
+    TypeScript's tsconfig `extends` uses ("relative paths found in the configuration file will be
+    resolved relative to the configuration file they originated in"), split by what a path names:
+    the CORPUS (internal_roots[].path, library.graph) is the machine's and resolves against the
+    defining file's directory; the PROJECT'S OWN STATE (log, gate.design_dir, gate.baseline,
+    gate.verdict_ledger_without_governed) resolves against the project using the block. For a
+    block a project defines itself the two directories are the same.
+    """
+    project_dir = Path(project_dir).resolve()
+    block, definer_dir, defined_in = resolve_block(project_dir, config)
+    where = f"{defined_in} prior_art" if defined_in else "seldon.yaml prior_art"
     missing = [k for k in _REQUIRED if k not in block]
     if missing:
-        raise PriorArtError(f"seldon.yaml prior_art block missing {missing}")
-    project_dir = Path(project_dir).resolve()
+        raise PriorArtError(f"{where} block missing {missing}")
     internal, library, gate = block["internal"], block["library"], block["gate"]
     for name, sub, keys in (("internal", internal, ("default_include", "suffixes", "top_n",
                                                      "max_file_bytes", "bm25")),
                             ("library", library, ("graph", "k")),
-                            ("gate", gate, ("design_dir", "baseline", "exempt_globs"))):
+                            ("gate", gate, ("design_dir", "baseline", "exempt_globs",
+                                            "verdict_ledger_without_governed"))):
         miss = [k for k in keys if k not in (sub or {})]
         if miss:
-            raise PriorArtError(f"seldon.yaml prior_art.{name} missing {miss}")
+            raise PriorArtError(f"{where}.{name} missing {miss}")
+
+    def at(base: Path, p: str) -> Path:
+        q = Path(os.path.expanduser(str(p)))
+        return q if q.is_absolute() else (base / q).resolve()
+
     roots = []
     for row in block["internal_roots"]:
         if not isinstance(row, dict) or not row.get("name") or not row.get("path"):
             raise PriorArtError(f"prior_art.internal_roots row {row!r} needs `name` and `path`")
-        path = Path(os.path.expanduser(str(row["path"])))
-        if not path.is_absolute():
-            path = (project_dir / path)
-        roots.append(Root(name=str(row["name"]), path=path.resolve(),
+        roots.append(Root(name=str(row["name"]), path=at(definer_dir, row["path"]),
                           include=tuple(row.get("include") or internal["default_include"])))
     names = [r.name for r in roots]
     if len(set(names)) != len(names):
         raise PriorArtError(f"prior_art.internal_roots names are not unique: {names}")
 
-    def rel(p: str) -> Path:
-        q = Path(os.path.expanduser(str(p)))
-        return q if q.is_absolute() else (project_dir / q).resolve()
-
-    return Settings(project_dir=project_dir, log=rel(block["log"]), roots=tuple(roots),
+    return Settings(project_dir=project_dir, log=at(project_dir, block["log"]), roots=tuple(roots),
                     suffixes=tuple(internal["suffixes"]), top_n=int(internal["top_n"]),
                     max_file_bytes=int(internal["max_file_bytes"]),
                     k1=float(internal["bm25"]["k1"]), b=float(internal["bm25"]["b"]),
-                    library_graph=rel(library["graph"]), library_k=int(library["k"]),
-                    design_dir=str(gate["design_dir"]), baseline=rel(gate["baseline"]),
-                    exempt_globs=tuple(gate["exempt_globs"]))
+                    library_graph=at(definer_dir, library["graph"]), library_k=int(library["k"]),
+                    design_dir=str(gate["design_dir"]), baseline=at(project_dir, gate["baseline"]),
+                    exempt_globs=tuple(gate["exempt_globs"]),
+                    verdict_ledger_without_governed=at(project_dir,
+                                                       gate["verdict_ledger_without_governed"]),
+                    defined_in=defined_in)
 
 
 def _glob_re(pattern: str) -> re.Pattern:
@@ -643,8 +738,12 @@ def addenda_of(note: Path) -> list[Path]:
     for a note without an identifier). A note is immutable once committed, so its prior-art
     section is completed, never edited, by an addendum (AD-036-R7)."""
     m = _NOTE_ID_RE.match(note.name)
-    prefix = m.group(1) if m else note.stem
-    return sorted(p for p in note.parent.glob(f"{prefix}_ADDENDUM_*.md") if p != note)
+    if m is None:
+        return sorted(p for p in note.parent.glob(f"{note.stem}_ADDENDUM_*.md") if p != note)
+    # Same identifier, with or without a date prefix: an addendum is dated the day it is written,
+    # which is rarely the base note's date.
+    return sorted(p for p in note.parent.glob("*_ADDENDUM_*.md")
+                  if p != note and (a := _NOTE_ID_RE.match(p.name)) and a.group(1) == m.group(1))
 
 
 # ----------------------------------------------------------------------------- verification
@@ -803,16 +902,27 @@ def governed_ledger(project_dir: Path, config: dict) -> Path | None:
     return p if p.parent.is_dir() else None
 
 
+def verdict_ledger(project_dir: Path, config: dict) -> Path:
+    """Where this project's AD-036-R4 verdicts live: the governed ledger when the project keeps a
+    governed graph, otherwise `gate.verdict_ledger_without_governed` (AD-036 ADDENDUM 03).
+
+    Before the fallback a project with no governed graph could not record a verdict, so once the
+    gate reached it (SQ-010 Part 0) every new design note would have been refused for good.
+    """
+    gov = governed_ledger(project_dir, config)
+    if gov is not None:
+        return gov
+    return settings(project_dir, config).verdict_ledger_without_governed
+
+
 def record_verdict(v: Verdict, project_dir: Path, config: dict) -> dict:
-    """Append the verdict to the governed ledger through squiddy's single write path (R4)."""
-    path = governed_ledger(project_dir, config)
-    if path is None:
-        raise PriorArtError("this project has no governed ledger to record a verdict in "
-                            "(governed.graph_dir in seldon.yaml); AD-036-R4 needs one")
+    """Append the verdict to the verdict ledger through squiddy's single write path (R4)."""
+    path = verdict_ledger(project_dir, config)
     try:
         from squiddy import ledger as L
     except ImportError as exc:
         raise PriorArtError(f"recording a verdict needs squiddy installed: {exc}") from exc
+    path.parent.mkdir(parents=True, exist_ok=True)
     event = L.make_event(run_id=L.new_run_id("prior_art_verify"), stage="prior_art_verify",
                          etype=VERDICT_EVENT, schema_version="1", kind="provenance", doc_id=None,
                          payload=v.as_payload(),
@@ -823,12 +933,12 @@ def record_verdict(v: Verdict, project_dir: Path, config: dict) -> dict:
 
 
 def verdicts(project_dir: Path, config: dict) -> dict:
-    """{note path: newest verdict payload per note sha256} read from the governed ledger.
+    """{note path: newest verdict payload per note sha256} read from the verdict ledger.
 
     Returns {note: {sha256: payload}} with the newest event winning for each (note, sha256).
     """
-    path = governed_ledger(project_dir, config)
-    if path is None or not path.is_file():
+    path = verdict_ledger(project_dir, config)
+    if not path.is_file():
         return {}
     with path.open(encoding="utf-8") as fh:
         return verdicts_from_lines(fh, str(path))
@@ -956,8 +1066,9 @@ def governing_notes(task_text: str, project_dir: Path, s: Settings) -> list[str]
     exempt = [_glob_re(g) for g in s.exempt_globs]
     for block in _GOVERNING_BLOCK_RE.findall(task_text):
         for ident in _ID_RE.findall(block):
-            for p in sorted((project_dir / s.design_dir).glob(f"{ident}_*.md")):
-                if not any(e.match(p.name) for e in exempt):
+            for p in sorted((project_dir / s.design_dir).glob(f"*{ident}_*.md")):
+                own = _NOTE_ID_RE.match(p.name)
+                if own and own.group(1) == ident and not any(e.match(p.name) for e in exempt):
                     found.add(p.relative_to(project_dir).as_posix())
     return sorted(found)
 

@@ -72,7 +72,8 @@ def proj(tmp_path):
                          "bm25": {"k1": 1.2, "b": 0.75}},
             "library": {"graph": str(tmp_path / "nolib"), "k": 20},
             "gate": {"design_dir": "docs/design", "baseline": "docs/design/AD-036_baseline.txt",
-                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"]},
+                     "exempt_globs": ["*_ADDENDUM_*.md", "*_erratum_*.md"],
+                     "verdict_ledger_without_governed": "state/verdicts.jsonl"},
         },
     }
     return {"dir": project, "config": config, "sha": sha, "tmp": tmp_path}
@@ -264,6 +265,33 @@ def test_an_addendum_completes_a_notes_section(proj):
     v = pa.verify_note(note, s, library=StubLibrary())
     assert v.verdict == "pass", v.problems
     assert [a["path"] for a in v.addenda] == ["docs/design/AD-099_ADDENDUM_01_receipts.md"]
+
+
+
+def test_a_date_prefixed_notes_addendum_is_read_with_it(proj):
+    """SQ-010 Part 0: squiddy names its notes `<date>_DN-NNN_<slug>.md` and their addenda
+    `<date>_DN-NNN_ADDENDUM_NN_<slug>.md`. The identifier was matched only at the start of the
+    name, so a date-prefixed note never read its addendum (DN-043 verified without its ADDENDUM 01)."""
+    s = _settings(proj)
+    note = _note(proj, "2026-10-10_DN-099_x.md", "# DN-099\n\n## Prior art\n\n### External\n\n"
+                 f'- library receipt: query "q" | release lib.json sha256:{LIB_SHA} | rows none\n'
+                 "\n### Internal\n\nSearched by reading.\n")
+    assert pa.verify_note(note, s, library=StubLibrary()).verdict == "fail"
+    _note(proj, "2026-10-11_DN-099_ADDENDUM_01_receipts.md", "# addendum\n\n## Prior art\n\n"
+          f'### Internal\n\n- internal receipt: query "unit of extraction" | repo sib@{proj["sha"]} | '
+          "hits docs/design/DN-001_unit.md:5\n")
+    _note(proj, "2026-10-11_DN-0990_ADDENDUM_01_other.md", "# another note's addendum\n")
+    v = pa.verify_note(note, s, library=StubLibrary())
+    assert v.verdict == "pass", v.problems
+    assert [a["path"] for a in v.addenda] == ["docs/design/2026-10-11_DN-099_ADDENDUM_01_receipts.md"]
+
+
+def test_a_governing_identifier_resolves_a_date_prefixed_note(proj):
+    s = _settings(proj)
+    _note(proj, "2026-10-10_DN-099_x.md", "# DN-099\n")
+    _note(proj, "2026-10-11_DN-099_ADDENDUM_01_y.md", "# addendum\n")
+    got = pa.governing_notes("# T\n\n**Governing:** DN-099.\n", proj["dir"], s)
+    assert got == ["docs/design/2026-10-10_DN-099_x.md"]
 
 
 # --------------------------------------------------------------------------------- the gate

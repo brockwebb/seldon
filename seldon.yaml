@@ -75,6 +75,7 @@ decisions:
     findings: ../squiddy/docs/findings/2026-10-03_operator_audit/probe/conflicts.jsonl
     exclusions: docs/decisions/probe_exclusions.yaml
 
+# Every other repository's prior_art block is a `ref` to this one (AD-036 ADDENDUM 03, SQ-010).
 prior_art:
   # AD-036: the prior-art receipts gate. `seldon prior-art search|verify` (seldon/core/prior_art.py).
   # Every query either arm runs, for a search, a verification or the recall control, is appended
@@ -127,6 +128,9 @@ prior_art:
     design_dir: docs/design
     baseline: docs/design/AD-036_baseline.txt
     exempt_globs: ['*_ADDENDUM_*.md', '*_erratum_*.md', '*_ERRATUM_*.md']
+    # AD-036 ADDENDUM 03: where a project with no governed graph records its verdicts, relative to
+    # that project (a project-state path). A project with a governed ledger records there instead.
+    verdict_ledger_without_governed: state/prior_art_verdicts.jsonl
 
 dispatch:
   # SEL-005 (docs/design/2026-09-15_standing_dispatcher.md "Adopting it in another project";
