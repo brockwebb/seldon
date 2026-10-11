@@ -91,7 +91,10 @@ _ROW_RE = re.compile(r"^\S+#\S+$|^\S+$")
 #: A sentence asserting that nothing was found. Allowed only beside a receipt that found nothing.
 _NO_PRIOR_ART_RE = re.compile(r"\bno\s+(?:internal\s+|external\s+)?(?:prior\s+art|precedent)\b",
                               re.IGNORECASE)
-_NOTE_ID_RE = re.compile(r"^((?:AD|DN)-\d{3})")
+#: A note's identifier, at the start of its name (seldon `AD-036_...`) or after a date prefix
+#: (squiddy `2026-10-10_DN-043_...`). SQ-010 Part 0: anchored at the start only, a date-prefixed note
+#: never found its addenda.
+_NOTE_ID_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}_)?((?:AD|DN)-\d{3})(?=_|\.md$)")
 
 
 class PriorArtError(Exception):
@@ -735,8 +738,12 @@ def addenda_of(note: Path) -> list[Path]:
     for a note without an identifier). A note is immutable once committed, so its prior-art
     section is completed, never edited, by an addendum (AD-036-R7)."""
     m = _NOTE_ID_RE.match(note.name)
-    prefix = m.group(1) if m else note.stem
-    return sorted(p for p in note.parent.glob(f"{prefix}_ADDENDUM_*.md") if p != note)
+    if m is None:
+        return sorted(p for p in note.parent.glob(f"{note.stem}_ADDENDUM_*.md") if p != note)
+    # Same identifier, with or without a date prefix: an addendum is dated the day it is written,
+    # which is rarely the base note's date.
+    return sorted(p for p in note.parent.glob("*_ADDENDUM_*.md")
+                  if p != note and (a := _NOTE_ID_RE.match(p.name)) and a.group(1) == m.group(1))
 
 
 # ----------------------------------------------------------------------------- verification
@@ -1059,8 +1066,9 @@ def governing_notes(task_text: str, project_dir: Path, s: Settings) -> list[str]
     exempt = [_glob_re(g) for g in s.exempt_globs]
     for block in _GOVERNING_BLOCK_RE.findall(task_text):
         for ident in _ID_RE.findall(block):
-            for p in sorted((project_dir / s.design_dir).glob(f"{ident}_*.md")):
-                if not any(e.match(p.name) for e in exempt):
+            for p in sorted((project_dir / s.design_dir).glob(f"*{ident}_*.md")):
+                own = _NOTE_ID_RE.match(p.name)
+                if own and own.group(1) == ident and not any(e.match(p.name) for e in exempt):
                     found.add(p.relative_to(project_dir).as_posix())
     return sorted(found)
 
