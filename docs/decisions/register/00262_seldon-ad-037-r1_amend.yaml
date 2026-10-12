@@ -1,0 +1,16 @@
+seq: 262
+event: amend
+id: seldon:AD-037-R1
+date: '2026-10-12'
+decided_by: cc:00e22dd9
+operator_stated: false
+receipts:
+- docs/evidence/qc001/statements/writer.jsonl
+- docs/evidence/qc001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (QC-001 Part B): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: 'The dispatch system shall decide every acceptance criterion that a program can decide by running that program, never by a judge reading output; each acceptance criterion in a dispatched task shall be marked either `check: <command>` or `judgment: <why no program decides it>`, a reading judge shall see only the `judgment:` criteria, and a task with an unmarked criterion shall fail registration as `criterion_unmarked`, because self-preference persists on checkable rubrics.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: cab1a09fd22341ea0a989fb757c2af61bf40542ca3132f1e2b5a7bc967f96dba
+record_hash: 7f2019719223c9984c255c2cb107c907dd4c6e01ce554b19deb9ff964fc55b89

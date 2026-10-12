@@ -1,0 +1,38 @@
+seq: 255
+event: accept
+id: seldon:AD-037-R5
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R5. A judge's calibration reports position bias, test-retest reliability and self-preference as three separate numbers.**
+    - Position bias is the ABBA flip rate.
+    - Test-retest reliability is replicate kappa.
+    - Self-preference is R3's differential.
+    - A calibration report missing any of the three is refused, and a judge without a passing report is not used.
+    - This is the mechanism that closes DN-022's correction as an AD-032 FC-26 lesson (QC-001 Part C).
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 208
+  - 213
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R5. A judge's calibration reports position bias, test-retest reliability and self-preference as three separate numbers.**
+      - Position bias is the ABBA flip rate.
+      - Test-retest reliability is replicate kappa.
+      - Self-preference is R3's differential.
+      - A calibration report missing any of the three is refused, and a judge without a passing report is not used.
+      - This is the mechanism that closes DN-022's correction as an AD-032 FC-26 lesson (QC-001 Part C).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R5
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 7fe7894e99085eccc04894f6cbd5bbc5162c5b66f8de0f7c4eb4ffe41f703447
+record_hash: a85ef8b77d17e4d6d8c4d71a9dcebeb8f8cfd86663445c05d83f94f73db05f9a

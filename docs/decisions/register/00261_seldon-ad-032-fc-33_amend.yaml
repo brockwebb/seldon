@@ -1,0 +1,16 @@
+seq: 261
+event: amend
+id: seldon:AD-032-FC-33
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+receipts:
+- docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:258
+reason: 'QC-001 Part B.2: AD-037-R10 amends FC-33''s rater rule; the operator''s 2026-10-11 rule excludes a different family by default (AD-037 section 1)'
+amendment:
+  clause: the independent rater from a different model family than the observed agent
+  text: The rater is the next tier above the observed agent (AD-037-R2), with its self-preference measured on this portfolio's work (AD-037-R3); a cross-family rater is a touchpoint-1 spend decision. FC-33 is otherwise unchanged.
+  by: seldon:AD-037-R10
+written_by: seldon decision 0.1.0
+prev_hash: 8d810ef95b4b25d3373ac5d7f617bccdda2a092e10c6ef3f35d496dcf3658308
+record_hash: cab1a09fd22341ea0a989fb757c2af61bf40542ca3132f1e2b5a7bc967f96dba

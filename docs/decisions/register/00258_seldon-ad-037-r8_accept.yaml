@@ -1,0 +1,42 @@
+seq: 258
+event: accept
+id: seldon:AD-037-R8
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R8. Station outcomes are charted per project.** Charted per project (FC-10):
+    - premise-false rate;
+    - first-article reject rate;
+    - milestone defect rate;
+    - CPI;
+    - huddles per task.
+
+    A first reading is reported, not gated.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 240
+  - 247
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R8. Station outcomes are charted per project.** Charted per project (FC-10):
+      - premise-false rate;
+      - first-article reject rate;
+      - milestone defect rate;
+      - CPI;
+      - huddles per task.
+
+      A first reading is reported, not gated.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R8
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 0966803f1238a1d22a491815c4149373cddb4018dca34a7ed8b4e759de207e16
+record_hash: f1d4ccb3ca3a353c6bdef901f745408d3d070668a696c5cdc75ca86b42acdc8b

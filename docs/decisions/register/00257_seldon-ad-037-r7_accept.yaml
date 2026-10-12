@@ -1,0 +1,34 @@
+seq: 257
+event: accept
+id: seldon:AD-037-R7
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R7. Inspection costs at most 10% of the task's estimate, reserved with the task.**
+    - The checker's calls are reserved in the task's spend reservation (FC-11).
+    - When the reserve runs low, the judgment sampling rate falls first. `check:` commands are never skipped.
+    - There is no measured basis for 10%; the actual share is charted (FC-15).
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 235
+  - 238
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R7. Inspection costs at most 10% of the task's estimate, reserved with the task.**
+      - The checker's calls are reserved in the task's spend reservation (FC-11).
+      - When the reserve runs low, the judgment sampling rate falls first. `check:` commands are never skipped.
+      - There is no measured basis for 10%; the actual share is charted (FC-15).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R7
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: bf868e84b13e97c32c74e4ef3d38b04dd696d866010abceb2f000fcd7d772dc5
+record_hash: 0966803f1238a1d22a491815c4149373cddb4018dca34a7ed8b4e759de207e16

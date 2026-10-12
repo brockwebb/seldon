@@ -1,0 +1,36 @@
+seq: 251
+event: accept
+id: seldon:AD-037-R1
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R1. A criterion that a program can decide is decided by running the program, never by a judge reading output.**
+    - Every acceptance criterion in a dispatched task is marked either `check: <command>` or `judgment: <why no program decides it>`.
+    - A reading judge sees only `judgment:` criteria.
+    - A task with an unmarked criterion fails registration as `criterion_unmarked`.
+    - Basis: S1, self-preference persists on checkable rubrics; S8.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 177
+  - 181
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R1. A criterion that a program can decide is decided by running the program, never by a judge reading output.**
+      - Every acceptance criterion in a dispatched task is marked either `check: <command>` or `judgment: <why no program decides it>`.
+      - A reading judge sees only `judgment:` criteria.
+      - A task with an unmarked criterion fails registration as `criterion_unmarked`.
+      - Basis: S1, self-preference persists on checkable rubrics; S8.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R1
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: ad2eda73a1967934e167f899c0910cd1a4a2fca04a60d59b85a8450dee7d0763
+record_hash: 6fe9f86e41b340aa53df8b35f329ce95a8bfcf8a2ca5466a899973d571f134e4

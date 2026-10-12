@@ -1,0 +1,42 @@
+seq: 259
+event: accept
+id: seldon:AD-037-R9
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R9. Parallel dispatch stays at `max_parallel: 1` in every project, ai-readiness-kg included, until R6 (a) to (d) and the dispatcher's disk preflight (SQ-010 ADDENDUM 02 D3.4) are live.**
+    - After that, a project opts in only on measured demand: on 3 of 7 days, two or more gate-clean tasks with disjoint Touches waited over 24 hours. No measured basis.
+    - Reasons:
+      - Weekly model budget, not wall-clock, is the binding constraint, and parallel sessions spend it faster.
+      - On 2026-10-11 a worktree cost 1.1 to 2.1 GiB and the disk filled.
+      - AD-034 §6 leaves Touches unenforced and semantic conflicts outside the write set unchecked.
+      - Without R6, two unsupervised sessions double the blind time.
+    - This decides the open question of ai-readiness-kg's SEL-004 opt-in: not now.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 249
+  - 256
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R9. Parallel dispatch stays at `max_parallel: 1` in every project, ai-readiness-kg included, until R6 (a) to (d) and the dispatcher's disk preflight (SQ-010 ADDENDUM 02 D3.4) are live.**
+      - After that, a project opts in only on measured demand: on 3 of 7 days, two or more gate-clean tasks with disjoint Touches waited over 24 hours. No measured basis.
+      - Reasons:
+        - Weekly model budget, not wall-clock, is the binding constraint, and parallel sessions spend it faster.
+        - On 2026-10-11 a worktree cost 1.1 to 2.1 GiB and the disk filled.
+        - AD-034 §6 leaves Touches unenforced and semantic conflicts outside the write set unchecked.
+        - Without R6, two unsupervised sessions double the blind time.
+      - This decides the open question of ai-readiness-kg's SEL-004 opt-in: not now.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R9
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: f1d4ccb3ca3a353c6bdef901f745408d3d070668a696c5cdc75ca86b42acdc8b
+record_hash: 0fc14b60941f1368d8d1f2a0dab586bb5cce9e168a5da19f5e26a43ce5022b42

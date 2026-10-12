@@ -1,0 +1,82 @@
+[
+ {
+  "id": "seldon:AD-037-R1",
+  "lines": [
+   177,
+   181
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R2",
+  "lines": [
+   183,
+   187
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R3",
+  "lines": [
+   189,
+   204
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R4",
+  "lines": [
+   206,
+   206
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R5",
+  "lines": [
+   208,
+   213
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R6",
+  "lines": [
+   215,
+   233
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R7",
+  "lines": [
+   235,
+   238
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R8",
+  "lines": [
+   240,
+   247
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R9",
+  "lines": [
+   249,
+   256
+  ],
+  "consumer": []
+ },
+ {
+  "id": "seldon:AD-037-R10",
+  "lines": [
+   258,
+   258
+  ],
+  "consumer": []
+ }
+]
