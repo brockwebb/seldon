@@ -39,7 +39,6 @@ engine:
     dispositions: [active, reference, metadata_only, "excluded:out_of_scope", "excluded:deferred", "excluded:restricted"]
     in_graph_stage: in_graph
     admitting_stage: admitting
-    incomplete_after_minutes: 10           # a local-file admission is seconds; ten minutes is 30x
 
   acquire:
     user_agent: "seldon-governed/0.1 (local files only; this graph makes no network request)"
