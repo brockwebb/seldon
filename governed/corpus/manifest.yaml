@@ -2623,9 +2623,9 @@ documents:
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: docs_design_ad_037_in_process_quality_control_for_dispatched_sessions
-    verification_method: "local governed file, sha256 ead9f4de0f13173d, 14,659 characters"
-    retrieved_date: "2026-10-11"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    verification_method: "local governed file, sha256 7b80f91c34ff8f48, 48,635 characters"
+    retrieved_date: "2026-10-12"
+    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 ead9f4de0f13173d recorded, 7b80f91c34ff8f48 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-10-12. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -2634,8 +2634,8 @@ documents:
     local_path: "../docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md"
     doc_kind: design
     provenance_flag: local_authored
-    sha256: "ead9f4de0f13173d73bbc36fa5afbeb8c1b7cc2008f44aaa966a128e2d03174e"
-    bytes: 14662
+    sha256: "7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7"
+    bytes: 48639
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
