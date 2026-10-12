@@ -1,0 +1,33 @@
+seq: 264
+event: accept
+id: seldon:AD-032-FC-26-L1
+date: '2026-10-12'
+decided_by: cc:00e22dd9
+operator_stated: false
+receipts:
+- docs/findings/2026-10-11_judge_bias_and_inprocess_qc/NOTEBOOK.md:27
+- squiddy:docs/design/2026-09-29_kill_stands_postmortem_before_any_lift.md section 1
+reason: 'Lesson of seldon:AD-032-FC-26 (QC-001 Part C.5). Defect of record: squiddy DN-022 §1, 2026-09-29: ABBA and replicate kappa reported as judge calibration; neither measures self-preference. Closed as a mechanism: seldon qc calibrate-judge and seldon.models.resolve_judge (AD-037-R5), tested in tests/test_qc_calibrate_judge.py. AD-033-R3 has no lesson kind, so the record is a requirement with its consumer.'
+kind: requirement
+status: accepted
+statement: '- squiddy `docs/design/2026-09-29_kill_stands_postmortem_before_any_lift.md` (DN-022) section 1: judge calibrated with ABBA 26 of 26 and replicate kappa 0.874 (scores) and 0.822 (preferences). **Correction recorded here:** ABBA counterbalancing measures position (order) bias and replicate kappa measures test-retest reliability. Neither measures self-preference. DN-022 itself notes the declared self-preference risk would have favoured arm T and T lost, so the bias did not flip that verdict; its size on this portfolio''s work is unmeasured.'
+source:
+  path: docs/findings/2026-10-11_judge_bias_and_inprocess_qc/NOTEBOOK.md
+  lines:
+  - 27
+  - 27
+  sha256: 1d526d502a3431684a9aa82da9f714b8197c4f9b0e4a3e7876f09abd679957e4
+  text: '- squiddy `docs/design/2026-09-29_kill_stands_postmortem_before_any_lift.md` (DN-022) section 1: judge calibrated with ABBA 26 of 26 and replicate kappa 0.874 (scores) and 0.822 (preferences). **Correction recorded here:** ABBA counterbalancing measures position (order) bias and replicate kappa measures test-retest reliability. Neither measures self-preference. DN-022 itself notes the declared self-preference risk would have favoured arm T and T lost, so the bias did not flip that verdict; its size on this portfolio''s work is unmeasured.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R5
+consumer:
+- seldon/core/qc.py
+- seldon/commands/qc.py
+- seldon/models.py
+- tests/test_qc_calibrate_judge.py
+written_by: seldon decision 0.1.0
+prev_hash: f5b10b964d3b54b698fd0145708644769ea0386da0091374500bdc757e739558
+record_hash: fdb6201994e8607027b2dcd2001742f52c17d1c11e78b7e6e06dba38abccd434

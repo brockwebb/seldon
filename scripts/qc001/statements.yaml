@@ -1,0 +1,35 @@
+# QC-001 Part B (AD-033-R8): AD-037-R1 to R10, written by one call and checked by another. SQ-010's pass reused whole
+# (HOOK-001's referent line plus SQ-010's keep-reasons instruction): same roles, transport and policy.
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)
+  setting_sources_disabled: true
+  nonessential_traffic_disabled: true
+policy:
+  in_flight: 1
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: the pilot is 2 of the 10 records, measured, before the bulk.
+pilot_records: 2
+guess_output_tokens: 250
+# QC-001's declared spend for Part B: "10 records on role register_statement, under 40k weighted" (task file, Spend
+# line). HOOK-001 and PA-001 measured about 4k weighted per record, so 10 project to about 40k; past 40k times 1.2
+# the run stops for the operator (DN-042 R-178).
+budget:
+  declared_weighted_tokens: 40000
+  band_stop: 0.20
+spacing_seconds: null

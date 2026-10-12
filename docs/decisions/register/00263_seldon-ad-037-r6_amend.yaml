@@ -1,0 +1,16 @@
+seq: 263
+event: amend
+id: seldon:AD-037-R6
+date: '2026-10-12'
+decided_by: cc:00e22dd9
+operator_stated: false
+receipts:
+- docs/evidence/qc001/statements/writer.jsonl
+- docs/evidence/qc001/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (QC-001 Part B): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: 'A dispatched session shall pass four inspection stations: (a) before launch, every factual premise in the task (a count, a path, a state, a version, an id or label assumed free) is checked against live state by command, a false premise blocks the task with an Issue naming it, and only premises no command can check go to the R2 checker; (b) in any loop over units (documents, repositories, records), the session stops after the first unit, the unit''s output is inspected per R1 and R2, and the loop continues only on a pass; (c) at each Part boundary the session appends `part_complete` naming the Part, its planned share of the task''s estimate and tokens used so far, the dispatcher computes CPI as earned value (the planned share of the completed Parts) over actual cost, runs the Part''s `check:` commands every time and reads `judgment:` outputs on a sample (R7), a CPI below 0.8 opens a huddle without stopping (a threshold with no measured basis, to be replaced by FC-15''s charted ratio once 10 tasks exist), and a failed check stops the line; (d) when any station, the session or the operator writes a session stop, the session halts at its next Part or loop boundary, the dispatcher enforces a hard stop for FC-32''s toxic class and for disk or spend ceilings, and the huddle record names the reading, the cause one level down and the gate that now prevents it.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7f2019719223c9984c255c2cb107c907dd4c6e01ce554b19deb9ff964fc55b89
+record_hash: f5b10b964d3b54b698fd0145708644769ea0386da0091374500bdc757e739558

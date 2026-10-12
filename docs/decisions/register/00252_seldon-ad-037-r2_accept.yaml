@@ -1,0 +1,36 @@
+seq: 252
+event: accept
+id: seldon:AD-037-R2
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R2. A reading judge is the next tier above the generator, in a fresh context.**
+    - The judge runs with no access to the generator's reasoning, self-assessment or chat.
+    - The `checker` role in `models/registry.yaml` maps each generator family to the next tier: haiku to sonnet, sonnet to opus, opus to fable. It is resolved through the lock (AD-035-R1), never typed.
+    - **Fable has no higher tier.** Its judge is a fresh Fable context reading an authorship-obfuscated text (S2, a partial fix). It carries the measured catch rate of R3, and R1 carries the rest.
+    - Basis: the operator's rule; S6 on capability. S1 shows this is not independence from family bias; R3 measures how much that costs.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 183
+  - 187
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R2. A reading judge is the next tier above the generator, in a fresh context.**
+      - The judge runs with no access to the generator's reasoning, self-assessment or chat.
+      - The `checker` role in `models/registry.yaml` maps each generator family to the next tier: haiku to sonnet, sonnet to opus, opus to fable. It is resolved through the lock (AD-035-R1), never typed.
+      - **Fable has no higher tier.** Its judge is a fresh Fable context reading an authorship-obfuscated text (S2, a partial fix). It carries the measured catch rate of R3, and R1 carries the rest.
+      - Basis: the operator's rule; S6 on capability. S1 shows this is not independence from family bias; R3 measures how much that costs.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R2
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 6fe9f86e41b340aa53df8b35f329ce95a8bfcf8a2ca5466a899973d571f134e4
+record_hash: 58beb031efe859f2dbaef0399bff402aade378b789818b0c9ea1671569a2684f

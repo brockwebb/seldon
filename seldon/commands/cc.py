@@ -1197,6 +1197,14 @@ def register_task_file(
     if prior_art_refusal:
         raise ValueError(f"{prior_art_refusal} File: {rel_path}")
 
+    # AD-037-R1, registration: every acceptance criterion is marked `check: <command>` or `judgment: <why no
+    # program decides it>`, BEFORE anything is created. Tasks registered before QC-001's merge are baseline
+    # (`qc.criteria_baseline` in seldon.yaml).
+    from seldon.core import criteria
+    criteria_refusal = criteria.registration_refusal(task_path, project_dir, config)
+    if criteria_refusal:
+        raise ValueError(f"{criteria_refusal} File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "

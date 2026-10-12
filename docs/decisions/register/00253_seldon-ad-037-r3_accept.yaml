@@ -1,0 +1,58 @@
+seq: 253
+event: accept
+id: seldon:AD-037-R3
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R3. Family self-preference is measured on this portfolio's work, against a pre-registered bar, and re-measured on every lock bump.**
+    - **The calibration set** is planted defects, each written twice: once into text in the generator's own style, and once into reference text not written by a model of that family (the operator's own design notes and RESULT prose he wrote).
+    - **Seeding.** The first set is seeded from this week's real defects:
+      - premises found wrong;
+      - the effort default;
+      - the unparsed ruling labels;
+      - the R-181 collision.
+    - **Reported numbers:**
+      - the catch rate on each half, with Wilson-95 intervals;
+      - their difference, which is the self-preference estimate.
+    - **The bar:** a checker serves as a reading judge for a criterion class only if its Wilson-95 lower bound on generator-style plants is at least 0.70, with n of at least 30. There is no measured basis for these numbers; FC-10 control limits replace them once 3 measurements exist.
+    - **Below the bar:**
+      - that class moves to execution checks (R1) or to operator review of aggregates;
+      - a cross-family checker is proposed only as a spend decision at operator touchpoint 1, since he has ruled out paying for a second API by default;
+      - no ensemble.
+    - Basis: S1, S3, notebook position 3.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 189
+  - 204
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R3. Family self-preference is measured on this portfolio's work, against a pre-registered bar, and re-measured on every lock bump.**
+      - **The calibration set** is planted defects, each written twice: once into text in the generator's own style, and once into reference text not written by a model of that family (the operator's own design notes and RESULT prose he wrote).
+      - **Seeding.** The first set is seeded from this week's real defects:
+        - premises found wrong;
+        - the effort default;
+        - the unparsed ruling labels;
+        - the R-181 collision.
+      - **Reported numbers:**
+        - the catch rate on each half, with Wilson-95 intervals;
+        - their difference, which is the self-preference estimate.
+      - **The bar:** a checker serves as a reading judge for a criterion class only if its Wilson-95 lower bound on generator-style plants is at least 0.70, with n of at least 30. There is no measured basis for these numbers; FC-10 control limits replace them once 3 measurements exist.
+      - **Below the bar:**
+        - that class moves to execution checks (R1) or to operator review of aggregates;
+        - a cross-family checker is proposed only as a spend decision at operator touchpoint 1, since he has ruled out paying for a second API by default;
+        - no ensemble.
+      - Basis: S1, S3, notebook position 3.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R3
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 58beb031efe859f2dbaef0399bff402aade378b789818b0c9ea1671569a2684f
+record_hash: aaec15749bf8a97a0c14efc911c5282250037605f5fc9c3b7b0cef2872ffb967

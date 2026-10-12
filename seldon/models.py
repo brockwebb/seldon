@@ -94,6 +94,10 @@ class ModelsError(Exception):
     """The registry or the lock is missing, malformed or does not answer. Fatal: no call is made."""
 
 
+class JudgeUncalibrated(ModelsError):
+    """`judge_uncalibrated`: a judge with no passing calibration report on its current lock entry (AD-037-R5)."""
+
+
 class UnknownRole(ModelsError):
     """A launcher asked for a role the registry does not hold."""
 
@@ -157,6 +161,8 @@ def load_registry(home: Path | None = None) -> dict:
         if effort not in EFFORT_LEVELS:
             raise ModelsError(f"{path}: role {name!r} effort {effort!r} is not one of "
                               f"{EFFORT_LEVELS} (AD-036-R8)")
+    _check_checker(path, data.get(CHECKER_ROLE), roles)
+    _check_calibration(path, data.get("calibration"))
     refresh_cfg = data.get("refresh")
     if not isinstance(refresh_cfg, dict):
         raise ModelsError(f"{path}: no `refresh:` block")
@@ -166,6 +172,38 @@ def load_registry(home: Path | None = None) -> dict:
     _check_documented_defaults(path, refresh_cfg["documented_default_effort"],
                                refresh_cfg["families"])
     return data
+
+
+#: AD-037-R2: the role resolved relative to a generator role, the next tier above it.
+CHECKER_ROLE = "checker"
+CALIBRATION_REQUIRED = ("report_dir", "set", "z", "defect_label", "bar")
+
+
+def _check_checker(path: Path, block, roles: dict) -> None:
+    """The `checker:` block names an effort and one tier per family, each a known family."""
+    if CHECKER_ROLE in roles:
+        raise ModelsError(f"{path}: `{CHECKER_ROLE}` is the `{CHECKER_ROLE}:` block, not a row of `roles:` (AD-037-R2)")
+    if not isinstance(block, dict):
+        raise ModelsError(f"{path}: no `{CHECKER_ROLE}:` block (AD-037-R2)")
+    if block.get("effort") not in EFFORT_LEVELS:
+        raise ModelsError(f"{path}: `{CHECKER_ROLE}.effort` must be one of {EFFORT_LEVELS}")
+    tiers = block.get("tiers")
+    if not isinstance(tiers, dict) or sorted(tiers) != sorted(FAMILY_ENV):
+        raise ModelsError(f"{path}: `{CHECKER_ROLE}.tiers` must name exactly {sorted(FAMILY_ENV)}")
+    for fam, row in tiers.items():
+        if not isinstance(row, dict) or row.get("family") not in FAMILY_ENV:
+            raise ModelsError(f"{path}: `{CHECKER_ROLE}.tiers.{fam}` needs a `family` in {sorted(FAMILY_ENV)}")
+
+
+def _check_calibration(path: Path, block) -> None:
+    """The `calibration:` block (AD-037-R3, R5): where reports live, the set, and the bar."""
+    if not isinstance(block, dict):
+        raise ModelsError(f"{path}: no `calibration:` block (AD-037-R5)")
+    missing = [k for k in CALIBRATION_REQUIRED if k not in block]
+    bar = block.get("bar") or {}
+    missing += [f"bar.{k}" for k in ("generator_catch_lower", "n_min") if k not in bar]
+    if missing:
+        raise ModelsError(f"{path}: `calibration:` lacks {missing}")
 
 
 def _check_documented_defaults(path: Path, table, families: list) -> None:
@@ -232,31 +270,79 @@ class Resolution:
     cli_version: str
     resolved_on: str
     evidence: str | None = None
+    #: AD-037-R2: a Fable checker reads an authorship-obfuscated text, since nothing sits above Fable.
+    obfuscate: bool = False
 
 
-def resolve_role(role: str, home: Path | None = None) -> Resolution:
-    """The role's family, effort, model id and the CLI that resolved it."""
+def resolve_role(role: str, home: Path | None = None, *, generator: str | None = None) -> Resolution:
+    """The role's family, effort, model id and the CLI that resolved it.
+
+    `checker` (AD-037-R2) resolves relative to the generator role whose work it reads: the next tier above that
+    role's family, from the registry's `checker.tiers`. It needs `generator`; no other role takes one."""
     home = _home(home)
-    roles = load_registry(home)["roles"]
-    if role not in roles:
-        raise UnknownRole(f"role {role!r} is not in {home / REGISTRY_FILE}; the roles are "
-                          f"{sorted(roles)} (AD-035 R1)")
+    reg = load_registry(home)
+    roles = reg["roles"]
+    obfuscate = False
+    if role == CHECKER_ROLE:
+        if not generator:
+            raise ModelsError(f"role {CHECKER_ROLE!r} resolves relative to a generator role: pass generator=<role> "
+                              f"(AD-037-R2)")
+        gen_fam = resolve_role(generator, home).family
+        tier = reg[CHECKER_ROLE]["tiers"][gen_fam]
+        fam, effort, obfuscate = tier["family"], reg[CHECKER_ROLE]["effort"], bool(tier.get("obfuscate", False))
+    else:
+        if generator is not None:
+            raise ModelsError(f"only role {CHECKER_ROLE!r} resolves relative to a generator; {role!r} was given "
+                              f"generator={generator!r}")
+        if role not in roles:
+            raise UnknownRole(f"role {role!r} is not in {home / REGISTRY_FILE}; the roles are "
+                              f"{sorted(roles)} (AD-035 R1)")
+        fam, effort = roles[role]["family"], roles[role]["effort"]
     lock = load_lock(home)
-    fam = roles[role]["family"]
     if fam not in lock["families"]:
         raise ModelsError(f"role {role!r} is family {fam!r}, which {home / LOCK_FILE} does not "
                           f"resolve; run `seldon models refresh`")
-    return Resolution(role=role, family=fam, effort=roles[role]["effort"],
+    return Resolution(role=role, family=fam, effort=effort,
                       model=lock["families"][fam]["model"],
                       cli_path=str(Path(lock["cli"]["path"]).expanduser()),
                       cli_version=str(lock["cli"]["version"]),
                       resolved_on=str(lock.get("resolved_on")),
-                      evidence=lock.get("evidence"))
+                      evidence=lock.get("evidence"), obfuscate=obfuscate)
 
 
-def resolve(role: str, home: Path | None = None) -> str:
+def resolve(role: str, home: Path | None = None, *, generator: str | None = None) -> str:
     """The model id for a role. AD-035 R1: the only way code on this machine gets one."""
-    return resolve_role(role, home).model
+    return resolve_role(role, home, generator=generator).model
+
+
+def _require_calibration(home: Path, judge_model: str, generator_model: str) -> None:
+    """Refuse a judge with no complete, passing calibration report for this judge id over this generator id."""
+    from seldon.core import qc
+    path = qc.report_path(home, judge_model, generator_model)
+    if not path.is_file():
+        raise JudgeUncalibrated(f"judge_uncalibrated: no calibration report for judge {judge_model} over generator "
+                                f"{generator_model} at {path}; run `seldon qc calibrate-judge` (AD-037-R5; a lock "
+                                f"bump voids a report, AD-035-R7)")
+    report = json.loads(path.read_text(encoding="utf-8"))
+    cfg = load_registry(home)["calibration"]
+    try:
+        ok = qc.passes(report, cfg)
+    except qc.CalibrationIncomplete as exc:
+        raise JudgeUncalibrated(f"judge_uncalibrated: {exc} ({path})") from exc
+    if not ok:
+        g = report["self_preference"]["generator"]
+        raise JudgeUncalibrated(f"judge_uncalibrated: {path} is under the bar: generator-style catch rate Wilson-95 "
+                                f"lower bound {float(g['ci95'][0]):.3f} with n {g['n']}; the bar is "
+                                f"{cfg['bar']['generator_catch_lower']} with n >= {cfg['bar']['n_min']} (AD-037-R3)")
+
+
+def resolve_judge(role: str, generator: str, home: Path | None = None) -> str:
+    """The model id for `role` used as a reading judge of `generator`'s work, only with a passing calibration report
+    for that judge id over that generator id (AD-037-R5). `role` may be `checker`, resolved over `generator`."""
+    home = _home(home)
+    judge = resolve(role, home, generator=generator if role == CHECKER_ROLE else None)
+    _require_calibration(home, judge, resolve(generator, home))
+    return judge
 
 
 def launch_env(home: Path | None = None) -> dict:

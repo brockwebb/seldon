@@ -1,0 +1,64 @@
+seq: 256
+event: accept
+id: seldon:AD-037-R6
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-037-R6. A dispatched session passes four inspection stations: premise review, first article, milestone, and andon with huddle.**
+    - **(a) Pre-dispatch premise review.**
+      - Before launch, every factual premise in the task (a count, a path, a state, a version, an id or label assumed free) is checked against live state by command.
+      - A false premise blocks the task with an Issue naming it.
+      - Only premises no command can check go to the R2 checker.
+    - **(b) First-article inspection.**
+      - In any loop over units (documents, repositories, records), the session stops after the first unit.
+      - The unit's output is inspected per R1 and R2, and the loop continues only on a pass (AS9102: objective evidence before production; the doctrine's "pilot first" made a station).
+    - **(c) Milestone sampling with earned value.**
+      - **At each Part boundary** the session appends `part_complete`, naming the Part, its planned share of the task's estimate, and tokens used so far.
+      - **The dispatcher computes CPI**, earned value over actual cost. Earned value is the planned share of the completed Parts.
+      - **It runs the Part's `check:` commands every time.** It reads `judgment:` outputs on a sample (R7).
+      - **CPI below 0.8 opens a huddle without stopping.** No measured basis; FC-15's charted ratio replaces it once 10 tasks exist.
+      - **A failed check stops the line.**
+    - **(d) Andon and huddle** (FC-28, FC-29).
+      - Any station, the session or the operator writes a session stop.
+      - The session halts at its next Part or loop boundary.
+      - The dispatcher enforces a hard stop for FC-32's toxic class and for disk or spend ceilings.
+      - The huddle record names the reading, the cause one level down and the gate that now prevents it.
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 215
+  - 233
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: |-
+    - **AD-037-R6. A dispatched session passes four inspection stations: premise review, first article, milestone, and andon with huddle.**
+      - **(a) Pre-dispatch premise review.**
+        - Before launch, every factual premise in the task (a count, a path, a state, a version, an id or label assumed free) is checked against live state by command.
+        - A false premise blocks the task with an Issue naming it.
+        - Only premises no command can check go to the R2 checker.
+      - **(b) First-article inspection.**
+        - In any loop over units (documents, repositories, records), the session stops after the first unit.
+        - The unit's output is inspected per R1 and R2, and the loop continues only on a pass (AS9102: objective evidence before production; the doctrine's "pilot first" made a station).
+      - **(c) Milestone sampling with earned value.**
+        - **At each Part boundary** the session appends `part_complete`, naming the Part, its planned share of the task's estimate, and tokens used so far.
+        - **The dispatcher computes CPI**, earned value over actual cost. Earned value is the planned share of the completed Parts.
+        - **It runs the Part's `check:` commands every time.** It reads `judgment:` outputs on a sample (R7).
+        - **CPI below 0.8 opens a huddle without stopping.** No measured basis; FC-15's charted ratio replaces it once 10 tasks exist.
+        - **A failed check stops the line.**
+      - **(d) Andon and huddle** (FC-28, FC-29).
+        - Any station, the session or the operator writes a session stop.
+        - The session halts at its next Part or loop boundary.
+        - The dispatcher enforces a hard stop for FC-32's toxic class and for disk or spend ceilings.
+        - The huddle record names the reading, the cause one level down and the gate that now prevents it.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R6
+review_only: dispatch
+written_by: seldon decision 0.1.0
+prev_hash: a85ef8b77d17e4d6d8c4d71a9dcebeb8f8cfd86663445c05d83f94f73db05f9a
+record_hash: bf868e84b13e97c32c74e4ef3d38b04dd696d866010abceb2f000fcd7d772dc5

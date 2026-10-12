@@ -1,0 +1,78 @@
+{
+ "phase": "pilot",
+ "records": 2,
+ "writer": {
+  "summary": {
+   "unit": "sel002_writer",
+   "total": 2,
+   "already_done": 0,
+   "done_this_run": 2,
+   "failed_this_run": 0,
+   "exhausted": [],
+   "pending_at_start": 2,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_writer:pilot:8fe2fd490bdd:sel002_writer_de1a2852:qc001",
+  "estimate": 5271.5,
+  "actual": 6930.1,
+  "ratio": 1.3146,
+  "by_class": {
+   "cache_read": 561,
+   "cache_write": 2992,
+   "input": 4,
+   "output": 626
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=a0ccc9ea",
+   "node": "sel002_writer_de1a2852",
+   "n": 1,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)",
+   "rate_cold": 2635.75,
+   "rate_warm": 2635.75
+  }
+ },
+ "validator": {
+  "summary": {
+   "unit": "sel002_validator",
+   "total": 2,
+   "already_done": 0,
+   "done_this_run": 2,
+   "failed_this_run": 0,
+   "exhausted": [],
+   "pending_at_start": 2,
+   "in_flight": 0,
+   "pilot": null,
+   "torn_bytes_recovered": 0
+  },
+  "job": "sel002_validator:pilot:8fe2fd490bdd:sel002_validator_b25daa06:qc001",
+  "estimate": 3877.125,
+  "actual": 4841.5,
+  "ratio": 1.2487,
+  "by_class": {
+   "cache_read": 0,
+   "cache_write": 3590,
+   "input": 4,
+   "output": 70
+  },
+  "basis": {
+   "source": "ledger",
+   "model": "sonnet",
+   "profile": "scaffold=minimal,nonessential=off,effort=low,session=fresh,system=48109227",
+   "node": "sel002_validator_b25daa06",
+   "n": 4,
+   "spacing_seconds": null,
+   "cache_window_seconds": 300.0,
+   "pricing": "every call cold (spacing outside the cache window, or not declared)",
+   "weights_basis": "Anthropic API list-price ratios (assumption; the Max plan's limit accounting is not published)",
+   "rate_cold": 1938.562,
+   "rate_warm": 1938.562
+  }
+ }
+}

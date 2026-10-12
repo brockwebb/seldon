@@ -1,0 +1,26 @@
+seq: 254
+event: accept
+id: seldon:AD-037-R4
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: '- **AD-037-R4. No same-model persona panel or debate is used as a check.** Personas of one model are one correlated instrument. Basis: S4, S5.'
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 206
+  - 206
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: '- **AD-037-R4. No same-model persona panel or debate is used as a check.** Personas of one model are one correlated instrument. Basis: S4, S5.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R4
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: aaec15749bf8a97a0c14efc911c5282250037605f5fc9c3b7b0cef2872ffb967
+record_hash: 7fe7894e99085eccc04894f6cbd5bbc5162c5b66f8de0f7c4eb4ffe41f703447

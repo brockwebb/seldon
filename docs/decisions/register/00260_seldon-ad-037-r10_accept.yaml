@@ -1,0 +1,26 @@
+seq: 260
+event: accept
+id: seldon:AD-037-R10
+date: '2026-10-11'
+decided_by: desktop
+operator_stated: false
+reason: 'QC-001 Part B: AD-037''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the squiddy/seldon Desktop session (AD-037 Status line), accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: '- **AD-037-R10. AD-032 FC-33''s perversity rater follows R2 and R3, not "a different model family".** FC-33 required a different family, which the operator''s 2026-10-11 rule excludes by default. The rater is the next tier up, with its self-preference measured per R3; a cross-family rater is a touchpoint-1 spend decision. FC-33 is otherwise unchanged.'
+source:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  lines:
+  - 258
+  - 258
+  sha256: 7b80f91c34ff8f48f897f10bc058d157f8ae9085cf17fb6a39d1574aff16a4b7
+  text: '- **AD-037-R10. AD-032 FC-33''s perversity rater follows R2 and R3, not "a different model family".** FC-33 required a different family, which the operator''s 2026-10-11 rule excludes by default. The rater is the next tier up, with its self-preference measured per R3; a cross-family rater is a touchpoint-1 spend decision. FC-33 is otherwise unchanged.'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+  anchor: AD-037-R10
+review_only: none
+written_by: seldon decision 0.1.0
+prev_hash: 0fc14b60941f1368d8d1f2a0dab586bb5cce9e168a5da19f5e26a43ce5022b42
+record_hash: 8d810ef95b4b25d3373ac5d7f617bccdda2a092e10c6ef3f35d496dcf3658308

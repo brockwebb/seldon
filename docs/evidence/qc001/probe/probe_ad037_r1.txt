@@ -1,0 +1,2 @@
+Bound by 1 accepted decision record(s), advisory until SEL-003 (0 new edge(s)):
+  seldon:AD-037-R1  [accepted]  docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md  (names it)
