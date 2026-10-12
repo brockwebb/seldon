@@ -351,3 +351,4 @@
 {"arm": "internal", "corpora": {"icsp_notebook": "68723d09c29f5be602c7caf95b1f154935dae4e3"}, "hits": 0, "purpose": "verify", "query": "pilot first checkpoint", "tool": "prior-art/1", "ts": "2026-10-12T03:56:52.635863Z"}
 {"arm": "internal", "corpora": {"wintermute": "2a78c392f4d998227d2433338ea45aee82c67f1e"}, "hits": 0, "purpose": "verify", "query": "pilot first checkpoint", "tool": "prior-art/1", "ts": "2026-10-12T03:56:52.667823Z"}
 {"arm": "internal", "corpora": {"workbench-audit": "tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412"}, "hits": 0, "purpose": "verify", "query": "pilot first checkpoint", "tool": "prior-art/1", "ts": "2026-10-12T03:56:52.673967Z"}
+{"arm": "library", "purpose": "search", "query": "self-preference judge", "release": "library_graph_20260930_m002_2026-09-30.json", "rows": 50, "sha256": "fc7f31737a682d1832e26ac72ebe5da75d054bd4e8564524ba1ed239a2576543", "tool": "prior-art/1", "ts": "2026-10-12T04:34:57.344166Z"}
