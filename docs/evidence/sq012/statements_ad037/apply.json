@@ -1,0 +1,71 @@
+{
+ "tally": {
+  "passed": 8
+ },
+ "records": [
+  {
+   "id": "seldon:AD-037-R2",
+   "outcome": "landed",
+   "statement": "The reading judge for a generator's output shall be the next tier above the generator, run in a fresh context with no access to the generator's reasoning, self-assessment or chat; the `checker` role in `models/registry.yaml` maps haiku to sonnet, sonnet to opus and opus to fable, and is resolved through the lock (AD-035-R1), never typed. Because Fable has no higher tier, its judge shall be a fresh Fable context reading an authorship-obfuscated text (S2, a partial fix), which carries the catch rate measured in R3 while R1 carries the rest, since a same-family judge is not independent of family bias and R3 measures how much that costs.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00265_seldon-ad-037-r2_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R3",
+   "outcome": "landed",
+   "statement": "The project shall measure family self-preference on this portfolio's own work against a pre-registered bar, and shall re-measure it on every lock bump, using a calibration set of planted defects each written twice (once into text in the generator's own style, once into reference text not written by a model of that family, namely the operator's own design notes and RESULT prose), seeded from this week's real defects (premises found wrong, the effort default, the unparsed ruling labels, the R-181 collision), and reporting the catch rate on each half with Wilson-95 intervals plus their difference as the self-preference estimate. A checker shall serve as a reading judge for a criterion class only if its Wilson-95 lower bound on generator-style plants is at least 0.70 with n of at least 30; these numbers have no measured basis, and FC-10 control limits replace them once 3 measurements exist. If a checker is below the bar for a criterion class, then that class shall move to execution checks (R1) or to operator review of aggregates, a cross-family checker shall be proposed only as a spend decision at operator touchpoint 1 because the operator has ruled out paying for a second API by default, and no ensemble shall be used.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00266_seldon-ad-037-r3_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R4",
+   "outcome": "landed",
+   "statement": "The dispatched-session quality control shall not use a same-model persona panel or debate as a check, because personas of one model are one correlated instrument.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00267_seldon-ad-037-r4_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R5",
+   "outcome": "landed",
+   "statement": "The judge calibration report shall give position bias (the ABBA flip rate), test-retest reliability (replicate kappa) and self-preference (the differential defined in AD-037-R3) as three separate numbers; a calibration report missing any of the three shall be refused, and a judge without a passing calibration report shall not be used.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00268_seldon-ad-037-r5_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R7",
+   "outcome": "landed",
+   "statement": "The inspection of a dispatched session shall cost at most 10% of the task's estimate, with the checker's calls reserved in the task's spend reservation (FC-11); when the reserve runs low, the judgment sampling rate shall fall first and `check:` commands shall never be skipped. The 10% figure has no measured basis, so the actual share is charted (FC-15).",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00269_seldon-ad-037-r7_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R8",
+   "outcome": "landed",
+   "statement": "The system shall chart station outcomes per project, covering the premise-false rate, the first-article reject rate, the milestone defect rate, CPI, and huddles per task (FC-10). A first reading of these charted outcomes shall be reported and shall not be used as a gate.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00270_seldon-ad-037-r8_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R9",
+   "outcome": "landed",
+   "statement": "In every project, ai-readiness-kg included, the dispatcher shall keep parallel dispatch at `max_parallel: 1` until R6 (a) to (d) and the dispatcher's disk preflight (SQ-010 ADDENDUM 02 D3.4) are live; after that, a project shall opt in only on measured demand, meaning that on 3 of 7 days two or more gate-clean tasks with disjoint Touches waited over 24 hours, and without that measured basis it shall not opt in. The reasons are that the weekly model budget, not wall-clock time, is the binding constraint and parallel sessions spend it faster; that on 2026-10-11 a worktree cost 1.1 to 2.1 GiB and the disk filled; that AD-034 \u00a76 leaves Touches unenforced and leaves semantic conflicts outside the write set unchecked; and that without R6 two unsupervised sessions double the blind time. This settles the open question of ai-readiness-kg's SEL-004 opt-in as not now.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00271_seldon-ad-037-r9_amend.yaml"
+   ]
+  },
+  {
+   "id": "seldon:AD-037-R10",
+   "outcome": "landed",
+   "statement": "The perversity rater of AD-032 FC-33 shall follow AD-037 rulings R2 and R3 (the next tier up, with its self-preference measured per R3) rather than FC-33's requirement of a different model family, because the operator's 2026-10-11 rule excludes a different family by default; a cross-family rater is a touchpoint-1 spend decision, and FC-33 is otherwise unchanged.",
+   "record": [
+    "/Users/brock/GitHub/seldon/docs/decisions/register/00272_seldon-ad-037-r10_amend.yaml"
+   ]
+  }
+ ]
+}

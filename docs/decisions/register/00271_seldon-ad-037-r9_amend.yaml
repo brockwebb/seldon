@@ -1,0 +1,16 @@
+seq: 271
+event: amend
+id: seldon:AD-037-R9
+date: '2026-10-12'
+decided_by: cc:0ba6d722
+operator_stated: false
+receipts:
+- docs/evidence/sq012/statements_ad037/writer.jsonl
+- docs/evidence/sq012/statements_ad037/validator.jsonl
+reason: 'AD-033-R8 statement pass (SQ-012 Part G, QC-001 Part B''s bulk): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: 'In every project, ai-readiness-kg included, the dispatcher shall keep parallel dispatch at `max_parallel: 1` until R6 (a) to (d) and the dispatcher''s disk preflight (SQ-010 ADDENDUM 02 D3.4) are live; after that, a project shall opt in only on measured demand, meaning that on 3 of 7 days two or more gate-clean tasks with disjoint Touches waited over 24 hours, and without that measured basis it shall not opt in. The reasons are that the weekly model budget, not wall-clock time, is the binding constraint and parallel sessions spend it faster; that on 2026-10-11 a worktree cost 1.1 to 2.1 GiB and the disk filled; that AD-034 §6 leaves Touches unenforced and leaves semantic conflicts outside the write set unchecked; and that without R6 two unsupervised sessions double the blind time. This settles the open question of ai-readiness-kg''s SEL-004 opt-in as not now.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 7fc75641edea1fe05792d82833d9a6aee7e228e0780ca67b9684219ed8312e96
+record_hash: 7a7ff2b7a3ac3c3bf32f6a53402732456e25cd8b29586eacc532eaae95354bcb

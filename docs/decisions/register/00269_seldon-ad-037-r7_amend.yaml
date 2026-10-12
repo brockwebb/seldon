@@ -1,0 +1,16 @@
+seq: 269
+event: amend
+id: seldon:AD-037-R7
+date: '2026-10-12'
+decided_by: cc:0ba6d722
+operator_stated: false
+receipts:
+- docs/evidence/sq012/statements_ad037/writer.jsonl
+- docs/evidence/sq012/statements_ad037/validator.jsonl
+reason: 'AD-033-R8 statement pass (SQ-012 Part G, QC-001 Part B''s bulk): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: The inspection of a dispatched session shall cost at most 10% of the task's estimate, with the checker's calls reserved in the task's spend reservation (FC-11); when the reserve runs low, the judgment sampling rate shall fall first and `check:` commands shall never be skipped. The 10% figure has no measured basis, so the actual share is charted (FC-15).
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: cc247fff02084c3788cc61e40a8632dbcc65323cb3431a6b7661943e4b4e2dee
+record_hash: 789cf2f5de5b05b1d3cb385ea3b5956910ce1ed77179a136ee78dcdef9191ed9

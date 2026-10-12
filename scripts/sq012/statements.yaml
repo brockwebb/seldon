@@ -1,0 +1,36 @@
+# SQ-012 Part G (AD-033-R8): AD-037-R2 to R5 and R7 to R10, the eight QC-001 Part B left verbatim. QC-001's
+# config (scripts/qc001/statements.yaml) with two changes, below: the pilot is the whole pass, and the budget.
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)
+  setting_sources_disabled: true
+  nonessential_traffic_disabled: true
+policy:
+  in_flight: 1
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: QC-001's pilot (R1 and R6) measured 5.9k weighted per record; these eight are the bulk it
+# projected, run as one measured pass.
+pilot_records: 8
+guess_output_tokens: 250
+# SQ-012's declared spend for Part G: "Part G's eight AD-033-R8 statements, about 50k weighted on role
+# register_statement, declared here so the governor's band covers them" (task file, Spend line). QC-001's governor
+# projected 50.3k for them from its pilot. Past 50k times 1.2 the run stops for the operator (DN-042 R-178).
+budget:
+  declared_weighted_tokens: 50000
+  band_stop: 0.20
+spacing_seconds: null

@@ -1,0 +1,16 @@
+seq: 268
+event: amend
+id: seldon:AD-037-R5
+date: '2026-10-12'
+decided_by: cc:0ba6d722
+operator_stated: false
+receipts:
+- docs/evidence/sq012/statements_ad037/writer.jsonl
+- docs/evidence/sq012/statements_ad037/validator.jsonl
+reason: 'AD-033-R8 statement pass (SQ-012 Part G, QC-001 Part B''s bulk): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: The judge calibration report shall give position bias (the ABBA flip rate), test-retest reliability (replicate kappa) and self-preference (the differential defined in AD-037-R3) as three separate numbers; a calibration report missing any of the three shall be refused, and a judge without a passing calibration report shall not be used.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 19d880be3fa73812a7a2a9fa5557debfe6009b1883b8c8d4644bd0b168901b9d
+record_hash: cc247fff02084c3788cc61e40a8632dbcc65323cb3431a6b7661943e4b4e2dee

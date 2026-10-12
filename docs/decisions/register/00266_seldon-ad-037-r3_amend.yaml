@@ -1,0 +1,16 @@
+seq: 266
+event: amend
+id: seldon:AD-037-R3
+date: '2026-10-12'
+decided_by: cc:0ba6d722
+operator_stated: false
+receipts:
+- docs/evidence/sq012/statements_ad037/writer.jsonl
+- docs/evidence/sq012/statements_ad037/validator.jsonl
+reason: 'AD-033-R8 statement pass (SQ-012 Part G, QC-001 Part B''s bulk): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: The project shall measure family self-preference on this portfolio's own work against a pre-registered bar, and shall re-measure it on every lock bump, using a calibration set of planted defects each written twice (once into text in the generator's own style, once into reference text not written by a model of that family, namely the operator's own design notes and RESULT prose), seeded from this week's real defects (premises found wrong, the effort default, the unparsed ruling labels, the R-181 collision), and reporting the catch rate on each half with Wilson-95 intervals plus their difference as the self-preference estimate. A checker shall serve as a reading judge for a criterion class only if its Wilson-95 lower bound on generator-style plants is at least 0.70 with n of at least 30; these numbers have no measured basis, and FC-10 control limits replace them once 3 measurements exist. If a checker is below the bar for a criterion class, then that class shall move to execution checks (R1) or to operator review of aggregates, a cross-family checker shall be proposed only as a spend decision at operator touchpoint 1 because the operator has ruled out paying for a second API by default, and no ensemble shall be used.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: af3713dd660e058d24d0d42ba68f37f6f1dd5665095a53ac2e689c534e905273
+record_hash: e505396fa264bfbdc81376503b287aae25f7a483212512ae9eabf2f2bc622428
