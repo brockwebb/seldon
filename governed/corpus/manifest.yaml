@@ -131,8 +131,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_phase_c_closure
     verification_method: "local governed file, sha256 6d45064aeef0d547, 8,076 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_phase_c_closure.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-11"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-11."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -2140,6 +2140,521 @@ documents:
     provenance_flag: local_authored
     sha256: "bcac76bd28325fef5058ea2a4a220667d9251cdd64adecf54713d78325942df9"
     bytes: 39543
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_04_sel_002_addendum_01_decision_label_and_r14
+    verification_method: "local governed file, sha256 b11b947d14ad829a, 896 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-002 ADDENDUM 01: AD-033-R10 in Part A'
+    source_url: cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md
+    local_path: "../cc_tasks/2026-10-04_SEL-002_ADDENDUM_01_decision_label_and_r14.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b11b947d14ad829a5050249ed90b6229e320a307b547b48e398191bb3f743a51"
+    bytes: 896
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_04_sel_002_addendum_02_store_of_truth_settled
+    verification_method: "local governed file, sha256 84a0e008b42a107a, 1,812 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-002 ADDENDUM 02: AD-033-R11, the store-of-truth question closed'
+    source_url: cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md
+    local_path: "../cc_tasks/2026-10-04_SEL-002_ADDENDUM_02_store_of_truth_settled.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "84a0e008b42a107a946b0419b44948284ec7b843f3420de28438b76d9485df78"
+    bytes: 1812
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_04_sel_002_decision_register_baseline_db1
+    verification_method: "local governed file, sha256 307c3bcc1a79f315, 7,427 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-002: AD-033 built. One decision register per repository, one write path, baseline DB-1 seeded from the probe, the 45 conflicts resolved as records, the probe re-run clean'
+    source_url: cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md
+    local_path: "../cc_tasks/2026-10-04_SEL-002_decision_register_baseline_db1.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "307c3bcc1a79f3152fbc035ec780af236e4411a99fe3d8a6805b6793f698cbb7"
+    bytes: 7427
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_04_sel_003_phase_1b_on_the_register
+    verification_method: "local governed file, sha256 2e971fed2aa16822, 4,427 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-04_SEL-003_phase_1b_on_the_register.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-003: AD-031 Phase 1b on the decision register. Three arms (overlap, hybrid, full register) against the frozen bar, on the gold sets SEL-001 drew'
+    source_url: cc_tasks/2026-10-04_SEL-003_phase_1b_on_the_register.md
+    local_path: "../cc_tasks/2026-10-04_SEL-003_phase_1b_on_the_register.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "2e971fed2aa168222728e17abf4bb1999a756a026b333e37b0b9eb171a631af7"
+    bytes: 4427
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_07_sel_004_worktree_per_task_dispatch
+    verification_method: "local governed file, sha256 2121cbe47de6301f, 5,662 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-004: the dispatcher runs independent tasks in parallel, each in its own git worktree, with independence declared by resource and never inferred from the precedes graph'
+    source_url: cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch.md
+    local_path: "../cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "2121cbe47de6301f10d6125a93a8e356de3be409263c9fff6e6293c84d2447c9"
+    bytes: 5663
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_07_sel_004_worktree_per_task_dispatch_result
+    verification_method: "local governed file, sha256 e1cc3aefc09b6109, 6,368 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT — SEL-004: worktree-per-task dispatch, independence declared by resource (AD-034)'
+    source_url: cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch_RESULT.md
+    local_path: "../cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "e1cc3aefc09b6109ce4388af4e28dfdedf174d8d3b89eea2d3d96dcad7d8ae2e"
+    bytes: 6374
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_hook_001_commit_gate_is_a_hook_not_a_protocol
+    verification_method: "local governed file, sha256 ce92ed555761ef83, 4,069 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'HOOK-001: the commit gate runs as a git hook, and the three refused register statements are rewritten'
+    source_url: cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol.md
+    local_path: "../cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "ce92ed555761ef83d58f083b38ef2692c6a14c5417dc769522c6a581f198da2a"
+    bytes: 4070
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_hook_001_commit_gate_is_a_hook_not_a_protocol_result
+    verification_method: "local governed file, sha256 7b8c80356b193435, 5,084 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: HOOK-001, the commit gate is a git hook; the three refused register statements'
+    source_url: cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol_RESULT.md
+    local_path: "../cc_tasks/2026-10-09_HOOK-001_commit_gate_is_a_hook_not_a_protocol_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "7b8c80356b193435f7ddaab8969c690ddb4626200b9cc0e76526f3c04f279413"
+    bytes: 5085
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_model_001_config_driven_model_selection
+    verification_method: "local governed file, sha256 3394b6e7204e01ad, 5,423 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'MODEL-001: model selection is config-driven, locked and receipted, on every launcher on this machine'
+    source_url: cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection.md
+    local_path: "../cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "3394b6e7204e01adc227d7d598ed4abb9fa58590cc9286cdf2793f04d1ae5ebb"
+    bytes: 5424
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_model_001_config_driven_model_selection_result
+    verification_method: "local governed file, sha256 6b6a60feb6476df6, 6,291 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: MODEL-001, model selection config-driven, locked and receipted (AD-035)'
+    source_url: cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md
+    local_path: "../cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6b6a60feb6476df60280d996245705b388deedca39f1f95da4dd838fb2c27169"
+    bytes: 6295
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_model_002_explicit_effort_hermetic_model_tests
+    verification_method: "local governed file, sha256 90007a8b53d3cf8b, 4,622 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_MODEL-002_explicit_effort_hermetic_model_tests.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'MODEL-002: effort is explicit per role, tests never call a model unasked, icsp CI runs the model gates'
+    source_url: cc_tasks/2026-10-09_MODEL-002_explicit_effort_hermetic_model_tests.md
+    local_path: "../cc_tasks/2026-10-09_MODEL-002_explicit_effort_hermetic_model_tests.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "90007a8b53d3cf8b5f3e2d22881f2d16434dd56944d3a513e6e7e61821360fa3"
+    bytes: 4623
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_pa_001_prior_art_receipts_gate
+    verification_method: "local governed file, sha256 49fc83a2a80c4084, 5,919 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'PA-001: the prior-art receipts gate (AD-036), declared effort, hermetic tests, and the AD-035 records the register cannot see'
+    source_url: cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate.md
+    local_path: "../cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "49fc83a2a80c40845812f3a06140bcfbba7344db5a955d4c288a5a65b5bfa6ff"
+    bytes: 5921
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_pa_001_prior_art_receipts_gate_result
+    verification_method: "local governed file, sha256 1a0c92c762e8e541, 5,387 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: PA-001, the prior-art receipts gate (AD-036), declared effort, hermetic tests, AD-035 records'
+    source_url: cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate_RESULT.md
+    local_path: "../cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "1a0c92c762e8e541a0f36943cb6f4625d8cb4ff44625185f3bcea6ceed822572"
+    bytes: 5388
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_sel_005_standing_dispatcher_for_seldon_and_squiddy
+    verification_method: "local governed file, sha256 1233737ba0ad87a9, 3,264 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-005: run the standing dispatcher for seldon and squiddy, so registered tasks launch without a pasted line'
+    source_url: cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy.md
+    local_path: "../cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "1233737ba0ad87a9b2440728bf0a6599391ff5d9c1e177f128cb66007117fff7"
+    bytes: 3265
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_09_sel_005_standing_dispatcher_for_seldon_and_squiddy_result
+    verification_method: "local governed file, sha256 0dfde5a050522deb, 2,948 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: SEL-005, the standing dispatcher runs for seldon and squiddy'
+    source_url: cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy_RESULT.md
+    local_path: "../cc_tasks/2026-10-09_SEL-005_standing_dispatcher_for_seldon_and_squiddy_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "0dfde5a050522debea5c12523fd84b4d652f939528b04cb54a555224c90fd720"
+    bytes: 2948
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_11_qc_001_ad037_receipts_records_judge_calibration_mechanism_filing
+    verification_method: "local governed file, sha256 0adc63ec67869320, 7,931 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'QC-001: AD-037''s receipts and register records, the judge-calibration mechanism (FC-26 lesson for DN-022), criterion marking, and filing the 2026-10-11 notebook'
+    source_url: cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing.md
+    local_path: "../cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "0adc63ec6786932069b861d609c2f9229d05a8c19158c06c91415e511c92bc00"
+    bytes: 7935
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_033_decision_register
+    verification_method: "local governed file, sha256 5d57fe89ce8c0358, 22,826 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-033_decision_register.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-033: One decision register. Decisions are records with a lifecycle, kept in each repository, projected into Seldon, and measured before they are consumed at dispatch'
+    source_url: docs/design/AD-033_decision_register.md
+    local_path: "../docs/design/AD-033_decision_register.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "5d57fe89ce8c035858ba696318cd02340ec329c2f1e7a40b579e0c411c6efbb3"
+    bytes: 22826
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_034_worktree_per_task_dispatch
+    verification_method: "local governed file, sha256 1b3ee46fe3701cdd, 12,673 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-034_worktree_per_task_dispatch.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-034: Parallel dispatch. A task runs in its own git worktree when its declared resources are disjoint from every running task''s; independence is declared, never inferred'
+    source_url: docs/design/AD-034_worktree_per_task_dispatch.md
+    local_path: "../docs/design/AD-034_worktree_per_task_dispatch.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "1b3ee46fe3701cdd1679772d02eb1555e30a11acd8237fa104a66114c52b23c2"
+    bytes: 12676
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_035_addendum_01_prior_art_verified
+    verification_method: "local governed file, sha256 b0d71a1bfb204d63, 3,688 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-035_ADDENDUM_01_prior_art_verified.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-035 ADDENDUM 01: its prior-art section, verified (AD-036-R7)'
+    source_url: docs/design/AD-035_ADDENDUM_01_prior_art_verified.md
+    local_path: "../docs/design/AD-035_ADDENDUM_01_prior_art_verified.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "b0d71a1bfb204d63f4beabdd53ffbad712ab921d31e2e978e9c1180b9e7eb916"
+    bytes: 3688
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_035_config_driven_model_selection
+    verification_method: "local governed file, sha256 868a0373a135b9df, 7,131 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-035_config_driven_model_selection.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-035: Model selection is config-driven, locked, and receipted'
+    source_url: docs/design/AD-035_config_driven_model_selection.md
+    local_path: "../docs/design/AD-035_config_driven_model_selection.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "868a0373a135b9df8ff46a645e49f0d7e73e6534e13453aaa3f40f428ca662f8"
+    bytes: 7131
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_035_erratum_01_prior_art_overstated
+    verification_method: "local governed file, sha256 c5a96263a4eb97f2, 2,730 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-035_erratum_01_prior_art_overstated.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-035 erratum 01: section 2''s internal search was overstated, and the library was not consulted'
+    source_url: docs/design/AD-035_erratum_01_prior_art_overstated.md
+    local_path: "../docs/design/AD-035_erratum_01_prior_art_overstated.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "c5a96263a4eb97f2d5fca66627ea4995610504801a42a71d34f21cd19df5e4d8"
+    bytes: 2730
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_036_addendum_01_self_test
+    verification_method: "local governed file, sha256 eba78b5f8a18346b, 8,748 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-036_ADDENDUM_01_self_test.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-036 ADDENDUM 01: the receipt grammar, two departures, and the self-test (R7)'
+    source_url: docs/design/AD-036_ADDENDUM_01_self_test.md
+    local_path: "../docs/design/AD-036_ADDENDUM_01_self_test.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "eba78b5f8a18346be8be5fd862adc1b4129ca65f5e5f5ff95fa72f1655098755"
+    bytes: 8748
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_036_addendum_02_commit_hook
+    verification_method: "local governed file, sha256 e0057e385995b538, 8,803 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-036_ADDENDUM_02_commit_hook.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-036 ADDENDUM 02: the commit point of R4 is a git hook'
+    source_url: docs/design/AD-036_ADDENDUM_02_commit_hook.md
+    local_path: "../docs/design/AD-036_ADDENDUM_02_commit_hook.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "e0057e385995b53836b867caf38eb5c09be4208f741e99929c81fb4d845e47ff"
+    bytes: 8803
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_036_addendum_03_prior_art_by_reference
+    verification_method: "local governed file, sha256 4a91d1503e41de4f, 7,577 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-036 ADDENDUM 03: one prior-art definition, referenced by every repository; a verdict ledger for a project with no governed graph'
+    source_url: docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md
+    local_path: "../docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "4a91d1503e41de4f9ca9d50dda904e17d8903a3ab844a16e01176f4f6a3c08ea"
+    bytes: 7577
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_036_prior_art_receipts_gate
+    verification_method: "local governed file, sha256 1e88beac53c61d5d, 13,854 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-036_prior_art_receipts_gate.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-036: A design note carries a two-part prior-art section made of receipts, and a note without one cannot be committed or cited'
+    source_url: docs/design/AD-036_prior_art_receipts_gate.md
+    local_path: "../docs/design/AD-036_prior_art_receipts_gate.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "1e88beac53c61d5d0033415c8ca5f04218d8febea9610edf46a742db798e0f91"
+    bytes: 13862
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_037_in_process_quality_control_for_dispatched_sessions
+    verification_method: "local governed file, sha256 ead9f4de0f13173d, 14,659 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-037: In-process quality control for dispatched sessions. Checks run by execution first; a reading judge is the next tier up and is calibrated for self-preference; four inspection stations sit inside every long session'
+    source_url: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+    local_path: "../docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "ead9f4de0f13173d73bbc36fa5afbeb8c1b7cc2008f44aaa966a128e2d03174e"
+    bytes: 14662
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_10_04_sel_002_decision_register_db1
+    verification_method: "local governed file, sha256 ae14aa1f3956f7bf, 3,010 characters"
+    retrieved_date: "2026-10-11"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-10-04_SEL-002_decision_register_db1.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-12."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Handoff: SEL-002, the decision register and baseline DB-1 (CC, 2026-10-04)'
+    source_url: handoffs/2026-10-04_SEL-002_decision_register_db1.md
+    local_path: "../handoffs/2026-10-04_SEL-002_decision_register_db1.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "ae14aa1f3956f7bf643bb105f86b3a65685fde91245b3f178b335a439229daae"
+    bytes: 3010
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
