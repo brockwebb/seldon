@@ -44,6 +44,7 @@ from seldon.config import (
     bind_process_session, get_current_session, get_neo4j_driver, load_project_config,
 )
 from seldon.core import cadence as C
+from seldon.core import qc
 from seldon.core import dispatch as D
 from seldon.core.artifacts import transition_task
 from seldon.core.events import append_event, make_event
@@ -751,6 +752,16 @@ def _commit_registration_records(project_dir, store) -> dict | None:
 
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
+    if cfg["max_parallel"] > 1 and not qc.parallel_opted_in(project_dir, config):
+        # AD-037-R9: parallel dispatch stays at 1 until R6's stations and the disk preflight are live; a project
+        # opts in only by an accepted record anchored at AD-037-R9 naming it. The dispatcher refuses the pass (no
+        # launch), the way it refuses an inherited API key: exit 0, a refusal event, and the reason on stderr.
+        _emit(project_dir, session_id, D.EVENT_REFUSED,
+              {"task_id": None, "reason": "parallel_not_opted_in", "max_parallel": cfg["max_parallel"]})
+        click.echo(f"refused: dispatch.max_parallel is {cfg['max_parallel']} and no accepted record anchored at "
+                   f"AD-037-R9 names {Path(project_dir).resolve().name!r} (AD-037-R9: parallel dispatch stays at 1)",
+                   err=True)
+        return
     if cfg["max_parallel"] > 1:
         # SEL-004 (AD-034): worktree per task. Opt-in; at the default of 1 the code below is
         # the pass, unchanged, and `tests/test_dispatch_serial_transcript.py` holds it to the

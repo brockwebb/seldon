@@ -456,3 +456,11 @@ def test_a_supervisor_killed_alone_has_its_orphaned_session_terminated(
     assert fin["outcome"] == "holder_gone" and fin["orphaned_session_terminated"] is True
     _wait(lambda: not D.pid_alive(session), "orphaned session to exit", timeout=20)
     assert task_states(neo4j_driver)["a"] == "blocked"
+
+
+@pytest.fixture(autouse=True)
+def _parallel_opted_in(monkeypatch):
+    """SEL-004's worktree mechanics are under test here, not AD-037-R9's hold: this stands in for an accepted opt-in
+    record naming the scaffold project (the hold itself is `tests/test_dispatch_parallel_held.py`)."""
+    from seldon.core import qc
+    monkeypatch.setattr(qc, "parallel_opted_in", lambda project_dir, config: True)

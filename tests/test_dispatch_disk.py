@@ -221,3 +221,11 @@ def test_a_pass_launching_several_worktrees_measures_again_before_each(tmp_path,
     assert len(launched) == 1 and "cc_tasks/a.md" in launched[0], res.output
     assert "disk_short" in res.output and "cc_tasks/b.md" in res.output
     _wait_settled(p, neo4j_driver, ["a"])
+
+
+@pytest.fixture(autouse=True)
+def _parallel_opted_in(monkeypatch):
+    """The disk preflight of SEL-004's parallel pass is under test here, not AD-037-R9's hold: this stands in for an
+    accepted opt-in record naming the scaffold project (the hold itself is `tests/test_dispatch_parallel_held.py`)."""
+    from seldon.core import qc
+    monkeypatch.setattr(qc, "parallel_opted_in", lambda project_dir, config: True)

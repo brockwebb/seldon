@@ -231,6 +231,26 @@ def parallel_opt_ins(records) -> set[str]:
     return out
 
 
+#: This repository: AD-037 and its register live here, so the dispatcher of any project reads its opt-ins from here too.
+SELDON_ROOT = Path(__file__).resolve().parents[2]
+
+
+def parallel_opted_in(project_dir: Path, config: dict) -> bool:
+    """AD-037-R9 AT THE DISPATCHER (QC-001 premise 7: the hold was a test, not a refusal). True when an accepted record
+    anchored at AD-037-R9 names this project in its scope. Records are read from this project's register and its
+    imports, and from seldon's register, where AD-037 lives; a project with no register of its own reads seldon's."""
+    from seldon.core import decisions
+    repo = Path(project_dir).resolve().name
+    seldon_cfg = yaml.safe_load((SELDON_ROOT / "seldon.yaml").read_text(encoding="utf-8")) or {}
+    recs = []
+    for root, cfg in ((Path(project_dir), config or {}), (SELDON_ROOT, seldon_cfg)):
+        if decisions.settings(root, cfg) is None:
+            continue
+        u = decisions.universe(root, cfg)
+        recs += [r for rp in u.scope_repos() for r in u.records(rp).values()]
+    return repo in parallel_opt_ins(recs)
+
+
 def parallel_findings(seldon_yaml: Path, opted_in: set[str]) -> list[str]:
     """A `dispatch:` block whose `max_parallel` is above 1 for a repository with no opt-in record (AD-037-R9)."""
     cfg = yaml.safe_load(Path(seldon_yaml).read_text(encoding="utf-8")) or {}
