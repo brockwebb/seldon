@@ -28,3 +28,5 @@
 7. R9's hold is enforced by the test, not by the dispatcher: SEL-004's tests build parallel configs with no opt-in record.
 
 **Tokens and model:** Claude Opus 5.5. About 0.32M uncached (input plus cache writes plus output) against the 3M estimate, plus 45.2M cache reads, all from this session's transcript; plus the statement pilot's 11.8k weighted (Sonnet, role `register_statement`).
+
+**Erratum, 2026-10-12, after completion.** Part D's schema change (`load_registry` requires `checker:` and `calibration:`) failed squiddy's recorded pass on b36c413: 55 failures per seed. Squiddy's `tests/fixtures/model001/registry.yaml` was a static byte copy of this registry at 3500b54, while its suite imports this checkout. The fix was a re-copy at fe19900 with its pin moved (squiddy 5359789). Arnold, ai-readiness-kg and icsp_notebook copy the live registry when their tests run, so they were not affected. A registry schema change here should search the consumers for static copies before it lands.
