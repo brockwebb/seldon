@@ -176,7 +176,10 @@ dispatch:
   # The staleness alarm: one `dispatch_stuck` event per streak of this many passes refused on the
   # same criterion. NO MEASURED BASIS; ai-readiness-kg's value (fifteen minutes at 300 s).
   stuck_after_passes: 3
-  # AD-034: one task at a time until a project opts into worktrees deliberately.
+  # AD-034: one task at a time until a project opts into worktrees deliberately. AD-037-R9 holds it at 1 in every
+  # project until AD-037-R6's four stations and the dispatcher's disk preflight are live; after that a project opts
+  # in only on measured demand, by an accepted register record anchored at AD-037-R9 that names it in its scope
+  # (seldon tests/test_dispatch_parallel_held.py fails otherwise).
   max_parallel: 1
   # SEL-005: the launchd job that runs the passes (scripts/jobs/com.brock.seldon-dispatch.plist,
   # installed by symlink). `seldon go` reports `dispatch: on` only while it is loaded.
@@ -192,3 +195,8 @@ jobs:
     log_max_line_chars: 2000
     log_max_run_bytes: 2097152
     log_retention_days: 30
+
+# AD-037-R1 (QC-001 Part E): `seldon cc register` refuses a task whose acceptance criteria are not each marked
+# `check: <command>` or `judgment: <why no program decides it>`. Tasks registered before QC-001's merge are baseline.
+qc:
+  criteria_baseline: docs/evidence/qc001/criteria_baseline.txt

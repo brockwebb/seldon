@@ -158,6 +158,32 @@ roles:
       this role now run at one level; they stay two roles because each is a frozen instrument
       and a change to either is a re-pilot of that one (AD-035 R7).
 
+# AD-037-R2: the reading judge is the next tier above the generator, in a fresh context. Not a row of `roles:`,
+# because it has no family of its own: `seldon.models.resolve("checker", generator=<role>)` maps the generator role's
+# family through `tiers` and reads the id from the lock. Fable has no higher tier: its checker is a fresh Fable context
+# reading an authorship-obfuscated text (S2, Mahbub and Feng 2026: a partial fix), and R3's measured catch rate
+# carries the rest. `effort: high` is the level the portfolio's judges run at (`judge`, `demand_judge`).
+checker:
+  effort: high
+  tiers:
+    haiku: {family: sonnet}
+    sonnet: {family: opus}
+    opus: {family: fable}
+    fable: {family: fable, obfuscate: true}
+
+# AD-037-R3 and R5: judge calibration. `seldon qc calibrate-judge` writes one report per (judge id, generator id)
+# under `report_dir`, so a lock bump of either voids it (AD-035-R7), and `seldon.models.resolve_judge` refuses a judge
+# without a complete report that meets `bar`. The bar has no measured basis (AD-037-R3); FC-10 control limits replace
+# it once three measurements exist. `z` is the two-sided 95% normal quantile.
+calibration:
+  report_dir: calibration/reports
+  set: calibration/set.yaml
+  z: 1.959964
+  defect_label: defect
+  bar:
+    generator_catch_lower: 0.70
+    n_min: 30
+
 # `seldon models refresh` (AD-035 R2). Every value it uses is here, so a change is an edit.
 refresh:
   # The npm package whose newest release is Anthropic's own alias resolver.

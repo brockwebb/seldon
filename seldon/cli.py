@@ -25,6 +25,7 @@ from seldon.commands.events import events_group
 from seldon.commands.dispatch import dispatch_group
 from seldon.commands.models import models_group
 from seldon.commands.prior_art import prior_art_group
+from seldon.commands.qc import qc_group
 from seldon.commands.hooks import hooks_group
 
 
@@ -62,3 +63,4 @@ main.add_command(cadence_group, name="cadence")
 main.add_command(models_group, name="models")
 main.add_command(prior_art_group, name="prior-art")
 main.add_command(hooks_group, name="hooks")
+main.add_command(qc_group, name="qc")

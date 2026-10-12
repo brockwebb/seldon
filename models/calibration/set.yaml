@@ -1,0 +1,369 @@
+# The judge-calibration set (AD-037-R3), seeded by QC-001 Part C.3 from scripts/qc001/seed_calibration_set.py.
+# Do not edit by hand: change the script and re-run it. Generator halves are slots QC-002 fills.
+schema: 1
+criteria:
+  premise_found_wrong: Every count, date, version or state the passage asserts agrees with what the passage itself lists or
+    reports elsewhere.
+  implicit_default: Every setting a reported result depends on is stated with its value, not left to an unstated default.
+  unparsed_label: Every reference label in the passage uses the one label form the passage uses for the rest.
+  label_collision: Every numbered label in the passage names exactly one item.
+  unbounded_resource: Every iterative or repeated procedure the passage describes states its bound.
+items:
+- id: premise-model001-inventory
+  defect_class: premise_found_wrong
+  receipt: seldon:cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md:38
+  defect: MODEL-001's inventory counted 13 ai-readiness-kg launchers where there was 1 exec site.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2024-05-17_arXiv_1701_00160
+      title: 'NIPS 2016 Tutorial: Generative Adversarial Networks'
+      publication_date: '2016-12-31'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: 'This report summarizes the tutorial presented by the author at NIPS 2016 on generative adversarial networks
+      (GANs). The tutorial describes: (1) Why generative modeling is a topic worth studying, (2) how generative models work,
+      and how GANs compare to other generative models, (3) the details of how GANs work, (4) research frontiers in GANs, and
+      (5) state-of-the-art image models that combine GANs with other methods. Finally, the tutorial contains three exercises
+      for readers to complete, and the solutions to these exercises.'
+    planted: 'This report summarizes the tutorial presented by the author at NIPS 2016 on generative adversarial networks
+      (GANs). The tutorial describes six topics: (1) Why generative modeling is a topic worth studying, (2) how generative
+      models work, and how GANs compare to other generative models, (3) the details of how GANs work, (4) research frontiers
+      in GANs, and (5) state-of-the-art image models that combine GANs with other methods. Finally, the tutorial contains
+      three exercises for readers to complete, and the solutions to these exercises.'
+    plant:
+      from: 'The tutorial describes:'
+      to: 'The tutorial describes six topics:'
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: premise-model001-import
+  defect_class: premise_found_wrong
+  receipt: seldon:cc_tasks/2026-10-09_MODEL-001_config_driven_model_selection_RESULT.md:41
+  defect: MODEL-001 assumed arnold's and squiddy's environments could import seldon; they could not.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2026-02-22_arXiv_2112_09332
+      title: 'WebGPT: Browser-assisted question-answering with human feedback'
+      publication_date: '2021-12-17'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: We fine-tune GPT-3 to answer long-form questions using a text-based web-browsing environment, which allows the
+      model to search and navigate the web. By setting up the task so that it can be performed by humans, we are able to train
+      models on the task using imitation learning, and then optimize answer quality with human feedback. To make human evaluation
+      of factual accuracy easier, models must collect references while browsing in support of their answers. We train and
+      evaluate our models on ELI5, a dataset of questions asked by Reddit users. Our best model is obtained by fine-tuning
+      GPT-3 using behavior cloning, and then performing rejection sampling against a reward model trained to predict human
+      preferences. This model's answers are preferred by humans 56% of the time to those of our human demonstrators, and 69%
+      of the time to the highest-voted answer from Reddit.
+    planted: We fine-tune GPT-3 to answer long-form questions using a text-based web-browsing environment, which allows the
+      model to search and navigate the web. By setting up the task so that it can be performed by humans, we are able to train
+      models on the task using imitation learning, and then optimize answer quality with human feedback. To make human evaluation
+      of factual accuracy easier, models must collect references while browsing in support of their answers. We train and
+      evaluate our models on ELI5, a dataset of questions asked by Reddit users. Our best model is obtained by fine-tuning
+      GPT-2 using behavior cloning, and then performing rejection sampling against a reward model trained to predict human
+      preferences. This model's answers are preferred by humans 56% of the time to those of our human demonstrators, and 69%
+      of the time to the highest-voted answer from Reddit.
+    plant:
+      from: Our best model is obtained by fine-tuning GPT-3
+      to: Our best model is obtained by fine-tuning GPT-2
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: premise-pa001-hook
+  defect_class: premise_found_wrong
+  receipt: seldon:cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate_RESULT.md:36
+  defect: PA-001 assumed a git pre-commit hook existed; `core.hooksPath` named a removed path.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2024-12-04_10_1177_1461444814538646
+      title: 'Recommended for you: The Netflix Prize and the production of algorithmic culture'
+      publication_date: '2014-06-23'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: How does algorithmic information processing affect the meaning of the word culture, and, by extension, cultural
+      practice? We address this question by focusing on the Netflix Prize (2006–2009), a contest offering US$1m to the first
+      individual or team to boost the accuracy of the company’s existing movie recommendation system by 10%. Although billed
+      as a technical challenge intended for engineers, we argue that the Netflix Prize was equally an effort to reinterpret
+      the meaning of culture in ways that overlapped with, but also diverged in important respects from, the three dominant
+      senses of the term assayed by Raymond Williams. Thus, this essay explores the conceptual and semantic work required
+      to render algorithmic information processing systems legible as forms of cultural decision making. It also then represents
+      an effort to add depth and dimension to the concept of “algorithmic culture.”
+    planted: How does algorithmic information processing affect the meaning of the word culture, and, by extension, cultural
+      practice? We address this question by focusing on the Netflix Prize (2006–2009), a five-year contest offering US$1m
+      to the first individual or team to boost the accuracy of the company’s existing movie recommendation system by 10%.
+      Although billed as a technical challenge intended for engineers, we argue that the Netflix Prize was equally an effort
+      to reinterpret the meaning of culture in ways that overlapped with, but also diverged in important respects from, the
+      three dominant senses of the term assayed by Raymond Williams. Thus, this essay explores the conceptual and semantic
+      work required to render algorithmic information processing systems legible as forms of cultural decision making. It
+      also then represents an effort to add depth and dimension to the concept of “algorithmic culture.”
+    plant:
+      from: the Netflix Prize (2006–2009), a contest
+      to: the Netflix Prize (2006–2009), a five-year contest
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: premise-pa001-pin
+  defect_class: premise_found_wrong
+  receipt: seldon:cc_tasks/2026-10-09_PA-001_prior_art_receipts_gate_RESULT.md:42
+  defect: PA-001 found the governed pin stale, so 19 governed documents were uncataloged against the assumed state.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2026-02-21_arXiv_1904_10509
+      title: Generating Long Sequences with Sparse Transformers
+      publication_date: '2019-04-23'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: Transformers are powerful sequence models, but require time and memory that grows quadratically with the sequence
+      length. In this paper we introduce sparse factorizations of the attention matrix which reduce this to $O(n \sqrt{n})$.
+      We also introduce a) a variation on architecture and initialization to train deeper networks, b) the recomputation of
+      attention matrices to save memory, and c) fast attention kernels for training. We call networks with these changes Sparse
+      Transformers, and show they can model sequences tens of thousands of timesteps long using hundreds of layers. We use
+      the same architecture to model images, audio, and text from raw bytes, setting a new state of the art for density modeling
+      of Enwik8, CIFAR-10, and ImageNet-64. We generate unconditional samples that demonstrate global coherence and great
+      diversity, and show it is possible in principle to use self-attention to model sequences of length one million or more.
+    planted: 'Transformers are powerful sequence models, but require time and memory that grows quadratically with the sequence
+      length. In this paper we introduce sparse factorizations of the attention matrix which reduce this to $O(n \sqrt{n})$.
+      We also introduce four changes: a) a variation on architecture and initialization to train deeper networks, b) the recomputation
+      of attention matrices to save memory, and c) fast attention kernels for training. We call networks with these changes
+      Sparse Transformers, and show they can model sequences tens of thousands of timesteps long using hundreds of layers.
+      We use the same architecture to model images, audio, and text from raw bytes, setting a new state of the art for density
+      modeling of Enwik8, CIFAR-10, and ImageNet-64. We generate unconditional samples that demonstrate global coherence and
+      great diversity, and show it is possible in principle to use self-attention to model sequences of length one million
+      or more.'
+    plant:
+      from: We also introduce a)
+      to: 'We also introduce four changes: a)'
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: premise-sq010-binding
+  defect_class: premise_found_wrong
+  receipt: squiddy:cc_tasks/2026-10-10_SQ-010_governed_admission_dn043_RESULT.md:44
+  defect: DN-043 R-186 assumed registration binds by retrieval from the governed graph; it binds register records.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2026-02-22_arXiv_1809_07124
+      title: 'Pommerman: A Multi-Agent Playground'
+      publication_date: '2018-09-19'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: We present Pommerman, a multi-agent environment based on the classic console game Bomberman. Pommerman consists
+      of a set of scenarios, each having at least four players and containing both cooperative and competitive aspects. We
+      believe that success in Pommerman will require a diverse set of tools and methods, including planning, opponent/teammate
+      modeling, game theory, and communication, and consequently can serve well as a multi-agent benchmark. To date, we have
+      already hosted one competition, and our next one will be featured in the NIPS 2018 competition track.
+    planted: We present Pommerman, a multi-agent environment based on the classic console game Bomberman. Pommerman consists
+      of a set of scenarios, each having at least four players and containing both cooperative and competitive aspects. We
+      believe that success in Pommerman will require a diverse set of tools and methods, including planning, opponent/teammate
+      modeling, game theory, and communication, and consequently can serve well as a multi-agent benchmark. To date, we have
+      hosted no competition, and our next one will be featured in the NIPS 2018 competition track.
+    plant:
+      from: To date, we have already hosted one competition, and our next one
+      to: To date, we have hosted no competition, and our next one
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: premise-sq010-cause
+  defect_class: premise_found_wrong
+  receipt: squiddy:cc_tasks/2026-10-10_SQ-010_governed_admission_dn043_RESULT.md:45
+  defect: SQ-010's stop condition named stage 04 snapshot as the cause; the file is stage 06 read's output.
+  criterion: Every count, date, version or state the passage asserts agrees with what the passage itself lists or reports
+    elsewhere.
+  reference:
+    source:
+      library_id: lesson:2026-04-12_arXiv_2112_01488
+      title: 'ColBERTv2: Effective and Efficient Retrieval via Lightweight Late Interaction'
+      publication_date: '2021-12-02'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: Neural information retrieval (IR) has greatly advanced search and other knowledge-intensive language tasks.
+      While many neural IR methods encode queries and documents into single-vector representations, late interaction models
+      produce multi-vector representations at the granularity of each token and decompose relevance modeling into scalable
+      token-level computations. This decomposition has been shown to make late interaction more effective, but it inflates
+      the space footprint of these models by an order of magnitude. In this work, we introduce ColBERTv2, a retriever that
+      couples an aggressive residual compression mechanism with a denoised supervision strategy to simultaneously improve
+      the quality and space footprint of late interaction. We evaluate ColBERTv2 across a wide range of benchmarks, establishing
+      state-of-the-art quality within and outside the training domain while reducing the space footprint of late interaction
+      models by 6--10$\times$.
+    planted: Neural information retrieval (IR) has greatly advanced search and other knowledge-intensive language tasks. While
+      many neural IR methods encode queries and documents into single-vector representations, late interaction models produce
+      multi-vector representations at the granularity of each token and decompose relevance modeling into scalable token-level
+      computations. This decomposition has been shown to make late interaction more effective, but it inflates the space footprint
+      of these models by an order of magnitude. In this work, we introduce ColBERTv2, a retriever that couples an aggressive
+      residual compression mechanism with a denoised supervision strategy to simultaneously improve the quality and space
+      footprint of late interaction. We evaluate ColBERTv2 across a wide range of benchmarks, establishing state-of-the-art
+      quality within and outside the training domain while increasing the space footprint of late interaction models by 6--10$\times$.
+    plant:
+      from: while reducing the space footprint of late interaction models by 6--10$\times$
+      to: while increasing the space footprint of late interaction models by 6--10$\times$
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: default-model002-effort
+  defect_class: implicit_default
+  receipt: seldon:cc_tasks/2026-10-09_MODEL-002_explicit_effort_hermetic_model_tests.md:16
+  defect: '20 of 22 registry roles ran at `effort: default`, which moved from high to medium with the 5.5 lock.'
+  criterion: Every setting a reported result depends on is stated with its value, not left to an unstated default.
+  reference:
+    source:
+      library_id: lesson:2026-01-12_arXiv_1807_04667
+      title: Online Heart Rate Prediction using Acceleration from a Wrist Worn Wearable
+      publication_date: '2018-06-25'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: In this paper we study the prediction of heart rate from acceleration using a wrist worn wearable. Although
+      existing photoplethysmography (PPG) heart rate sensors provide reliable measurements, they use considerably more energy
+      than accelerometers and have a major impact on battery life of wearable devices. By using energy-efficient accelerometers
+      to predict heart rate, significant energy savings can be made. Further, we are interested in understanding patient recovery
+      after a heart rate intervention, where we expect a variation in heart rate over time. Therefore, we propose an online
+      approach to tackle the concept as time passes. We evaluate the methods on approximately 4 weeks of free living data
+      from three patients over a number of months. We show that our approach can achieve good predictive performance (e.g.,
+      2.89 Mean Absolute Error) while using the PPG heart rate sensor infrequently (e.g., 20.25% of the samples).
+    planted: In this paper we study the prediction of heart rate from acceleration using a wrist worn wearable. Although existing
+      photoplethysmography (PPG) heart rate sensors provide reliable measurements, they use considerably more energy than
+      accelerometers and have a major impact on battery life of wearable devices. By using energy-efficient accelerometers
+      to predict heart rate, significant energy savings can be made. Further, we are interested in understanding patient recovery
+      after a heart rate intervention, where we expect a variation in heart rate over time. Therefore, we propose an online
+      approach to tackle the concept as time passes. We evaluate the methods on approximately 4 weeks of free living data
+      from three patients over a number of months. We show that our approach can achieve good predictive performance (e.g.,
+      2.89 Mean Absolute Error) while sampling the PPG heart rate sensor at its default rate.
+    plant:
+      from: while using the PPG heart rate sensor infrequently (e.g., 20.25% of the samples)
+      to: while sampling the PPG heart rate sensor at its default rate
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: label-ad035-unparsed
+  defect_class: unparsed_label
+  receipt: seldon:docs/design/AD-036_prior_art_receipts_gate.md:143
+  defect: AD-035's rulings were written as `## AD-035-Rn.` headings, a form no configured label pattern read.
+  criterion: Every reference label in the passage uses the one label form the passage uses for the rest.
+  reference:
+    source:
+      library_id: lesson:2026-03-14_10_1515_forma_2016_0023
+      title: Leibniz Series for <i>π</i>
+      publication_date: '2016-12-01'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: 'Summary In this article we prove the Leibniz series for π which states that π 4 = ∑ n = 0 ∞ ( − 1 ) n 2 ⋅ n
+      + 1 . $${\pi \over 4} = \sum\limits_{n = 0}^\infty {{{\left( { - 1} \right)^n } \over {2 \cdot n + 1}}.} $$ The formalization
+      follows K. Knopp [8], [1] and [6]. Leibniz’s Series for Pi is item #26 from the “Formalizing 100 Theorems” list maintained
+      by Freek Wiedijk at http://www.cs.ru.nl/F.Wiedijk/100/ .'
+    planted: 'Summary In this article we prove the Leibniz series for π which states that π 4 = ∑ n = 0 ∞ ( − 1 ) n 2 ⋅ n
+      + 1 . $${\pi \over 4} = \sum\limits_{n = 0}^\infty {{{\left( { - 1} \right)^n } \over {2 \cdot n + 1}}.} $$ The formalization
+      follows K. Knopp [8], (1) and [6]. Leibniz’s Series for Pi is item #26 from the “Formalizing 100 Theorems” list maintained
+      by Freek Wiedijk at http://www.cs.ru.nl/F.Wiedijk/100/ .'
+    plant:
+      from: follows K. Knopp [8], [1] and [6]
+      to: follows K. Knopp [8], (1) and [6]
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: label-dn043-r181
+  defect_class: label_collision
+  receipt: squiddy:docs/design/2026-10-10_DN-043_ADDENDUM_01_r181_renumbered_r188.md:7
+  defect: DN-043 labelled its first ruling R-181, which DN-042 already held.
+  criterion: Every numbered label in the passage names exactly one item.
+  reference:
+    source:
+      library_id: lesson:2026-02-08_arXiv_1701_05517
+      title: 'PixelCNN++: Improving the PixelCNN with Discretized Logistic Mixture Likelihood and Other Modifications'
+      publication_date: '2017-01-19'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: PixelCNNs are a recently proposed class of powerful generative models with tractable likelihood. Here we discuss
+      our implementation of PixelCNNs which we make available at https://github.com/openai/pixel-cnn. Our implementation contains
+      a number of modifications to the original model that both simplify its structure and improve its performance. 1) We
+      use a discretized logistic mixture likelihood on the pixels, rather than a 256-way softmax, which we find to speed up
+      training. 2) We condition on whole pixels, rather than R/G/B sub-pixels, simplifying the model structure. 3) We use
+      downsampling to efficiently capture structure at multiple resolutions. 4) We introduce additional short-cut connections
+      to further speed up optimization. 5) We regularize the model using dropout. Finally, we present state-of-the-art log
+      likelihood results on CIFAR-10 to demonstrate the usefulness of these modifications.
+    planted: PixelCNNs are a recently proposed class of powerful generative models with tractable likelihood. Here we discuss
+      our implementation of PixelCNNs which we make available at https://github.com/openai/pixel-cnn. Our implementation contains
+      a number of modifications to the original model that both simplify its structure and improve its performance. 1) We
+      use a discretized logistic mixture likelihood on the pixels, rather than a 256-way softmax, which we find to speed up
+      training. 2) We condition on whole pixels, rather than R/G/B sub-pixels, simplifying the model structure. 3) We use
+      downsampling to efficiently capture structure at multiple resolutions. 3) We introduce additional short-cut connections
+      to further speed up optimization. 5) We regularize the model using dropout. Finally, we present state-of-the-art log
+      likelihood results on CIFAR-10 to demonstrate the usefulness of these modifications.
+    plant:
+      from: 4) We introduce additional short-cut connections
+      to: 3) We introduce additional short-cut connections
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
+- id: bound-sq010-disk
+  defect_class: unbounded_resource
+  receipt: squiddy:docs/evidence/sq010/disk_incident.md:25
+  defect: SQ-010 ran with no disk ceiling or checkpoint and filled the volume's last 4.4 GB.
+  criterion: Every iterative or repeated procedure the passage describes states its bound.
+  reference:
+    source:
+      library_id: lesson:2026-02-22_arXiv_2110_14168
+      title: Training Verifiers to Solve Math Word Problems
+      publication_date: '2021-10-27'
+      locator: abstract
+      manifest: /Users/brock/GitHub/squiddy/graphs/library/corpus/manifest.yaml
+      abstract_whitespace: collapsed to single spaces
+    original: State-of-the-art language models can match human performance on many tasks, but they still struggle to robustly
+      perform multi-step mathematical reasoning. To diagnose the failures of current models and support research, we introduce
+      GSM8K, a dataset of 8.5K high quality linguistically diverse grade school math word problems. We find that even the
+      largest transformer models fail to achieve high test performance, despite the conceptual simplicity of this problem
+      distribution. To increase performance, we propose training verifiers to judge the correctness of model completions.
+      At test time, we generate many candidate solutions and select the one ranked highest by the verifier. We demonstrate
+      that verification significantly improves performance on GSM8K, and we provide strong empirical evidence that verification
+      scales more effectively with increased data than a finetuning baseline.
+    planted: State-of-the-art language models can match human performance on many tasks, but they still struggle to robustly
+      perform multi-step mathematical reasoning. To diagnose the failures of current models and support research, we introduce
+      GSM8K, a dataset of 8.5K high quality linguistically diverse grade school math word problems. We find that even the
+      largest transformer models fail to achieve high test performance, despite the conceptual simplicity of this problem
+      distribution. To increase performance, we propose training verifiers to judge the correctness of model completions.
+      At test time, we generate candidate solutions until the verifier accepts one, and select the one ranked highest by the
+      verifier. We demonstrate that verification significantly improves performance on GSM8K, and we provide strong empirical
+      evidence that verification scales more effectively with increased data than a finetuning baseline.
+    plant:
+      from: At test time, we generate many candidate solutions and select the one
+      to: At test time, we generate candidate solutions until the verifier accepts one, and select the one
+  generator:
+    status: slot
+    instructions: 'QC-002: the generator role being calibrated writes a passage of similar length on the same topic, in its
+      own style, without seeing the reference passage''s wording; then the same defect class is planted in it by one minimal
+      edit under the same criterion. Record the passage, the plant and the call''s receipt here, and set `status: written`.'
