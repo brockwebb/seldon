@@ -218,3 +218,11 @@ def test_check_union_text_against_a_base_reports_only_what_the_branch_added():
     bad = base + b'{"event_id": "b"}\n{"event_id": "b"}\n{"event_id": "a"}\nbroken{\n'
     assert WT.check_union_text(bad, "event_id", base=base) == {
         "ok": False, "malformed": [7], "duplicates": ["b", "a"]}
+
+
+@pytest.fixture(autouse=True)
+def _parallel_opted_in(monkeypatch):
+    """SEL-004's worktree mechanics are under test here, not AD-037-R9's hold: this stands in for an accepted opt-in
+    record naming the scaffold project (the hold itself is `tests/test_dispatch_parallel_held.py`)."""
+    from seldon.core import qc
+    monkeypatch.setattr(qc, "parallel_opted_in", lambda project_dir, config: True)

@@ -394,3 +394,48 @@ def test_verification_logs_every_query(proj):
     rows = [json.loads(x) for x in s.log.read_text().splitlines()]
     assert {r["arm"] for r in rows} == {"internal", "library"}
     assert all(r["purpose"] == "verify" and r["tool"] == pa.TOOL_VERSION for r in rows)
+
+
+# --------------------------------------------------------------------------- SQ-012 Part F: the note is not its own prior art
+
+
+def _self_note(proj):
+    """A design note being written in the sibling root, untracked, whose own text matches the query."""
+    p = proj["tmp"] / "sib" / "docs" / "design" / "DN-002_new.md"
+    p.write_text("# DN-002\n\nThe unit of extraction, restated by the note itself.\n\n## Prior art\n")
+    return p
+
+
+def test_the_internal_search_leaves_out_the_note_it_is_for(proj):
+    s = _settings(proj)
+    note = _self_note(proj)
+    paths = {h.path for h in pa.Internal(s).search("unit of extraction")["hits"]}
+    assert "docs/design/DN-002_new.md" in paths, "the fixture must show the self-hit it removes"
+    res = pa.Internal(s).search("unit of extraction", exclude=pa.note_keys(s, [note]))
+    assert "docs/design/DN-002_new.md" not in {h.path for h in res["hits"]}
+    assert "docs/design/DN-001_unit.md" in {h.path for h in res["hits"]}
+
+
+def test_receipts_taken_without_the_note_still_verify_after_they_are_inserted(proj):
+    s = _settings(proj)
+    note = _self_note(proj)
+    tool = pa.Internal(s)
+    receipts = tool.receipts(tool.search("unit of extraction", roots=["sib"], exclude=pa.note_keys(s, [note])))
+    note.write_text(note.read_text() + "\n### External\n\n"
+                    f'- library receipt: query "q" | release lib.json sha256:{LIB_SHA} | rows none\n\n'
+                    "### Internal\n\n" + "\n".join(receipts) + "\n")
+    v = pa.verify_note(note, s, library=StubLibrary())
+    assert v.verdict == "pass", v.problems
+
+
+def test_a_receipt_citing_the_note_itself_fails_and_says_why(proj):
+    s = _settings(proj)
+    note = _self_note(proj)
+    h = [x for x in pa.Internal(s).search("unit of extraction")["hits"] if x.path == "docs/design/DN-002_new.md"][0]
+    note.write_text(note.read_text() + "\n### External\n\n"
+                    f'- library receipt: query "q" | release lib.json sha256:{LIB_SHA} | rows none\n\n'
+                    f'### Internal\n\n- internal receipt: query "unit of extraction" | repo sib@{proj["sha"]} '
+                    f"| hits {h.cite()}\n")
+    v = pa.verify_note(note, s, library=StubLibrary())
+    (r,) = [x for x in v.receipts if x.kind == "internal"]
+    assert r.status == pa.ID_NOT_RETURNED and "not prior art for itself" in r.detail

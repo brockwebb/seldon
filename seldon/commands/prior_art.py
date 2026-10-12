@@ -31,15 +31,20 @@ def _settings() -> tuple[Path, dict, pa.Settings]:
 
 
 def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
-               project_dir: Path | None = None, config: dict | None = None) -> dict:
-    """One search, logged. Returns {receipts, hits, meta}; shared by the CLI and the MCP tool."""
+               project_dir: Path | None = None, config: dict | None = None, note: str | None = None) -> dict:
+    """One search, logged. Returns {receipts, hits, meta}; shared by the CLI and the MCP tool. `note` is the note the
+    receipts are for: the internal arm leaves it out (QC-001 premise 3)."""
     project_dir = Path(project_dir or Path.cwd())
     config = config if config is not None else load_project_config(project_dir)
     s = pa.settings(project_dir, config)
     started = time.monotonic()
     if arm == "internal":
         tool = pa.Internal(s)
-        res = tool.search(query, roots or None)
+        exclude = frozenset()
+        if note:
+            np_ = Path(note).expanduser()
+            exclude = pa.note_keys(s, [np_ if np_.is_absolute() else project_dir / np_])
+        res = tool.search(query, roots or None, exclude=exclude)
         n = top or s.top_n
         out = {"arm": arm, "query": query, "receipts": tool.receipts(res, n),
                "corpora": res["corpora"], "total_hits": len(res["hits"]),
@@ -94,14 +99,16 @@ def prior_art_group():
 @click.option("--library", "arm", flag_value="library", help="The squiddy library graph.")
 @click.option("--root", "roots", multiple=True, help="Internal arm: only these roots.")
 @click.option("--top", type=int, default=None, help="Hits to print (default: config top_n).")
+@click.option("--note", default=None, help="Internal arm: the note these receipts are for; it is left out of the "
+                                           "search (a note is not prior art for itself).")
 @click.option("--json", "as_json", is_flag=True, help="Print the full result as JSON.")
-def search_command(query, arm, roots, top, as_json):
+def search_command(query, arm, roots, top, note, as_json):
     """Run QUERY on one arm; print receipts to paste into a note's `## Prior art` section."""
     if arm is None:
         raise click.UsageError("choose --internal or --library")
     project_dir, config, _s = _settings()
     try:
-        out = run_search(arm, query, roots, top, project_dir, config)
+        out = run_search(arm, query, roots, top, project_dir, config, note=note)
     except pa.PriorArtError as exc:
         raise click.ClickException(str(exc))
     if as_json:

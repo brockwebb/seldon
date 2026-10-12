@@ -528,10 +528,12 @@ class Internal:
             self._cache[(root.name, c.identity)] = c
         return self._cache[key]
 
-    def search(self, query: str, roots: Iterable[str] | None = None) -> dict:
+    def search(self, query: str, roots: Iterable[str] | None = None, exclude: frozenset = frozenset()) -> dict:
+        """`exclude` is `note_keys` of the note the receipts are for: a note is not prior art for itself, and a receipt
+        naming its own bytes cannot verify once it is inserted (QC-001 premise 3)."""
         wanted = set(roots) if roots else None
         corpora = [self.corpus(r) for r in self.s.roots if wanted is None or r.name in wanted]
-        hits = search_corpora(query, corpora, self.s)
+        hits = [h for h in search_corpora(query, corpora, self.s) if (h.root, h.path) not in exclude]
         return {"query": query, "hits": hits,
                 "corpora": {c.root.name: {"identity": c.identity, "files": len(c.docs),
                                           "untracked": c.untracked, "dirty_tracked": c.dirty_tracked,
@@ -592,6 +594,20 @@ class Library:
         rows = ", ".join(result["rows"]) or "none"
         return (f'- library receipt: query "{result["query"]}" | release {result["release"]} '
                 f'sha256:{result["sha256"]} | rows {rows}')
+
+
+def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:
+    """`{(root name, path within the root)}` for each file that lies inside an internal root: what the internal arm
+    leaves out when it searches for, or verifies, the receipts of these files (QC-001 premise 3)."""
+    out = set()
+    for p in paths:
+        rp = Path(p).resolve()
+        for r in s.roots:
+            try:
+                out.add((r.name, rp.relative_to(r.path.resolve()).as_posix()))
+            except ValueError:
+                continue
+    return frozenset(out)
 
 
 def log_query(s: Settings, record: dict) -> None:
@@ -816,7 +832,8 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
         if r.error:
             r.status, r.detail = MALFORMED, r.error
     _verify_library([r for r in receipts if r.kind == "library" and not r.status], s, library)
-    _verify_internal([r for r in receipts if r.kind == "internal" and not r.status], s, internal)
+    _verify_internal([r for r in receipts if r.kind == "internal" and not r.status], s, internal,
+                     exclude=note_keys(s, files))
     for r in receipts:
         if r.kind == "web" and not r.status:
             r.status, r.detail = PASS, "well-formed; a web page is not re-fetched"
@@ -857,7 +874,9 @@ def _verify_library(receipts: list, s: Settings, library: Library) -> None:
                 r.status, r.detail = PASS, f"{len(r.rows)} row(s) returned"
 
 
-def _verify_internal(receipts: list, s: Settings, internal: Internal) -> None:
+def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: frozenset = frozenset()) -> None:
+    """Each receipt re-run at its commit. The note being verified and its addenda (`exclude`) are left out of the
+    search, so a receipt that cites them fails: a note is not prior art for itself (QC-001 premise 3)."""
     roots = {r.name: r for r in s.roots}
     for r in receipts:
         root = roots.get(r.repo)
@@ -870,14 +889,17 @@ def _verify_internal(receipts: list, s: Settings, internal: Internal) -> None:
         except PriorArtError as exc:
             r.status, r.detail = RELEASE_UNAVAILABLE, str(exc)
             continue
-        hits = search_corpora(r.query, [corpus], s)
+        hits = [h for h in search_corpora(r.query, [corpus], s) if (h.root, h.path) not in exclude]
         log_query(s, {"arm": "internal", "purpose": "verify", "query": r.query,
                       "corpora": {root.name: corpus.identity}, "hits": len(hits)})
         found = {(h.path, h.start): h for h in hits}
         missing, moved = [], []
         for path, line, sha12 in r.hits:
             h = found.get((path, line))
-            if h is None:
+            if h is None and (root.name, path) in exclude:
+                missing.append(f"{path}:{line} (the note being verified, which the internal arm leaves out: a note "
+                               f"is not prior art for itself)")
+            elif h is None:
                 missing.append(f"{path}:{line}")
             elif sha12 and h.sha12 != sha12:
                 moved.append(f"{path} (sha256 now {h.sha12})")
