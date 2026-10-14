@@ -39,8 +39,10 @@ A design note is where a project records why it adopted or departed from prior a
 
 ## Success criteria
 
-- The new tests pass; nothing else in the suite changes. check: python -m dotenv -f .env run -- python -m pytest tests/ -q
-- From regs-comment-pipeline, `seldon link create --actor cc --from-name classification_design_notebook_2026_09_28 --rel cites --to-id <citation>` succeeds. judgment: it runs in another repository against its own graph, with a citation id chosen there.
+- check: python -m dotenv -f .env run -- python -m pytest tests/ -q
+  The new tests pass; nothing else in the suite changes.
+- judgment: it runs in another repository against its own graph, with a citation id chosen there.
+  From regs-comment-pipeline, `seldon link create --actor cc --from-name classification_design_notebook_2026_09_28 --rel cites --to-id <citation>` succeeds.
 
 ## Observed alongside (not in scope here; file separately if wanted)
 

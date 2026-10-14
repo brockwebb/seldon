@@ -79,9 +79,12 @@ Intended edges:
 
 ## Success criteria
 
-- The failing tests in `tests/test_relationship_types.py` come first, and then pass. check: python -m dotenv -f .env run -- python -m pytest tests/test_relationship_types.py -q
-- The full suite is green. check: python -m dotenv -f .env run -- python -m pytest tests/ -q
-- Whether `derived_from` should be widened at all, against AD-030 section 4's closed edge set. judgment: section 2 leaves this to the implementer, and no program decides it.
+- check: python -m dotenv -f .env run -- python -m pytest tests/test_relationship_types.py -q
+  The failing tests in `tests/test_relationship_types.py` come first, and then pass.
+- check: python -m dotenv -f .env run -- python -m pytest tests/ -q
+  The full suite is green.
+- judgment: section 2 leaves this to the implementer, and no program decides it.
+  Whether `derived_from` should be widened at all, against AD-030 section 4's closed edge set.
 
 ## What NOT to do
 
