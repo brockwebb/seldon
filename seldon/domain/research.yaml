@@ -825,7 +825,7 @@ relationship_types:
     properties:
       cito_type:
         required: false
-        description: "CiTO intent: cites_as_evidence, uses_method_in, cites_for_information, extends, disagrees_with, refutes."
+        description: "CiTO intent: cites_as_evidence, uses_method_in, uses_data_from, cites_for_information, extends, disagrees_with, refutes."
       reason:
         required: false
         description: "Why this citation disagrees or refutes — the constraint being named (AD-030-R7)."
@@ -883,8 +883,13 @@ relationship_types:
     from_types: [Figure, Document]
     to_types: [Result, Section, Ruling, Citation, Passage]
   derived_from:
-    from_types: [Result]
-    to_types: [LabNotebookEntry, Citation, Result]
+    # DataFile origin and DesignNote target added
+    # (cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md): a config
+    # registry derives from the notes whose decisions justify its entries (PROV-O
+    # wasDerivedFrom, Entity -> Entity). Document is deliberately not an origin: AD-030
+    # section 4 closes the edge set on governed-document nodes.
+    from_types: [Result, DataFile]
+    to_types: [LabNotebookEntry, Citation, Result, DesignNote]
   includes_role:
     from_types: [Workflow]
     to_types: [AgentRole]

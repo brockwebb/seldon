@@ -11,6 +11,10 @@ Covers the edge types extended or introduced by AD-028 (Lane B of the
     cites          DesignNote | ArchitecturalDecision  ->  Citation | Result | Passage
                    (the two origins added by
                    cc_tasks/2026-09-28_designnote_cites_citation.md; AD-030-R7)
+    derived_from   Result | DataFile  ->  LabNotebookEntry | Citation | Result | DesignNote
+                   (DataFile and DesignNote added by
+                   cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md:
+                   a config registry derives from the notes that justify its entries)
 
 Two layers are asserted:
 
@@ -103,6 +107,14 @@ ACCEPTED = [
     ("cites", "ArchitecturalDecision", "Citation"),
     ("cites", "ArchitecturalDecision", "Result"),
     ("cites", "ArchitecturalDecision", "Passage"),
+    # derived_from — a DataFile (e.g. a parameter registry) derives from the
+    # DesignNote whose decisions justify it (PROV-O prov:wasDerivedFrom is
+    # Entity -> Entity). The pre-existing Result endpoints must survive.
+    ("derived_from", "DataFile", "DesignNote"),
+    ("derived_from", "DataFile", "Citation"),
+    ("derived_from", "Result", "DesignNote"),
+    ("derived_from", "Result", "Result"),
+    ("derived_from", "Result", "Citation"),
 ]
 
 # (rel_type, from_type, to_type, expected_error_fragment) triples that must be
@@ -142,6 +154,13 @@ REJECTED = [
     # cites: widening from_types did not widen to_types.
     ("cites", "DesignNote", "DesignNote", "cannot target"),
     ("cites", "ArchitecturalDecision", "Script", "cannot target"),
+    # derived_from: Document stays out. AD-030 section 4 closes the edge set on
+    # governed-document nodes; a Document's dependencies go through
+    # `depends_on` and `mentions`, not a provenance edge.
+    ("derived_from", "Document", "DesignNote", "cannot originate"),
+    ("derived_from", "DesignNote", "DesignNote", "cannot originate"),
+    ("derived_from", "DataFile", "Script", "cannot target"),
+    ("derived_from", "DataFile", "Document", "cannot target"),
 ]
 
 # One accepted and one rejected case per edge type, exercised end to end
@@ -152,6 +171,7 @@ END_TO_END_ACCEPTED = [
     ("corrects", "DesignNote", "Result"),
     ("annotates", "Issue", "Result"),
     ("disputes", "Issue", "Result"),
+    ("derived_from", "DataFile", "DesignNote"),
 ]
 
 END_TO_END_REJECTED = [
@@ -160,6 +180,7 @@ END_TO_END_REJECTED = [
     ("corrects", "Result", "Result"),
     ("annotates", "Issue", "Script"),
     ("disputes", "DesignNote", "Result"),
+    ("derived_from", "DesignNote", "DesignNote"),
 ]
 
 
@@ -211,6 +232,8 @@ def _make(project_dir, driver, domain_config, artifact_type):
      {"PaperSection", "Figure", "Document", "Section", "Ruling", "DesignNote",
       "ArchitecturalDecision"},
      {"Result", "Citation", "Passage"}),
+    ("derived_from", {"Result", "DataFile"},
+     {"LabNotebookEntry", "Citation", "Result", "DesignNote"}),
 ])
 def test_domain_config_declares_endpoints(domain_config, rel_type, from_types, to_types):
     """The domain config — not the ontology master DB — carries the endpoints."""
