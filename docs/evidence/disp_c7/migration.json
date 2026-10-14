@@ -1,0 +1,6172 @@
+{
+ "source": "seldon:state/prior_art_queries.jsonl@e2472141df75117ec584b922fc03ffa84e153434",
+ "lines": 413,
+ "tally": {
+  "moved:ai-readiness-kg": 1,
+  "moved:squiddy": 46,
+  "seldon": 325,
+  "unattributable": 41
+ },
+ "stays_in_seldon": 366,
+ "moved": {
+  "ai-readiness-kg": 1,
+  "squiddy": 46
+ },
+ "percent_in_receipts": {
+  "squiddy": 0,
+  "ai-readiness-kg": 0,
+  "arnold": 0,
+  "icsp_notebook": 0,
+  "TickBiteRisk": 0,
+  "ai-workflow-design": 0,
+  "book_responsible_ai": 0,
+  "brock_projects": 0,
+  "census-web-concept-inventory": 0,
+  "federal-survey-concept-mapper": 0,
+  "regs-comment-pipeline": 0,
+  "sas_graph_code_conversion": 0,
+  "slosh-pipe": 0,
+  "usai-harness": 0,
+  "seldon": 0
+ },
+ "applied": true,
+ "rows": [
+  {
+   "line": 1,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:19:48.660621Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "unit of extraction"
+  },
+  {
+   "line": 2,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:08.409450Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "duplicate work"
+  },
+  {
+   "line": 3,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:08.547242Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "duplication check skill"
+  },
+  {
+   "line": 4,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:08.686822Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "entity resolution literature"
+  },
+  {
+   "line": 5,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:08.823067Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "architecture literature map"
+  },
+  {
+   "line": 6,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:09.178586Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "whole document unit prior art"
+  },
+  {
+   "line": 7,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:09.472060Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "unit of extraction"
+  },
+  {
+   "line": 8,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:09.856585Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "prior art search before design"
+  },
+  {
+   "line": 9,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:09.988956Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "prior-art gate pilots"
+  },
+  {
+   "line": 10,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:10.083531Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "TAC KBP guideline"
+  },
+  {
+   "line": 11,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:10.295924Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "internal precedent search gate"
+  },
+  {
+   "line": 12,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:10.577637Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "rule enforced one repository"
+  },
+  {
+   "line": 13,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:10.975360Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "Seldon gate not built"
+  },
+  {
+   "line": 14,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.126879Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "inheritance walk gate"
+  },
+  {
+   "line": 15,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.219284Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "shelf screen recall"
+  },
+  {
+   "line": 16,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.459809Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "model identity new instrument"
+  },
+  {
+   "line": 17,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.568968Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "prior_art block registration"
+  },
+  {
+   "line": 18,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.729833Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "model pin"
+  },
+  {
+   "line": 19,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:20:11.968236Z",
+   "arm": "internal",
+   "purpose": "recall_control",
+   "query": "positive control verdict instrument"
+  },
+  {
+   "line": 20,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:30",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:77"
+   ],
+   "ts": "2026-10-09T19:31:00.520211Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 21,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:78"
+   ],
+   "ts": "2026-10-09T19:31:15.873876Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades"
+  },
+  {
+   "line": 22,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:79"
+   ],
+   "ts": "2026-10-09T19:31:33.721846Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "PRISMA-S reporting literature search strategy databases search strings dates reproducible search"
+  },
+  {
+   "line": 23,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:31",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:80"
+   ],
+   "ts": "2026-10-09T19:31:51.177857Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 24,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:86"
+   ],
+   "ts": "2026-10-09T19:31:54.951602Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "internal prior art searched"
+  },
+  {
+   "line": 25,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:31:57.760610Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "model identity gate"
+  },
+  {
+   "line": 26,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:32:00.458822Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 27,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:95"
+   ],
+   "ts": "2026-10-09T19:32:03.161949Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "positive-controlled instrument verdict"
+  },
+  {
+   "line": 28,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:32:05.966395Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "prior_art block registration"
+  },
+  {
+   "line": 29,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:98"
+   ],
+   "ts": "2026-10-09T19:32:08.627068Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "internal search gate"
+  },
+  {
+   "line": 30,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:101"
+   ],
+   "ts": "2026-10-09T19:32:10.951110Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "frozen questions p95"
+  },
+  {
+   "line": 31,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:104"
+   ],
+   "ts": "2026-10-09T19:32:13.570566Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "design note citation register refuses"
+  },
+  {
+   "line": 32,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:110"
+   ],
+   "ts": "2026-10-09T19:32:15.922726Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "governed pin stale"
+  },
+  {
+   "line": 33,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:107"
+   ],
+   "ts": "2026-10-09T19:32:18.361114Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "label pattern decisions"
+  },
+  {
+   "line": 34,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:86"
+   ],
+   "ts": "2026-10-09T19:32:38.680214Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "internal prior art searched"
+  },
+  {
+   "line": 35,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:32:38.889129Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "model identity gate"
+  },
+  {
+   "line": 36,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:32:38.996892Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 37,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:95"
+   ],
+   "ts": "2026-10-09T19:32:39.111654Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "positive-controlled instrument verdict"
+  },
+  {
+   "line": 38,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:98"
+   ],
+   "ts": "2026-10-09T19:32:39.305200Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "internal search gate"
+  },
+  {
+   "line": 39,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:101"
+   ],
+   "ts": "2026-10-09T19:32:39.406420Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "frozen questions p95"
+  },
+  {
+   "line": 40,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:104"
+   ],
+   "ts": "2026-10-09T19:32:39.682618Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "design note citation register refuses"
+  },
+  {
+   "line": 41,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:107"
+   ],
+   "ts": "2026-10-09T19:32:39.843683Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "label pattern decisions"
+  },
+  {
+   "line": 42,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:110"
+   ],
+   "ts": "2026-10-09T19:32:39.985524Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "governed pin stale"
+  },
+  {
+   "line": 43,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:30",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:77"
+   ],
+   "ts": "2026-10-09T19:33:22.977764Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 44,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:78"
+   ],
+   "ts": "2026-10-09T19:33:23.287108Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades"
+  },
+  {
+   "line": 45,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:79"
+   ],
+   "ts": "2026-10-09T19:33:23.536824Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "PRISMA-S reporting literature search strategy databases search strings dates reproducible search"
+  },
+  {
+   "line": 46,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:31",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:80"
+   ],
+   "ts": "2026-10-09T19:33:23.797635Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 47,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:86"
+   ],
+   "ts": "2026-10-09T19:33:23.848054Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal prior art searched"
+  },
+  {
+   "line": 48,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:33:24.095453Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 49,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:33:24.111878Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 50,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:95"
+   ],
+   "ts": "2026-10-09T19:33:24.130684Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "positive-controlled instrument verdict"
+  },
+  {
+   "line": 51,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:98"
+   ],
+   "ts": "2026-10-09T19:33:24.741271Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal search gate"
+  },
+  {
+   "line": 52,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:101"
+   ],
+   "ts": "2026-10-09T19:33:24.746046Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "frozen questions p95"
+  },
+  {
+   "line": 53,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:104"
+   ],
+   "ts": "2026-10-09T19:33:25.033271Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "design note citation register refuses"
+  },
+  {
+   "line": 54,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:107"
+   ],
+   "ts": "2026-10-09T19:33:25.051949Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "label pattern decisions"
+  },
+  {
+   "line": 55,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:110"
+   ],
+   "ts": "2026-10-09T19:33:25.068109Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "governed pin stale"
+  },
+  {
+   "line": 56,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:33:35.381938Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "model identity gate"
+  },
+  {
+   "line": 57,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:33:37.835776Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 58,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:42"
+   ],
+   "ts": "2026-10-09T19:33:40.319132Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "new version pilot"
+  },
+  {
+   "line": 59,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:45"
+   ],
+   "ts": "2026-10-09T19:33:42.835951Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "machine-wide spend ledger"
+  },
+  {
+   "line": 60,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:33:45.312983Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "model lock"
+  },
+  {
+   "line": 61,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-09T19:33:47.852656Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "served model receipt"
+  },
+  {
+   "line": 62,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:34:00.951308Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "model identity gate"
+  },
+  {
+   "line": 63,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:34:01.051762Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 64,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:42"
+   ],
+   "ts": "2026-10-09T19:34:01.216776Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "new version pilot"
+  },
+  {
+   "line": 65,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:45"
+   ],
+   "ts": "2026-10-09T19:34:01.310286Z",
+   "arm": "internal",
+   "purpose": "self_test",
+   "query": "machine-wide spend ledger"
+  },
+  {
+   "line": 66,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:30",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:77"
+   ],
+   "ts": "2026-10-09T19:34:28.030912Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 67,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:31",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:80"
+   ],
+   "ts": "2026-10-09T19:34:28.315952Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 68,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-09T19:34:28.583685Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 69,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-09T19:34:28.599663Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 70,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:42"
+   ],
+   "ts": "2026-10-09T19:34:29.210779Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "new version pilot"
+  },
+  {
+   "line": 71,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:45"
+   ],
+   "ts": "2026-10-09T19:34:29.248753Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "machine-wide spend ledger"
+  },
+  {
+   "line": 72,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:121",
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:122",
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:123"
+   ],
+   "ts": "2026-10-10T01:47:10.359792Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "hooksPath"
+  },
+  {
+   "line": 73,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:118"
+   ],
+   "ts": "2026-10-10T01:47:12.598334Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "pre-commit hook"
+  },
+  {
+   "line": 74,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-10T01:58:06.825878Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "git pre-commit hook enforcement continuous integration gate developers bypass"
+  },
+  {
+   "line": 75,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:93"
+   ],
+   "ts": "2026-10-10T02:09:07.018560Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "hard enforcement outside the agent versus prompt instructions compliance guardrail"
+  },
+  {
+   "line": 76,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:93"
+   ],
+   "ts": "2026-10-10T02:09:30.055655Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "hard enforcement outside the agent versus prompt instructions compliance guardrail"
+  },
+  {
+   "line": 77,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:113"
+   ],
+   "ts": "2026-10-10T02:10:00.575524Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "closure hooks installer"
+  },
+  {
+   "line": 78,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:117"
+   ],
+   "ts": "2026-10-10T02:10:03.307364Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "ingest runs on commit"
+  },
+  {
+   "line": 79,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:118"
+   ],
+   "ts": "2026-10-10T02:10:05.926938Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "pre-commit hook"
+  },
+  {
+   "line": 80,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:30",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:77"
+   ],
+   "ts": "2026-10-10T02:11:22.420925Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 81,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:78"
+   ],
+   "ts": "2026-10-10T02:11:22.769114Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades"
+  },
+  {
+   "line": 82,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:79"
+   ],
+   "ts": "2026-10-10T02:11:23.010326Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "PRISMA-S reporting literature search strategy databases search strings dates reproducible search"
+  },
+  {
+   "line": 83,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:31",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:80"
+   ],
+   "ts": "2026-10-10T02:11:23.246391Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 84,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:93"
+   ],
+   "ts": "2026-10-10T02:11:23.436747Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "hard enforcement outside the agent versus prompt instructions compliance guardrail"
+  },
+  {
+   "line": 85,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:86"
+   ],
+   "ts": "2026-10-10T02:11:23.497582Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal prior art searched"
+  },
+  {
+   "line": 86,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-10T02:11:23.807586Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 87,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-10T02:11:23.822879Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 88,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:95"
+   ],
+   "ts": "2026-10-10T02:11:23.840526Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "positive-controlled instrument verdict"
+  },
+  {
+   "line": 89,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:98"
+   ],
+   "ts": "2026-10-10T02:11:24.559566Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal search gate"
+  },
+  {
+   "line": 90,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:101"
+   ],
+   "ts": "2026-10-10T02:11:24.564006Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "frozen questions p95"
+  },
+  {
+   "line": 91,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:104"
+   ],
+   "ts": "2026-10-10T02:11:25.018955Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "design note citation register refuses"
+  },
+  {
+   "line": 92,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:107"
+   ],
+   "ts": "2026-10-10T02:11:25.038170Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "label pattern decisions"
+  },
+  {
+   "line": 93,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:110"
+   ],
+   "ts": "2026-10-10T02:11:25.055786Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "governed pin stale"
+  },
+  {
+   "line": 94,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:113"
+   ],
+   "ts": "2026-10-10T02:11:25.627861Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "closure hooks installer"
+  },
+  {
+   "line": 95,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:117"
+   ],
+   "ts": "2026-10-10T02:11:25.985655Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ingest runs on commit"
+  },
+  {
+   "line": 96,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:118"
+   ],
+   "ts": "2026-10-10T02:11:25.994647Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pre-commit hook"
+  },
+  {
+   "line": 97,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:121"
+   ],
+   "ts": "2026-10-10T02:11:25.998753Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 98,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:122"
+   ],
+   "ts": "2026-10-10T02:11:26.006011Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 99,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:123"
+   ],
+   "ts": "2026-10-10T02:11:26.708116Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 100,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:30",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:77"
+   ],
+   "ts": "2026-10-10T02:11:50.117907Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 101,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:78"
+   ],
+   "ts": "2026-10-10T02:11:50.384683Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM agents fail to follow instructions in long context, constraints ignored, instruction adherence degrades"
+  },
+  {
+   "line": 102,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:79"
+   ],
+   "ts": "2026-10-10T02:11:50.555995Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "PRISMA-S reporting literature search strategy databases search strings dates reproducible search"
+  },
+  {
+   "line": 103,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:31",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:80"
+   ],
+   "ts": "2026-10-10T02:11:50.864226Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 104,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:93"
+   ],
+   "ts": "2026-10-10T02:11:51.094555Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "hard enforcement outside the agent versus prompt instructions compliance guardrail"
+  },
+  {
+   "line": 105,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:86"
+   ],
+   "ts": "2026-10-10T02:11:51.150970Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal prior art searched"
+  },
+  {
+   "line": 106,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-10T02:11:51.441219Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 107,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-10T02:11:51.456698Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 108,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:95"
+   ],
+   "ts": "2026-10-10T02:11:51.475104Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "positive-controlled instrument verdict"
+  },
+  {
+   "line": 109,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:98"
+   ],
+   "ts": "2026-10-10T02:11:52.146864Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "internal search gate"
+  },
+  {
+   "line": 110,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:101"
+   ],
+   "ts": "2026-10-10T02:11:52.151083Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "frozen questions p95"
+  },
+  {
+   "line": 111,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:104"
+   ],
+   "ts": "2026-10-10T02:11:52.536863Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "design note citation register refuses"
+  },
+  {
+   "line": 112,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:107"
+   ],
+   "ts": "2026-10-10T02:11:52.558906Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "label pattern decisions"
+  },
+  {
+   "line": 113,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:110"
+   ],
+   "ts": "2026-10-10T02:11:52.582393Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "governed pin stale"
+  },
+  {
+   "line": 114,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:113"
+   ],
+   "ts": "2026-10-10T02:11:53.171556Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "closure hooks installer"
+  },
+  {
+   "line": 115,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:117"
+   ],
+   "ts": "2026-10-10T02:11:53.487577Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ingest runs on commit"
+  },
+  {
+   "line": 116,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:118"
+   ],
+   "ts": "2026-10-10T02:11:53.496482Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pre-commit hook"
+  },
+  {
+   "line": 117,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:121"
+   ],
+   "ts": "2026-10-10T02:11:53.500373Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 118,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:122"
+   ],
+   "ts": "2026-10-10T02:11:53.507736Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 119,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_02_commit_hook.md:123"
+   ],
+   "ts": "2026-10-10T02:11:54.085807Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "hooksPath"
+  },
+  {
+   "line": 120,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:26"
+   ],
+   "ts": "2026-10-10T09:48:36.154218Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "test tiering fast tests per commit full suite nightly"
+  },
+  {
+   "line": 121,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:27"
+   ],
+   "ts": "2026-10-10T09:48:49.862419Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "flaky tests order dependent hermetic test isolation shared state"
+  },
+  {
+   "line": 122,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:28"
+   ],
+   "ts": "2026-10-10T09:49:03.420084Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "lease heartbeat liveness failure detection distributed lock"
+  },
+  {
+   "line": 123,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:44",
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:45",
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:46"
+   ],
+   "ts": "2026-10-10T09:49:07.398110Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "abandoned admission"
+  },
+  {
+   "line": 124,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:29"
+   ],
+   "ts": "2026-10-10T09:49:21.266350Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "incremental knowledge graph update add one document without rebuild"
+  },
+  {
+   "line": 125,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:48"
+   ],
+   "ts": "2026-10-10T09:49:37.369685Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "pin uncataloged governed"
+  },
+  {
+   "line": 126,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_governed_admission_in_seconds_tiered_tests_holder_leases.md:47"
+   ],
+   "ts": "2026-10-10T09:49:40.921370Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "test suite working directory clean checkout failures"
+  },
+  {
+   "line": 127,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T03:53:24.763210Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "R-181 R-182 R-183"
+  },
+  {
+   "line": 128,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T03:53:30.329263Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "R-185"
+  },
+  {
+   "line": 129,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_ADDENDUM_01_r181_renumbered_r188.md:16"
+   ],
+   "ts": "2026-10-11T03:53:36.797798Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "R-184"
+  },
+  {
+   "line": 130,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-10_DN-043_ADDENDUM_01_r181_renumbered_r188.md:15"
+   ],
+   "ts": "2026-10-11T03:53:41.839683Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "R-183"
+  },
+  {
+   "line": 131,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T03:53:44.035393Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "R-182"
+  },
+  {
+   "line": 132,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T11:11:26.230541Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "deixis anaphora antecedent definite noun phrase reference resolution"
+  },
+  {
+   "line": 133,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T11:15:01.027037Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "standing band ref"
+  },
+  {
+   "line": 134,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:98",
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:99"
+   ],
+   "ts": "2026-10-11T11:15:04.576655Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "reference never a copied number"
+  },
+  {
+   "line": 135,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T11:15:08.275635Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "one definition never a copy"
+  },
+  {
+   "line": 136,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T11:15:11.744372Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "symlink or reference"
+  },
+  {
+   "line": 137,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:98",
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:99"
+   ],
+   "ts": "2026-10-11T11:15:18.858687Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "reference never a copied number"
+  },
+  {
+   "line": 138,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:102"
+   ],
+   "ts": "2026-10-11T11:15:21.569504Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "symlink"
+  },
+  {
+   "line": 139,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:106",
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:107",
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:108"
+   ],
+   "ts": "2026-10-11T11:15:24.617929Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "verdict governed ledger beside the note"
+  },
+  {
+   "line": 140,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:93"
+   ],
+   "ts": "2026-10-11T11:15:51.123768Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "configuration duplicated across repositories drift single source of truth"
+  },
+  {
+   "line": 141,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-11T11:16:12.045185Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "configuration inheritance base file override relative paths"
+  },
+  {
+   "line": 142,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md:93"
+   ],
+   "ts": "2026-10-11T11:16:34.582146Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "configuration duplicated across repositories drift single source of truth"
+  },
+  {
+   "line": 143,
+   "class": "moved",
+   "target": "ai-readiness-kg",
+   "holders": [
+    "ai-readiness-kg"
+   ],
+   "basis": [
+    "cc_tasks/2026-10-11_manners_honours_crawl_delay.md:23"
+   ],
+   "ts": "2026-10-11T15:13:25.911837Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "crawl delay robots"
+  },
+  {
+   "line": 144,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:90",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:91",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:92"
+   ],
+   "ts": "2026-10-11T16:53:36.419887Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "first article inspection"
+  },
+  {
+   "line": 145,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:86",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:87",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:88"
+   ],
+   "ts": "2026-10-12T03:51:06.687761Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "first article inspection"
+  },
+  {
+   "line": 146,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:86",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:87",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:88"
+   ],
+   "ts": "2026-10-12T03:51:14.142001Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "first article inspection"
+  },
+  {
+   "line": 147,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:93",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:94",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:95"
+   ],
+   "ts": "2026-10-12T03:51:16.410899Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "earned value"
+  },
+  {
+   "line": 148,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:100",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:101",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:102"
+   ],
+   "ts": "2026-10-12T03:51:24.467725Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 149,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:107",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:108",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:109"
+   ],
+   "ts": "2026-10-12T03:51:26.731794Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 150,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:114",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:115",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:116"
+   ],
+   "ts": "2026-10-12T03:51:29.072133Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 151,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:121",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:122",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:123"
+   ],
+   "ts": "2026-10-12T03:51:31.458438Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "andon huddle"
+  },
+  {
+   "line": 152,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:128",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:129",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:130"
+   ],
+   "ts": "2026-10-12T03:51:33.788583Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "different family rater"
+  },
+  {
+   "line": 153,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:135",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:136",
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:137"
+   ],
+   "ts": "2026-10-12T03:51:36.124220Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 154,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:63"
+   ],
+   "ts": "2026-10-12T03:52:01.402363Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "Self-Preference Bias in Rubric-Based Evaluation of Large Language Models"
+  },
+  {
+   "line": 155,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:64"
+   ],
+   "ts": "2026-10-12T03:52:20.198929Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "Mitigating Self-Preference by Authorship Obfuscation"
+  },
+  {
+   "line": 156,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:65"
+   ],
+   "ts": "2026-10-12T03:52:37.369336Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "UDA: Unsupervised Debiasing Alignment for Pair-wise LLM-as-a-Judge"
+  },
+  {
+   "line": 157,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:66"
+   ],
+   "ts": "2026-10-12T03:52:54.435636Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "More Debate, Same Evidence: Structural Limits of Homogeneous Multi-Agent Groundedness"
+  },
+  {
+   "line": 158,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:67"
+   ],
+   "ts": "2026-10-12T03:53:11.599007Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "Stop Overvaluing Multi-Agent Debate: We Must Rethink Evaluation and Embrace Model Heterogeneity"
+  },
+  {
+   "line": 159,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:68"
+   ],
+   "ts": "2026-10-12T03:53:28.290385Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "Beyond Symmetric Agents: Cognitive Diversity and Multi-Agent Debate in Small Language Models"
+  },
+  {
+   "line": 160,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:69"
+   ],
+   "ts": "2026-10-12T03:53:45.392275Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "DynSTEER: Dynamic Stage-wise Trajectory Evaluation and Execution-time Review for Agents"
+  },
+  {
+   "line": 161,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:70"
+   ],
+   "ts": "2026-10-12T03:54:02.165985Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "Agent-as-a-Judge: Evaluate Agents with Agents"
+  },
+  {
+   "line": 162,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:63"
+   ],
+   "ts": "2026-10-12T03:55:43.708554Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Self-Preference Bias in Rubric-Based Evaluation of Large Language Models"
+  },
+  {
+   "line": 163,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:64"
+   ],
+   "ts": "2026-10-12T03:55:43.880207Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Mitigating Self-Preference by Authorship Obfuscation"
+  },
+  {
+   "line": 164,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:65"
+   ],
+   "ts": "2026-10-12T03:55:44.160121Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "UDA: Unsupervised Debiasing Alignment for Pair-wise LLM-as-a-Judge"
+  },
+  {
+   "line": 165,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:66"
+   ],
+   "ts": "2026-10-12T03:55:44.331523Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "More Debate, Same Evidence: Structural Limits of Homogeneous Multi-Agent Groundedness"
+  },
+  {
+   "line": 166,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:67"
+   ],
+   "ts": "2026-10-12T03:55:44.547275Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Stop Overvaluing Multi-Agent Debate: We Must Rethink Evaluation and Embrace Model Heterogeneity"
+  },
+  {
+   "line": 167,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:68"
+   ],
+   "ts": "2026-10-12T03:55:44.787090Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Beyond Symmetric Agents: Cognitive Diversity and Multi-Agent Debate in Small Language Models"
+  },
+  {
+   "line": 168,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:69"
+   ],
+   "ts": "2026-10-12T03:55:44.983023Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "DynSTEER: Dynamic Stage-wise Trajectory Evaluation and Execution-time Review for Agents"
+  },
+  {
+   "line": 169,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:70"
+   ],
+   "ts": "2026-10-12T03:55:45.253039Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Agent-as-a-Judge: Evaluate Agents with Agents"
+  },
+  {
+   "line": 170,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:86"
+   ],
+   "ts": "2026-10-12T03:55:45.562910Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 171,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:87"
+   ],
+   "ts": "2026-10-12T03:55:46.169466Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 172,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:88"
+   ],
+   "ts": "2026-10-12T03:55:46.432722Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 173,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:89"
+   ],
+   "ts": "2026-10-12T03:55:46.943522Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 174,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:90"
+   ],
+   "ts": "2026-10-12T03:55:47.162353Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 175,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:91"
+   ],
+   "ts": "2026-10-12T03:55:47.462257Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 176,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:92"
+   ],
+   "ts": "2026-10-12T03:55:47.506439Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 177,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:93"
+   ],
+   "ts": "2026-10-12T03:55:47.516263Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 178,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:94"
+   ],
+   "ts": "2026-10-12T03:55:47.539372Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 179,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:95"
+   ],
+   "ts": "2026-10-12T03:55:47.548865Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 180,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:96"
+   ],
+   "ts": "2026-10-12T03:55:47.563493Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 181,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:97"
+   ],
+   "ts": "2026-10-12T03:55:47.570311Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 182,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:98"
+   ],
+   "ts": "2026-10-12T03:55:47.593993Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 183,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:99"
+   ],
+   "ts": "2026-10-12T03:55:47.597049Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 184,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:100"
+   ],
+   "ts": "2026-10-12T03:55:47.604758Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 185,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:101"
+   ],
+   "ts": "2026-10-12T03:55:47.624500Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 186,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:102"
+   ],
+   "ts": "2026-10-12T03:55:47.633108Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 187,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:103"
+   ],
+   "ts": "2026-10-12T03:55:47.642363Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 188,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:104"
+   ],
+   "ts": "2026-10-12T03:55:47.646917Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 189,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:105"
+   ],
+   "ts": "2026-10-12T03:55:47.661490Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 190,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:106"
+   ],
+   "ts": "2026-10-12T03:55:47.664077Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 191,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:107"
+   ],
+   "ts": "2026-10-12T03:55:47.674062Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 192,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:108"
+   ],
+   "ts": "2026-10-12T03:55:47.705164Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 193,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:109"
+   ],
+   "ts": "2026-10-12T03:55:47.714882Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 194,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:110"
+   ],
+   "ts": "2026-10-12T03:55:47.732556Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 195,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:111"
+   ],
+   "ts": "2026-10-12T03:55:47.741828Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 196,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:112"
+   ],
+   "ts": "2026-10-12T03:55:47.768020Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 197,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:113"
+   ],
+   "ts": "2026-10-12T03:55:47.771018Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 198,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:114"
+   ],
+   "ts": "2026-10-12T03:55:47.782855Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 199,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:115"
+   ],
+   "ts": "2026-10-12T03:55:47.819924Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 200,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:116"
+   ],
+   "ts": "2026-10-12T03:55:47.833885Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 201,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:117"
+   ],
+   "ts": "2026-10-12T03:55:47.851182Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 202,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:118"
+   ],
+   "ts": "2026-10-12T03:55:47.860570Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 203,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:119"
+   ],
+   "ts": "2026-10-12T03:55:47.890115Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 204,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:120"
+   ],
+   "ts": "2026-10-12T03:55:47.894634Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 205,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:121"
+   ],
+   "ts": "2026-10-12T03:55:47.900769Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 206,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:122"
+   ],
+   "ts": "2026-10-12T03:55:47.913875Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 207,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:123"
+   ],
+   "ts": "2026-10-12T03:55:47.918473Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 208,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:124"
+   ],
+   "ts": "2026-10-12T03:55:47.928140Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 209,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:125"
+   ],
+   "ts": "2026-10-12T03:55:47.932989Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 210,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:126"
+   ],
+   "ts": "2026-10-12T03:55:47.943566Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 211,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:127"
+   ],
+   "ts": "2026-10-12T03:55:47.945063Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 212,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:128"
+   ],
+   "ts": "2026-10-12T03:55:47.957779Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 213,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:129"
+   ],
+   "ts": "2026-10-12T03:55:47.987914Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 214,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:130"
+   ],
+   "ts": "2026-10-12T03:55:47.997674Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 215,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:131"
+   ],
+   "ts": "2026-10-12T03:55:48.013553Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 216,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:132"
+   ],
+   "ts": "2026-10-12T03:55:48.022901Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 217,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:133"
+   ],
+   "ts": "2026-10-12T03:55:48.054310Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 218,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:134"
+   ],
+   "ts": "2026-10-12T03:55:48.056814Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 219,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:135"
+   ],
+   "ts": "2026-10-12T03:55:48.069006Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 220,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:136"
+   ],
+   "ts": "2026-10-12T03:55:48.120058Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 221,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:137"
+   ],
+   "ts": "2026-10-12T03:55:48.135232Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 222,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:138"
+   ],
+   "ts": "2026-10-12T03:55:48.154073Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 223,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:139"
+   ],
+   "ts": "2026-10-12T03:55:48.164955Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 224,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:140"
+   ],
+   "ts": "2026-10-12T03:55:48.196884Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 225,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:141"
+   ],
+   "ts": "2026-10-12T03:55:48.202959Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 226,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:63"
+   ],
+   "ts": "2026-10-12T03:56:07.613009Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Self-Preference Bias in Rubric-Based Evaluation of Large Language Models"
+  },
+  {
+   "line": 227,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:64"
+   ],
+   "ts": "2026-10-12T03:56:07.771308Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Mitigating Self-Preference by Authorship Obfuscation"
+  },
+  {
+   "line": 228,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:65"
+   ],
+   "ts": "2026-10-12T03:56:07.973992Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "UDA: Unsupervised Debiasing Alignment for Pair-wise LLM-as-a-Judge"
+  },
+  {
+   "line": 229,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:66"
+   ],
+   "ts": "2026-10-12T03:56:08.138521Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "More Debate, Same Evidence: Structural Limits of Homogeneous Multi-Agent Groundedness"
+  },
+  {
+   "line": 230,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:67"
+   ],
+   "ts": "2026-10-12T03:56:08.418362Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Stop Overvaluing Multi-Agent Debate: We Must Rethink Evaluation and Embrace Model Heterogeneity"
+  },
+  {
+   "line": 231,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:68"
+   ],
+   "ts": "2026-10-12T03:56:08.697849Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Beyond Symmetric Agents: Cognitive Diversity and Multi-Agent Debate in Small Language Models"
+  },
+  {
+   "line": 232,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:69"
+   ],
+   "ts": "2026-10-12T03:56:08.915546Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "DynSTEER: Dynamic Stage-wise Trajectory Evaluation and Execution-time Review for Agents"
+  },
+  {
+   "line": 233,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:70"
+   ],
+   "ts": "2026-10-12T03:56:09.079498Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Agent-as-a-Judge: Evaluate Agents with Agents"
+  },
+  {
+   "line": 234,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:86"
+   ],
+   "ts": "2026-10-12T03:56:09.372123Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 235,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:87"
+   ],
+   "ts": "2026-10-12T03:56:09.917371Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 236,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:88"
+   ],
+   "ts": "2026-10-12T03:56:10.137284Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 237,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:89"
+   ],
+   "ts": "2026-10-12T03:56:10.605271Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 238,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:90"
+   ],
+   "ts": "2026-10-12T03:56:10.819522Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 239,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:91"
+   ],
+   "ts": "2026-10-12T03:56:11.107889Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 240,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:92"
+   ],
+   "ts": "2026-10-12T03:56:11.152058Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 241,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:93"
+   ],
+   "ts": "2026-10-12T03:56:11.161782Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 242,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:94"
+   ],
+   "ts": "2026-10-12T03:56:11.185161Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 243,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:95"
+   ],
+   "ts": "2026-10-12T03:56:11.194568Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 244,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:96"
+   ],
+   "ts": "2026-10-12T03:56:11.209320Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 245,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:97"
+   ],
+   "ts": "2026-10-12T03:56:11.216230Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 246,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:98"
+   ],
+   "ts": "2026-10-12T03:56:11.239896Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 247,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:99"
+   ],
+   "ts": "2026-10-12T03:56:11.243021Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 248,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:100"
+   ],
+   "ts": "2026-10-12T03:56:11.250886Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 249,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:101"
+   ],
+   "ts": "2026-10-12T03:56:11.271166Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 250,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:102"
+   ],
+   "ts": "2026-10-12T03:56:11.279990Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 251,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:103"
+   ],
+   "ts": "2026-10-12T03:56:11.289344Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 252,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:104"
+   ],
+   "ts": "2026-10-12T03:56:11.293904Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 253,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:105"
+   ],
+   "ts": "2026-10-12T03:56:11.308620Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 254,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:106"
+   ],
+   "ts": "2026-10-12T03:56:11.311211Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 255,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:107"
+   ],
+   "ts": "2026-10-12T03:56:11.321106Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 256,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:108"
+   ],
+   "ts": "2026-10-12T03:56:11.352392Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 257,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:109"
+   ],
+   "ts": "2026-10-12T03:56:11.362040Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 258,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:110"
+   ],
+   "ts": "2026-10-12T03:56:11.379758Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 259,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:111"
+   ],
+   "ts": "2026-10-12T03:56:11.389129Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 260,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:112"
+   ],
+   "ts": "2026-10-12T03:56:11.415822Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 261,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:113"
+   ],
+   "ts": "2026-10-12T03:56:11.418875Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 262,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:114"
+   ],
+   "ts": "2026-10-12T03:56:11.430515Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 263,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:115"
+   ],
+   "ts": "2026-10-12T03:56:11.467594Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 264,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:116"
+   ],
+   "ts": "2026-10-12T03:56:11.481497Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 265,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:117"
+   ],
+   "ts": "2026-10-12T03:56:11.498560Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 266,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:118"
+   ],
+   "ts": "2026-10-12T03:56:11.507913Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 267,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:119"
+   ],
+   "ts": "2026-10-12T03:56:11.537378Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 268,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:120"
+   ],
+   "ts": "2026-10-12T03:56:11.541906Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 269,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:121"
+   ],
+   "ts": "2026-10-12T03:56:11.548035Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 270,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:122"
+   ],
+   "ts": "2026-10-12T03:56:11.561248Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 271,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:123"
+   ],
+   "ts": "2026-10-12T03:56:11.565767Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 272,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:124"
+   ],
+   "ts": "2026-10-12T03:56:11.575339Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 273,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:125"
+   ],
+   "ts": "2026-10-12T03:56:11.580197Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 274,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:126"
+   ],
+   "ts": "2026-10-12T03:56:11.590726Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 275,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:127"
+   ],
+   "ts": "2026-10-12T03:56:11.592214Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 276,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:128"
+   ],
+   "ts": "2026-10-12T03:56:11.604696Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 277,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:129"
+   ],
+   "ts": "2026-10-12T03:56:11.634767Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 278,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:130"
+   ],
+   "ts": "2026-10-12T03:56:11.644692Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 279,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:131"
+   ],
+   "ts": "2026-10-12T03:56:11.660638Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 280,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:132"
+   ],
+   "ts": "2026-10-12T03:56:11.669817Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 281,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:133"
+   ],
+   "ts": "2026-10-12T03:56:11.701262Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 282,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:134"
+   ],
+   "ts": "2026-10-12T03:56:11.703739Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 283,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:135"
+   ],
+   "ts": "2026-10-12T03:56:11.715851Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 284,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:136"
+   ],
+   "ts": "2026-10-12T03:56:11.766702Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 285,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:137"
+   ],
+   "ts": "2026-10-12T03:56:11.781256Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 286,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:138"
+   ],
+   "ts": "2026-10-12T03:56:11.799555Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 287,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:139"
+   ],
+   "ts": "2026-10-12T03:56:11.810290Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 288,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:140"
+   ],
+   "ts": "2026-10-12T03:56:11.842139Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 289,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:141"
+   ],
+   "ts": "2026-10-12T03:56:11.848259Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 290,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:63"
+   ],
+   "ts": "2026-10-12T03:56:48.257992Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Self-Preference Bias in Rubric-Based Evaluation of Large Language Models"
+  },
+  {
+   "line": 291,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:64"
+   ],
+   "ts": "2026-10-12T03:56:48.412833Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Mitigating Self-Preference by Authorship Obfuscation"
+  },
+  {
+   "line": 292,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:65"
+   ],
+   "ts": "2026-10-12T03:56:48.591685Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "UDA: Unsupervised Debiasing Alignment for Pair-wise LLM-as-a-Judge"
+  },
+  {
+   "line": 293,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:66"
+   ],
+   "ts": "2026-10-12T03:56:48.755892Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "More Debate, Same Evidence: Structural Limits of Homogeneous Multi-Agent Groundedness"
+  },
+  {
+   "line": 294,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:67"
+   ],
+   "ts": "2026-10-12T03:56:49.016018Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Stop Overvaluing Multi-Agent Debate: We Must Rethink Evaluation and Embrace Model Heterogeneity"
+  },
+  {
+   "line": 295,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:68"
+   ],
+   "ts": "2026-10-12T03:56:49.249880Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Beyond Symmetric Agents: Cognitive Diversity and Multi-Agent Debate in Small Language Models"
+  },
+  {
+   "line": 296,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:69"
+   ],
+   "ts": "2026-10-12T03:56:49.526630Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "DynSTEER: Dynamic Stage-wise Trajectory Evaluation and Execution-time Review for Agents"
+  },
+  {
+   "line": 297,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:70"
+   ],
+   "ts": "2026-10-12T03:56:49.755781Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "Agent-as-a-Judge: Evaluate Agents with Agents"
+  },
+  {
+   "line": 298,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:86"
+   ],
+   "ts": "2026-10-12T03:56:50.050089Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 299,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:87"
+   ],
+   "ts": "2026-10-12T03:56:50.656529Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 300,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:88"
+   ],
+   "ts": "2026-10-12T03:56:50.921950Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 301,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:89"
+   ],
+   "ts": "2026-10-12T03:56:51.423176Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 302,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:90"
+   ],
+   "ts": "2026-10-12T03:56:51.641112Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 303,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:91"
+   ],
+   "ts": "2026-10-12T03:56:51.934945Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 304,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:92"
+   ],
+   "ts": "2026-10-12T03:56:51.980585Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "first article inspection"
+  },
+  {
+   "line": 305,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:93"
+   ],
+   "ts": "2026-10-12T03:56:51.990247Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 306,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:94"
+   ],
+   "ts": "2026-10-12T03:56:52.013167Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 307,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:95"
+   ],
+   "ts": "2026-10-12T03:56:52.022338Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 308,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:96"
+   ],
+   "ts": "2026-10-12T03:56:52.036807Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 309,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:97"
+   ],
+   "ts": "2026-10-12T03:56:52.043612Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 310,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:98"
+   ],
+   "ts": "2026-10-12T03:56:52.066843Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 311,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:99"
+   ],
+   "ts": "2026-10-12T03:56:52.069901Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "earned value"
+  },
+  {
+   "line": 312,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:100"
+   ],
+   "ts": "2026-10-12T03:56:52.077473Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 313,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:101"
+   ],
+   "ts": "2026-10-12T03:56:52.097325Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 314,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:102"
+   ],
+   "ts": "2026-10-12T03:56:52.105927Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 315,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:103"
+   ],
+   "ts": "2026-10-12T03:56:52.115228Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 316,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:104"
+   ],
+   "ts": "2026-10-12T03:56:52.119764Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 317,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:105"
+   ],
+   "ts": "2026-10-12T03:56:52.134356Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 318,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:106"
+   ],
+   "ts": "2026-10-12T03:56:52.136942Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 319,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:107"
+   ],
+   "ts": "2026-10-12T03:56:52.146956Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 320,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:108"
+   ],
+   "ts": "2026-10-12T03:56:52.178161Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 321,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:109"
+   ],
+   "ts": "2026-10-12T03:56:52.187965Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 322,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:110"
+   ],
+   "ts": "2026-10-12T03:56:52.205813Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 323,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:111"
+   ],
+   "ts": "2026-10-12T03:56:52.215159Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 324,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:112"
+   ],
+   "ts": "2026-10-12T03:56:52.241728Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 325,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:113"
+   ],
+   "ts": "2026-10-12T03:56:52.244728Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "premises found wrong"
+  },
+  {
+   "line": 326,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:114"
+   ],
+   "ts": "2026-10-12T03:56:52.256275Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 327,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:115"
+   ],
+   "ts": "2026-10-12T03:56:52.293262Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 328,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:116"
+   ],
+   "ts": "2026-10-12T03:56:52.307000Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 329,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:117"
+   ],
+   "ts": "2026-10-12T03:56:52.323969Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 330,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:118"
+   ],
+   "ts": "2026-10-12T03:56:52.333432Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 331,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:119"
+   ],
+   "ts": "2026-10-12T03:56:52.362709Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 332,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:120"
+   ],
+   "ts": "2026-10-12T03:56:52.367180Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "ABBA judge order"
+  },
+  {
+   "line": 333,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:121"
+   ],
+   "ts": "2026-10-12T03:56:52.373321Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 334,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:122"
+   ],
+   "ts": "2026-10-12T03:56:52.386702Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 335,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:123"
+   ],
+   "ts": "2026-10-12T03:56:52.391223Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 336,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:124"
+   ],
+   "ts": "2026-10-12T03:56:52.400719Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 337,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:125"
+   ],
+   "ts": "2026-10-12T03:56:52.405581Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 338,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:126"
+   ],
+   "ts": "2026-10-12T03:56:52.416089Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 339,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:127"
+   ],
+   "ts": "2026-10-12T03:56:52.417651Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "andon huddle"
+  },
+  {
+   "line": 340,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:128"
+   ],
+   "ts": "2026-10-12T03:56:52.430425Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 341,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:129"
+   ],
+   "ts": "2026-10-12T03:56:52.460723Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 342,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:130"
+   ],
+   "ts": "2026-10-12T03:56:52.470559Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 343,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:131"
+   ],
+   "ts": "2026-10-12T03:56:52.486421Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 344,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:132"
+   ],
+   "ts": "2026-10-12T03:56:52.495594Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 345,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:133"
+   ],
+   "ts": "2026-10-12T03:56:52.527154Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 346,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:134"
+   ],
+   "ts": "2026-10-12T03:56:52.529661Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "different family rater"
+  },
+  {
+   "line": 347,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:135"
+   ],
+   "ts": "2026-10-12T03:56:52.541823Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 348,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:136"
+   ],
+   "ts": "2026-10-12T03:56:52.592510Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 349,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:137"
+   ],
+   "ts": "2026-10-12T03:56:52.606839Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 350,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:138"
+   ],
+   "ts": "2026-10-12T03:56:52.625166Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 351,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:139"
+   ],
+   "ts": "2026-10-12T03:56:52.635863Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 352,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:140"
+   ],
+   "ts": "2026-10-12T03:56:52.667823Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 353,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md:141"
+   ],
+   "ts": "2026-10-12T03:56:52.673967Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "pilot first checkpoint"
+  },
+  {
+   "line": 354,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-12T04:34:57.344166Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 355,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:62",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:63",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:64"
+   ],
+   "ts": "2026-10-12T13:49:17.264975Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "DOI normalization"
+  },
+  {
+   "line": 356,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:69",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:70",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:71"
+   ],
+   "ts": "2026-10-12T13:49:19.769334Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "identity halt"
+  },
+  {
+   "line": 357,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:76",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:77",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:78"
+   ],
+   "ts": "2026-10-12T13:49:22.050723Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "acquire halt resolution"
+  },
+  {
+   "line": 358,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:83",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:84",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:85"
+   ],
+   "ts": "2026-10-12T13:49:24.272949Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "keyed no-op"
+  },
+  {
+   "line": 359,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:90",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:91",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:92"
+   ],
+   "ts": "2026-10-12T13:49:33.777061Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "idempotent stage outputs"
+  },
+  {
+   "line": 360,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:100",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:101",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:102"
+   ],
+   "ts": "2026-10-12T13:49:36.045562Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "ledger snapshot append"
+  },
+  {
+   "line": 361,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:104",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:105",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:106"
+   ],
+   "ts": "2026-10-12T13:49:38.303106Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "static fixture copy"
+  },
+  {
+   "line": 362,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:111",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:112",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:113"
+   ],
+   "ts": "2026-10-12T13:49:40.580189Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "symlinks never copies"
+  },
+  {
+   "line": 363,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:43"
+   ],
+   "ts": "2026-10-12T13:50:51.912369Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "DOI normalization"
+  },
+  {
+   "line": 364,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:44"
+   ],
+   "ts": "2026-10-12T13:51:10.008644Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "identity halt"
+  },
+  {
+   "line": 365,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:45"
+   ],
+   "ts": "2026-10-12T13:51:27.586197Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "acquire halt resolution"
+  },
+  {
+   "line": 366,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:46"
+   ],
+   "ts": "2026-10-12T13:51:45.041063Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "keyed no-op"
+  },
+  {
+   "line": 367,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:47"
+   ],
+   "ts": "2026-10-12T13:52:02.660248Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "idempotent stage outputs"
+  },
+  {
+   "line": 368,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:48"
+   ],
+   "ts": "2026-10-12T13:52:20.062092Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "ledger snapshot append"
+  },
+  {
+   "line": 369,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:49"
+   ],
+   "ts": "2026-10-12T13:52:37.348086Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "static fixture copy"
+  },
+  {
+   "line": 370,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:50"
+   ],
+   "ts": "2026-10-12T13:52:54.947531Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "symlinks never copies"
+  },
+  {
+   "line": 371,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:62",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:63",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:64"
+   ],
+   "ts": "2026-10-12T13:53:10.997609Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "DOI normalization"
+  },
+  {
+   "line": 372,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:69",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:70",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:71"
+   ],
+   "ts": "2026-10-12T13:53:13.258340Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "identity halt"
+  },
+  {
+   "line": 373,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:76",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:77",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:78"
+   ],
+   "ts": "2026-10-12T13:53:15.574305Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "acquire halt resolution"
+  },
+  {
+   "line": 374,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:83",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:84",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:85"
+   ],
+   "ts": "2026-10-12T13:53:17.806373Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "keyed no-op"
+  },
+  {
+   "line": 375,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:90",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:91",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:92"
+   ],
+   "ts": "2026-10-12T13:53:20.081427Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "idempotent stage outputs"
+  },
+  {
+   "line": 376,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:100",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:101",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:102"
+   ],
+   "ts": "2026-10-12T13:53:22.358045Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "ledger snapshot append"
+  },
+  {
+   "line": 377,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:104",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:105",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:106"
+   ],
+   "ts": "2026-10-12T13:53:24.606458Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "static fixture copy"
+  },
+  {
+   "line": 378,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:111",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:112",
+    "docs/design/2026-10-12_DN-044_identity_halts_by_rule_keyed_noops_verify_outputs.md:113"
+   ],
+   "ts": "2026-10-12T13:53:26.866054Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "symlinks never copies"
+  },
+  {
+   "line": 379,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-12T14:20:26.339322Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "self-preference judge"
+  },
+  {
+   "line": 380,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:65",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:66",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:67"
+   ],
+   "ts": "2026-10-12T18:13:35.865597Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "DOI handle resolution"
+  },
+  {
+   "line": 381,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:51"
+   ],
+   "ts": "2026-10-12T18:13:55.517539Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "DOI handle resolution"
+  },
+  {
+   "line": 382,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:72",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:73",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:74"
+   ],
+   "ts": "2026-10-12T18:14:02.321120Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "citation title agreement"
+  },
+  {
+   "line": 383,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:52"
+   ],
+   "ts": "2026-10-12T18:14:14.972560Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "citation title agreement"
+  },
+  {
+   "line": 384,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:79",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:80",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:81"
+   ],
+   "ts": "2026-10-12T18:14:22.086694Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "registration agency identifier exists"
+  },
+  {
+   "line": 385,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:53"
+   ],
+   "ts": "2026-10-12T18:14:36.367246Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "registration agency identifier exists"
+  },
+  {
+   "line": 386,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_ADDENDUM_01_r201_edits_attach_on_handle_evidence.md:44",
+    "docs/design/2026-10-12_DN-045_ADDENDUM_01_r201_edits_attach_on_handle_evidence.md:45",
+    "docs/design/2026-10-12_DN-045_ADDENDUM_01_r201_edits_attach_on_handle_evidence.md:46"
+   ],
+   "ts": "2026-10-12T18:14:43.006087Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "preprint version suffix"
+  },
+  {
+   "line": 387,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-12_DN-045_ADDENDUM_01_r201_edits_attach_on_handle_evidence.md:33",
+    "docs/design/2026-10-12_DN-045_doi_existence_by_handle_system_shortening_by_evidence_labels_by_measurement.md:54"
+   ],
+   "ts": "2026-10-12T18:14:57.009691Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "preprint version suffix"
+  },
+  {
+   "line": 388,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-13T03:49:32.746018Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "LinkML"
+  },
+  {
+   "line": 389,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:45",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:46",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:47"
+   ],
+   "ts": "2026-10-14T00:50:39.546083Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "verifying traces build system"
+  },
+  {
+   "line": 390,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:32"
+   ],
+   "ts": "2026-10-14T00:50:57.160712Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "verifying traces build system"
+  },
+  {
+   "line": 391,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:52",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:53",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:54"
+   ],
+   "ts": "2026-10-14T00:51:01.822293Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "output hash completion proof"
+  },
+  {
+   "line": 392,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:33"
+   ],
+   "ts": "2026-10-14T00:51:18.328064Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "output hash completion proof"
+  },
+  {
+   "line": 393,
+   "class": "moved",
+   "target": "squiddy",
+   "holders": [
+    "squiddy"
+   ],
+   "basis": [
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:59",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:60",
+    "docs/design/2026-10-13_DN-046_completion_is_a_verifying_trace.md:61"
+   ],
+   "ts": "2026-10-14T00:51:25.037665Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "stage record output file gate"
+  },
+  {
+   "line": 394,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:63",
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:64"
+   ],
+   "ts": "2026-10-14T02:01:10.440111Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "claude-opus-4-8"
+  },
+  {
+   "line": 395,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:54"
+   ],
+   "ts": "2026-10-14T02:01:40.332266Z",
+   "arm": "library",
+   "purpose": "search",
+   "query": "lockfile exact version pin dependency resolution reproducibility"
+  },
+  {
+   "line": 396,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:54"
+   ],
+   "ts": "2026-10-14T02:02:47.541386Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "lockfile exact version pin dependency resolution reproducibility"
+  },
+  {
+   "line": 397,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T02:02:47.826680Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 398,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T02:02:48.112572Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 399,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:63"
+   ],
+   "ts": "2026-10-14T02:02:48.363136Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "claude-opus-4-8"
+  },
+  {
+   "line": 400,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_02_pinned_roles.md:64"
+   ],
+   "ts": "2026-10-14T02:02:48.654623Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "claude-opus-4-8"
+  },
+  {
+   "line": 401,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-14T02:02:48.959605Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 402,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-14T02:02:48.976119Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 403,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:42"
+   ],
+   "ts": "2026-10-14T02:02:49.789646Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "new version pilot"
+  },
+  {
+   "line": 404,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:45"
+   ],
+   "ts": "2026-10-14T02:02:49.828669Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "machine-wide spend ledger"
+  },
+  {
+   "line": 405,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T02:10:53.127676Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "checklist compliance enforced gate pre-registration systematic review protocol reduces errors"
+  },
+  {
+   "line": 406,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T02:10:53.470211Z",
+   "arm": "library",
+   "purpose": "verify",
+   "query": "LLM behavior drift over time model version changes reproducibility of results"
+  },
+  {
+   "line": 407,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:36",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:89"
+   ],
+   "ts": "2026-10-14T02:10:53.751932Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "model identity gate"
+  },
+  {
+   "line": 408,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:39",
+    "docs/design/AD-036_ADDENDUM_01_self_test.md:92"
+   ],
+   "ts": "2026-10-14T02:10:53.767253Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "product facts pinning"
+  },
+  {
+   "line": 409,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:42"
+   ],
+   "ts": "2026-10-14T02:10:54.508271Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "new version pilot"
+  },
+  {
+   "line": 410,
+   "class": "seldon",
+   "target": null,
+   "holders": [
+    "seldon"
+   ],
+   "basis": [
+    "docs/design/AD-035_ADDENDUM_01_prior_art_verified.md:45"
+   ],
+   "ts": "2026-10-14T02:10:54.547437Z",
+   "arm": "internal",
+   "purpose": "verify",
+   "query": "machine-wide spend ledger"
+  },
+  {
+   "line": 411,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T15:22:31.921635Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "tracked file dirty commit append"
+  },
+  {
+   "line": 412,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T15:22:37.504659Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "commits its own"
+  },
+  {
+   "line": 413,
+   "class": "unattributable",
+   "target": null,
+   "holders": [],
+   "basis": [],
+   "ts": "2026-10-14T15:22:39.745394Z",
+   "arm": "internal",
+   "purpose": "search",
+   "query": "lockfile"
+  }
+ ]
+}

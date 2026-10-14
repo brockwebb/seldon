@@ -1733,9 +1733,17 @@ def seldon_decision_check(project_dir: str = ".") -> str:
     return run_read(_decision_project_path(project_dir), "check")
 
 
+def _prior_art_commit_line(out: dict) -> list:
+    """The one line a prior-art reply carries when its lines were left uncommitted (AD-036-R11: never silently)."""
+    c = out.get("commit") or {}
+    if c.get("committed") or c.get("reason") in (None, "nothing_to_commit", "not_a_work_tree"):
+        return []
+    return [f"(prior-art lines in {out.get('project')} not committed: {c.get('reason')})"]
+
+
 @mcp.tool()
 def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".",
-                            top: int = 0) -> str:
+                            top: int = 0, note: str = "") -> str:
     """Search the prior art BEFORE writing a design note, and get receipts to paste (AD-036).
 
     `arm` is `internal` (the operator's own repositories: seldon, squiddy, ai-readiness-kg,
@@ -1749,8 +1757,11 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
     Args:
         query: A few topic words. No double quotes.
         arm: internal, library or both.
-        project_dir: Path to a project whose seldon.yaml has a `prior_art:` block.
+        project_dir: The project whose evidence this search is; its query log gets the line and the commit
+            (AD-036-R10). "." means the note's repository when `note` is given, else the default project.
         top: Hits to show per arm (0: the configured top_n).
+        note: The note these receipts are for (absolute, or relative to the default project). It is left out of the
+            internal search, and the query is logged in its repository.
     """
     from seldon.commands.prior_art import run_search
     from seldon.core.prior_art import PriorArtError
@@ -1758,7 +1769,8 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
     out = []
     for a in arms:
         try:
-            r = run_search(a, query, top=top or None, project_dir=Path(_project_path(project_dir)))
+            r = run_search(a, query, top=top or None, project_dir=None if project_dir == "." else project_dir,
+                           note=note or None, cwd=Path(_project_path(".")))
         except (PriorArtError, ValueError) as exc:
             out.append(f"## {a}: error\n{exc}")
             continue
@@ -1770,6 +1782,7 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
                 lines.append(f"- {h['doc_id']}: {h['text'][:160]!r}")
         lines.append("Receipts:")
         lines.extend(r["receipts"])
+        lines.extend(_prior_art_commit_line(r))
         out.append("\n".join(lines))
     return "\n\n".join(out)
 
@@ -1783,13 +1796,14 @@ def seldon_prior_art_verify(note: str, project_dir: str = ".", record: bool = Tr
 
     Args:
         note: Path of the note, relative to the project root.
-        project_dir: Path to project root.
+        project_dir: The project the verdict goes to; "." means the repository holding the note (AD-036-R10).
         record: Write the verdict to the governed ledger (default true).
     """
     from seldon.commands.prior_art import run_verify
     from seldon.core.prior_art import PriorArtError
     try:
-        v = run_verify(note, record, project_dir=Path(_project_path(project_dir)))
+        v = run_verify(note, record, project_dir=None if project_dir == "." else project_dir,
+                       cwd=Path(_project_path(".")))
     except PriorArtError as exc:
         return f"Error: {exc}"
     lines = [f"{v['note']} (sha256 {v['sha256'][:12]}): {v['verdict'].upper()}"]
@@ -1798,4 +1812,5 @@ def seldon_prior_art_verify(note: str, project_dir: str = ".", record: bool = Tr
     lines += [f"PROBLEM: {p}" for p in v["problems"]]
     if v.get("recorded"):
         lines.append(f"verdict recorded: event {v['recorded']}")
+    lines.extend(_prior_art_commit_line(v))
     return "\n".join(lines)

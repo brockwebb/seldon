@@ -28,7 +28,9 @@ fails as `release_unavailable`, naming it.
 "no prior art" finding may take (R1). A hit in a file the repository does not track (a gitignored
 handoff) carries its content hash, `<path>:<line>#sha256=<12 hex>`, because a commit does not pin
 it. A root that is not a git repository is named `<name>@tree:<64 hex>`, the digest of every file
-searched. A query may not contain a double quote.
+searched. A query may not contain a double quote. A hit path is percent-encoded (RFC 3986 section
+2.1) for `%`, `,` and whitespace, the three characters the grammar uses or splits on; every other
+character is written as it is (AD-036 ADDENDUM 04).
 
 **The internal arm** is lexical: case-insensitive, every query term must occur in one paragraph
 (a run of non-blank lines), each term matched at a word start, so `pin` finds `pinned`. Paragraphs
@@ -58,6 +60,7 @@ import math
 import os
 import re
 import subprocess
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
@@ -480,7 +483,23 @@ class Hit:
     sha12: str
 
     def cite(self) -> str:
-        return f"{self.path}:{self.start}" + ("" if self.tracked else f"#sha256={self.sha12}")
+        return f"{encode_hit_path(self.path)}:{self.start}" + ("" if self.tracked else f"#sha256={self.sha12}")
+
+
+def encode_hit_path(path: str) -> str:
+    """A hit path as a receipt writes it: `%`, `,` and whitespace percent-encoded, nothing else.
+
+    MODEL-003 found the defect: a path containing spaces (ai-readiness-kg `docs/research/AI Readiness  A ...md`)
+    was printed as-is, and the verifier, which reads a hit as one non-space token and splits hits on commas, called
+    the receipt `malformed`. Only the characters the grammar itself uses are encoded, so every path the old grammar
+    could express is written exactly as before and `urllib.parse.unquote` reads it back unchanged."""
+    out = []
+    for ch in path:
+        if ch == "%" or ch == "," or ch.isspace():
+            out.append("".join(f"%{b:02X}" for b in ch.encode("utf-8")))
+        else:
+            out.append(ch)
+    return "".join(out)
 
 
 def search_corpora(query: str, corpora: list, s: Settings) -> list[Hit]:
@@ -611,10 +630,13 @@ def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:
 
 
 def log_query(s: Settings, record: dict) -> None:
-    """Append one line to the query log, flushed and fsynced (constitution section 15)."""
+    """Append one line to the query log, flushed and fsynced (constitution section 15).
+
+    The log is `s.log`, resolved against the calling project (AD-036-R10), and each line names that project, so a
+    line that is ever found in the wrong repository says whose it is."""
     s.log.parent.mkdir(parents=True, exist_ok=True)
-    line = json.dumps({"ts": _now(), "tool": TOOL_VERSION, **record}, sort_keys=True,
-                      default=str)
+    line = json.dumps({"ts": _now(), "tool": TOOL_VERSION, "project": s.project_dir.name, **record},
+                      sort_keys=True, default=str)
     with s.log.open("a", encoding="utf-8") as fh:
         fh.write(line + "\n")
         fh.flush()
@@ -623,6 +645,224 @@ def log_query(s: Settings, record: dict) -> None:
 
 def _now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+# ------------------------------------------------------------------ the calling project (AD-036-R10)
+
+PROJECT_FILE = "seldon.yaml"
+
+
+def project_of(path: Path) -> Path | None:
+    """The nearest directory at or above `path` holding a `seldon.yaml`, or None.
+
+    The discovery rule git uses for `.git`: a command run anywhere inside a project acts on that project."""
+    p = Path(path).expanduser().resolve()
+    for d in ([p] if p.is_dir() else []) + list(p.parents):
+        if (d / PROJECT_FILE).is_file():
+            return d
+    return None
+
+
+def calling_project(explicit: Path | str | None, note: Path | str | None, cwd: Path | str) -> Path:
+    """The repository whose evidence a search or a verify is (AD-036-R10).
+
+    In order: `explicit` (`--project`, or an MCP `project_dir`); the repository holding `note` (a relative note is
+    read against `cwd`); the project at or above `cwd`. A receipt's log line belongs beside the document the receipt
+    supports, so a search run from seldon's checkout for a squiddy note is logged, and committed, in squiddy.
+
+    Raises:
+        PriorArtError: `explicit` holds no seldon.yaml, or none of the three resolves to a project.
+    """
+    if explicit is not None:
+        d = Path(explicit).expanduser().resolve()
+        if not (d / PROJECT_FILE).is_file():
+            raise PriorArtError(f"--project {d} holds no {PROJECT_FILE}")
+        return d
+    cwd = Path(cwd).expanduser().resolve()
+    if note:
+        n = Path(note).expanduser()
+        found = project_of(n if n.is_absolute() else cwd / n)
+        if found is not None:
+            return found
+    found = project_of(cwd)
+    if found is None:
+        raise PriorArtError(f"no {PROJECT_FILE} at or above {cwd}; run from a project or pass --project")
+    return found
+
+
+# ------------------------------------------------------------- committing what was written (AD-036-R11)
+
+def _git_out(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], cwd=root, capture_output=True)
+
+
+def append_state(project_dir: Path, paths: Iterable[Path]) -> dict:
+    """`{path: True}` for each path whose working copy differs from HEAD (or that is untracked and present) BEFORE a
+    run writes to it. A run commits only the files it found clean: lines already waiting in a file are someone
+    else's, and a commit made by this run must contain only this run's lines (the rule `own_appended_lines` keeps for
+    the event store)."""
+    out = {}
+    for p in paths:
+        p = Path(p)
+        rel = _rel_to(project_dir, p)
+        if rel is None:
+            out[str(p)] = True
+            continue
+        head = _git_out(project_dir, "show", f"HEAD:{rel}")
+        if head.returncode != 0:
+            out[str(p)] = p.exists()
+        else:
+            out[str(p)] = (p.read_bytes() if p.exists() else b"") != head.stdout
+    return out
+
+
+def _rel_to(project_dir: Path, p: Path) -> str | None:
+    try:
+        return Path(p).resolve().relative_to(Path(project_dir).resolve()).as_posix()
+    except ValueError:
+        return None
+
+
+def _appended_lines_ok(project_dir: Path, rel: str, accept) -> str | None:
+    """None when the file's change against HEAD is append-only and every appended line parses and passes `accept`;
+    otherwise the reason."""
+    path = Path(project_dir) / rel
+    head = _git_out(project_dir, "show", f"HEAD:{rel}")
+    base = head.stdout if head.returncode == 0 else b""
+    work = path.read_bytes()
+    if not work.startswith(base):
+        return "not_append_only"
+    for raw in work[len(base):].decode("utf-8").splitlines():
+        if not raw.strip():
+            continue
+        try:
+            row = json.loads(raw)
+        except json.JSONDecodeError:
+            return "unparseable"
+        if not accept(row):
+            return "foreign_lines"
+    return None
+
+
+def _is_log_line(row: dict) -> bool:
+    return str(row.get("tool", "")).startswith("prior-art/")
+
+
+def _is_verdict_line(row: dict) -> bool:
+    return row.get("type") == VERDICT_EVENT
+
+
+def _lease_defers(project_dir: Path, config: dict) -> bool:
+    """Is another session working here under a dispatcher lease? Then nothing is committed beside it (DN-006
+    ADDENDUM 04: "a pass never commits without the lease"); the next pass that takes the lease commits the lines
+    (`commit_leftovers`). A session the lease launched (`SELDON_SESSION_ID` is its child session) is not "another
+    session": committing its own writes is its job."""
+    from seldon.core import dispatch as D
+    try:
+        cfg = D.load_dispatch_config(Path(project_dir), config)
+    except (D.DispatchConfigError, OSError):
+        return False
+    if not D.lease_is_held(project_dir, cfg):
+        return False
+    body = D.read_lease(Path(project_dir) / cfg["lease_file"]) or {}
+    sid = os.environ.get("SELDON_SESSION_ID")
+    if not sid or not body.get("task"):
+        return True
+    from seldon.core import stations
+    store = Path(project_dir) / (config or {}).get("event_store", {}).get("path", "seldon_events.jsonl")
+    events = []
+    if store.is_file():
+        with store.open(encoding="utf-8") as fh:
+            for raw in fh:
+                if '"dispatch_launched"' in raw:
+                    try:
+                        events.append(json.loads(raw))
+                    except json.JSONDecodeError:
+                        continue
+    launch = stations.launch_for_session(events, sid)
+    return not (launch and (launch.get("payload") or {}).get("task_id") == body.get("task"))
+
+
+def commit_appends(project_dir: Path, config: dict, written: dict, message: str) -> dict:
+    """Commit the prior-art files this run appended to, path-scoped and through the hooks (AD-036-R11).
+
+    Args:
+        project_dir: The calling project.
+        config: Its seldon.yaml.
+        written: `{path: dirty_before}` from `append_state`, for the files the run appended to.
+        message: The commit message.
+
+    Returns:
+        `{committed, reason, ...}`; `reason` is None, `not_a_work_tree`, `lease_held`, `nothing_to_commit`,
+        `dirty_before_this_run`, `not_append_only`, `unparseable`, `foreign_lines`, `git_add_failed` or
+        `git_commit_failed`. **Never raises on a git state**: the search or verify did its work, and its bookkeeping
+        reports rather than undoing it. The caller prints any reason that leaves a file dirty.
+    """
+    from seldon.core import dispatch as D
+    project_dir = Path(project_dir).resolve()
+    top = _git_out(project_dir, "rev-parse", "--show-toplevel")
+    if top.returncode != 0 or Path(top.stdout.decode().strip()).resolve() != project_dir:
+        return {"committed": False, "reason": "not_a_work_tree"}
+    rels, skipped = [], []
+    for p, dirty_before in written.items():
+        rel = _rel_to(project_dir, Path(p))
+        if rel is None or not Path(p).exists():
+            continue
+        if D.git(project_dir, "check-ignore", "-q", "--", rel).returncode == 0:
+            continue
+        if dirty_before:
+            skipped.append(rel)
+            continue
+        rels.append(rel)
+    if not rels:
+        return {"committed": False, "reason": "dirty_before_this_run" if skipped else "nothing_to_commit",
+                "skipped": skipped}
+    for rel in rels:
+        why = _appended_lines_ok(project_dir, rel, lambda row: _is_log_line(row) or _is_verdict_line(row))
+        if why:
+            return {"committed": False, "reason": why, "path": rel, "skipped": skipped}
+    if _lease_defers(project_dir, config):
+        return {"committed": False, "reason": "lease_held", "skipped": skipped}
+    out = D.commit_paths(project_dir, rels, message)
+    out["skipped"] = skipped + out.get("skipped", [])
+    return out
+
+
+def prior_art_paths(project_dir: Path, config: dict) -> list[Path]:
+    """The files `search` and `verify` append to in this project: the query log and the verdict ledger."""
+    s = settings(project_dir, config)
+    return [s.log, verdict_ledger(project_dir, config)]
+
+
+def commit_leftovers(project_dir: Path, config: dict) -> dict:
+    """The dispatcher pass's sweep: commit prior-art lines a run left uncommitted (a run deferred by the lease, or one
+    whose commit failed). Called by a pass that holds the lease with no claim in flight, before it reads the tree.
+
+    Commits the query log only when every appended line is a query-log line, and the verdict ledger only when every
+    appended line is a verdict; a ledger carrying anyone else's lines is theirs to commit, and stays dirty for c7 to
+    name. Returns `{committed, reason, ...}` as `commit_appends` does; `no_prior_art_block` when the project has none.
+    """
+    from seldon.core import dispatch as D
+    if not isinstance((config or {}).get("prior_art"), dict):
+        return {"committed": False, "reason": "no_prior_art_block"}
+    project_dir = Path(project_dir).resolve()
+    s = settings(project_dir, config)
+    rels = []
+    for p, accept in ((s.log, _is_log_line), (verdict_ledger(project_dir, config), _is_verdict_line)):
+        rel = _rel_to(project_dir, p)
+        if rel is None or not p.is_file():
+            continue
+        if D.git(project_dir, "check-ignore", "-q", "--", rel).returncode == 0:
+            continue
+        head = _git_out(project_dir, "show", f"HEAD:{rel}")
+        if head.returncode == 0 and p.read_bytes() == head.stdout:
+            continue
+        if _appended_lines_ok(project_dir, rel, accept) is None:
+            rels.append(rel)
+    if not rels:
+        return {"committed": False, "reason": "nothing_to_commit"}
+    return D.commit_paths(project_dir, rels, f"record: prior-art lines left uncommitted ({', '.join(rels)}), "
+                                             f"committed by the standing dispatcher (AD-036-R11)")
 
 
 # ------------------------------------------------------------------------------ parsing a note
@@ -694,7 +934,7 @@ def _parse_receipt(section: str, kind: str, body: str, line: int, source: str, r
                 if not hm:
                     r.error = f"hit {x!r} is not <path>:<line> or <path>:<line>#sha256=<12 hex>"
                     return r
-                r.hits.append((hm.group(1), int(hm.group(2)), hm.group(3)))
+                r.hits.append((urllib.parse.unquote(hm.group(1)), int(hm.group(2)), hm.group(3)))
             if not r.hits:
                 r.error = "hits must be a comma-separated list, or none"
     else:

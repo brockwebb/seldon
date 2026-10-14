@@ -800,7 +800,7 @@ def _default_runner(cmd: list, *, cwd: str | None, env: dict, timeout: int) -> s
 class RefreshOutcome:
     """What a refresh did, as values."""
 
-    status: str                      # cached | unchanged | bumped | written
+    status: str                      # cached | unchanged | bumped | written | skipped
     lock: dict
     evidence: str | None = None
     event: dict | None = None
@@ -844,6 +844,16 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
             and Path(old["cli"]["path"]).expanduser().exists() and not unprobed):
         return RefreshOutcome(status="cached", lock=old,
                               messages=[f"lock resolved today ({today}); cached for the day"])
+
+    if commit and old is not None:
+        # AD-036-R11: an automatic writer writes only where it can commit. A refresh on another branch used to write
+        # the lock and its evidence, refuse the commit and leave both dirty (2026-10-12: the main checkout was on
+        # feat/SQ-010-repin, and refresh_2026-10-12.json waited a day for the operator). Checked before any probe,
+        # so a refresh that could not commit also spends nothing; the current lock stands.
+        why = _cannot_commit(_repo_root(home), cfg["commit_branch"])
+        if why:
+            return RefreshOutcome(status="skipped", lock=old,
+                                  messages=[f"not refreshed: {why}; the current lock stands (AD-036-R11)"])
 
     pkg = cfg["npm_package"]
     if version is None:
@@ -1029,6 +1039,17 @@ def _write_lock(home: Path, lock: dict) -> None:
     tmp = home / f".{LOCK_FILE}.{uuid.uuid4().hex}.tmp"
     tmp.write_text(header + yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
     os.replace(tmp, home / LOCK_FILE)
+
+
+def _cannot_commit(root: Path, branch: str) -> str | None:
+    """Why a refresh here could not commit what it writes, or None. Outside a work tree nothing tracked is dirtied,
+    so that is not a reason (the lock is then nobody's tracked file)."""
+    if _git(root, "rev-parse", "--is-inside-work-tree").returncode != 0:
+        return None
+    current = _git(root, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    if current != branch:
+        return f"checkout is on {current!r}, refresh commits only on {branch!r}"
+    return None
 
 
 def _commit(root: Path, paths: list, branch: str, message: str) -> tuple:
