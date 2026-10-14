@@ -2916,3 +2916,24 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_13_designnote_cites_citation_addendum_01_slosh_pipe_result
+    verification_method: "local governed file, sha256 b235e47db814517b, 3,281 characters"
+    retrieved_date: "2026-10-14"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-14."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: `derived_from` may originate at a DataFile and target a DesignNote (Addendum 01, slosh-pipe)'
+    source_url: cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe_RESULT.md
+    local_path: "../cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b235e47db814517b12bd0c6ba00a2a6bcfa138c27a97467c27544bf266316bce"
+    bytes: 3281
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
