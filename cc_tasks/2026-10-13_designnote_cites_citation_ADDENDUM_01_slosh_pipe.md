@@ -3,6 +3,18 @@
 **Date:** 2026-10-13
 **Filed from:** slosh-pipe, task 8962cfdb (`cc_tasks/2026-10-13_register_notes_and_registry.md`, steps 4 and 5), branch `build/register`.
 **Issues opened there:** 1fa6d45b (`designnote_cites_schema_gap`), 1ed73d2e (`parameter_registry_derived_from_schema_gap`).
+**Governing:** `docs/design/AD-030_governed_documents_as_graph_content.md`, section 4 (the closed edge set) and AD-030-R7.
+**Spend:** est. 250k tokens.
+**Network:** none beyond git push.
+**Model:** primary
+**Framework layer served (DN-005 §5 rule 1):** none (machine infrastructure).
+**Exclusive:** yes
+**Parts:** A 1.0.
+**Part map:** A is section 2's proposed change, its tests and the full suite.
+**Registration (2026-10-14, seldon DISP-c7, task defca7cc; AD-036-R12):** registered as a task of its own, ordered after
+the parent (`seldon task precede`). Its date prefix differs from the parent's stem, so the dispatcher's addendum glob
+(`<stem>_ADDENDUM*.md`) never read it as the parent's addendum. The nine header lines above and the success criteria
+below were added so it could be registered. The criteria restate section 2's own discipline. Nothing else was changed.
 **Status of the parent proposal:** still pending. As of seldon 6517ef7, `relationship_types.cites.from_types` in `seldon/domain/research.yaml` is still `[PaperSection, Figure, Document, Section, Ruling]`, and the parent file is untracked in this repository.
 
 This file is written as a separate addendum, not an edit to the parent, because the filing task permits one new file in this directory and nothing else.
@@ -64,6 +76,12 @@ Intended edges:
 |---|---|---|
 | parameter_registry 427bead8 (DataFile) | derived_from | design_decisions_session_2026_10_13 4d7f3d79 |
 | parameter_registry 427bead8 (DataFile) | derived_from | rigidity_assumption_check_2026_10_13 315b8cba |
+
+## Success criteria
+
+- The failing tests in `tests/test_relationship_types.py` come first, and then pass. check: python -m dotenv -f .env run -- python -m pytest tests/test_relationship_types.py -q
+- The full suite is green. check: python -m dotenv -f .env run -- python -m pytest tests/ -q
+- Whether `derived_from` should be widened at all, against AD-030 section 4's closed edge set. judgment: section 2 leaves this to the implementer, and no program decides it.
 
 ## What NOT to do
 

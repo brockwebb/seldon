@@ -104,6 +104,15 @@ tasks with `â–¸`. Ordering carried as prose in each task's description drifts â€
 this replaced. The `precedes` subgraph must stay acyclic and is advisory: starting a task ahead of
 its predecessor warns and proceeds.
 
+**Filing into another repository (AD-036-R12).** A task file written into another repository's `cc_tasks/` is
+registered there in the same step: `seldon cc register --project <that repo> --allow-untracked <file>`. The registration
+commits the file. A filing that is written and not registered leaves that repository's tree dirty, so its dispatcher
+refuses every task on c7. No filing helper exists to refuse the bare write, so this rule is the gate.
+
+**Prior-art evidence lives with the caller (AD-036-R10, R11).** `seldon prior-art search` and `verify` log to, and
+commit in, the calling project: `--project`, else the note's repository, else the project at or above the working
+directory. For another repository's note, pass `--note` or `--project` rather than running it from seldon's checkout.
+
 Long-lived tasks belong in the graph as ResearchTask or Issue artifacts, not as prose in CLAUDE.md or handoff files. Desktop sessions can create tasks and issues via MCP tools (`seldon_task_create`, `seldon_issue_create`). If a task must survive across sessions, create a graph artifact.
 
 ## Governed Documents (AD-030)

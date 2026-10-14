@@ -199,6 +199,28 @@ def _store_rel(config) -> str:
     return config.get("event_store", {}).get("path", "seldon_events.jsonl")
 
 
+def _record_prior_art_lines(project_dir, config, cfg) -> dict:
+    """Commit the prior-art query-log and verdict lines a search or verify left uncommitted (AD-036-R11).
+
+    A run commits its own lines; the ones that reach here were deferred because a session held the lease, or their
+    commit failed. Same conditions as `_record_own_lines`: the lease held, no claim in flight, the configured branch.
+    """
+    from seldon.core import prior_art as pa
+    if D.tree_state(project_dir)["branch"] != cfg["branch"]:
+        return {"committed": False, "reason": "wrong_branch"}
+    try:
+        outcome = pa.commit_leftovers(project_dir, config)
+    except pa.PriorArtError as exc:
+        click.echo(f"record: prior-art lines NOT committed: {exc}", err=True)
+        return {"committed": False, "reason": "prior_art_config"}
+    if outcome["committed"]:
+        click.echo(f"record: {outcome['message']} -> {outcome['commit']}")
+    elif outcome["reason"] not in ("nothing_to_commit", "no_prior_art_block"):
+        click.echo(f"record: prior-art lines NOT committed ({outcome['reason']}): {outcome.get('stderr', '')}",
+                   err=True)
+    return outcome
+
+
 def _record_own_lines(project_dir, config, cfg) -> dict:
     """Commit the lines the dispatcher appended to the tracked event store, and only those.
 
@@ -792,6 +814,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # in flight and the lease held, nothing else is working in the checkout.
     if claim is None and not dry_run:
         _record_own_lines(project_dir, config, cfg)
+        _record_prior_art_lines(project_dir, config, cfg)
     tree = D.tree_state(project_dir)
     # Registered-but-uncommitted task files BEFORE the cadence and before candidacy: the
     # cadence gates creation on a clean tree, and an untracked task file is one of the things

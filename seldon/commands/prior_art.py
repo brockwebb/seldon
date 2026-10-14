@@ -1,13 +1,17 @@
 """`seldon prior-art`: search the prior art and verify a note's receipts (AD-036).
 
-    seldon prior-art search --internal "<query>" [--root NAME ...] [--top N] [--json]
-    seldon prior-art search --library "<query>" [--json]
-    seldon prior-art verify docs/design/<note>.md [--no-record] [--json]
+    seldon prior-art search --internal "<query>" [--root NAME ...] [--top N] [--note N] [--project DIR] [--json]
+    seldon prior-art search --library "<query>" [--project DIR] [--json]
+    seldon prior-art verify docs/design/<note>.md [--no-record] [--project DIR] [--json]
 
 `search` prints receipts in AD-036-R1's form, ready to paste under `### Internal` or
 `### External`; `verify` re-runs every receipt a note and its addenda carry and writes the verdict
 to the governed ledger (R2, R4). The grammar and the matching rules are in
 `seldon/core/prior_art.py`.
+
+**Whose evidence a run is** (AD-036-R10, R11, ADDENDUM 04). A run's log lines and verdict go to the calling project:
+`--project`, else the repository holding the note, else the project at or above the working directory. The run then
+commits what it appended there, path-scoped and through the hooks, so a search never leaves a tracked file dirty.
 """
 from __future__ import annotations
 
@@ -21,29 +25,40 @@ from seldon.config import load_project_config
 from seldon.core import prior_art as pa
 
 
-def _settings() -> tuple[Path, dict, pa.Settings]:
-    project_dir = Path.cwd()
-    config = load_project_config(project_dir)
-    try:
-        return project_dir, config, pa.settings(project_dir, config)
-    except pa.PriorArtError as exc:
-        raise click.ClickException(str(exc))
+def _resolve(project: str | None, note: str | None, cwd: Path) -> tuple[Path, str | None]:
+    """`(calling project, the note as an absolute path)`; see `pa.calling_project`."""
+    project_dir = pa.calling_project(project, note, cwd)
+    if note:
+        n = Path(note).expanduser()
+        if not n.is_absolute():
+            n = (Path(project).expanduser().resolve() if project else Path(cwd).resolve()) / n
+        note = str(n.resolve())
+    return project_dir, note
+
+
+def _commit(project_dir: Path, config: dict, before: dict, what: str) -> dict:
+    outcome = pa.commit_appends(project_dir, config, before, f"record: prior-art {what} (AD-036-R11)")
+    return {k: v for k, v in outcome.items() if k in ("committed", "reason", "commit", "committed_paths",
+                                                       "skipped", "path", "stderr")}
 
 
 def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
-               project_dir: Path | None = None, config: dict | None = None, note: str | None = None) -> dict:
-    """One search, logged. Returns {receipts, hits, meta}; shared by the CLI and the MCP tool. `note` is the note the
-    receipts are for: the internal arm leaves it out (QC-001 premise 3)."""
-    project_dir = Path(project_dir or Path.cwd())
+               project_dir: Path | None = None, config: dict | None = None, note: str | None = None,
+               cwd: Path | None = None) -> dict:
+    """One search, logged in the calling project and committed there. Returns {receipts, hits, meta, commit}; shared
+    by the CLI and the MCP tool. `note` is the note the receipts are for: the internal arm leaves it out (QC-001
+    premise 3), and the log goes to its repository (AD-036-R10). `project_dir` is an explicit project; without one
+    the note's repository, else the project at or above `cwd` (default: the working directory)."""
+    project_dir, note = _resolve(project_dir, note, Path(cwd or Path.cwd()))
     config = config if config is not None else load_project_config(project_dir)
     s = pa.settings(project_dir, config)
+    before = pa.append_state(project_dir, [s.log])
     started = time.monotonic()
     if arm == "internal":
         tool = pa.Internal(s)
         exclude = frozenset()
         if note:
-            np_ = Path(note).expanduser()
-            exclude = pa.note_keys(s, [np_ if np_.is_absolute() else project_dir / np_])
+            exclude = pa.note_keys(s, [Path(note)])
         res = tool.search(query, roots or None, exclude=exclude)
         n = top or s.top_n
         out = {"arm": arm, "query": query, "receipts": tool.receipts(res, n),
@@ -68,24 +83,38 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
     else:
         raise pa.PriorArtError(f"unknown arm {arm!r}")
     out["seconds"] = round(time.monotonic() - started, 3)
+    out["project"] = str(project_dir)
+    out["commit"] = _commit(project_dir, config, before, f"{arm} search {query!r}")
     return out
 
 
 def run_verify(note: str, record: bool = True, project_dir: Path | None = None,
-               config: dict | None = None) -> dict:
-    """Verify one note; record the verdict unless told not to. Shared by the CLI and MCP."""
-    project_dir = Path(project_dir or Path.cwd())
+               config: dict | None = None, cwd: Path | None = None) -> dict:
+    """Verify one note in its own repository (or `project_dir`), record the verdict unless told not to, and commit
+    the log lines and the verdict there (AD-036-R10, R11). Shared by the CLI and MCP. A relative `note` is read
+    against `project_dir` when one is given, else against `cwd`."""
+    project_dir, path = _resolve(project_dir, note, Path(cwd or Path.cwd()))
     config = config if config is not None else load_project_config(project_dir)
     s = pa.settings(project_dir, config)
-    path = Path(note)
-    if not path.is_absolute():
-        path = project_dir / path
-    v = pa.verify_note(path, s)
+    before = pa.append_state(project_dir, pa.prior_art_paths(project_dir, config))
+    v = pa.verify_note(Path(path), s)
     out = v.as_payload()
     if record:
         event = pa.record_verdict(v, project_dir, config)
         out["recorded"] = event["event_id"]
+    out["project"] = str(project_dir)
+    out["commit"] = _commit(project_dir, config, before, f"verify {v.note} ({v.verdict})")
     return out
+
+
+def _report_commit(out: dict) -> None:
+    """Say, on stderr, when the run's lines were left uncommitted, and why (AD-036-R11: never silently)."""
+    c = out.get("commit") or {}
+    if c.get("committed") or c.get("reason") in ("nothing_to_commit", "not_a_work_tree"):
+        return
+    detail = f" ({c['stderr']})" if c.get("stderr") else ""
+    click.echo(f"prior-art: lines in {out.get('project')} NOT committed: {c.get('reason')}{detail}"
+               + ("; the dispatcher's next pass commits them" if c.get("reason") == "lease_held" else ""), err=True)
 
 
 @click.group("prior-art")
@@ -101,16 +130,19 @@ def prior_art_group():
 @click.option("--top", type=int, default=None, help="Hits to print (default: config top_n).")
 @click.option("--note", default=None, help="Internal arm: the note these receipts are for; it is left out of the "
                                            "search (a note is not prior art for itself).")
+@click.option("--project", "project", default=None,
+              help="The project whose evidence this search is (default: the note's repository, else the project at "
+                   "or above the working directory). Its log gets the line, and the commit (AD-036-R10).")
 @click.option("--json", "as_json", is_flag=True, help="Print the full result as JSON.")
-def search_command(query, arm, roots, top, note, as_json):
+def search_command(query, arm, roots, top, note, project, as_json):
     """Run QUERY on one arm; print receipts to paste into a note's `## Prior art` section."""
     if arm is None:
         raise click.UsageError("choose --internal or --library")
-    project_dir, config, _s = _settings()
     try:
-        out = run_search(arm, query, roots, top, project_dir, config, note=note)
-    except pa.PriorArtError as exc:
+        out = run_search(arm, query, roots, top, project, note=note)
+    except (pa.PriorArtError, FileNotFoundError) as exc:
         raise click.ClickException(str(exc))
+    _report_commit(out)
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
         return
@@ -137,14 +169,16 @@ def search_command(query, arm, roots, top, note, as_json):
 @prior_art_group.command("verify")
 @click.argument("note")
 @click.option("--no-record", is_flag=True, help="Do not write the verdict to the governed ledger.")
+@click.option("--project", "project", default=None,
+              help="The project the verdict and log lines go to (default: the repository holding NOTE).")
 @click.option("--json", "as_json", is_flag=True, help="Print the verdict payload as JSON.")
-def verify_command(note, no_record, as_json):
+def verify_command(note, no_record, project, as_json):
     """Re-run every receipt in NOTE and its addenda; exit 0 on pass, 2 on fail (AD-036-R2)."""
-    project_dir, config, _s = _settings()
     try:
-        out = run_verify(note, not no_record, project_dir, config)
-    except pa.PriorArtError as exc:
+        out = run_verify(note, not no_record, project)
+    except (pa.PriorArtError, FileNotFoundError) as exc:
         raise click.ClickException(str(exc))
+    _report_commit(out)
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
     else:

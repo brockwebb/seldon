@@ -1316,7 +1316,14 @@ def register_task_file(
     help="Proceed even though git cannot recover the task file. "
          "The task will become an undescribable stub if the file is lost.",
 )
-def cc_register(filepath, description, actor, allow_untracked):
+@click.option(
+    "--project",
+    "project",
+    default=None,
+    help="The project to register in (default: the working directory). A filing into another repository's "
+         "cc_tasks/ is registered there, and the registration commits it (AD-036-R12).",
+)
+def cc_register(filepath, description, actor, allow_untracked, project):
     """Register a CC task file as a proposed ResearchTask in the graph.
 
     Use at task creation time to track the task before execution.
@@ -1327,7 +1334,7 @@ def cc_register(filepath, description, actor, allow_untracked):
 
     FILEPATH is relative to project root or absolute.
     """
-    project_dir = Path.cwd()
+    project_dir = Path(project).expanduser().resolve() if project else Path.cwd()
     config = load_project_config(project_dir)
     driver = get_neo4j_driver(config)
     database = config["neo4j"]["database"]

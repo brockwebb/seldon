@@ -4,6 +4,17 @@
 **Project:** seldon (`/Users/brock/GitHub/seldon`)
 **Filed from:** regs-comment-pipeline, task e9f7e860 (`cc_tasks/2026-09-28_notebook_and_citations.md`), Issue opened there naming the blocked links.
 **Governing doc:** `docs/design/AD-030_governed_documents_as_graph_content.md`, ruling AD-030-R7 (a citation edge carries a CiTO intent).
+**Spend:** est. 200k tokens.
+**Network:** none beyond git push.
+**Model:** primary
+**Framework layer served (DN-005 §5 rule 1):** none (machine infrastructure).
+**Exclusive:** yes
+**Parts:** A 1.0.
+**Part map:** A is steps 1 to 4.
+**Registration (2026-10-14, seldon DISP-c7, task defca7cc; AD-036-R12):** the eight header lines above and the
+`check:`/`judgment:` marks on the success criteria were added so the filing could be registered (`criterion_unmarked`,
+AD-037-R1; `parts_undeclared`, AD-037-R6). The estimate is the registering session's, for a one-line schema change and
+its tests. Nothing else in this file was changed.
 
 ## Goal
 
@@ -28,8 +39,8 @@ A design note is where a project records why it adopted or departed from prior a
 
 ## Success criteria
 
-- The new tests pass; nothing else in the suite changes.
-- From regs-comment-pipeline, `seldon link create --actor cc --from-name classification_design_notebook_2026_09_28 --rel cites --to-id <citation>` succeeds.
+- The new tests pass; nothing else in the suite changes. check: python -m dotenv -f .env run -- python -m pytest tests/ -q
+- From regs-comment-pipeline, `seldon link create --actor cc --from-name classification_design_notebook_2026_09_28 --rel cites --to-id <citation>` succeeds. judgment: it runs in another repository against its own graph, with a citation id chosen there.
 
 ## Observed alongside (not in scope here; file separately if wanted)
 

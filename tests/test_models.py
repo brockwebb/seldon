@@ -280,6 +280,53 @@ def test_refresh_refuses_a_probe_served_outside_its_family(refresh_home, tmp_pat
     assert not (refresh_home / M.LOCK_FILE).exists()
 
 
+def _git_repo(repo: Path, branch: str = "main") -> None:
+    def g(*a):
+        return subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True, text=True).stdout.strip()
+    g("init", "-q", "-b", branch)
+    g("config", "user.email", "t@t")
+    g("config", "user.name", "t")
+    g("add", "-A")
+    g("commit", "-q", "-m", "init")
+    return g
+
+
+def test_refresh_commits_the_lock_and_its_evidence_in_one_commit(refresh_home, tmp_path):
+    """DISP-c7 step 3 (AD-036-R11): the lock and the evidence it names land in one path-scoped commit, and the tree
+    is clean after it, on a first refresh and on a later day's recheck that moves nothing but the date."""
+    repo = refresh_home.parent
+    g = _git_repo(repo)
+    named = M.named_models()
+    npm, runner, _ = _fake_install(tmp_path, "3.0.1", {**FIXTURE_IDS, **{m: m for m in named}})
+    for day in ("2026-10-09", "2026-10-10"):
+        before = g("rev-parse", "HEAD")
+        out = M.refresh(commit=True, npm=npm, runner=runner, today=day)
+        assert out.committed and not out.messages, out.messages
+        assert g("rev-list", "--count", f"{before}..HEAD") == "1"
+        files = set(g("show", "--name-only", "--format=", "HEAD").splitlines())
+        assert {f"models/{M.LOCK_FILE}", out.evidence} <= files
+        assert M.load_lock()["evidence"] == out.evidence
+        assert g("status", "--porcelain") == ""
+
+
+def test_refresh_off_the_commit_branch_writes_nothing_and_probes_nothing(refresh_home, tmp_path):
+    """The 2026-10-12 incident: a refresh on a feature branch wrote the lock and its evidence, could not commit, and
+    left both dirty. Now it checks first, so the current lock stands and no probe is spent."""
+    repo = refresh_home.parent
+    named = M.named_models()
+    npm, runner, calls = _fake_install(tmp_path, "3.0.1", {**FIXTURE_IDS, **{m: m for m in named}})
+    M.refresh(commit=False, npm=npm, runner=runner, today="2026-10-09")
+    g = _git_repo(repo, branch="feat/x")
+    lock_bytes = (refresh_home / M.LOCK_FILE).read_bytes()
+    n_cli, n_npm = len(calls["cli"]), len(calls["npm"])
+    out = M.refresh(commit=True, npm=npm, runner=runner, today="2026-10-10")
+    assert out.status == "skipped"
+    assert "refresh commits only on 'main'" in out.messages[0]
+    assert (len(calls["cli"]), len(calls["npm"])) == (n_cli, n_npm)
+    assert (refresh_home / M.LOCK_FILE).read_bytes() == lock_bytes
+    assert g("status", "--porcelain") == ""
+
+
 def test_probe_env_drops_credentials_and_family_pins(monkeypatch):
     base = {"ANTHROPIC_API_KEY": "k", "ANTHROPIC_DEFAULT_OPUS_MODEL": "x", "CLAUDECODE": "1",
             "CLAUDE_CODE_ENTRYPOINT": "cli", "PATH": "/bin"}

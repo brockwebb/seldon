@@ -1,0 +1,48 @@
+seq: 281
+event: accept
+id: seldon:AD-036-R10
+date: '2026-10-14'
+decided_by: cc:defca7cc
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-14_DISP-c7_prior_art_log_lives_in_calling_repo.md
+reason: 'DISP-c7 Part A (task defca7cc): AD-036 ADDENDUM 04''s labeled rulings recorded with the note''s first commit (AD-033-R2); written from the task''s three rulings, accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R10. The prior-art query log lives in the repository that ran the search, beside the document the receipt supports.**
+    - The calling repository is resolved in this order:
+      1. `--project <dir>` (MCP: `project_dir`);
+      2. the repository holding the note, for `verify` and for `search --note`;
+      3. the nearest directory at or above the working directory that holds a `seldon.yaml`.
+    - Seldon's own log holds only seldon's searches. Every line names its calling project (`project`).
+    - Prior art: a test's fixtures and a build's lockfile live with the project that uses them. ADDENDUM 03 already
+      resolves "the project's own state" against the referencing project.
+source:
+  path: docs/design/AD-036_ADDENDUM_04_query_log_in_the_calling_repo.md
+  lines:
+  - 42
+  - 49
+  sha256: de7a731f12e7c43742b4bfb81c2483626a620f3f708cb402774a21a15c6968dd
+  text: |-
+    - **AD-036-R10. The prior-art query log lives in the repository that ran the search, beside the document the receipt supports.**
+      - The calling repository is resolved in this order:
+        1. `--project <dir>` (MCP: `project_dir`);
+        2. the repository holding the note, for `verify` and for `search --note`;
+        3. the nearest directory at or above the working directory that holds a `seldon.yaml`.
+      - Seldon's own log holds only seldon's searches. Every line names its calling project (`project`).
+      - Prior art: a test's fixtures and a build's lockfile live with the project that uses them. ADDENDUM 03 already
+        resolves "the project's own state" against the referencing project.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_04_query_log_in_the_calling_repo.md
+  anchor: AD-036-R10
+consumer:
+- seldon/core/prior_art.py
+- seldon/commands/prior_art.py
+- seldon/mcp_server.py
+- tests/test_prior_art_caller.py
+written_by: seldon decision 0.1.0
+prev_hash: 1dbd3ca8fe862b37277156c7b3b74807a4c1b5f8dbd8a4e12c5a5ce672500c79
+record_hash: c9a9b2df5f599fccd8480021f76f42a94355a9a3e0125b4fc3f485f2aadac8d5

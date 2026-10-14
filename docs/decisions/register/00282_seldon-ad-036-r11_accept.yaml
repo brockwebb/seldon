@@ -1,0 +1,55 @@
+seq: 282
+event: accept
+id: seldon:AD-036-R11
+date: '2026-10-14'
+decided_by: cc:defca7cc
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-14_DISP-c7_prior_art_log_lives_in_calling_repo.md
+reason: 'DISP-c7 Part A (task defca7cc): AD-036 ADDENDUM 04''s labeled rulings recorded with the note''s first commit (AD-033-R2); written from the task''s three rulings, accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R11. An automatic writer commits what it writes, in the repository it writes to, with a path-scoped commit that runs the hooks.**
+    - An automatic process that leaves a tracked file dirty is a defect.
+    - The query log, and the verdict ledger `verify` appends to, are committed by the run that appended to them. The
+      commit is `git commit -- <paths>` with no `--no-verify`, and only when the file's change is append-only against
+      HEAD.
+    - DN-006 ADDENDUM 04 says "a pass never commits without the lease". So while another session holds a dispatcher
+      lease on the repository, the commit is deferred. The next pass that takes the lease commits the leftover lines
+      before it reads the tree, as it already does for its own records.
+    - The lock refresh checks, before any probe, that it can commit: a work tree on the configured branch. If it
+      cannot, it writes nothing and the current lock stands. Where it does write, the lock and its evidence go in one
+      commit.
+source:
+  path: docs/design/AD-036_ADDENDUM_04_query_log_in_the_calling_repo.md
+  lines:
+  - 50
+  - 60
+  sha256: de7a731f12e7c43742b4bfb81c2483626a620f3f708cb402774a21a15c6968dd
+  text: |-
+    - **AD-036-R11. An automatic writer commits what it writes, in the repository it writes to, with a path-scoped commit that runs the hooks.**
+      - An automatic process that leaves a tracked file dirty is a defect.
+      - The query log, and the verdict ledger `verify` appends to, are committed by the run that appended to them. The
+        commit is `git commit -- <paths>` with no `--no-verify`, and only when the file's change is append-only against
+        HEAD.
+      - DN-006 ADDENDUM 04 says "a pass never commits without the lease". So while another session holds a dispatcher
+        lease on the repository, the commit is deferred. The next pass that takes the lease commits the leftover lines
+        before it reads the tree, as it already does for its own records.
+      - The lock refresh checks, before any probe, that it can commit: a work tree on the configured branch. If it
+        cannot, it writes nothing and the current lock stands. Where it does write, the lock and its evidence go in one
+        commit.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_04_query_log_in_the_calling_repo.md
+  anchor: AD-036-R11
+consumer:
+- seldon/core/prior_art.py
+- seldon/commands/dispatch.py
+- seldon/models.py
+- tests/test_prior_art_caller.py
+- tests/test_models.py
+written_by: seldon decision 0.1.0
+prev_hash: c9a9b2df5f599fccd8480021f76f42a94355a9a3e0125b4fc3f485f2aadac8d5
+record_hash: 722d03ed5e0d5a1df497647a8842f8280c78ed8cb9021401d0cd69afac41a12b
