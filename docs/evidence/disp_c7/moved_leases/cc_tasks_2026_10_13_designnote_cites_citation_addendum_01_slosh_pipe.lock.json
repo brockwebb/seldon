@@ -1,0 +1,11 @@
+{
+ "doc_id": "cc_tasks_2026_10_13_designnote_cites_citation_addendum_01_slosh_pipe",
+ "admission_id": "adm-20261014T160703Z-0b6b40ce",
+ "pid": 20713,
+ "host": "HexagonMBP.local",
+ "started_utc": "2026-10-14T16:18:20.222433+00:00",
+ "version": "20261014_cc_tasks_2026_10_13_designnote_cites_citation_addendum_01_slosh_pipe_19bf513b",
+ "state": "released_unfinished",
+ "resumed_from_pid": 14808,
+ "released_utc": "2026-10-14T16:18:55.928781+00:00"
+}

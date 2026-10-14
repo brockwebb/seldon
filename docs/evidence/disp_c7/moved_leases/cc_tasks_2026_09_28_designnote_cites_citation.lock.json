@@ -1,0 +1,11 @@
+{
+ "doc_id": "cc_tasks_2026_09_28_designnote_cites_citation",
+ "admission_id": "adm-20261014T160645Z-2ac5384d",
+ "pid": 23177,
+ "host": "HexagonMBP.local",
+ "started_utc": "2026-10-14T16:20:08.472213+00:00",
+ "version": "20261014_cc_tasks_2026_09_28_designnote_cites_citation_0f59cb25",
+ "state": "released_unfinished",
+ "resumed_from_pid": 20713,
+ "released_utc": "2026-10-14T16:20:25.416354+00:00"
+}

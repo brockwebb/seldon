@@ -985,9 +985,9 @@ documents:
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: cc_tasks_2026_09_28_designnote_cites_citation
-    verification_method: "local governed file, sha256 ff7953d82548b955, 6,697 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-28_designnote_cites_citation.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    verification_method: "local governed file, sha256 0f59cb256ae03c38, 7,493 characters"
+    retrieved_date: "2026-10-14"
+    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 ff7953d82548b955 recorded, 0f59cb256ae03c38 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-10-14. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-09-28_designnote_cites_citation.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -996,8 +996,8 @@ documents:
     local_path: "../cc_tasks/2026-09-28_designnote_cites_citation.md"
     doc_kind: cc_task
     provenance_flag: local_authored
-    sha256: "ff7953d82548b955c977d92b1e92318be122123df89ed6f9c2ae6844046ecb36"
-    bytes: 6697
+    sha256: "0f59cb256ae03c38f7600e273d92e84b2a601c66f8fd049d835404a4ca5f162c"
+    bytes: 7494
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
@@ -2758,9 +2758,9 @@ documents:
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: cc_tasks_2026_10_13_designnote_cites_citation_addendum_01_slosh_pipe
-    verification_method: "local governed file, sha256 a194507d18c01b93, 6,074 characters"
+    verification_method: "local governed file, sha256 19bf513b42c13a95, 7,420 characters"
     retrieved_date: "2026-10-14"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-14."
+    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 a194507d18c01b93 recorded, 19bf513b42c13a95 on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-10-14. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-14."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -2769,8 +2769,8 @@ documents:
     local_path: "../cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md"
     doc_kind: cc_task
     provenance_flag: local_authored
-    sha256: "a194507d18c01b936642479993a0bead76dba759ed1c4b7aac22fc21bf632408"
-    bytes: 6074
+    sha256: "19bf513b42c13a958aaf909763966e6fee448bd5b1af91ef7057002bd657cf48"
+    bytes: 7421
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
@@ -2870,6 +2870,27 @@ documents:
     provenance_flag: local_authored
     sha256: "de7a731f12e7c43742b4bfb81c2483626a620f3f708cb402774a21a15c6968dd"
     bytes: 6274
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_14_disp_c7_prior_art_log_lives_in_calling_repo_result
+    verification_method: "local governed file, sha256 c455aee448616bd2, 6,069 characters"
+    retrieved_date: "2026-10-14"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-14_DISP-c7_prior_art_log_lives_in_calling_repo_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-14."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'DISP-c7 RESULT: the prior-art query log is the calling repo''s, and every automatic writer commits what it writes'
+    source_url: cc_tasks/2026-10-14_DISP-c7_prior_art_log_lives_in_calling_repo_RESULT.md
+    local_path: "../cc_tasks/2026-10-14_DISP-c7_prior_art_log_lives_in_calling_repo_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "c455aee448616bd28cd3e53b07fa487d1309190fba0fcd56764498aec3dbaec8"
+    bytes: 6076
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
