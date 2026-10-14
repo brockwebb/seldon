@@ -1,0 +1,16 @@
+seq: 279
+event: amend
+id: seldon:AD-035-R11
+date: '2026-10-14'
+decided_by: cc:019844b9
+operator_stated: false
+receipts:
+- docs/evidence/model003/statements/writer.jsonl
+- docs/evidence/model003/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (MODEL-003 Part A): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: 'The registry shall check each role''s declared parameters against its model''s `supported_params` at load, and shall refuse at load, naming the role, the parameter and the model, any parameter the model does not support or any value it does not take, because a parameter must never be silently dropped at launch. The launcher shall pass exactly the declared, supported parameters, so a model whose profile is `effort: []` launches with no `--effort` flag and no `CLAUDE_CODE_EFFORT_LEVEL`, while AD-036-R8 holds for every model whose profile has effort levels, the role naming one. A family role shall be checked at load against the head the documented-default table was read for, and checked again at resolution against the head the lock serves when the catalog has that head; a bump to a head with no profile shall be named `profile_missing` in the `models_lock_bumped` event.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 6862ec7c4f17a551ebdb6479a1f0f972f56add3ba51cf5ad6f95095577f5afe4
+record_hash: 3c5b920dd2daef311ed1666f8102cc45671296269fc44d2e3dee71aa01a2b366

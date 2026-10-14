@@ -1,0 +1,16 @@
+seq: 277
+event: amend
+id: seldon:AD-035-R9
+date: '2026-10-14'
+decided_by: cc:019844b9
+operator_stated: false
+receipts:
+- docs/evidence/model003/statements/writer.jsonl
+- docs/evidence/model003/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (MODEL-003 Part A): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: A role in `models/registry.yaml` shall name exactly one of `family` or `model`, where a family resolves to the family's newest member as the default (as in AD-035-R2) and a model id is used exactly, neither form is privileged and both are lines of configuration in `models/registry.yaml`, and the registry shall refuse a role that names both or neither.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 10f5d20393865aaf2437ea2b47dfbb2b9ebf001e3d34ba7afba5b4fe17da8fe6
+record_hash: 511ccd1410158e20c0cb4c93daca02e9883c62427f9edd5f1c0bb63063a26880

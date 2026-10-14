@@ -26,10 +26,12 @@ policy:
 # Constitution 15.4: the pilot is 1 of the 4 records, measured, before the bulk.
 pilot_records: 1
 guess_output_tokens: 250
-# MODEL-003's declared spend for this pass: 4 records on role register_statement. HOOK-001, PA-001 and QC-001 measured
-# about 4k weighted per record, so 4 project to about 16k; past 16k times 1.2 the run stops for the operator (DN-042
-# R-178).
+# MODEL-003's declared spend for this pass. First declared 16k (4 records at QC-001's measured ~4k weighted each), an
+# unmeasured carry-over: the 1-record pilot (docs/evidence/model003/statements/pilot.json) measured a projection of
+# 20,773 weighted, past that declaration's 19,200 stop line, and the governor stopped the run. Re-declared from the
+# pilot measurement (constitution 15.4) at 24k: the task file's Spend line declares est. 1M tokens for all of MODEL-003,
+# so this is about 2% of the task's cap and under it. Past 24k times 1.2 the run stops for the operator (DN-042 R-178).
 budget:
-  declared_weighted_tokens: 16000
+  declared_weighted_tokens: 24000
   band_stop: 0.20
 spacing_seconds: null

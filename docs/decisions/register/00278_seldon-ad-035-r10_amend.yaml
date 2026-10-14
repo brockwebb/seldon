@@ -1,0 +1,16 @@
+seq: 278
+event: amend
+id: seldon:AD-035-R10
+date: '2026-10-14'
+decided_by: cc:019844b9
+operator_stated: false
+receipts:
+- docs/evidence/model003/statements/writer.jsonl
+- docs/evidence/model003/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (MODEL-003 Part A): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: 'The registry shall carry a `models:` catalog keyed by Anthropic model id, with one parameter profile per model declaring its `family` and its `supported_params` (for example `effort: [low, medium, high, xhigh, max]`, or `effort: []` when the model takes none), including entries for family heads; `load_registry` shall refuse any catalog id not prefixed `claude-<family>-*`, so that a non-Anthropic id cannot enter before its own task decides how it should work. When `seldon models refresh` runs, it shall probe each model a role names with `--model <id>` and record under the lock''s `models:` the served id, `available`, and the evidence file, treating the model as `available: false` with the reason unless the served id equals the requested id exactly. If a model probe fails, then `seldon models refresh` shall not fail the family probes and shall not block writing the lock, and the day''s cache shall not cover a named model the lock has never probed.'
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 511ccd1410158e20c0cb4c93daca02e9883c62427f9edd5f1c0bb63063a26880
+record_hash: 6862ec7c4f17a551ebdb6479a1f0f972f56add3ba51cf5ad6f95095577f5afe4

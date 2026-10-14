@@ -1,0 +1,16 @@
+seq: 280
+event: amend
+id: seldon:AD-035-R12
+date: '2026-10-14'
+decided_by: cc:019844b9
+operator_stated: false
+receipts:
+- docs/evidence/model003/statements/writer.jsonl
+- docs/evidence/model003/statements/validator.jsonl
+reason: 'AD-033-R8 statement pass (MODEL-003 Part A): written by one call, checked by a separate call: entailed, complete, standalone'
+changes:
+  statement: If the model named by a role is unavailable, then the role resolver shall fail the role as `model_unavailable` and shall never fall back to another model, because that is the substitution R6 exists to stop. R5 shall accept the family heads plus every named model the lock marks available, and shall refuse a `**Model:** <role>` header naming an unavailable model, quoting the lock. The four `ANTHROPIC_DEFAULT_*_MODEL` variables shall still carry the family heads, `--model` shall carry the named id, and the R6 receipt shall compare the served id with that named id. AD-037's checker over a role naming a model shall map by that model's catalog family (an opus model is read by fable), and a calibration report shall stay per judge id over generator id; AD-037 governs both, nothing in it changes, and the base task's R13 is not a ruling here.
+  statement_check: passed
+written_by: seldon decision 0.1.0
+prev_hash: 3c5b920dd2daef311ed1666f8102cc45671296269fc44d2e3dee71aa01a2b366
+record_hash: 1dbd3ca8fe862b37277156c7b3b74807a4c1b5f8dbd8a4e12c5a5ce672500c79
