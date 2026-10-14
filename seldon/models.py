@@ -12,10 +12,13 @@ is the one place a model id comes from.
 
 **The shape is a lockfile** (npm `package-lock.json`, Cargo `Cargo.lock`, Poetry `poetry.lock`):
 
-- `models/registry.yaml` is intent: role to family and effort (R1).
+- `models/registry.yaml` is intent: role to a family or to a named model, plus the parameters the
+  role runs with (R1; AD-035-R9). Its `models:` catalog is each model's parameter profile: which
+  parameters it takes and which values (AD-035-R10, R11).
 - `models/models.lock.yaml` is resolution: family to model id, plus the CLI that resolved it, the
   date and the evidence file. Only :func:`refresh` writes it (R2), by asking Anthropic's own
-  resolver, the newest CLI, one probe per family alias.
+  resolver, the newest CLI, one probe per family alias, plus one probe per model a role names,
+  recorded under `models:` with whether it was served exactly (AD-035-R10).
 - :func:`resolve` is the only way code on this machine gets a model id (R1).
 - :func:`launch_spec` is what a launcher needs to obey R3 and R6: the lock's CLI, `--model <id>`,
   the four `ANTHROPIC_DEFAULT_*_MODEL` variables, and `switchModelsOnFlag: false`.
@@ -53,6 +56,13 @@ LOCK_FILE = "models.lock.yaml"
 EVENT_LOCK_BUMPED = "models_lock_bumped"
 #: The named failure R6 requires when the served model is not the requested one.
 SUBSTITUTED = "model_substituted"
+#: AD-035-R12: a role naming a model the lock does not mark available. Never a fallback.
+UNAVAILABLE = "model_unavailable"
+#: AD-035-R10 and MODEL-003 ADDENDUM 02 section 2: the catalog holds Anthropic model ids only.
+ANTHROPIC_PREFIX = "claude-"
+#: Keys of a `roles:` row that are not launch parameters. Every other key is a parameter, and must
+#: be one the role's model supports, with a value it supports (AD-035-R11).
+ROLE_NON_PARAM_KEYS = ("family", "model", "uses")
 
 #: R3: one variable per family, so CLI background work and any alias the CLI resolves internally
 #: follow the lock too (code.claude.com/docs/en/model-config, read 2026-10-09).
@@ -102,6 +112,27 @@ class UnknownRole(ModelsError):
     """A launcher asked for a role the registry does not hold."""
 
 
+class ModelUnavailable(ModelsError):
+    """`model_unavailable`: a role names a model the lock does not mark available (AD-035-R12).
+
+    The role is not resolved to anything else: falling back to the family head would be the silent
+    substitution R6 exists to stop.
+    """
+
+    reason = UNAVAILABLE
+
+    def __init__(self, role: str, model: str, entry: dict | None, lock_path: Path):
+        self.role, self.model, self.entry = role, model, dict(entry or {})
+        if not entry:
+            why = (f"{lock_path} has no `models:` entry for it; run `seldon models refresh --force`, "
+                   f"which probes every model a role names")
+        else:
+            why = (f"the lock's last probe was served {entry.get('served')!r} "
+                   f"(evidence {entry.get('evidence')}){': ' + entry['error'] if entry.get('error') else ''}")
+        super().__init__(f"{UNAVAILABLE}: role {role!r} names {model!r}, which the lock does not mark "
+                         f"available: {why}. It is not resolved to another model (AD-035-R12)")
+
+
 class ModelSubstituted(Exception):
     """R6: the served model is not the requested one. The unit stops; its output is not used.
 
@@ -142,27 +173,17 @@ def _home(home: Path | None) -> Path:
 
 
 def load_registry(home: Path | None = None) -> dict:
-    """The registry, validated. Every role names a known family and a known effort."""
+    """The registry, validated.
+
+    Every role names a known family or a model in the `models:` catalog (AD-035-R9), and every
+    parameter it declares is one its model's profile supports, with a supported value (AD-035-R11).
+    A role whose model takes effort levels names one (AD-036-R8).
+    """
     path = _home(home) / REGISTRY_FILE
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     roles = data.get("roles")
     if not isinstance(roles, dict) or not roles:
         raise ModelsError(f"{path}: no `roles:` mapping")
-    for name, row in roles.items():
-        if not isinstance(row, dict):
-            raise ModelsError(f"{path}: role {name!r} is not a mapping")
-        if row.get("family") not in FAMILY_ENV:
-            raise ModelsError(f"{path}: role {name!r} family {row.get('family')!r} is not one "
-                              f"of {sorted(FAMILY_ENV)}")
-        effort = row.get("effort")
-        if effort == EFFORT_DEFAULT:
-            raise ModelsError(f"{path}: role {name!r} effort 'default' is refused (AD-036-R8): "
-                              f"name one of {EFFORT_LEVELS}, the level the role is to run at")
-        if effort not in EFFORT_LEVELS:
-            raise ModelsError(f"{path}: role {name!r} effort {effort!r} is not one of "
-                              f"{EFFORT_LEVELS} (AD-036-R8)")
-    _check_checker(path, data.get(CHECKER_ROLE), roles)
-    _check_calibration(path, data.get("calibration"))
     refresh_cfg = data.get("refresh")
     if not isinstance(refresh_cfg, dict):
         raise ModelsError(f"{path}: no `refresh:` block")
@@ -171,7 +192,112 @@ def load_registry(home: Path | None = None) -> dict:
         raise ModelsError(f"{path}: refresh block missing {missing}")
     _check_documented_defaults(path, refresh_cfg["documented_default_effort"],
                                refresh_cfg["families"])
+    heads = {f: r["model"] for f, r in refresh_cfg["documented_default_effort"]["families"].items()}
+    catalog = _check_catalog(path, data.get("models"), heads)
+    for name, row in roles.items():
+        _check_role(path, name, row, catalog, heads)
+    _check_checker(path, data.get(CHECKER_ROLE), roles)
+    _check_calibration(path, data.get("calibration"))
     return data
+
+
+def _check_catalog(path: Path, catalog, heads: dict) -> dict:
+    """AD-035-R10: the `models:` catalog, keyed by Anthropic model id, one parameter profile each.
+
+    Each entry names its family (the id must start `claude-<family>-`, so a non-Anthropic id cannot
+    enter, MODEL-003 ADDENDUM 02 section 2) and `supported_params`, a mapping of parameter name to
+    the values the model accepts (`effort: []` when it takes none). `default_effort`, when given,
+    is the model's documented default, used only when a task names the id instead of a role. The
+    family heads the documented-default table was read for have entries too.
+    """
+    if not isinstance(catalog, dict) or not catalog:
+        raise ModelsError(f"{path}: no `models:` catalog (AD-035-R10)")
+    for mid, entry in catalog.items():
+        if not isinstance(entry, dict):
+            raise ModelsError(f"{path}: models.{mid} is not a mapping")
+        fam = entry.get("family")
+        if fam not in FAMILY_ENV:
+            raise ModelsError(f"{path}: models.{mid} family {fam!r} is not one of {sorted(FAMILY_ENV)}")
+        if not str(mid).startswith(f"{ANTHROPIC_PREFIX}{fam}-"):
+            raise ModelsError(f"{path}: models.{mid} does not start with {ANTHROPIC_PREFIX}{fam}-: the "
+                              f"catalog holds Anthropic model ids of the family it names (AD-035-R10)")
+        params = entry.get("supported_params")
+        if not isinstance(params, dict) or not all(isinstance(v, list) for v in params.values()):
+            raise ModelsError(f"{path}: models.{mid} needs `supported_params`, a mapping of parameter "
+                              f"to the list of values the model accepts (AD-035-R10)")
+        bad = [v for v in params.get("effort", []) if v not in EFFORT_LEVELS]
+        if bad:
+            raise ModelsError(f"{path}: models.{mid} effort values {bad} are not CLI levels {EFFORT_LEVELS}")
+        default = entry.get("default_effort")
+        if default is not None and default not in params.get("effort", []):
+            raise ModelsError(f"{path}: models.{mid} default_effort {default!r} is not in its "
+                              f"supported effort {params.get('effort', [])}")
+    absent = sorted(m for m in heads.values() if m not in catalog)
+    if absent:
+        raise ModelsError(f"{path}: the family heads {absent} have no `models:` entry (AD-035-R10)")
+    return catalog
+
+
+def _role_model(name: str, row: dict, heads: dict) -> tuple:
+    """`(family, catalog id, named)`: the model whose profile a role is checked against.
+
+    A role naming a model is checked against that model. A role naming a family is checked at load
+    against the head the documented-default table was read for; `resolve_role` checks it again
+    against whatever head the lock serves, when the catalog has that head.
+    """
+    if "model" in row:
+        return None, row["model"], True
+    return row["family"], heads[row["family"]], False
+
+
+def _check_role(path: Path, name: str, row, catalog: dict, heads: dict) -> None:
+    """AD-035-R9 (family xor model), R11 (declared parameters against the profile), AD-036-R8."""
+    if not isinstance(row, dict):
+        raise ModelsError(f"{path}: role {name!r} is not a mapping")
+    if ("family" in row) == ("model" in row):
+        raise ModelsError(f"{path}: role {name!r} must name exactly one of `family` or `model` "
+                          f"(AD-035-R9)")
+    if "family" in row and row["family"] not in FAMILY_ENV:
+        raise ModelsError(f"{path}: role {name!r} family {row.get('family')!r} is not one "
+                          f"of {sorted(FAMILY_ENV)}")
+    if "model" in row and row["model"] not in catalog:
+        raise ModelsError(f"{path}: role {name!r} names model {row['model']!r}, which has no entry "
+                          f"in the `models:` catalog; add its measured profile first (AD-035-R10)")
+    _fam, mid, _named = _role_model(name, row, heads)
+    _check_params(f"{path}: role {name!r}", row, mid, catalog[mid])
+
+
+def _check_params(where: str, row: dict, mid: str, entry: dict) -> None:
+    """Every declared parameter is supported by `mid`'s profile; effort is named when it has levels."""
+    supported = entry["supported_params"]
+    effort = row.get("effort")
+    if effort == EFFORT_DEFAULT:
+        raise ModelsError(f"{where} effort 'default' is refused (AD-036-R8): name one of "
+                          f"{supported.get('effort') or EFFORT_LEVELS}, the level the role is to run at")
+    if supported.get("effort") and effort is None:
+        raise ModelsError(f"{where} names no effort; {mid} takes {supported['effort']}, so the role "
+                          f"names the level it runs at (AD-036-R8)")
+    for key, value in row.items():
+        if key in ROLE_NON_PARAM_KEYS:
+            continue
+        if key not in supported:
+            raise ModelsError(f"{where} declares parameter {key!r}, which model {mid} does not "
+                              f"support (its profile: {sorted(supported)}) (AD-035-R11)")
+        if value not in supported[key]:
+            raise ModelsError(f"{where} {key} {value!r} is not supported by model {mid}, which "
+                              f"takes {supported[key]} (AD-035-R11; AD-036-R8)")
+
+
+def role_family(reg: dict, role: str) -> str:
+    """A role's family: the one it names, or its named model's catalog family (AD-035-R9)."""
+    row = reg["roles"][role]
+    return reg["models"][row["model"]]["family"] if "model" in row else row["family"]
+
+
+def named_models(home: Path | None = None, reg: dict | None = None) -> list:
+    """Every model id a role names directly (AD-035-R9), sorted: what `refresh` probes beyond the families."""
+    reg = reg if reg is not None else load_registry(home)
+    return sorted({row["model"] for row in reg["roles"].values() if "model" in row})
 
 
 #: AD-037-R2: the role resolved relative to a generator role, the next tier above it.
@@ -244,7 +370,21 @@ def load_lock(home: Path | None = None) -> dict:
     cli = lock.get("cli") or {}
     if not cli.get("version") or not cli.get("path"):
         raise ModelsError(f"{path}: `cli.version` and `cli.path` are required")
+    # AD-035-R10: `models:` is optional (a lock written before it, or a registry naming no model).
+    named = lock.get("models")
+    if named is not None:
+        if not isinstance(named, dict):
+            raise ModelsError(f"{path}: `models:` is not a mapping")
+        for mid, row in named.items():
+            if not isinstance(row, dict) or not isinstance(row.get("available"), bool):
+                raise ModelsError(f"{path}: models.{mid} needs `available: true|false`")
     return lock
+
+
+def available_models(home: Path | None = None, lock: dict | None = None) -> dict:
+    """`{model id: entry}` for every named model the lock marks available (AD-035-R12)."""
+    lock = lock if lock is not None else load_lock(home)
+    return {m: r for m, r in (lock.get("models") or {}).items() if r.get("available") is True}
 
 
 def lock_ids(home: Path | None = None) -> dict:
@@ -264,7 +404,7 @@ class Resolution:
 
     role: str
     family: str
-    effort: str
+    effort: str | None
     model: str
     cli_path: str
     cli_version: str
@@ -272,6 +412,8 @@ class Resolution:
     evidence: str | None = None
     #: AD-037-R2: a Fable checker reads an authorship-obfuscated text, since nothing sits above Fable.
     obfuscate: bool = False
+    #: AD-035-R9: the role names this model id rather than following its family's head.
+    named: bool = False
 
 
 def resolve_role(role: str, home: Path | None = None, *, generator: str | None = None) -> Resolution:
@@ -287,9 +429,15 @@ def resolve_role(role: str, home: Path | None = None, *, generator: str | None =
         if not generator:
             raise ModelsError(f"role {CHECKER_ROLE!r} resolves relative to a generator role: pass generator=<role> "
                               f"(AD-037-R2)")
-        gen_fam = resolve_role(generator, home).family
+        if generator not in roles:
+            raise UnknownRole(f"generator role {generator!r} is not in {home / REGISTRY_FILE}; the roles are "
+                              f"{sorted(roles)} (AD-035 R1)")
+        # AD-037-R2 maps by family. A role naming a model is read by its catalog family (an opus model by
+        # fable), and that needs no lock: the checker is defined whether or not the generator is served.
+        gen_fam = role_family(reg, generator)
         tier = reg[CHECKER_ROLE]["tiers"][gen_fam]
         fam, effort, obfuscate = tier["family"], reg[CHECKER_ROLE]["effort"], bool(tier.get("obfuscate", False))
+        params = {"effort": effort}
     else:
         if generator is not None:
             raise ModelsError(f"only role {CHECKER_ROLE!r} resolves relative to a generator; {role!r} was given "
@@ -297,13 +445,33 @@ def resolve_role(role: str, home: Path | None = None, *, generator: str | None =
         if role not in roles:
             raise UnknownRole(f"role {role!r} is not in {home / REGISTRY_FILE}; the roles are "
                               f"{sorted(roles)} (AD-035 R1)")
-        fam, effort = roles[role]["family"], roles[role]["effort"]
+        row = roles[role]
+        effort = row.get("effort")
+        if "model" in row:
+            # AD-035-R9, R12: a named model resolves to itself while the lock marks it available,
+            # and otherwise fails. It never falls back to the family head.
+            lock = load_lock(home)
+            model = row["model"]
+            entry = (lock.get("models") or {}).get(model)
+            if not entry or entry.get("available") is not True:
+                raise ModelUnavailable(role, model, entry, home / LOCK_FILE)
+            return Resolution(role=role, family=reg["models"][model]["family"], effort=effort,
+                              model=model, cli_path=str(Path(lock["cli"]["path"]).expanduser()),
+                              cli_version=str(lock["cli"]["version"]),
+                              resolved_on=str(lock.get("resolved_on")),
+                              evidence=entry.get("evidence") or lock.get("evidence"), named=True)
+        fam, params = row["family"], row
     lock = load_lock(home)
     if fam not in lock["families"]:
         raise ModelsError(f"role {role!r} is family {fam!r}, which {home / LOCK_FILE} does not "
                           f"resolve; run `seldon models refresh`")
-    return Resolution(role=role, family=fam, effort=effort,
-                      model=lock["families"][fam]["model"],
+    model = lock["families"][fam]["model"]
+    if model in reg["models"]:
+        # AD-035-R11 again, against the head the lock serves today: an unsupported parameter fails
+        # here rather than being dropped at launch. A head the catalog has no profile for yet is
+        # named by `refresh` in the bump event (`profile_missing`).
+        _check_params(f"role {role!r} (family {fam} -> {model})", params, model, reg["models"][model])
+    return Resolution(role=role, family=fam, effort=effort, model=model,
                       cli_path=str(Path(lock["cli"]["path"]).expanduser()),
                       cli_version=str(lock["cli"]["version"]),
                       resolved_on=str(lock.get("resolved_on")),
@@ -366,10 +534,14 @@ def launch_spec(role: str, home: Path | None = None) -> dict:
 
     Returns ``{role, family, effort, model, cli_path, cli_version, resolved_on, evidence, env,
     args, settings}``. `args` is ``["--model", id, "--settings", json, "--effort", level]``:
-    effort is always passed (AD-036-R8), and `env` carries the same level in
-    ``CLAUDE_CODE_EFFORT_LEVEL`` beside the four family ids. A launcher execs ``cli_path`` with its
-    own flags and `args`, with `env` laid over the child's environment, and records
-    :func:`receipt` with ``effort=spec["effort"]``.
+    effort is always passed when the model takes one (AD-036-R8), and `env` carries the same level
+    in ``CLAUDE_CODE_EFFORT_LEVEL`` beside the four family ids. A model whose profile is
+    `effort: []` launches with neither, and `effort` None (AD-035-R11). A launcher execs
+    ``cli_path`` with its own flags and `args`, with `env` laid over the child's environment, and
+    records :func:`receipt` with ``effort=spec["effort"]``.
+
+    The four `ANTHROPIC_DEFAULT_*_MODEL` variables always carry the family heads; for a role that
+    names a model, `--model` carries that id and the R6 receipt compares the served id with it.
     """
     r = resolve_role(role, home)
     return _spec(role=r.role, family=r.family, effort=r.effort, model=r.model,
@@ -380,33 +552,47 @@ def launch_spec(role: str, home: Path | None = None) -> dict:
 def _spec(*, role, family, effort, model, cli_path, cli_version, resolved_on, evidence,
           home) -> dict:
     env = launch_env(home)
-    env[EFFORT_ENV] = effort
+    args = ["--model", model, "--settings", settings_json()]
+    if effort is not None:
+        env[EFFORT_ENV] = effort
+        args += ["--effort", effort]
     return {"role": role, "family": family, "effort": effort, "model": model,
             "cli_path": cli_path, "cli_version": cli_version, "resolved_on": resolved_on,
-            "evidence": evidence, "env": env,
-            "args": ["--model", model, "--settings", settings_json(), "--effort", effort],
+            "evidence": evidence, "env": env, "args": args,
             "settings": dict(LAUNCH_SETTINGS)}
 
 
 def launch_spec_for(target: str, home: Path | None = None) -> dict:
     """The launch block for a task's `**Model:**` value: a role, or an id equal to the lock's.
 
-    An id is launched as its family, at the family's documented default effort (AD-036-R8), with
-    `role` None; anything else fails loudly, because a header that names neither is refused at
+    A family head's id is launched as its family, at the family's documented default effort
+    (AD-036-R8), with `role` None. An available named model's id (AD-035-R12) is launched at its
+    catalog `default_effort`, and refused when its profile has effort levels but no documented
+    default. Anything else fails loudly, because a header that names neither is refused at
     registration (R5).
     """
     home = _home(home)
-    if target in load_registry(home)["roles"]:
+    reg = load_registry(home)
+    if target in reg["roles"]:
         return launch_spec(target, home)
+    lock = load_lock(home)
     ids = lock_ids(home)
     fams = [f for f, m in ids.items() if m == target]
-    if not fams:
+    if fams:
+        fam, effort, evidence = fams[0], documented_default_effort(fams[0], home), lock.get("evidence")
+    elif target in available_models(lock=lock) and target in reg["models"]:
+        entry = reg["models"][target]
+        fam, effort = entry["family"], entry.get("default_effort")
+        if effort is None and entry["supported_params"].get("effort"):
+            raise ModelsError(f"{target!r} has no documented `default_effort` in the catalog; name a "
+                              f"role that declares its effort (AD-036-R8)")
+        evidence = lock["models"][target].get("evidence")
+    else:
         raise ModelsError(f"{target!r} is neither a role nor an id in the lock: {lock_quote(home)}")
-    lock = load_lock(home)
-    return _spec(role=None, family=fams[0], effort=documented_default_effort(fams[0], home),
+    return _spec(role=None, family=fam, effort=effort,
                  model=target, cli_path=str(Path(lock["cli"]["path"]).expanduser()),
                  cli_version=str(lock["cli"]["version"]),
-                 resolved_on=str(lock.get("resolved_on")), evidence=lock.get("evidence"),
+                 resolved_on=str(lock.get("resolved_on")), evidence=evidence,
                  home=home)
 
 
@@ -526,7 +712,10 @@ def lock_quote(home: Path | None = None) -> str:
     """The lock, quoted for a refusal: `fable=claude-fable-5-1, ... (CLI 2.1.295, 2026-10-09)`."""
     lock = load_lock(home)
     ids = ", ".join(f"{f}={r['model']}" for f, r in sorted(lock["families"].items()))
-    return f"{ids} (CLI {lock['cli']['version']}, resolved {lock.get('resolved_on')})"
+    named = "; ".join(f"{m} available={r.get('available')} served={r.get('served')}"
+                      for m, r in sorted((lock.get("models") or {}).items()))
+    return (f"{ids}{'; named: ' + named if named else ''} "
+            f"(CLI {lock['cli']['version']}, resolved {lock.get('resolved_on')})")
 
 
 def check_task_models(text: str, home: Path | None = None) -> dict:
@@ -545,13 +734,18 @@ def check_task_models(text: str, home: Path | None = None) -> dict:
                 "errors": []}
     home = _home(home)
     roles = load_registry(home)["roles"]
-    ids = set(lock_ids(home).values())
+    # AD-035-R12: the family heads plus every named model the lock marks available.
+    ids = set(lock_ids(home).values()) | set(available_models(home))
     errors = []
     role = model = None
     if header is not None:
         value = _clean(header.split()[0]) if header.split() else ""
         if value in roles:
-            role, model = value, resolve(value, home)
+            role = value
+            try:
+                model = resolve(value, home)
+            except ModelUnavailable as exc:
+                errors.append(f"Model header names role {value!r}: {exc}")
         elif value in ids:
             model = value
         elif value in ALIASES:
@@ -643,8 +837,11 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     old = None
     if (home / LOCK_FILE).is_file():
         old = load_lock(home)
+    named = named_models(reg=reg)
+    # A role added today names a model the lock has never probed: the day's cache does not cover it.
+    unprobed = [m for m in named if m not in ((old or {}).get("models") or {})]
     if (old and not force and cfg["cache"] == "day" and str(old.get("resolved_on")) == today
-            and Path(old["cli"]["path"]).expanduser().exists()):
+            and Path(old["cli"]["path"]).expanduser().exists() and not unprobed):
         return RefreshOutcome(status="cached", lock=old,
                               messages=[f"lock resolved today ({today}); cached for the day"])
 
@@ -698,23 +895,31 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
             raise ModelsError(f"probe {fam!r} was served {served!r}, not a {fam} model")
         families[fam] = {"alias": fam, "model": served}
 
+    model_probes, named_lock = _probe_named(named, str(cli_path), cfg, runner, env, cwd)
+
     old_ids = {f: r["model"] for f, r in (old or {}).get("families", {}).items()}
     old_cli = str((old or {}).get("cli", {}).get("version") or "")
     new_ids = {f: r["model"] for f, r in families.items()}
     documented = _documented_in_lock(cfg["documented_default_effort"], new_ids)
     old_documented = (old or {}).get("documented_default_effort")
+    old_named = _named_state((old or {}).get("models"))
+    new_named = _named_state(named_lock)
     changed = (old is None or old_ids != new_ids or old_cli != version
-               or old_documented != documented)
+               or old_documented != documented or old_named != new_named)
     root = _repo_root(home)
     evidence_rel = f"{cfg['evidence_dir']}/refresh_{today}.json"
     if (root / evidence_rel).exists():
         # A second refresh on one day (forced) never overwrites the first one's evidence.
         evidence_rel = f"{cfg['evidence_dir']}/refresh_{today}_{_now()[11:19].replace(':', '')}.json"
     evidence_path = root / evidence_rel
+    for row in named_lock.values():
+        row["evidence"] = evidence_rel
     lock = {"schema": 1, "resolved_on": today, "resolved_at": _now(),
             "cli": {"version": version, "path": str(cli_path), "npm_package": pkg},
             "families": families, "documented_default_effort": documented,
             "evidence": evidence_rel}
+    if named_lock:
+        lock["models"] = named_lock
     same_day_same = (old is not None and not changed and str(old.get("resolved_on")) == today)
     if same_day_same:
         return RefreshOutcome(status="unchanged", lock=old,
@@ -723,7 +928,8 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     evidence = {"refreshed_at": lock["resolved_at"], "date": today, "npm_package": pkg,
                 "cli_version": version, "cli_path": str(cli_path), "installed_now": installed,
                 "cli_version_reported": reported, "probe_cwd": cwd,
-                "previous_lock": old, "probes": probes, "lock": lock}
+                "previous_lock": old, "probes": probes, "model_probes": model_probes,
+                "lock": lock}
     evidence_path.parent.mkdir(parents=True, exist_ok=True)
     evidence_path.write_text(json.dumps(evidence, indent=1, sort_keys=True) + "\n",
                              encoding="utf-8")
@@ -737,9 +943,13 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
                                             "documented_default_effort": old_documented},
                                     "new": {"families": new_ids, "cli_version": version,
                                             "documented_default_effort": documented},
+                                    "old_models": old_named, "new_models": new_named,
                                     "documented_default_effort_unverified": sorted(
                                         f for f, r in documented["families"].items()
                                         if not r["current"]),
+                                    # AD-035-R11: a head the catalog has no parameter profile for.
+                                    "profile_missing": sorted(
+                                        m for m in new_ids.values() if m not in reg["models"]),
                                     "evidence": evidence_rel, "lock": LOCK_FILE})
         append_event(root, event)
         touched.append("seldon_events.jsonl")
@@ -754,6 +964,51 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     return RefreshOutcome(status="bumped" if changed else "written", lock=lock,
                           evidence=evidence_rel, event=event, committed=committed,
                           messages=msgs)
+
+
+def _probe_named(named: list, cli_path: str, cfg: dict, runner: Callable, env: dict,
+                 cwd: str) -> tuple:
+    """AD-035-R10: one probe per model a role names, `--model <id>`. `(probes, lock entries)`.
+
+    Served must equal the id exactly; anything else, a non-zero exit, a timeout or an unreadable
+    envelope is `available: false` with the reason. A failed probe never raises: the family probes
+    and the lock stand without it, and the role naming it fails as `model_unavailable` (R12).
+    """
+    probes, entries = {}, {}
+    for mid in named:
+        cmd = probe_command(cli_path, mid, cfg["probe_prompt"])
+        started = _dt.datetime.now(_dt.timezone.utc)
+        envelope, served, error, code, stderr = None, None, None, None, ""
+        try:
+            res = runner(cmd, cwd=cwd, env=env, timeout=int(cfg["probe_timeout_s"]))
+            code, stderr = res.returncode, (res.stderr or "")
+            try:
+                envelope = json.loads(res.stdout) if res.stdout else None
+            except json.JSONDecodeError:
+                envelope = last_result_envelope(res.stdout)
+            served = served_model(envelope or {})
+            if code != 0 or served is None:
+                error = f"exit {code}: {(res.stderr or res.stdout or '').strip()[:300]}"
+        except (subprocess.SubprocessError, OSError) as exc:
+            error = f"{type(exc).__name__}: {exc}"
+        secs = round((_dt.datetime.now(_dt.timezone.utc) - started).total_seconds(), 3)
+        available = error is None and served == mid
+        if error is None and not available:
+            error = f"served {served!r}, not {mid!r}"
+        probes[mid] = {"model": mid, "argv": cmd, "exit_code": code, "seconds": secs,
+                       "served": served, "available": available, "error": error,
+                       "model_usage_keys": sorted((envelope or {}).get("modelUsage") or {}),
+                       "envelope": envelope, "stderr_tail": stderr[-500:]}
+        entries[mid] = {"served": served, "available": available}
+        if error:
+            entries[mid]["error"] = error
+    return probes, entries
+
+
+def _named_state(models_block) -> dict:
+    """What a lock's `models:` says, without its evidence path: the part a re-probe can change."""
+    return {m: {"served": r.get("served"), "available": r.get("available")}
+            for m, r in sorted((models_block or {}).items())}
 
 
 def _documented_in_lock(table: dict, new_ids: dict) -> dict:
@@ -825,9 +1080,15 @@ def show(home: Path | None = None) -> dict:
         lock = {"error": str(exc)}
     rows = []
     for name, row in sorted(reg["roles"].items()):
+        if "model" in row:
+            entry = (lock.get("models") or {}).get(row["model"]) or {}
+            rows.append({"role": name, "family": reg["models"][row["model"]]["family"],
+                         "effort": row.get("effort"), "model": row["model"], "named": True,
+                         "available": entry.get("available") is True})
+            continue
         model = (lock.get("families") or {}).get(row["family"], {}).get("model")
-        rows.append({"role": name, "family": row["family"], "effort": row["effort"],
-                     "model": model})
+        rows.append({"role": name, "family": row["family"], "effort": row.get("effort"),
+                     "model": model, "named": False, "available": model is not None})
     return {"home": str(home), "roles": rows, "lock": lock, "path_cli": which_cli()}
 
 

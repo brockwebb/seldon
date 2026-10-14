@@ -1,0 +1,43 @@
+seq: 276
+event: accept
+id: seldon:AD-035-R12
+date: '2026-10-14'
+decided_by: desktop
+operator_stated: false
+reason: 'MODEL-003 Part A (task 019844b9): AD-035 ADDENDUM 02''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the Desktop session that wrote MODEL-003 and its addenda, on the operator''s ruling in ai-readiness-kg DN-014 section 9 and his corrections of 2026-10-12 and 2026-10-13; accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-035-R12. A role whose named model is unavailable fails as `model_unavailable`, and R5 accepts any id the lock marks available.**
+    - It never falls back to another model: that is the substitution R6 exists to stop.
+    - R5 accepts the family heads plus every named model the lock marks available. A `**Model:** <role>` header naming an unavailable model is refused, quoting the lock.
+    - The four `ANTHROPIC_DEFAULT_*_MODEL` variables still carry the family heads. `--model` carries the named id, and the R6 receipt compares the served id with it.
+
+  AD-037's checker over a role naming a model maps by that model's catalog family (an opus model is read by fable), and
+  a calibration report stays per judge id over generator id. AD-037 governs both and nothing in it changes, so the base
+  task's R13 is not a ruling here (ADDENDUM 01).
+source:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  lines:
+  - 83
+  - 90
+  sha256: e40cd03bc8f25a7b49511bbcc7140742404f643c84f7200e1313714ae69aa2f6
+  text: |-
+    - **AD-035-R12. A role whose named model is unavailable fails as `model_unavailable`, and R5 accepts any id the lock marks available.**
+      - It never falls back to another model: that is the substitution R6 exists to stop.
+      - R5 accepts the family heads plus every named model the lock marks available. A `**Model:** <role>` header naming an unavailable model is refused, quoting the lock.
+      - The four `ANTHROPIC_DEFAULT_*_MODEL` variables still carry the family heads. `--model` carries the named id, and the R6 receipt compares the served id with it.
+
+    AD-037's checker over a role naming a model maps by that model's catalog family (an opus model is read by fable), and
+    a calibration report stays per judge id over generator id. AD-037 governs both and nothing in it changes, so the base
+    task's R13 is not a ruling here (ADDENDUM 01).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  anchor: AD-035-R12
+consumer:
+- seldon/models.py
+written_by: seldon decision 0.1.0
+prev_hash: 3ef0c3966a8ce8fa8b8286863f1fb83d7fae062c68bb7b61a1909bcc1b3de008
+record_hash: 10f5d20393865aaf2437ea2b47dfbb2b9ebf001e3d34ba7afba5b4fe17da8fe6

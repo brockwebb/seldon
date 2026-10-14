@@ -1,0 +1,35 @@
+# MODEL-003 Part A (AD-033-R8): AD-035-R9 to R12, written by one call and checked by another. QC-001's pass reused whole
+# (scripts/qc001/statements.yaml): same roles, transport and policy.
+writer:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+validator:
+  role: register_statement
+  alias: sonnet
+  timeout: 300
+  max_turns: 2
+transport:
+  launch: seldon.models.launch_spec(register_statement)
+  setting_sources_disabled: true
+  nonessential_traffic_disabled: true
+policy:
+  in_flight: 1
+  pilot_in_flight: 1
+  retry_attempts: 2
+  retry_backoff_seconds: 5
+  progress_every_seconds: 60
+  progress_every_units: 10
+  eta_window: 20
+  parse_retries: 1
+# Constitution 15.4: the pilot is 1 of the 4 records, measured, before the bulk.
+pilot_records: 1
+guess_output_tokens: 250
+# MODEL-003's declared spend for this pass: 4 records on role register_statement. HOOK-001, PA-001 and QC-001 measured
+# about 4k weighted per record, so 4 project to about 16k; past 16k times 1.2 the run stops for the operator (DN-042
+# R-178).
+budget:
+  declared_weighted_tokens: 16000
+  band_stop: 0.20
+spacing_seconds: null

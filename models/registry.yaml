@@ -1,7 +1,15 @@
 # The model registry: INTENT, one row per role (AD-035 R1).
 #
-# A role is named by its use. It maps to a model FAMILY and an effort, never to a model id: the id
-# the family resolves to is in `models.lock.yaml`, written only by `seldon models refresh` (R2).
+# A role is named by its use. It names either a model FAMILY, resolved to the family's newest
+# member (the default), or one specific model id from the `models:` catalog below (AD-035-R9,
+# MODEL-003). Neither is privileged; both are lines of configuration. The id a family resolves to,
+# and whether a named model is served, are in `models.lock.yaml`, written only by
+# `seldon models refresh` (R2, R10). A role naming a model the lock does not mark available fails
+# as `model_unavailable`; it never falls back to the family head (R12).
+#
+# Every key of a role other than `family`, `model` and `uses` is a launch parameter, and must be
+# one its model's catalog profile supports, with a supported value (R11), or the registry does not
+# load.
 # This is the manifest / lockfile split of npm, Cargo and Poetry: intent here, resolution there,
 # and every launcher reads the lock through `seldon.models` (R3), never this file's family words
 # and never an alias of its own (R4).
@@ -157,6 +165,57 @@ roles:
       what the sealed rounds measured. Fable's documented default is also `high`, so `judge` and
       this role now run at one level; they stay two roles because each is a frozen instrument
       and a change to either is a re-pilot of that one (AD-035 R7).
+  author:
+    model: claude-opus-4-8
+    effort: high
+    uses: >-
+      ai-readiness-kg first-pass authoring: the executive summary v2
+      (cc_tasks/2026-10-12_executive_summary_from_brief_v2.md), per the operator's ruling in
+      docs/design/2026-10-12_DN-014_executive_summary_brief.md section 9 (Opus 4.8 writes the
+      executive summary; it is the model of his book work). Effort `high` is the documented default
+      for claude-opus-4-8 (catalog entry below), and the operator's book work ran before the 5.5
+      models moved the default to medium; it is an assumption no pilot has measured (MODEL-003).
+
+# AD-035-R10, R11: the model catalog, one parameter profile per Anthropic model id (`claude-*` only:
+# MODEL-003 ADDENDUM 02 section 2; `load_registry` refuses any other prefix). `supported_params`
+# maps each launch parameter to the values the model accepts; `effort: []` means it takes none, and
+# then a role on it declares no effort and launches with no `--effort` flag and no
+# CLAUDE_CODE_EFFORT_LEVEL. The shape is OpenRouter's per-model `supported_parameters` (a citation of
+# shape, not a dependency). The family heads the documented-default table was read for have entries,
+# so a family role's parameters are checked at load too; `resolve_role` checks them again against
+# whatever head the lock serves, and a bump to a head with no entry is named `profile_missing` in
+# the `models_lock_bumped` event.
+#
+# Source of the effort lists: the Claude API reference bundled with CLI 2.1.296 (the `claude-api`
+# skill, "Thinking & Effort" table, cached 2026-10-06; excerpt in docs/evidence/model003/). The CLI
+# itself does not validate `--effort` per model: it accepted `--effort bogus` with exit 0 on
+# claude-opus-4-8 (docs/evidence/model003/opus_4_8_effort_probes.jsonl), so a CLI probe cannot
+# measure which levels a model supports; it measures only that the model is served at each level.
+# `default_effort` is used only when a task header names a non-head id instead of a role.
+models:
+  claude-fable-5-1:
+    family: fable
+    supported_params:
+      effort: [low, medium, high, xhigh, max]
+  claude-opus-5-5:
+    family: opus
+    supported_params:
+      effort: [low, medium, high, xhigh, max]
+  claude-sonnet-5-5:
+    family: sonnet
+    supported_params:
+      effort: [low, medium, high, xhigh, max]
+  claude-haiku-5-5:
+    family: haiku
+    supported_params:
+      effort: [low, medium, high, xhigh, max]
+  claude-opus-4-8:
+    family: opus
+    supported_params:
+      effort: [low, medium, high, xhigh, max]
+    # "default `high` (equivalent to omitting it) on every current model except Claude Opus 5.5 and
+    # Claude Haiku 5.5" (bundled API reference, as above).
+    default_effort: high
 
 # AD-037-R2: the reading judge is the next tier above the generator, in a fresh context. Not a row of `roles:`,
 # because it has no family of its own: `seldon.models.resolve("checker", generator=<role>)` maps the generator role's

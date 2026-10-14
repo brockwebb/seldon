@@ -1,0 +1,49 @@
+[
+ {
+  "id": "seldon:AD-035-R9",
+  "lines": [
+   70,
+   73
+  ],
+  "consumer": [
+   "tests/test_models.py",
+   "tests/test_models_catalog.py",
+   "seldon/commands/models.py",
+   "seldon/models.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-035-R10",
+  "lines": [
+   74,
+   78
+  ],
+  "consumer": [
+   "tests/models_fixture.py",
+   "tests/test_models.py",
+   "seldon/commands/models.py",
+   "seldon/models.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-035-R11",
+  "lines": [
+   79,
+   82
+  ],
+  "consumer": [
+   "tests/test_models_catalog.py",
+   "seldon/models.py"
+  ]
+ },
+ {
+  "id": "seldon:AD-035-R12",
+  "lines": [
+   83,
+   90
+  ],
+  "consumer": [
+   "seldon/models.py"
+  ]
+ }
+]

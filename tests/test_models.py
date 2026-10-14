@@ -92,6 +92,11 @@ def test_the_registry_names_the_documented_default_for_each_family(home):
     assert {f: r["effort"] for f, r in doc.items()} == {
         "fable": "high", "opus": "medium", "sonnet": "medium", "haiku": "medium"}
     for name, row in reg["roles"].items():
+        if "model" in row:
+            # AD-035-R9: a role naming a model runs at the level it declares; `author` declares its
+            # model's documented default (MODEL-003).
+            assert row["effort"] == reg["models"][row["model"]]["default_effort"], name
+            continue
         measured = {"document_extractor": "high", "demand_judge": "high",
                     "register_statement": "low"}       # SEL-002 pilot 2
         want = measured.get(name, doc[row["family"]]["effort"])
@@ -218,7 +223,8 @@ def _bumped_events(repo: Path) -> list:
 
 def test_refresh_writes_the_lock_and_one_event_and_is_idempotent(refresh_home, tmp_path):
     repo = refresh_home.parent
-    npm, runner, calls = _fake_install(tmp_path, "3.0.1", FIXTURE_IDS)
+    named = M.named_models()
+    npm, runner, calls = _fake_install(tmp_path, "3.0.1", {**FIXTURE_IDS, **{m: m for m in named}})
     out = M.refresh(commit=False, npm=npm, runner=runner, today="2026-10-09")
     assert out.status == "bumped"
     lock = M.load_lock()
@@ -227,8 +233,10 @@ def test_refresh_writes_the_lock_and_one_event_and_is_idempotent(refresh_home, t
     assert len(_bumped_events(repo)) == 1
     evidence = json.loads((repo / out.evidence).read_text())
     assert set(evidence["probes"]) == set(FIXTURE_IDS)
+    assert set(evidence["model_probes"]) == set(named)
     probes = [c for c in calls["cli"] if "-p" in c]
-    assert len(probes) == 4
+    # One probe per family (R2) and one per model a role names (AD-035-R10).
+    assert len(probes) == 4 + len(named)
     assert all('{"switchModelsOnFlag":false}' in c for c in probes)
     lock_bytes = (refresh_home / M.LOCK_FILE).read_bytes()
 

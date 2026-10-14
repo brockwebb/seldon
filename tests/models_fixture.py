@@ -37,6 +37,11 @@ def write_models_home(root: Path, cli_path: str | Path = "/nonexistent/claude",
                     "npm_package": "@anthropic-ai/claude-code"},
             "families": {f: {"alias": f, "model": m} for f, m in (ids or FIXTURE_IDS).items()},
             "evidence": "docs/evidence/fixture.json"}
+    # AD-035-R10: every model a role names, served exactly, as a refresh would record it.
+    named = M.named_models(reg=reg)
+    if named:
+        lock["models"] = {m: {"served": m, "available": True,
+                              "evidence": "docs/evidence/fixture.json"} for m in named}
     (home / M.LOCK_FILE).write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
     return home
 

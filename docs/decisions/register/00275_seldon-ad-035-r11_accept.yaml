@@ -1,0 +1,36 @@
+seq: 275
+event: accept
+id: seldon:AD-035-R11
+date: '2026-10-14'
+decided_by: desktop
+operator_stated: false
+reason: 'MODEL-003 Part A (task 019844b9): AD-035 ADDENDUM 02''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the Desktop session that wrote MODEL-003 and its addenda, on the operator''s ruling in ai-readiness-kg DN-014 section 9 and his corrections of 2026-10-12 and 2026-10-13; accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-035-R11. A role's declared parameters are checked against its model's `supported_params` at registry load.**
+    - A parameter the model does not support, or a value it does not take, is refused at load, naming the role, the parameter and the model. It is never silently dropped at launch.
+    - The launcher passes exactly the declared, supported parameters. A model whose profile is `effort: []` launches with no `--effort` flag and no `CLAUDE_CODE_EFFORT_LEVEL`. AD-036-R8 holds for every model whose profile has effort levels: the role names one.
+    - A family role is checked at load against the head the documented-default table was read for. It is checked again at resolution against the head the lock serves when the catalog has that head. A bump to a head with no profile is named `profile_missing` in the `models_lock_bumped` event.
+source:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  lines:
+  - 79
+  - 82
+  sha256: e40cd03bc8f25a7b49511bbcc7140742404f643c84f7200e1313714ae69aa2f6
+  text: |-
+    - **AD-035-R11. A role's declared parameters are checked against its model's `supported_params` at registry load.**
+      - A parameter the model does not support, or a value it does not take, is refused at load, naming the role, the parameter and the model. It is never silently dropped at launch.
+      - The launcher passes exactly the declared, supported parameters. A model whose profile is `effort: []` launches with no `--effort` flag and no `CLAUDE_CODE_EFFORT_LEVEL`. AD-036-R8 holds for every model whose profile has effort levels: the role names one.
+      - A family role is checked at load against the head the documented-default table was read for. It is checked again at resolution against the head the lock serves when the catalog has that head. A bump to a head with no profile is named `profile_missing` in the `models_lock_bumped` event.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  anchor: AD-035-R11
+consumer:
+- tests/test_models_catalog.py
+- seldon/models.py
+written_by: seldon decision 0.1.0
+prev_hash: 07603a79ddc73a9aa60e1c90c9e50e86c04618e54bd8d7dfdf342385aa97c1a4
+record_hash: 3ef0c3966a8ce8fa8b8286863f1fb83d7fae062c68bb7b61a1909bcc1b3de008

@@ -39,9 +39,13 @@ def models_show(as_json):
                    f"({lock['cli']['path']}); evidence {lock.get('evidence')}")
         for fam, row in sorted(lock["families"].items()):
             click.echo(f"  {fam:<7} {row['model']}")
+        for mid, row in sorted((lock.get("models") or {}).items()):
+            click.echo(f"  named   {mid} available={row['available']} served={row.get('served')}")
     click.echo("roles:")
     for r in data["roles"]:
-        click.echo(f"  {r['role']:<20} {r['family']:<7} effort={r['effort']:<8} {r['model']}")
+        # AD-035-R9: a role naming a model says so, with whether the lock marks it available (R12).
+        named = f"  named, available={r['available']}" if r["named"] else ""
+        click.echo(f"  {r['role']:<20} {r['family']:<7} effort={str(r['effort']):<8} {r['model']}{named}")
     click.echo(f"interactive claude on PATH (not launched by any launcher): {data['path_cli']}")
 
 
@@ -67,8 +71,10 @@ def models_resolve(role, as_json):
 def models_refresh(force, version, no_commit):
     """Install the newest CLI into a versioned prefix, probe each family alias, write the lock.
 
-    Four minimal calls (one per family). Cached for the UTC day unless --force. Appends a
-    `models_lock_bumped` event when an id or the CLI version changes (AD-035 R2).
+    One minimal call per family, plus one per model a role names (AD-035-R10). Cached for the UTC
+    day unless --force or a role names a model the lock has never probed. Appends a
+    `models_lock_bumped` event when an id, the CLI version or a named model's availability changes
+    (AD-035 R2).
     """
     try:
         out = M.refresh(force=force, version=version, commit=not no_commit)
@@ -78,6 +84,9 @@ def models_refresh(force, version, no_commit):
     click.echo(f"refresh: {out.status}")
     for fam, row in sorted(out.lock["families"].items()):
         click.echo(f"  {fam:<7} {row['model']}")
+    for mid, row in sorted((out.lock.get("models") or {}).items()):
+        click.echo(f"  named   {mid} available={row['available']} served={row.get('served')}"
+                   f"{' (' + row['error'] + ')' if row.get('error') else ''}")
     click.echo(f"  cli     {out.lock['cli']['version']} {out.lock['cli']['path']}")
     if out.evidence:
         click.echo(f"evidence: {out.evidence}")

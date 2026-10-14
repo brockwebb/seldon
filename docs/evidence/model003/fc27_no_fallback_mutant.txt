@@ -1,0 +1,8 @@
+seldon/models.py:462: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_models_catalog.py::test_r5_accepts_the_named_role_while_available_and_refuses_it_quoting_the_lock
+FAILED tests/test_models_catalog.py::test_dispatcher_candidacy_refuses_a_task_on_an_unavailable_named_model
+FAILED tests/test_models_catalog.py::test_a_named_model_served_another_id_is_unavailable_and_the_lock_still_writes
+FAILED tests/test_models_catalog.py::test_an_unavailable_named_model_fails_as_model_unavailable_and_never_falls_back
+FAILED tests/test_models_catalog.py::test_a_named_model_missing_from_the_lock_is_unavailable
+5 failed, 17 passed in 4.00s

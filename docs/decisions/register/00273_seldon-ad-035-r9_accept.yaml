@@ -1,0 +1,38 @@
+seq: 273
+event: accept
+id: seldon:AD-035-R9
+date: '2026-10-14'
+decided_by: desktop
+operator_stated: false
+reason: 'MODEL-003 Part A (task 019844b9): AD-035 ADDENDUM 02''s labeled rulings recorded with the note''s first commit (AD-033-R2); decided by the Desktop session that wrote MODEL-003 and its addenda, on the operator''s ruling in ai-readiness-kg DN-014 section 9 and his corrections of 2026-10-12 and 2026-10-13; accepted at registration under L4 (AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-035-R9. A role names either a family or one specific model id.**
+    - A family resolves to the family's newest member, the default (R2 unchanged). A model id is used exactly.
+    - Neither is privileged; both are lines of configuration in `models/registry.yaml`.
+    - A role names exactly one of `family` or `model`; the registry refuses a role naming both or neither.
+source:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  lines:
+  - 70
+  - 73
+  sha256: e40cd03bc8f25a7b49511bbcc7140742404f643c84f7200e1313714ae69aa2f6
+  text: |-
+    - **AD-035-R9. A role names either a family or one specific model id.**
+      - A family resolves to the family's newest member, the default (R2 unchanged). A model id is used exactly.
+      - Neither is privileged; both are lines of configuration in `models/registry.yaml`.
+      - A role names exactly one of `family` or `model`; the registry refuses a role naming both or neither.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_02_pinned_roles.md
+  anchor: AD-035-R9
+consumer:
+- tests/test_models.py
+- tests/test_models_catalog.py
+- seldon/commands/models.py
+- seldon/models.py
+written_by: seldon decision 0.1.0
+prev_hash: fa889bc67de0cef5461d7afd787da0ca38a35484a8ea98d14061856674964870
+record_hash: 51d8d2797f834ee2af0b0243fd0c4276730e946de03f290b42c0ebd764dc5cf8
