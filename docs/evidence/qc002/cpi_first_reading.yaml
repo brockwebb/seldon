@@ -1,0 +1,12 @@
+# AD-037-R8's first reading (QC-002 Part D): the five estimate-versus-actual pairs measured before the stations ran,
+# copied from QC-002's "The spend data" table and the RESULTs it cites. Tokens are input + cache writes + output from
+# each session's transcript (cache reads not counted). CPI = estimate / actual: a completed task's earned value is
+# its whole estimate. The estimates were Desktop guesses with no method (FC-12); this chart is what replaces them.
+tasks:
+  - {task: SQ-010, project: squiddy, estimate: 5000000, actual: 10990000,
+     basis: "squiddy/cc_tasks/2026-10-11_SQ-010 RESULT; the one task with no stop condition"}
+  - {task: SQ-012, project: squiddy, estimate: 6000000, actual: 940000, basis: "squiddy SQ-012 RESULT"}
+  - {task: SQ-013, project: squiddy, estimate: 1200000, actual: 700000, basis: "squiddy SQ-013 RESULT"}
+  - {task: SQ-014, project: squiddy, estimate: 600000, actual: 360000, lower_bound: true,
+     basis: "squiddy SQ-014 RESULT; plus an unmeasured first session, so actual is a lower bound and CPI an upper"}
+  - {task: SQ-015, project: squiddy, estimate: 1500000, actual: 956000, basis: "squiddy SQ-015 RESULT line 3"}

@@ -39,6 +39,12 @@ to equal the pre-change fixture once the two c12 blocks are removed and HEX toke
 appearance in both. Every other line is unchanged. c12's `footprint_bytes` and `need_bytes` are masked as
 `<BYTES>`: they measure the committed tree, which differs between the two parametrizations by the
 `max_parallel: 1` line in seldon.yaml.
+
+**Erratum, QC-002 (AD-037-R6, 2026-10-14).** Each `dispatch_launched` now records station (a)'s premise review
+(`premises`: the dispatcher's environment premise and the task's own, none in this scenario) and R7's
+`inspection_reserve`. Re-recorded on the QC-002 code; the diff is the two launch lines, and the re-recording equals
+the pre-change fixture once exactly those two keys are removed from both (checked with a regex strip, `True`).
+Every other line is unchanged: the stations write nothing for a session that appends no station record.
 """
 from __future__ import annotations
 

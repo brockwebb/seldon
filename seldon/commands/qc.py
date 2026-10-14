@@ -63,3 +63,55 @@ def calibrate_judge_command(verdicts_path, judge_role, generator_role, set_path,
                f", n {sp['generator']['n']}; reference {sp['reference']['estimate']:.3f}, n {sp['reference']['n']}); "
                f"passes the bar: {report['passes']}")
     click.echo(f"report -> {out}")
+
+
+@qc_group.command("chart")
+@click.option("--json", "as_json", is_flag=True, help="machine-readable")
+def chart_command(as_json):
+    """AD-037-R8: station outcomes per project, from this project's event store plus the seed (`qc.chart_seed`).
+
+    Premise-false rate, first-article reject rate, milestone defect rate, CPI per task and huddles per task. A
+    first reading is reported, not gated; FC-15's individuals chart is drawn from `qc.chart_min_points` tasks on."""
+    from seldon.config import load_project_config
+    from seldon.core import stations as S
+    from seldon.core.events import read_events
+
+    project_dir = Path.cwd()
+    config = load_project_config()
+    qcfg = config.get("qc") or {}
+    seed_rel = qcfg.get("chart_seed")
+    seed = S.load_seed(project_dir / seed_rel) if seed_rel else []
+    min_points = qcfg.get("chart_min_points")
+    if not isinstance(min_points, int) or min_points < 2:
+        raise click.ClickException(f"seldon.yaml qc.chart_min_points must be a whole number of at least 2, "
+                                   f"got {min_points!r}")
+    name = (config.get("project") or {}).get("name") or project_dir.resolve().name
+    out = S.chart(read_events(project_dir), name, seed=seed, min_points=min_points)
+    if as_json:
+        click.echo(json.dumps(out, indent=1, default=str))
+        return
+
+    def r(x):
+        return f"{x['k']}/{x['n']}" + (f" = {x['rate']:.3f}" if x["rate"] is not None else " (no station run yet)")
+    click.echo(f"qc chart ({out['project']} event store + seed {seed_rel}; first reading, not gated)")
+    click.echo(f"  premise-false rate        : {r(out['premise_false_rate'])}")
+    click.echo(f"  first-article reject rate : {r(out['first_article_reject_rate'])}")
+    click.echo(f"  milestone defect rate     : {r(out['milestone_defect_rate'])}")
+    click.echo(f"  huddles                   : {out['huddles']}")
+    click.echo("  CPI per task (CPI = earned / actual; seed rows: estimate / actual):")
+    click.echo(f"    {'task':10s} {'project':9s} {'source':9s} {'estimate':>10s} {'actual':>10s} {'act/est':>8s} "
+               f"{'CPI':>7s} huddles")
+    for t in out["tasks"]:
+        est, act = t.get("estimate"), t.get("actual_tokens")
+        ratio = t.get("ratio") if t.get("ratio") is not None else (round(act / est, 4) if est and act else None)
+        fmt = (lambda v, w: f"{v:>{w},.0f}" if isinstance(v, (int, float)) else f"{'-':>{w}}")
+        cpi = t.get("cpi")
+        click.echo(f"    {t['task']:10s} {t['project']:9s} {t['source']:9s} {fmt(est, 10)} {fmt(act, 10)} "
+                   f"{(f'{ratio:.2f}' if ratio is not None else '-'):>8s} "
+                   f"{(f'{cpi:.3f}' if cpi is not None else '-'):>7s} {t.get('huddles', 0)}"
+                   + ("  (actual is a lower bound)" if t.get("lower_bound") else ""))
+    ind = out["individuals_chart"]
+    if ind["drawn"]:
+        click.echo(f"  individuals chart (CPI, n {ind['n']}): mean {ind['mean']}, limits [{ind['lnpl']}, {ind['unpl']}]")
+    else:
+        click.echo(f"  individuals chart: not drawn, {ind['n']} task(s) of the {ind['needs']} FC-15 requires")

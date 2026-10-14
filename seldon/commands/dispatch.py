@@ -183,7 +183,8 @@ def _survey(project_dir, config, driver, database):
         return cfg, band, survey["tree"], lease_body, survey["claim"], survey["rows"]
     tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
-    rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body)
+    holds = _premise_holds(project_dir, driver, database)
+    rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds)
             for t in _tasks(driver, database)]
     return cfg, band, tree, lease_body, claim, D.fifo(rows)
 
@@ -319,6 +320,9 @@ def dispatch_status(as_json):
                "cadence": cadence_rows,
                "max_parallel": cfg["max_parallel"],
                "worktree_leases": D.worktree_leases(project_dir, cfg),
+               # QC-002: station (a)'s outcome on the last pass that reviewed premises, and open huddles (d).
+               "last_premise_review": _stations_mod().last_premise_review(project_dir, cfg),
+               "open_huddles": _open_huddles(project_dir),
                "tasks": rows}
     if as_json:
         click.echo(json.dumps(payload, indent=1, default=str))
@@ -446,6 +450,17 @@ def dispatch_once(dry_run):
                        "acquired_at": held.body.get("acquired_at"),
                        "task_in_flight": held.body.get("task")})
             click.echo(f"lease held by {held.body.get('holder')}; exiting")
+            # QC-002: a holder from before the stations does not inspect the session it waits on, so this pass
+            # does, and reaps nothing (the session and the lease are the holder's, DN-006 decision 6).
+            from seldon.commands import dispatch_stations as ST
+            inspected = ST.inspect_for_held_lease(project_dir, cfg, held.body)
+            if inspected is not None:
+                click.echo(f"inspected {str(held.body.get('task'))[:8]} for its holder: "
+                           f"{len(inspected.get('milestones') or [])} milestone(s), "
+                           f"{len(inspected.get('first_articles') or [])} first article(s), "
+                           f"{len(inspected.get('stops') or [])} stop(s), "
+                           f"{len(inspected.get('huddles') or [])} huddle(s)"
+                           + (f" ({inspected['skipped']})" if inspected.get("skipped") else ""))
             return
         try:
             _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
@@ -792,7 +807,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                  claim, dry_run)
         tree = D.tree_state(project_dir)
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body)
+    holds = _premise_holds(project_dir, driver, database)
+    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds)
                    for t in _tasks(driver, database)])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
@@ -828,11 +844,31 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
             _push(project_dir, cfg)
         return
 
-    chosen = eligible[0]
+    # AD-037-R6 (a): premise review, BEFORE the claim, over the eligible tasks in FIFO order. A false premise
+    # refuses that task (an Issue names it) and the next eligible task is reviewed; a sibling's lease on this
+    # project's environment refuses the pass, since it holds for every task here alike.
+    chosen = None
+    for row in eligible:
+        review = _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row,
+                                 dry_run)
+        if review["ok"]:
+            chosen = row
+            chosen["premises"] = review
+            break
+        if not review["environment"]["outcome"] == "true":
+            if not dry_run:
+                _push(project_dir, cfg)
+            return
+    if chosen is None:
+        click.echo("nothing launched: every eligible task has a false premise")
+        if not dry_run:
+            _record_and_push(project_dir, config, cfg)
+        return
     if dry_run:
         click.echo(json.dumps({"would_launch": chosen["task_id"],
                                "source_file": chosen["source_file"],
-                               "criteria": chosen["criteria"]}, indent=1, default=str))
+                               "criteria": chosen["criteria"],
+                               "premises": chosen["premises"]}, indent=1, default=str))
         return
     _launch_inplace(project_dir, config, driver, database, domain_config, session_id, cfg,
                     lease, chosen)
@@ -864,6 +900,9 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
         return
 
     lease.heartbeat(task=chosen["task_id"])
+    # QC-002: this holder inspects the session while it waits (`_run`), so a later pass need not.
+    from seldon.commands import dispatch_stations as ST
+    lease.write({**D.read_lease(lease.path), ST.LEASE_STATIONS_FIELD: ST.LEASE_STATIONS_VERSION})
     # AD-035 R2 and R7: the lock is refreshed (cached for the day) BEFORE the run, and this
     # run keeps the spec it starts with to the end.
     refresh_note = models.ensure_fresh("dispatch")
@@ -881,6 +920,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "log_path": str(log_path.relative_to(project_dir)),
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
+           **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note)})
     # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the
     # session starts, so it opens on a clean, level tree. Left for the session, they were the
@@ -893,7 +933,10 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     offset = _log_offset(log_path)
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
-                extra_env=spec["env"])
+                extra_env=spec["env"],
+                inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
+                inspect_every_s=cfg["poll_interval_s"],
+                on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig))
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
@@ -1207,8 +1250,14 @@ def _model_fields(spec: dict, refresh_note: str | None) -> dict:
     return out
 
 
+#: How long a reaped session's process group has, after SIGTERM, before SIGKILL. ASSUMPTION: the CLI flushes its
+#: transcript and exits well inside this; a session still running after it is not going to halt.
+REAP_GRACE_S = 30
+
+
 def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
-         network_allowlist: list | None = None, extra_env: dict | None = None) -> int:
+         network_allowlist: list | None = None, extra_env: dict | None = None,
+         inspector=None, inspect_every_s: float | None = None, on_reap=None) -> int:
     """Detached, logged, `EXIT=$?` appended.
 
     Working directory is the PROJECT ROOT, so `CLAUDE.md` loads — the exact inverse of
@@ -1240,10 +1289,41 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
     with log_path.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {_now()} | dispatch | {' '.join(shlex.quote(p) for p in cmd)}\n")
         fh.flush()
-        proc = subprocess.run(cmd, cwd=project_dir, stdout=fh, stderr=subprocess.STDOUT,
-                              env=env)
-        fh.write(f"\nEXIT={proc.returncode}\n")
-    return proc.returncode
+        # QC-002 (AD-037-R6): the holder waits in slices of `inspect_every_s` and inspects the session between them.
+        # An inspected session gets its own process group, so a reap (a hard stop the session did not answer within
+        # the reap interval) ends its children too; the holder is the only process that reaps (DN-006 decision 6).
+        # An uninspected one (the worktree supervisor's) stays in its caller's group, which
+        # `dispatch_worktree._terminate_orphaned_session` relies on.
+        proc = subprocess.Popen(cmd, cwd=project_dir, stdout=fh, stderr=subprocess.STDOUT, env=env,
+                                start_new_session=inspector is not None)
+        while True:
+            try:
+                returncode = proc.wait(timeout=inspect_every_s if inspector else None)
+                break
+            except subprocess.TimeoutExpired:
+                reap = (inspector() or {}).get("reap")
+                if reap:
+                    sig = _reap_group(proc)
+                    if on_reap:
+                        on_reap(reap, proc.pid, sig)
+        fh.write(f"\nEXIT={returncode}\n")
+    return returncode
+
+
+def _reap_group(proc) -> str:
+    """SIGTERM the session's process group, SIGKILL after `REAP_GRACE_S`. Returns the signal that ended it."""
+    import signal
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return "none (already exited)"
+    try:
+        proc.wait(timeout=REAP_GRACE_S)
+        return "SIGTERM"
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+        return "SIGKILL"
 
 
 def _log_offset(log_path: Path) -> int:
@@ -1299,6 +1379,89 @@ def _block(project_dir, driver, database, domain_config, session_id, task_id, st
         click.echo(f"could not block {task_id[:8]}: {exc}", err=True)
 
 
+def _stations_mod():
+    from seldon.commands import dispatch_stations as ST
+    return ST
+
+
+def _open_huddles(project_dir: Path) -> list:
+    from seldon.core import stations as S
+    from seldon.core.events import read_events
+    return S.open_huddles(read_events(project_dir))
+
+
+def _station_fields(cfg: dict, chosen: dict) -> dict:
+    """What `dispatch_launched` records for the stations: the premise review (a), and R7's inspection reserve."""
+    from seldon.core import stations as S
+    scfg = S.load_stations_config(cfg)
+    tokens = (chosen.get("criteria") or {}).get("c4", {}).get("declared_tokens")
+    return {"premises": chosen.get("premises"),
+            "inspection_reserve": {"share": scfg["inspection_reserve_share"],
+                                   "tokens": int((tokens or 0) * scfg["inspection_reserve_share"])}}
+
+
+def _premise_holds(project_dir: Path, driver, database) -> dict:
+    """Tasks held by an open `premise_false` Issue (c13), read from the event store and the Issue's graph state."""
+    from seldon.core.events import read_events
+
+    def issue_state(issue_id):
+        with driver.session(database=database) as s:
+            r = s.run("MATCH (i:Issue {artifact_id: $id}) RETURN i.state AS state", id=issue_id).single()
+        return r["state"] if r else None
+    return _stations_mod().premise_holds(read_events(project_dir), issue_state)
+
+
+def _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row, dry_run) -> dict:
+    """Station (a) for one eligible task, with its refusal: `environment_in_flight` once per sibling lease
+    acquisition (a standing condition, recorded where it begins), `premise_false` with an Issue naming the
+    premise. A dry run reviews and records nothing."""
+    from seldon.core import stations as S
+    review = _stations_mod().premise_review(project_dir, config, cfg, row)
+    if review["ok"] or dry_run:
+        if not review["ok"]:
+            click.echo(f"dry run: {row['task_id'][:8]} would be refused on its premises", err=True)
+        return review
+    env = review["environment"]
+    if env["outcome"] != "true":
+        acquisitions = {n: h.get("acquired_at") for n, h in env["held"].items()}
+        seen = _last_payload(project_dir, D.EVENT_REFUSED,
+                             where=lambda p: p.get("reason") == S.REFUSED_ENVIRONMENT_IN_FLIGHT
+                             and p.get("acquisitions") == acquisitions)
+        if seen is None:
+            _emit(project_dir, session_id, D.EVENT_REFUSED,
+                  {"task_id": row["task_id"], "reason": S.REFUSED_ENVIRONMENT_IN_FLIGHT, "held": env["held"],
+                   "acquisitions": acquisitions})
+            _record_and_push(project_dir, config, cfg)
+        click.echo(f"refused: {S.REFUSED_ENVIRONMENT_IN_FLIGHT}: a dispatcher holds a lease on "
+                   f"{', '.join(sorted(env['held']))}, which this project's environment names", err=True)
+        return review
+    false = review["false"]
+    names = "; ".join(f"line {f.get('line')}: {f.get('statement')} ({f.get('outcome')})" for f in false)
+    issue_id = _file_premise_issue(project_dir, driver, database, domain_config, session_id, row, names)
+    _emit(project_dir, session_id, D.EVENT_REFUSED,
+          {"task_id": row["task_id"], "reason": S.REFUSED_PREMISE_FALSE, "issue_id": issue_id,
+           "false": [{k: f.get(k) for k in ("line", "statement", "kind", "command", "outcome")} for f in false],
+           "source_file": row["source_file"]})
+    click.echo(f"refused {row['task_id'][:8]}: {S.REFUSED_PREMISE_FALSE}: {names} (Issue {str(issue_id)[:8]})",
+               err=True)
+    return review
+
+
+def _file_premise_issue(project_dir, driver, database, domain_config, session_id, row, names) -> str | None:
+    """The Issue AD-037-R6 (a) requires: it names the false premise, and while it is open the task waits (c13)."""
+    from seldon.core.artifacts import create_artifact
+    return create_artifact(
+        project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+        artifact_type="Issue",
+        properties={"name": f"premise_false: {Path(row['source_file']).stem}"[:200],
+                    "description": (f"Station (a) refused {row['source_file']} ({row['task_id']}) before launch: "
+                                    f"{names}. Correct the premise (or the task) and resolve this Issue; the task "
+                                    f"waits while it is open (AD-037-R6 a, QC-002)."),
+                    "issue_type": "factual_error", "importance": "high", "urgency": "high",
+                    "detection_method": "automated_check", "target": "data"},
+        actor=ACTOR, authority="accepted", session_id=session_id)
+
+
 @dispatch_group.group("lease")
 def lease_group():
     """The single-instance lease."""
@@ -1339,3 +1502,5 @@ def lease_show():
 # The worktree supervisor (`seldon dispatch supervise`, SEL-004) registers itself on
 # `dispatch_group` when its module is imported; imported last because it imports this module.
 from seldon.commands import dispatch_worktree as _dispatch_worktree  # noqa: E402,F401
+# The stations' commands (QC-002, AD-037-R6), for the same reason.
+from seldon.commands import dispatch_stations as _dispatch_stations  # noqa: E402,F401

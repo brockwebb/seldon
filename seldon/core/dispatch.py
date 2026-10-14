@@ -507,7 +507,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    # ai-readiness-kg/cc_tasks/2026-10-09_main_green_dispatch_stuck_without_a_path
                    # .md decision 3: a checkout on another branch (or a detached HEAD) with no
                    # dirty path, and a git read that failed. `dirty_tree` now always names a path.
-                   "wrong_branch", "tree_unreadable")
+                   "wrong_branch", "tree_unreadable",
+                   # QC-002 (AD-037-R6 a): a false premise, and a sibling dispatcher's lease on this project's
+                   # environment.
+                   "premise_false", "environment_in_flight")
 
 #: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
 #: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a
@@ -604,6 +607,12 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"multiplied by it), got {factor!r}")
     block["disk_need_factor"] = factor
     _load_parallel_config(block)
+    # QC-002: the stations' block, validated at load like every other key, so a misspelt ceiling refuses here.
+    from seldon.core import stations as S
+    try:
+        S.load_stations_config(block)
+    except S.StationsConfigError as exc:
+        raise DispatchConfigError(str(exc)) from exc
     return block
 
 
@@ -1540,7 +1549,8 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
 # ------------------------------------------------------------------------------- evaluation
 
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
-             claim_in_flight: dict | None, lease_body: dict, running=None) -> dict:
+             claim_in_flight: dict | None, lease_body: dict, running=None,
+             premise_holds: dict | None = None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1640,6 +1650,12 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     c["c12"] = disk_state(project_dir, cfg,
                           worktree=parallel and conc["error"] is None and not conc["exclusive"])
 
+    # QC-002 (AD-037-R6 a): a task whose last premise review filed an Issue that is still open waits on it. Absent
+    # for every other task, so the criteria vector the serial transcript holds is unchanged.
+    hold = (premise_holds or {}).get(task.get("artifact_id"))
+    if hold:
+        c["c13"] = {**hold, "ok": False}
+
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
     out["failed"] = [k for k, v in c.items() if not v["ok"]]
@@ -1667,6 +1683,8 @@ def first_refusal_reason(row: dict) -> str | None:
         return "concurrency_undeclared"
     if not c.get("c11", {}).get("ok", True):
         return "worktree_unavailable"
+    if not c.get("c13", {}).get("ok", True):
+        return "premise_false"
     return None
 
 

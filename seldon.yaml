@@ -185,6 +185,19 @@ dispatch:
   # installed by symlink). `seldon go` reports `dispatch: on` only while it is loaded.
   launchd_label: com.brock.seldon-dispatch
   cadence: []
+  # AD-037-R6's four stations (QC-002; seldon/core/stations.py). Every key is optional with the default and basis
+  # in `STATIONS_DEFAULTS`; the ones whose basis is a ruling are written here so the number is beside its reason.
+  stations:
+    # AD-037-R6 (c): CPI below this opens a huddle and does not stop. No measured basis; FC-15's chart replaces it.
+    cpi_huddle_below: 0.8
+    # AD-037-R7: the share of the task's estimate reserved for inspection. No measured basis; charted.
+    inspection_reserve_share: 0.10
+    # QC-002 Part C: no first-article verdict in this many polls is a huddle; a hard stop unanswered by
+    # `andon_halted` for this many poll intervals is reaped by the lease holder. The task's numbers.
+    first_article_polls: 3
+    reap_after_intervals: 1
+    # Inherited from every QC/SQ task's stop condition: the estimate plus 20 percent.
+    spend_ceiling_factor: 1.2
 
 jobs:
   # The launchd wrapper's log caps (scripts/jobs/seldon_dispatch.sh), ai-readiness-kg's
@@ -200,3 +213,11 @@ jobs:
 # `check: <command>` or `judgment: <why no program decides it>`. Tasks registered before QC-001's merge are baseline.
 qc:
   criteria_baseline: docs/evidence/qc001/criteria_baseline.txt
+  # AD-037-R6 (c) (QC-002 Part A): `seldon cc register` refuses a task with no `**Parts:**` header
+  # (`parts_undeclared`). Tasks registered before QC-002's merge are baseline.
+  parts_baseline: docs/evidence/qc002/parts_baseline.txt
+  # AD-037-R8 (QC-002 Part D): `seldon qc chart`'s first reading. The seed is the five estimate-versus-actual pairs
+  # measured before the stations ran (CPI only). FC-15's individuals chart is drawn from `chart_min_points` tasks on
+  # (FC-15's own number, 10).
+  chart_seed: docs/evidence/qc002/cpi_first_reading.yaml
+  chart_min_points: 10

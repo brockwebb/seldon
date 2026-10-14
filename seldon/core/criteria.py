@@ -8,7 +8,8 @@ What counts as an acceptance criterion, in the forms this portfolio's task files
 - **inline:** `- Acceptance: <criterion>` (or `**Acceptance:**`, `Acceptance criteria:`, `Success criteria:`) holds one
   criterion on its own line;
 - **block:** the same label with nothing after it, or numbered (`4. Acceptance:`), followed by list items indented
-  deeper than the label; each item is one criterion, and deeper non-list lines continue it;
+  deeper than the label; each item is one criterion, and deeper non-list lines continue it. A label that is not
+  itself a list item also owns a list directly under it at its own indent (QC-002);
 - **section:** a heading `## Acceptance`, `## Acceptance criteria` or `## Success criteria`, whose list items up to the
   next heading are the criteria.
 
@@ -57,15 +58,24 @@ def acceptance_criteria(text: str) -> list[tuple[int, str]]:
                 i += 1
                 continue
             base = _indent(line)
+            # QC-002: a bare label that is not itself a list item (`Acceptance:` on its own line) owns the list
+            # directly under it at its own indent. QC-001's reader required deeper items, so it read zero criteria
+            # in QC-002's own task file and `criterion_unmarked` passed it vacuously.
+            flush = not _ITEM_RE.match(line)
             i += 1
             while i < len(lines):
                 nxt = lines[i]
                 if not nxt.strip():
                     i += 1
                     continue
-                if _indent(nxt) <= base or _ANY_HEADING_RE.match(nxt):
+                if _ANY_HEADING_RE.match(nxt):
                     break
                 im = _ITEM_RE.match(nxt)
+                if _indent(nxt) <= base:
+                    if not (flush and im and _indent(nxt) == base):
+                        break
+                elif flush is True:
+                    flush = False      # deeper items first: the label's list is the deeper one
                 if im:
                     out.append((i + 1, im.group("text").strip()))
                 i += 1

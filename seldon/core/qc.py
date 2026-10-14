@@ -239,7 +239,11 @@ def parallel_opted_in(project_dir: Path, config: dict) -> bool:
     """AD-037-R9 AT THE DISPATCHER (QC-001 premise 7: the hold was a test, not a refusal). True when an accepted record
     anchored at AD-037-R9 names this project in its scope. Records are read from this project's register and its
     imports, and from seldon's register, where AD-037 lives; a project with no register of its own reads seldon's."""
-    from seldon.core import decisions
+    from seldon.core import decisions, stations
+    # R9's first condition, read from the code path (QC-002 Part D): R6 (a) to (d) are live for the sessions a
+    # parallel pass would launch. Until they are, no record opts a project in.
+    if not stations.stations_live()["all"]:
+        return False
     repo = Path(project_dir).resolve().name
     seldon_cfg = yaml.safe_load((SELDON_ROOT / "seldon.yaml").read_text(encoding="utf-8")) or {}
     recs = []

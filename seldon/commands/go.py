@@ -755,6 +755,51 @@ def _get_dispatch_line(project_dir: str) -> str:
     return f"**dispatch: {'on' if st['on'] else 'off'}** ({st['why']})"
 
 
+#: The dispatched-session protocol's three lines (QC-002 Part D; docs/conventions/dispatched_session_protocol.md),
+#: printed by `seldon go` in a Claude Code session, which is where a dispatched session reads its orientation.
+SESSION_PROTOCOL_LINES = (
+    "1. At each Part boundary: `seldon dispatch part-complete --part <name>` (records tokens and the Part; the "
+    "dispatcher runs the Part's `check:` criteria). Exit 3 means a stop is written: write the RESULT and end.",
+    "2. After the first unit of a loop the task marks `**First article:**`: `seldon dispatch first-article --loop "
+    "<name> --output <path>`, and continue the loop only on exit 0.",
+    "3. At every other loop boundary: `seldon dispatch boundary`. Exit 3 means halt: `andon_halted` is written.",
+)
+
+
+def _in_claude_code_session() -> bool:
+    """Claude Code sets `CLAUDECODE=1` in every session's environment, dispatched or interactive."""
+    return os.environ.get("CLAUDECODE") == "1"
+
+
+def _open_huddles(project_dir: str) -> list:
+    """AD-037-R6 (d): huddles a station, the session or the operator opened and nobody has closed with a cause and
+    a gate (FC-29). Read from the event log, like the dispatcher section, so it renders without Neo4j."""
+    from seldon.core import stations as S
+    from seldon.core.events import read_events
+    try:
+        return S.open_huddles(read_events(Path(project_dir)))
+    except Exception as exc:                                        # noqa: BLE001
+        return [{"huddle_id": "?", "task_id": None, "reading": f"huddles unreadable: {type(exc).__name__}: {exc}"}]
+
+
+def _get_stations_section(project_dir: str) -> Optional[str]:
+    """Open huddles, and in a Claude Code session the protocol's three lines. None when there is neither."""
+    lines = []
+    huddles = _open_huddles(project_dir)
+    if huddles:
+        lines.append(f"**Open huddles ({len(huddles)})** (close: `seldon dispatch huddle <task> --id <id> "
+                     f"--cause <c> --gate <g>`):")
+        for h in huddles:
+            lines.append(f"- {str(h.get('huddle_id'))[:8]} task {str(h.get('task_id'))[:8]} "
+                         f"({h.get('opened_by')}, {h.get('opened_at', '')}): {h.get('reading')}")
+    if _in_claude_code_session():
+        if lines:
+            lines.append("")
+        lines.append("**Dispatched-session protocol** (AD-037-R6):")
+        lines.extend(SESSION_PROTOCOL_LINES)
+    return "\n".join(lines) if lines else None
+
+
 def _get_dispatch_section(project_dir: str) -> Optional[str]:
     """Return the Dispatcher section for `seldon go`, or None when a project has no dispatcher.
 
@@ -956,8 +1001,10 @@ def assemble_go_context(
     # Section 5.6 — Dispatcher. The `dispatch: on|off` line is always present (SEL-005); the
     # detail below it only for a project with a `dispatch:` block.
     dispatcher = _get_dispatch_section(project_dir)
+    stations = _get_stations_section(project_dir)
     sections.append(_get_dispatch_line(project_dir)
-                    + (f"\n\n{dispatcher}" if dispatcher is not None else ""))
+                    + (f"\n\n{dispatcher}" if dispatcher is not None else "")
+                    + (f"\n\n{stations}" if stations is not None else ""))
 
     # Section 6 — Agent Roles (optional — omit if no roles exist)
     agent_roles = _get_agent_roles_section(project_dir)
@@ -1032,6 +1079,7 @@ def assemble_go_context_as_dict(
         "audit_pipeline": _get_pipeline_section(project_dir),
         "dispatch": _get_dispatch_section(project_dir),
         "dispatch_state": _dispatch_state(project_dir),
+        "open_huddles": _open_huddles(project_dir),
         "agent_roles": agent_roles,
         "available_commands": available_commands,
     }

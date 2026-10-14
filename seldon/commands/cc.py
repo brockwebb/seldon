@@ -1205,6 +1205,14 @@ def register_task_file(
     if criteria_refusal:
         raise ValueError(f"{criteria_refusal} File: {rel_path}")
 
+    # AD-037-R6 (c), registration (QC-002 Part A): a task lists each Part's share of its estimate in a `**Parts:**`
+    # header, so the milestone station can compute CPI. Tasks registered before QC-002's merge are baseline
+    # (`qc.parts_baseline` in seldon.yaml).
+    from seldon.core import stations
+    parts_refusal = stations.parts_registration_refusal(task_path, project_dir, config)
+    if parts_refusal:
+        raise ValueError(f"{parts_refusal} File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "

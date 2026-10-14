@@ -126,6 +126,7 @@ def test_go_json_output_has_expected_keys(tmp_path):
         "dispatch",
         # SEL-005: `{"on": bool, "why": str}` for every project, block or not.
         "dispatch_state",
+        "open_huddles",
         "agent_roles",
         "available_commands",
     }
