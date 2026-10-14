@@ -1,7 +1,11 @@
 # RESULT: DesignNote and ArchitecturalDecision may originate `cites` edges
 
 **Task:** `cc_tasks/2026-09-28_designnote_cites_citation.md` (dispatch ef334553), including its inline afternoon
-addendum (ArchitecturalDecision too). There are no sibling `_ADDENDUM*.md` files.
+addendum (ArchitecturalDecision too). No file matches `2026-09-28_designnote_cites_citation_ADDENDUM*.md`.
+`cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md` was found while cataloging. It is
+registered as a separate task, ordered after this one, and was not executed here. Its section 1 (slosh-pipe's
+DesignNote `cites` refusal) needs no further change: this one covers it. Its section 2 (`derived_from` widening)
+and its `uses_data_from` question stay with that task.
 **Date:** 2026-10-14
 **Governing ruling:** AD-030-R7.
 
