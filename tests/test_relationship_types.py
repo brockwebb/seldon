@@ -8,6 +8,9 @@ Covers the edge types extended or introduced by AD-028 (Lane B of the
     corrects       DesignNote                          ->  DesignNote | Result
     annotates      Issue                               ->  Result
     disputes       Issue                               ->  Result
+    cites          DesignNote | ArchitecturalDecision  ->  Citation | Result | Passage
+                   (the two origins added by
+                   cc_tasks/2026-09-28_designnote_cites_citation.md; AD-030-R7)
 
 Two layers are asserted:
 
@@ -67,6 +70,13 @@ PROPS_BY_TYPE = {
         "target": "content",
     },
     "PaperSection": {"name": "edge_contract_section", "title": "Edge contract fixture"},
+    "ArchitecturalDecision": {
+        "name": "edge_contract_ad",
+        "title": "Edge contract fixture",
+        "path": "docs/design/edge_contract_ad.md",
+        "description": "edge-contract fixture",
+    },
+    "Citation": {"key": "edge_contract_citation", "title": "Edge contract fixture"},
 }
 
 # (rel_type, from_type, to_type) triples that must be ACCEPTED.
@@ -85,6 +95,14 @@ ACCEPTED = [
     # annotates / disputes — Issue commentary on a Result.
     ("annotates", "Issue", "Result"),
     ("disputes", "Issue", "Result"),
+    # cites — a design note or an AD names the prior art it adopts or departs
+    # from (AD-030-R7), so both originate the same edge a Document does.
+    ("cites", "DesignNote", "Citation"),
+    ("cites", "DesignNote", "Result"),
+    ("cites", "DesignNote", "Passage"),
+    ("cites", "ArchitecturalDecision", "Citation"),
+    ("cites", "ArchitecturalDecision", "Result"),
+    ("cites", "ArchitecturalDecision", "Passage"),
 ]
 
 # (rel_type, from_type, to_type, expected_error_fragment) triples that must be
@@ -121,6 +139,9 @@ REJECTED = [
     ("disputes", "Issue", "Script", "cannot target"),
     ("disputes", "Issue", "DataFile", "cannot target"),
     ("disputes", "Issue", "PaperSection", "cannot target"),
+    # cites: widening from_types did not widen to_types.
+    ("cites", "DesignNote", "DesignNote", "cannot target"),
+    ("cites", "ArchitecturalDecision", "Script", "cannot target"),
 ]
 
 # One accepted and one rejected case per edge type, exercised end to end
@@ -186,6 +207,10 @@ def _make(project_dir, driver, domain_config, artifact_type):
     ("corrects", {"DesignNote"}, {"DesignNote", "Result"}),
     ("annotates", {"Issue"}, {"Result"}),
     ("disputes", {"Issue"}, {"Result"}),
+    ("cites",
+     {"PaperSection", "Figure", "Document", "Section", "Ruling", "DesignNote",
+      "ArchitecturalDecision"},
+     {"Result", "Citation", "Passage"}),
 ])
 def test_domain_config_declares_endpoints(domain_config, rel_type, from_types, to_types):
     """The domain config — not the ontology master DB — carries the endpoints."""
@@ -302,3 +327,46 @@ def test_create_link_rejects_endpoint_pair(
             from_id=from_id, to_id=to_id,
         ).single()
     assert rel is None
+
+
+@pytest.mark.parametrize("from_type", ["DesignNote", "ArchitecturalDecision"])
+def test_create_link_cites_citation_carries_cito_properties(
+    neo4j_driver, project_dir, domain_config, clean_test_db, from_type
+):
+    """A DesignNote or AD `cites` a Citation with its CiTO intent on the edge.
+
+    The edge exists to carry `cito_type`, `reason` and `raw_reference`
+    (AD-030-R7); an edge that landed without them would ground nothing.
+    """
+    from_id = _make(project_dir, neo4j_driver, domain_config, from_type)
+    to_id = _make(project_dir, neo4j_driver, domain_config, "Citation")
+    rel_properties = {
+        "cito_type": "uses_method_in",
+        "reason": "the shingling method is adopted as published",
+        "raw_reference": "Broder, A. Z. (1997). On the resemblance and containment of documents.",
+    }
+
+    create_link(
+        project_dir=project_dir,
+        driver=neo4j_driver,
+        database=NEO4J_DB,
+        domain_config=domain_config,
+        from_id=from_id,
+        to_id=to_id,
+        from_type=from_type,
+        to_type="Citation",
+        rel_type="cites",
+        actor="human",
+        authority="accepted",
+        rel_properties=rel_properties,
+    )
+
+    with neo4j_driver.session(database=NEO4J_DB) as session:
+        rel = session.run(
+            "MATCH (a:Artifact {artifact_id: $from_id})-[r:CITES]->"
+            "(b:Artifact {artifact_id: $to_id}) RETURN properties(r) AS p",
+            from_id=from_id, to_id=to_id,
+        ).single()
+    assert rel is not None
+    for key, value in rel_properties.items():
+        assert rel["p"][key] == value

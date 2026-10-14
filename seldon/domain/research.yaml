@@ -818,7 +818,9 @@ relationship_types:
     # vocabulary, and `disagrees_with` / `refutes` carry the constraint that no
     # longer holds. Rejected science stays in the graph as a rejected prescription;
     # reinstatement is supersession with evidence, not deletion.
-    from_types: [PaperSection, Figure, Document, Section, Ruling]
+    # DesignNote and ArchitecturalDecision added (cc_tasks/2026-09-28_designnote_cites_citation.md):
+    # they are where a project names the prior art it adopts or departs from.
+    from_types: [PaperSection, Figure, Document, Section, Ruling, DesignNote, ArchitecturalDecision]
     to_types: [Result, Citation, Passage]
     properties:
       cito_type:
