@@ -589,7 +589,7 @@ def environment_repositories(project_dir: Path, config: dict, scfg: dict) -> dic
     `dispatch.stations.environment_ref` (`path#key`, a list of sibling repository names, e.g. squiddy's
     `squiddy/kit.yaml#environment_packages`) when set; otherwise `decisions.repositories` (seldon's squiddy and
     arnold). A name resolves to the sibling directory of that name beside this project."""
-    project_dir = Path(project_dir)
+    project_dir = Path(project_dir).resolve()      # `Path('.').parent` is `.`: resolve before taking the parent
     ref = scfg.get("environment_ref")
     if ref:
         path, _, key = str(ref).partition("#")

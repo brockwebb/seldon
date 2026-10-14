@@ -123,3 +123,13 @@ def test_an_unreadable_premise_line_is_a_false_premise():
     text = "**Premises:**\n- premise: the count is 5 | check: `true`\n- the count is 6 with no form\n\n## Part A: x\n"
     r = S.review_premises(".", text, S.load_stations_config({}), run=lambda *a, **k: {"outcome": "pass"})
     assert r["ok"] is False and r["false"][0]["outcome"] == "unreadable"
+
+
+def test_environment_names_resolve_beside_the_project_from_a_relative_cwd(tmp_path, monkeypatch):
+    from seldon.core import stations as S
+    p = tmp_path / "proj"
+    p.mkdir()
+    (p / "kit.yaml").write_text("environment_packages: [seldon]\n", encoding="utf-8")
+    monkeypatch.chdir(p)
+    got = S.environment_repositories(".", {}, {"environment_ref": "kit.yaml#environment_packages"})
+    assert got == {"seldon": str((tmp_path / "seldon").resolve())}
