@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import sys
 import textwrap
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone  # noqa: F401 (timedelta re-exported for tests)
 from pathlib import Path
 
 import yaml

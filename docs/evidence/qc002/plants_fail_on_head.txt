@@ -1,0 +1,43 @@
+# QC-002: every station plant run against the HEAD before QC-002 (main 9344954), test files copied into a detached
+# worktree of that commit, PYTHONPATH at it, 2026-10-14. 10 plants, 10 failed. Reasons (pytest --tb=line):
+E   AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+      Error: No such command 'part-complete'.
+    assert 2 == 0
+/private/tmp/seldon-head-9344954/tests/test_dispatch_milestone.py:36: AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+E   AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+      Error: No such command 'part-complete'.
+    assert 2 == 0
+/private/tmp/seldon-head-9344954/tests/test_dispatch_milestone.py:63: AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+E   AttributeError: 'NoneType' object has no attribute 'session'
+/private/tmp/seldon-head-9344954/seldon/commands/cc.py:662: AttributeError: 'NoneType' object has no attribute 'session'
+E   AssertionError: record: record: artifact_created d5c70f30 — 1 line(s) written by the standing dispatcher -> d256793
+    assert [{'actor': 'd...unched', ...}] == []
+/private/tmp/seldon-head-9344954/tests/test_dispatch_premises.py:51: AssertionError: record: record: artifact_created d5c70f30 — 1 line(s) written by the standing dispatcher -> d256793
+E   AssertionError: record: record: artifact_created c43e2406 — 1 line(s) written by the standing dispatcher -> 7a07284
+    assert [{'actor': 'd...unched', ...}] == []
+/private/tmp/seldon-head-9344954/tests/test_dispatch_premises.py:95: AssertionError: record: record: artifact_created c43e2406 — 1 line(s) written by the standing dispatcher -> 7a07284
+E   AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+      Error: No such command 'stop'.
+    assert 2 == 0
+/private/tmp/seldon-head-9344954/tests/test_dispatch_andon.py:48: AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+E   AssertionError: no stop written: continue
+    assert 2 == 0
+/private/tmp/seldon-head-9344954/tests/test_dispatch_andon.py:31: AssertionError: no stop written: continue
+E   AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+      Error: No such command 'huddle'.
+    assert 2 == 0
+/private/tmp/seldon-head-9344954/tests/test_dispatch_andon.py:101: AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+E   ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
+/private/tmp/seldon-head-9344954/tests/test_dispatch_first_article.py:32: ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
+E   ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
+/private/tmp/seldon-head-9344954/tests/test_dispatch_first_article.py:32: ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
+FAILED tests/test_dispatch_milestone.py::test_plant_a_failing_check_at_a_part_boundary_stops_the_session - AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+FAILED tests/test_dispatch_milestone.py::test_plant_cpi_below_the_line_opens_a_huddle_and_does_not_stop - AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+FAILED tests/test_dispatch_milestone.py::test_plant_a_task_with_no_parts_header_is_refused_at_registration - AttributeError: 'NoneType' object has no attribute 'session'
+FAILED tests/test_dispatch_premises.py::test_plant_a_false_check_premise_refuses_the_launch_and_files_an_issue - AssertionError: record: record: artifact_created d5c70f30 — 1 line(s) written by the standing dispatcher -> d256793
+FAILED tests/test_dispatch_premises.py::test_plant_a_held_lease_in_a_named_sibling_repository_refuses - AssertionError: record: record: artifact_created c43e2406 — 1 line(s) written by the standing dispatcher -> 7a07284
+FAILED tests/test_dispatch_andon.py::test_plant_a_hard_stop_is_reaped_after_one_interval_and_not_before - AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+FAILED tests/test_dispatch_andon.py::test_plant_an_operator_stop_halts_the_session_at_its_next_boundary - AssertionError: no stop written: continue
+FAILED tests/test_dispatch_andon.py::test_plant_go_lists_an_open_huddle_and_none_once_it_is_closed - AssertionError: Usage: main dispatch [OPTIONS] COMMAND [ARGS]...
+FAILED tests/test_dispatch_first_article.py::test_plant_a_first_article_pass_continues_the_loop - ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
+FAILED tests/test_dispatch_first_article.py::test_plant_a_first_article_fail_stops_the_loop - ImportError: cannot import name 'stations' from 'seldon.core' (/private/tmp/seldon-head-9344954/seldon/core/__init__.py)
