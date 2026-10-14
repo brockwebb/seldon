@@ -1,0 +1,53 @@
+...............F..........................                               [100%]
+=================================== FAILURES ===================================
+___________ test_the_shim_sees_a_planted_call_and_the_gate_stops_one ___________
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-741/test_the_shim_sees_a_planted_c0')
+
+    def test_the_shim_sees_a_planted_call_and_the_gate_stops_one(tmp_path):
+        """The positive control: the instrument records an ungated call by PATH and by the lock, and the shared gate
+        skips the same call, naming its variable, so the empty record above is a measurement and not a blind spot."""
+        bindir, record, home = _shim(tmp_path)
+        planted = tmp_path / "planted" / "test_planted_calls.py"
+        planted.parent.mkdir()
+        planted.write_text(PLANTED.format(root=str(ROOT)), encoding="utf-8")
+        r = _pytest([str(planted)], env=_env(bindir, home), cwd=planted.parent)
+        out = r.stdout + r.stderr
+>       assert "2 passed, 1 skipped" in out, out[-1500:]
+E       AssertionError:  _ _ _ _ _ 
+E         
+E         home = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-741/test_the_shim_sees_a_planted_c0/shim_models_home')
+E         
+E             def load_registry(home: Path | None = None) -> dict:
+E                 """The registry, validated. Every role names a known family and a known effort."""
+E                 path = _home(home) / REGISTRY_FILE
+E                 data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+E                 roles = data.get("roles")
+E                 if not isinstance(roles, dict) or not roles:
+E                     raise ModelsError(f"{path}: no `roles:` mapping")
+E                 for name, row in roles.items():
+E                     if not isinstance(row, dict):
+E                         raise ModelsError(f"{path}: role {name!r} is not a mapping")
+E                     if row.get("family") not in FAMILY_ENV:
+E         >               raise ModelsError(f"{path}: role {name!r} family {row.get('family')!r} is not one "
+E                                           f"of {sorted(FAMILY_ENV)}")
+E         E               seldon.models.ModelsError: /private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-741/test_the_shim_sees_a_planted_c0/shim_models_home/registry.yaml: role 'author' family None is not one of ['fable', 'haiku', 'opus', 'sonnet']
+E         
+E         /Users/brock/GitHub/seldon/seldon/models.py:155: ModelsError
+E         =========================== short test summary info ============================
+E         SKIPPED [1] test_planted_calls.py:16: calls a real model; set LIVE_MODEL_CALLS=1 to run (AD-036-R9)
+E         1 failed, 1 passed, 1 skipped in 0.43s
+E         
+E       assert '2 passed, 1 skipped' in 'F.s                                                                      [100%]\n=================================== ...d_calls.py:16: calls a real model; set LIVE_MODEL_CALLS=1 to run (AD-036-R9)\n1 failed, 1 passed, 1 skipped in 0.43s\n'
+
+tests/test_pa001_zero_model_calls.py:160: AssertionError
+============================= slowest 5 durations ==============================
+725.09s call     tests/test_pa001_zero_model_calls.py::test_the_suite_invokes_no_claude_by_default
+0.78s call     tests/test_pa001_zero_model_calls.py::test_the_shim_sees_a_planted_call_and_the_gate_stops_one
+0.37s call     tests/test_model001_model_selection.py::test_the_daemon_refuses_a_lock_cli_the_graph_was_not_piloted_on
+0.32s call     tests/test_model001_model_selection.py::test_a_call_reaches_the_fake_cli_with_the_launch_block_and_returns_a_receipt
+0.30s call     tests/test_model001_model_selection.py::test_a_substituted_model_stops_the_call_named_model_substituted
+=========================== short test summary info ============================
+FAILED tests/test_pa001_zero_model_calls.py::test_the_shim_sees_a_planted_call_and_the_gate_stops_one
+1 failed, 41 passed in 730.14s (0:12:10)
+EXIT 1

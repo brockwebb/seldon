@@ -1,0 +1,9 @@
+..........................................                               [100%]
+============================= slowest 5 durations ==============================
+668.93s call     tests/test_pa001_zero_model_calls.py::test_the_suite_invokes_no_claude_by_default
+0.76s call     tests/test_pa001_zero_model_calls.py::test_the_shim_sees_a_planted_call_and_the_gate_stops_one
+0.39s call     tests/test_sq009_client_governed.py::test_a_spend_refusal_inside_a_unit_stops_the_loop_after_in_flight_units_land
+0.36s call     tests/test_model_client.py::test_auth_failure_halts_and_rate_limit_is_retryable
+0.30s call     tests/test_sq009_client_governed.py::test_a_rate_limit_with_no_envelope_is_released_and_a_crash_settles_at_projection
+42 passed in 673.88s (0:11:13)
+EXIT 0
