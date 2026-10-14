@@ -83,6 +83,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 
 1. **Start**: `seldon go` or `/briefing` — orient to project, read handoff, surface open tasks
 2. **Work**: `/result-register` for quantitative output, `/task-track` for cross-session items
+   **Dispatched sessions and their stations (AD-037-R6, QC-002):** every task written from QC-002 on carries `**Parts:**` (each Part's share of the estimate; `cc register` refuses `parts_undeclared`) and may carry `**Premises:**` and `**First article:**`. A dispatched session runs `seldon dispatch part-complete --part <X>` at each Part boundary and halts on exit 3. The protocol is `docs/conventions/dispatched_session_protocol.md`; `seldon go` prints its three lines in a CC session.
    **CC task contracts:** Complex CC tasks (3+ deliverables, schema + code changes, new test files, or tasks where the spec says "check whether X exists and handle accordingly") should include a `## Success Contract` section in the task file or produce a separate `cc_tasks/<date>_<name>_contract.md` before execution begins. The contract lists deliverables, verification commands with expected results, scope boundaries, and assumptions. Simple tasks (single-function fixes, doc updates, file registration) do not need contracts. Template: `docs/templates/cc_task_contract.md`.
 3. **After each CC task**: `seldon cc complete <task-filepath>` — records completion in graph so `seldon go` can reconcile stale handoff references
 4. **End**: `/closeout` — structured handoff, then **run `seldon verify`**, then commit

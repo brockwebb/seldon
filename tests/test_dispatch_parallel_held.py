@@ -97,3 +97,27 @@ def test_opt_ins_are_read_from_seldons_register_for_a_project_with_none(tmp_path
     """A project with no register of its own is not opted in by seldon's register as it stands (no AD-037-R9 opt-in
     record exists yet), and the reader does not fail on it."""
     assert qc.parallel_opted_in(_project(tmp_path), {}) is False
+
+
+# --------------------------------------------------------------------------------- QC-002 Part D: R9's first condition
+
+
+def test_r6_stations_are_live_in_the_code_path_before_any_project_may_opt_in(tmp_path, monkeypatch):
+    """AD-037-R9: R6 (a) to (d) live, and the disk preflight, before a parallel opt-in counts. Each station's records
+    are written by code that exists (`stations.STATION_RECORDS`, `stations_live`), and the worktree path, where a
+    parallel session runs, does not inspect yet: so no record opts a project in today."""
+    from seldon.core import dispatch as D
+    from seldon.core import stations as S
+    live = S.stations_live()
+    assert all(live[k] for k in "abcd"), live
+    assert set(S.STATION_RECORDS) == set("abcd")
+    assert {"premise_false", "environment_in_flight"} <= set(D.REFUSAL_REASONS)
+    assert live["worktree"] is False and live["all"] is False
+    assert callable(D.disk_state), "the disk preflight (SQ-010 ADDENDUM 02 D3.4) stays the second condition"
+
+    # With the stations not live for worktrees, an opt-in record does not opt a project in ...
+    monkeypatch.setattr(qc, "parallel_opt_ins", lambda recs: {_project(tmp_path).resolve().name})
+    assert qc.parallel_opted_in(tmp_path / "proj", {}) is False
+    # ... and once they are, the record decides.
+    monkeypatch.setattr(S, "stations_live", lambda: {"all": True})
+    assert qc.parallel_opted_in(tmp_path / "proj", {}) is True
