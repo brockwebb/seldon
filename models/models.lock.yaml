@@ -3,7 +3,7 @@
 # own alias resolver served, one probe per family, with the evidence file named below.
 schema: 1
 resolved_on: '2026-10-14'
-resolved_at: '2026-10-14T00:50:12.439482Z'
+resolved_at: '2026-10-14T02:20:58.135516Z'
 cli:
   version: 2.1.296
   path: /Users/brock/.local/share/seldon/claude-cli/2.1.296/node_modules/.bin/claude
@@ -41,4 +41,9 @@ documented_default_effort:
       effort: medium
       documented_for: claude-sonnet-5-5
       current: true
-evidence: docs/evidence/model001/refresh_2026-10-14.json
+evidence: docs/evidence/model001/refresh_2026-10-14_022058.json
+models:
+  claude-opus-4-8:
+    served: claude-opus-4-8
+    available: true
+    evidence: docs/evidence/model001/refresh_2026-10-14_022058.json
