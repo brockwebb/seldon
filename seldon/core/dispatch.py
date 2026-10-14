@@ -91,6 +91,7 @@ _LAYER_VALUE_RE = re.compile(r"§\s?2\.[1-5]\b|\bTier\s+[MOD]\b|\bnone\b", re.IG
 #: the standing band can be compared against; `M`/`K` suffixes are the spelling the task files
 #: and `--ceiling-tokens` already use.
 _ZERO_RE = re.compile(r"\bzero\b", re.IGNORECASE)
+_STRICT_TOKENS_RE = re.compile(r"(?P<n>\d[\d,_]*(?:\.\d+)?)\s*(?:(?P<suffix>[MmKk])\b(?:\s*tokens?\b)?|tokens?\b)")
 _TOKENS_RE = re.compile(r"(?P<n>\d[\d,_]*(?:\.\d+)?)\s*(?P<suffix>[MmKk])?\s*(?:tokens?|$|[ .,;)])")
 
 #: The Network header's grammar (ai-readiness-kg/cc_tasks/2026-09-18_network_allowlist.md
@@ -807,6 +808,14 @@ def spend_tokens(value: str | None) -> int | None:
     """
     if value is None:
         return None
+    # QC-002: an explicit token count wins over the word `zero`. QC-002's own header reads "est. 1.5M tokens ...
+    # Zero model calls beyond the session", and zero-first read it as 0 tokens: c4 passed it against the band at
+    # 0 and station (c) had no estimate to compute CPI from. Only an unambiguous count (`<n> tokens`, `<n>M`,
+    # `<n>K`) outranks `zero`, so an incidental number in a zero header ("DN-005 §5") is not read as a count.
+    strict = _STRICT_TOKENS_RE.search(value)
+    if strict:
+        n = float(strict.group("n").replace(",", "").replace("_", ""))
+        return int(n * {"m": 1_000_000, "k": 1_000}.get((strict.group("suffix") or "").lower(), 1))
     if _ZERO_RE.search(value):
         return 0
     m = _TOKENS_RE.search(value)

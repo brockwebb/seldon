@@ -208,6 +208,9 @@ def test_every_accepted_framework_layer_spelling(project, value):
     ("zero model calls.", 0), ("zero", 0), ("12M tokens", 12_000_000),
     ("500K tokens", 500_000), ("1,500,000 tokens", 1_500_000), ("up to 3.5M tokens", 3_500_000),
     ("whatever it takes", None),
+    # QC-002: a count outranks `zero` (its own header), and an incidental number in a zero header does not.
+    ("est. 1.5M tokens. Basis: ... Zero model calls beyond the session", 1_500_000),
+    ("zero model calls (DN-005 §5 rule 1).", 0),
 ])
 def test_the_spend_header_reads_as_a_token_count_or_refuses(value, expect):
     """`None` is a refusal and never a zero. A Spend line nobody can parse is the one case
