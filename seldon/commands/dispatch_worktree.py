@@ -105,7 +105,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         _commit_shared(project_dir, cfg)
     exclude = cfg["shared_paths"]
     tree = D.tree_state(project_dir, exclude)
-    tasks = S._tasks(driver, database)
+    tasks = S._tasks(driver, database, include_future=True)
     if S._commit_registered(project_dir, config, cfg, tasks, tree, inplace_claim, dry_run):
         tree = D.tree_state(project_dir, exclude)
     if cfg.get("cadence"):

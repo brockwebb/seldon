@@ -111,6 +111,8 @@ def test_go_json_output_has_expected_keys(tmp_path):
     data = assemble_go_context_as_dict(project_dir=str(tmp_path))
 
     expected_keys = {
+        # TRIAGE-001 Part B: the `Moving:` status line, first in both forms.
+        "moving",
         "role",
         "system_standards",
         "project_context",

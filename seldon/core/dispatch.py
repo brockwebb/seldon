@@ -37,6 +37,7 @@ import yaml
 
 from seldon import models
 from seldon.core import cadence as C
+from seldon.core.moving import is_future
 
 #: DN-006 decision 3, as corrected by this build's ADDENDUM_01 to that note. The marker survey
 #: over 34 addenda in `ai-readiness-kg/cc_tasks/` found a `**Status:**` field in the first ten
@@ -1622,8 +1623,13 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     """
     source = task.get("source_file")
     task_file = project_dir / source if source else None
-    cand = candidacy(task_file) if task_file else {"candidate": False,
-                                                   "reason": "no_source_file", "headers": {}}
+    if is_future(task.get("description")):
+        # TRIAGE-001 Part B: a parked idea (rule 4's `FUTURE` prefix) is never a candidate, even
+        # with a task file. `_tasks` already leaves these out of a pass; this holds for any caller.
+        cand = {"candidate": False, "reason": "future", "headers": {}}
+    else:
+        cand = candidacy(task_file) if task_file else {"candidate": False,
+                                                       "reason": "no_source_file", "headers": {}}
     # `created_at` is carried through because `fifo` sorts on it (decision 9). It was dropped
     # here until SEL-004, so every pass sorted by `("", task_id)`: a random uuid order.
     out = {"task_id": task.get("artifact_id"), "name": task.get("name"),

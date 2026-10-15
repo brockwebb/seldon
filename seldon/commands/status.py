@@ -7,6 +7,7 @@ import click
 from seldon.config import load_project_config, get_neo4j_driver
 from seldon.core.events import event_count
 from seldon.core.graph import graph_stats, get_stale_artifacts
+from seldon.core.moving import moving_line, project_moving
 from seldon.core.staleness import (
     partition_stale,
     resolver_for_session,
@@ -19,6 +20,9 @@ def status_command():
     """Show project status: artifact counts, open tasks, stale results."""
     config = load_project_config()
     project_dir = Path.cwd()
+    # TRIAGE-001 Part B: the line comes first. Here a graph error is not caught: `status` has
+    # nothing to show without the graph, unlike `go`, which renders the rest regardless.
+    click.echo(moving_line(project_moving(str(project_dir))))
     database = config["neo4j"]["database"]
     driver = get_neo4j_driver(config)
 
