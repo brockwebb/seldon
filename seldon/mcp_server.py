@@ -14,6 +14,53 @@ mcp = FastMCP("seldon")
 
 
 # ---------------------------------------------------------------------------
+# What this process loaded, re-checked before every tool call (SEL-006 Part B)
+# ---------------------------------------------------------------------------
+#
+# Claude Desktop keeps this server for days while the seldon checkout moves under it. On
+# 2026-10-14 a server holding pre-MODEL-003 code answered with a registry parse error instead of
+# saying it was stale (Issue fed23c36). squiddy DN-046 R-202: a process records what it loaded and
+# re-checks it. See `seldon/core/loaded_state.py` for why the code tree, not HEAD, is compared.
+
+def _capture_loaded():
+    from seldon import models
+    from seldon.core import loaded_state
+
+    repo = Path(__file__).resolve().parent.parent
+    try:
+        registry = models.models_home() / models.REGISTRY_FILE
+    except models.ModelsError:
+        registry = repo / "models" / models.REGISTRY_FILE
+    return loaded_state.capture("seldon-mcp", repo, ["seldon"], [registry, repo / "seldon.yaml"])
+
+
+_LOADED = _capture_loaded()
+
+
+def _refuses_when_stale(fn):
+    """Answer `server_stale` instead of running `fn` when the checkout no longer holds what this
+    process loaded; the underlying error a stale process would raise is never reached."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        from seldon.core import loaded_state
+
+        refusal = loaded_state.stale(_LOADED)
+        if refusal:
+            return f"Error: {refusal}"
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def _tool(*args, **kwargs):
+    """`mcp.tool()` with the stale-process check in front of every tool this server registers."""
+    register = mcp.tool(*args, **kwargs)
+
+    def decorator(fn):
+        return register(_refuses_when_stale(fn))
+    return decorator
+
+
+# ---------------------------------------------------------------------------
 # Shared project resolution
 # ---------------------------------------------------------------------------
 
@@ -252,7 +299,7 @@ def _mcp_terminal_transition(
 # seldon_go (existing)
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@_tool()
 def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
     """Orient to a Seldon-managed project. Returns engineering standards,
     project context, latest handoff, current state, and available commands.
@@ -271,7 +318,7 @@ def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
 # Task tools
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_create(
     description: str,
@@ -329,7 +376,7 @@ def seldon_task_create(
         driver.close()
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_update(
     task_id: str,
@@ -399,7 +446,7 @@ def seldon_task_update(
         driver.close()
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_withdraw(
     task_id: str,
@@ -421,7 +468,7 @@ def seldon_task_withdraw(
     return _mcp_terminal_transition(task_id, "withdrawn", reason, None, project_dir)
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_supersede(
     task_id: str,
@@ -448,7 +495,7 @@ def seldon_task_supersede(
     )
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_close(
     task_id: str,
@@ -506,7 +553,7 @@ def seldon_task_close(
         driver.close()
 
 
-@mcp.tool()
+@_tool()
 def seldon_task_list(
     project_dir: str = ".",
     state_filter: str = "open",
@@ -642,7 +689,7 @@ def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str
     return "\n".join(lines)
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_precede(
     before_id: str,
@@ -667,7 +714,7 @@ def seldon_task_precede(
     return _mcp_add_chain([before_id, after_id], reason, project_dir, "Precedes")
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_chain(
     task_ids: list[str],
@@ -690,7 +737,7 @@ def seldon_task_chain(
     return _mcp_add_chain(list(task_ids), reason, project_dir, "Chained")
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_task_unprecede(
     before_id: str,
@@ -727,7 +774,7 @@ def seldon_task_unprecede(
 # Issue tools
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_issue_create(
     name: str,
@@ -800,7 +847,7 @@ def seldon_issue_create(
         driver.close()
 
 
-@mcp.tool()
+@_tool()
 @_commits_its_append
 def seldon_issue_update(
     issue_id: str,
@@ -921,7 +968,7 @@ def _mcp_git_tracking_error(
     )
 
 
-@mcp.tool()
+@_tool()
 def seldon_cc_complete(
     filepath: str,
     project_dir: str = ".",
@@ -1039,7 +1086,7 @@ def seldon_cc_complete(
         driver.close()
 
 
-@mcp.tool()
+@_tool()
 def seldon_cc_register(
     filepath: str,
     project_dir: str = ".",
@@ -1142,7 +1189,7 @@ def seldon_cc_register(
 # Session closeout
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@_tool()
 def seldon_handoff(
     slug: str,
     summary: str,
@@ -1262,7 +1309,7 @@ def _next_run_id(audits_dir: Path) -> str:
     return f"run-{highest + 1:03d}"
 
 
-@mcp.tool()
+@_tool()
 def seldon_audit(
     section: str,
     project_dir: str = ".",
@@ -1429,7 +1476,7 @@ def seldon_audit(
 # Audit ingest (AD-020 pipeline → graph)
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@_tool()
 def seldon_audit_ingest(
     run_dir: str,
     project_dir: str = ".",
@@ -1522,7 +1569,7 @@ _WRITE_PATTERN = re.compile(
 )
 
 
-@mcp.tool()
+@_tool()
 def seldon_query(
     cypher: str,
     project_dir: str = ".",
@@ -1628,7 +1675,7 @@ def _receipts(text: str) -> list[str]:
     return [r.strip() for r in (text or "").split("\n") if r.strip()]
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_propose(record_yaml: str, decided_by: str, project_dir: str = ".",
                             date: str = "", reason: str = "", receipts: str = "",
                             operator_stated: bool = False) -> str:
@@ -1649,7 +1696,7 @@ def seldon_decision_propose(record_yaml: str, decided_by: str, project_dir: str 
                            receipts=_receipts(receipts), operator_stated=operator_stated)
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_accept(decided_by: str, project_dir: str = ".", record_id: str = "",
                            record_yaml: str = "", date: str = "", reason: str = "",
                            receipts: str = "", operator_stated: bool = False) -> str:
@@ -1663,7 +1710,7 @@ def seldon_decision_accept(decided_by: str, project_dir: str = ".", record_id: s
                            operator_stated=operator_stated)
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_reject(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
                            date: str = "", receipts: str = "") -> str:
     """Reject a proposed record."""
@@ -1671,7 +1718,7 @@ def seldon_decision_reject(record_id: str, decided_by: str, reason: str, project
                            date=date or None, reason=reason, receipts=_receipts(receipts))
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_deprecate(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
                               date: str = "", receipts: str = "") -> str:
     """Withdraw an active record with nothing replacing it."""
@@ -1679,7 +1726,7 @@ def seldon_decision_deprecate(record_id: str, decided_by: str, reason: str, proj
                            date=date or None, reason=reason, receipts=_receipts(receipts))
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_supersede(decided_by: str, project_dir: str = ".", record_yaml: str = "",
                               record_id: str = "", superseded_by: str = "", date: str = "",
                               reason: str = "", receipts: str = "",
@@ -1694,7 +1741,7 @@ def seldon_decision_supersede(decided_by: str, project_dir: str = ".", record_ya
                            operator_stated=operator_stated)
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
                           clause: str = "", text: str = "", by: str = "", changes_yaml: str = "",
                           date: str = "", receipts: str = "") -> str:
@@ -1706,7 +1753,7 @@ def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_
                            amendment=amendment, changes=_yaml_mapping(changes_yaml, "changes_yaml"))
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
     """One record as its events say it stands now."""
     from seldon.commands.decision import run_read
@@ -1717,7 +1764,7 @@ def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
         return f"Error: {exc}"
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "") -> str:
     """List records of this repository and its imports, optionally by status or repository."""
     from seldon.commands.decision import run_read
@@ -1729,7 +1776,7 @@ def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "
         return f"Error: {exc}"
 
 
-@mcp.tool()
+@_tool()
 def seldon_decision_check(project_dir: str = ".") -> str:
     """The register checks `seldon verify` fails on: chain, hashes, rationale, unregistered labels."""
     from seldon.commands.decision import run_read
@@ -1744,7 +1791,7 @@ def _prior_art_commit_line(out: dict) -> list:
     return [f"(prior-art lines in {out.get('project')} not committed: {c.get('reason')})"]
 
 
-@mcp.tool()
+@_tool()
 def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".",
                             top: int = 0, note: str = "") -> str:
     """Search the prior art BEFORE writing a design note, and get receipts to paste (AD-036).
@@ -1790,7 +1837,7 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
     return "\n\n".join(out)
 
 
-@mcp.tool()
+@_tool()
 def seldon_prior_art_verify(note: str, project_dir: str = ".", record: bool = True) -> str:
     """Re-run every receipt a design note (and its addenda) carries; record the verdict (AD-036).
 

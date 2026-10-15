@@ -1,0 +1,4 @@
+ImportError while importing test module '/private/tmp/seldon-head-sel006/tests/test_mcp_server_stale.py'.
+E   ImportError: cannot import name 'loaded_state' from 'seldon.core' (/private/tmp/seldon-head-sel006/seldon/core/__init__.py)
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 2.02s
