@@ -3078,9 +3078,9 @@ documents:
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: cc_tasks_2026_10_15_triage_001_open_proposals_closed_as_history_result
-    verification_method: "local governed file, sha256 61a6bb10b691b4c3, 4,618 characters"
+    verification_method: "local governed file, sha256 60a60162c7313b5e, 5,178 characters"
     retrieved_date: "2026-10-15"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-15_TRIAGE-001_open_proposals_closed_as_history_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-15."
+    notes: "RE-ADMITTED, content changed: the id is in the graph, but the file it names has been edited: sha256 61a6bb10b691b4c3 recorded, 60a60162c7313b5e on disk. Re-admissible at the cost of this one document; the write stage appends its updated nodes and retracts the children the new text no longer has. Assessed mechanically by squiddy.assess on 2026-10-15. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-15_TRIAGE-001_open_proposals_closed_as_history_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-15."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -3089,8 +3089,8 @@ documents:
     local_path: "../cc_tasks/2026-10-15_TRIAGE-001_open_proposals_closed_as_history_RESULT.md"
     doc_kind: cc_task
     provenance_flag: local_authored
-    sha256: "61a6bb10b691b4c30e3a998bb31c3e9b378f6c9d042a710daac7f1534b4a59bd"
-    bytes: 4629
+    sha256: "60a60162c7313b5efb0f600fd6a3973c391c901ad004f36ec881170ba380606b"
+    bytes: 5189
     acquisition: none
     acquisition_status: "acquired"
     verification_status: "verified"
