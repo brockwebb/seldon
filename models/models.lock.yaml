@@ -2,11 +2,11 @@
 # Never edit by hand. Intent is in registry.yaml; this file is what the newest CLI's
 # own alias resolver served, one probe per family, with the evidence file named below.
 schema: 1
-resolved_on: '2026-10-14'
-resolved_at: '2026-10-14T02:20:58.135516Z'
+resolved_on: '2026-10-15'
+resolved_at: '2026-10-15T01:52:02.960422Z'
 cli:
-  version: 2.1.296
-  path: /Users/brock/.local/share/seldon/claude-cli/2.1.296/node_modules/.bin/claude
+  version: 2.1.300
+  path: /Users/brock/.local/share/seldon/claude-cli/2.1.300/node_modules/.bin/claude
   npm_package: '@anthropic-ai/claude-code'
 families:
   fable:
@@ -41,9 +41,9 @@ documented_default_effort:
       effort: medium
       documented_for: claude-sonnet-5-5
       current: true
-evidence: docs/evidence/model001/refresh_2026-10-14_022058.json
+evidence: docs/evidence/model001/refresh_2026-10-15.json
 models:
   claude-opus-4-8:
     served: claude-opus-4-8
     available: true
-    evidence: docs/evidence/model001/refresh_2026-10-14_022058.json
+    evidence: docs/evidence/model001/refresh_2026-10-15.json
