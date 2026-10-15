@@ -109,6 +109,19 @@ registered there in the same step: `seldon cc register --project <that repo> --a
 commits the file. A filing that is written and not registered leaves that repository's tree dirty, so its dispatcher
 refuses every task on c7. No filing helper exists to refuse the bare write, so this rule is the gate.
 
+**Registration commits the governing note (SEL-006).** A design note the task's `**Governing:**` block names
+that git does not hold (untracked, or edited since its commit; its addenda count) is verified by registration
+(`prior-art verify`, verdict recorded; FAIL refuses `governing_note_unverified`), its labelled rulings are recorded
+from its bytes (`decided_by: desktop`; refusal `ruling_unrecorded`), and note, addenda, records, verdict and task
+file go in ONE commit through the hook (refusal `governing_note_uncommitted`, tree restored). `--allow-untracked`
+means "commit what registration verified"; without it such a note refuses. The executing session has no Step 0.
+Code: `seldon/core/governing_commit.py`.
+
+**seldon-mcp refuses `server_stale` after a merge (SEL-006 Part B).** The server records the HEAD tree of `seldon/`
+and the sha256 of `models/registry.yaml` and `seldon.yaml` at start and re-checks them before every tool call. On
+`server_stale`, restart Claude Desktop; the answer it would have given came from pre-merge code. `squiddy serve`
+does the same for `squiddy/` and its graph's `config.yaml`.
+
 **Prior-art evidence lives with the caller (AD-036-R10, R11).** `seldon prior-art search` and `verify` log to, and
 commit in, the calling project: `--project`, else the note's repository, else the project at or above the working
 directory. For another repository's note, pass `--note` or `--project` rather than running it from seldon's checkout.
