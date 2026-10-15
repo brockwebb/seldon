@@ -946,6 +946,18 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
         return None
 
 
+def _get_moving_line(project_dir: str) -> str:
+    """TRIAGE-001 Part B: the `Moving:` line, printed first. Never raises: `seldon go` must render
+    when the graph is down, and an unreadable count says so instead of printing a number."""
+    from seldon.core.moving import moving_line, project_moving
+    try:
+        return moving_line(project_moving(project_dir))
+    except FileNotFoundError:
+        return "Moving: unavailable (no seldon.yaml)."
+    except Exception as exc:                                        # noqa: BLE001
+        return f"Moving: unavailable ({type(exc).__name__}: {exc})."
+
+
 def _resolve_project_dir(project_dir: str) -> str:
     """Resolve project_dir, falling back to SELDON_DEFAULT_PROJECT if project_dir is '.'."""
     if project_dir != ".":
@@ -977,6 +989,9 @@ def assemble_go_context(
     """
     project_dir = _resolve_project_dir(project_dir)
     sections = []
+
+    # Section 0 — what is moving (TRIAGE-001 Part B), first so it is the first thing read.
+    sections.append(_get_moving_line(project_dir))
 
     # Section 1 — Role Directive (always)
     sections.append(_ROLE_SECTION)
@@ -1090,6 +1105,7 @@ def assemble_go_context_as_dict(
     available_commands = _AVAILABLE_COMMANDS_SECTION
 
     return {
+        "moving": _get_moving_line(project_dir),
         "role": role,
         "system_standards": system_standards,
         "project_context": project_context,

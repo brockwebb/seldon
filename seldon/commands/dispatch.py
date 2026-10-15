@@ -48,6 +48,7 @@ from seldon.core import qc
 from seldon.core import dispatch as D
 from seldon.core.artifacts import transition_task
 from seldon.core.events import append_event, make_event
+from seldon.core.moving import is_future
 from seldon.domain.loader import load_domain_config
 
 #: Actor on every event this module writes. Not `human` and not `cc`: a dispatch is an
@@ -121,22 +122,30 @@ def _open_project():
             get_current_session(project_dir))
 
 
-def _tasks(driver, database) -> list:
+def _tasks(driver, database, include_future: bool = False) -> list:
     """Every open ResearchTask, with its `precedes` predecessors' states.
 
     The graph IS the queue (DN-006 decision 1): there is no separate table to keep in step,
     and a task becomes dispatchable by being registered, not by being enqueued.
+
+    A `FUTURE` task (TRIAGE-001 rule 4) is left out unless `include_future`: it is a parked
+    idea, so it is neither a candidate nor a line in the pass's log, its counts or `status`.
+    `_commit_registered` asks for it, because a registered FUTURE task file still has to be
+    committed or it leaves the tree dirty for every other task.
     """
     q = ("MATCH (t:ResearchTask) WHERE t.state IN $states "
          "OPTIONAL MATCH (p:ResearchTask)-[:PRECEDES|precedes]->(t) "
          "RETURN t.artifact_id AS artifact_id, t.name AS name, t.state AS state, "
          "       t.source_file AS source_file, t.created_at AS created_at, "
+         "       t.description AS description, "
          "       collect({artifact_id: p.artifact_id, state: p.state}) AS predecessors "
          "ORDER BY t.created_at")
     with driver.session(database=database) as s:
         rows = [dict(r) for r in s.run(q, states=list(D.DISPATCHABLE_STATES))]
     for r in rows:
         r["predecessors"] = [p for p in r["predecessors"] if p.get("artifact_id")]
+    if not include_future:
+        rows = [r for r in rows if not is_future(r.get("description"))]
     return rows
 
 
@@ -819,7 +828,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # Registered-but-uncommitted task files BEFORE the cadence and before candidacy: the
     # cadence gates creation on a clean tree, and an untracked task file is one of the things
     # making it dirty, so committing first is what lets a due period be served in the same pass.
-    tasks = _tasks(driver, database)
+    tasks = _tasks(driver, database, include_future=True)
     if _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run):
         tree = D.tree_state(project_dir)
     # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
