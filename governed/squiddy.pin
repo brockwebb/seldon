@@ -56,5 +56,7 @@
 
 # 2026-10-14: moved from 21f40040040c by `squiddy governed repin` (DN-043 R-185): every admitted document re-gated, only those whose gate output changed re-admitted; no reset, no sweep.
 
-SQUIDDY_COMMIT=57e220ffe4e63f8d66cd997d7887eb832f8ffe3d
+# 2026-10-15: moved from 57e220ffe4e6 by `squiddy governed repin` (DN-043 R-185): every admitted document re-gated, only those whose gate output changed re-admitted; no reset, no sweep.
+
+SQUIDDY_COMMIT=a1e991c95cbd884969bbcadb59cc7fd2f12bc186
 SQUIDDY_VERSION=0.8.0

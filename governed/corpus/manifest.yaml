@@ -2937,3 +2937,62 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_14_sel_006_registration_commits_the_governing_note_server_head_check_parts_baselines
+    verification_method: "local governed file, sha256 b859d45d713368ef, 6,311 characters"
+    retrieved_date: "2026-10-15"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-14_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-15."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-006: `cc register` verifies and commits the governing design note with the task; the MCP server refuses on a stale HEAD; `qc.parts_baseline` in every project'
+    source_url: cc_tasks/2026-10-14_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md
+    local_path: "../cc_tasks/2026-10-14_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b859d45d713368ef4d7d1bff571c6b390bc47f18c0f71c558aa6694e9b6916c1"
+    bytes: 6313
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_15_sel_006_registration_commits_the_governing_note_server_head_check_parts_baselines
+    verification_method: "local governed file, sha256 373e74b048c141bc, 6,449 characters"
+    retrieved_date: "2026-10-15"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-15."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'SEL-006: `cc register` verifies and commits the governing design note with the task; the MCP server refuses on a stale HEAD; `qc.parts_baseline` in every project'
+    source_url: cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md
+    local_path: "../cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "373e74b048c141bc4671129e1f494dbadb5abcd1957ef851e81bd9783d05ca69"
+    bytes: 6451
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_15_sel_006_registration_commits_the_governing_note_server_head_check_parts_baselines_result
+    verification_method: "local governed file, sha256 e091b5dcb1a22725, 4,910 characters"
+    retrieved_date: "2026-10-15"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-15."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: SEL-006 (task 1b8ef64d), registration commits the governing note; server_stale; parts baselines'
+    source_url: cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines_RESULT.md
+    local_path: "../cc_tasks/2026-10-15_SEL-006_registration_commits_the_governing_note_server_head_check_parts_baselines_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "e091b5dcb1a227253706a349f65ecc8b770aa535d49f880246a8d6488a12f66e"
+    bytes: 4910
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
