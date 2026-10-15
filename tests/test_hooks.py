@@ -311,7 +311,9 @@ def test_removing_the_hook_lets_the_planted_note_through(repo, removal):
     if removal == "unset_hooks_path":
         _git(d, "config", "--local", "--unset", "core.hooksPath")
     else:
+        # DESK-001: the prior-art half runs in commit-msg where it is installed; the gate is both.
         (d / ".githooks" / "pre-commit").unlink()
+        (d / ".githooks" / "commit-msg").unlink(missing_ok=True)
     _plant(repo)
     _git(d, "add", "docs/design/AD-099_x.md")
     r = _commit(repo)

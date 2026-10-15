@@ -54,6 +54,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `models resolve`  | A role's model id, or with `--json` the full launch block | `seldon models resolve <role> [--json]` |
 | `models refresh`  | Re-resolve the lock from the newest CLI (four calls, cached for the day) | `seldon models refresh [--force]` |
 | `cc register`     | When writing a new CC task | `seldon cc register <task-filepath>` |
+| `commit-governed` | After writing a design note, addendum, task file, handoff or issue outside registration | `seldon commit-governed <path>...` (MCP: `seldon_commit_governed`) |
 
 ## MCP Tools (Desktop Housekeeping)
 
@@ -75,6 +76,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 | `seldon_cc_register` | Register CC task file as proposed |
 | `seldon_handoff` | Close the session: write the handoff, return the resume and CC dispatch blocks |
 | `seldon_cc_register` | ...also returns the Rulings the task is constrained by, and refuses a task citing no AD/DN (AD-030-R9) |
+| `seldon_commit_governed` | Commit files this Desktop session wrote (DESK-001); an unverified design note commits as `draft:` |
 | `seldon_query` | Read-only Cypher against project graph |
 
 `seldon_query` is read-only — write operations (CREATE, MERGE, SET, DELETE, REMOVE) are rejected. Use the typed tools for mutations.
@@ -111,11 +113,18 @@ refuses every task on c7. No filing helper exists to refuse the bare write, so t
 
 **Registration commits the governing note (SEL-006).** A design note the task's `**Governing:**` block names
 that git does not hold (untracked, or edited since its commit; its addenda count) is verified by registration
-(`prior-art verify`, verdict recorded; FAIL refuses `governing_note_unverified`), its labelled rulings are recorded
+(`prior-art verify`, verdict recorded; since DESK-001 a FAIL commits the note as `draft:` and HOLDs the task), its labelled rulings are recorded
 from its bytes (`decided_by: desktop`; refusal `ruling_unrecorded`), and note, addenda, records, verdict and task
 file go in ONE commit through the hook (refusal `governing_note_uncommitted`, tree restored). `--allow-untracked`
 means "commit what registration verified"; without it such a note refuses. The executing session has no Step 0.
 Code: `seldon/core/governing_commit.py`.
+
+**The tool that writes a governed file commits it (DESK-001, AD-036 ADDENDUM 05).** A Desktop session commits what it
+wrote with `seldon_commit_governed` (exact paths, through the hooks, `desktop: <kind>: <name>`); `seldon_handoff`
+commits the session's touched notes and handoffs, then the handoff. A design note without a passing prior-art verdict
+commits only with `draft:` in the subject (the tracked `.githooks/commit-msg`); registration then records a HOLD
+instead of refusing, and the dispatcher refuses that one task as `governing_unverified` (c14), not the whole queue.
+A dirty tree alarms on the first refused pass, and `seldon go` prints the last pass's refusal lines.
 
 **seldon-mcp refuses `server_stale` after a merge (SEL-006 Part B).** The server records the HEAD tree of `seldon/`
 and the sha256 of `models/registry.yaml` and `seldon.yaml` at start and re-checks them before every tool call. On

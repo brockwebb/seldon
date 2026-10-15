@@ -178,19 +178,25 @@ def test_an_untracked_note_with_passing_receipts_is_committed_with_the_task_in_o
     assert len(reg) == 1 and reg[0]["payload"]["properties"]["source_commit"] == _head(repo)
 
 
-def test_a_failing_receipt_refuses_and_commits_nothing(repo):
+def test_a_failing_receipt_registers_commits_a_draft_and_holds_the_task(repo):
+    """DESK-001 (AD-036 ADDENDUM 05). This was `..._refuses_and_commits_nothing` under SEL-006: the
+    refusal left the note and the task file untracked, which refused EVERY task on c7 for hours
+    (2026-10-12, 2026-10-14). Now the verdict is recorded, note and task go in one `draft:` commit,
+    the task is registered, and the reply says the dispatcher holds it."""
     _write(repo, NOTE, BAD)
     _task(repo)
     before = _head(repo)
 
     out = seldon_cc_register(TASK, project_dir=str(repo["dir"]), allow_untracked=True)
 
-    assert out.startswith("Error: governing_note_unverified"), out
+    assert out.startswith("Registered:"), out
+    assert f"HOLD: {NOTE}" in out and "governing_unverified" in out
     assert "missing: no `## Prior art` section" in out
-    assert _head(repo) == before
-    assert _status(repo, NOTE).startswith("??") and _status(repo, TASK).startswith("??")
-    assert _registered(repo) == []
-    # The fail verdict is recorded (AD-036-R4) and left for the dispatcher's sweep, not committed.
+    assert _git(repo["dir"], "rev-parse", "HEAD~1").stdout.strip() == before     # exactly one commit
+    assert NOTE in _files_in(repo) and TASK in _files_in(repo)
+    assert H.is_draft(_git(repo["dir"], "log", "-1", "--format=%s").stdout)
+    assert _status(repo, "docs/design", "cc_tasks", "governed") == ""
+    assert len(_registered(repo)) == 1
     have = pa.verdicts(repo["dir"], repo["config"])
     assert [v["verdict"] for v in have[NOTE].values()] == ["fail"]
 
@@ -275,3 +281,19 @@ def test_a_commit_the_hook_refuses_puts_the_tree_back_and_registers_nothing(repo
     assert not list((repo["dir"] / "docs" / "decisions" / "register").glob("*.yaml"))
     assert _status(repo, NOTE).startswith("??") and _status(repo, TASK).startswith("??")
     assert _git(repo["dir"], "diff", "--cached", "--name-only").stdout == ""
+
+
+def test_a_note_named_in_implements_is_committed_with_the_task_in_one_commit(repo):
+    """DESK-001 Part A step 2: `**Implements:**`, `**Amended by:**` and `**Resolves:**` name notes
+    registration commits, as `**Governing:**` already did (SEL-006)."""
+    _write(repo, NOTE, _good(repo))
+    _write(repo, TASK, "# CC Task: probe\n\n**Implements:** AD-099 (the probe note).\n**Model:** primary\n\n"
+                       "A task implementing a note Desktop wrote.\n")
+    before = _head(repo)
+
+    out = seldon_cc_register(TASK, project_dir=str(repo["dir"]), allow_untracked=True)
+
+    assert out.startswith("Registered:"), out
+    assert _git(repo["dir"], "rev-parse", "HEAD~1").stdout.strip() == before     # exactly one commit
+    assert NOTE in _files_in(repo) and TASK in _files_in(repo)
+    assert _status(repo, "docs/design", "cc_tasks") == ""

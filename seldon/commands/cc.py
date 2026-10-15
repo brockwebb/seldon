@@ -1200,9 +1200,12 @@ def register_task_file(
             raise ValueError(f"{gc.UNCOMMITTED}: the governing note(s) {named} are not committed, and "
                              f"registration commits them only with --allow-untracked (commit what it "
                              f"verified). File: {rel_path}")
-        verdicts, refusals = gc.verify(project_dir, config, pending)
-        if not refusals:
-            records, refusals = gc.plan_records(project_dir, config, pending, rel_path)
+        # DESK-001 (AD-036 ADDENDUM 05): a FAIL verdict no longer refuses the registration. A refusal
+        # committed nothing, so the note and the task file stayed untracked and the dispatcher refused
+        # EVERY task on c7 for hours. The verdict is recorded; the note is committed as a draft with the
+        # task; the dispatcher holds THIS task (`governing_unverified`) until the note passes.
+        verdicts, _unverified = gc.verify(project_dir, config, pending)
+        records, refusals = gc.plan_records(project_dir, config, pending, rel_path)
         if not refusals:
             ledger, refusal = gc.ledger_paths(project_dir, config, verdicts)
             refusals = [refusal] if refusal else []
@@ -1212,16 +1215,15 @@ def register_task_file(
         say(f"  governing note(s) to commit with the task: {named}"
             + (f"; {len(records)} ruling record(s) to write" if records else ""))
 
-    # AD-036-R4, registration: a task governed by a design note of this project that has no
-    # passing prior-art verdict for its current bytes is refused, BEFORE anything is created.
-    # Baseline notes (on main at PA-001's merge) are grandfathered.
+    # AD-036-R4, registration, as amended by ADDENDUM 05 (DESK-001): a governing note of this project
+    # with no passing prior-art verdict for its current bytes is a HOLD, reported here and enforced by
+    # the dispatcher (`governing_unverified`), not a refusal. Baseline notes are grandfathered. A gate
+    # that cannot be evaluated still refuses: nothing is known, so nothing is committed.
     from seldon.core import prior_art
     try:
-        prior_art_refusal = prior_art.registration_refusal(task_path, project_dir, config)
+        holds = prior_art.registration_holds(task_path, project_dir, config)
     except prior_art.PriorArtError as exc:
-        prior_art_refusal = f"{PRIOR_ART_REFUSAL}: the gate cannot be evaluated ({exc})"
-    if prior_art_refusal:
-        raise ValueError(f"{prior_art_refusal} File: {rel_path}")
+        raise ValueError(f"{PRIOR_ART_REFUSAL}: the gate cannot be evaluated ({exc}) File: {rel_path}")
 
     # AD-037-R1, registration: every acceptance criterion is marked `check: <command>` or `judgment: <why no
     # program decides it>`, BEFORE anything is created. Tasks registered before QC-001's merge are baseline
@@ -1247,7 +1249,7 @@ def register_task_file(
                 "rel_path": rel_path, "description": None, "existing": True,
                 "rulings": [], "edges_written": 0, "warning": warning,
                 "source_commit": None, "after": [], "after_edges": 0,
-                "sequencing_warning": None}
+                "sequencing_warning": None, "holds": holds}
 
     # The `**After:**` header, resolved BEFORE anything is created: an unresolvable ref is a
     # refusal that writes nothing, the same standing `network_undeclared` has at the
@@ -1274,8 +1276,11 @@ def register_task_file(
         # SEL-006 Part A: the notes, their rulings' records, the verdict and the task file in ONE commit,
         # through the hooks. A refused commit is a refused registration: nothing is created.
         notes = ", ".join(pn.note for pn in plan.pending)
-        message = (f"register: {rel_path} with its governing note(s) {notes} — task {artifact_id[:8]} "
-                   f"({name}) committed by its registration (SEL-006)")
+        staged = {x for pn in plan.pending for x in pn.paths}
+        # A note without a passing verdict commits only as a declared draft (AD-036 ADDENDUM 05).
+        draft = "draft: " if any(h["note"] in staged for h in holds) else ""
+        message = (f"register: {draft}{rel_path} with its governing note(s) {notes} — task "
+                   f"{artifact_id[:8]} ({name}) committed by its registration (SEL-006, DESK-001)")
         source_commit, refusal = gc.commit(project_dir, config, plan, rel_path,
                                            status == GIT_UNTRACKED, message)
         if refusal:
@@ -1328,13 +1333,15 @@ def register_task_file(
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
         session_id=session_id,
     )
+    for h in holds:
+        say(gc.hold_line(h["note"], h["why"]))
     say("")
     say(render_rulings(matches, written))
     return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path,
             "description": description, "existing": False, "rulings": matches,
             "edges_written": written, "warning": warning, "source_commit": source_commit,
             "after": predecessors, "after_edges": after_edges,
-            "sequencing_warning": sequencing_warning}
+            "sequencing_warning": sequencing_warning, "holds": holds}
 
 
 @cc_group.command("register")

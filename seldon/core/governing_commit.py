@@ -8,15 +8,15 @@ refused the launch, the operator pasted a launch line, and twice in one week a D
 edited a note after a running session had committed it (Issues 231c255c, 1fed4254).
 
 **What registration now does**, for each note under the design directory that the task's
-`**Governing:**` block names (a path, or an AD-/DN- identifier) and that git does not track or
+`**Governing:**`, `**Implements:**`, `**Amended by:**` or `**Resolves:**` block names (DESK-001) (a path, or an AD-/DN- identifier) and that git does not track or
 that has uncommitted changes, counting its addenda:
 
 1. `verify` (before anything is created): re-run the note's prior-art receipts and record the
    verdict (AD-036-R4), in a project that declares a `prior_art:` block and for a gated note
-   outside the baseline. A FAIL refuses the registration as `governing_note_unverified`, naming
-   the receipts that failed; registration commits nothing. The verdict line stays in the verdict
-   ledger for the dispatcher's sweep (`prior_art.commit_leftovers`), which is how AD-036-R11 already
-   treats lines a run could not commit.
+   outside the baseline. Until DESK-001 a FAIL refused the registration and committed nothing,
+   which left the note untracked and stalled the whole queue on c7. Under AD-036 ADDENDUM 05 (R13)
+   a FAIL is a HOLD: the note commits as a `draft:` with the task, the verdict ledger is staged
+   with it, and the dispatcher refuses this task as `governing_unverified` until the note passes.
 2. `plan` (before anything is created): find each labelled ruling in the note that the register
    has no record for, and build its record from the note's bytes (AD-033-R3: verbatim source,
    `decided_by: desktop`; AD-033-R4: a Desktop decision under L4 is accepted when registered). A
@@ -57,8 +57,13 @@ DEFAULT_DESIGN_DIR = "docs/design"
 #: Addenda and errata: never a governing note of their own, always staged with their base note.
 DEFAULT_EXEMPT = ("*_ADDENDUM_*.md", "*_erratum_*.md")
 
-_GOVERNING_BLOCK_RE = re.compile(r"^\*\*Governing:\*\*(.*?)(?=^\*\*[A-Z][^*]*:\*\*|^#|\Z)",
-                                 re.MULTILINE | re.DOTALL)
+#: The task-header blocks whose design notes registration commits with the task. SEL-006 read
+#: `**Governing:**` alone; DESK-001 Part A step 2 adds the other three a Desktop task names notes in,
+#: because a note named there and left untracked stalled the queue on c7 just the same.
+GOVERNING_HEADERS = ("Governing", "Implements", "Amended by", "Resolves")
+_GOVERNING_BLOCK_RE = re.compile(
+    r"^\*\*(?:" + "|".join(re.escape(h) for h in GOVERNING_HEADERS)
+    + r"):\*\*(.*?)(?=^\*\*[A-Z][^*]*:\*\*|^#|\Z)", re.MULTILINE | re.DOTALL)
 _ID_RE = re.compile(r"\b((?:AD|DN)-\d{3})\b")
 _NOTE_ID_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}_)?((?:AD|DN)-\d{3})(?=_|\.md$)")
 
@@ -86,9 +91,22 @@ def remedy(refusal: str) -> str:
                 "addendum, never by editing it (AD-036-R4)")
     if refusal.startswith(UNRECORDED):
         return ("label each ruling in a form `decisions.design_notes` captures, numbered from the register "
-                "(`seldon decision list`); then register again")
+                "(`seldon decision list`); then register again. " + DIRTY_LINE)
     return ("re-run with --allow-untracked so registration commits what it verified, or clear what refused the "
-            "commit (the hook's findings above) and register again")
+            "commit (the hook's findings above) and register again. " + DIRTY_LINE)
+
+
+#: DESK-001 Part A step 2: a refused registration commits nothing, so what Desktop wrote is still
+#: untracked, and that stalls the whole queue, not this task. Said in one line on every such refusal.
+DIRTY_LINE = ("Until the files above are committed (`seldon commit-governed <path>`, or the "
+              "`seldon_commit_governed` MCP tool) or removed, the dispatcher refuses EVERY task on c7 "
+              "(dirty_tree).")
+
+
+def hold_line(note: str, why: str) -> str:
+    """The one line registration prints for a governing note without a passing verdict (DESK-001)."""
+    return (f"HOLD: {note}: {why}. Registered and committed as a draft; the dispatcher refuses this task "
+            f"as governing_unverified until `seldon prior-art verify {note}` passes (AD-036 ADDENDUM 05).")
 
 
 def _design_settings(project_dir: Path, config: dict) -> tuple[str, tuple]:
@@ -121,7 +139,7 @@ def _base_of(project_dir: Path, rel: str, design_dir: str, exempt: tuple) -> Opt
 
 
 def governing_notes(task_text: str, project_dir: Path, config: dict) -> list[str]:
-    """The base design notes of THIS project the task's `**Governing:**` block names.
+    """The base design notes of THIS project the task's `GOVERNING_HEADERS` blocks name.
 
     A `docs/design/...md` path in the block counts (an addendum path counts as its base note), and
     so does each AD-/DN- identifier, resolved to `<design_dir>/[date_]<id>_*.md`. A name that does

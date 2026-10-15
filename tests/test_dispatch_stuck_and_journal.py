@@ -99,6 +99,9 @@ def project(tmp_path):
                      "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
                      "lease_file": ".seldon/dispatch.lock",
                      "stuck_after_passes": 3,
+                     # The uniform threshold these tests were written for; DESK-001's
+                     # first-pass `dirty_tree` default has its own tests below.
+                     "stuck_after_passes_by_criterion": {},
                      "notify": f"echo \"$SELDON_NOTIFY_OUTCOME $SELDON_NOTIFY_CRITERION "
                                f"$SELDON_NOTIFY_PASSES $SELDON_NOTIFY_DIRTY_PATHS\" "
                                f">> {p}/notify.log"},
@@ -385,3 +388,49 @@ def test_a_detached_clean_checkout_alarms_as_wrong_branch_with_the_branch_named(
     assert payload["criterion"] == "wrong_branch"
     assert payload["branch"] == "HEAD" and payload["configured_branch"] == "main"
     assert payload["dirty_paths"] == []
+
+
+# ------------------------------------------------------------------------- DESK-001 Part B
+
+def _default_thresholds(project):
+    """Drop the fixture's uniform-threshold pin, so the shipped default applies, and make the
+    notifier record the body DESK-001 adds."""
+    cfg = yaml.safe_load((project / "seldon.yaml").read_text(encoding="utf-8"))
+    cfg["dispatch"].pop("stuck_after_passes_by_criterion")
+    cfg["dispatch"]["notify"] = f"echo \"$SELDON_NOTIFY_MESSAGE\" >> {project}/notify.log"
+    (project / "seldon.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    _git(project, "commit", "-qm", "default thresholds", "--", "seldon.yaml")
+
+
+def test_a_dirty_tree_alarms_on_the_first_pass_and_the_body_names_the_dirt(
+        project, neo4j_driver, domain_config):
+    """Part B step 6: three Desktop writes stalled the queue 3, 36 and 14 hours; the first refused
+    pass is the alarm now, and the notification body says which file to commit."""
+    _default_thresholds(project)
+    _register(project, neo4j_driver, domain_config, commit=True)
+    _make_stuck(project)
+
+    out = _run(project, ["once"])
+
+    assert out.exit_code == 0, out.output
+    stuck = _events(project, D.EVENT_STUCK)
+    assert len(stuck) == 1 and stuck[0]["payload"]["passes"] == 1
+    assert stuck[0]["payload"]["threshold"] == 1
+    assert _notifications(project) == ["stuck: dirty_tree for 1 pass(es); dirty: stray.md"]
+
+
+def test_go_renders_the_last_pass_refusal_lines(project, neo4j_driver, domain_config):
+    """Part B step 5: `Lease: free` alone said nothing while one untracked note held the queue for
+    14 hours; the Dispatcher section now shows what the last pass refused and why."""
+    from seldon.commands.go import _get_dispatch_section
+
+    _register(project, neo4j_driver, domain_config, commit=True)
+    _make_stuck(project)
+    assert "no pass has recorded" in _get_dispatch_section(str(project))
+
+    _run(project, ["once"])
+
+    section = _get_dispatch_section(str(project))
+    assert "**Last pass:**" in section and "1 of 1 candidate(s) refused" in section
+    assert "dirty_tree: c7  cc_tasks/t1.md" in section
+    assert "dirty: stray.md" in section

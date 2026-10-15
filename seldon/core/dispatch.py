@@ -482,6 +482,17 @@ EVENT_STUCK = "dispatch_stuck"
 #: standing `poll_interval_s: 300` the default is fifteen minutes. **No measured basis**, like
 #: `poll_interval_s` itself, and it says so in the config file.
 STUCK_AFTER_PASSES_DEFAULT = 3
+#: Per-criterion overrides of `stuck_after_passes` (`dispatch.stuck_after_passes_by_criterion`).
+#: DESK-001 Part B step 6: `dirty_tree` alarms on the FIRST refused pass. A dirty tree refuses the
+#: whole queue, not one task, and the three recorded stalls (2026-09-22, 3 hours; 2026-10-12, 36
+#: hours; 2026-10-14, 14 hours) were each a Desktop write nobody committed, found by reading the log.
+#: Fifteen minutes of grace bought nothing there: the condition never clears by itself.
+STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1}
+#: The last pass's refusals, for `seldon go` (DESK-001 Part B step 5). Beside the streak file,
+#: under the gitignored lease directory: what the last pass saw is local state, not a record.
+LAST_PASS_FILE = "dispatch_last_pass.json"
+#: Test override of the last-pass file's path, as `STUCK_STATE_ENV` is for the streak file.
+LAST_PASS_ENV = "SELDON_DISPATCH_LAST_PASS"
 #: Where the streak is kept. Under `.seldon/`, which is gitignored: a count of passes is local
 #: state and not a project record. The EVENT is the record.
 STUCK_STATE_FILE = "dispatch_stuck.json"
@@ -511,7 +522,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "wrong_branch", "tree_unreadable",
                    # QC-002 (AD-037-R6 a): a false premise, and a sibling dispatcher's lease on this project's
                    # environment.
-                   "premise_false", "environment_in_flight")
+                   "premise_false", "environment_in_flight",
+                   # DESK-001 (AD-036 ADDENDUM 05): a governing design note without a passing
+                   # prior-art verdict, committed as a draft. R4's gate moved here from the commit.
+                   "governing_unverified")
 
 #: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
 #: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a
@@ -600,6 +614,14 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.stuck_after_passes must be a positive whole number of passes, got "
             f"{stuck!r}")
     block["stuck_after_passes"] = stuck
+    by = block.get("stuck_after_passes_by_criterion", STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT)
+    if not isinstance(by, dict) or any(
+            k not in REFUSAL_REASONS + ("disk_short", "disk_unmeasured")
+            or isinstance(v, bool) or not isinstance(v, int) or v < 1 for k, v in by.items()):
+        raise DispatchConfigError(
+            f"dispatch.stuck_after_passes_by_criterion must map refusal reasons to positive whole "
+            f"numbers of passes, got {by!r}")
+    block["stuck_after_passes_by_criterion"] = dict(by)
     # SQ-010 ADDENDUM 02 D3.4. Optional with a default, so installing this build changes no config file.
     factor = block.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
     if isinstance(factor, bool) or not isinstance(factor, (int, float)) or factor < 1:
@@ -1210,7 +1232,37 @@ def write_stuck_state(project_dir: Path, cfg: dict, state: dict) -> None:
     path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def advance_stuck(previous: dict, refusals: dict, threshold: int, now: str) -> tuple:
+def stuck_threshold(cfg: dict, criterion: str) -> int:
+    """Passes before the alarm for this criterion: its override, else `stuck_after_passes`."""
+    return (cfg.get("stuck_after_passes_by_criterion") or {}).get(criterion,
+                                                                  cfg["stuck_after_passes"])
+
+
+def last_pass_path(project_dir: Path, cfg: dict) -> Path:
+    override = os.environ.get(LAST_PASS_ENV)
+    if override:
+        return Path(override).expanduser()
+    return Path(project_dir) / Path(cfg["lease_file"]).parent / LAST_PASS_FILE
+
+
+def write_last_pass(project_dir: Path, cfg: dict, body: dict) -> None:
+    path = last_pass_path(project_dir, cfg)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(body, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def read_last_pass(project_dir: Path, cfg: dict) -> dict | None:
+    """The last pass's record, or None when no pass has written one. Raises on a corrupt file:
+    `seldon go` reports that rather than showing an empty queue."""
+    path = last_pass_path(project_dir, cfg)
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def advance_stuck(previous: dict, refusals: dict, threshold, now: str) -> tuple:
     """One pass's refusals against the previous streaks: `(state, alarms)`.
 
     Pure, so the whole re-arm rule is testable without a clock, a graph or a notifier.
@@ -1218,7 +1270,8 @@ def advance_stuck(previous: dict, refusals: dict, threshold: int, now: str) -> t
     Args:
         previous: The state file's contents.
         refusals: `{task_id: {"criterion": str, "detail": ...}}` for this pass.
-        threshold: `dispatch.stuck_after_passes`.
+        threshold: `dispatch.stuck_after_passes`, or a callable `criterion -> passes`
+            (`stuck_threshold`, so a dirty tree can alarm on its first pass).
         now: Timestamp stamped on a new streak and on the alarm.
 
     Returns:
@@ -1237,7 +1290,8 @@ def advance_stuck(previous: dict, refusals: dict, threshold: int, now: str) -> t
         notified = bool(prior.get("notified")) if same else False
         entry = {"criterion": row["criterion"], "passes": passes, "notified": notified,
                  "first_seen": prior.get("first_seen", now) if same else now}
-        if passes >= threshold and not notified:
+        need = threshold(row["criterion"]) if callable(threshold) else threshold
+        if passes >= need and not notified:
             entry["notified"] = True
             entry["notified_at"] = now
             alarms.append(task_id)
@@ -1664,6 +1718,12 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     hold = (premise_holds or {}).get(task.get("artifact_id"))
     if hold:
         c["c13"] = {**hold, "ok": False}
+    # DESK-001 (AD-036 ADDENDUM 05): R4's dispatch point. A draft note may be committed, so the gate
+    # that used to refuse its commit refuses the launch of a task it governs instead. Absent unless it
+    # fails, like c13, so the criteria vector the serial transcript holds is unchanged.
+    unverified = governing_unverified(project_dir, task_file)
+    if unverified:
+        c["c14"] = {"unverified": unverified, "ok": False}
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1694,7 +1754,27 @@ def first_refusal_reason(row: dict) -> str | None:
         return "worktree_unavailable"
     if not c.get("c13", {}).get("ok", True):
         return "premise_false"
+    if not c.get("c14", {}).get("ok", True):
+        return "governing_unverified"
     return None
+
+
+def governing_unverified(project_dir: Path, task_file: Path) -> list:
+    """Criterion c14: the task's governing notes with no passing prior-art verdict (DESK-001).
+
+    `[{"note", "why"}]`, empty when every one passes or the project declares no `prior_art:`
+    block. A gate that cannot be evaluated fails closed with one row naming why: a launch on an
+    unknown verdict is the launch this criterion exists to stop.
+    """
+    from seldon.core import prior_art as pa
+
+    try:
+        path = Path(project_dir) / "seldon.yaml"
+        config = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+        rows = pa.registration_holds(task_file, Path(project_dir), config or {})
+    except (pa.PriorArtError, OSError, yaml.YAMLError) as exc:
+        return [{"note": None, "why": f"the prior-art gate cannot be evaluated: {exc}"}]
+    return [{"note": r["note"], "why": r["why"]} for r in rows]
 
 
 def c7_reason(c7: dict) -> str:

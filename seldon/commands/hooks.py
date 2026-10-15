@@ -3,6 +3,7 @@
     seldon hooks install [--repo PATH]   # core.hooksPath -> the tracked .githooks/, per repository
     seldon hooks status  [--repo PATH]   # installed here? what was it before?
     seldon hooks pre-commit              # run by .githooks/pre-commit; judges the staged files
+    seldon hooks commit-msg MSGFILE      # run by .githooks/commit-msg; the prior-art half (DESK-001)
 
 The mechanism and its reasons are in `seldon/core/hooks.py`.
 """
@@ -39,7 +40,7 @@ def hooks_install(repo, as_json):
     else:
         click.echo(f"{res.repo}: core.hooksPath {res.old_hooks_path or 'unset'} -> "
                    f"{res.hooks_path}; {H.PYTHON_KEY} {res.python}"
-                   + ("; wrote .githooks/pre-commit (commit it)" if res.wrote_hook else ""))
+                   + ("; wrote .githooks/ hook file(s) (commit them)" if res.wrote_hook else ""))
         for p in st["problems"]:
             click.echo(f"  still to do: {p}")
     if not st["installed"] and not res.wrote_hook:
@@ -77,3 +78,30 @@ def hooks_pre_commit():
             click.echo(f"  - {f}", err=True)
         click.echo(H.REFUSAL_FOOTER, err=True)
         raise SystemExit(1)
+
+
+@hooks_group.command("commit-msg")
+@click.argument("msgfile", type=click.Path(dir_okay=False, path_type=Path))
+def hooks_commit_msg(msgfile):
+    """What .githooks/commit-msg runs. Exit 1 refuses the commit.
+
+    The prior-art check (AD-036-R4) as amended by AD-036 ADDENDUM 05: a design note without a
+    passing verdict commits only when the subject carries `draft:` (DESK-001)."""
+    try:
+        message = msgfile.read_text(encoding="utf-8", errors="replace")
+        findings, drafts, _summary = H.commit_msg(Path.cwd(), message)
+    except Exception as exc:                                        # noqa: BLE001
+        click.echo(f"seldon commit gate: could not judge this commit: {type(exc).__name__}: "
+                   f"{exc}", err=True)
+        click.echo(H.REFUSAL_FOOTER, err=True)
+        raise SystemExit(1)
+    if findings:
+        click.echo(f"seldon commit gate: {len(findings)} finding(s) in the staged files:",
+                   err=True)
+        for f in findings:
+            click.echo(f"  - {f}", err=True)
+        click.echo(H.DRAFT_FOOTER, err=True)
+        click.echo(H.REFUSAL_FOOTER, err=True)
+        raise SystemExit(1)
+    for d in drafts:
+        click.echo(f"seldon commit gate: draft admitted: {d}", err=True)

@@ -360,15 +360,25 @@ def test_registration_gate_passes_a_verified_or_baseline_note(proj):
                                    proj["config"]) is None
 
 
-def test_cc_register_refuses_before_creating_anything(proj, monkeypatch):
-    """The register code path raises the AD-036 refusal before it touches the graph."""
+def test_cc_register_holds_rather_than_refuses(proj, monkeypatch):
+    """AD-036 ADDENDUM 05 (DESK-001): registration reports a governing note without a passing
+    verdict as a hold and goes on to the graph; the dispatcher refuses the task on it. (Until
+    DESK-001 this raised the AD-036-R4 refusal before touching the graph.)"""
     from seldon.commands import cc
     _note(proj, "AD-099_x.md", "# AD-099\n\nNo section.\n")
     task = _task(proj, "docs/design/AD-099_x.md")
     _git(proj["dir"], "add", "-A")
     _git(proj["dir"], "commit", "-qm", "task")
-    monkeypatch.setattr(cc, "_find_existing", lambda *a, **k: pytest.fail("graph was touched"))
-    with pytest.raises(ValueError, match="AD-036-R4"):
+    holds = pa.registration_holds(task, proj["dir"], proj["config"])
+    assert [h["note"] for h in holds] == ["docs/design/AD-099_x.md"]
+
+    class PastTheGate(Exception):
+        pass
+
+    def reached(*a, **k):
+        raise PastTheGate()
+    monkeypatch.setattr(cc, "_find_existing", reached)
+    with pytest.raises(PastTheGate):
         cc.register_task_file(project_dir=proj["dir"], config=proj["config"], driver=None,
                               database="x", domain_config=None, session_id=None, task_path=task,
                               actor="cc")

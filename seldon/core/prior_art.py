@@ -1335,6 +1335,19 @@ def governing_notes(task_text: str, project_dir: Path, s: Settings) -> list[str]
     return sorted(found)
 
 
+def registration_holds(task_path: Path, project_dir: Path, config: dict) -> list[dict]:
+    """AD-036-R4 as amended by ADDENDUM 05 (DESK-001): the governing notes of this project with no
+    passing verdict for their current bytes, as `gate_status` rows. Registration records and
+    reports them; the dispatcher refuses the task on them (`governing_unverified`). Empty when the
+    project declares no `prior_art:` block (the gate is per project)."""
+    if not isinstance(config.get("prior_art"), dict):
+        return []
+    s = settings(project_dir, config)
+    text = Path(task_path).read_text(encoding="utf-8", errors="replace")
+    notes = governing_notes(text, project_dir, s)
+    return [r for r in gate_status(project_dir, config, notes) if not r["ok"]]
+
+
 def registration_refusal(task_path: Path, project_dir: Path, config: dict) -> str | None:
     """AD-036-R4, registration: the refusal text when a governing note has no passing verdict.
 

@@ -835,6 +835,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                    for t in _tasks(driver, database)])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
+    _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
     _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
 
     eligible = [r for r in rows if r["eligible"]]
@@ -1002,39 +1003,75 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
 STUCK_DIRTY_PATHS_SHOWN = 10
 
 
-def _echo_refusals(rows: list, tree: dict) -> None:
-    """One line per refused candidate, with the evidence an operator acts on. Shared by the
-    serial pass and the parallel one (SEL-004), so both logs read the same."""
+def _refusal_lines(rows: list, tree: dict) -> list:
+    """One line per refused candidate, with the evidence an operator acts on (indented detail
+    lines after it). The text `_echo_refusals` prints and `seldon go` shows from the last pass
+    (DESK-001 Part B step 5), so the log and the orientation read the same."""
+    out = []
     for r in rows:
         reason = D.first_refusal_reason(r) if r["candidate"] else None
         if reason:
-            click.echo(f"  {(r['task_id'] or '?')[:8]} {reason}: "
+            out.append(f"  {(r['task_id'] or '?')[:8]} {reason}: "
                        f"{','.join(r['failed'])}  {r['source_file']}")
             if reason == "network_undeclared":
-                click.echo(f"      {r['criteria']['c5'].get('message', '')}")
+                out.append(f"      {r['criteria']['c5'].get('message', '')}")
             if reason == "concurrency_undeclared":
-                click.echo(f"      {r['criteria']['c10'].get('message', '')}")
+                out.append(f"      {r['criteria']['c10'].get('message', '')}")
             if reason == "worktree_unavailable":
-                click.echo(f"      {json.dumps(r['criteria']['c11'])}")
+                out.append(f"      {json.dumps(r['criteria']['c11'])}")
             if reason == "dirty_tree":
                 # ADDENDUM_01 decision 6b: name the DIRT, not only the task. The task file
                 # is not why c7 failed and printing only it sent seven hours of log lines
                 # pointing at the wrong file.
-                click.echo(f"      dirty: {', '.join(_dirty_paths(tree))}")
+                out.append(f"      dirty: {', '.join(_dirty_paths(tree))}")
             if reason == "wrong_branch":
-                click.echo(f"      branch: {tree.get('branch') or '(none)'}, configured "
+                out.append(f"      branch: {tree.get('branch') or '(none)'}, configured "
                            f"{r['criteria']['c7'].get('configured_branch')}")
             if reason == "tree_unreadable":
-                click.echo(f"      git: {tree.get('read_error')}")
+                out.append(f"      git: {tree.get('read_error')}")
             if reason == "disk_short":
                 # SQ-010 ADDENDUM 02 D3.4: the need, the free space and where, so the operator knows what to free
                 d = r["criteria"]["c12"]
-                click.echo(f"      disk: need {d['need_bytes']:,} bytes ({d['factor']} x the {d['launch']} "
+                out.append(f"      disk: need {d['need_bytes']:,} bytes ({d['factor']} x the {d['launch']} "
                            f"launch's {d['footprint_bytes']:,}-byte tree at {d['ref']}), free "
                            f"{d['free_bytes']:,} bytes at {d['path']} ({d['probe']})")
             if reason == "disk_unmeasured":
-                click.echo(f"      disk: the launch's footprint could not be measured: "
+                out.append(f"      disk: the launch's footprint could not be measured: "
                            f"{r['criteria']['c12'].get('read_error')}")
+            if reason == "governing_unverified":
+                # DESK-001: the note and the command that clears the hold.
+                for u in r["criteria"]["c14"]["unverified"]:
+                    out.append(f"      unverified: {u['note'] or '(gate)'}: {u['why']}")
+    return out
+
+
+def _echo_refusals(rows: list, tree: dict) -> None:
+    """One line per refused candidate. Shared by the serial pass and the parallel one (SEL-004),
+    so both logs read the same."""
+    for line in _refusal_lines(rows, tree):
+        click.echo(line)
+
+
+def _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run) -> None:
+    """Write what this pass refused, for `seldon go`'s Dispatcher section (DESK-001 Part B step 5).
+
+    A file, not an event: the refusals are standing conditions, and DN-006 decision 7 forbids
+    logging them per pass. A file overwritten each pass is the dead man's switch's display, not a
+    record. Nothing on a dry run, which observes on another's behalf."""
+    if dry_run:
+        return
+    refused = []
+    for r in rows:
+        reason = D.first_refusal_reason(r) if r.get("candidate") else None
+        if reason:
+            refused.append({"task_id": r.get("task_id"), "criterion": reason,
+                            "failed": r.get("failed"), "source_file": r.get("source_file")})
+    D.write_last_pass(project_dir, cfg, {
+        "at": _now(), "open": len(rows),
+        "candidates": sum(1 for r in rows if r.get("candidate")),
+        "claim_in_flight": claim is not None, "refused": refused,
+        "dirty_paths": _dirty_paths(tree) if tree.get("dirty") else [],
+        "lines": _refusal_lines(rows, tree)})
 
 
 def _dirty_paths(tree: dict) -> list:
@@ -1072,7 +1109,7 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
     previous = D.read_stuck_state(project_dir, cfg)
     state, alarms = D.advance_stuck(
         previous, {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
-        cfg["stuck_after_passes"], _now())
+        lambda criterion: D.stuck_threshold(cfg, criterion), _now())
     D.write_stuck_state(project_dir, cfg, state)
     for task_id in alarms:
         row = refusals[task_id]["row"]
@@ -1081,7 +1118,8 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
         payload = {"task_id": task_id, "name": row.get("name"),
                    "source_file": row.get("source_file"),
                    "criterion": entry["criterion"], "failed": row.get("failed"),
-                   "passes": entry["passes"], "threshold": cfg["stuck_after_passes"],
+                   "passes": entry["passes"],
+                   "threshold": D.stuck_threshold(cfg, entry["criterion"]),
                    "first_seen": entry["first_seen"], "dirty_paths": dirty,
                    "dirty_count": tree.get("dirty_count"),
                    "branch": tree.get("branch"), "configured_branch": cfg["branch"],
@@ -1101,6 +1139,10 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
             "SELDON_NOTIFY_CRITERION": entry["criterion"],
             "SELDON_NOTIFY_PASSES": str(entry["passes"]),
             "SELDON_NOTIFY_DIRTY_PATHS": ", ".join(dirty),
+            # DESK-001 Part B step 6: the body names the evidence, so the banner alone says what
+            # to commit. `notify` templates that predate it keep working on the other variables.
+            "SELDON_NOTIFY_MESSAGE": (f"stuck: {entry['criterion']} for {entry['passes']} pass(es); "
+                                      f"{evidence}"),
             "SELDON_NOTIFY_RESULT_PATH": "",
             "SELDON_NOTIFY_LOG_PATH": "",
             "SELDON_NOTIFY_WALL_SECONDS": "0",
@@ -1133,7 +1175,7 @@ def _stuck_due(project_dir, cfg, rows, tree, claim) -> list:
     _state, alarms = D.advance_stuck(
         D.read_stuck_state(project_dir, cfg),
         {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
-        cfg["stuck_after_passes"], _now())
+        lambda criterion: D.stuck_threshold(cfg, criterion), _now())
     return alarms
 
 
@@ -1160,6 +1202,8 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str,
         "SELDON_NOTIFY_OK": "true" if finish["ok"] else "false",
         # The word a notification body wants, so a template needs no shell conditional.
         "SELDON_NOTIFY_OUTCOME": outcome or ("ok" if finish["ok"] else "blocked"),
+        # DESK-001: the body text, set on every notification so one template serves both kinds.
+        "SELDON_NOTIFY_MESSAGE": outcome or ("ok" if finish["ok"] else "blocked"),
         "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
         "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
         "SELDON_NOTIFY_WALL_SECONDS": str(finish["wall_clock_s"]),

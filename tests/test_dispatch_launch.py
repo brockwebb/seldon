@@ -475,8 +475,11 @@ def test_a_dirty_tree_refuses_the_candidate_names_the_paths_and_writes_no_event(
     assert "nothing eligible" in res.output
     assert "dirty_tree" in res.output and "cc_tasks/t1.md" in res.output
 
+    # DESK-001 Part B step 6: a dirty tree raises its streak's one `dispatch_stuck` on the first
+    # pass. That is the alarm decision 6b allows, not a per-pass refusal: nothing else is written.
     after = log.read_bytes() if log.exists() else b""
-    assert after == before, "a standing-condition refusal was written to the log"
+    added = [json.loads(x)["event_type"] for x in after[len(before):].decode().splitlines() if x.strip()]
+    assert added == [D.EVENT_STUCK], "a standing-condition refusal was written to the log"
     assert not _events(project, D.EVENT_REFUSED)
 
     # `status` still has the whole vector, values and all.
@@ -503,7 +506,8 @@ def test_ten_passes_over_a_dirty_tree_write_one_line_and_then_nothing(
     (project / "scratch.txt").write_text("x", encoding="utf-8")
     log = project / "seldon_events.jsonl"
     before = log.read_bytes() if log.exists() else b""
-    threshold = D.load_dispatch_config(project)["stuck_after_passes"]
+    # Amended again by DESK-001: the threshold is the criterion's (`dirty_tree` alarms on pass 1).
+    threshold = D.stuck_threshold(D.load_dispatch_config(project), "dirty_tree")
     for _ in range(threshold - 1):
         assert _run(project, ["once"]).exit_code == 0
     assert log.read_bytes() == before, "a standing-condition refusal was logged per pass"

@@ -3,6 +3,7 @@
     seldon hooks install       # per repository: core.hooksPath -> the tracked .githooks/
     seldon hooks status        # is it installed here, and what did it replace
     seldon hooks pre-commit    # what .githooks/pre-commit runs; never typed by hand
+    seldon hooks commit-msg F  # what .githooks/commit-msg runs: the prior-art half (DESK-001)
 
 **Why this exists.** AD-036-R4 says `seldon verify` (pre-commit) refuses a design note without
 receipts. PA-001 found that no pre-commit hook ran in any repository: `core.hooksPath` named a
@@ -40,6 +41,15 @@ The graph-wide Tier A checks (file hashes, ontology, references, binding constra
 unregistered files, governed-doc ingest) are not properties of one staged file, need Neo4j or
 another repository's pipeline, and stay with `seldon verify --strict`.
 
+**Drafts (DESK-001, AD-036 ADDENDUM 05).** A design note without a passing verdict may be
+committed when the commit says so: its subject carries the `draft:` marker. Pre-commit cannot see
+the message, so where the tracked `.githooks/commit-msg` is present the prior-art check moves to
+that hook, which reads the message and the same index. A checkout without it keeps the check in
+pre-commit and refuses as before (fail closed). A draft is held at registration and dispatch
+instead (`seldon cc register` reports it; the dispatcher refuses the task as
+`governing_unverified`). The reason: a refused commit left the note untracked, the tree dirty and
+the whole queue refused on c7 for hours (2026-09-22, 2026-10-12, 2026-10-14).
+
 **The one way past** is `git commit --no-verify`. `bypassed()` finds what it let through: a
 non-merge commit, at or after the one that added `.githooks/pre-commit`, that carried gated
 design-note bytes with no passing verdict in the ledger. `seldon verify` reports each as
@@ -64,6 +74,13 @@ import yaml
 HOOKS_DIR = ".githooks"
 #: The hook this module installs.
 PRE_COMMIT = "pre-commit"
+#: The second hook (DESK-001): the prior-art check, where the commit message is readable.
+COMMIT_MSG = "commit-msg"
+#: The subject-line token that declares a draft (AD-036 ADDENDUM 05). A protocol token, like a
+#: conventional-commits type, not a tunable: the hook, the commit tool, registration and the
+#: bypass audit must all read the same one.
+DRAFT_MARKER = "draft:"
+_DRAFT_RE = re.compile(r"(?:^|\s)draft:(?=\s|$)")
 #: Local git config key holding the interpreter the hook runs seldon with.
 PYTHON_KEY = "seldon.python"
 #: The bypass finding's name in `seldon verify`.
@@ -89,6 +106,30 @@ echo "seldon commit gate: no interpreter: git config seldon.python is unset or n
 echo "and seldon is not on PATH. Run \\`seldon hooks install\\` in this repository." >&2
 exit 1
 """
+
+
+#: What `.githooks/commit-msg` contains (DESK-001). Same interpreter rule as the pre-commit hook.
+COMMIT_MSG_SCRIPT = """#!/bin/sh
+# Seldon's commit gate, prior-art half (AD-036-R4 as amended by ADDENDUM 05; DESK-001). A design
+# note without a passing prior-art verdict commits only when the subject carries `draft:`; tasks
+# governed by a draft are held at registration and dispatch. `git commit --no-verify` bypasses it.
+py="$(git config --get seldon.python)"
+if [ -n "$py" ] && [ -x "$py" ]; then
+  exec "$py" -m seldon hooks commit-msg "$1"
+fi
+if command -v seldon >/dev/null 2>&1; then
+  exec seldon hooks commit-msg "$1"
+fi
+echo "seldon commit gate: no interpreter: git config seldon.python is unset or not executable" >&2
+echo "and seldon is not on PATH. Run \\`seldon hooks install\\` in this repository." >&2
+exit 1
+"""
+
+
+def is_draft(message: str) -> bool:
+    """True when the commit message's subject line carries the draft marker."""
+    subject = (message or "").lstrip("\n").split("\n", 1)[0]
+    return bool(_DRAFT_RE.search(subject))
 
 
 class HookError(RuntimeError):
@@ -129,6 +170,39 @@ def hook_file(repo: Path) -> Path:
     return Path(repo) / HOOKS_DIR / PRE_COMMIT
 
 
+def commit_msg_file(repo: Path) -> Path:
+    return Path(repo) / HOOKS_DIR / COMMIT_MSG
+
+
+def _write_hook(path: Path, script: str) -> bool:
+    """Write a tracked hook file when absent; refuse a different one. True when written."""
+    wrote = False
+    if path.exists():
+        if path.read_text(encoding="utf-8") != script:
+            raise HookError(f"{path} exists and is not seldon's hook; merge it by hand (seldon's "
+                            f"text is in seldon.core.hooks) and re-run")
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(script, encoding="utf-8")
+        wrote = True
+    if not os.access(path, os.X_OK):
+        path.chmod(path.stat().st_mode | 0o111)
+    return wrote
+
+
+def drafts_enabled(repo: Path) -> bool:
+    """True when git will run seldon's tracked commit-msg hook here, so the prior-art check runs
+    there (where `draft:` is readable) instead of in pre-commit. Anything less keeps the check in
+    pre-commit, which refuses an unverified note outright: the gate fails closed (DESK-001)."""
+    f = commit_msg_file(repo)
+    if not f.is_file() or not os.access(f, os.X_OK):
+        return False
+    if f.read_text(encoding="utf-8") != COMMIT_MSG_SCRIPT:
+        return False
+    hp = _git(Path(repo), "config", "--get", "core.hooksPath", check=False).stdout.strip()
+    return hp == HOOKS_DIR
+
+
 def install(repo: Path, python: str | None = None) -> InstallResult:
     """Point this repository's own `core.hooksPath` at the tracked `.githooks/`.
 
@@ -142,18 +216,9 @@ def install(repo: Path, python: str | None = None) -> InstallResult:
     """
     repo = toplevel(Path(repo))
     python = python or sys.executable
-    hf = hook_file(repo)
-    wrote = False
-    if hf.exists():
-        if hf.read_text(encoding="utf-8") != HOOK_SCRIPT:
-            raise HookError(f"{hf} exists and is not seldon's hook; merge it by hand (seldon's "
-                            f"text is seldon.core.hooks.HOOK_SCRIPT) and re-run")
-    else:
-        hf.parent.mkdir(parents=True, exist_ok=True)
-        hf.write_text(HOOK_SCRIPT, encoding="utf-8")
-        wrote = True
-    if not os.access(hf, os.X_OK):
-        hf.chmod(hf.stat().st_mode | 0o111)
+    wrote = _write_hook(hook_file(repo), HOOK_SCRIPT)
+    # DESK-001: the commit-msg half, so a `draft:` commit of an unverified note is possible here.
+    wrote = _write_hook(commit_msg_file(repo), COMMIT_MSG_SCRIPT) or wrote
     old = _git(repo, "config", "--local", "--get", "core.hooksPath", check=False).stdout.strip()
     old_py = _git(repo, "config", "--local", "--get", PYTHON_KEY, check=False).stdout.strip()
     if old != HOOKS_DIR:
@@ -196,8 +261,11 @@ def status(repo: Path) -> dict:
             problems.append(f"no interpreter: {PYTHON_KEY} unset and seldon not on PATH")
     elif not os.access(py, os.X_OK):
         problems.append(f"{PYTHON_KEY} {py!r} is not executable")
+    # DESK-001: not a problem when absent (a checkout without it refuses unverified notes in
+    # pre-commit, as before), but reported, so `install` is the visible fix.
     return {"installed": not problems, "problems": problems, "hooks_path": hp or None,
-            "scope": scope or None, "effective": effective, "python": py or None}
+            "scope": scope or None, "effective": effective, "python": py or None,
+            "drafts": drafts_enabled(repo)}
 
 
 def ensure_installed(repo: Path) -> dict:
@@ -511,12 +579,55 @@ def pre_commit(repo: Path) -> tuple[list[str], dict]:
     if staged:
         config = staged_config(repo, idx)
         if config:
-            findings += prior_art_findings(repo, config, staged, idx)
+            if drafts_enabled(repo):
+                summary["prior_art"] = f"deferred to {COMMIT_MSG} (DESK-001)"
+            else:
+                findings += prior_art_findings(repo, config, staged, idx)
             findings += decision_findings(repo, config, staged, idx)
             findings += label_taken_findings(repo, config, staged, idx)
             summary["checked"] = [k for k in ("prior_art", "decisions") if config.get(k)]
     summary["seconds"] = round(time.monotonic() - started, 3)
     return findings, summary
+
+
+def merging(repo: Path) -> bool:
+    """True while a merge is being concluded: its commits were judged on their branch."""
+    return _git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD", check=False).returncode == 0
+
+
+def commit_msg(repo: Path, message: str) -> tuple[list[str], list[str], dict]:
+    """The prior-art half of the gate, run where the message is readable (DESK-001).
+
+    Returns ``(findings that refuse, drafts admitted, summary)``. A note without a passing
+    verdict refuses unless the subject carries `draft:`; then it is admitted and listed. A merge
+    is not judged (its commits were judged on their branch, as `bypassed` already holds).
+
+    Raises:
+        HookError: When the index or the configuration cannot be read.
+    """
+    started = time.monotonic()
+    repo = toplevel(Path(repo))
+    summary = {"staged": 0, "draft": is_draft(message), "seconds": None}
+    if merging(repo):
+        summary["merge"] = True
+        return [], [], summary
+    staged = staged_paths(repo)
+    summary["staged"] = len(staged)
+    findings: list[str] = []
+    if staged:
+        idx = Index(repo)
+        config = staged_config(repo, idx)
+        if config:
+            findings = prior_art_findings(repo, config, staged, idx)
+    summary["seconds"] = round(time.monotonic() - started, 3)
+    if findings and summary["draft"]:
+        return [], findings, summary
+    return findings, [], summary
+
+
+DRAFT_FOOTER = ("Or commit it as a draft: put `draft:` in the subject (`seldon commit-governed` "
+                "does). A task governed by a draft is held at registration and dispatch until "
+                "`seldon prior-art verify <note>` passes (AD-036 ADDENDUM 05).")
 
 
 REFUSAL_FOOTER = ("Refused by the commit gate (AD-036-R4; HOOK-001). The staged files decide; "
@@ -565,14 +676,19 @@ def bypassed(repo: Path, config: dict, rev: str = "HEAD") -> Optional[list[dict]
         have = pa.verdicts_from_lines(raw.splitlines(), f"{lrel}@{rev}")
     parents = _git(repo, "rev-list", "--parents", "-n", "1", a).stdout.split()
     walk = [rev, "--not", parents[1]] if len(parents) > 1 else [rev]
-    log = _git(repo, "log", "--no-merges", "--format=%x00%H", "--name-only",
+    log = _git(repo, "log", "--no-merges", "--format=%x00%H %s", "--name-only",
                "--diff-filter=AM", "--no-renames", *walk, "--", s.design_dir).stdout
     rows = []
     for chunk in log.split("\0"):
         lines = [x for x in chunk.strip().splitlines() if x]
         if not lines:
             continue
-        commit, files = lines[0], lines[1:]
+        commit, _, subject = lines[0].partition(" ")
+        files = lines[1:]
+        if is_draft(subject):
+            # A declared draft is not a bypass (AD-036 ADDENDUM 05): the commit-msg hook admitted
+            # it by its marker, and registration and dispatch hold what it governs.
+            continue
         for rel in files:
             if not pa.is_gated(s, rel) or rel in base:
                 continue

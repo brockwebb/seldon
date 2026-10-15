@@ -1087,6 +1087,40 @@ def seldon_cc_complete(
 
 
 @_tool()
+def seldon_commit_governed(
+    paths: list[str],
+    project_dir: str = ".",
+) -> str:
+    """Commit files this Desktop session wrote, so the tree stays clean (DESK-001).
+
+    Call it after writing a design note, addendum, task file, handoff or issue through the
+    Filesystem tools: an uncommitted file makes the standing dispatcher refuse EVERY task (c7)
+    until someone commits it. Commits exactly these paths through the hooks, as
+    `desktop: <kind>: <basename>`; never `git add -A`, never another session's files. A design note
+    with no passing prior-art verdict commits as a `draft:`, and tasks governed by it are held at
+    registration and dispatch until `seldon prior-art verify <note>` passes.
+
+    Refuses (nothing staged) a path outside docs/design/, cc_tasks/, handoffs/, issues/, ontology/;
+    a missing, gitignored or unchanged file; a handoff the secret scan flags; and anything the
+    commit hooks refuse, with the hook's text verbatim.
+
+    Args:
+        paths: Project-relative (or absolute) paths of the files to commit.
+        project_dir: Path to project root.
+
+    Returns:
+        "committed <sha> <message>" plus a line per draft note, or "REFUSED <reason>: <detail>".
+    """
+    from seldon.core import desktop_commit as DC
+
+    try:
+        outcome = DC.commit_governed(Path(_project_path(project_dir)), list(paths or []))
+    except Exception as exc:                                        # noqa: BLE001
+        return f"Error: {type(exc).__name__}: {exc}"
+    return DC.render(outcome)
+
+
+@_tool()
 def seldon_cc_register(
     filepath: str,
     project_dir: str = ".",
@@ -1156,12 +1190,16 @@ def seldon_cc_register(
         from seldon.core import governing_commit as gc
         if str(exc).startswith((gc.UNVERIFIED, gc.UNRECORDED, gc.UNCOMMITTED)):
             return f"Error: {exc}\n  Fix: {gc.remedy(str(exc))}"
+        # DESK-001: a refused registration commits nothing, so the file this session wrote stays
+        # untracked and stalls the whole queue on c7. Every refusal says so.
         if str(exc).startswith(AFTER_UNRESOLVED):
             return (f"Error: {exc}\n"
-                    f"  Fix: name a registered task, or drop the **After:** header.")
+                    f"  Fix: name a registered task, or drop the **After:** header.\n"
+                    f"  {gc.DIRTY_LINE}")
         return (
             f"Error: {exc}\n"
-            f"  Fix: cite the AD or DN this task implements in the task file's header."
+            f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
+            f"  {gc.DIRTY_LINE}"
         )
     finally:
         driver.close()
@@ -1181,6 +1219,9 @@ def seldon_cc_register(
         lines.append(outcome["warning"])
     if outcome.get("sequencing_warning"):
         lines.append(outcome["sequencing_warning"])
+    from seldon.core import governing_commit as gc
+    for h in outcome.get("holds") or []:
+        lines.append(gc.hold_line(h["note"], h["why"]))
     lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])
     return "\n".join(lines)
 
@@ -1239,16 +1280,24 @@ def seldon_handoff(
     finally:
         driver.close()
 
+    # DESK-001 Part B step 4: what this Desktop session wrote is committed BEFORE the handoff that
+    # cites it, and the handoff itself after it is written, so the session closes on a clean tree.
+    from seldon.core.handoff import commit_session_files
+
+    pre = [p for p in document.uncommitted if p != str(document.path.relative_to(Path(resolved)))]
+    commit_lines = commit_session_files(Path(resolved), config, pre)
     try:
         written = write_handoff(document, force=force)
     except FileExistsError as exc:
-        return f"Error: {exc}"
+        return "\n".join([*commit_lines, f"Error: {exc}"])
+    commit_lines += commit_session_files(
+        Path(resolved), config, [str(Path(written).resolve().relative_to(Path(resolved).resolve()))])
     # A session closed by the documented command leaves no live session file behind (decision 3).
     from seldon.config import end_session
 
     end_session(Path(resolved))
 
-    lines = [*document.warnings, f"Wrote {written}", ""]
+    lines = [*document.warnings, *commit_lines, f"Wrote {written}", ""]
     lines.extend(["## Resume block", "", document.resume, ""])
     lines.extend(["## CC dispatch block", "", document.dispatch])
     return "\n".join(lines)

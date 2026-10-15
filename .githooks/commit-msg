@@ -1,0 +1,14 @@
+#!/bin/sh
+# Seldon's commit gate, prior-art half (AD-036-R4 as amended by ADDENDUM 05; DESK-001). A design
+# note without a passing prior-art verdict commits only when the subject carries `draft:`; tasks
+# governed by a draft are held at registration and dispatch. `git commit --no-verify` bypasses it.
+py="$(git config --get seldon.python)"
+if [ -n "$py" ] && [ -x "$py" ]; then
+  exec "$py" -m seldon hooks commit-msg "$1"
+fi
+if command -v seldon >/dev/null 2>&1; then
+  exec seldon hooks commit-msg "$1"
+fi
+echo "seldon commit gate: no interpreter: git config seldon.python is unset or not executable" >&2
+echo "and seldon is not on PATH. Run \`seldon hooks install\` in this repository." >&2
+exit 1

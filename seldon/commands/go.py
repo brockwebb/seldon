@@ -864,6 +864,26 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
                 + ("alive" if wl["alive"]
                    else f"GONE — `seldon dispatch lease reap --task {wl['stem']}`") + ")")
 
+        # DESK-001 Part B step 5: what the LAST pass refused, by candidate and criterion, with the
+        # dirt it named. `Lease: free` alone said nothing while one untracked note held the queue
+        # for 14 hours (2026-10-14); a blocked queue is visible at orientation now.
+        try:
+            last = D.read_last_pass(root, cfg)
+        except (OSError, ValueError) as exc:
+            lines.append(f"**Last pass:** unreadable ({type(exc).__name__}: {exc})")
+        else:
+            if last is None:
+                lines.append("**Last pass:** *(no pass has recorded its refusals yet)*")
+            elif not last.get("refused"):
+                lines.append(f"**Last pass:** {last.get('at')}: {last.get('candidates', 0)} "
+                             f"candidate(s), none refused")
+            else:
+                lines.append(f"**Last pass:** {last.get('at')}: {len(last['refused'])} of "
+                             f"{last.get('candidates', 0)} candidate(s) refused:")
+                lines.append("```")
+                lines.extend(line.rstrip() for line in last.get("lines") or [])
+                lines.append("```")
+
         # One row per task the dispatcher has finished, newest last, with the three facts the
         # finish check turned on: exit code, RESULT present, and the state the graph showed.
         # The row reports the task's CURRENT state, replayed from `artifact_state_changed` on

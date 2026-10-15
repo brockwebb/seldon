@@ -287,16 +287,30 @@ def check_prior_art(project_dir: Path, config: dict) -> CheckResult:
         rows = pa.gate_status(project_dir, config)
     except pa.PriorArtError as exc:
         return CheckResult(name="Prior art", symbol="fail", summary=str(exc)[:300])
+    from seldon.core.governing_commit import uncommitted
+
     bad = [r for r in rows if not r["ok"]]
-    if not bad:
+    # AD-036 ADDENDUM 05 (DESK-001): a note committed without a passing verdict is a declared
+    # draft (the commit-msg hook admits it only under `draft:`; `bypassed` audits the rest). It is
+    # held at registration and dispatch, so it warns here instead of failing every later task's
+    # `--strict`. A note with uncommitted bytes is the change in hand and still fails.
+    drafts = [r for r in bad if not uncommitted(project_dir, r["note"])]
+    bad = [r for r in bad if r not in drafts]
+    if not bad and not drafts:
         return CheckResult(name="Prior art", symbol="pass",
                            summary=f"{len(rows)} note(s) outside the baseline, each with a "
                                    f"passing verdict (AD-036-R4)")
+    if not bad:
+        return CheckResult(name="Prior art", symbol="warn",
+                           summary=f"{len(drafts)} committed draft note(s) without a passing "
+                                   f"verdict; tasks governed by them are held (AD-036 ADDENDUM 05)",
+                           details=[f"draft: {r['note']}: {r['why']}" for r in drafts[:25]])
     fixable = all(r["why"].startswith("no prior-art verdict") for r in bad)
     return CheckResult(name="Prior art", symbol="fail",
                        summary=f"{len(bad)} design note(s) without a passing prior-art verdict "
-                               f"(AD-036-R4)",
-                       details=[f"{r['note']}: {r['why']}" for r in bad[:25]], fixable=fixable)
+                               f"(AD-036-R4)" + (f"; {len(drafts)} committed draft(s)" if drafts else ""),
+                       details=[f"{r['note']}: {r['why']}" for r in bad[:25]]
+                       + [f"draft: {r['note']}: {r['why']}" for r in drafts[:25]], fixable=fixable)
 
 
 def _fix_prior_art(project_dir: Path, quiet: bool = False) -> None:

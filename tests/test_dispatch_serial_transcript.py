@@ -71,7 +71,11 @@ RECORD_ENV = "SELDON_RECORD_SERIAL_TRANSCRIPT"
 def _scenario(tmp_path, driver, dispatch_extra) -> str:
     """Four passes: a green launch, a failing launch, a dirty tree, a held lease."""
     domain_config = load_domain_config(RESEARCH_YAML)
-    p = make_project(tmp_path, dispatch_extra=dispatch_extra)
+    # DESK-001 made `dirty_tree` alarm on its first pass. The recorded transcript is the serial
+    # dispatcher's launch path, not its alarm thresholds, so the scenario keeps the uniform
+    # threshold it was recorded under; the new default has its own tests.
+    p = make_project(tmp_path, dispatch_extra={"stuck_after_passes_by_criterion": {},
+                                               **dispatch_extra})
     for stem in ("t1", "t2", "t3"):
         add_task(p, stem)
     write_stub(p, {"t1": {"complete": True, "write": {"out/t1.txt": "one\n"}},

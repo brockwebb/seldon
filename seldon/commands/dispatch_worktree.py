@@ -116,6 +116,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     ids = [r["task_id"] for r in running]
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,
                               running=ids) for t in S._tasks(driver, database)])
+    S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
 
     ready = [r for r in rows if r["eligible"]]

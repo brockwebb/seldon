@@ -683,3 +683,42 @@ def test_previous_window_is_none_without_a_handoff(project):
     """Nothing to bound, nothing to report."""
     settings = handoff_settings(_config(project))
     assert previous_session_window(project, settings) is None
+
+
+# ---------------------------------------------------------------------------
+# DESK-001 Part B step 4: the handoff commits what the session wrote
+# ---------------------------------------------------------------------------
+
+@neo4j_tests
+def test_mcp_handoff_commits_an_uncommitted_design_note_before_writing_the_handoff(
+    project, neo4j_driver, domain_config
+):
+    """21af86f8's fix 1: a Desktop session closes on a clean tree. The note it wrote is committed
+    BEFORE the handoff that cites it, and the handoff itself after it is written."""
+    import subprocess
+    import sys
+
+    from seldon.core import hooks as H
+    from seldon.mcp_server import seldon_handoff
+
+    def git(*a):
+        return subprocess.run(["git", "-C", str(project), *a], check=True, capture_output=True,
+                              text=True).stdout
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@t")
+    git("config", "user.name", "t")
+    (project / ".gitignore").write_text("seldon_events.jsonl\n.seldon/\n")
+    H.install(project, python=sys.executable)
+    git("add", "-A")
+    git("commit", "-qm", "init")
+    _desktop_task(project, neo4j_driver, domain_config)
+    _touch(project / "docs" / "design" / "DN-001_thing.md", datetime.now(timezone.utc))
+
+    out = seldon_handoff(slug="desk", summary="s", next="n", project_dir=str(project))
+
+    assert "Wrote" in out, out
+    subjects = git("log", "--format=%s", "-2").splitlines()
+    assert subjects == ["desktop: handoff: " + next(p.name for p in (project / "handoffs").glob("*_desk.md")),
+                        "desktop: design: DN-001_thing.md"], subjects
+    assert git("status", "--porcelain", "--untracked-files=all", "--", "docs", "handoffs") == ""

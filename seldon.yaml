@@ -169,13 +169,18 @@ dispatch:
   # The finish signal: a local macOS banner (cron's MAILTO, systemd's OnSuccess=/OnFailure=). The
   # outcome arrives in the environment, never substituted into this text. A network notifier would
   # be an outbound send and is deliberately not the default.
+  # DESK-001: the body is `$SELDON_NOTIFY_MESSAGE`, which on a stuck alarm names the dirty paths.
   notify: >-
     osascript -e 'on run argv' -e 'display notification (item 1 of argv) with title "Seldon"'
-    -e 'end run' "$SELDON_NOTIFY_TASK_NAME: $SELDON_NOTIFY_OUTCOME"
+    -e 'end run' "$SELDON_NOTIFY_TASK_NAME: $SELDON_NOTIFY_MESSAGE"
   notify_timeout_s: 30
   # The staleness alarm: one `dispatch_stuck` event per streak of this many passes refused on the
   # same criterion. NO MEASURED BASIS; ai-readiness-kg's value (fifteen minutes at 300 s).
   stuck_after_passes: 3
+  # DESK-001 Part B step 6: a dirty tree refuses the WHOLE queue and never clears by itself (three
+  # Desktop writes left uncommitted stalled it 3, 36 and 14 hours), so it alarms on its first pass.
+  stuck_after_passes_by_criterion:
+    dirty_tree: 1
   # AD-034: one task at a time until a project opts into worktrees deliberately. AD-037-R9 holds it at 1 in every
   # project until AD-037-R6's four stations and the dispatcher's disk preflight are live; after that a project opts
   # in only on measured demand, by an accepted register record anchored at AD-037-R9 that names it in its scope
@@ -198,6 +203,22 @@ dispatch:
     reap_after_intervals: 1
     # Inherited from every QC/SQ task's stop condition: the estimate plus 20 percent.
     spend_ceiling_factor: 1.2
+
+# DESK-001: `seldon commit-governed` / the `seldon_commit_governed` MCP tool, the commit path for
+# what a Desktop session writes (seldon/core/desktop_commit.py). `roots` maps each directory the
+# tool may commit from to the kind its message names; anything else is refused. `scan` runs the
+# secret scanner over files under its roots before staging (FC-02, `.gitignore`: each handoff is
+# scanned before it is committed); exit 1 refuses, any other non-zero refuses as scan_failed.
+desktop_commit:
+  roots:
+    docs/design/: design
+    cc_tasks/: task
+    handoffs/: handoff
+    issues/: issue
+    ontology/: ontology
+  scan:
+    roots: [handoffs/]
+    command: [../squiddy/.venv/bin/python, -m, squiddy.secret_scan]
 
 jobs:
   # The launchd wrapper's log caps (scripts/jobs/seldon_dispatch.sh), ai-readiness-kg's

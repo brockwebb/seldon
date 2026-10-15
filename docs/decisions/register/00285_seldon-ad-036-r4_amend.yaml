@@ -1,0 +1,17 @@
+seq: 285
+event: amend
+id: seldon:AD-036-R4
+date: '2026-10-15'
+decided_by: cc:5558c652
+operator_stated: false
+receipts:
+- docs/design/AD-036_ADDENDUM_05_drafts_commit_the_gate_holds_the_task.md
+- cc_tasks/2026-10-15_DESK-001_desktop_writes_are_committed.md
+reason: 'DESK-001: the commit-point refusal stalled the whole queue on c7 three times (3, 36, 14 hours) without stopping any unreceipted note from reaching a task; the gate moves to registration (hold) and dispatch (refusal)'
+amendment:
+  clause: the commit point and the registration point
+  text: A design note without a passing verdict may be committed as a declared draft (subject token draft:); registration records the verdict, commits the note as a draft and registers the task with a HOLD; the dispatcher refuses the task as governing_unverified (c14) until the note passes. AD-036-R13.
+  by: seldon:AD-036-R13
+written_by: seldon decision 0.1.0
+prev_hash: ac05296d32b875991cf87cd5b1b95ef457ea7b2b09ecdfd9540abe6f6bcf833f
+record_hash: 64dd035b8d88e14b39bf0887da44a5298c6d22df067689f54aea0b4b8512697b

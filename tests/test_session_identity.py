@@ -168,6 +168,7 @@ class _FakeDocument:
         self.resume = "resume"
         self.dispatch = "dispatch"
         self.warnings = []
+        self.uncommitted = ()          # DESK-001: what the handoff commits before writing
 
 
 @pytest.fixture

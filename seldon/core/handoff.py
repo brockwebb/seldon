@@ -926,6 +926,8 @@ class HandoffDocument:
         window: The window the document reports on.
         r9: The AD-030-R9 verdict for that window.
         warnings: Non-fatal notices to print alongside the result.
+        uncommitted: Design notes and handoffs the session touched that git does not hold;
+            `commit_session_files` commits them before the handoff is written (DESK-001).
     """
 
     path: Path
@@ -935,6 +937,7 @@ class HandoffDocument:
     window: SessionWindow
     r9: R9Verdict
     warnings: list[str] = field(default_factory=list)
+    uncommitted: tuple = ()
 
 
 def _render_changes(changes: list[GraphChange]) -> list[str]:
@@ -1161,6 +1164,13 @@ def build_handoff(
         date=date,
     )
 
+    # DESK-001 Part B step 4: the notes and handoffs this session touched that git does not hold.
+    from seldon.core.governing_commit import uncommitted as _uncommitted
+    touched = set(files_touched(project_dir, window, COMMITTED_AT_HANDOFF_DIRS)) | set(verdict.design_notes)
+    pending = tuple(sorted(r for r in touched
+                           if r.endswith(".md") and (project_dir / r).is_file()
+                           and _uncommitted(project_dir, r)))
+
     return HandoffDocument(
         path=path,
         text=text,
@@ -1169,7 +1179,34 @@ def build_handoff(
         window=window,
         r9=verdict,
         warnings=warnings,
+        uncommitted=pending,
     )
+
+
+#: The directories whose touched, uncommitted markdown `seldon_handoff` commits (DESK-001 Part B
+#: step 4, 21af86f8's fix 1). Task files are committed by their registration (d6a1f467).
+COMMITTED_AT_HANDOFF_DIRS = (DESIGN_DIR, HANDOFFS_DIR)
+
+
+def commit_session_files(project_dir: Path, config: dict, paths: Iterable[str]) -> list[str]:
+    """Commit `paths` through `seldon commit-governed`'s path, one commit; the lines to report.
+
+    Never raises: the handoff is written whatever happens here, and a refusal is reported in the
+    reply with the hook's text, because the reply is the only place a Desktop session sees it.
+    """
+    from seldon.core import desktop_commit as DC
+
+    paths = [p for p in paths]
+    if not paths:
+        return []
+    try:
+        outcome = DC.commit_governed(Path(project_dir), paths, config)
+    except Exception as exc:                                        # noqa: BLE001
+        return [f"NOT COMMITTED {', '.join(paths)}: {type(exc).__name__}: {exc}"]
+    if outcome.committed:
+        return DC.render(outcome).splitlines()
+    return [f"NOT COMMITTED {', '.join(paths)}: {outcome.detail}",
+            "  The dispatcher refuses every task on c7 until these are committed or removed."]
 
 
 def write_handoff(document: HandoffDocument, force: bool = False) -> Path:

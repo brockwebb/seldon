@@ -1,0 +1,63 @@
+seq: 284
+event: accept
+id: seldon:AD-036-R13
+date: '2026-10-15'
+decided_by: cc:5558c652
+operator_stated: false
+receipts:
+- cc_tasks/2026-10-15_DESK-001_desktop_writes_are_committed.md
+reason: 'DESK-001 Part A step 3 (task 5558c652): AD-036 ADDENDUM 05''s labeled ruling recorded with the note''s first commit (AD-033-R2); the task authorizes amending AD-036-R4 by addendum, with the three recorded stalls as evidence (L4, AD-033-R4)'
+kind: decision
+status: accepted
+statement: |-
+  - **AD-036-R13. A design note without a passing prior-art verdict may be committed as a declared draft, and the gate holds every task the note governs until the note passes.**
+    - **Commit.** A commit that carries such a note passes only if its subject line has the `draft:` token. The git
+      `commit-msg` hook enforces this from the tracked `.githooks/commit-msg`. That hook reads the message and the same
+      index pre-commit reads. A checkout without that hook keeps the check in pre-commit and refuses as before, so the
+      gate fails closed. A merge is not judged: its commits were judged on their branch.
+    - **Registration.** Registration verifies the note and records its verdict. A failing verdict no longer refuses the
+      registration. Note, task file and verdict go in one `draft:` commit. The task is registered. The reply prints one
+      `HOLD` line per note, with the command that clears it.
+    - **Dispatch.** The dispatcher refuses a candidate whose governing note lacks a passing verdict for its current bytes,
+      as `governing_unverified` (criterion c14). Only that task waits; the queue does not.
+    - **Audit.** `bypassed()` does not report a `draft:` commit, because it was declared. `seldon verify` warns on a
+      committed draft note instead of failing. A note whose current bytes are uncommitted still fails Tier A, because it
+      is the change in hand.
+    - R4's other clauses stand: baseline notes are grandfathered; every refusal and hold quotes what is missing and
+      names AD-036.
+source:
+  path: docs/design/AD-036_ADDENDUM_05_drafts_commit_the_gate_holds_the_task.md
+  lines:
+  - 28
+  - 42
+  sha256: dfaf19eed9a5a589c0ec6e09c67079cdbed2d2a62bd2efe4d19138be44acd80e
+  text: |-
+    - **AD-036-R13. A design note without a passing prior-art verdict may be committed as a declared draft, and the gate holds every task the note governs until the note passes.**
+      - **Commit.** A commit that carries such a note passes only if its subject line has the `draft:` token. The git
+        `commit-msg` hook enforces this from the tracked `.githooks/commit-msg`. That hook reads the message and the same
+        index pre-commit reads. A checkout without that hook keeps the check in pre-commit and refuses as before, so the
+        gate fails closed. A merge is not judged: its commits were judged on their branch.
+      - **Registration.** Registration verifies the note and records its verdict. A failing verdict no longer refuses the
+        registration. Note, task file and verdict go in one `draft:` commit. The task is registered. The reply prints one
+        `HOLD` line per note, with the command that clears it.
+      - **Dispatch.** The dispatcher refuses a candidate whose governing note lacks a passing verdict for its current bytes,
+        as `governing_unverified` (criterion c14). Only that task waits; the queue does not.
+      - **Audit.** `bypassed()` does not report a `draft:` commit, because it was declared. `seldon verify` warns on a
+        committed draft note instead of failing. A note whose current bytes are uncommitted still fails Tier A, because it
+        is the change in hand.
+      - R4's other clauses stand: baseline notes are grandfathered; every refusal and hold quotes what is missing and
+        names AD-036.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_05_drafts_commit_the_gate_holds_the_task.md
+  anchor: AD-036-R13
+consumer:
+- seldon/core/hooks.py
+- seldon/core/desktop_commit.py
+- seldon/commands/cc.py
+- seldon/core/dispatch.py
+- tests/test_desk001_desktop_commit.py
+written_by: seldon decision 0.1.0
+prev_hash: 3ee9587b258a4cd1f66adbb41925b64d477f9c2fd8bb075a7ca8afeb00368555
+record_hash: ac05296d32b875991cf87cd5b1b95ef457ea7b2b09ecdfd9540abe6f6bcf833f
