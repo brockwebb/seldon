@@ -1174,6 +1174,73 @@ def labeled_ids_in(s: Settings, rel: str, text: str) -> list[str]:
     return sorted(set(out))
 
 
+def labeled_spans_in(s: Settings, rel: str, text: str) -> list[tuple[str, str, int, int]]:
+    """`(qualified id, label, first line, last line)` for each ruling the configured families label
+    in one note's text, the span being the ruling's verbatim body (AD-033-R3 `source.lines`).
+
+    The span rules are the ones PA-001 and SEL-002 registered rulings by
+    (`scripts/pa001/register_rulings.py`, `scripts/sel002/seed_db1.py` `section_span`), generalised
+    so `seldon cc register` can record a Desktop note's rulings with no script (SEL-006 Part A):
+      - a label in a heading (`## AD-035-R1.`) spans its section, to the line before the next heading
+        of the same or a higher level;
+      - a label in a list item (`- **R3.** ...`) spans the item with its deeper-indented lines, to the
+        line before the next non-blank line indented no deeper than the item, or the next heading;
+      - a label opening a bold paragraph (`**FC-30.** ...`) spans to the line before the next labelled
+        line or heading, so a table or list the ruling carries stays in its span (AD-032 FC-30's record).
+    Trailing blank lines are dropped. Lines inside fenced code are never a label.
+    """
+    lines = text.splitlines()
+    fenced = set()
+    fence = False
+    for n, line in enumerate(lines, 1):
+        if _FENCE_RE.match(line):
+            fence = not fence
+            fenced.add(n)
+        elif fence:
+            fenced.add(n)
+    found = []
+    for fam in s.design_notes:
+        if not family_matches(fam["glob"], rel):
+            continue
+        pat = re.compile(fam["pattern"])
+        for n, line in enumerate(lines, 1):
+            if n in fenced or not (m := pat.match(line)):
+                continue
+            found.append((family_labels(s, fam, rel, line)[0], m.group(1), n))
+    starts = {n for _q, _l, n in found}
+    out = {(qid, label, n, _span_end(lines, n, starts)) for qid, label, n in found}
+    return sorted(out, key=lambda r: (r[2], r[0]))
+
+
+def _span_end(lines: list[str], start: int, starts: set) -> int:
+    """The last line (1-based) of the ruling whose label is on line `start`; `starts` holds every
+    labelled line of the note. See `labeled_spans_in`."""
+    head = re.match(r"^(#{1,6})\s", lines[start - 1])
+    indent = len(lines[start - 1]) - len(lines[start - 1].lstrip())
+    bullet = re.match(r"^\s*[-*]\s", lines[start - 1]) is not None
+    end = len(lines)
+    for j in range(start + 1, len(lines) + 1):
+        ln = lines[j - 1]
+        h = re.match(r"^(#{1,6})\s", ln)
+        if head:
+            if h and len(h.group(1)) <= len(head.group(1)):
+                end = j - 1
+                break
+            continue
+        if h:
+            end = j - 1
+            break
+        if not bullet and j in starts:
+            end = j - 1
+            break
+        if bullet and ln.strip() and len(ln) - len(ln.lstrip()) <= indent:
+            end = j - 1
+            break
+    while end > start and not lines[end - 1].strip():
+        end -= 1
+    return end
+
+
 def family_labels(s: Settings, fam: dict, rel: str, text: str) -> list[str]:
     """The qualified ids one family's pattern labels in `text`, the note's own identifier taken
     from its filename (`doc_id`, default the AD-/DN- prefix, after any date)."""

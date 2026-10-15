@@ -1106,6 +1106,9 @@ def seldon_cc_register(
         # AD-030-R9, the task half: a task that cites no decision is refused before it is
         # registered. An `**After:**` refusal comes back the same way with its own fix line.
         from seldon.commands.cc import AFTER_UNRESOLVED
+        from seldon.core import governing_commit as gc
+        if str(exc).startswith((gc.UNVERIFIED, gc.UNRECORDED, gc.UNCOMMITTED)):
+            return f"Error: {exc}\n  Fix: {gc.remedy(str(exc))}"
         if str(exc).startswith(AFTER_UNRESOLVED):
             return (f"Error: {exc}\n"
                     f"  Fix: name a registered task, or drop the **After:** header.")

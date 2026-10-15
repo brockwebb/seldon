@@ -910,8 +910,8 @@ def cc_group():
     "--allow-untracked",
     is_flag=True,
     default=False,
-    help="Proceed even though git cannot recover the task file. "
-         "The task will become an undescribable stub if the file is lost.",
+    help="Commit what registration verified: the untracked task file, and any governing design note "
+         "(with its addenda and ruling records) git does not hold, in one commit (SEL-006).",
 )
 def cc_complete(filepath, note, allow_untracked):
     """Record a CC task as completed in the graph.
@@ -1186,6 +1186,32 @@ def register_task_file(
     if model_check:
         raise ValueError(f"{model_check} File: {rel_path}")
 
+    # SEL-006 Part A: a governing note git does not hold (untracked, or edited since its commit) is
+    # verified and its rulings planned here, BEFORE anything is created, and committed with the task
+    # in one commit below. Registration leaves nothing it read uncommitted: without `allow_untracked`
+    # ("commit what registration verified") such a note refuses rather than staying untracked.
+    from seldon.core import governing_commit as gc
+    task_text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
+    pending = gc.pending_notes(task_text, project_dir, config)
+    plan = None
+    if pending and not _find_existing(driver, database, rel_path):
+        named = ", ".join(x for pn in pending for x in pn.paths)
+        if not allow_untracked:
+            raise ValueError(f"{gc.UNCOMMITTED}: the governing note(s) {named} are not committed, and "
+                             f"registration commits them only with --allow-untracked (commit what it "
+                             f"verified). File: {rel_path}")
+        verdicts, refusals = gc.verify(project_dir, config, pending)
+        if not refusals:
+            records, refusals = gc.plan_records(project_dir, config, pending, rel_path)
+        if not refusals:
+            ledger, refusal = gc.ledger_paths(project_dir, config, verdicts)
+            refusals = [refusal] if refusal else []
+        if refusals:
+            raise ValueError("; ".join(refusals) + f" File: {rel_path}")
+        plan = gc.Plan(pending=pending, records=records, ledger_paths=ledger, verdicts=verdicts)
+        say(f"  governing note(s) to commit with the task: {named}"
+            + (f"; {len(records)} ruling record(s) to write" if records else ""))
+
     # AD-036-R4, registration: a task governed by a design note of this project that has no
     # passing prior-art verdict for its current bytes is refused, BEFORE anything is created.
     # Baseline notes (on main at PA-001's merge) are grandfathered.
@@ -1244,7 +1270,19 @@ def register_task_file(
     # commit this file" rather than as a field an older writer never knew about.
     artifact_id = str(uuid.uuid4())
     source_commit = None
-    if status == GIT_UNTRACKED:
+    if plan is not None:
+        # SEL-006 Part A: the notes, their rulings' records, the verdict and the task file in ONE commit,
+        # through the hooks. A refused commit is a refused registration: nothing is created.
+        notes = ", ".join(pn.note for pn in plan.pending)
+        message = (f"register: {rel_path} with its governing note(s) {notes} — task {artifact_id[:8]} "
+                   f"({name}) committed by its registration (SEL-006)")
+        source_commit, refusal = gc.commit(project_dir, config, plan, rel_path,
+                                           status == GIT_UNTRACKED, message)
+        if refusal:
+            raise ValueError(f"{refusal} File: {rel_path}")
+        if plan.records:
+            say(f"  recorded: {', '.join(r['id'] for r in plan.records)} (decided_by desktop)")
+    elif status == GIT_UNTRACKED:
         source_commit, failure = _commit_registered_file(project_dir, rel_path, artifact_id,
                                                          name)
         if failure:
@@ -1313,8 +1351,8 @@ def register_task_file(
     "--allow-untracked",
     is_flag=True,
     default=False,
-    help="Proceed even though git cannot recover the task file. "
-         "The task will become an undescribable stub if the file is lost.",
+    help="Commit what registration verified: the untracked task file, and any governing design note "
+         "(with its addenda and ruling records) git does not hold, in one commit (SEL-006).",
 )
 @click.option(
     "--project",
@@ -1334,6 +1372,7 @@ def cc_register(filepath, description, actor, allow_untracked, project):
 
     FILEPATH is relative to project root or absolute.
     """
+    from seldon.core import governing_commit as gc
     project_dir = Path(project).expanduser().resolve() if project else Path.cwd()
     config = load_project_config(project_dir)
     driver = get_neo4j_driver(config)
@@ -1385,6 +1424,9 @@ def cc_register(filepath, description, actor, allow_untracked, project):
                        f"  Fix: `seldon prior-art verify <note>` until it passes; a note's "
                        f"prior-art section is completed by an addendum, never by editing it.",
                        err=True)
+        elif str(exc).startswith((gc.UNVERIFIED, gc.UNRECORDED, gc.UNCOMMITTED)):
+            click.echo(f"ERROR: {exc}\n"
+                       f"  Fix: {gc.remedy(str(exc))}", err=True)
         elif str(exc).startswith(AFTER_UNRESOLVED):
             click.echo(f"ERROR: {exc}\n"
                        f"  Fix: name a registered task, or drop the **After:** header.",
