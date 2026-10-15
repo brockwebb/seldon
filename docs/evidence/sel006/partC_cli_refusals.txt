@@ -1,0 +1,9 @@
+== squiddy
+ERROR: parts_undeclared: no `**Parts:**` header. A task lists each Part's share of its estimate, e.g. `**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002)
+exit=1
+== arnold
+ERROR: parts_undeclared: no `**Parts:**` header. A task lists each Part's share of its estimate, e.g. `**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002)
+exit=1
+== ai-readiness-kg
+ERROR: parts_undeclared: no `**Parts:**` header. A task lists each Part's share of its estimate, e.g. `**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002)
+exit=1
