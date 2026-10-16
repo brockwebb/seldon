@@ -56,6 +56,12 @@ def _git(root: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
 def repo(tmp_path, monkeypatch):
     """`tests/test_hooks.py`'s project (prior-art gate, decision register, tracked governed ledger,
     the hook installed), with a Neo4j database and an event store so a task can be registered."""
+    return make_repo(tmp_path, monkeypatch)
+
+
+def make_repo(tmp_path, monkeypatch) -> dict:
+    """The `repo` fixture's body, callable from another module whose own `repo` fixture differs
+    (DESK-002's tests use `tests/test_hooks.py`'s)."""
     # The hook git runs imports seldon: the code under test, not the installed checkout.
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(x for x in (str(SRC), os.environ.get("PYTHONPATH")) if x))
     monkeypatch.setattr(pa, "Library", StubLibrary)

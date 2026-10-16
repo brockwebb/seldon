@@ -1,0 +1,14 @@
+E       AssertionError: Error: governing_note_uncommitted: the commit of docs/design/AD-099_probe.md, cc_tasks/2026-10-15_SEL-T_probe.md, governed/ledger/events.jsonl was refused (git_commit_failed): seldon commit gate: 1 finding(s) in the staged files:
+E           Fix: re-run with --allow-untracked so registration commits what it verified, or clear what refused the commit (the hook's findings above) and register again. Until the files above are committed (`seldon commit-governed <path>`, or the `seldon_commit_governed` MCP tool) or removed, the dispatcher refuses EVERY task on c7 (dirty_tree).
+E       assert False
+E        +    where <built-in method startswith of str object at 0x10500b400> = 'Error: governing_note_uncommitted: the commit of docs/design/AD-099_probe.md, cc_tasks/2026-10-15_SEL-T_probe.md, gov...d <path>`, or the `seldon_commit_governed` MCP tool) or removed, the dispatcher refuses EVERY task on c7 (dirty_tree).'.startswith
+E           AssertionError: outside_roots: docs/decisions/register/00001_t-ad-099-r1_accept.yaml is under none of docs/design/, cc_tasks/, handoffs/, issues/, ontology/; this tool commits only what a Desktop session writes
+E           assert 'only with the design note whose label it answers' in 'outside_roots: docs/decisions/register/00001_t-ad-099-r1_accept.yaml is under none of docs/design/, cc_tasks/, handoffs/, issues/, ontology/; this tool commits only what a Desktop session writes'
+E       AssertionError: outside_roots: docs/decisions/register/00001_t-ad-099-r1_accept.yaml is under none of docs/design/, cc_tasks/, handoffs/, issues/, ontology/; this tool commits only what a Desktop session writes
+E       assert False
+E       AssertionError: assert 't:AD-099-R1' in 'outside_roots: docs/decisions/register/00001_t-ad-099-r1_accept.yaml is under none of docs/design/, cc_tasks/, handoffs/, issues/, ontology/; this tool commits only what a Desktop session writes'
+PASSED tests/test_desk002_ruling_commits_with_record.py::test_the_gate_still_refuses_a_note_whose_label_has_no_record_anywhere
+FAILED tests/test_desk002_ruling_commits_with_record.py::test_registration_commits_the_note_its_desktop_written_record_and_register_md_together
+FAILED tests/test_desk002_ruling_commits_with_record.py::test_commit_governed_refuses_a_record_alone_and_stages_nothing
+FAILED tests/test_desk002_ruling_commits_with_record.py::test_commit_governed_commits_a_note_with_the_record_its_label_answers
+FAILED tests/test_desk002_ruling_commits_with_record.py::test_commit_governed_refuses_a_record_its_note_does_not_label

@@ -1211,9 +1211,13 @@ def register_task_file(
             refusals = [refusal] if refusal else []
         if refusals:
             raise ValueError("; ".join(refusals) + f" File: {rel_path}")
-        plan = gc.Plan(pending=pending, records=records, ledger_paths=ledger, verdicts=verdicts)
+        # DESK-002: a ruling's record Desktop already wrote, uncommitted, goes in the same commit.
+        record_paths = gc.uncommitted_record_paths(project_dir, config, pending)
+        plan = gc.Plan(pending=pending, records=records, record_paths=record_paths, ledger_paths=ledger,
+                       verdicts=verdicts)
         say(f"  governing note(s) to commit with the task: {named}"
-            + (f"; {len(records)} ruling record(s) to write" if records else ""))
+            + (f"; {len(records)} ruling record(s) to write" if records else "")
+            + (f"; {len(record_paths)} register file(s) already written to commit" if record_paths else ""))
 
     # AD-036-R4, registration, as amended by ADDENDUM 05 (DESK-001): a governing note of this project
     # with no passing prior-art verdict for its current bytes is a HOLD, reported here and enforced by

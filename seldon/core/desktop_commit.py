@@ -22,6 +22,14 @@ unstaged again. It never runs `git add -A` and never commits a path it was not g
 is pathspec-limited (`dispatch.commit_paths`), so another session's staged or dirty files stay
 exactly as they were.
 
+**A ruling's record commits with its note, and only with it (DESK-002).** The register files
+(`decisions.register_dir`, `*.yaml`) and the rendered `REGISTER.md` are outside the roots: AD-033-R2
+makes `seldon decision` their one writer. But the commit gate refuses a design note whose label has
+no record in the staged register, and a Desktop session writes that record itself
+(`seldon_decision_accept`) while writing the note. So a register file is accepted in the SAME call as
+a design note one of whose labels it carries an event about, and `REGISTER.md` with such a file;
+alone, or beside a note that does not label it, each still refuses as `outside_roots` (Issue 5c689098).
+
 **Drafts.** A gated design note with no passing prior-art verdict for its bytes is committed with
 `draft:` in the subject (`desktop: draft: design: <name>`), which the commit-msg hook admits
 (AD-036 ADDENDUM 05). Verification is not run here: it costs library searches, and registration
@@ -34,6 +42,8 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+import yaml
 
 from seldon.core import dispatch as D
 
@@ -57,6 +67,9 @@ SECRET_FOUND = "secret_found"
 SCAN_FAILED = "scan_failed"
 HOOK_REFUSED = "hook_refused"
 NO_PATHS = "no_paths"
+
+#: The kind a register file or REGISTER.md is named by in the commit message (DESK-002).
+REGISTER_KIND = "register"
 
 
 class CommitConfigError(ValueError):
@@ -135,7 +148,7 @@ def message_for(rels: list, s: Settings, draft: bool) -> str:
     """`desktop: <kind>: <basename>[, <basename>]; <kind>: ...`, `draft: ` after `desktop: `."""
     groups: dict = {}
     for rel in rels:
-        groups.setdefault(kind_of(rel, s), []).append(Path(rel).name)
+        groups.setdefault(kind_of(rel, s) or REGISTER_KIND, []).append(Path(rel).name)
     body = "; ".join(f"{k}: {', '.join(names)}" for k, names in groups.items())
     return f"desktop: {'draft: ' if draft else ''}{body}"
 
@@ -171,6 +184,53 @@ def _scan(project_dir: Path, s: Settings, rels: list) -> Optional[Outcome]:
     return None
 
 
+def _register_refusal(project_dir: Path, config: dict, rels: list, register_rels: list) -> Optional[Outcome]:
+    """None when every register path in the call answers a label of a design note in the call."""
+    from seldon.core import decisions as dr
+
+    def refuse(rel: str, why: str) -> Outcome:
+        return _refuse(OUTSIDE_ROOTS, f"{rel}: {why}; a register file or REGISTER.md commits through this "
+                                      f"tool only with the design note whose label it answers, in the same "
+                                      f"call (DESK-002, AD-033-R2)", [rel])
+    try:
+        ds = dr.settings(project_dir, config)
+    except dr.RegisterError as exc:
+        return _refuse("config_invalid", str(exc))
+    labels: dict = {}
+    for rel in rels:
+        if ds is not None and dr.is_design_note(ds, rel):
+            for qid in dr.labeled_ids_in(ds, rel, (project_dir / rel).read_text(encoding="utf-8")):
+                labels.setdefault(qid, rel)
+    records = [r for r in register_rels if r.endswith(".yaml")]
+    for rel in records:
+        try:
+            qid = (yaml.safe_load((project_dir / rel).read_text(encoding="utf-8")) or {}).get("id")
+        except yaml.YAMLError as exc:
+            return refuse(rel, f"not YAML ({exc})")
+        if qid not in labels:
+            return refuse(rel, f"it is about {qid}, which no design note in this call labels"
+                               + (f" (they label {', '.join(sorted(labels))})" if labels else ""))
+    for rel in register_rels:
+        if rel not in records and not records:
+            return refuse(rel, "no register record in this call")
+    return None
+
+
+def _register_path(project_dir: Path, config: dict, rel: str) -> bool:
+    """`rel` is a file of this project's register, or its rendered REGISTER.md."""
+    from seldon.core import decisions as dr
+
+    try:
+        ds = dr.settings(project_dir, config)
+    except dr.RegisterError:
+        return False
+    if ds is None:
+        return False
+    prefix = ds.register_dir.rstrip("/") + "/"
+    return rel == ds.rendered or (rel.startswith(prefix) and rel.endswith(".yaml")
+                                  and "/" not in rel[len(prefix):])
+
+
 def _unstage(project_dir: Path, rels: list) -> None:
     """Put the index back for exactly these paths after a refused commit."""
     if D.git(project_dir, "rev-parse", "--verify", "-q", "HEAD").returncode == 0:
@@ -200,12 +260,14 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
         return _refuse("config_invalid", str(exc))
     if not paths:
         return _refuse(NO_PATHS, "name at least one path")
-    rels = []
+    rels, register_rels = [], []
     for raw in paths:
         rel = _normalize(project_dir, str(raw))
         if rel is None:
             return _refuse(OUTSIDE_PROJECT, f"{raw} is not inside {project_dir}", [raw])
-        if kind_of(rel, s) is None:
+        if kind_of(rel, s) is None and _register_path(project_dir, config, rel):
+            register_rels.append(rel)      # judged below, against the notes of this call
+        elif kind_of(rel, s) is None:
             return _refuse(OUTSIDE_ROOTS, f"{rel} is under none of {', '.join(s.roots)}; this tool "
                                           f"commits only what a Desktop session writes", [rel])
         if not (project_dir / rel).is_file():
@@ -218,6 +280,10 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
             return _refuse(UNCHANGED, f"{rel} has nothing to commit (git holds these bytes)", [rel])
         rels.append(rel)
     rels = list(dict.fromkeys(rels))
+    if register_rels:
+        refused = _register_refusal(project_dir, config, rels, register_rels)
+        if refused is not None:
+            return refused
     scanned = _scan(project_dir, s, rels)
     if scanned is not None:
         return scanned
