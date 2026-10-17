@@ -1289,6 +1289,12 @@ def register_task_file(
     if parts_refusal:
         raise ValueError(f"{parts_refusal} File: {rel_path}")
 
+    # AD-038-R5 (FRICTION-001 Part E): the task's `check:` premises run now, BEFORE anything is created, so a
+    # false one reaches its author in the same turn rather than at the dispatcher a day later (SQ-016).
+    premise_refusal = stations.premises_registration_refusal(task_path, project_dir, config)
+    if premise_refusal:
+        raise ValueError(f"{premise_refusal} File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "

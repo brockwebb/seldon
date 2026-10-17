@@ -526,7 +526,14 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "premise_false", "environment_in_flight",
                    # DESK-001 (AD-036 ADDENDUM 05): a governing design note without a passing
                    # prior-art verdict, committed as a draft. R4's gate moved here from the commit.
-                   "governing_unverified")
+                   "governing_unverified",
+                   # FRICTION-001 Part E (AD-038-R6, Issue 59b2db84): Neo4j unreachable. Written once
+                   # per outage, with one STUCK notification, instead of a traceback every pass.
+                   "database_unavailable")
+
+#: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
+#: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
+OUTAGE_STATE_FILE = "dispatch_outage.json"
 
 #: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
 #: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a

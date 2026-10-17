@@ -372,6 +372,65 @@ def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None
             "tail": text[-_TAIL_CHARS:]}
 
 
+#: A huddle's reason when a check names a file its tree lacks and the session's branch holds (AD-038-R4): the station
+#: ran in the wrong tree, which is the dispatcher's defect, and `seldon.core.redrive` answers it without a person.
+REASON_WRONG_TREE = "check_unrunnable_wrong_tree"
+#: The same, when no branch holds the file either: the check names something that does not exist anywhere.
+REASON_MISSING_FILE = "check_unrunnable_missing_file"
+#: Commands whose purpose is to test for a file: a missing file is their reading, not an unrunnable check.
+_EXISTENCE_TESTS = ("test", "[")
+#: A token is a path when it has a directory part or one of these suffixes (after any pytest `::node` id).
+_PATH_SUFFIXES = (".py", ".md", ".yaml", ".yml", ".json", ".jsonl", ".txt", ".toml", ".sh", ".csv")
+
+
+def named_paths(command: str) -> list:
+    """The file paths a check command names, in order: argv tokens that look like paths, with a pytest node id's
+    `::...` removed. Options (`-k`, `--x=y`) and their values are not paths. Empty for an existence test."""
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return []
+    if not argv or Path(argv[0]).name in _EXISTENCE_TESTS:
+        return []
+    out = []
+    for tok in argv[1:]:
+        if tok.startswith("-") or "://" in tok or "{" in tok:
+            continue
+        path = tok.split("::", 1)[0]
+        if "/" in path or path.endswith(_PATH_SUFFIXES):
+            out.append(path)
+    return out
+
+
+def missing_file_reading(command: str, cwd: Path, branch: str | None) -> dict | None:
+    """AD-038-R4: when a check names a file absent from the tree it ran in, the check could not be run as written.
+
+    Returns None when every named file is present; otherwise `{missing, reason, branch}`, with `reason`
+    `REASON_WRONG_TREE` when the session's `branch` holds every missing file (`git cat-file -e <branch>:<path>`),
+    else `REASON_MISSING_FILE`.
+    """
+    missing = [p for p in named_paths(command) if not (Path(cwd) / p).exists()]
+    if not missing:
+        return None
+    on_branch = bool(branch) and all(
+        subprocess.run(["git", "-C", str(cwd), "cat-file", "-e", f"{branch}:{p}"], capture_output=True).returncode == 0
+        for p in missing)
+    return {"missing": missing, "reason": REASON_WRONG_TREE if on_branch else REASON_MISSING_FILE, "branch": branch}
+
+
+def run_station_check(command: str, cwd: Path, timeout_s: float, branch: str | None = None,
+                      run: Callable[..., dict] = run_check) -> dict:
+    """`run_check`, then AD-038-R4: a check that did not pass and names a file its tree lacks is `unrunnable`
+    (a huddle), never `fail` (a stop). A genuinely failing check, whose files are all present, still fails."""
+    r = run(command, cwd, timeout_s)
+    if r.get("outcome") == "pass":
+        return r
+    miss = missing_file_reading(command, Path(cwd), branch)
+    if miss is None:
+        return r
+    return {**r, "outcome": "unrunnable", "reason": miss["reason"], "missing": miss["missing"], "cwd": str(cwd)}
+
+
 # ------------------------------------------------------------------------------------------- the event store
 
 def _ts(event: dict) -> str:
@@ -506,7 +565,11 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
         if e["event_id"] in answered:
             continue
         crit = part_criteria(text, p.get("part"))
-        results = [run(cmd, Path(project_dir), scfg["check_timeout_s"]) for cmd in crit["checks"]]
+        # AD-038-R4: the checks run in the tree the session works in, as its `part_complete` recorded it; a record
+        # from before FRICTION-001 (no `cwd`), or a tree that is gone, falls back to the project checkout.
+        where = Path(p["cwd"]) if p.get("cwd") and Path(p["cwd"]).is_dir() else Path(project_dir)
+        results = [run_station_check(cmd, where, scfg["check_timeout_s"], p.get("branch"), run=run)
+                   for cmd in crit["checks"]]
         value = cpi(parts["parts"], completed, p.get("tokens"), estimate)
         plan = judgment_plan(crit["judgments"], (reserve - spent_inspection) / reserve if reserve else 0.0,
                              scfg["judgment_sample_rate"], judge)
@@ -525,8 +588,10 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
             stop("milestone", "line", "check_failed", answers_part=p.get("part"),
                  failed=[r["command"] for r in defects])
         for r in unrunnable:
-            huddle(f"check could not run at Part {p.get('part')}: `{r['command']}` exit {r['exit']}",
-                   "check_unrunnable", part=p.get("part"))
+            extra = {"reason": r["reason"], "missing": r["missing"], "cwd": r["cwd"]} if r.get("reason") else {}
+            huddle(f"check could not run at Part {p.get('part')}: `{r['command']}` exit {r['exit']}"
+                   + (f" ({r['reason']}: {', '.join(r['missing'])} absent from {r['cwd']})" if extra else ""),
+                   "check_unrunnable", part=p.get("part"), **extra)
         if value["cpi"] is not None and value["cpi"] < scfg["cpi_huddle_below"]:
             huddle(f"CPI {value['cpi']} below {scfg['cpi_huddle_below']} at Part {p.get('part')} "
                    f"(earned {value['earned']}, actual {value['actual']})", "cpi", part=p.get("part"))
@@ -541,12 +606,23 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
         if command is None:
             stop("first_article", "line", "first_article_undeclared", answers=e["event_id"], loop=p.get("loop"))
             continue
-        r = run(command, Path(project_dir), scfg["check_timeout_s"], output=p.get("output"))
+        where = Path(p["cwd"]) if p.get("cwd") and Path(p["cwd"]).is_dir() else Path(project_dir)
+        r = run(command, where, scfg["check_timeout_s"], output=p.get("output"))
+        if r.get("outcome") != "pass":
+            miss = missing_file_reading(command.replace("{output}", p.get("output") or ""), where, p.get("branch"))
+            if miss is not None:
+                r = {**r, "outcome": "unrunnable", "reason": miss["reason"], "missing": miss["missing"],
+                     "cwd": str(where)}
         row = {"task_id": task_id, "answers": e["event_id"], "loop": p.get("loop"), "output": p.get("output"),
                "check": r}
         out["first_articles"].append(row)
         if r["outcome"] == "pass":
             emit(EVENT_FIRST_ARTICLE_PASS, row)
+        elif r.get("reason") in (REASON_WRONG_TREE, REASON_MISSING_FILE):
+            # AD-038-R4: a file absent from the tree is a huddle, never a stop.
+            huddle(f"first-article check could not run for loop {p.get('loop')!r}: {r['reason']}: "
+                   f"{', '.join(r['missing'])} absent from {r['cwd']}", "check_unrunnable", loop=p.get("loop"),
+                   answers=e["event_id"], reason=r["reason"], missing=r["missing"], cwd=r["cwd"])
         else:
             stop("first_article", "line", f"first_article_{r['outcome']}", answers=e["event_id"], loop=p.get("loop"),
                  check=r)
@@ -742,6 +818,40 @@ def parts_registration_refusal(task_path: Path, project_dir: Path, config: dict)
     why = parsed["error"] or "no `**Parts:**` header"
     return (f"{PARTS_REFUSAL}: {why}. A task lists each Part's share of its estimate, e.g. "
             f"`**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002)")
+
+
+#: AD-038-R5's refusal at registration: a `check:` premise that is false when the task is registered.
+PREMISE_REGISTRATION_REFUSAL = "premise_false"
+
+
+def premises_registration_refusal(task_path: Path, project_dir: Path, config: dict,
+                                  run: Callable[..., dict] = run_check) -> str | None:
+    """AD-038-R5: run the task's `check:` premises at registration; None when every one holds.
+
+    A false, unrunnable or unreadable premise refuses with each command's exit and the tail of its output, so the
+    author sees it in the same turn (SQ-016 waited 19 hours at the dispatcher for a one-line path error). Run in the
+    registering project with station (a)'s timeout. Dispatch keeps its own review: the environment may change between.
+    `judgment:` premises are not evaluated here either (station (a) lists them for the R2 checker).
+    """
+    text = Path(task_path).read_text(encoding="utf-8", errors="replace")
+    if not parse_premises(text)["declared"]:
+        return None
+    try:
+        scfg = load_stations_config((config or {}).get("dispatch") or {})
+    except StationsConfigError:
+        scfg = dict(STATIONS_DEFAULTS)
+    review = review_premises(Path(project_dir), text, scfg, run=run)
+    if review["ok"]:
+        return None
+    lines = []
+    for r in review["false"]:
+        chk = r.get("check") or {}
+        tail = " ".join((chk.get("tail") or "").split())[-300:]
+        lines.append(f"`{r.get('command') or r.get('statement')}` is {r['outcome']}"
+                     + (f" (exit {chk.get('exit')})" if chk else "") + (f": {tail}" if tail else "")
+                     + f" [premise: {r.get('statement')}]")
+    return (f"{PREMISE_REGISTRATION_REFUSAL}: {len(lines)} premise(s) do not hold at registration (AD-038-R5): "
+            + "; ".join(lines))
 
 
 def stations_live() -> dict:

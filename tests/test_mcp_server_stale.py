@@ -110,12 +110,14 @@ def project(tmp_path: Path) -> Path:
 
 
 @pytest.mark.usefixtures("neo4j_available", "clean_test_db")
-def test_the_tool_answers_server_stale_and_never_reaches_the_registry_error(checkout, project, monkeypatch):
+def test_a_mutating_tool_reaches_the_current_code_and_a_read_only_tool_refuses(checkout, project, monkeypatch):
+    """Rewritten by FRICTION-001 Part C (AD-038-R3). SEL-006 refused EVERY tool after a merge and asked for a Desktop
+    restart. A mutating tool now runs the checkout's current code in a fresh process, so `seldon_cc_register` answers
+    what that code answers on this registry (fed23c36's shape, `model_not_in_lock`), never `server_stale`; a
+    read-only tool still refuses, and its message asks for no restart."""
     monkeypatch.setattr(m, "_LOADED", _capture(checkout))
     monkeypatch.setenv(models.MODELS_HOME_ENV, str(checkout / "models"))
-    # The plant: a merge moves the code and the registry under the running server (fed23c36's shape).
     (checkout / "seldon" / "models.py").write_text("# the new loader\n")
-    # The registry shape the stale loader refused: a role whose family it reads as None.
     reg = yaml.safe_load((checkout / "models" / "registry.yaml").read_text())
     reg["roles"]["primary"] = {"family": None}
     (checkout / "models" / "registry.yaml").write_text(yaml.safe_dump(reg))
@@ -123,19 +125,19 @@ def test_the_tool_answers_server_stale_and_never_reaches_the_registry_error(chec
     _git(checkout, "commit", "-qm", "merge MODEL-003")
 
     out = m.seldon_cc_register("cc_tasks/t.md", project_dir=str(project))
+    assert "server_stale" not in out, out
+    assert "model_not_in_lock" in out and "family None is not one of" in out, out
 
-    assert out.startswith("Error: server_stale: seldon-mcp loaded "), out
-    assert "Restart the MCP server (restart Claude Desktop)." in out
-    assert "model_not_in_lock" not in out
-    # Removal check: without the guard the same call reaches the error the stale process gave.
-    under = m.seldon_cc_register.__wrapped__("cc_tasks/t.md", project_dir=str(project))
-    assert "model_not_in_lock" in under and "family None is not one of" in under, under
+    read = m.seldon_task_list(project_dir=str(project))
+    assert read.startswith("Error: server_stale: seldon-mcp loaded "), read
+    assert "restart" not in read.lower(), read
 
 
-def test_every_tool_the_server_registers_is_guarded():
+def test_every_tool_the_server_registers_is_guarded_or_runs_head():
+    """Rewritten by FRICTION-001 Part C: a read-only tool is stale-guarded, every other tool runs HEAD."""
     import asyncio
     names = {t.name for t in asyncio.run(m.mcp.list_tools())}
     assert names
+    codes = {m._refuses_when_stale(lambda: None).__code__, m._runs_head(lambda: None).__code__}
     for name in names:
-        fn = getattr(m, name)
-        assert fn.__code__ is m._refuses_when_stale(lambda: None).__code__, name
+        assert getattr(m, name).__code__ in codes, name

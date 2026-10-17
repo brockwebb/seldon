@@ -243,6 +243,12 @@ def _reconcile(project_dir, config, cfg, driver, database) -> dict:
         else:
             click.echo(f"record: {', '.join(c['paths'])} NOT committed ({c['class']}, {c.get('reason')}): "
                        f"{c.get('stderr', '')}", err=True)
+    # A governed path the reconciler refused (a ledger edited in place, a register record rewritten) is
+    # printed here as well as by c7: a pass with no candidate prints no refusal line, and this one must
+    # not go unseen. Ordinary dirt (a source file) is c7's alone to name.
+    for u in out["unreconciled"]:
+        if not u["why"].startswith("not machine-written"):
+            click.echo(f"record: {u['path']} NOT committed: {u['why']}", err=True)
     return out
 
 
@@ -256,6 +262,22 @@ def _unreconciled(project_dir, config, driver, database, done: dict | None) -> l
         return R.classify(project_dir, config, _registered_files(driver, database))["unreconciled"]
     except RuntimeError:
         return []
+
+
+def _auto_redrive(project_dir, driver, database, domain_config, session_id) -> list:
+    """Redrive the blocked tasks whose stop was the dispatcher's own defect (AD-038-R2;
+    `seldon.core.redrive.AUTO_REDRIVE_REASONS`). Each is printed; a failure is reported, not raised, since
+    the pass's other work does not depend on it and the next pass tries again."""
+    from seldon.core import redrive as RD
+    try:
+        done = RD.auto_redrive(project_dir, driver, database, domain_config, session_id)
+    except (RD.RedriveRefused, ValueError) as exc:
+        click.echo(f"redrive: automatic redrive NOT done: {exc}", err=True)
+        return []
+    for r in done:
+        click.echo(f"redrive: {r['task_id'][:8]} {r['source_file']} -> accepted "
+                   f"(answers {r['stop_event_type']} {r['stop_reason']})")
+    return done
 
 
 def _record_own_lines(project_dir, config, cfg) -> dict:
@@ -508,10 +530,126 @@ def dispatch_once(dry_run):
         try:
             _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                   lease, dry_run)
+        except DATABASE_UNAVAILABLE as exc:
+            _database_unavailable(project_dir, session_id, cfg, exc, dry_run)
+        else:
+            if not dry_run:
+                _database_back(project_dir, cfg)
         finally:
             lease.__exit__(None, None, None)
     finally:
         driver.close()
+
+
+@dispatch_group.command("redrive")
+@click.argument("task")
+@click.option("--actor", default="human", show_default=True,
+              help="who redrives: human, cc or desktop (`seldon qc chart` counts each as an operator intervention)")
+def dispatch_redrive(task, actor):
+    """Put a blocked task back on the queue: blocked -> accepted, claim cleared (AD-038-R2).
+
+    TASK is an artifact id, a unique id prefix, or the task file's stem. The task keeps its file, id
+    and history; `dispatch_redrive` records the stop it answers. Refuses a task that is not blocked
+    (exit 1). Like the dead-letter redrive of a message queue, this is the one way back; a new task
+    file for the same work is what it replaces.
+    """
+    from seldon.core import redrive as RD
+    project_dir, config, driver, database, domain_config, session_id = _open_project()
+    try:
+        task_id = _resolve_task(driver, database, task)
+        if task_id is None:
+            raise click.ClickException(f"no ResearchTask matches {task!r}")
+        try:
+            out = RD.redrive(project_dir, driver, database, domain_config, task_id, actor, session_id)
+        except RD.RedriveRefused as exc:
+            raise click.ClickException(f"redrive refused: {exc}")
+    finally:
+        driver.close()
+    click.echo(f"redriven: {task_id[:8]} {out['source_file']} blocked -> accepted; answers "
+               f"{out['stop_event_type'] or 'no recorded stop'} {out['stop_reason'] or ''}".rstrip())
+    # The redrive's own lines, committed the way an MCP tool commits its append (deferred while a
+    # lease is held; the next pass reconciles them, AD-038-R1).
+    committed = D.commit_journal_append(project_dir, config, by="seldon dispatch redrive", actor=actor)
+    if committed.get("committed"):
+        click.echo(f"committed {committed['commit']}")
+
+
+def _resolve_task(driver, database, ref: str) -> str | None:
+    """A full id, a unique prefix, or a task file stem (`cc_tasks/<stem>.md`)."""
+    q = ("MATCH (t:ResearchTask) WHERE t.artifact_id STARTS WITH $ref "
+         "OR t.source_file = $rel OR t.source_file = $ref RETURN DISTINCT t.artifact_id AS id")
+    stem = Path(ref).stem if ref.endswith(".md") else ref
+    with driver.session(database=database) as s:
+        ids = [r["id"] for r in s.run(q, ref=ref, rel=f"cc_tasks/{stem}.md")]
+    if len(ids) > 1:
+        raise click.ClickException(f"{ref!r} is ambiguous: {', '.join(i[:8] for i in ids)}")
+    return ids[0] if ids else None
+
+
+#: What "the database is unavailable" means to a pass (Issue 59b2db84): Neo4j refusing the database
+#: (`DatabaseUnavailable`, the 2026-10-15 lock-file outage) or the server unreachable
+#: (`ServiceUnavailable`, the connection-refused tracebacks in the same log).
+from neo4j.exceptions import DatabaseUnavailable as _DatabaseUnavailable  # noqa: E402
+from neo4j.exceptions import ServiceUnavailable as _ServiceUnavailable  # noqa: E402
+
+DATABASE_UNAVAILABLE = (_DatabaseUnavailable, _ServiceUnavailable)
+
+
+def _outage_path(project_dir, cfg) -> Path:
+    return Path(project_dir) / Path(cfg["lease_file"]).parent / D.OUTAGE_STATE_FILE
+
+
+def _database_unavailable(project_dir, session_id, cfg, exc, dry_run) -> None:
+    """AD-038-R6 for Issue 59b2db84: a pass that cannot reach Neo4j is a handled refusal, exit 0.
+
+    From 16:11Z on 2026-10-15 every pass crashed with a `DatabaseUnavailable` traceback (rc=1) and no
+    alert reached the operator for five hours. Now the FIRST pass of an outage writes one
+    `dispatch_refused` (reason `database_unavailable`) and raises the notifier once, as a stuck alarm;
+    later passes of the same outage only print a line (DN-006 decision 7: a standing condition is not
+    re-logged per pass). The pass that reaches the database again removes the outage file.
+    """
+    error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:300] if str(exc) else ''}"
+    path = _outage_path(project_dir, cfg)
+    state = {}
+    if path.is_file():
+        try:
+            state = json.loads(path.read_text(encoding="utf-8") or "{}")
+        except json.JSONDecodeError:
+            state = {}          # a corrupt file re-arms the alarm: "tell them again", never "stay quiet"
+    first = not state
+    state = {"first_seen": state.get("first_seen") or _now(), "passes": int(state.get("passes", 0)) + 1,
+             "error": error}
+    click.echo(f"refused: database_unavailable ({error}); pass {state['passes']} of this outage since "
+               f"{state['first_seen']}", err=True)
+    if dry_run:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    if not first:
+        return
+    _emit(project_dir, session_id, D.EVENT_REFUSED,
+          {"task_id": None, "reason": "database_unavailable", "error": error, "first_seen": state["first_seen"]})
+    click.echo(f"STUCK: database_unavailable since {state['first_seen']}: {error}", err=True)
+    _run_notifier(project_dir, session_id, cfg, {
+        "SELDON_NOTIFY_TASK_ID": "", "SELDON_NOTIFY_TASK_NAME": "dispatcher",
+        "SELDON_NOTIFY_OK": "false", "SELDON_NOTIFY_OUTCOME": "stuck",
+        "SELDON_NOTIFY_CRITERION": "database_unavailable", "SELDON_NOTIFY_PASSES": "1",
+        "SELDON_NOTIFY_DIRTY_PATHS": "",
+        "SELDON_NOTIFY_MESSAGE": f"stuck: database_unavailable: {error}",
+        "SELDON_NOTIFY_RESULT_PATH": "", "SELDON_NOTIFY_LOG_PATH": "", "SELDON_NOTIFY_WALL_SECONDS": "0",
+    }, task_id="-", label="stuck")
+
+
+def _database_back(project_dir, cfg) -> None:
+    """The first pass that reached the database ends the outage: the next one alarms afresh."""
+    path = _outage_path(project_dir, cfg)
+    if path.is_file():
+        try:
+            passes = json.loads(path.read_text(encoding="utf-8") or "{}").get("passes")
+        except json.JSONDecodeError:
+            passes = None
+        path.unlink()
+        click.echo(f"database available again after {passes} refused pass(es)")
 
 
 def _last_payload(project_dir: Path, event_type: str, where=None) -> dict | None:
@@ -737,6 +875,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # checkout. Before the cadence too: it gates creation on a clean tree.
     done = None
     if claim is None and not dry_run:
+        # AD-038-R2: a task blocked by one of the dispatcher's own recorded defects goes back on the
+        # queue by itself, before the reconcile so its lines are committed in this pass.
+        _auto_redrive(project_dir, driver, database, domain_config, session_id)
         done = _reconcile(project_dir, config, cfg, driver, database)
     tree = D.tree_state(project_dir)
     # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
@@ -884,7 +1025,13 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
-    graph_state = _state_of(driver, database, chosen["task_id"])
+    db_failure = None
+    try:
+        graph_state = _state_of(driver, database, chosen["task_id"])
+    except DATABASE_UNAVAILABLE as exc:
+        # AD-038-R2/R6: the session's outcome cannot be read, which is the dispatcher's own condition, not the
+        # session's. Recorded as `database_unavailable`, the reason the automatic redrive answers.
+        graph_state, db_failure = None, f"{type(exc).__name__}: {str(exc).splitlines()[0][:200] if str(exc) else ''}"
     receipt = _model_receipt(log_path, offset, spec)
     ok = (code == 0 and result_path.is_file() and graph_state == "completed"
           and receipt["ok"])
@@ -898,12 +1045,17 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     if not receipt["ok"]:
         # AD-035 R6: the session's work is not counted as done on an unverified model.
         finish["failure"] = models.SUBSTITUTED
+    if db_failure:
+        finish["failure"] = "database_unavailable"
+        finish["database_error"] = db_failure
     _emit(project_dir, session_id, D.EVENT_FINISHED, finish)
     if not ok:
         # Blocked, never retried. The next OODA reads the log and decides; a loop that cannot
         # see why the last attempt failed cannot decide anything and would spend on each guess.
+        # With the graph unreadable at the finish, the walk is tried from the state the claim left;
+        # a refused walk is reported by `_block`, never raised.
         _block(project_dir, driver, database, domain_config, session_id, chosen["task_id"],
-               graph_state, code, log_path.relative_to(project_dir))
+               "in_progress" if db_failure else graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
                    f"graph={graph_state} model={receipt['served']} "
                    f"(requested {receipt['requested']}) -> blocked", err=True)

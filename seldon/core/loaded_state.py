@@ -79,8 +79,15 @@ def capture(name: str, repo: Path, code_dirs: Iterable[str], files: Iterable[Pat
                   at=datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z"))
 
 
-def stale(loaded: Optional[Loaded]) -> Optional[str]:
-    """None when the checkout still holds what was loaded; otherwise the `server_stale` message."""
+#: The advice the message ends with when the caller names none.
+RESTART_ADVICE = "Restart the MCP server (restart Claude Desktop)."
+
+
+def stale(loaded: Optional[Loaded], advice: str = RESTART_ADVICE) -> Optional[str]:
+    """None when the checkout still holds what was loaded; otherwise the `server_stale` message.
+
+    `advice` ends the message. seldon-mcp passes its own since AD-038-R3: its mutating tools run the
+    checkout's code in a fresh process, so only its read-only tools are guarded and none asks for a restart."""
     if loaded is None:
         return None
     head, trees = _read(loaded.repo, loaded.trees)
@@ -91,4 +98,4 @@ def stale(loaded: Optional[Loaded]) -> Optional[str]:
     now = (head or "unknown")[:7]
     what = ", ".join([f"{d}/" for d in moved] + changed) or "the checkout"
     return (f"{STALE}: {loaded.name} loaded {loaded.head[:7]} on {loaded.at}; the checkout is at {now} "
-            f"({what} changed since). Restart the MCP server (restart Claude Desktop).")
+            f"({what} changed since). {advice}")
