@@ -3095,3 +3095,246 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_16_desk_002_desktop_rulings_commit_with_their_register_records
+    verification_method: "local governed file, sha256 1c7a075b007f23c8, 8,131 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'DESK-002: a Desktop design note that adds a ruling commits with its register record; registration commits its own event lines; the register takes its source hash from the file'
+    source_url: cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records.md
+    local_path: "../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "1c7a075b007f23c81a32afa42e636ffce93b5aa9d0f088e544714b1f979f8bae"
+    bytes: 8132
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_16_desk_002_desktop_rulings_commit_with_their_register_records_addendum_01_resume_merge_before_part_checks
+    verification_method: "local governed file, sha256 6e3b4334827f0631, 1,518 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_ADDENDUM_01_resume_merge_before_part_checks.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'DESK-002 ADDENDUM 01: resume from the branch; merge before each Part check'
+    source_url: cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_ADDENDUM_01_resume_merge_before_part_checks.md
+    local_path: "../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_ADDENDUM_01_resume_merge_before_part_checks.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "6e3b4334827f06314b472bf8b9493501a35d5c8ec3750fa9475fb00053a1296f"
+    bytes: 1518
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_16_desk_002_desktop_rulings_commit_with_their_register_records_result
+    verification_method: "local governed file, sha256 9fd6f66d64cd4d35, 3,687 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: DESK-002 HALTED at Part B by a line stop; Parts A and B are built on an unmerged branch, C and D not started'
+    source_url: cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_RESULT.md
+    local_path: "../cc_tasks/2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "9fd6f66d64cd4d350e99512198ff315bc87b2622f90f226dc12960e9a97d2a19"
+    bytes: 3687
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_desk_002r_desktop_rulings_commit_with_their_register_records_resumed
+    verification_method: "local governed file, sha256 d8888c8fc4cb28f8, 5,979 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'DESK-002R: DESK-002 resumed. Merge its Parts A and B from the branch, then do Part C (the register''s source hash) and Part D (the squiddy live control); each Part merges before its check'
+    source_url: cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed.md
+    local_path: "../cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "d8888c8fc4cb28f8182fb9056b4c25fd45fbaf329cbfa4d90fd51849adf27eb2"
+    bytes: 5980
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_desk_002r_desktop_rulings_commit_with_their_register_records_resumed_result
+    verification_method: "local governed file, sha256 b5dd8b6c9730f615, 3,855 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: DESK-002R complete. All four Parts merged before their checks, every milestone passed, squiddy''s live control registered SQ-017 with a clean tree'
+    source_url: cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed_RESULT.md
+    local_path: "../cc_tasks/2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b5dd8b6c9730f615eeaa84e339bbcceee3dfae22a262bee447155c68dbf10607"
+    bytes: 3859
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_desk_003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding
+    verification_method: "local governed file, sha256 7ad37d0de3e7e1e0, 4,007 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'DESK-003: the handoff secret scan runs under squiddy''s venv launcher, and a scanner that did not run is `scan_failed`, never `secret_found`'
+    source_url: cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding.md
+    local_path: "../cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "7ad37d0de3e7e1e0630d78dfc1b9cae02957b81f909f8ee9f11e704bc4fcd85e"
+    bytes: 4008
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_friction_001_the_machine_reconciles_its_own_state
+    verification_method: "local governed file, sha256 d46f9fdd8b69a5c6, 4,785 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'FRICTION-001: AD-038 in Seldon. The dispatcher reconciles machine state before c7; blocked tasks redrive; the MCP server runs HEAD; stations inspect the session''s tree; registration runs premises'
+    source_url: cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md
+    local_path: "../cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "d46f9fdd8b69a5c6acd85305acdd7d884fd063bab787ef947743f0bb1c43d661"
+    bytes: 4786
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_friction_001_the_machine_reconciles_its_own_state_result
+    verification_method: "local governed file, sha256 44c7ef61f172ef18, 3,619 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RESULT: FRICTION-001, AD-038 R1-R6 (seldon) — done; merged 356b67b (+ fix 0fb7930), pushed'
+    source_url: cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state_RESULT.md
+    local_path: "../cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "44c7ef61f172ef1867c97e895f6ee2beaada3e84bbf8e6c71286912b9c49456a"
+    bytes: 3621
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_friction_002_vendor_isolation_replaces_hand_built_plumbing
+    verification_method: "local governed file, sha256 0e5d666f0c48a5c7, 5,397 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'FRICTION-002: every dispatched task runs in a Claude Code worktree; the Stop hook is the completion gate; sessions run in auto mode with the breaker. The vendor survey is filed.'
+    source_url: cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing.md
+    local_path: "../cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "0e5d666f0c48a5c770847218b0faa7f26f6ec1940df3ee9652c26df6a8fbba41"
+    bytes: 5398
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_prune_001_weekly_prune_of_open_artifacts
+    verification_method: "local governed file, sha256 942f603c07e0cacf, 3,059 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_PRUNE-001_weekly_prune_of_open_artifacts.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'PRUNE-001: a weekly prune stage closes issues that are already fixed, re-dates or withdraws stale FUTURE proposals, and re-measures each repository''s exit bar'
+    source_url: cc_tasks/2026-10-17_PRUNE-001_weekly_prune_of_open_artifacts.md
+    local_path: "../cc_tasks/2026-10-17_PRUNE-001_weekly_prune_of_open_artifacts.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "942f603c07e0cacfe111b64eb3b2e42fb569c94b208ee92520c349f57d7ab692"
+    bytes: 3060
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_recall_001_registration_retrieves_the_repos_own_history
+    verification_method: "local governed file, sha256 c3d74611ed62fd9c, 4,371 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_RECALL-001_registration_retrieves_the_repos_own_history.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'RECALL-001: registration retrieves the repositories'' own history (RESULTs, issues, decisions, dead-end branches) for every task, prints the hits into its launch prompt, and measures whether a hit changed the task'
+    source_url: cc_tasks/2026-10-17_RECALL-001_registration_retrieves_the_repos_own_history.md
+    local_path: "../cc_tasks/2026-10-17_RECALL-001_registration_retrieves_the_repos_own_history.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "c3d74611ed62fd9c08a7ecb3c35b2c6699077f1104440f8c5ddfcfef191c9cb6"
+    bytes: 4372
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: cc_tasks_2026_10_17_sec_001_secrets_out_of_claude_desktop_config
+    kind: local_document
+    stage: cataloged
+    disposition: active
+    title: 'SEC-001: secrets out of claude_desktop_config.json, by a launcher that reads each repo''s .env'
+    source_url: cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md
+    local_path: ../cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: 2cd3caf4d2368049026d961a92aacba9c0ab6d93ae4a43b4831edca49b9362fa
+    bytes: 2566
+    acquisition: none
+    acquisition_status: pending
+    verification_status: declared
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_038_the_machine_reconciles_its_own_state
+    kind: local_document
+    stage: cataloged
+    disposition: active
+    title: 'AD-038: The machine reconciles its own state. The operator is not the retry loop.'
+    source_url: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+    local_path: ../docs/design/AD-038_the_machine_reconciles_its_own_state.md
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: 27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415
+    bytes: 12898
+    acquisition: none
+    acquisition_status: pending
+    verification_status: declared
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
