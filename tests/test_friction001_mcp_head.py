@@ -12,6 +12,7 @@ The plant is the one SEL-006 used: a temp checkout stands in for the code the se
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -117,3 +118,17 @@ def test_every_tool_is_read_only_guarded_or_runs_head():
     assert seen_read_only == READ_ONLY, seen_read_only
     assert seen_head == names - READ_ONLY
     assert "seldon_dispatch_redrive" in seen_head
+
+
+def test_a_stale_refusal_in_a_test_never_reaches_the_repositorys_stale_log(checkout, project, monkeypatch, tmp_path):
+    """The stale log is the toil measure's record of Desktop restarts (AD-038-R6). On 2026-10-17 the Part C station
+    check, run in the main checkout, appended this module's deliberate `server_stale` to the real log, and the first
+    `qc chart` reading counted a restart nobody made. Tests point `SELDON_MCP_STALE_LOG` elsewhere (conftest)."""
+    real = m._repo() / ".seldon" / "mcp_stale.jsonl"
+    before = real.read_bytes() if real.is_file() else None
+    monkeypatch.setattr(m, "_LOADED", L.capture("seldon-mcp", checkout, ["seldon"], [checkout / "seldon.yaml"]))
+    _merge_under_seldon(checkout)
+    assert m.seldon_task_list(project_dir=str(project)).startswith("Error: server_stale")
+    assert (real.read_bytes() if real.is_file() else None) == before
+    logged = Path(os.environ[m.STALE_LOG_ENV]).read_text().splitlines()
+    assert json.loads(logged[-1])["tool"] == "seldon_task_list"

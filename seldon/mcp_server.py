@@ -63,6 +63,9 @@ def _refuses_when_stale(fn):
 
 #: `mcp.stale_log` in the repository's seldon.yaml when it names none: runtime state, gitignored with the lease.
 STALE_LOG_DEFAULT = ".seldon/mcp_stale.jsonl"
+#: Points the stale log somewhere else. Unset in production; the test suite sets it for every test, so a test's
+#: deliberate `server_stale` is never counted as a Desktop restart (the `SELDON_DISPATCH_STUCK_STATE` precedent).
+STALE_LOG_ENV = "SELDON_MCP_STALE_LOG"
 
 
 def _record_stale(tool: str) -> None:
@@ -76,8 +79,12 @@ def _record_stale(tool: str) -> None:
     import yaml
 
     try:
-        block = (yaml.safe_load((_repo() / "seldon.yaml").read_text(encoding="utf-8")) or {}).get("mcp") or {}
-        path = _repo() / block.get("stale_log", STALE_LOG_DEFAULT)
+        override = os.environ.get(STALE_LOG_ENV)
+        if override:
+            path = Path(override).expanduser()
+        else:
+            block = (yaml.safe_load((_repo() / "seldon.yaml").read_text(encoding="utf-8")) or {}).get("mcp") or {}
+            path = _repo() / block.get("stale_log", STALE_LOG_DEFAULT)
         path.parent.mkdir(parents=True, exist_ok=True)
         row = {"at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "tool": tool, "pid": os.getpid(),
                "loaded_head": _LOADED.head if _LOADED else None, "loaded_at": _LOADED.at if _LOADED else None}
