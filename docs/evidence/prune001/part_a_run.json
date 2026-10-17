@@ -1,0 +1,281 @@
+{
+ "dry_run": false,
+ "run_at": "2026-10-17T16:32:00.728097Z",
+ "stale_days": 60,
+ "tokens_spent": 0,
+ "token_cap": 0,
+ "stopped": null,
+ "actions": 27,
+ "repositories": [
+  {
+   "repo": "/Users/brock/GitHub/seldon",
+   "database": "seldon-seldon-self",
+   "before": {
+    "open_issues": 8,
+    "proposed_tasks": 24,
+    "future_proposed": 12,
+    "stale_future": 0
+   },
+   "resolved": [],
+   "redated": [],
+   "withdrawn": [],
+   "errors": [],
+   "after": {
+    "open_issues": 8,
+    "proposed_tasks": 24,
+    "future_proposed": 12,
+    "stale_future": 0
+   }
+  },
+  {
+   "repo": "/Users/brock/GitHub/squiddy",
+   "database": "seldon-squiddy",
+   "before": {
+    "open_issues": 56,
+    "proposed_tasks": 2,
+    "future_proposed": 0,
+    "stale_future": 0
+   },
+   "resolved": [
+    {
+     "artifact_id": "f694d215-f1e3-42b8-b0d5-86b310047e17",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "da74a9c4aa6a",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of da74a9c4aa6a (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "0d34b9af-aae5-4e5b-b7a5-f34f57044938",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "da74a9c4aa6a",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of da74a9c4aa6a (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "1f0aacd5-7259-4046-bf59-a42f552400e5",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "da74a9c4aa6a",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of da74a9c4aa6a (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "a4841589-2c57-4608-b133-e8ba205e9386",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "da74a9c4aa6a",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of da74a9c4aa6a (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "bb0f933d-a06b-4638-b8f4-39e3d32dab26",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "aee8cdada7df",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of aee8cdada7df (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "9345b935-d668-4182-9445-94fbf7d4a39e",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "aee8cdada7df",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of aee8cdada7df (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "bee50af2-5cc5-42d0-9c21-ae299c1ece78",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "a2ad022e60c1",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of a2ad022e60c1 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "51440d07-b3f6-44ed-8321-c23451b18d0c",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "6e077fa485b4",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of 6e077fa485b4 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "8374b1da-510c-4086-bc4d-08ccb1ba4b07",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "6e077fa485b4",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of 6e077fa485b4 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "49806b6d-84d8-48f7-8cae-2f7ea1876965",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "fcc979a51efb",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of fcc979a51efb (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "ff305bf6-fc04-432a-b5ba-f2bb55be4a03",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "fcc979a51efb",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of fcc979a51efb (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "77e0f3ce-25b5-4d37-9800-2d89dcb817c0",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "fcc979a51efb",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of fcc979a51efb (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "daa9a7e5-1ab4-41dc-b2c9-2583ee8d0250",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "fcc979a51efb",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of fcc979a51efb (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "4ac56331-666b-44e1-a765-aa2c257986d0",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "fcc979a51efb",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of fcc979a51efb (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "8af5e609-3155-4e45-804c-b1737730e6c5",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "6b72147b-1cc0-4e95-91f5-f308a9e1a0d4",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "f28cedd4-8509-4f37-adf6-841143e84ea8",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "07c3321d-d6e5-4d97-ab48-8a10388f87a7",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "2d21b823-b742-4119-97af-b416511e0ccb",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "f262e9ac-c49c-4b8f-9d35-257cb9379f09",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "e377d2de-793b-49b5-af42-f0b37bba7ba3",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "368cc06a-2678-469e-bfd9-39768489fe0e",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "61f7097b-209c-4caa-8329-ef8d02578abd",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "597307a2-ffc3-484d-9b29-9bcff72e7b52",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "c502f45f3902",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of c502f45f3902 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "09154c9a-eef6-449c-bc1c-c8ec672018b9",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "8ec15b53eff8",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of 8ec15b53eff8 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "20304971-88d6-402b-acc9-f739c07c61bb",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "8ec15b53eff8",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of 8ec15b53eff8 (main when the issue was filed)."
+    },
+    {
+     "artifact_id": "3d93d96e-f335-4d43-8e53-d9c59f4e0610",
+     "rule": "fixed_marker",
+     "evidence": "its own text says 'FIXED' in its first 120 characters",
+     "commit": "8ec15b53eff8",
+     "resolution_notes": "PRUNE-001 weekly prune, rule fixed_marker: its own text says 'FIXED' in its first 120 characters. Fixed as of 8ec15b53eff8 (main when the issue was filed)."
+    }
+   ],
+   "redated": [],
+   "withdrawn": [],
+   "errors": [],
+   "after": {
+    "open_issues": 29,
+    "proposed_tasks": 2,
+    "future_proposed": 0,
+    "stale_future": 0
+   }
+  },
+  {
+   "repo": "/Users/brock/GitHub/arnold",
+   "database": "seldon-arnold",
+   "before": {
+    "open_issues": 0,
+    "proposed_tasks": 6,
+    "future_proposed": 0,
+    "stale_future": 0
+   },
+   "resolved": [],
+   "redated": [],
+   "withdrawn": [],
+   "errors": [],
+   "after": {
+    "open_issues": 0,
+    "proposed_tasks": 6,
+    "future_proposed": 0,
+    "stale_future": 0
+   }
+  },
+  {
+   "repo": "/Users/brock/GitHub/ai-readiness-kg",
+   "database": "seldon-ai-readiness-kg",
+   "before": {
+    "open_issues": 12,
+    "proposed_tasks": 28,
+    "future_proposed": 25,
+    "stale_future": 0
+   },
+   "resolved": [],
+   "redated": [],
+   "withdrawn": [],
+   "errors": [],
+   "after": {
+    "open_issues": 12,
+    "proposed_tasks": 28,
+    "future_proposed": 25,
+    "stale_future": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+=== 2026-10-17T16:33:57Z | seldon-prune fire
+prune: seldon
+  {'open_issues': 8, 'proposed_tasks': 24, 'future_proposed': 12, 'stale_future': 0} -> {'open_issues': 8, 'proposed_tasks': 24, 'future_proposed': 12, 'stale_future': 0}; resolved 0, re-dated 0, withdrawn 0, errors 0
+prune: squiddy
+  {'open_issues': 29, 'proposed_tasks': 2, 'future_proposed': 0, 'stale_future': 0} -> {'open_issues': 29, 'proposed_tasks': 2, 'future_proposed': 0, 'stale_future': 0}; resolved 0, re-dated 0, withdrawn 0, errors 0
+prune: arnold
+  {'open_issues': 0, 'proposed_tasks': 6, 'future_proposed': 0, 'stale_future': 0} -> {'open_issues': 0, 'proposed_tasks': 6, 'future_proposed': 0, 'stale_future': 0}; resolved 0, re-dated 0, withdrawn 0, errors 0
+prune: ai-readiness-kg
+  {'open_issues': 12, 'proposed_tasks': 28, 'future_proposed': 25, 'stale_future': 0} -> {'open_issues': 12, 'proposed_tasks': 28, 'future_proposed': 25, 'stale_future': 0}; resolved 0, re-dated 0, withdrawn 0, errors 0
+prune: 0 action(s); tokens 0 of cap 0
+=== rc=0

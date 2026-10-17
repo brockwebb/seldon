@@ -17,8 +17,8 @@ documents:
 
   - id: cc_tasks_2026_03_22_global_citation_catalog
     verification_method: "local governed file, sha256 b6fb49f30229d2a6, 9,575 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-03-22_global_citation_catalog.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-03-22_global_citation_catalog.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -36,8 +36,8 @@ documents:
 
   - id: cc_tasks_2026_04_03_register_glossary_ontology_design_note
     verification_method: "local governed file, sha256 4ace7167c238a733, 1,536 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_register_glossary_ontology_design_note.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -55,8 +55,8 @@ documents:
 
   - id: cc_tasks_2026_04_03_verify_glossary_path_resolution
     verification_method: "local governed file, sha256 6bd857705afe72af, 3,860 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_verify_glossary_path_resolution.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-03_verify_glossary_path_resolution.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -74,8 +74,8 @@ documents:
 
   - id: cc_tasks_2026_04_05_implement_verify_strict_mode
     verification_method: "local governed file, sha256 1e540adca4b99389, 6,659 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-05_implement_verify_strict_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-05_implement_verify_strict_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -93,8 +93,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_cc3_measurement_function_audit
     verification_method: "local governed file, sha256 b1a7f4ce0408cd87, 10,494 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc3_measurement_function_audit.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -112,8 +112,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_cc5_sleep_function_architecture
     verification_method: "local governed file, sha256 f1fb2d793f053c91, 17,011 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-18_cc5_sleep_function_architecture.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -131,8 +131,8 @@ documents:
 
   - id: cc_tasks_2026_04_18_phase_c_closure
     verification_method: "local governed file, sha256 6d45064aeef0d547, 8,076 characters"
-    retrieved_date: "2026-10-11"
-    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-11."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-11."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -150,8 +150,8 @@ documents:
 
   - id: cc_tasks_2026_04_21_investigate_cross_project_contamination
     verification_method: "local governed file, sha256 fa37f2420a3df12a, 7,688 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-21_investigate_cross_project_contamination.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-04-21_investigate_cross_project_contamination.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -169,8 +169,8 @@ documents:
 
   - id: cc_tasks_2026_06_18_cc_task_researchtask_superseded_terminal
     verification_method: "local governed file, sha256 9c0afe7a445a7b5e, 6,903 characters"
-    retrieved_date: "2026-10-02"
-    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
+    retrieved_date: "2026-10-17"
+    notes: "RE-ADMITTED on request: the id is in the graph and its bytes have not moved; re-admitted on request because the extraction changed and the document did not. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-06-18_cc_task_researchtask_superseded_terminal.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-02."
     kind: local_document
     stage: "in_graph"
     disposition: active
@@ -3308,33 +3308,39 @@ documents:
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: cc_tasks_2026_10_17_sec_001_secrets_out_of_claude_desktop_config
+    verification_method: "local governed file, sha256 2cd3caf4d2368049, 2,565 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
     kind: local_document
-    stage: cataloged
+    stage: "in_graph"
     disposition: active
     title: 'SEC-001: secrets out of claude_desktop_config.json, by a launcher that reads each repo''s .env'
     source_url: cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md
-    local_path: ../cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md
+    local_path: "../cc_tasks/2026-10-17_SEC-001_secrets_out_of_claude_desktop_config.md"
     doc_kind: cc_task
     provenance_flag: local_authored
-    sha256: 2cd3caf4d2368049026d961a92aacba9c0ab6d93ae4a43b4831edca49b9362fa
+    sha256: "2cd3caf4d2368049026d961a92aacba9c0ab6d93ae4a43b4831edca49b9362fa"
     bytes: 2566
     acquisition: none
-    acquisition_status: pending
-    verification_status: declared
+    acquisition_status: "acquired"
+    verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
 
   - id: docs_design_ad_038_the_machine_reconciles_its_own_state
+    verification_method: "local governed file, sha256 27a9d6e70162bd20, 12,893 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-038_the_machine_reconciles_its_own_state.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
     kind: local_document
-    stage: cataloged
+    stage: "in_graph"
     disposition: active
     title: 'AD-038: The machine reconciles its own state. The operator is not the retry loop.'
     source_url: docs/design/AD-038_the_machine_reconciles_its_own_state.md
-    local_path: ../docs/design/AD-038_the_machine_reconciles_its_own_state.md
+    local_path: "../docs/design/AD-038_the_machine_reconciles_its_own_state.md"
     doc_kind: design
     provenance_flag: local_authored
-    sha256: 27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415
+    sha256: "27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415"
     bytes: 12898
     acquisition: none
-    acquisition_status: pending
-    verification_status: declared
+    acquisition_status: "acquired"
+    verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
