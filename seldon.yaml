@@ -208,7 +208,8 @@ dispatch:
 # what a Desktop session writes (seldon/core/desktop_commit.py). `roots` maps each directory the
 # tool may commit from to the kind its message names; anything else is refused. `scan` runs the
 # secret scanner over files under its roots before staging (FC-02, `.gitignore`: each handoff is
-# scanned before it is committed); exit 1 refuses, any other non-zero refuses as scan_failed.
+# scanned before it is committed); exit 1 with the scanner's `scanned N file(s); exit 1` trailer
+# refuses as secret_found, any other non-zero (a scanner that did not run) as scan_failed (DESK-003).
 desktop_commit:
   roots:
     docs/design/: design

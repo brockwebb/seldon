@@ -38,6 +38,8 @@ command that clears each.
 """
 from __future__ import annotations
 
+import os
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -71,6 +73,11 @@ NO_PATHS = "no_paths"
 #: The kind a register file or REGISTER.md is named by in the commit message (DESK-002).
 REGISTER_KIND = "register"
 
+#: The trailer `squiddy.secret_scan` prints as its last line (`scanned N file(s); exit 1`). Exit 1
+#: is a finding only with it: a scanner that never started (an import error, a missing module)
+#: also exits 1, and that is SCAN_FAILED, not SECRET_FOUND (DESK-003, Issue cf57b8e5).
+SCAN_FOUND_TRAILER = re.compile(r"^scanned \d+ file\(s\); exit 1$", re.MULTILINE)
+
 
 class CommitConfigError(ValueError):
     """`desktop_commit:` in seldon.yaml does not parse."""
@@ -102,9 +109,11 @@ def settings(project_dir: Path, config: dict) -> Settings:
         raise CommitConfigError("desktop_commit.scan.command must be a non-empty list when "
                                 "scan.roots is set")
     # A relative program path is relative to the project (seldon.yaml's own convention for
-    # sibling repositories, e.g. `../squiddy/...`); a bare name is looked up on PATH.
+    # sibling repositories, e.g. `../squiddy/...`); a bare name is looked up on PATH. Absolutized
+    # lexically, never with resolve(): a venv's `bin/python` is a symlink, and following it lands
+    # on the bare interpreter, which runs outside the venv (DESK-003).
     if command and ("/" in command[0]) and not Path(command[0]).is_absolute():
-        command = [str((Path(project_dir) / command[0]).resolve())] + list(command[1:])
+        command = [os.path.normpath(Path(project_dir) / command[0])] + list(command[1:])
     return Settings(roots=roots, scan_roots=scan_roots, scan_command=[str(c) for c in command])
 
 
@@ -175,11 +184,11 @@ def _scan(project_dir: Path, s: Settings, rels: list) -> Optional[Outcome]:
     except OSError as exc:
         return _refuse(SCAN_FAILED, f"the secret scan could not run ({' '.join(s.scan_command)}): "
                                     f"{exc}", targets)
-    if r.returncode == 1:
+    if r.returncode == 1 and SCAN_FOUND_TRAILER.search(r.stdout or ""):
         return _refuse(SECRET_FOUND, f"the secret scan flagged {', '.join(targets)}; nothing was "
                                      f"staged: {(r.stdout or r.stderr).strip()}", targets)
     if r.returncode != 0:
-        return _refuse(SCAN_FAILED, f"the secret scan exited {r.returncode}: "
+        return _refuse(SCAN_FAILED, f"the secret scan exited {r.returncode} without a finding: "
                                     f"{(r.stderr or r.stdout).strip()}", targets)
     return None
 
