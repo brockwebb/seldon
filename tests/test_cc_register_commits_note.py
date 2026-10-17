@@ -26,7 +26,11 @@ from click.testing import CliRunner
 from seldon.commands.cc import cc_group
 from seldon.core import hooks as H
 from seldon.core import prior_art as pa
-from seldon.mcp_server import seldon_cc_register
+from seldon.mcp_server import seldon_cc_register as _registered_cc_register
+
+#: The tool's body, in this process (AD-038-R3, FRICTION-001 Part C): `StubLibrary` is patched into this process's
+#: prior-art module, which the fresh process the registered tool runs in would not see.
+seldon_cc_register = _registered_cc_register.__wrapped__
 from tests.testdb import TEST_DATABASE
 
 pytestmark = pytest.mark.usefixtures("neo4j_available", "clean_test_db")

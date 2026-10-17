@@ -86,7 +86,9 @@ def chart_command(as_json):
         raise click.ClickException(f"seldon.yaml qc.chart_min_points must be a whole number of at least 2, "
                                    f"got {min_points!r}")
     name = (config.get("project") or {}).get("name") or project_dir.resolve().name
-    out = S.chart(read_events(project_dir), name, seed=seed, min_points=min_points)
+    events = read_events(project_dir)
+    out = S.chart(events, name, seed=seed, min_points=min_points)
+    out["toil"] = _toil(project_dir, config, events)
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
         return
@@ -115,3 +117,26 @@ def chart_command(as_json):
         click.echo(f"  individuals chart (CPI, n {ind['n']}): mean {ind['mean']}, limits [{ind['lnpl']}, {ind['unpl']}]")
     else:
         click.echo(f"  individuals chart: not drawn, {ind['n']} task(s) of the {ind['needs']} FC-15 requires")
+    t = out["toil"]
+    click.echo("  toil per week (AD-038-R6; the target for every column is zero):")
+    click.echo(f"    {'week':9s} {'machine-dirt':>12s} {'other-dirt':>10s} {'redrives':>8s} {'restarts':>8s} "
+               f"{'re-issues':>9s} {'interventions':>13s}")
+    for w in t["weeks"]:
+        click.echo(f"    {w['week']:9s} {w['refused_machine_dirt']:>12d} {w['refused_other_dirt']:>10d} "
+                   f"{w['redrives_by_operator']:>8d} {w['desktop_restarts']:>8d} {w['reissued_tasks']:>9d} "
+                   f"{w['interventions']:>13d}")
+    if not t["weeks"]:
+        click.echo("    (no dispatcher log, stale log or intervention recorded yet)")
+    click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
+               f"{t['sources']['stale_log'] or '(none)'}, the event store")
+
+
+def _toil(project_dir: Path, config: dict, events: list) -> dict:
+    """AD-038-R6's toil reading (`seldon.core.toil`) from this project's configured sources."""
+    from seldon.core import reconcile as R
+    from seldon.core import toil as T
+
+    rel = (((config.get("qc") or {}).get("toil") or {}).get("dispatch_log"))
+    stale = (config.get("mcp") or {}).get("stale_log")
+    return T.toil(events, T.dispatch_logs(project_dir, rel), R.governed_paths(project_dir, config),
+                  project_dir / stale if stale else None)

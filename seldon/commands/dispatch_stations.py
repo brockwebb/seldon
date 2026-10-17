@@ -202,6 +202,23 @@ def _halt_if_stopped(project_dir: Path, events: list, task_id: str, since: str, 
     raise SystemExit(S.HALT_EXIT)
 
 
+def _session_tree(cwd: Path) -> dict:
+    """`{primary, cwd, branch}` for a session standing in `cwd` (AD-038-R4).
+
+    `cwd` is the top of the checkout the session works in; `primary` is the checkout whose event store the
+    dispatcher reads: the parent of git's common directory, which is `cwd` itself unless `cwd` is a linked
+    worktree. Outside a git checkout all three fall back to `cwd` and no branch.
+    """
+    top = D.git(cwd, "rev-parse", "--show-toplevel")
+    if top.returncode != 0:
+        return {"primary": cwd, "cwd": cwd, "branch": None}
+    tree = Path(top.stdout.strip())
+    common = D.git(tree, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    primary = Path(common.stdout.strip()).parent if common.returncode == 0 else tree
+    branch = D.git(tree, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() or None
+    return {"primary": primary, "cwd": tree, "branch": branch}
+
+
 @dispatch_group.command("part-complete")
 @click.option("--part", required=True, help="the Part just finished, as named in the task's **Parts:** header")
 @click.option("--task", default=None, help="task id or stem; default: this session's launch")
@@ -209,8 +226,13 @@ def part_complete_command(part, task):
     """Station (c), the session's side: record a Part boundary, then halt if a stop is written.
 
     Appends `part_complete` with the Part's planned share, tokens used so far (from the dispatch log's stream-json
-    usage: input plus cache writes plus output) and wall time since launch, and prints the tokens."""
-    project_dir = Path.cwd()
+    usage: input plus cache writes plus output) and wall time since launch, and prints the tokens.
+
+    AD-038-R4: the record carries the session's checkout (`cwd`) and `branch`, and the station runs the Part's
+    checks there. Run from a linked worktree, the record is written to the PRIMARY checkout's event store, where
+    the dispatcher reads it (Issue 02d52bc4: checks ran in main while the work sat on a worktree branch)."""
+    here = _session_tree(Path.cwd())
+    project_dir = here["primary"]
     events = read_events(project_dir)
     launch = _session_task(project_dir, events, task)
     lp = launch["payload"]
@@ -226,10 +248,11 @@ def part_complete_command(part, task):
     wall = round((datetime.now(timezone.utc) - launched).total_seconds(), 1)
     _emit(project_dir, S.EVENT_PART_COMPLETE,
           {"task_id": task_id, "part": part, "planned_share": shares[part], "tokens": used.get("tokens"),
-           "cache_read": used.get("cache_read"), "token_source": lp.get("log_path"), "wall_clock_s": wall},
+           "cache_read": used.get("cache_read"), "token_source": lp.get("log_path"), "wall_clock_s": wall,
+           "cwd": str(here["cwd"]), "branch": here["branch"]},
           actor=resolve_cli_actor())
     click.echo(f"part_complete {task_id[:8]} Part {part}: planned share {shares[part]}, tokens so far "
-               f"{used.get('tokens')}, wall {wall}s")
+               f"{used.get('tokens')}, wall {wall}s; checks run in {here['cwd']} ({here['branch']})")
     _halt_if_stopped(project_dir, read_events(project_dir), task_id, launch["timestamp"], f"Part {part}")
 
 
@@ -237,8 +260,9 @@ def part_complete_command(part, task):
 @click.option("--task", default=None, help="task id or stem; default: this session's launch")
 @click.option("--at", "where", default="loop boundary", help="where the session is, for the halt record")
 def boundary_command(task, where):
-    """Station (d), the session's side: exit 0 to continue, or write `andon_halted` and exit 3 if a stop is written."""
-    project_dir = Path.cwd()
+    """Station (d), the session's side: exit 0 to continue, or write `andon_halted` and exit 3 if a stop is written.
+    From a linked worktree the stops are read from the primary checkout's store (AD-038-R4)."""
+    project_dir = _session_tree(Path.cwd())["primary"]
     events = read_events(project_dir)
     launch = _session_task(project_dir, events, task)
     _halt_if_stopped(project_dir, events, launch["payload"]["task_id"], launch["timestamp"], where)
@@ -256,13 +280,15 @@ def first_article_command(loop, output, task, wait, poll_s):
 
     A `first_article_pass` continues the loop (exit 0); a stop ends it (exit 3, `andon_halted` written); nothing
     within `first_article_polls` polls opens a huddle with its reading and halts (exit 3)."""
-    project_dir = Path.cwd()
+    here = _session_tree(Path.cwd())
+    project_dir = here["primary"]
     cfg = D.load_dispatch_config(project_dir)
     scfg = _scfg(cfg)
     events = read_events(project_dir)
     launch = _session_task(project_dir, events, task)
     task_id = launch["payload"]["task_id"]
-    ev = _emit(project_dir, S.EVENT_FIRST_ARTICLE, {"task_id": task_id, "loop": loop, "output": output},
+    ev = _emit(project_dir, S.EVENT_FIRST_ARTICLE, {"task_id": task_id, "loop": loop, "output": output,
+                                                    "cwd": str(here["cwd"]), "branch": here["branch"]},
                actor=resolve_cli_actor())
     click.echo(f"first_article {task_id[:8]} loop {loop!r}: {output}")
     if not wait:

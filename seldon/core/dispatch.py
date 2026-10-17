@@ -526,7 +526,14 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "premise_false", "environment_in_flight",
                    # DESK-001 (AD-036 ADDENDUM 05): a governing design note without a passing
                    # prior-art verdict, committed as a draft. R4's gate moved here from the commit.
-                   "governing_unverified")
+                   "governing_unverified",
+                   # FRICTION-001 Part E (AD-038-R6, Issue 59b2db84): Neo4j unreachable. Written once
+                   # per outage, with one STUCK notification, instead of a traceback every pass.
+                   "database_unavailable")
+
+#: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
+#: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
+OUTAGE_STATE_FILE = "dispatch_outage.json"
 
 #: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
 #: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a
@@ -1033,6 +1040,9 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
                 "skipped": skipped}
     done = git(project_dir, "commit", "-m", message, "--", *keep)
     if done.returncode != 0:
+        # Unstage what this call staged: a refused commit (a hook) must leave the index as it found
+        # it, or the next commit anyone makes carries these paths under its own message.
+        git(project_dir, "reset", "-q", "--", *keep)
         return {"committed": False, "reason": "git_commit_failed",
                 "stderr": (done.stderr or done.stdout).strip(), "skipped": skipped}
     head = git(project_dir, "rev-parse", "--short", "HEAD").stdout.strip()
@@ -1043,8 +1053,8 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> dict:
 def appended_events(project_dir: Path, store_rel: str) -> dict:
     """The events appended to the tracked store since HEAD, whoever wrote them.
 
-    The append-only half of :func:`own_appended_lines`, shared with the registration-record
-    sweep (`ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md`). Checked against
+    The store's commit precondition since AD-038-R1 retired the actor allowlist (FRICTION-001
+    Part A): what qualifies a line is that the change is an append, never who wrote it. Checked against
     HEAD's blob: the working copy must begin with HEAD's bytes, and every appended line must
     parse. Returns `{ok, reason, events}` with `reason` one of `None`, `clean`, `untracked`,
     `not_append_only`, `unparseable`; never raises on a state.
@@ -1069,48 +1079,6 @@ def appended_events(project_dir: Path, store_rel: str) -> dict:
             events.append(json.loads(raw))
         except json.JSONDecodeError:
             return {"ok": False, "reason": "unparseable", "events": events}
-    return {"ok": True, "reason": None, "events": events}
-
-
-#: Who may have written an uncommitted line the dispatcher is willing to commit
-#: (ADDENDUM_01 decision 6a). `dispatcher` is its own record. `desktop` is the MCP tools':
-#: `seldon_task_create` and `seldon_task_chain` append to a TRACKED store, and a Desktop
-#: session that used one and then went away left the tree dirty — which is c7 false for the
-#: WHOLE queue, not just for the task it touched. A `cc` line is deliberately NOT here: a
-#: dispatched session's uncommitted event is the DD-019 class and the refusal is the guard.
-COMMITTABLE_ACTORS = ("dispatcher", "desktop")
-
-
-def own_appended_lines(project_dir: Path, store_rel: str, actor) -> dict:
-    """Is the store's uncommitted change made ONLY of lines these actors appended?
-
-    `actor` is one actor string or an iterable of them.
-
-    The precondition for the dispatcher committing its own record
-    (`ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 1). The
-    pathspec on the commit limits WHICH FILE is committed; this limits WHOSE LINES. Two checks,
-    both against HEAD's blob rather than a textual diff, because the store is append-only and
-    that contract is exactly what they test:
-
-    * the working copy **begins with HEAD's bytes** — anything else is an in-place edit, and
-      the dispatcher does not put its name on one;
-    * every appended line **parses and carries `actor == <actor>`** — a line a session or an
-      operator wrote and did not commit is their finding to surface (c7 surfaces it), not a
-      line to launder under a dispatcher message.
-
-    Returns values, never raises on a state: `{ok, reason, events}` with `reason` one of
-    `None`, `clean`, `untracked`, `not_append_only`, `unparseable`, `not_own_lines`.
-    """
-    allowed = {actor} if isinstance(actor, str) else set(actor)
-    appended = appended_events(project_dir, store_rel)
-    if not appended["ok"]:
-        return appended
-    events, foreign = [], []
-    for ev in appended["events"]:
-        (events if ev.get("actor") in allowed else foreign).append(ev)
-    if foreign:
-        return {"ok": False, "reason": "not_own_lines", "events": events,
-                "foreign_actors": sorted({str(e.get("actor")) for e in foreign})}
     return {"ok": True, "reason": None, "events": events}
 
 
@@ -1153,8 +1121,7 @@ def lease_is_held(project_dir: Path, cfg: dict) -> bool:
     return not isinstance(pid, int) or pid_alive(pid)
 
 
-def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str = "desktop",
-                          actors=COMMITTABLE_ACTORS) -> dict:
+def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str = "desktop") -> dict:
     """Commit the lines `by` just appended to the tracked event store, path-scoped.
 
     ADDENDUM_01 decision 6a to
@@ -1169,15 +1136,15 @@ def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str =
 
     **Deferred, never forced.** Nothing is committed while a lease is held: a `git commit`
     beside a working dispatched session is DD-019's class and an `index.lock` collision
-    besides. The next pass that holds the lease commits what it finds, which is why
-    `COMMITTABLE_ACTORS` now includes `desktop`. Nothing is committed either when the project
-    has no `dispatch:` block (the dispatcher is opt-in per project and this is its hygiene),
-    when the store is untracked, or when a `cc` line is in the append — that last one is the
-    DD-019 guard and it stays.
+    besides. The next pass that holds the lease reconciles what it finds (AD-038-R1). Nothing is
+    committed either when the project has no `dispatch:` block (the dispatcher is opt-in per
+    project and this is its hygiene), or when the store is untracked or not append-only. The
+    lines may be anyone's: with no lease held no session is working here, which is the DD-019
+    guard the retired actor allowlist stood for.
 
     Returns:
         `{committed, reason, ...}` — `reason` one of `None`, `no_dispatch_block`,
-        `lease_held`, `wrong_branch`, or whatever `own_appended_lines` / `commit_paths`
+        `lease_held`, `wrong_branch`, or whatever `appended_events` / `commit_paths`
         reported. **Never raises**: a tool that did its work must not fail on its bookkeeping.
     """
     try:
@@ -1189,10 +1156,9 @@ def commit_journal_append(project_dir: Path, config: dict, by: str, actor: str =
         return {"committed": False, "reason": "lease_held"}
     if tree_state(project_dir)["branch"] != cfg["branch"]:
         return {"committed": False, "reason": "wrong_branch"}
-    own = own_appended_lines(Path(project_dir), store, actors)
+    own = appended_events(Path(project_dir), store)
     if not own["ok"]:
-        return {"committed": False, "reason": own["reason"],
-                "foreign_actors": own.get("foreign_actors", [])}
+        return {"committed": False, "reason": own["reason"]}
     types = list(dict.fromkeys(e.get("event_type") for e in own["events"]))
     ids = list(dict.fromkeys(
         str(pl.get("task_id") or pl.get("artifact_id") or pl.get("id"))[:8]
@@ -1682,6 +1648,10 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
                       and not tree.get("read_error"))}
     if tree.get("read_error"):
         c["c7"]["read_error"] = tree["read_error"]
+    if tree.get("dirty") and tree.get("unreconciled"):
+        # AD-038-R1: the paths the reconciler could not or may not commit, and why. Absent on a clean
+        # tree, so the criteria vector the serial transcript holds for a launch is unchanged.
+        c["c7"]["unreconciled"] = tree["unreconciled"]
     c["c8"] = {"enabled": cfg["enabled"], "stop_file": str(cfg["stop_file"]),
                "stop_file_present": stop.exists(),
                "ok": bool(cfg["enabled"]) and not stop.exists()}

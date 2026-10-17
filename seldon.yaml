@@ -220,6 +220,15 @@ desktop_commit:
     roots: [handoffs/]
     command: [../squiddy/.venv/bin/python, -m, squiddy.secret_scan]
 
+mcp:
+  # AD-038-R3: every mutating seldon-mcp tool runs `python -P -m seldon mcp-call <tool>` in a fresh
+  # process on the checkout's current code. A call that runs longer is answered with an error and not
+  # retried. NO MEASURED BASIS: half an hour bounds the slowest tool (cc_register's prior-art verify).
+  call_timeout_s: 1800
+  # AD-038-R6: each read-only tool's `server_stale` refusal is appended here; `seldon qc chart` infers
+  # Desktop restarts from it (one refusing server process, one restart). Gitignored runtime state.
+  stale_log: .seldon/mcp_stale.jsonl
+
 jobs:
   # The launchd wrapper's log caps (scripts/jobs/seldon_dispatch.sh), ai-readiness-kg's
   # `controls.yaml jobs.biblio_resume` values and reasons: 2000 characters per line is the
@@ -242,3 +251,7 @@ qc:
   # (FC-15's own number, 10).
   chart_seed: docs/evidence/qc002/cpi_first_reading.yaml
   chart_min_points: 10
+  # AD-038-R6 (FRICTION-001 Part E): the toil `seldon qc chart` reports per week. Passes refused on dirt are
+  # read from the launchd wrapper's log (scripts/jobs/seldon_dispatch.sh) and its rotations.
+  toil:
+    dispatch_log: logs/seldon_dispatch.log

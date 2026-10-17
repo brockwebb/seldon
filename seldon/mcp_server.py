@@ -37,26 +37,148 @@ def _capture_loaded():
 _LOADED = _capture_loaded()
 
 
+#: The read-only guard's advice. Never a restart (AD-038-R3): the mutating tools already run HEAD.
+STALE_READ_ONLY_ADVICE = ("This read-only tool answers from the code this server loaded, so it refuses rather than "
+                          "answer from it; every tool that writes runs the checkout's current code in a fresh process "
+                          "and is unaffected. The server picks up the new code at its next start.")
+
+
 def _refuses_when_stale(fn):
-    """Answer `server_stale` instead of running `fn` when the checkout no longer holds what this
-    process loaded; the underlying error a stale process would raise is never reached."""
+    """Answer `server_stale` instead of running the read-only tool `fn` when the checkout no longer
+    holds what this process loaded; the underlying error a stale process would raise is never reached.
+
+    Read-only tools only (AD-038-R3). The message never asks for a restart: a Desktop restart after
+    every merge under `seldon/` was the toil R3 removes, and the mutating tools no longer need one."""
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         from seldon.core import loaded_state
 
-        refusal = loaded_state.stale(_LOADED)
+        refusal = loaded_state.stale(_LOADED, advice=STALE_READ_ONLY_ADVICE)
         if refusal:
+            _record_stale(fn.__name__)
             return f"Error: {refusal}"
         return fn(*args, **kwargs)
     return wrapper
 
 
-def _tool(*args, **kwargs):
-    """`mcp.tool()` with the stale-process check in front of every tool this server registers."""
+#: `mcp.stale_log` in the repository's seldon.yaml when it names none: runtime state, gitignored with the lease.
+STALE_LOG_DEFAULT = ".seldon/mcp_stale.jsonl"
+
+
+def _record_stale(tool: str) -> None:
+    """Append one line per `server_stale` refusal to `mcp.stale_log`: the record `seldon qc chart` infers Desktop
+    restarts from (AD-038-R6; one server process that refused is one restart). A failed write is reported on
+    stderr, which Claude Desktop keeps in the server's log; it never changes the tool's answer."""
+    import json
+    import sys
+    from datetime import datetime, timezone
+
+    import yaml
+
+    try:
+        block = (yaml.safe_load((_repo() / "seldon.yaml").read_text(encoding="utf-8")) or {}).get("mcp") or {}
+        path = _repo() / block.get("stale_log", STALE_LOG_DEFAULT)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        row = {"at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "tool": tool, "pid": os.getpid(),
+               "loaded_head": _LOADED.head if _LOADED else None, "loaded_at": _LOADED.at if _LOADED else None}
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row) + "\n")
+    except (OSError, yaml.YAMLError) as exc:
+        print(f"seldon-mcp: server_stale not recorded: {exc}", file=sys.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Mutating tools run HEAD's code in a fresh process (AD-038-R3, FRICTION-001 Part C)
+# ---------------------------------------------------------------------------
+#
+# Every merge under `seldon/` used to disable Desktop for the rest of its session: the stale guard
+# refused every tool and asked for a restart (three restarts in three days, AD-038 §1 mechanism 3).
+# Reloading in place cannot follow HEAD: `importlib.reload` "does not redefine the objects imported"
+# with `from ... import`, and this server imports that way. So each mutating tool runs as
+# `<python> -P -m seldon mcp-call <tool>` with the repository first on PYTHONPATH (`-P`: the caller's
+# working directory never shadows it), its keyword arguments on stdin, and its answer relayed. The
+# child keeps the server's working directory and environment, so `project_dir="."` and
+# SELDON_DEFAULT_PROJECT mean what they meant in process.
+
+#: Every registered tool's undecorated body, by name: what `seldon mcp-call` runs in the child.
+RAW_TOOLS: dict = {}
+
+#: Read from `mcp.call_timeout_s` in the repository's seldon.yaml; this is the value when the key is absent.
+#: Half an hour: the longest mutating tool, `seldon_cc_register`, runs a prior-art verify (minutes, not hours).
+#: NO MEASURED BASIS beyond that; a call that overruns is reported, never retried.
+CALL_TIMEOUT_S_DEFAULT = 1800
+
+
+def _repo() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def _call_timeout_s() -> float:
+    import yaml
+
+    path = _repo() / "seldon.yaml"
+    try:
+        block = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("mcp") or {}
+    except (OSError, yaml.YAMLError):
+        return CALL_TIMEOUT_S_DEFAULT
+    return float(block.get("call_timeout_s", CALL_TIMEOUT_S_DEFAULT))
+
+
+def _run_in_head(name: str, kwargs: dict) -> str:
+    """Run tool `name` in a fresh process on the repository's current code; return its answer.
+
+    Never raises: a child that crashed or timed out is answered with an `Error:` line naming the
+    exit and the last of its stderr, which is what a tool says when it cannot do its work.
+    """
+    import json
+    import subprocess
+    import sys
+
+    from seldon.commands.mcp_call import CHILD_ENV, RESULT_PREFIX
+
+    repo = str(_repo())
+    env = {**os.environ, CHILD_ENV: "1",
+           "PYTHONPATH": os.pathsep.join([repo, *filter(None, [os.environ.get("PYTHONPATH")])])}
+    timeout = _call_timeout_s()
+    try:
+        proc = subprocess.run([sys.executable, "-P", "-m", "seldon", "mcp-call", name],
+                              input=json.dumps(kwargs, default=str), capture_output=True, text=True,
+                              env=env, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return f"Error: {name} did not finish within {timeout:g}s (mcp.call_timeout_s); nothing was retried."
+    for line in reversed((proc.stdout or "").splitlines()):
+        if line.startswith(RESULT_PREFIX):
+            answer = json.loads(line[len(RESULT_PREFIX):])
+            return answer if isinstance(answer, str) else json.dumps(answer)
+    tail = ((proc.stderr or "") + (proc.stdout or "")).strip()[-800:]
+    return f"Error: {name} exited {proc.returncode} without an answer: {tail}"
+
+
+def _runs_head(fn):
+    """The mutating tool `fn`, run by `_run_in_head` unless this process is already the child."""
+    sig = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        if os.environ.get("SELDON_MCP_CHILD") == "1":
+            return fn(*args, **kwargs)
+        bound = sig.bind(*args, **kwargs)
+        bound.apply_defaults()
+        return _run_in_head(fn.__name__, dict(bound.arguments))
+    return wrapper
+
+
+def _tool(*args, read_only: bool = False, **kwargs):
+    """`mcp.tool()`, and how the tool runs (AD-038-R3).
+
+    A tool is mutating unless declared `read_only=True`, so a new tool runs HEAD's code by default:
+    the safe direction for a long-lived process. Read-only tools stay in process behind the stale guard.
+    """
     register = mcp.tool(*args, **kwargs)
 
     def decorator(fn):
-        return register(_refuses_when_stale(fn))
+        RAW_TOOLS[fn.__name__] = fn
+        return register(_refuses_when_stale(fn) if read_only else _runs_head(fn))
     return decorator
 
 
@@ -127,8 +249,7 @@ MCP_ACTOR = "desktop"
 # rule for every write to the journal, and this is it applied to the rest of them.
 #
 # **Deferred while a lease is held**, never forced: see `commit_journal_append`. What the tool
-# could not commit, the next dispatcher pass commits, which is why `desktop` joined
-# `dispatcher` in `COMMITTABLE_ACTORS`.
+# could not commit, the next dispatcher pass reconciles, whoever wrote it (AD-038-R1).
 
 
 def _project_path(project_dir: str) -> str:
@@ -299,7 +420,7 @@ def _mcp_terminal_transition(
 # seldon_go (existing)
 # ---------------------------------------------------------------------------
 
-@_tool()
+@_tool(read_only=True)
 def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
     """Orient to a Seldon-managed project. Returns engineering standards,
     project context, latest handoff, current state, and available commands.
@@ -553,7 +674,7 @@ def seldon_task_close(
         driver.close()
 
 
-@_tool()
+@_tool(read_only=True)
 def seldon_task_list(
     project_dir: str = ".",
     state_filter: str = "open",
@@ -687,6 +808,45 @@ def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str
     if reason and result.created:
         lines.append(f"  reason: {reason}")
     return "\n".join(lines)
+
+
+@_tool()
+def seldon_dispatch_redrive(task: str, project_dir: str = ".") -> str:
+    """Put a blocked task back on the dispatcher's queue: blocked -> accepted, claim cleared (AD-038-R2).
+
+    The task keeps its file, id and history; a `dispatch_redrive` event names the stop it answers. Use it
+    instead of writing a new task file for the same work. Refuses a task that is not blocked.
+
+    Args:
+        task: Artifact id, unique id prefix, or the task file's stem.
+        project_dir: Path to the project root.
+    """
+    from seldon.core import dispatch as D
+    from seldon.core import redrive as RD
+
+    config, driver, database, domain_config, resolved = _resolve_project(project_dir)
+    project_path = Path(resolved)
+    try:
+        stem = Path(task).stem if task.endswith(".md") else task
+        with driver.session(database=database) as s:
+            ids = [r["id"] for r in s.run(
+                "MATCH (t:ResearchTask) WHERE t.artifact_id STARTS WITH $ref OR t.source_file = $rel "
+                "RETURN DISTINCT t.artifact_id AS id", ref=task, rel=f"cc_tasks/{stem}.md")]
+        if len(ids) != 1:
+            return f"Error: {task!r} matches {len(ids)} ResearchTasks" + (
+                f": {', '.join(i[:8] for i in ids)}" if ids else "")
+        try:
+            out = RD.redrive(project_path, driver, database, domain_config, ids[0], MCP_ACTOR)
+        except RD.RedriveRefused as exc:
+            return f"Error: redrive refused: {exc}"
+    finally:
+        driver.close()
+    committed = D.commit_journal_append(project_path, config, by="the seldon_dispatch_redrive MCP tool",
+                                        actor=MCP_ACTOR)
+    line = (f"Redriven {ids[0][:8]} {out['source_file']}: blocked -> accepted; answers "
+            f"{out['stop_event_type'] or 'no recorded stop'} {out['stop_reason'] or ''}").rstrip()
+    return line + (f"\n  committed {committed['commit']}" if committed.get("committed")
+                   else f"\n  (event store not committed: {committed.get('reason')})")
 
 
 @_tool()
@@ -1630,7 +1790,7 @@ _WRITE_PATTERN = re.compile(
 )
 
 
-@_tool()
+@_tool(read_only=True)
 def seldon_query(
     cypher: str,
     project_dir: str = ".",
@@ -1819,7 +1979,7 @@ def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_
                            amendment=amendment, changes=_yaml_mapping(changes_yaml, "changes_yaml"))
 
 
-@_tool()
+@_tool(read_only=True)
 def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
     """One record as its events say it stands now."""
     from seldon.commands.decision import run_read
@@ -1830,7 +1990,7 @@ def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
         return f"Error: {exc}"
 
 
-@_tool()
+@_tool(read_only=True)
 def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "") -> str:
     """List records of this repository and its imports, optionally by status or repository."""
     from seldon.commands.decision import run_read
@@ -1842,7 +2002,7 @@ def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "
         return f"Error: {exc}"
 
 
-@_tool()
+@_tool(read_only=True)
 def seldon_decision_check(project_dir: str = ".") -> str:
     """The register checks `seldon verify` fails on: chain, hashes, rationale, unregistered labels."""
     from seldon.commands.decision import run_read

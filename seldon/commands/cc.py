@@ -664,7 +664,7 @@ def _commit_registration_lines(project_dir: Path, config: dict, rel_path: str, t
     **The defect (Issue 70bf1a21, measured in `docs/evidence/desk002/registration_event_lines.md`).**
     Registration appends `artifact_created` (its actor) and one `link_created` per constraining ruling
     (actor `governed_sync`) to the TRACKED store, and committed none of them. The dispatcher's record step
-    commits only `dispatch.COMMITTABLE_ACTORS`, and its registration sweep only an `artifact_created` with a
+    committed only `dispatch.COMMITTABLE_ACTORS` (retired by AD-038-R1), and its registration sweep only an `artifact_created` with a
     `source_commit`, i.e. only when registration had committed the task file. So a task file committed
     first (by `seldon_commit_governed`) left `governed_sync` lines that no one would commit, and c7 refused
     every task (squiddy SQ-016R, 2026-10-16).
@@ -1288,6 +1288,12 @@ def register_task_file(
     parts_refusal = stations.parts_registration_refusal(task_path, project_dir, config)
     if parts_refusal:
         raise ValueError(f"{parts_refusal} File: {rel_path}")
+
+    # AD-038-R5 (FRICTION-001 Part E): the task's `check:` premises run now, BEFORE anything is created, so a
+    # false one reaches its author in the same turn rather than at the dispatcher a day later (SQ-016).
+    premise_refusal = stations.premises_registration_refusal(task_path, project_dir, config)
+    if premise_refusal:
+        raise ValueError(f"{premise_refusal} File: {rel_path}")
 
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:

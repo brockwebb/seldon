@@ -45,6 +45,14 @@ appearance in both. Every other line is unchanged. c12's `footprint_bytes` and `
 `inspection_reserve`. Re-recorded on the QC-002 code; the diff is the two launch lines, and the re-recording equals
 the pre-change fixture once exactly those two keys are removed from both (checked with a regex strip, `True`).
 Every other line is unchanged: the stations write nothing for a session that appends no station record.
+
+**Erratum, FRICTION-001 (AD-038-R1, 2026-10-17).** The dispatcher reconciles before c7, whoever wrote a line, and
+its event-store commit subject names the writers it found and the class: `... written by desktop; reconciled by the
+standing dispatcher (event_store, AD-038-R1)` where it read `... written by the standing dispatcher`. The dirty-tree
+pass's refusal gains one line naming the path the reconciler would not commit (`unreconciled: notes.txt: not
+machine-written governed state (untracked)`). Re-recorded on the FRICTION-001 code; `diff` against the pre-change
+fixture shows exactly twelve reworded subjects (six on the passes' output, six in the `git log` section) and the one
+added refusal line, nothing else.
 """
 from __future__ import annotations
 

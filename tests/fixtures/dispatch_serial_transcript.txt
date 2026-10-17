@@ -1,28 +1,29 @@
 ## pass: t1 green
 exit=0
-record: record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by the standing dispatcher -> <HEX-3>
-record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by the standing dispatcher -> <HEX-4>
+record: record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by desktop; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-3>
+record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-4>
 push: pushed 2 commit(s)
 launching <HEX-1> cc_tasks/t1.md -> logs/dispatch/t1.log
 finished exit=0 in <WALL>s; t1_RESULT.md present; graph completed
-record: record: dispatch_finished <HEX-1> — 1 line(s) written by the standing dispatcher -> <HEX-5>
+record: record: dispatch_finished <HEX-1> — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-5>
 push: pushed 2 commit(s)
 
 ## pass: t2 fails
 exit=0
-record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by the standing dispatcher -> <HEX-6>
+record: record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-6>
 push: pushed 1 commit(s)
 launching <HEX-2> cc_tasks/t2.md -> logs/dispatch/t2.log
 finished exit=1 result=False graph=in_progress model=claude-opus-5-5 (requested claude-opus-5-5) -> blocked
-record: record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by the standing dispatcher -> <HEX-7>
+record: record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-7>
 push: pushed 1 commit(s)
 
 ## pass: dirty tree
 exit=0
-record: record: artifact_created <HEX-8> — 1 line(s) written by the standing dispatcher -> <HEX-9>
+record: record: artifact_created <HEX-8> — 1 line(s) written by desktop; reconciled by the standing dispatcher (event_store, AD-038-R1) -> <HEX-9>
 nothing eligible (1 open, 1 candidate(s))
   <HEX-8> dirty_tree: c7  cc_tasks/t3.md
       dirty: notes.txt
+      unreconciled: notes.txt: not machine-written governed state (untracked)
 push: pushed 1 commit(s)
 
 ## pass: lease held
@@ -63,13 +64,13 @@ stub cwd: primary
 EXIT=1
 
 ## git log main
-record: artifact_created <HEX-8> — 1 line(s) written by the standing dispatcher
-record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by the standing dispatcher
-record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by the standing dispatcher
-record: dispatch_finished <HEX-1> — 1 line(s) written by the standing dispatcher
+record: artifact_created <HEX-8> — 1 line(s) written by desktop; reconciled by the standing dispatcher (event_store, AD-038-R1)
+record: dispatch_finished, artifact_state_changed <HEX-2> — 2 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1)
+record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-2> — 4 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1)
+record: dispatch_finished <HEX-1> — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1)
 t1: result
-record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by the standing dispatcher
-record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by the standing dispatcher
+record: artifact_state_changed, artifact_updated, dispatch_launched <HEX-1> — 4 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1)
+record: artifact_created <HEX-1>, <HEX-2> — 2 line(s) written by desktop; reconciled by the standing dispatcher (event_store, AD-038-R1)
 task t3
 task t2
 task t1

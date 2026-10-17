@@ -130,8 +130,8 @@ def _tasks(driver, database, include_future: bool = False) -> list:
 
     A `FUTURE` task (TRIAGE-001 rule 4) is left out unless `include_future`: it is a parked
     idea, so it is neither a candidate nor a line in the pass's log, its counts or `status`.
-    `_commit_registered` asks for it, because a registered FUTURE task file still has to be
-    committed or it leaves the tree dirty for every other task.
+    The reconciler (`_registered_files`) reads every registered task's file instead, because a
+    registered FUTURE task file still has to be committed or it leaves the tree dirty.
     """
     q = ("MATCH (t:ResearchTask) WHERE t.state IN $states "
          "OPTIONAL MATCH (p:ResearchTask)-[:PRECEDES|precedes]->(t) "
@@ -208,89 +208,123 @@ def _store_rel(config) -> str:
     return config.get("event_store", {}).get("path", "seldon_events.jsonl")
 
 
-def _record_prior_art_lines(project_dir, config, cfg) -> dict:
-    """Commit the prior-art query-log and verdict lines a search or verify left uncommitted (AD-036-R11).
+def _registered_files(driver, database) -> set:
+    """The `source_file` of every registered ResearchTask, in any state: what qualifies an untracked task file or
+    addendum as registration output for the reconciler (AD-038-R1)."""
+    q = "MATCH (t:ResearchTask) WHERE t.source_file IS NOT NULL RETURN DISTINCT t.source_file AS f"
+    with driver.session(database=database) as s:
+        return {r["f"] for r in s.run(q)}
 
-    A run commits its own lines; the ones that reach here were deferred because a session held the lease, or their
-    commit failed. Same conditions as `_record_own_lines`: the lease held, no claim in flight, the configured branch.
+
+def _reconcile(project_dir, config, cfg, driver, database) -> dict:
+    """AD-038-R1: commit every dirty path of machine-written governed state, one commit per class, before c7.
+
+    Replaces the per-writer sweeps this pass used to run (`_record_own_lines` over `COMMITTABLE_ACTORS`, the
+    prior-art leftovers, `_commit_registered` and its registration-record sweep): 797 refused passes in a week were
+    all dirt the system wrote itself (`docs/design/AD-038_the_machine_reconciles_its_own_state.md` §1). What
+    qualifies a path is its class and its change (`seldon.core.reconcile`), never its writer.
+
+    **Callers hold the lease and have no claim in flight**, so nothing else is working in the checkout. Nothing is
+    committed on a branch other than the configured one. Returns `{commits, unreconciled}`; each commit is printed,
+    and `unreconciled` is what c7 names when it refuses.
     """
-    from seldon.core import prior_art as pa
+    from seldon.core import reconcile as R
     if D.tree_state(project_dir)["branch"] != cfg["branch"]:
-        return {"committed": False, "reason": "wrong_branch"}
+        return {"commits": [], "unreconciled": [], "skipped": "wrong_branch"}
     try:
-        outcome = pa.commit_leftovers(project_dir, config)
-    except pa.PriorArtError as exc:
-        click.echo(f"record: prior-art lines NOT committed: {exc}", err=True)
-        return {"committed": False, "reason": "prior_art_config"}
-    if outcome["committed"]:
-        click.echo(f"record: {outcome['message']} -> {outcome['commit']}")
-    elif outcome["reason"] not in ("nothing_to_commit", "no_prior_art_block"):
-        click.echo(f"record: prior-art lines NOT committed ({outcome['reason']}): {outcome.get('stderr', '')}",
-                   err=True)
-    return outcome
+        out = R.reconcile(project_dir, config, _registered_files(driver, database))
+    except RuntimeError as exc:
+        # git status failed: c7's own read reports it as tree_unreadable.
+        click.echo(f"reconcile: NOT run: {exc}", err=True)
+        return {"commits": [], "unreconciled": [], "skipped": "git_failed"}
+    for c in out["commits"]:
+        if c.get("committed"):
+            click.echo(f"record: {c['message']} -> {c['commit']}")
+        else:
+            click.echo(f"record: {', '.join(c['paths'])} NOT committed ({c['class']}, {c.get('reason')}): "
+                       f"{c.get('stderr', '')}", err=True)
+    # A governed path the reconciler refused (a ledger edited in place, a register record rewritten) is
+    # printed here as well as by c7: a pass with no candidate prints no refusal line, and this one must
+    # not go unseen. Ordinary dirt (a source file) is c7's alone to name.
+    for u in out["unreconciled"]:
+        if not u["why"].startswith("not machine-written"):
+            click.echo(f"record: {u['path']} NOT committed: {u['why']}", err=True)
+    return out
+
+
+def _unreconciled(project_dir, config, driver, database, done: dict | None) -> list:
+    """What c7 names for a dirty tree: the reconciler's leftovers, or, when it did not run (a dry run, a claim in
+    flight), the paths it would not commit."""
+    from seldon.core import reconcile as R
+    if done is not None and "skipped" not in done:
+        return done["unreconciled"]
+    try:
+        return R.classify(project_dir, config, _registered_files(driver, database))["unreconciled"]
+    except RuntimeError:
+        return []
+
+
+def _auto_redrive(project_dir, driver, database, domain_config, session_id) -> list:
+    """Redrive the blocked tasks whose stop was the dispatcher's own defect (AD-038-R2;
+    `seldon.core.redrive.AUTO_REDRIVE_REASONS`). Each is printed; a failure is reported, not raised, since
+    the pass's other work does not depend on it and the next pass tries again."""
+    from seldon.core import redrive as RD
+    try:
+        done = RD.auto_redrive(project_dir, driver, database, domain_config, session_id)
+    except (RD.RedriveRefused, ValueError) as exc:
+        click.echo(f"redrive: automatic redrive NOT done: {exc}", err=True)
+        return []
+    for r in done:
+        click.echo(f"redrive: {r['task_id'][:8]} {r['source_file']} -> accepted "
+                   f"(answers {r['stop_event_type']} {r['stop_reason']})")
+    return done
 
 
 def _record_own_lines(project_dir, config, cfg) -> dict:
-    """Commit the lines the dispatcher appended to the tracked event store, and only those.
+    """Commit the lines appended to the tracked event store, whoever wrote them (AD-038-R1).
 
     `ai-readiness-kg/cc_tasks/2026-09-16_dispatcher_commits_its_record.md` decision 1, closing
     DN-006 ADDENDUM_03 §4: `dispatch_finished` is appended AFTER the dispatched session has
     committed and pushed, so before this every completed dispatch left the store modified by a
-    line only the dispatcher wrote — and the cadence gates creation on a clean tree, so that one
-    line could block cycle 5.
+    line only the dispatcher wrote.
 
     **Callers hold the lease.** A held lease is how a pass knows no dispatched session is
     working in the checkout; a `git commit` beside a working session is DD-019's class and an
-    `index.lock` collision besides. The three lines written WITHOUT the lease are therefore
-    never committed where they are written, and the next pass that holds the lease commits them
-    first (`_pass`):
+    `index.lock` collision besides. The three lines written WITHOUT the lease (`lease_held`,
+    `dispatch_observed_stop`, `api_key_present`) are therefore never committed where they are
+    written, and the next pass that holds the lease commits them first (`_pass`).
 
-    * `lease_held` — written while a session is in flight; that session's own commit, or the
-      finish pass's, carries it.
-    * `dispatch_observed_stop` — the operator has stopped the world, and a commit and a push
-      are writes the STOP file exists to prevent.
-    * `api_key_present` — the DD-007 refusal comes before the lease and touches nothing else
-      (`test_an_api_key_refuses_before_any_claim`). The launchd wrapper unsets both variables,
-      so this is reachable only from a hand-run pass.
-
-    Pathspec-limited to the store (`D.commit_paths`), and only when every appended line was
-    written by one of `D.COMMITTABLE_ACTORS` (`D.own_appended_lines`). The message names each
-    event type and task id, so `git log` reads as the log's own index. No event is written for
-    the commit: git records it.
-
-    **`desktop` joined `dispatcher` in that set** with ADDENDUM_01 decision 6a. An MCP write
-    tool now commits its own append, so a line reaching here is one whose tool could not — it
-    ran while a session held the lease. Refusing it, as this did, left the tree dirty and c7
-    false for the whole queue, which is a Desktop housekeeping call stopping the dispatcher.
-    A `cc` line still refuses: that one is DD-019's class and the guard stays.
+    **The actor allowlist is gone** (AD-038-R1, FRICTION-001 Part A). It admitted `dispatcher`
+    and `desktop` lines and refused `cc`, `governed_sync` and every other writer, which turned the
+    system's own writes into c7 dirt for the whole queue. The DD-019 guard it stood for is the
+    lease: every caller holds it with no session working. What still refuses is a store that is not
+    append-only against HEAD, or a line that does not parse; c7 names it.
     """
+    from seldon.core import reconcile as R
     store = _store_rel(config)
     if D.tree_state(project_dir)["branch"] != cfg["branch"]:
         return {"committed": False, "reason": "wrong_branch"}
-    own = D.own_appended_lines(project_dir, store, D.COMMITTABLE_ACTORS)
-    if not own["ok"]:
-        if own["reason"] not in ("clean", "untracked"):
-            detail = {"not_own_lines": "written by "
-                                       f"{', '.join(own.get('foreign_actors', []))}, which is "
-                                       f"not one of {', '.join(D.COMMITTABLE_ACTORS)}",
-                      "not_append_only": "not append-only against HEAD",
-                      "unparseable": "an appended line does not parse"}[own["reason"]]
-            click.echo(f"record: {store} NOT committed: {detail}", err=True)
-        return {"committed": False, "reason": own["reason"]}
-    types = list(dict.fromkeys(e.get("event_type") for e in own["events"]))
-    ids = list(dict.fromkeys(
-        str(p.get("task_id") or p.get("artifact_id"))[:8]
-        for p in ((e.get("payload") or {}) for e in own["events"])
-        if p.get("task_id") or p.get("artifact_id")))
-    message = (f"record: {', '.join(types)} {', '.join(ids) or '-'} — "
-               f"{len(own['events'])} line(s) written by the standing dispatcher")
-    outcome = D.commit_paths(project_dir, [store], message)
-    if outcome["committed"]:
-        click.echo(f"record: {message} -> {outcome['commit']}")
+    try:
+        out = R.reconcile(project_dir, config, set(), classes=("event_store",))
+    except RuntimeError as exc:
+        click.echo(f"record: {store} NOT committed: {exc}", err=True)
+        return {"committed": False, "reason": "git_failed"}
+    if not out["commits"]:
+        why = R.appended_rows(project_dir, store)
+        if not why["ok"] and why["why"] != "deleted" and _store_dirty(project_dir, store):
+            click.echo(f"record: {store} NOT committed: {why['why']}", err=True)
+            return {"committed": False, "reason": why["why"]}
+        return {"committed": False, "reason": "clean"}
+    c = out["commits"][0]
+    if c.get("committed"):
+        click.echo(f"record: {c['message']} -> {c['commit']}")
     else:
-        click.echo(f"record: {store} NOT committed ({outcome['reason']}): "
-                   f"{outcome.get('stderr', '')}", err=True)
-    return outcome
+        click.echo(f"record: {store} NOT committed ({c.get('reason')}): {c.get('stderr', '')}", err=True)
+    return c
+
+
+def _store_dirty(project_dir, store) -> bool:
+    return bool(D.git(project_dir, "status", "--porcelain", "--", store).stdout.strip())
 
 
 def _push(project_dir, cfg) -> dict:
@@ -496,10 +530,126 @@ def dispatch_once(dry_run):
         try:
             _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                   lease, dry_run)
+        except DATABASE_UNAVAILABLE as exc:
+            _database_unavailable(project_dir, session_id, cfg, exc, dry_run)
+        else:
+            if not dry_run:
+                _database_back(project_dir, cfg)
         finally:
             lease.__exit__(None, None, None)
     finally:
         driver.close()
+
+
+@dispatch_group.command("redrive")
+@click.argument("task")
+@click.option("--actor", default="human", show_default=True,
+              help="who redrives: human, cc or desktop (`seldon qc chart` counts each as an operator intervention)")
+def dispatch_redrive(task, actor):
+    """Put a blocked task back on the queue: blocked -> accepted, claim cleared (AD-038-R2).
+
+    TASK is an artifact id, a unique id prefix, or the task file's stem. The task keeps its file, id
+    and history; `dispatch_redrive` records the stop it answers. Refuses a task that is not blocked
+    (exit 1). Like the dead-letter redrive of a message queue, this is the one way back; a new task
+    file for the same work is what it replaces.
+    """
+    from seldon.core import redrive as RD
+    project_dir, config, driver, database, domain_config, session_id = _open_project()
+    try:
+        task_id = _resolve_task(driver, database, task)
+        if task_id is None:
+            raise click.ClickException(f"no ResearchTask matches {task!r}")
+        try:
+            out = RD.redrive(project_dir, driver, database, domain_config, task_id, actor, session_id)
+        except RD.RedriveRefused as exc:
+            raise click.ClickException(f"redrive refused: {exc}")
+    finally:
+        driver.close()
+    click.echo(f"redriven: {task_id[:8]} {out['source_file']} blocked -> accepted; answers "
+               f"{out['stop_event_type'] or 'no recorded stop'} {out['stop_reason'] or ''}".rstrip())
+    # The redrive's own lines, committed the way an MCP tool commits its append (deferred while a
+    # lease is held; the next pass reconciles them, AD-038-R1).
+    committed = D.commit_journal_append(project_dir, config, by="seldon dispatch redrive", actor=actor)
+    if committed.get("committed"):
+        click.echo(f"committed {committed['commit']}")
+
+
+def _resolve_task(driver, database, ref: str) -> str | None:
+    """A full id, a unique prefix, or a task file stem (`cc_tasks/<stem>.md`)."""
+    q = ("MATCH (t:ResearchTask) WHERE t.artifact_id STARTS WITH $ref "
+         "OR t.source_file = $rel OR t.source_file = $ref RETURN DISTINCT t.artifact_id AS id")
+    stem = Path(ref).stem if ref.endswith(".md") else ref
+    with driver.session(database=database) as s:
+        ids = [r["id"] for r in s.run(q, ref=ref, rel=f"cc_tasks/{stem}.md")]
+    if len(ids) > 1:
+        raise click.ClickException(f"{ref!r} is ambiguous: {', '.join(i[:8] for i in ids)}")
+    return ids[0] if ids else None
+
+
+#: What "the database is unavailable" means to a pass (Issue 59b2db84): Neo4j refusing the database
+#: (`DatabaseUnavailable`, the 2026-10-15 lock-file outage) or the server unreachable
+#: (`ServiceUnavailable`, the connection-refused tracebacks in the same log).
+from neo4j.exceptions import DatabaseUnavailable as _DatabaseUnavailable  # noqa: E402
+from neo4j.exceptions import ServiceUnavailable as _ServiceUnavailable  # noqa: E402
+
+DATABASE_UNAVAILABLE = (_DatabaseUnavailable, _ServiceUnavailable)
+
+
+def _outage_path(project_dir, cfg) -> Path:
+    return Path(project_dir) / Path(cfg["lease_file"]).parent / D.OUTAGE_STATE_FILE
+
+
+def _database_unavailable(project_dir, session_id, cfg, exc, dry_run) -> None:
+    """AD-038-R6 for Issue 59b2db84: a pass that cannot reach Neo4j is a handled refusal, exit 0.
+
+    From 16:11Z on 2026-10-15 every pass crashed with a `DatabaseUnavailable` traceback (rc=1) and no
+    alert reached the operator for five hours. Now the FIRST pass of an outage writes one
+    `dispatch_refused` (reason `database_unavailable`) and raises the notifier once, as a stuck alarm;
+    later passes of the same outage only print a line (DN-006 decision 7: a standing condition is not
+    re-logged per pass). The pass that reaches the database again removes the outage file.
+    """
+    error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:300] if str(exc) else ''}"
+    path = _outage_path(project_dir, cfg)
+    state = {}
+    if path.is_file():
+        try:
+            state = json.loads(path.read_text(encoding="utf-8") or "{}")
+        except json.JSONDecodeError:
+            state = {}          # a corrupt file re-arms the alarm: "tell them again", never "stay quiet"
+    first = not state
+    state = {"first_seen": state.get("first_seen") or _now(), "passes": int(state.get("passes", 0)) + 1,
+             "error": error}
+    click.echo(f"refused: database_unavailable ({error}); pass {state['passes']} of this outage since "
+               f"{state['first_seen']}", err=True)
+    if dry_run:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    if not first:
+        return
+    _emit(project_dir, session_id, D.EVENT_REFUSED,
+          {"task_id": None, "reason": "database_unavailable", "error": error, "first_seen": state["first_seen"]})
+    click.echo(f"STUCK: database_unavailable since {state['first_seen']}: {error}", err=True)
+    _run_notifier(project_dir, session_id, cfg, {
+        "SELDON_NOTIFY_TASK_ID": "", "SELDON_NOTIFY_TASK_NAME": "dispatcher",
+        "SELDON_NOTIFY_OK": "false", "SELDON_NOTIFY_OUTCOME": "stuck",
+        "SELDON_NOTIFY_CRITERION": "database_unavailable", "SELDON_NOTIFY_PASSES": "1",
+        "SELDON_NOTIFY_DIRTY_PATHS": "",
+        "SELDON_NOTIFY_MESSAGE": f"stuck: database_unavailable: {error}",
+        "SELDON_NOTIFY_RESULT_PATH": "", "SELDON_NOTIFY_LOG_PATH": "", "SELDON_NOTIFY_WALL_SECONDS": "0",
+    }, task_id="-", label="stuck")
+
+
+def _database_back(project_dir, cfg) -> None:
+    """The first pass that reached the database ends the outage: the next one alarms afresh."""
+    path = _outage_path(project_dir, cfg)
+    if path.is_file():
+        try:
+            passes = json.loads(path.read_text(encoding="utf-8") or "{}").get("passes")
+        except json.JSONDecodeError:
+            passes = None
+        path.unlink()
+        click.echo(f"database available again after {passes} refused pass(es)")
 
 
 def _last_payload(project_dir: Path, event_type: str, where=None) -> dict | None:
@@ -697,105 +847,6 @@ def _create_instance(project_dir, config, driver, database, domain_config, sessi
             "last_instance_written": wrote_back}
 
 
-def _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run) -> list:
-    """DN-006 ADDENDUM_03 §2: a registered task file is committed by the dispatcher, not by a
-    person.
-
-    **The wedge this removes.** `seldon cc register` leaves two things behind: an untracked
-    task file, and an `artifact_created` line appended to the event store, which this project
-    tracks. Decision 2's c1 wants the file git-tracked and c7 wants the tree clean, so a
-    Desktop session that registers a task produces a task that can never be dispatched — and
-    blocks every OTHER task in the queue at the same time, because c7 is a fact about the
-    checkout and not about the task being evaluated. That is the wedge ADDENDUM_02 §1 found in
-    the cadence, one step earlier in the life of a task, and the commit is entailed by
-    decision 2 in exactly the way it was entailed by decision 8.
-
-    **Both halves of the footprint go in one commit.** The task file, any untracked
-    `<stem>_ADDENDUM*.md` beside it (c3's evidence: a dispatcher that committed a base task and
-    left its supersession notice untracked would hand a session a task the notice forbids), and
-    the event store, whose modified line is the record of the very registration being
-    committed. Committing the file alone leaves c7 false on that line and makes this mechanism
-    incapable of freeing a single task.
-
-    **What it will not touch.** Anything else untracked or modified stays c7's business
-    (`git add -A` is what the cadence already refuses); and it writes nothing into a checkout
-    with a dispatcher claim in flight or on a branch that is not the configured one, for
-    DD-019's reason.
-
-    **No event.** The commit is recorded by git and the registration by `artifact_created`; a
-    third record of one fact is what decision 1 spent this task removing. The pass names it on
-    stdout, which is what the launchd wrapper's log carries.
-    """
-    if dry_run or claim is not None or tree["branch"] != cfg["branch"]:
-        return []
-    store = config.get("event_store", {}).get("path", "seldon_events.jsonl")
-    done = []
-    for task in tasks:
-        rel = task.get("source_file")
-        if not rel:
-            continue
-        path = project_dir / rel
-        if not path.is_file() or D.is_tracked(project_dir, path):
-            continue
-        paths = [rel]
-        paths += [str(a.relative_to(project_dir)) for a in D.addenda_for(path)
-                  if not D.is_tracked(project_dir, a)]
-        paths.append(store)
-        outcome = D.commit_paths(project_dir, paths,
-                                 f"register: {rel} — registered task file committed by the "
-                                 f"standing dispatcher")
-        if outcome["committed"]:
-            click.echo(f"register: {rel} committed as {outcome['commit']} "
-                       f"({len(outcome['committed_paths'])} path(s))")
-        else:
-            # Reported, never swallowed. A failure here leaves the file exactly as the
-            # registration left it; the next pass tries again, and `status` still shows why
-            # the task is ineligible.
-            click.echo(f"register: {rel} NOT committed ({outcome['reason']}): "
-                       f"{outcome.get('stderr', '')}", err=True)
-        done.append({"source_file": rel, **outcome})
-    record = _commit_registration_records(project_dir, store)
-    if record is not None:
-        done.append(record)
-    return done
-
-
-def _commit_registration_records(project_dir, store) -> dict | None:
-    """Commit the store when it holds the uncommitted record of a registration that committed
-    its own file (`ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md` decision 4).
-
-    Registration now commits an untracked task file by path and writes `artifact_created`
-    with `source_commit` AFTER that commit, so the line cannot be in it. The loop above keys on
-    an untracked file and never sees such a task; without this, the one line keeps c7 false for
-    the whole queue — decision 3's wedge, one commit later. The store is committed on the same
-    terms the loop above has always committed it with a task file (whole file, pathspec to the
-    store alone, only with no claim in flight — the caller's gate), and only when it is
-    append-only against HEAD: an in-place edit is not a registration's footprint.
-
-    Returns the commit outcome, or None when there is no such record to commit.
-    """
-    appended = D.appended_events(project_dir, store)
-    if not appended["ok"]:
-        return None
-    records = [e for e in appended["events"]
-               if e.get("event_type") == "artifact_created"
-               and (e.get("payload") or {}).get("artifact_type") == "ResearchTask"
-               and ((e.get("payload") or {}).get("properties") or {}).get("source_commit")]
-    if not records:
-        return None
-    names = ", ".join(f"{e['payload']['properties'].get('source_file')} "
-                      f"({str(e['payload'].get('artifact_id'))[:8]})" for e in records)
-    outcome = D.commit_paths(project_dir, [store],
-                             f"register: record of {names} — registration line committed by "
-                             f"the standing dispatcher")
-    if outcome["committed"]:
-        click.echo(f"register: record of {names} committed as {outcome['commit']}")
-    else:
-        click.echo(f"register: record of {names} NOT committed ({outcome['reason']}): "
-                   f"{outcome.get('stderr', '')}", err=True)
-    return {"source_file": store, **outcome}
-
-
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
           dry_run):
     if cfg["max_parallel"] > 1 and not qc.parallel_opted_in(project_dir, config):
@@ -817,20 +868,18 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                                session_id, cfg, lease, dry_run)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     claim = _claim_in_flight(driver, database)
-    # The dispatcher's own leftovers FIRST, before anything reads the tree: lines an earlier
-    # pass appended and did not commit — a pass that died between append and commit, or a
-    # dispatcher process still running the code from before decision 1 existed. With no claim
-    # in flight and the lease held, nothing else is working in the checkout.
+    # AD-038-R1: reconcile FIRST, before anything reads the tree. Every dirty path of machine-written
+    # governed state (the event store, the prior-art logs, the decision register, the cadence's
+    # write-back, registered task files and their addenda) is committed, one commit per class,
+    # whoever wrote it. With no claim in flight and the lease held, nothing else is working in the
+    # checkout. Before the cadence too: it gates creation on a clean tree.
+    done = None
     if claim is None and not dry_run:
-        _record_own_lines(project_dir, config, cfg)
-        _record_prior_art_lines(project_dir, config, cfg)
+        # AD-038-R2: a task blocked by one of the dispatcher's own recorded defects goes back on the
+        # queue by itself, before the reconcile so its lines are committed in this pass.
+        _auto_redrive(project_dir, driver, database, domain_config, session_id)
+        done = _reconcile(project_dir, config, cfg, driver, database)
     tree = D.tree_state(project_dir)
-    # Registered-but-uncommitted task files BEFORE the cadence and before candidacy: the
-    # cadence gates creation on a clean tree, and an untracked task file is one of the things
-    # making it dirty, so committing first is what lets a due period be served in the same pass.
-    tasks = _tasks(driver, database, include_future=True)
-    if _commit_registered(project_dir, config, cfg, tasks, tree, claim, dry_run):
-        tree = D.tree_state(project_dir)
     # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
     # pass may then launch, so the queue it evaluates is the queue as it stands after the
     # calendar has had its say.
@@ -838,6 +887,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         _cadence(project_dir, config, driver, database, domain_config, session_id, cfg, tree,
                  claim, dry_run)
         tree = D.tree_state(project_dir)
+    if tree["dirty"]:
+        # c7 names what the reconciler could not or may not commit, and why (FRICTION-001 Part A step 3).
+        tree["unreconciled"] = _unreconciled(project_dir, config, driver, database, done)
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     holds = _premise_holds(project_dir, driver, database)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds)
@@ -973,7 +1025,13 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     wall = round(time.monotonic() - started, 3)
 
     result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
-    graph_state = _state_of(driver, database, chosen["task_id"])
+    db_failure = None
+    try:
+        graph_state = _state_of(driver, database, chosen["task_id"])
+    except DATABASE_UNAVAILABLE as exc:
+        # AD-038-R2/R6: the session's outcome cannot be read, which is the dispatcher's own condition, not the
+        # session's. Recorded as `database_unavailable`, the reason the automatic redrive answers.
+        graph_state, db_failure = None, f"{type(exc).__name__}: {str(exc).splitlines()[0][:200] if str(exc) else ''}"
     receipt = _model_receipt(log_path, offset, spec)
     ok = (code == 0 and result_path.is_file() and graph_state == "completed"
           and receipt["ok"])
@@ -987,12 +1045,17 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     if not receipt["ok"]:
         # AD-035 R6: the session's work is not counted as done on an unverified model.
         finish["failure"] = models.SUBSTITUTED
+    if db_failure:
+        finish["failure"] = "database_unavailable"
+        finish["database_error"] = db_failure
     _emit(project_dir, session_id, D.EVENT_FINISHED, finish)
     if not ok:
         # Blocked, never retried. The next OODA reads the log and decides; a loop that cannot
         # see why the last attempt failed cannot decide anything and would spend on each guess.
+        # With the graph unreadable at the finish, the walk is tried from the state the claim left;
+        # a refused walk is reported by `_block`, never raised.
         _block(project_dir, driver, database, domain_config, session_id, chosen["task_id"],
-               graph_state, code, log_path.relative_to(project_dir))
+               "in_progress" if db_failure else graph_state, code, log_path.relative_to(project_dir))
         click.echo(f"finished exit={code} result={result_path.is_file()} "
                    f"graph={graph_state} model={receipt['served']} "
                    f"(requested {receipt['requested']}) -> blocked", err=True)
@@ -1033,6 +1096,9 @@ def _refusal_lines(rows: list, tree: dict) -> list:
                 # is not why c7 failed and printing only it sent seven hours of log lines
                 # pointing at the wrong file.
                 out.append(f"      dirty: {', '.join(_dirty_paths(tree))}")
+                # AD-038-R1: each path the reconciler could not or may not commit, with its reason.
+                for u in (tree.get("unreconciled") or [])[:STUCK_DIRTY_PATHS_SHOWN]:
+                    out.append(f"      unreconciled: {u['path']}: {u['why']}")
             if reason == "wrong_branch":
                 out.append(f"      branch: {tree.get('branch') or '(none)'}, configured "
                            f"{r['criteria']['c7'].get('configured_branch')}")
