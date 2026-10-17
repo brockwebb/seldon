@@ -1,0 +1,11 @@
+github: ['GITHUB_PERSONAL_ACCESS_TOKEN'] LEFT INLINE: /Users/brock/.config/claude-mcp/github/.env lacks ['GITHUB_PERSONAL_ACCESS_TOKEN']
+census-mcp: ['CENSUS_API_KEY'] -> reads /Users/brock/GitHub/census-mcp-server/.env
+neo4j-mcp: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/arnold/.env
+neo4j-pragmatics: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/seldon/.env
+neo4j-quarry: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/seldon/.env
+arnold-profile: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/arnold/.env
+arnold-training: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/arnold/.env
+arnold-memory: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/arnold/.env
+arnold-journal: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/arnold/.env
+seldon-mcp: ['NEO4J_PASSWORD'] -> reads /Users/brock/GitHub/seldon/.env
+fss-policy-kg: ['NEO4J_PASS'] LEFT INLINE: /Users/brock/GitHub/icsp_notebook/.env lacks ['NEO4J_PASS']

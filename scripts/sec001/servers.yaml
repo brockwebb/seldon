@@ -1,0 +1,32 @@
+# SEC-001R: which directory's .env each Claude Desktop MCP server reads its secrets from.
+# Consumed by scripts/sec001/rewrite_desktop_config.py. A server listed here is rewritten to
+# start through scripts/mcp_launch.sh only once its .env holds every secret key the config
+# carries inline, with the identical value; until then it is reported and left as it is.
+
+config: "/Users/brock/Library/Application Support/Claude/claude_desktop_config.json"
+
+# The config must name the PRIMARY checkout's launcher: worktrees are removed after merge.
+launcher: "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh"
+
+# An env key whose name matches this is treated as a secret (token, key, password).
+secret_key_pattern: "TOKEN|API_KEY|SECRET|PASSWORD|PASS$"
+
+servers:
+  # npx package, no owning repo: a dedicated directory (mode 700, .env mode 600) so the
+  # token is not exported into every process that loads some repo's .env.
+  github: "/Users/brock/.config/claude-mcp/github"
+  census-mcp: "/Users/brock/GitHub/census-mcp-server"
+  # neo4j-mcp serves the `arnold` database.
+  neo4j-mcp: "/Users/brock/GitHub/arnold"
+  # pragmatics and quarry are census-mcp-server databases, but the password is the local
+  # Neo4j instance's; seldon's .env holds only NEO4J_USERNAME/NEO4J_PASSWORD, so reading it
+  # there exports nothing else (census-mcp-server's .env also holds OpenAI/Anthropic keys).
+  neo4j-pragmatics: "/Users/brock/GitHub/seldon"
+  neo4j-quarry: "/Users/brock/GitHub/seldon"
+  arnold-profile: "/Users/brock/GitHub/arnold"
+  arnold-training: "/Users/brock/GitHub/arnold"
+  arnold-memory: "/Users/brock/GitHub/arnold"
+  arnold-journal: "/Users/brock/GitHub/arnold"
+  seldon-mcp: "/Users/brock/GitHub/seldon"
+  # reads NEO4J_PASS (icsp_notebook kg/config.yaml `pass_env`).
+  fss-policy-kg: "/Users/brock/GitHub/icsp_notebook"

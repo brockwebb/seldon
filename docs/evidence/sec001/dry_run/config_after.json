@@ -1,0 +1,458 @@
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gongrzhe/server-gmail-autoauth-mcp"
+      ]
+    },
+    "trace": {
+      "command": "/opt/anaconda3/bin/python",
+      "args": [
+        "-m",
+        "mcp_server.server"
+      ],
+      "env": {
+        "TRACE_DIR": "/Users/brock/Documents/GitHub/ai-native-traceability-system/.trace",
+        "PYTHONPATH": "/Users/brock/Documents/GitHub/ai-native-traceability-system"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<redacted>"
+      }
+    },
+    "census-mcp": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/census-mcp-server",
+        "--only",
+        "CENSUS_API_KEY",
+        "--",
+        "/opt/anaconda3/envs/census-mcp/bin/python",
+        "-m",
+        "census_mcp.server"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/brock/Documents/GitHub/census-mcp-server/src",
+        "PACKS_DIR": "/Users/brock/Documents/GitHub/census-mcp-server/packs",
+        "LOG_LEVEL": "WARNING",
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    "neo4j-mcp": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/arnold",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "neo4j-mcp"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USERNAME": "neo4j",
+        "NEO4J_DATABASE": "arnold",
+        "NEO4J_READ_ONLY": "false",
+        "NEO4J_TELEMETRY": "false",
+        "NEO4J_LOG_LEVEL": "info",
+        "NEO4J_LOG_FORMAT": "text",
+        "NEO4J_SCHEMA_SAMPLE_SIZE": "100"
+      }
+    },
+    "neo4j-pragmatics": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/seldon",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "neo4j-mcp"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USERNAME": "neo4j",
+        "NEO4J_DATABASE": "pragmatics",
+        "NEO4J_READ_ONLY": "false",
+        "NEO4J_TELEMETRY": "false",
+        "NEO4J_LOG_LEVEL": "info",
+        "NEO4J_LOG_FORMAT": "text",
+        "NEO4J_SCHEMA_SAMPLE_SIZE": "100"
+      }
+    },
+    "neo4j-quarry": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/seldon",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "neo4j-mcp"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USERNAME": "neo4j",
+        "NEO4J_DATABASE": "quarry",
+        "NEO4J_READ_ONLY": "false",
+        "NEO4J_TELEMETRY": "false",
+        "NEO4J_LOG_LEVEL": "info",
+        "NEO4J_LOG_FORMAT": "text",
+        "NEO4J_SCHEMA_SAMPLE_SIZE": "100"
+      }
+    },
+    "postgres-mcp": {
+      "command": "/opt/anaconda3/envs/arnold/bin/postgres-mcp",
+      "args": [
+        "--access-mode=unrestricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://brock@localhost:5432/arnold_analytics"
+      }
+    },
+    "arnold-profile": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/arnold",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "/opt/anaconda3/envs/arnold/bin/python",
+        "/Users/brock/GitHub/arnold/src/arnold-profile-mcp/arnold_profile_mcp/server.py"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_DATABASE": "arnold"
+      }
+    },
+    "arnold-training": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/arnold",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "/opt/anaconda3/envs/arnold/bin/python",
+        "/Users/brock/GitHub/arnold/src/arnold-training-mcp/arnold_training_mcp/server.py"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_DATABASE": "arnold",
+        "DATABASE_URI": "postgresql://brock@localhost:5432/arnold_analytics"
+      }
+    },
+    "arnold-memory": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/arnold",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "/opt/anaconda3/envs/arnold/bin/python",
+        "/Users/brock/GitHub/arnold/src/arnold-memory-mcp/arnold_memory_mcp/server.py"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_DATABASE": "arnold",
+        "DATABASE_URI": "postgresql://brock@localhost:5432/arnold_analytics"
+      }
+    },
+    "arnold-analytics": {
+      "command": "/opt/anaconda3/envs/arnold/bin/python",
+      "args": [
+        "/Users/brock/GitHub/arnold/src/arnold-analytics-mcp/server.py"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://brock@localhost:5432/arnold_analytics"
+      }
+    },
+    "arnold-journal": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/arnold",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "/opt/anaconda3/envs/arnold/bin/python",
+        "/Users/brock/GitHub/arnold/src/arnold-journal-mcp/arnold_journal_mcp/server.py"
+      ],
+      "env": {
+        "POSTGRES_DSN": "postgresql://brock@localhost:5432/arnold_analytics",
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_DATABASE": "arnold"
+      }
+    },
+    "seldon-mcp": {
+      "command": "/Users/brock/GitHub/seldon/scripts/mcp_launch.sh",
+      "args": [
+        "/Users/brock/GitHub/seldon",
+        "--only",
+        "NEO4J_PASSWORD",
+        "--",
+        "/opt/anaconda3/bin/seldon-mcp"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USERNAME": "neo4j",
+        "SELDON_SYSTEM_CLAUDE_MD": "/Users/brock/Documents/GitHub/CLAUDE.md",
+        "SELDON_DEFAULT_PROJECT": "/Users/brock/Documents/GitHub/seldon"
+      }
+    },
+    "wintermute": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "http://127.0.0.1:7799/mcp"
+      ]
+    },
+    "ai-readiness-kg": {
+      "command": "/opt/anaconda3/bin/python3",
+      "args": [
+        "/Users/brock/GitHub/ai-readiness-kg/mcp/airkg_server.py"
+      ]
+    },
+    "fss-policy-kg": {
+      "command": "/opt/anaconda3/bin/python",
+      "args": [
+        "/Users/brock/Documents/GitHub/icsp_notebook/kg/mcp_server.py"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASS": "<redacted>"
+      }
+    },
+    "census-site": {
+      "command": "/Users/brock/GitHub/census-web-concept-inventory/.venv-mining/bin/census-site-mcp",
+      "args": []
+    },
+    "squiddy-library": {
+      "command": "/Users/brock/GitHub/squiddy/.venv/bin/python",
+      "args": [
+        "-m",
+        "squiddy.cli",
+        "serve",
+        "--graph",
+        "/Users/brock/GitHub/squiddy/graphs/library"
+      ]
+    },
+    "squiddy-arnold-evidence": {
+      "command": "/Users/brock/GitHub/squiddy/.venv/bin/python",
+      "args": [
+        "-m",
+        "squiddy.cli",
+        "serve",
+        "--graph",
+        "/Users/brock/GitHub/arnold/graphs/arnold-evidence"
+      ]
+    }
+  },
+  "features": {
+    "isLocalDevMcpEnabled": true
+  },
+  "coworkUserFilesPath": "/Users/brock/Claude",
+  "preferences": {
+    "quickEntryDictationShortcut": {
+      "accelerator": "Cmd+Shift+Alt+Space"
+    },
+    "coworkBrowserToolsEnabled": true,
+    "coworkPreferredBrowser": "chrome",
+    "launchPreviewPersistedWorkspaces": [],
+    "launchPreviewSessionScopedSessions": [],
+    "localAgentModeTrustedFolders": [
+      "/Users/brock/GitHub/book_responsible_ai"
+    ],
+    "remoteFolderConsentMemory": [
+      "/Users/brock/.wintermute",
+      "/Users/brock/GitHub"
+    ],
+    "remoteSessionFolderGrants": {
+      "session_01L8RTCdYDnCXizUHhSmXSgc": [
+        "/Users/brock/GitHub/book_responsible_ai",
+        "/Users/brock/GitHub/ai-workflow-design"
+      ],
+      "session_01SLyCL7d1akD9HjU9qRCsKf": [
+        "/Users/brock/GitHub/book_responsible_ai",
+        "/Users/brock/GitHub/ai-workflow-design"
+      ],
+      "session_01R4wP1i4ZamC4ntXmsuYXXK": [
+        "/Users/brock/GitHub/ai-readiness-kg"
+      ]
+    },
+    "remoteChatFolderGrants": {
+      "a4982d35-3822-4478-bdab-70c358abaf5b": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/squiddy",
+          "/Users/brock/.wintermute"
+        ]
+      },
+      "b758472e-9cd0-4438-8f30-6f52a67f6a29": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub"
+        ]
+      },
+      "42537198-bcea-4047-a38b-0662c4830c50": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/squiddy",
+          "/Users/brock/.wintermute",
+          "/Users/brock/GitHub/wintermute"
+        ]
+      },
+      "59902b9b-68ef-4210-adf9-faf23ee967d7": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/regs-comment-pipeline"
+        ]
+      },
+      "7f726c96-f034-4c1a-8f12-7eaeed932b14": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub",
+          "/Users/brock/.wintermute"
+        ]
+      },
+      "22f7bdc4-f585-4d31-bb78-530547f9c691": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/ai-readiness-kg"
+        ]
+      },
+      "f7a123d7-57b4-4224-b8a4-15db3ff1bbe8": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/ai-readiness-kg",
+          "/Users/brock/GitHub/seldon"
+        ]
+      },
+      "40f04b9e-99f6-4eb8-a34d-819a2b7ca67c": {
+        "orgUuid": "36ce6d60-9566-4eb1-9b0f-fb1c2326672d",
+        "accountUuid": "0c81a2be-5bce-4d57-8f66-28042461be11",
+        "folders": [
+          "/Users/brock/GitHub/slosh-pipe"
+        ]
+      }
+    },
+    "coworkLegacyRootGrantsPruned": true,
+    "coworkScheduledTasksEnabled": true,
+    "coworkHipaaRestricted": false,
+    "orgWorkAcrossAppsDisabled": false,
+    "ccdScheduledTasksEnabled": true,
+    "sidebarMode": "chat",
+    "bypassPermissionsModeEnabled": true,
+    "bypassPermissionsGateByAccount": {
+      "0c81a2be-5bce-4d57-8f66-28042461be11": false
+    },
+    "coworkWebSearchEnabled": true,
+    "coworkModelAutoFallbackByAccount": {
+      "0c81a2be-5bce-4d57-8f66-28042461be11": true
+    },
+    "keepAwakeEnabled": true,
+    "remoteToolsDeviceName": "hexagonmbp-local",
+    "epitaxyPrefs": {
+      "starred-local-code-sessions": [],
+      "starred-cowork-spaces": [],
+      "starred-session-groups": [],
+      "dframe-local-slice": {
+        "pinnedOrder": [],
+        "homeProjectsPinnedOrder": []
+      },
+      "ccd-sessions-filter": {
+        "state": {
+          "selectedProjects": []
+        },
+        "version": 0
+      },
+      "desktop-frame.paneStore.v1": {
+        "state": {
+          "extraPanesByMode": {},
+          "colWeightsByMode": {},
+          "rowSplit": 0.5,
+          "draftNonce": 0,
+          "lastPrimaryCodeSession": null
+        },
+        "version": 4
+      },
+      "dframe-group-scopes": {},
+      "starred-local-routines": [],
+      "dframe-code-sections": {
+        "0c81a2be-5bce-4d57-8f66-28042461be11/36ce6d60-9566-4eb1-9b0f-fb1c2326672d": {
+          "sections": [
+            {
+              "id": "pinned",
+              "kind": "pinned",
+              "v": 2,
+              "name": "",
+              "order": 0,
+              "sortBy": "recency",
+              "ascending": false,
+              "show": {
+                "metadata": false,
+                "emptyGroups": false,
+                "sideChats": false
+              },
+              "collapsed": false,
+              "shown": true
+            },
+            {
+              "id": "routines",
+              "kind": "routines",
+              "v": 2,
+              "name": "",
+              "order": 1,
+              "sortBy": "recency",
+              "ascending": false,
+              "show": {
+                "metadata": false,
+                "emptyGroups": false,
+                "sideChats": false
+              },
+              "collapsed": true,
+              "shown": false
+            },
+            {
+              "id": "sessions",
+              "kind": "sessions",
+              "v": 2,
+              "name": "",
+              "order": 2,
+              "sortBy": "recency",
+              "ascending": false,
+              "show": {
+                "metadata": false,
+                "emptyGroups": false,
+                "sideChats": false
+              },
+              "collapsed": false,
+              "shown": true
+            }
+          ],
+          "migratedFrom": 1,
+          "prefsSeeded": true
+        }
+      }
+    },
+    "coworkHasBoundRoutine": {
+      "36ce6d60-9566-4eb1-9b0f-fb1c2326672d": true
+    }
+  }
+}
