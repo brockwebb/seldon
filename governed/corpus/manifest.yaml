@@ -3365,3 +3365,43 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_17_desk_003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_result
+    verification_method: "local governed file, sha256 96853262cff4b83b, 1,376 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: DESK-003 RESULT
+    source_url: cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_RESULT.md
+    local_path: "../cc_tasks/2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "96853262cff4b83bf418368d0c90cb78b1bb7396dfd28d417c0d237e9a2c51b1"
+    bytes: 1376
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: handoffs_2026_10_17_desktop_sq8_friction_class_ad038_work_order
+    verification_method: "local governed file, sha256 6652b8e36da73621, 22,140 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-10-17_desktop_sq8_friction_class_ad038_work_order.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17. || PRIOR NOTE, PRESERVED: ADMITTED under criterion local_file_present: the governed file ../handoffs/2026-10-17_desktop_sq8_friction_class_ad038_work_order.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'Handoff: 2026-10-17 desktop sq8 friction class ad038 work order'
+    source_url: handoffs/2026-10-17_desktop_sq8_friction_class_ad038_work_order.md
+    local_path: "../handoffs/2026-10-17_desktop_sq8_friction_class_ad038_work_order.md"
+    doc_kind: handoff
+    provenance_flag: local_authored
+    sha256: "6652b8e36da73621bca0a6dfba0f635f6cf2659e7d855f3f87cf7c50f634fecc"
+    bytes: 22324
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
