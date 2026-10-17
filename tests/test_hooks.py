@@ -341,7 +341,7 @@ def _hold_label(repo, label="AD-099-R1"):
     u = dr.universe(d, repo["config"])
     dr.create(u, "accept", {
         "id": f"t:{label}", "kind": "decision", "statement": "The kit shall store nothing.",
-        "source": {"path": HOLDER, "lines": [3, 3], "sha256": "0" * 64,
+        "source": {"path": HOLDER, "lines": [3, 3],
                    "text": f"- **{label}.** The kit stores nothing."},
         "scope": ["t"], "rationale": {"path": HOLDER, "anchor": label}, "review_only": "none"},
         date="2026-10-11", decided_by="cc:test")

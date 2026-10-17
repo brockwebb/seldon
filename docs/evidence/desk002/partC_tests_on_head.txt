@@ -1,0 +1,31 @@
+E   seldon.core.decisions.RegisterError: fields ['source'] are fixed at creation; amendable: ['statement', 'statement_check', 'kind', 'mirrors', 'scope', 'scope_note', 'consumer', 'review_only', 'rationale']
+E   AssertionError: Regex pattern did not match.
+E   seldon.core.decisions.RegisterError: refused accept squiddy:R-1: squiddy:R-1.source: Source requires sha256
+E   AssertionError: Regex pattern did not match.
+E   seldon.core.decisions.RegisterError: fields ['source'] are fixed at creation; amendable: ['statement', 'statement_check', 'kind', 'mirrors', 'scope', 'scope_note', 'consumer', 'review_only', 'rationale']
+E   seldon.core.decisions.RegisterError: fields ['source'] are fixed at creation; amendable: ['statement', 'statement_check', 'kind', 'mirrors', 'scope', 'scope_note', 'consumer', 'review_only', 'rationale']
+E   AssertionError: Regex pattern did not match.
+E   Failed: DID NOT RAISE <class 'seldon.core.decisions.RegisterError'>
+E   seldon.core.decisions.RegisterError: refused accept squiddy:R-1: squiddy:R-1.source: Source requires sha256
+E   seldon.core.decisions.RegisterError: refused propose squiddy:R-1: squiddy:R-1.source: Source requires sha256
+E   seldon.core.decisions.RegisterError: refused accept squiddy:R-1: squiddy:R-1.source: Source requires sha256
+E   AssertionError: Regex pattern did not match.
+E   seldon.core.decisions.RegisterError: fields ['source'] are fixed at creation; amendable: ['statement', 'statement_check', 'kind', 'mirrors', 'scope', 'scope_note', 'consumer', 'review_only', 'rationale']
+E   AssertionError: Regex pattern did not match.
+E   seldon.core.decisions.RegisterError: fields ['source'] are fixed at creation; amendable: ['statement', 'statement_check', 'kind', 'mirrors', 'scope', 'scope_note', 'consumer', 'review_only', 'rationale']
+E   AssertionError: Regex pattern did not match.
+PASSED tests/test_desk002_register_source_hash.py::test_amend_of_any_other_source_field_still_refuses[path-docs/design/other.md]
+PASSED tests/test_desk002_register_source_hash.py::test_accept_with_the_true_digest_passes
+PASSED tests/test_desk002_register_source_hash.py::test_amend_of_any_other_source_field_still_refuses[text-A different ruling.]
+PASSED tests/test_desk002_register_source_hash.py::test_amend_of_any_other_source_field_still_refuses[lines-value1]
+FAILED tests/test_desk002_register_source_hash.py::test_amend_of_the_digest_refuses_when_the_text_no_longer_matches_the_file
+FAILED tests/test_desk002_register_source_hash.py::test_accept_whose_source_names_no_file_refuses
+FAILED tests/test_desk002_register_source_hash.py::test_amend_to_the_files_true_digest_succeeds
+FAILED tests/test_desk002_register_source_hash.py::test_amend_to_any_other_digest_refuses[]
+FAILED tests/test_desk002_register_source_hash.py::test_accept_with_a_wrong_digest_refuses_naming_both_values
+FAILED tests/test_desk002_register_source_hash.py::test_accept_or_propose_with_no_digest_computes_it_from_the_file[accept]
+FAILED tests/test_desk002_register_source_hash.py::test_accept_or_propose_with_no_digest_computes_it_from_the_file[propose]
+FAILED tests/test_desk002_register_source_hash.py::test_accept_whose_text_is_not_the_file_at_its_lines_refuses
+FAILED tests/test_desk002_register_source_hash.py::test_amend_to_any_other_digest_refuses[6b2045ebee75]
+FAILED tests/test_desk002_register_source_hash.py::test_amend_to_any_other_digest_refuses[0000000000000000000000000000000000000000000000000000000000000000]
+10 failed, 4 passed in 3.93s

@@ -85,14 +85,23 @@ def _u(root: Path) -> dr.Universe:
 def _record(repo: str, local: str, text: str, **extra) -> dict:
     rec = {
         "id": f"{repo}:{local}", "kind": "decision", "statement": text,
+        # The note's own span; `sha256` is computed from the file by the write path (DESK-002 Part C).
         "source": {"path": "docs/design/2026-09-01_DN-001_first.md", "lines": [3, 5],
-                   "sha256": "0" * 64, "text": text},
+                   "text": "## R-1 A kit, not a system\n\nThe kit never stores content."},
         "scope": [repo],
         "rationale": {"path": "docs/design/2026-09-01_DN-001_first.md", "anchor": local},
         "review_only": "none",
     }
     rec.update(extra)
     return rec
+
+
+def _source(root: Path, local: str, text: str) -> dict:
+    """A source file whose only text is `text`, for a test that reads a record's own sentence (the probe)."""
+    rel = f"docs/sources/{local}.md"
+    (root / rel).parent.mkdir(parents=True, exist_ok=True)
+    (root / rel).write_text(text + "\n", encoding="utf-8")
+    return {"path": rel, "lines": [1, len(text.splitlines())], "text": text}
 
 
 def _accept(u: dr.Universe, repo: str, local: str, text: str, **extra) -> list[Path]:
@@ -473,8 +482,9 @@ def _findings(path: Path, rows: list[dict]) -> Path:
 def test_planted_silent_supersession_is_caught_by_the_probe(tmp_path):
     root = _repo(tmp_path, "squiddy")
     u = _u(root)
-    _accept(u, "squiddy", "R-1", "The multiple stays a reported number.")
-    _accept(u, "squiddy", "R-2", "The control chart of R-1 is withdrawn.")
+    for local, text in (("R-1", "The multiple stays a reported number."),
+                        ("R-2", "The control chart of R-1 is withdrawn.")):
+        _accept(u, "squiddy", local, text, source=_source(root, local, text))
     rep = dr.conflicts_probe(_u(root), None, None)
     assert [(p["record"], p["cites"]) for p in rep.unrecorded_pairs] == [("squiddy:R-2", "squiddy:R-1")]
     assert not rep.clean
