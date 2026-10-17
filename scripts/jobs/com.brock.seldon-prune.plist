@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  seldon-prune: the weekly prune of open artifacts (PRUNE-001), Sunday 03:30 local.
+  Runs scripts/jobs/seldon_prune.sh, which runs `seldon prune run` over seldon.yaml
+  `prune.repositories` and logs to logs/seldon_prune.log.
+
+  RunAtLoad false: loading the job must not fire a pass (seldon-dispatch's reason).
+
+  Installed by SYMLINK, never a copy, so the installed job and this tracked file are one set of bytes:
+    ln -s /Users/brock/GitHub/seldon/scripts/jobs/com.brock.seldon-prune.plist \
+          ~/Library/LaunchAgents/com.brock.seldon-prune.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.brock.seldon-prune.plist
+  A pass by hand: launchctl kickstart gui/$(id -u)/com.brock.seldon-prune
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.brock.seldon-prune</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/brock/GitHub/seldon/scripts/jobs/seldon_prune.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>WorkingDirectory</key>
+    <string>/Users/brock/GitHub/seldon</string>
+</dict>
+</plist>

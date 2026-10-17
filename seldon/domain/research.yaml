@@ -240,6 +240,14 @@ artifact_types:
         # `snapshot` — conditionally-set operator input, not authored prose.
         category: system
         description: "Why the task was withdrawn or superseded. Required by `seldon task withdraw` / `seldon task supersede`; absent on tasks that reached a terminal state before AD-028. See AD-028."
+      redated_at:
+        # `system` for the same reason as terminal_reason: set only on a FUTURE proposal the
+        # weekly prune kept, absent everywhere else.
+        category: system
+        description: "When the weekly prune (PRUNE-001, `seldon prune`) last kept this FUTURE proposal alive. The prune's 60-day clock runs from here, else from created_at."
+      redate_reason:
+        category: system
+        description: "One line: why the prune kept this FUTURE proposal (its trigger is still plausible, or an open task points at it)."
       claimed_by:
         category: system
         description: "Agent identifier that took the task in_progress ('desktop', 'cc', or a caller-supplied id). Set on the accepted -> in_progress transition. See AD-028."

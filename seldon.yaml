@@ -238,6 +238,42 @@ jobs:
     log_max_line_chars: 2000
     log_max_run_bytes: 2097152
     log_retention_days: 30
+  # PRUNE-001's weekly lane (scripts/jobs/seldon_prune.sh), the same caps and reasons as above.
+  prune:
+    log_max_line_chars: 2000
+    log_max_run_bytes: 2097152
+    log_retention_days: 30
+
+# PRUNE-001: the weekly prune (`seldon prune run`, seldon/core/prune.py; launchd Sunday 03:30 local,
+# scripts/jobs/com.brock.seldon-prune.plist). It resolves Issues that say they are fixed, and re-dates or
+# withdraws stale FUTURE proposals. It never deletes. Every key is required; the code has no defaults.
+prune:
+  # The four graphs the task names. Relative paths resolve against this repository's root.
+  repositories: [., ../squiddy, ../arnold, ../ai-readiness-kg]
+  # The branch a fix commit must be on, and the branch whose head at filing time is the reason recorded
+  # for an Issue that says FIXED. Every one of the four repositories works on main.
+  branch: main
+  # The task's number (PRUNE-001 Part A step 2): a FUTURE proposal untouched this long is re-dated or withdrawn.
+  stale_days: 60
+  withdraw_reason: "stale {days} days, no trigger seen"
+  # The task's four words. Matched whole-word, any case, in the first `lead_chars` characters of the description,
+  # where these records state their status ("S-008 defect 1, FIXED with its test ..."). 120 characters holds every
+  # status lead among the 77 open Issues read on 2026-10-17 (the longest, "K-001 defect 11, FIXED in", ends at 25)
+  # and excludes the deeper sub-finding markers ("R-23's PROVENANCE DEFECT, CLOSED" at about 900 in 8e888b61).
+  fixed_markers: [fixed, resolved, closed, superseded]
+  lead_chars: 120
+  # The first marker in the lead decides. With one of these words in the `negation_window_words` words before it,
+  # it is not a claim: "NOT FIXED", "MEASURED not fixed" (both present on 2026-10-17). A later marker never
+  # overrides a negated first one: "HV-002 finding 2, NOT FIXED ... attach a RESOLVED CANDIDATE" stays open.
+  negations: [not, never, nor, unfixed, unresolved]
+  negation_window_words: 3
+  # "fixed in <sha>": the verbs that make a commit id a fix claim. A bare commit id names where a defect was seen
+  # far more often than what fixed it, so it is never enough on its own.
+  fix_verbs: [in, by, at]
+  # DN-042 R-178: the lane's declared tokens and its stop band (+20 percent). The sweep makes zero model calls
+  # (task stop condition), so the cap is 0: any token charged stops the lane.
+  token_cap: 0
+  token_stop_factor: 1.2
 
 # AD-037-R1 (QC-001 Part E): `seldon cc register` refuses a task whose acceptance criteria are not each marked
 # `check: <command>` or `judgment: <why no program decides it>`. Tasks registered before QC-001's merge are baseline.
