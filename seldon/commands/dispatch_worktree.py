@@ -100,18 +100,20 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         running = _reap_stale(project_dir, driver, database, domain_config, session_id, cfg,
                               running)
     inplace_claim = inplace[0] if inplace else None
+    done = None
     if inplace_claim is None and not dry_run:
-        S._record_own_lines(project_dir, config, cfg)
+        # AD-038-R1: the serial pass's reconcile, before the shared files and before the tree is read.
+        done = S._reconcile(project_dir, config, cfg, driver, database)
         _commit_shared(project_dir, cfg)
     exclude = cfg["shared_paths"]
     tree = D.tree_state(project_dir, exclude)
-    tasks = S._tasks(driver, database, include_future=True)
-    if S._commit_registered(project_dir, config, cfg, tasks, tree, inplace_claim, dry_run):
-        tree = D.tree_state(project_dir, exclude)
     if cfg.get("cadence"):
         S._cadence(project_dir, config, driver, database, domain_config, session_id, cfg, tree,
                    inplace_claim, dry_run)
         tree = D.tree_state(project_dir, exclude)
+    if tree["dirty"]:
+        tree["unreconciled"] = [u for u in S._unreconciled(project_dir, config, driver, database, done)
+                                if u["path"] not in set(exclude)]
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     ids = [r["task_id"] for r in running]
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,

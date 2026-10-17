@@ -699,8 +699,8 @@ def _git_out(root: Path, *args: str) -> subprocess.CompletedProcess:
 def append_state(project_dir: Path, paths: Iterable[Path]) -> dict:
     """`{path: True}` for each path whose working copy differs from HEAD (or that is untracked and present) BEFORE a
     run writes to it. A run commits only the files it found clean: lines already waiting in a file are someone
-    else's, and a commit made by this run must contain only this run's lines (the rule `own_appended_lines` keeps for
-    the event store)."""
+    else's, and a commit made by this run must contain only this run's lines (the rule the event store's per-tool
+    commits keep)."""
     out = {}
     for p in paths:
         p = Path(p)

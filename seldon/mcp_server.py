@@ -127,8 +127,7 @@ MCP_ACTOR = "desktop"
 # rule for every write to the journal, and this is it applied to the rest of them.
 #
 # **Deferred while a lease is held**, never forced: see `commit_journal_append`. What the tool
-# could not commit, the next dispatcher pass commits, which is why `desktop` joined
-# `dispatcher` in `COMMITTABLE_ACTORS`.
+# could not commit, the next dispatcher pass reconciles, whoever wrote it (AD-038-R1).
 
 
 def _project_path(project_dir: str) -> str:

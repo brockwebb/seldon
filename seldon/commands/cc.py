@@ -664,7 +664,7 @@ def _commit_registration_lines(project_dir: Path, config: dict, rel_path: str, t
     **The defect (Issue 70bf1a21, measured in `docs/evidence/desk002/registration_event_lines.md`).**
     Registration appends `artifact_created` (its actor) and one `link_created` per constraining ruling
     (actor `governed_sync`) to the TRACKED store, and committed none of them. The dispatcher's record step
-    commits only `dispatch.COMMITTABLE_ACTORS`, and its registration sweep only an `artifact_created` with a
+    committed only `dispatch.COMMITTABLE_ACTORS` (retired by AD-038-R1), and its registration sweep only an `artifact_created` with a
     `source_commit`, i.e. only when registration had committed the task file. So a task file committed
     first (by `seldon_commit_governed`) left `governed_sync` lines that no one would commit, and c7 refused
     every task (squiddy SQ-016R, 2026-10-16).
