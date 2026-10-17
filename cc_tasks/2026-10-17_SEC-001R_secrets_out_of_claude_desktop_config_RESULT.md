@@ -1,6 +1,7 @@
 # RESULT: SEC-001R. Part B done. Part A built but NOT applied: auto mode blocked both writes (operator action needed)
 
 **Status:** Part A's acceptance check fails. The Desktop config is unchanged and still holds every inline secret. Part B passes: `pytest tests/test_sec001_launcher.py -q` gives 10 passed, and the rewriter tests give 4 more. No addenda existed.
+**Full suite:** 2635 passed, 7 skipped, EXIT 0 (worktree PYTHONPATH, `.env` loaded).
 **Blocked:** the auto-mode classifier denied (1) writing secret values into `.env` files ("Secret-Store Writes") and (2) rewriting `claude_desktop_config.json` ("Modify Shared Resources"). I made no further attempts.
 **Departure from the spec:** `scripts/mcp_launch.sh` parses dotenv format instead of running `set -a; . .env`. The shared Neo4j password contains an unquoted `'`. Sourcing it exits 0 with `NEO4J_PASSWORD` unset (verified on seldon's and arnold's `.env`). The launcher matches python-dotenv on all four real `.env` files. A key already in the environment wins (python-dotenv `override=False`). `--only` limits which keys are exported and fails loud if one is missing. `${}` and backslash escapes are refused.
 **Servers ready to switch** (secret already in the target `.env`, same value): census-mcp (CENSUS_API_KEY to census-mcp-server); neo4j-mcp and arnold-profile/training/memory/journal (NEO4J_PASSWORD to arnold); seldon-mcp, neo4j-pragmatics and neo4j-quarry (NEO4J_PASSWORD to seldon; seldon's `.env` holds only Neo4j credentials).
