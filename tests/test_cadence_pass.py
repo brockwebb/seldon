@@ -90,7 +90,7 @@ def project(tmp_path):
     _git(p, "config", "user.name", "t")
     # The event store is TRACKED here, as it is in the real project: the cadence's commit has
     # to carry the `cadence_created` line, and a fixture that ignored it would not show that.
-    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
     (p / "controls.yaml").write_text(
         yaml.safe_dump({"spend": {"daily_tokens": 55_000_000}}), encoding="utf-8")
     (p / "seldon_events.jsonl").write_text("", encoding="utf-8")

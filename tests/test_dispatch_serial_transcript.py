@@ -59,7 +59,7 @@ runs: every task runs in `.claude/worktrees/<stem>` on branch `worktree-<stem>`,
 and per-launch `--settings` hooks, and finishes through AD-034-R5/R6's merge. Each launch's criteria vector gains
 c11; `dispatch_launched` gains `mode`, `worktree`, `branch` and its command those flags; the finish lines are the
 worktree finish's (`session exit=...`, `merged ...`, `sweep: removed ...`, `undeclared writes ...`), and
-`dispatch_finished` carries `outcome`, `classifier_blocks` and the worktree fields; a merged task adds
+`dispatch_finished` carries `outcome`, `classifier_blocks`, `stop_gate` and the worktree fields; a merged task adds
 `worktree_removed` and a failed one `worktree_kept`; main's log gains the merged session commit. HEX tokens renumber
 accordingly. Re-recorded twice on the FRICTION-002 code (byte-identical). The four scenarios and their outcomes (one
 green launch completed, one failing launch blocked, the dirty-tree refusal, the held-lease refusal) are unchanged.
