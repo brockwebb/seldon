@@ -5,6 +5,12 @@ boundary; the dispatcher runs that Part's `check:` criteria, computes CPI (earne
 
 The three plants are the three tests named `test_plant_*`; each fails on the HEAD before QC-002
 (docs/evidence/qc002/plants_fail_on_head.txt).
+
+**Erratum, FRICTION-002 Part C (2026-10-17).** The station runs no check of its own. The session's Stop hook
+(`seldon dispatch stop-gate`) runs the declared Parts' checks when the session tries to end and records `stop_gate`;
+the milestone answers a `part_complete` from that record (`_stop_gate` below stands in for the hook). A failed check
+is a recorded defect and NOT a line stop: the hook refuses the session's end until the check passes or the token
+ceiling is reached (tests/test_friction002_stop_hook_gate.py). The first plant is re-pointed accordingly.
 """
 from __future__ import annotations
 
@@ -26,7 +32,17 @@ def _inspect(p, **kw):
     return S.inspect(p, F.TASK_ID, F.events(p), scfg, 300, F.emitter(p), **kw)
 
 
-def test_plant_a_failing_check_at_a_part_boundary_stops_the_session(tmp_path, monkeypatch):
+def _stop_gate(p):
+    """What the session's Stop hook records: the declared Parts' checks, run in the session's tree."""
+    from seldon.core import stations as S
+    events = F.events(p)
+    scfg = S.load_stations_config(F.config(p)["dispatch"])
+    out = S.stop_gate(p, S.last_launch(events, F.TASK_ID), events, scfg, p, None)
+    F.record(p, S.EVENT_STOP_GATE, out["record"], actor="cc")
+    return out
+
+
+def test_plant_a_failing_check_at_a_part_boundary_is_a_defect_the_gate_holds(tmp_path, monkeypatch):
     p = F.make_project(tmp_path, check_a=F.FAIL)
     F.launch(p, at=F.ago(60))
     F.write_log(p, 400_000)
@@ -38,18 +54,18 @@ def test_plant_a_failing_check_at_a_part_boundary_stops_the_session(tmp_path, mo
     (pc,) = F.events(p, S.EVENT_PART_COMPLETE)
     assert pc["payload"]["tokens"] == 400_000 and pc["payload"]["planned_share"] == 0.5
 
+    assert _inspect(p)["milestones"] == [], "no milestone until the Stop hook has run the Part's checks"
+    gate = _stop_gate(p)
+    assert gate["block"] is True, "the hook refuses the session's end"
     out = _inspect(p)
     (m,) = F.events(p, S.EVENT_MILESTONE)
     assert m["payload"]["defect"] is True and m["payload"]["checks"][0]["outcome"] == "fail"
-    (stop,) = F.events(p, S.EVENT_SESSION_STOP)
-    assert stop["payload"]["station"] == "milestone" and stop["payload"]["kind"] == "line"
-    assert out["reap"] is None, "a line stop is never reaped"
+    assert m["payload"]["checks_source"] == "stop_gate"
+    assert F.events(p, S.EVENT_SESSION_STOP) == [] and out["reap"] is None
 
-    # The session halts at its next boundary, and says so on the record before it ends.
+    # No stop is written, so the session's next boundary continues: it is still working on the failed check.
     r = CliRunner().invoke(main, ["dispatch", "boundary"])
-    assert r.exit_code == S.HALT_EXIT, r.output
-    (halted,) = F.events(p, S.EVENT_ANDON_HALTED)
-    assert halted["payload"]["stop_event_id"] == stop["event_id"]
+    assert r.exit_code == 0, r.output
 
 
 def test_plant_cpi_below_the_line_opens_a_huddle_and_does_not_stop(tmp_path, monkeypatch):
@@ -62,6 +78,7 @@ def test_plant_cpi_below_the_line_opens_a_huddle_and_does_not_stop(tmp_path, mon
     r = CliRunner().invoke(main, ["dispatch", "part-complete", "--part", "A"])
     assert r.exit_code == 0, r.output
     from seldon.core import stations as S
+    _stop_gate(p)
     _inspect(p)
     (m,) = F.events(p, S.EVENT_MILESTONE)
     assert m["payload"]["cpi"] == pytest.approx(0.625) and m["payload"]["defect"] is False
@@ -104,8 +121,10 @@ def test_cpi_is_earned_over_actual_and_each_part_is_answered_once(tmp_path):
     p = F.make_project(tmp_path)
     F.launch(p, at=F.ago(60))
     F.record(p, S.EVENT_PART_COMPLETE, {"part": "A", "planned_share": 0.5, "tokens": 400_000})
+    _stop_gate(p)
     _inspect(p)
     F.record(p, S.EVENT_PART_COMPLETE, {"part": "B", "planned_share": 0.5, "tokens": 900_000})
+    _stop_gate(p)
     _inspect(p)
     _inspect(p)        # idempotent: a second inspector answers nothing twice
     ms = F.events(p, S.EVENT_MILESTONE)
@@ -122,6 +141,7 @@ def test_an_unrunnable_check_opens_a_huddle_and_is_not_a_pass(tmp_path):
     p = F.make_project(tmp_path, check_a="no-such-command-qc002 --x")
     F.launch(p, at=F.ago(60))
     F.record(p, S.EVENT_PART_COMPLETE, {"part": "A", "planned_share": 0.5, "tokens": 100_000})
+    assert _stop_gate(p)["block"] is False, "an unrunnable check never holds a session"
     _inspect(p)
     (m,) = F.events(p, S.EVENT_MILESTONE)
     assert m["payload"]["checks"][0]["outcome"] == "unrunnable" and m["payload"]["defect"] is False

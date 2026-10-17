@@ -61,7 +61,7 @@ def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
     git(p, "init", "-q", "-b", "main")
     git(p, "config", "user.email", "t@t")
     git(p, "config", "user.name", "t")
-    ignore = [".seldon/", "logs/", "bin/", ".worktrees/"]
+    ignore = [".seldon/", "logs/", "bin/", ".worktrees/", ".claude/"]
     if not track_store:
         ignore.append("seldon_events.jsonl")
     (p / ".gitignore").write_text("\n".join(ignore) + "\n", encoding="utf-8")
@@ -136,9 +136,14 @@ sys.stdout.reconfigure(line_buffering=True)  # a test may wait on a line of this
 prompt = sys.argv[sys.argv.index("-p") + 1]
 stem = re.search(r"cc_tasks/([A-Za-z0-9_.-]+)\\.md", prompt).group(1)
 spec = json.loads(Path({spec!r}).read_text()).get(stem, {{}})
+if "--worktree" in sys.argv:
+    # As the CLI does (FRICTION-002): enter `<repo>/.claude/worktrees/<name>`, which the dispatcher has cut.
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
+                         check=True).stdout.strip()
+    os.chdir(Path(top) / ".claude" / "worktrees" / sys.argv[sys.argv.index("--worktree") + 1])
 cwd = Path.cwd()
 print("stub cc:", " ".join(sys.argv[1:]))
-print("stub cwd:", "worktree" if ".worktrees" in str(cwd) else "primary")
+print("stub cwd:", "worktree" if "/worktrees/" in str(cwd) else "primary")
 def mark(what):
     if spec.get("mark"):
         with open(spec["mark"], "a") as fh:
@@ -187,6 +192,23 @@ if spec.get("commit", True) and spec.get("result", True):
     subprocess.run(["git", "add", "--", *paths], check=True)
     subprocess.run(["git", "commit", "-q", "-m", f"{{stem}}: result", "--", *paths],
                    check=True)
+for n in range(spec.get("classifier_blocks", 0)):
+    # FRICTION-002 Part D: the CLI runs the launch's PermissionDenied hook after each classifier denial.
+    hooks = json.loads(sys.argv[sys.argv.index("--settings") + 1])["hooks"]["PermissionDenied"]
+    subprocess.run(hooks[0]["hooks"][0]["command"], shell=True, check=True, input=json.dumps(
+        {{"hook_event_name": "PermissionDenied", "tool_name": "Bash", "tool_use_id": f"tu{{n}}",
+         "tool_input": {{"command": "git push --force"}}, "reason": f"blocked {{n}}"}}), text=True)
+for part in spec.get("part_complete") or []:
+    subprocess.run([sys.executable, "-m", "seldon", "dispatch", "part-complete", "--part", part], check=True)
+if spec.get("stop_hook"):
+    # As the CLI does when the session tries to end (FRICTION-002 Part C): run the launch's Stop hook.
+    hooks = json.loads(sys.argv[sys.argv.index("--settings") + 1])["hooks"]["Stop"]
+    r = subprocess.run(hooks[0]["hooks"][0]["command"], shell=True, check=True, capture_output=True, text=True,
+                       input=json.dumps({{"hook_event_name": "Stop", "cwd": str(Path.cwd()),
+                                         "stop_hook_active": False}}))
+    print("stub stop hook:", r.stdout.strip() or "(allowed)")
+if spec.get("print"):
+    print(spec["print"])
 mark("end")
 # AD-035 R6: the CLI's stream ends in a result object whose `modelUsage` names the served model.
 # The stub serves what `--model` asked for, unless the spec plants a substitution.

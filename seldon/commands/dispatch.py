@@ -32,6 +32,7 @@ import json
 import os
 import shlex
 import subprocess
+import sys
 import time
 import uuid
 from datetime import datetime, timezone
@@ -46,6 +47,8 @@ from seldon.config import (
 from seldon.core import cadence as C
 from seldon.core import qc
 from seldon.core import dispatch as D
+from seldon.core import stations as QS
+from seldon.core import worktree as WT
 from seldon.core.artifacts import transition_task
 from seldon.core.events import append_event, make_event
 from seldon.core.moving import is_future
@@ -403,9 +406,8 @@ def dispatch_status(as_json):
                + (f" (released {lease_body['released_at']})"
                   if not held and (lease_body or {}).get("released_at") else ""))
     click.echo(f"  claim        : {claim['artifact_id'][:8] + ' by ' + claim['claimed_by'] if claim else 'none'}")
-    if cfg["max_parallel"] > 1:
-        click.echo(f"  max_parallel : {cfg['max_parallel']}  (worktrees under "
-                   f"{cfg['worktree_dir']}/, gate: {cfg['gate_command']})")
+    click.echo(f"  max_parallel : {cfg['max_parallel']}  (every task in a worktree under "
+               f"{D.CLI_WORKTREE_DIR}/, gate: {cfg['gate_command']})")
     for wl in payload["worktree_leases"]:
         b = wl["body"]
         held = (f"{b.get('holder')} ({'alive' if wl['alive'] else 'GONE — `seldon dispatch '}"
@@ -875,6 +877,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # checkout. Before the cadence too: it gates creation on a clean tree.
     done = None
     if claim is None and not dry_run:
+        # FRICTION-002 Part B: a merged task's worktree is removed (its branch kept), before the reconcile so
+        # the `worktree_removed` lines are committed in this pass.
+        from seldon.commands import dispatch_worktree as W
+        W.sweep(project_dir, session_id)
         # AD-038-R2: a task blocked by one of the dispatcher's own recorded defects goes back on the
         # queue by itself, before the reconcile so its lines are committed in this pass.
         _auto_redrive(project_dir, driver, database, domain_config, session_id)
@@ -961,18 +967,33 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
 
 def _launch_inplace(project_dir, config, driver, database, domain_config, session_id, cfg,
                     lease, chosen):
-    """Claim, launch in the project root, wait, finish: DN-006 decisions 4 and 5.
+    """Claim, cut the task's worktree, launch the CLI into it, wait, merge on green: DN-006 decisions 4 and 5
+    with AD-034-R5/R6's finish, under the pass lease held for the whole run.
 
-    The whole of a serial pass's launch, and, under `max_parallel > 1`, the launch of an
-    EXCLUSIVE task, which runs alone in the primary checkout with the pass lease held for its
-    whole run, exactly as every task ran before SEL-004 (AD-034).
+    FRICTION-002 Part B (AD-034 ADDENDUM 01): every task runs in its own worktree,
+    `.claude/worktrees/<stem>` on branch `worktree-<stem>`, cut here from main's HEAD (after the claim's records
+    are committed) with `dispatch.worktree_links` linked in, and entered by the CLI's `--worktree <stem>`, which
+    turns on its hard isolation: Edit/Write and git aimed at the primary checkout are refused. The primary is then
+    touched only by the dispatcher's own commits, merges on green and Desktop's governed commits. The name says
+    where the session's LEASE is held (in place, by this pass, for the whole run), not where it works; the
+    parallel mode's exclusive tasks use it too.
+
+    The finish is the worktree supervisor's (`dispatch_worktree.finish_session`): a session that exited 0 with its
+    RESULT committed on its branch, on the requested model, is rebased, checked and fast-forwarded into main and
+    then completed by the dispatcher; anything else is blocked and its worktree and branch are kept, with a
+    `worktree_kept` record. This pass already holds the pass lease, so the finish takes no second one.
     """
+    from contextlib import nullcontext
+    from seldon.commands import dispatch_worktree as W
     rel = chosen["source_file"]
     stem = Path(rel).stem
+    wt_rel, branch = chosen["criteria"]["c11"]["worktree"], chosen["criteria"]["c11"]["branch"]
+    wt = project_dir / wt_rel
     log_dir = project_dir / cfg["log_dir"]
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{stem}.log"
-    prompt = DISPATCH_LINE.format(rel=rel, stem=stem)
+    log_rel = str(log_path.relative_to(project_dir))
+    held = nullcontext
 
     # THE CLAIM, and it is the compare-and-set: a transition that fails launches nothing.
     claimed = _claim(project_dir, driver, database, domain_config, session_id, chosen)
@@ -992,7 +1013,8 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # run keeps the spec it starts with to the end.
     refresh_note = models.ensure_fresh("dispatch")
     spec = _session_spec(project_dir, rel)
-    cmd = _launch_cmd(cfg, prompt, spec)
+    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+                      settings=_session_settings(project_dir, cfg))
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).
     child_session_id = str(uuid.uuid4())
@@ -1002,71 +1024,105 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "claimed_by": claimed["claimed_by"], "transitions": claimed["transitions"],
            "criteria": chosen["criteria"], "framework_layer": chosen["framework_layer"],
            "network_allowlist": chosen["criteria"]["c5"]["network_allowlist"],
-           "log_path": str(log_path.relative_to(project_dir)),
+           "log_path": log_rel,
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
+           "mode": "worktree", "worktree": wt_rel, "branch": branch,
            **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note)})
     # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the
-    # session starts, so it opens on a clean, level tree. Left for the session, they were the
-    # dirt it found on opening and the lines its own final commit had to carry.
+    # worktree is cut, so the task's branch starts from a main that already carries its own claim.
     _record_and_push(project_dir, config, cfg)
-    click.echo(f"launching {chosen['task_id'][:8]} {rel} -> "
-               f"{log_path.relative_to(project_dir)}")
+    base = WT.rev(project_dir, "HEAD")
+    added = WT.add(project_dir, wt, branch, base)
+    finish0 = {"task_id": chosen["task_id"], "source_file": rel, "child_session_id": child_session_id,
+               "exit_code": None, "wall_clock_s": 0, "result_present": False,
+               "result_path": f"cc_tasks/{stem}_RESULT.md", "graph_state_observed": "in_progress",
+               "log_path": log_rel, "mode": "worktree", "worktree": wt_rel, "branch": branch, "base": base}
+    if not added["ok"]:
+        click.echo(f"worktree add failed for {chosen['task_id'][:8]}: {added['stderr']}", err=True)
+        W._finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
+                           {**finish0, "error": added["stderr"]}, chosen.get("name") or stem,
+                           "worktree_add_failed")
+        return
+    linked = WT.link(project_dir, wt, cfg["worktree_links"])
+    extra = {"worktree_task": chosen["task_id"], "stem": stem, "source_file": rel, "worktree": wt_rel,
+             "branch": branch, "base": base, "child_session_id": child_session_id, "linked": linked,
+             "model_spec": spec}
+    click.echo(f"launching {chosen['task_id'][:8]} {rel} in {wt_rel} on {branch} -> {log_rel}")
 
     started = time.monotonic()
     offset = _log_offset(log_path)
+    # The CLI is started in the PRIMARY checkout: `--worktree <stem>` resolves `.claude/worktrees/<stem>` against
+    # the repository it starts in, and enters it.
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
-                extra_env=spec["env"],
+                extra_env=_worktree_env(project_dir, cfg, spec),
                 inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
                 inspect_every_s=cfg["poll_interval_s"],
                 on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig))
     wall = round(time.monotonic() - started, 3)
+    W.finish_session(project_dir, config, driver, database, domain_config, session_id, cfg,
+                     chosen["task_id"], extra, code, wall, log_path, offset, spec,
+                     name=chosen.get("name") or stem, lease_cm=held)
 
-    result_path = project_dir / "cc_tasks" / f"{stem}_RESULT.md"
-    db_failure = None
-    try:
-        graph_state = _state_of(driver, database, chosen["task_id"])
-    except DATABASE_UNAVAILABLE as exc:
-        # AD-038-R2/R6: the session's outcome cannot be read, which is the dispatcher's own condition, not the
-        # session's. Recorded as `database_unavailable`, the reason the automatic redrive answers.
-        graph_state, db_failure = None, f"{type(exc).__name__}: {str(exc).splitlines()[0][:200] if str(exc) else ''}"
-    receipt = _model_receipt(log_path, offset, spec)
-    ok = (code == 0 and result_path.is_file() and graph_state == "completed"
-          and receipt["ok"])
-    finish = {"task_id": chosen["task_id"], "child_session_id": child_session_id,
-              "exit_code": code, "wall_clock_s": wall,
-              "result_present": result_path.is_file(),
-              "result_path": str(result_path.relative_to(project_dir)),
-              "graph_state_observed": graph_state, "ok": ok,
-              "log_path": str(log_path.relative_to(project_dir)),
-              "model_receipt": receipt}
-    if not receipt["ok"]:
-        # AD-035 R6: the session's work is not counted as done on an unverified model.
-        finish["failure"] = models.SUBSTITUTED
-    if db_failure:
-        finish["failure"] = "database_unavailable"
-        finish["database_error"] = db_failure
-    _emit(project_dir, session_id, D.EVENT_FINISHED, finish)
-    if not ok:
-        # Blocked, never retried. The next OODA reads the log and decides; a loop that cannot
-        # see why the last attempt failed cannot decide anything and would spend on each guess.
-        # With the graph unreadable at the finish, the walk is tried from the state the claim left;
-        # a refused walk is reported by `_block`, never raised.
-        _block(project_dir, driver, database, domain_config, session_id, chosen["task_id"],
-               "in_progress" if db_failure else graph_state, code, log_path.relative_to(project_dir))
-        click.echo(f"finished exit={code} result={result_path.is_file()} "
-                   f"graph={graph_state} model={receipt['served']} "
-                   f"(requested {receipt['requested']}) -> blocked", err=True)
-        # After the walk to `blocked`, so what the operator is told is already on the log;
-        # before the commit, so a `dispatch_notify_failed` ships with it.
-        _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
-        _record_and_push(project_dir, config, cfg)
-        return
-    click.echo(f"finished exit=0 in {wall}s; {stem}_RESULT.md present; graph completed")
-    _notify(project_dir, session_id, cfg, finish, chosen.get("name") or stem)
-    _record_and_push(project_dir, config, cfg)
+
+def _worktree_env(project_dir: Path, cfg: dict, spec: dict) -> dict:
+    """What a worktree session's environment adds: the model lock's ids (AD-035 R3), where the primary checkout is
+    (AD-034-R8), and the CLI's Stop-hook block cap (FRICTION-002 Part C)."""
+    return {**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir),
+            STOP_HOOK_BLOCK_CAP_ENV: str(QS.load_stations_config(cfg)["stop_hook_block_cap"])}
+
+
+def _classifier_reading(project_dir: Path, child_session_id: str, log_path: Path, offset: int) -> dict:
+    """FRICTION-002 Part D: how many actions the auto-mode classifier blocked in this launch (its
+    `classifier_block` records), the last block's reason, and whether the CLI's breaker ended the session (its own
+    text in the session's log, from `offset`)."""
+    from seldon.core.events import read_events
+    blocks = [e for e in read_events(project_dir)
+              if e.get("event_type") == QS.EVENT_CLASSIFIER_BLOCK
+              and (e.get("payload") or {}).get("child_session_id") == child_session_id]
+    text = ""
+    if log_path.is_file():
+        with log_path.open("r", encoding="utf-8", errors="replace") as fh:
+            fh.seek(offset)
+            text = fh.read()
+    return {"blocks": len(blocks),
+            "last_reason": (blocks[-1].get("payload") or {}).get("reason") if blocks else None,
+            "breaker": QS.CLASSIFIER_BREAKER_TEXT in text}
+
+
+def _gate_reading(project_dir: Path, task_id: str, child_session_id: str) -> dict:
+    """FRICTION-002 Part C at the finish: did the session's Stop gate pass when it ended?
+
+    `passed` is True when the last `stop_gate` record of this launch says `pass`, or when the session declared no
+    Part and no gate record exists (nothing to gate). It is False when the last verdict is `block` (the CLI's own
+    block cap ended the session over the hook, observed at 9 consecutive refusals on CLI 2.1.302) or `ceiling`, and
+    when the session declared a Part but no gate ran (a hook that never ran is not a pass)."""
+    from seldon.core.events import read_events
+    gates, declared = [], False
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == QS.EVENT_STOP_GATE and p.get("child_session_id") == child_session_id:
+            gates.append(p)
+        elif e.get("event_type") == QS.EVENT_PART_COMPLETE and p.get("task_id") == task_id:
+            declared = True
+    if gates:
+        last = gates[-1]
+        return {"passed": last["verdict"] == "pass", "verdict": last["verdict"], "runs": len(gates),
+                "why": None if last["verdict"] == "pass" else f"{last['verdict']}: {', '.join(last['failed'])}"}
+    if declared:
+        return {"passed": False, "verdict": None, "runs": 0, "why": "Parts declared and no stop gate ran"}
+    return {"passed": True, "verdict": None, "runs": 0, "why": None}
+
+
+def _classifier_stop(project_dir: Path, session_id, task_id: str, reading: dict) -> None:
+    """FRICTION-002 Part D: the CLI's breaker (3 consecutive or 20 total blocks) aborted a headless session. That is a
+    `line` stop with the classifier's reason, answered by a redrive from the operator or Desktop (AD-038-R2), never
+    by the dispatcher's automatic redrive."""
+    _emit(project_dir, session_id, QS.EVENT_SESSION_STOP,
+          {"task_id": task_id, "station": "classifier", "kind": "line", "reason": "classifier_breaker",
+           "classifier_reason": reading["last_reason"], "blocks": reading["blocks"], "by": "dispatcher"})
 
 
 #: How many dirty paths a refusal line and a stuck alarm name. Ten is ADDENDUM_01's own
@@ -1348,7 +1404,36 @@ def _session_spec(project_dir: Path, rel: str) -> dict:
 MODEL_ROLE_DEFAULT = "primary"
 
 
-def _launch_cmd(cfg: dict, prompt: str, spec: dict) -> list:
+#: The CLI's limit on how many times a Stop hook may refuse the end of a session (FRICTION-002 Part C).
+STOP_HOOK_BLOCK_CAP_ENV = "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP"
+
+
+def _session_settings(project_dir: Path, cfg: dict) -> dict:
+    """The per-launch `--settings` every dispatched session gets (FRICTION-002), merged under the model lock's.
+
+    * `worktree.baseRef: head`: the CLI enters the worktree the dispatcher cut from main's HEAD (which carries the
+      task's own claim) and never branches from `origin/<default>` instead (the CLI's default, `fresh`).
+    * a `Stop` hook, `seldon dispatch stop-gate` (Part C): the completion gate.
+    * a `PermissionDenied` hook, `seldon dispatch classifier-denied` (Part D): one record per classifier block.
+
+    Each hook runs `python -P -m seldon`: `-P` keeps the session's worktree (the hook's cwd) off `sys.path`, so the
+    gate is the dispatcher's installed code and never the branch the session is editing.
+    """
+    scfg = QS.load_stations_config(cfg)
+
+    def hook(sub: str, timeout: int | None = None) -> dict:
+        h = {"type": "command", "command": " ".join(shlex.quote(a) for a in (
+            sys.executable, "-P", "-m", "seldon", "dispatch", sub, "--project", str(Path(project_dir).resolve())))}
+        if timeout:
+            h["timeout"] = timeout
+        return h
+    return {"worktree": {"baseRef": "head"},
+            "hooks": {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
+                      "PermissionDenied": [{"hooks": [hook("classifier-denied")]}]}}
+
+
+def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
+                settings: dict | None = None) -> list:
     """The lock's CLI, `-p "<the dispatch line>"`, the permission mode, and the model block.
 
     The prompt is the protocol's own sentence. The permission mode comes from `seldon.yaml`
@@ -1359,10 +1444,19 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict) -> list:
     this project's config: `dispatch.cli` and `dispatch.model` are refused at load.
     """
     cmd = [spec["cli_path"], "-p", prompt, *SESSION_OUTPUT_ARGS]
+    if worktree:
+        # FRICTION-002 Part B: the CLI enters `.claude/worktrees/<worktree>` (cut by the dispatcher) and its hard
+        # isolation refuses Edit/Write and git aimed at the primary checkout.
+        cmd += ["--worktree", worktree]
     mode = cfg["permission_mode"]
     if mode:
         cmd += ["--permission-mode", mode]
-    return cmd + list(spec["args"])
+    args = list(spec["args"])
+    if settings:
+        # One `--settings`: the lock's own keys (AD-035 R6) merged over this launch's.
+        i = args.index("--settings")
+        args[i + 1] = models.settings_json({**settings, **json.loads(args[i + 1])})
+    return cmd + args
 
 
 def _model_receipt(log_path: Path, offset: int, spec: dict) -> dict:

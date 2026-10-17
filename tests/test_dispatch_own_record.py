@@ -94,7 +94,7 @@ def project(tmp_path):
     _git(p, "init", "-b", "main")
     _git(p, "config", "user.email", "t@t")
     _git(p, "config", "user.name", "t")
-    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
     (p / "controls.yaml").write_text(
         yaml.safe_dump({"spend": {"daily_tokens": 55_000_000}}), encoding="utf-8")
     (p / STORE).write_text("", encoding="utf-8")

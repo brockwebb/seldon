@@ -70,7 +70,7 @@ def project(tmp_path):
     _git(p, "init", "-b", "main")
     _git(p, "config", "user.email", "t@t")
     _git(p, "config", "user.name", "t")
-    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\nseldon_events.jsonl\n",
+    (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\nseldon_events.jsonl\n",
                                   encoding="utf-8")
     (p / "controls.yaml").write_text(
         yaml.safe_dump({"spend": {"daily_tokens": 55_000_000}}), encoding="utf-8")
@@ -94,11 +94,19 @@ def project(tmp_path):
 
 
 def _stub(project: Path, *, exit_code=0, write_result=True, complete=True, task_id=None,
-          stem="t1"):
-    """A shell script standing in for `claude -p`. Writes what a real CC session writes."""
-    lines = ["#!/bin/sh", 'echo "stub cc: $*"']
+          stem="t1", commit=True):
+    """A shell script standing in for `claude -p`. Writes what a real CC session writes.
+
+    FRICTION-002: like the CLI, it enters `.claude/worktrees/<name>` when launched with `--worktree <name>`, and
+    the RESULT is written and committed there, on the task's branch, which is where the dispatcher looks for it."""
+    lines = ["#!/bin/sh", 'echo "stub cc: $*"',
+             'prev=""; for a in "$@"; do if [ "$prev" = "--worktree" ]; then '
+             'cd "$(git rev-parse --show-toplevel)/.claude/worktrees/$a" || exit 9; fi; prev="$a"; done']
     if write_result:
-        lines.append(f'printf "# RESULT\\n" > {project}/cc_tasks/{stem}_RESULT.md')
+        lines.append(f'printf "# RESULT\\n" > cc_tasks/{stem}_RESULT.md')
+        if commit:
+            lines.append(f'git add cc_tasks/{stem}_RESULT.md && git commit -q -m "{stem}: result" '
+                         f'-- cc_tasks/{stem}_RESULT.md')
     if complete and task_id:
         lines.append(
             f'{sys_executable()} -c "'
@@ -184,7 +192,8 @@ def test_a_clean_task_is_claimed_launched_and_finished(project, neo4j_driver, do
     assert pl["transitions"] == ["proposed -> accepted", "accepted -> in_progress"]
     assert pl["framework_layer"].startswith("§2.2")
     assert pl["permission_mode"] == "bypassPermissions"
-    assert set(pl["criteria"]) == {f"c{i}" for i in range(1, 10)} | {"c12"}   # c12: SQ-010 ADDENDUM 02 D3.4
+    # c11: every task runs in a worktree (FRICTION-002); c12: SQ-010 ADDENDUM 02 D3.4.
+    assert set(pl["criteria"]) == {f"c{i}" for i in range(1, 10)} | {"c11", "c12"}
     assert all(c["ok"] for c in pl["criteria"].values())
     assert "--permission-mode bypassPermissions" in pl["command"]
 
@@ -348,18 +357,20 @@ def test_a_zero_exit_with_no_result_file_still_blocks(project, neo4j_driver, dom
     assert _events(project, D.EVENT_FINISHED)[0]["payload"]["result_present"] is False
 
 
-def test_a_result_without_a_completed_graph_state_still_blocks(project, neo4j_driver,
-                                                               domain_config, clean_test_db,
-                                                               monkeypatch):
-    """The CC session runs `seldon cc complete` itself, per protocol. A RESULT on disk with the
-    task still `in_progress` is a session that wrote its record and never closed the task."""
+def test_a_result_not_committed_on_the_branch_still_blocks(project, neo4j_driver,
+                                                           domain_config, clean_test_db,
+                                                           monkeypatch):
+    """FRICTION-002 (AD-034-R6): the dispatcher, not the session, completes the task, and only after main
+    carries the work. A RESULT left uncommitted in the worktree is not on the branch, so it is not merged: the
+    task is blocked with the task still `in_progress`, and its worktree is kept as the session left it."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     tid = _register(project, neo4j_driver, domain_config)
-    _stub(project, exit_code=0, write_result=True, complete=False)
+    _stub(project, exit_code=0, write_result=True, complete=False, commit=False)
     _run(project, ["once"])
     assert _state(neo4j_driver, tid)[0] == "blocked"
     fl = _events(project, D.EVENT_FINISHED)[0]["payload"]
-    assert fl["result_present"] is True and fl["graph_state_observed"] == "in_progress"
+    assert fl["result_present"] is False and fl["graph_state_observed"] == "in_progress"
+    assert (project / ".claude" / "worktrees" / "t1" / "cc_tasks" / "t1_RESULT.md").is_file()
 
 
 # ============================================================ the kill switches and the lease
@@ -761,8 +772,10 @@ def test_the_dispatcher_commits_a_registered_task_file_nobody_committed(
     assert _run(project, ["once"]).exit_code == 0
 
     assert D.is_tracked(project, path), "the registered file is still untracked"
-    # FRICTION-001 (AD-038-R1): committed by the reconciler's `task_files` class.
-    assert _head_message(project).startswith("reconcile: 1 registered task file(s): cc_tasks/t2.md")
+    # FRICTION-001 (AD-038-R1): committed by the reconciler's `task_files` class. Since FRICTION-002 the same pass
+    # also merges the task's branch, so the reconcile commit is in main's history rather than at its head.
+    subjects = _git(project, "log", "--format=%s", "main").stdout.splitlines()
+    assert any(s.startswith("reconcile: 1 registered task file(s): cc_tasks/t2.md") for s in subjects), subjects
 
     # And then the SAME pass launches it. The commit runs before candidacy for this reason:
     # a task freed by a pass is a task that pass may serve, which is the cadence's shape
@@ -809,7 +822,7 @@ def test_the_dispatcher_commits_the_registration_record_with_the_file_it_records
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     # This project's fixture gitignores the store; the real one tracks it, which is the case
     # that matters, so the fixture is changed to match the project the rule was written for.
-    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
     _git(project, "add", "-A")
     _git(project, "commit", "-m", "track the event store")
     _stub(project, stem="t4")
@@ -938,7 +951,7 @@ def test_the_record_of_a_self_committing_registration_is_committed_by_the_regist
     from seldon.commands.cc import register_task_file
 
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
     (project / "seldon_events.jsonl").write_text("", encoding="utf-8")   # tracked, as here
     _git(project, "add", "-A")
     _git(project, "commit", "-m", "track the event store")
@@ -975,7 +988,7 @@ def test_a_record_is_not_committed_while_a_claim_is_in_flight(
     from seldon.commands.cc import register_task_file
 
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n", encoding="utf-8")
+    (project / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
     _git(project, "add", "-A")
     _git(project, "commit", "-m", "track the event store")
     _stub(project)

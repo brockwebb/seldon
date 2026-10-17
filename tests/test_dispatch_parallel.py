@@ -136,8 +136,10 @@ def test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge(
     assert _show(p, "main", "out/a/x.txt") == "a\n" and _show(p, "main", "out/b/x.txt") == "b\n"
     assert _show(p, "main", "cc_tasks/a_RESULT.md") and _show(p, "main", "cc_tasks/b_RESULT.md")
     # Worktrees removed, branches deleted, main pushed, primary clean.
-    assert not (p / ".worktrees" / "a").exists() and not (p / ".worktrees" / "b").exists()
-    assert git(p, "branch", "--list", "task/*").stdout.strip() == ""
+    assert not (p / ".claude" / "worktrees" / "a").exists() and not (p / ".claude" / "worktrees" / "b").exists()
+    # FRICTION-002 Part B step 3: nothing deletes a branch; the sweep removed only the worktrees.
+    assert sorted(git(p, "branch", "--list", "worktree-*", "--format=%(refname:short)").stdout.split()) == \
+        ["worktree-a", "worktree-b"]
     assert git(p, "rev-parse", "main").stdout == git(p, "rev-parse", "origin/main").stdout
     assert git(p, "status", "--porcelain").stdout == ""
     fin = {e["task_id"]: e for e in _finished(p)}
@@ -179,8 +181,8 @@ def test_overlapping_tasks_serialize(tmp_path, neo4j_driver, clean_test_db, dc, 
 def test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones(
         tmp_path, neo4j_driver, clean_test_db, dc):
     """A task with neither header is exclusive. It waits for the running worktree task; a
-    disjoint task registered after it does not start ahead of it; it then runs ALONE in the
-    primary checkout, as before SEL-004; the disjoint task follows."""
+    disjoint task registered after it does not start ahead of it; it then runs ALONE (in its own
+    worktree since FRICTION-002); the disjoint task follows."""
     p = _project(tmp_path)
     marks = tmp_path / "marks.txt"
     add_task(p, "r", NONEXCL.format(touches="out/r/"))
@@ -201,8 +203,9 @@ def test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones(
     _wait_settled(p, neo4j_driver, ["r"])
 
     out = _once(p)   # x runs in place, synchronously, and b waits behind it
-    assert f"launching {tx[:8]} cc_tasks/x.md -> logs/dispatch/x.log" in out, out
-    assert "stub cwd: primary" in (p / "logs" / "dispatch" / "x.log").read_text()
+    # FRICTION-002 Part B: an exclusive task runs alone, as before, but in its own worktree like every task.
+    assert f"launching {tx[:8]} cc_tasks/x.md in .claude/worktrees/x on worktree-x -> logs/dispatch/x.log" in out, out
+    assert "stub cwd: worktree" in (p / "logs" / "dispatch" / "x.log").read_text()
     assert task_states(neo4j_driver)["x"] == "completed"
     assert task_states(neo4j_driver)["b"] == "proposed"
     assert _once(p).count("launching") == 1
@@ -294,7 +297,7 @@ def test_a_conflicting_rebase_ends_merge_blocked_with_an_issue(tmp_path, neo4j_d
                      i=tb).single()["m"] == "merge_blocked"
     # Left exactly as the session left it: the worktree, the branch with b's commit, no
     # rebase in progress, and main carrying only a's line.
-    wt = p / ".worktrees" / "b"
+    wt = p / ".claude" / "worktrees" / "b"
     assert wt.is_dir() and (wt / "shared.txt").read_text() == "base\nfrom b\n"
     assert git(wt, "status", "--porcelain").stdout == ""
     assert _show(p, "main", "shared.txt") == "base\nfrom a\n"
@@ -362,7 +365,7 @@ def test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept(
     assert task_states(neo4j_driver)["a"] == "blocked"
     fin = _finished(p, "a")[-1]
     assert fin["outcome"] == "holder_gone" and fin["ok"] is False
-    assert (p / ".worktrees" / "a" / "out" / "a" / "1.txt").read_text() == "partial\n"
+    assert (p / ".claude" / "worktrees" / "a" / "out" / "a" / "1.txt").read_text() == "partial\n"
     lease = _leases(p)["a"]
     assert lease["held"] and not lease["alive"]
     assert "STALE" not in run_cli(p, dispatch_group, ["once"]).output  # marked once
@@ -400,7 +403,7 @@ def test_status_shows_a_running_worktree_and_why_the_next_task_waits(
     register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:02Z")
     assert _once(p).count("launching") == 1
     text = run_cli(p, dispatch_group, ["status"]).output
-    assert "worktree     : a  .worktrees/a on task/a  lease dispatcher:" in text, text
+    assert "worktree     : a  .claude/worktrees/a on worktree-a  lease dispatcher:" in text, text
     assert "(alive)" in text
     status = json.loads(run_cli(p, dispatch_group, ["status", "--json"]).output)
     b = next(r for r in status["tasks"] if r["name"] == "b")

@@ -504,6 +504,11 @@ STUCK_STATE_FILE = "dispatch_stuck.json"
 #: operator was never told.
 EVENT_NOTIFY_FAILED = "dispatch_notify_failed"
 
+#: FRICTION-002 Part B: a task that ended unmerged keeps its worktree and branch, and says so with the branch
+#: name and the reason; a merged task's worktree is removed by the sweep, which records each removal.
+EVENT_WORKTREE_KEPT = "worktree_kept"
+EVENT_WORKTREE_REMOVED = "worktree_removed"
+
 #: How long the finish notifier may run before it is killed. Decision 1 of the task above: a
 #: desktop or push notifier returns in well under a second, and a notifier that is still running
 #: after thirty has hung — it must not hold the lease, and with it every later pass, hostage.
@@ -652,13 +657,20 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
 #: project until it opts in.
 MAX_PARALLEL_DEFAULT = 1
 
-#: The parallel mode's keys and their defaults (SEL-004, AD-034). Read only when
-#: `max_parallel > 1`, and filled in then so `status` shows the values in force.
+#: Where every task's worktree lives and the branch it is cut on: the Claude Code CLI's own
+#: convention for `claude --worktree <name>` (`<repo>/.claude/worktrees/<name>`, branch
+#: `worktree-<name>`, observed on CLI 2.1.302 in `docs/evidence/friction002/`). FRICTION-002 Part
+#: B (AD-034 ADDENDUM 01): the dispatcher cuts the worktree there and the CLI enters it, which
+#: turns on the CLI's hard isolation. Fixed by the vendor, so not configuration: a
+#: `dispatch.worktree_dir` or `dispatch.branch_prefix` key is refused at load.
+CLI_WORKTREE_DIR = ".claude/worktrees"
+CLI_BRANCH_PREFIX = "worktree-"
+RETIRED_WORKTREE_KEYS = ("worktree_dir", "branch_prefix")
+
+#: The worktree keys and their defaults (SEL-004, AD-034). Since FRICTION-002 every task runs in
+#: a worktree, so they are filled in at every `max_parallel` and `status` shows the values in
+#: force; only `gate_command` stays required for `max_parallel > 1` alone.
 PARALLEL_DEFAULTS = {
-    # Where task worktrees live, under the primary checkout; gitignored.
-    "worktree_dir": ".worktrees",
-    # The branch each task's worktree is created on: `<prefix><task stem>`.
-    "branch_prefix": "task/",
     # One lease per worktree (decision 2): `<lease_dir>/<stem>.lock`, holder = supervisor.
     "lease_dir": ".seldon/leases",
     # Named resources a Touches header may use: name -> {paths: [globs], description}.
@@ -667,8 +679,10 @@ PARALLEL_DEFAULTS = {
     # their appended lines under the file's own flock and c7 does not count them as dirt.
     "shared_paths": [],
     # Gitignored files a session needs, symlinked from the primary checkout into each
-    # worktree (a worktree carries no gitignored file; `.env` is the usual one).
-    "worktree_links": [],
+    # worktree (a worktree carries no gitignored file). FRICTION-002: `.env` by default, because
+    # every task now runs in a worktree and every project here keeps its credentials there; a
+    # path absent from the primary is skipped (`worktree.link`), so the default costs nothing.
+    "worktree_links": [".env"],
     # Rebase-gate-merge rounds before a task whose main keeps moving is merge_blocked.
     # **No measured basis**: three is the declared starting value.
     "merge_attempts": 3,
@@ -718,10 +732,17 @@ def _load_parallel_config(block: dict) -> None:
             raise DispatchConfigError(f"dispatch.resources.{name} must be a mapping with a "
                                       f"`paths` list of globs, got {spec!r}")
     block["resources"] = resources
-    if n == 1:
-        return
+    for key in RETIRED_WORKTREE_KEYS:
+        if key in block:
+            raise DispatchConfigError(
+                f"seldon.yaml dispatch.{key} is no longer read: every task runs in the Claude Code "
+                f"CLI's worktree, {CLI_WORKTREE_DIR}/<stem> on branch {CLI_BRANCH_PREFIX}<stem> "
+                f"(FRICTION-002, AD-034 ADDENDUM 01). Remove the key.")
     gate = block.get("gate_command")
-    if not isinstance(gate, str) or not gate.strip():
+    if gate is not None and (not isinstance(gate, str) or not gate.strip()):
+        raise DispatchConfigError(f"dispatch.gate_command must be a non-empty shell command, got {gate!r}")
+    block["gate_command"] = gate
+    if n > 1 and gate is None:
         raise DispatchConfigError(
             "dispatch.max_parallel > 1 requires dispatch.gate_command: the re-gate after a "
             "rebase (SEL-004 decision 3) has nothing to run otherwise, and a merge that cannot "
@@ -1451,8 +1472,8 @@ def worktree_leases(project_dir: Path, cfg: dict) -> list:
 def worktree_state(project_dir: Path, cfg: dict, stem: str) -> dict:
     """c11's raw material: is this task's worktree path and branch free, and is the worktree
     directory ignored so a worktree inside the checkout is not c7's dirt."""
-    wt_rel = f"{cfg.get('worktree_dir', '.worktrees')}/{stem}"
-    branch = f"{cfg.get('branch_prefix', 'task/')}{stem}"
+    wt_rel = f"{CLI_WORKTREE_DIR}/{stem}"
+    branch = f"{CLI_BRANCH_PREFIX}{stem}"
     exists = (Path(project_dir) / wt_rel).exists()
     branch_exists = git(project_dir, "rev-parse", "--verify", "--quiet",
                         f"refs/heads/{branch}").returncode == 0
@@ -1542,11 +1563,12 @@ def tree_bytes(project_dir: Path, ref: str) -> int:
 def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
     """Criterion c12: is there room for this launch? SQ-010 ADDENDUM 02 D3.4.
 
-    **What a launch writes, measured at launch time.** A worktree launch (SEL-004) checks out the configured
-    branch into `dispatch.worktree_dir`: its footprint is that tree, measured exactly from git, and the volume
-    is the worktree directory's. An in-place launch (the serial pass, an exclusive task) creates no checkout.
-    What its session will write cannot be measured before it runs, and the decision taken here, on the
-    grounding below, is that its footprint is the same measured tree, on the project's own volume:
+    **What a launch writes, measured at launch time.** A worktree launch (SEL-004; every launch since
+    FRICTION-002) checks out the configured branch into `.claude/worktrees/`: its footprint is that tree, measured
+    exactly from git, and the volume is the worktree directory's. `worktree=False` (a task whose declaration does
+    not parse, which c10 refuses anyway) measures the project's own volume. What a session will write beyond its
+    tree cannot be measured before it runs, and the decision taken here, on the grounding below, is that its
+    footprint is the same measured tree:
 
     * The tree is the unit a session's disk use is made of. The incident this answers
       (squiddy/docs/evidence/sq010/disk_incident.md, 2026-10-11) was one in-place session that made two
@@ -1562,7 +1584,7 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
     A tree git cannot measure refuses (`disk_unmeasured`) rather than assuming a need of zero."""
     factor = cfg.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
     ref = cfg["branch"]
-    where = Path(project_dir) / cfg.get("worktree_dir", PARALLEL_DEFAULTS["worktree_dir"]) if worktree \
+    where = Path(project_dir) / CLI_WORKTREE_DIR if worktree \
         else Path(project_dir)
     out = {"launch": "worktree" if worktree else "in_place", "ref": ref, "path": str(where),
            "factor": factor}
@@ -1660,9 +1682,8 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     #: documents is worse than a table with a ninth row.
     c["c9"] = {"framework_layer": headers[HEADER_LAYER], "ok": True}
 
-    # SEL-004 (AD-034). Nothing below changes a serial pass for a task with neither header:
-    # c6 keeps its meaning, and c10 and c11 are absent, so the criteria vector is the one the
-    # recorded transcript holds.
+    # SEL-004 (AD-034). For a serial pass and a task with neither header c6 keeps its meaning and c10
+    # is absent; c11 is present for every task since FRICTION-002 (below).
     parallel = cfg.get("max_parallel", MAX_PARALLEL_DEFAULT) > 1
     raw = parse_concurrency_headers(task_file.read_text(encoding="utf-8",
                                                         errors="surrogateescape"))
@@ -1682,12 +1703,14 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
                     "ok": conc["error"] is None}
         if conc["error"]:
             c["c10"]["message"] = conc["error"]
-    if parallel and conc["error"] is None and not conc["exclusive"]:
+    # FRICTION-002 Part B (AD-034 ADDENDUM 01): every task runs in its own worktree, exclusive or not and at any
+    # `max_parallel`, so c11 (the worktree path and branch are free and ignored) is every task's criterion.
+    # `Exclusive:` decides only whether a task may run beside others, never where it runs.
+    if conc["error"] is None:
         c["c11"] = worktree_state(project_dir, cfg, Path(source).stem)
-    # SQ-010 ADDENDUM 02 D3.4: free space against this launch's own measured need, before any claim. A
-    # non-exclusive task under max_parallel > 1 runs in a worktree it creates; every other launch runs here.
-    c["c12"] = disk_state(project_dir, cfg,
-                          worktree=parallel and conc["error"] is None and not conc["exclusive"])
+    # SQ-010 ADDENDUM 02 D3.4: free space against this launch's own measured need, before any claim. Every
+    # launch checks a tree out into a worktree.
+    c["c12"] = disk_state(project_dir, cfg, worktree=conc["error"] is None)
 
     # QC-002 (AD-037-R6 a): a task whose last premise review filed an Issue that is still open waits on it. Absent
     # for every other task, so the criteria vector the serial transcript holds is unchanged.

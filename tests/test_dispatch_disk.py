@@ -95,9 +95,9 @@ def test_the_need_is_the_factor_times_the_footprint(project, monkeypatch):
 
 
 def test_a_worktree_launch_is_measured_where_the_worktree_goes(project, monkeypatch):
-    cfg = {**D.load_dispatch_config(project), "worktree_dir": ".worktrees"}
+    cfg = D.load_dispatch_config(project)
     st = D.disk_state(project, cfg, worktree=True)
-    assert st["path"] == str(project / ".worktrees") and st["launch"] == "worktree"
+    assert st["path"] == str(project / ".claude" / "worktrees") and st["launch"] == "worktree"
 
 
 @pytest.mark.parametrize("bad", [0, 0.5, -1, "2", True])
@@ -212,7 +212,7 @@ def test_a_pass_launching_several_worktrees_measures_again_before_each(tmp_path,
         # A volume with room for one launch and a half (the pass commits records first, so the tree is measured
         # when asked): free shrinks by what the worktrees write.
         tree = D.tree_bytes(p, "main")
-        return 2 * tree + tree // 2 - written(p / ".worktrees"), "fake: room minus worktrees"
+        return 2 * tree + tree // 2 - written(p / ".claude" / "worktrees"), "fake: room minus worktrees"
 
     monkeypatch.setattr(D, "free_bytes", free)
     res = run_cli(p, dispatch_group, ["once"])

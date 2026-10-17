@@ -117,6 +117,12 @@ def chart_command(as_json):
         click.echo(f"  individuals chart (CPI, n {ind['n']}): mean {ind['mean']}, limits [{ind['lnpl']}, {ind['unpl']}]")
     else:
         click.echo(f"  individuals chart: not drawn, {ind['n']} task(s) of the {ind['needs']} FC-15 requires")
+    auto = [c for c in out["classifier"] if c["permission_mode"] == "auto"]
+    click.echo(f"  classifier blocks per launch (FRICTION-002 Part D; {len(auto)} auto-mode launch(es) of "
+               f"{len(out['classifier'])}):")
+    for c in auto[-10:]:
+        click.echo(f"    {c['task']:10s} {str(c['launched_at'])[:19]:19s} blocks {c['blocks']:>3d}"
+                   + ("  BREAKER" if c["breaker"] else ""))
     t = out["toil"]
     click.echo("  toil per week (AD-038-R6; the target for every column is zero):")
     click.echo(f"    {'week':9s} {'machine-dirt':>12s} {'other-dirt':>10s} {'redrives':>8s} {'restarts':>8s} "

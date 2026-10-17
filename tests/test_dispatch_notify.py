@@ -14,6 +14,10 @@ The contract under test:
   nothing else — not the finish record, not the task's state, not the exit code;
 * no `notify` key means no notifier and no event.
 
+**Erratum, FRICTION-002 (2026-10-17).** Every task now finishes through the worktree finish (AD-034-R5/R6), which
+names the outcome: `SELDON_NOTIFY_OUTCOME` is `merged` where it was `ok` and `session_failed` (or another
+`dispatch_worktree.OUTCOMES` word) where it was `blocked`. `SELDON_NOTIFY_OK` keeps its `true`/`false`.
+
 The stub CC is `test_dispatch_launch`'s, so the spend is zero and nothing leaves the host.
 """
 from __future__ import annotations
@@ -91,7 +95,7 @@ def test_a_finished_task_runs_the_notifier_once_with_the_outcome(project, neo4j_
     assert env["SELDON_NOTIFY_TASK_ID"] == tid
     assert env["SELDON_NOTIFY_TASK_NAME"] == "notify probe"
     assert env["SELDON_NOTIFY_OK"] == "true"
-    assert env["SELDON_NOTIFY_OUTCOME"] == "ok"
+    assert env["SELDON_NOTIFY_OUTCOME"] == "merged"
     assert env["SELDON_NOTIFY_RESULT_PATH"] == "cc_tasks/t1_RESULT.md"
     assert env["SELDON_NOTIFY_LOG_PATH"] == "logs/dispatch/t1.log"
     assert float(env["SELDON_NOTIFY_WALL_SECONDS"]) >= 0
@@ -116,11 +120,13 @@ def test_a_blocked_task_notifies_once_after_the_walk_to_blocked(project, neo4j_d
     assert len(calls) == 1, "one notification per finish, not one per record"
     env = calls[0]["env"]
     assert env["SELDON_NOTIFY_OK"] == "false"
-    assert env["SELDON_NOTIFY_OUTCOME"] == "blocked"
+    assert env["SELDON_NOTIFY_OUTCOME"] == "session_failed"
     # The walk to `blocked` is on the log before the notifier runs.
     types = calls[0]["types"]
     assert types.index(D.EVENT_FINISHED) < len(types) - 1
-    assert types[-1] == "artifact_state_changed"
+    assert "artifact_state_changed" in types[types.index(D.EVENT_FINISHED):]
+    # FRICTION-002: the kept worktree's record follows the walk, and both precede the notifier.
+    assert types[-1] == D.EVENT_WORKTREE_KEPT
 
 
 @pytest.mark.parametrize("command,reason", [

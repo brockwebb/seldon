@@ -55,12 +55,13 @@ from seldon.core.artifacts import create_artifact, create_link, update_artifact,
 #: protocol text, not a tunable, as `HEADLESS_CLAUSE` is.
 WORKTREE_CLAUSE = (
     "This session runs in a git worktree at {worktree} on branch {branch}, not in the primary "
-    "checkout at {primary}; other tasks run beside it in their own worktrees. Do all work and "
-    "testing here and commit everything on this branch, including the RESULT. Do not merge, "
-    "push, switch branches, or run `seldon cc complete` for this task: the dispatcher rebases "
-    "onto main, re-runs the gate if main changed a file this task changed, merges on green "
-    "and completes the task. Gitignored files are not in this worktree; the primary "
-    "checkout's path is in $" + WT.PRIMARY_CHECKOUT_ENV + "."
+    "checkout at {primary}; Claude Code refuses edits and git aimed at the primary. Do all work "
+    "and testing here and commit everything on this branch, including the RESULT. Do not merge, "
+    "push, switch branches, or run `seldon cc complete` for this task, whatever the task file "
+    "says: the dispatcher rebases onto main, re-runs the gate if main changed a file this task "
+    "changed, merges on green and completes the task. Run `seldon dispatch part-complete` from "
+    "here. Gitignored files are not in this worktree unless linked; the primary checkout's path "
+    "is in $" + WT.PRIMARY_CHECKOUT_ENV + "."
 )
 
 #: The per-worktree lease's persistent fields (`D.Lease.extra`): what a released or orphaned
@@ -71,7 +72,12 @@ LEASE_EXTRA_KEYS = ("worktree_task", "stem", "source_file", "worktree", "branch"
 #: `dispatch_finished.outcome` values this module writes, beside the serial `ok` boolean.
 OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
             "launch_failed", "model_substituted",
-            "holder_gone", "released_unfinished")
+            "holder_gone", "released_unfinished",
+            # FRICTION-002 Part D: the CLI's auto-mode breaker aborted the session.
+            "classifier_breaker", "database_unavailable",
+            # FRICTION-002 Part C: the session ended with its Stop gate not passed (the CLI's block cap or the token
+            # ceiling ended it with a check failing, or it declared Parts and no gate ran).
+            "stop_gate_unpassed")
 
 #: The ResearchTask property that says what became of a worktree task's branch.
 MERGE_PROPERTY = "dispatch_merge"
@@ -102,6 +108,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     inplace_claim = inplace[0] if inplace else None
     done = None
     if inplace_claim is None and not dry_run:
+        sweep(project_dir, session_id)
         # AD-038-R1: the serial pass's reconcile, before the shared files and before the tree is read.
         done = S._reconcile(project_dir, config, cfg, driver, database)
         _commit_shared(project_dir, cfg)
@@ -383,7 +390,8 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     # with THIS spec, carried in the lease, so a lock bump while it starts changes nothing.
     refresh_note = S.models.ensure_fresh("dispatch")
     spec = S._session_spec(project_dir, rel)
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec)
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+                        settings=S._session_settings(project_dir, cfg))
     conc = chosen["concurrency"]
     S._emit(project_dir, session_id, D.EVENT_LAUNCHED,
             {"task_id": tid, "source_file": rel, "child_session_id": child_session_id,
@@ -496,45 +504,108 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
     spec = extra["model_spec"]
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec)
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+                        settings=S._session_settings(project_dir, cfg))
     started = time.monotonic()
     offset = S._log_offset(log_path)
-    code = S._run(cmd, wt, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env={**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir)})
+    # Started in the PRIMARY checkout: the CLI resolves `--worktree <stem>` against the repository it starts in.
+    code = S._run(cmd, project_dir, log_path, extra["child_session_id"], network_allowlist=allow,
+                  extra_env=S._worktree_env(project_dir, cfg, spec))
     wall = round(time.monotonic() - started, 3)
+    finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
+                   code, wall, log_path, offset, spec)
+
+
+def finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
+                   code, wall, log_path, offset, spec, name=None, lease_cm=None) -> None:
+    """A worktree session has exited: merge on green, or block and keep its worktree (AD-034-R5, R6).
+
+    Shared by the parallel supervisor and, since FRICTION-002, the serial pass. `lease_cm` is a zero-argument
+    context manager factory for the pass lease; the supervisor takes it (the default), while a serial pass already
+    holds it and passes `contextlib.nullcontext`.
+    """
+    lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
+    stem, rel, branch = extra["stem"], extra["source_file"], extra["branch"]
     receipt = S._model_receipt(log_path, offset, spec)
     result_rel = f"cc_tasks/{stem}_RESULT.md"
     committed = WT.show(project_dir, branch, result_rel) is not None
-    graph_state = S._state_of(driver, database, task_id)
+    classifier = S._classifier_reading(project_dir, extra["child_session_id"], log_path, offset)
+    gate = S._gate_reading(project_dir, task_id, extra["child_session_id"])
+    db_failure = None
+    try:
+        graph_state = S._state_of(driver, database, task_id)
+    except S.DATABASE_UNAVAILABLE as exc:
+        # AD-038-R2/R6: the session's outcome cannot be read, which is the dispatcher's own condition, not the
+        # session's. Recorded as `database_unavailable`, the reason the automatic redrive answers.
+        graph_state = None
+        db_failure = f"{type(exc).__name__}: {str(exc).splitlines()[0][:200] if str(exc) else ''}"
     finish = {"task_id": task_id, "source_file": rel,
               "child_session_id": extra["child_session_id"],
               "exit_code": code, "wall_clock_s": wall, "result_present": committed,
               "result_path": result_rel, "graph_state_observed": graph_state,
               "log_path": str(log_path.relative_to(project_dir)), "mode": "worktree",
               "worktree": extra["worktree"], "branch": branch, "base": extra["base"],
-              "model_receipt": receipt}
-    name = _task_name(driver, database, task_id) or stem
+              "linked": extra.get("linked") or [],
+              "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate}
     click.echo(f"session exit={code} result_committed={committed} graph={graph_state} "
-               f"model={receipt['served']} (requested {receipt['requested']})")
+               f"model={receipt['served']} (requested {receipt['requested']}) "
+               f"classifier_blocks={classifier['blocks']}")
+    if classifier["breaker"]:
+        S._classifier_stop(project_dir, session_id, task_id, classifier)
+    if db_failure:
+        with lease_cm():
+            _finish_unreadable(project_dir, config, driver, database, domain_config, session_id, cfg,
+                               {**finish, "failure": "database_unavailable", "database_error": db_failure},
+                               name or stem)
+        return
+    name = name or _task_name(driver, database, task_id) or stem
     try:
+        if classifier["breaker"]:
+            with lease_cm():
+                _finish_unmerged(project_dir, config, driver, database, domain_config,
+                                 session_id, cfg, finish, name, "classifier_breaker")
+            return
+        if not gate["passed"]:
+            # Part C: a session the CLI let end with a declared Part's check failing (its block cap, or the token
+            # ceiling) is not merged; the work stays on its branch with the failing commands named.
+            with lease_cm():
+                _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                 finish, name, "stop_gate_unpassed")
+            return
         if code != 0 or not committed or graph_state not in ("in_progress", "completed"):
-            with _pass_lease(project_dir, cfg):
+            with lease_cm():
                 _finish_unmerged(project_dir, config, driver, database, domain_config,
                                  session_id, cfg, finish, name, "session_failed")
             return
         if not receipt["ok"]:
             # AD-035 R6: a branch written by an unverified model is never merged.
-            with _pass_lease(project_dir, cfg):
+            with lease_cm():
                 _finish_unmerged(project_dir, config, driver, database, domain_config,
-                                 session_id, cfg, finish, name, "model_substituted")
+                                 session_id, cfg, {**finish, "failure": S.models.SUBSTITUTED}, name,
+                                 "model_substituted")
             return
         _merge(project_dir, config, driver, database, domain_config, session_id, cfg,
-               finish, name, extra)
+               finish, name, extra, lease_cm=lease_cm)
     except D.LeaseHeld as held:
         # Nothing is recorded without the pass lease. The worktree lease is released by the
         # caller with no finish, which the next pass reads as `released_unfinished`.
         click.echo(f"could not take the pass lease in {cfg['merge_lock_timeout_s']}s (held by "
                    f"{held.body.get('holder')}); left for the next pass", err=True)
+
+
+def _finish_unreadable(project_dir, config, driver, database, domain_config, session_id, cfg, finish,
+                       name) -> None:
+    """The graph could not be read at the finish: blocked from the state the claim left, worktree kept."""
+    record = {**finish, "ok": False, "outcome": "database_unavailable"}
+    S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
+    S._block(project_dir, driver, database, domain_config, session_id, finish["task_id"], "in_progress",
+             finish.get("exit_code"), finish["log_path"])
+    _record_kept(project_dir, session_id, finish, "database_unavailable", "database_unavailable")
+    click.echo(f"finished {finish['task_id'][:8]} database_unavailable -> blocked; worktree "
+               f"{finish['worktree']} kept", err=True)
+    S._notify(project_dir, session_id, cfg, {**record, "wall_clock_s": record["wall_clock_s"] or 0}, name,
+              outcome="database_unavailable")
+    S._record_and_push(project_dir, config, cfg)
 
 
 def _task_name(driver, database, task_id):
@@ -581,7 +652,7 @@ def _spec_modified(driver, database, task_id: str, path: Path) -> bool:
 
 
 def _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish,
-           name, extra) -> None:
+           name, extra, lease_cm=None) -> None:
     """Decision 3: rebase onto main, re-gate if main changed the write set, check the union
     files, then fast-forward under the pass lease if main has not moved. Never resolves.
 
@@ -592,6 +663,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
     itself makes whenever a ledger or the store has new lines, is rebased over inside the
     lease: it cannot conflict and is excluded from the re-gate, so it never costs a round.
     """
+    lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
     stem, branch, rel = extra["stem"], extra["branch"], extra["source_file"]
     wt = project_dir / extra["worktree"]
     linked = extra.get("linked") or []
@@ -603,7 +675,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                          merge={"reason": reason, "files": files, **detail})
 
     def blocked(reason, files, **detail):
-        with _pass_lease(project_dir, cfg):
+        with lease_cm():
             unmerged(reason, files, **detail)
 
     def union_bad(tip, base_sha, writes):
@@ -637,6 +709,10 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             # merged content below, and every merge moves the event store, so counting it
             # would re-gate every task whose main moved at all.
             overlap = sorted((set(moved) & set(writes)) - union)
+            if overlap and not cfg.get("gate_command"):
+                # A serial project need not declare a gate (FRICTION-002): with none, a task whose files main
+                # changed under it cannot be re-gated and is not merged on faith.
+                return blocked("regate_unavailable", overlap, attempt=attempt)
             if overlap:
                 regated, gate = True, _gate(project_dir, cfg, wt, stem)
                 if not gate["ok"]:
@@ -647,7 +723,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             return blocked("union_invalid", sorted(bad), union=bad)
         if _spec_modified(driver, database, finish["task_id"], wt / rel):
             return blocked("spec_modified", [rel])
-        with _pass_lease(project_dir, cfg):
+        with lease_cm():
             # What a pass would commit first, committed first here: a line a Desktop tool
             # appended while a pass held the lease would otherwise make the fast-forward
             # refuse to overwrite the store.
@@ -729,10 +805,9 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     click.echo(f"merged {task_id[:8]} {extra['branch']} at {merge['commit'][:8]} "
                f"(attempt {merge['attempts']}, regated={merge['regated']})")
     S._notify(project_dir, session_id, cfg, done, name, outcome="merged")
+    # FRICTION-002 Part B: the merged task's worktree is removed by the sweep, which keeps the branch.
+    sweep(project_dir, session_id)
     S._record_and_push(project_dir, config, cfg)
-    removed = WT.remove(project_dir, project_dir / extra["worktree"], extra["branch"])
-    if not (removed["worktree_removed"] and removed["branch_deleted"]):
-        click.echo(f"cleanup of {extra['worktree']} incomplete: {removed['stderr']}", err=True)
 
 
 def _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
@@ -753,6 +828,10 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
     S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
     S._block(project_dir, driver, database, domain_config, session_id, task_id, state,
              finish.get("exit_code"), finish["log_path"])
+    reason = (merge or {}).get("reason") or outcome
+    if outcome == "stop_gate_unpassed":
+        reason = f"stop_gate_unpassed: {(finish.get('stop_gate') or {}).get('why')}"
+    _record_kept(project_dir, session_id, finish, outcome, reason)
     after = S._state_of(driver, database, task_id)
     if state == "in_progress" and after != "blocked":
         click.echo(f"BLOCK FAILED for {task_id[:8]}: the task is still {after}; the next "
@@ -810,3 +889,75 @@ def _merge_issue(project_dir, driver, database, domain_config, session_id, task_
                 from_type="Issue", to_type="ResearchTask", rel_type="remediated_by",
                 actor=S.ACTOR, authority="accepted", session_id=session_id)
     return issue_id
+
+
+# ================================================================== kept and removed worktrees (FRICTION-002)
+
+#: How much of a kept task's RESULT `worktree_kept` quotes as the session's own reason.
+RESULT_REASON_CHARS = 300
+
+
+def _result_reason(project_dir: Path, branch: str, result_rel: str) -> str | None:
+    """The RESULT's first line of prose on the task's branch (headings and blank lines skipped), or None when the
+    branch carries no RESULT: what the session itself said about how it ended."""
+    data = WT.show(project_dir, branch, result_rel)
+    if data is None:
+        return None
+    for line in data.decode("utf-8", "replace").splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            return s[:RESULT_REASON_CHARS]
+    return None
+
+
+def _record_kept(project_dir: Path, session_id, finish: dict, outcome: str, reason: str) -> None:
+    """FRICTION-002 Part B step 3: a task that ends unmerged keeps its worktree and branch, and says so. Nothing
+    deletes a branch; the worktree goes only when the task is merged (`sweep`)."""
+    if not finish.get("worktree") or not (Path(project_dir) / finish["worktree"]).exists():
+        return
+    S._emit(project_dir, session_id, D.EVENT_WORKTREE_KEPT,
+            {"task_id": finish["task_id"], "worktree": finish["worktree"], "branch": finish.get("branch"),
+             "outcome": outcome, "reason": reason,
+             "result_reason": _result_reason(project_dir, finish.get("branch") or "HEAD",
+                                             finish.get("result_path") or "")})
+
+
+def sweep(project_dir: Path, session_id=None) -> list:
+    """Remove the worktree of every MERGED task that is still on disk; keep its branch. Returns what was removed.
+
+    A worktree is removed only when the dispatcher recorded its task `merged` (`dispatch_finished.outcome`), its
+    branch is contained in main (so nothing on it is lost), and nothing tracked in it is modified. Every other
+    worktree, a kept one or one the operator made, is left alone. Each removal is a `worktree_removed` record.
+    Run by every pass with no session in flight and after each merge (FRICTION-002 Part B step 4).
+    """
+    from seldon.core.events import read_events
+    project_dir = Path(project_dir)
+    merged = {}
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == D.EVENT_FINISHED and p.get("outcome") == "merged" and p.get("worktree"):
+            merged[p["worktree"]] = p
+    main = D.load_dispatch_config(project_dir)["branch"]
+    removed = []
+    for rel, p in merged.items():
+        wt = project_dir / rel
+        if not wt.exists():
+            continue
+        branch = p.get("branch")
+        contained = branch and WT.git(project_dir, "merge-base", "--is-ancestor", branch, main).returncode == 0
+        dirt = WT.dirty_paths(wt, exclude=p.get("linked") or [])
+        if not contained or dirt:
+            click.echo(f"sweep: {rel} kept ({'branch not in ' + main if not contained else 'modified: ' + ', '.join(dirt[:5])})",
+                       err=True)
+            continue
+        ignored = WT.ignored_paths(wt, exclude=p.get("linked") or [])
+        out = WT.remove(project_dir, wt)
+        if not out["worktree_removed"]:
+            click.echo(f"sweep: {rel} NOT removed: {out['stderr']}", err=True)
+            continue
+        record = {"task_id": p.get("task_id"), "worktree": rel, "branch": branch, "branch_kept": True,
+                  "discarded_ignored": ignored}
+        S._emit(project_dir, session_id, D.EVENT_WORKTREE_REMOVED, record)
+        click.echo(f"sweep: removed {rel} (branch {branch} kept)")
+        removed.append(record)
+    return removed

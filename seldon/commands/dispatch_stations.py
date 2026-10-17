@@ -6,6 +6,8 @@
     seldon dispatch stop <task> [--hard] --reason R                the operator's andon (d)
     seldon dispatch huddle <task> --reading R --cause C --gate G   FC-29's record; `--id` fills an open one (d)
     seldon dispatch inspect [<task>]           one inspection now, as the dispatcher's pass runs it
+    seldon dispatch stop-gate --project P      the session's Stop hook: run declared Parts' checks (FRICTION-002 C)
+    seldon dispatch classifier-denied --project P   the session's PermissionDenied hook (FRICTION-002 D)
 
 The session's commands exit `HALT_EXIT` (3) when a stop is written for its task; they write `andon_halted` first,
 so the dispatcher sees the halt before the process ends. The protocol a session follows is
@@ -21,6 +23,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -381,3 +384,80 @@ def inspect_command(task):
             raise click.ClickException("no task in flight; name one")
     out = inspect_in_flight(project_dir, cfg, task_id, holder=False)
     click.echo(json.dumps(out, indent=1, default=str))
+
+
+# ------------------------------------------------------------------------------------ the session's hooks
+
+def _hook_input() -> dict:
+    """The hook's JSON on stdin (Claude Code hooks: `session_id`, `cwd`, `hook_event_name`, ...). An unreadable
+    input is an error, never an empty dict: a gate that read nothing would wave the session through."""
+    raw = sys.stdin.read()
+    if not raw.strip():
+        return {}
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"hook input is not JSON: {exc}") from exc
+
+
+def _hook_launch(project_dir: Path, events: list) -> dict | None:
+    """The `dispatch_launched` whose child session id is this process's `SELDON_SESSION_ID`, which the dispatcher
+    set for the session and the CLI passes to its hooks; None for a session the dispatcher did not launch."""
+    return S.launch_for_session(events, os.environ.get("SELDON_SESSION_ID"))
+
+
+@dispatch_group.command("stop-gate", hidden=True)
+@click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
+              help="the primary checkout, whose event store the dispatcher reads")
+def stop_gate_command(project):
+    """FRICTION-002 Part C: the Stop hook each dispatched session is launched with. Not for operators.
+
+    Runs the `check:` criteria of every Part the session declared complete, in the session's tree, and records
+    `stop_gate`. While a check fails and the session is under its token ceiling it prints the CLI's block decision
+    (`{"decision": "block", "reason": ...}`), so the session keeps working; at the ceiling it lets the session end
+    and writes a hard stop. A session the dispatcher did not launch ends untouched."""
+    hook = _hook_input()
+    project_dir = Path(project).resolve()
+    events = read_events(project_dir)
+    launch = _hook_launch(project_dir, events)
+    if launch is None:
+        return
+    cwd = Path(hook.get("cwd") or os.getcwd())
+    tree = _session_tree(cwd)
+    cfg = D.load_dispatch_config(project_dir)
+    out = S.stop_gate(project_dir, launch, events, _scfg(cfg), tree["cwd"], tree["branch"],
+                      stop_hook_active=bool(hook.get("stop_hook_active")))
+    gate = _emit(project_dir, S.EVENT_STOP_GATE, out["record"], actor=resolve_cli_actor())
+    if out["hard_stop"]:
+        stop = _emit(project_dir, S.EVENT_SESSION_STOP, {**out["hard_stop"], "stop_gate_event_id": gate["event_id"]})
+        # The session is about to end at the gate's word, which is the halt the stop asks for; recorded so the
+        # holder does not reap a process that is already ending.
+        _emit(project_dir, S.EVENT_ANDON_HALTED, {"task_id": out["record"]["task_id"],
+                                                 "stop_event_id": stop["event_id"], "at": "stop gate",
+                                                 "stop_reason": "spend_ceiling", "stop_kind": "hard"},
+              actor=resolve_cli_actor())
+    if out["block"]:
+        click.echo(json.dumps({"decision": "block", "reason": out["reason"]}))
+
+
+@dispatch_group.command("classifier-denied", hidden=True)
+@click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
+              help="the primary checkout, whose event store the dispatcher reads")
+def classifier_denied_command(project):
+    """FRICTION-002 Part D: the PermissionDenied hook each dispatched session is launched with. Not for operators.
+
+    The CLI runs it after its auto-mode classifier denies a tool call, with `tool_name`, `tool_input`,
+    `tool_use_id` and `reason`. It records one `classifier_block` for the launch and prints nothing, so the
+    denial stands (the hook may not overrule the classifier)."""
+    hook = _hook_input()
+    project_dir = Path(project).resolve()
+    launch = _hook_launch(project_dir, read_events(project_dir))
+    if launch is None:
+        return
+    lp = launch["payload"]
+    _emit(project_dir, S.EVENT_CLASSIFIER_BLOCK,
+          {"task_id": lp["task_id"], "child_session_id": lp.get("child_session_id"),
+           "tool_name": hook.get("tool_name"), "tool_use_id": hook.get("tool_use_id"),
+           "reason": hook.get("reason"),
+           "tool_input": json.dumps(hook.get("tool_input"), sort_keys=True, default=str)[:S.CLASSIFIER_INPUT_CHARS]},
+          actor=resolve_cli_actor())

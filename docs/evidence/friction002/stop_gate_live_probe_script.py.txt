@@ -1,0 +1,32 @@
+"""Live probe: the locked CLI honours `seldon dispatch stop-gate`'s block decision (FRICTION-002 Part C)."""
+import json, os, subprocess, sys, tempfile
+from pathlib import Path
+sys.path.insert(0, "/Users/brock/GitHub/seldon-friction002")
+from tests.dispatch_scaffold import make_project
+from seldon.core.events import append_event, make_event, read_events
+from seldon.commands import dispatch as S
+from seldon.core import dispatch as D
+from seldon import models
+
+tmp = Path(tempfile.mkdtemp(prefix="f002_stopgate_"))
+real_home = os.environ.pop("SELDON_MODELS_HOME", None)
+p = make_project(tmp)
+os.environ.pop("SELDON_MODELS_HOME", None)
+(p / "cc_tasks" / "t.md").write_text("# T\n\n**Spend:** est. 300K tokens.\n**Parts:** A 1.0.\n\n## Part A: x\n\nAcceptance:\n- `check: test -f done.txt`\n")
+(p / "logs" / "dispatch").mkdir(parents=True, exist_ok=True)
+log = p / "logs" / "dispatch" / "t.log"
+log.write_text("")
+child = "live-probe-child"
+append_event(p, make_event(D.EVENT_LAUNCHED, "dispatcher", "accepted", {"task_id": "probe-task-0001", "source_file": "cc_tasks/t.md", "child_session_id": child, "log_path": "logs/dispatch/t.log", "launched_at": "2026-10-17T00:00:00Z"}))
+append_event(p, make_event("part_complete", "cc", "accepted", {"task_id": "probe-task-0001", "part": "A", "planned_share": 1.0, "tokens": 0, "cwd": str(p), "branch": "main"}))
+spec = models.launch_spec_for("background")
+cfg = D.load_dispatch_config(p)
+cmd = S._launch_cmd({**cfg, "permission_mode": "bypassPermissions"}, "Reply with the single word hello, then end your turn. Do nothing else unless a hook tells you to.", spec, settings=S._session_settings(p, cfg))
+env = {k: v for k, v in os.environ.items() if k not in D.API_KEY_VARS}
+env.update(spec["env"]); env["SELDON_SESSION_ID"] = child; env["PYTHONPATH"] = "/Users/brock/GitHub/seldon-friction002"
+r = subprocess.run(cmd, cwd=p, env=env, capture_output=True, text=True, timeout=600)
+log.write_text(r.stdout)
+gates = [e["payload"] for e in read_events(p) if e["event_type"] == "stop_gate"]
+print("exit", r.returncode, "done.txt exists:", (p / "done.txt").exists())
+print("gate verdicts:", [g["verdict"] for g in gates])
+print("project:", p)

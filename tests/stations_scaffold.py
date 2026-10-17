@@ -120,3 +120,17 @@ def _iso(t: datetime) -> str:
 
 def ago(seconds: float) -> datetime:
     return _now() - timedelta(seconds=seconds)
+
+
+def gate(p: Path, cwd: Path | None = None, branch: str | None = None, run=None, task_id: str | None = None) -> dict:
+    """What the session's Stop hook records (FRICTION-002 Part C): the declared Parts' checks, run in `cwd` (the
+    session's tree; the project by default), as one `stop_gate` record. Returns `stations.stop_gate`'s result."""
+    from seldon.core import stations as S
+    from seldon.core.dispatch import load_dispatch_config
+    evs = events(p)
+    tid = task_id or TASK_ID
+    kw = {"run": run} if run else {}
+    out = S.stop_gate(p, S.last_launch(evs, tid), evs, S.load_stations_config(load_dispatch_config(p)),
+                      Path(cwd or p), branch, **kw)
+    append_event(p, make_event(S.EVENT_STOP_GATE, "cc", "accepted", out["record"]))
+    return out

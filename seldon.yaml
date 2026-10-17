@@ -156,11 +156,18 @@ dispatch:
   # often costs nearly nothing and polling rarely costs latency. ai-readiness-kg's starting value.
   # The plist's StartInterval must equal it; the wrapper refuses when they differ.
   poll_interval_s: 300
-  # A headless session in any prompting mode blocks forever on its first tool call, having
+  # A headless session in any PROMPTING mode blocks forever on its first tool call, having
   # consumed a claim and produced nothing (ai-readiness-kg DN-006 ADDENDUM_01, from the CLI's own
-  # interface). The CLI and model come from seldon's model lock for the task's `**Model:**` role
-  # or `primary` (AD-035 R3), never from this block.
-  permission_mode: bypassPermissions
+  # interface). `auto` does not prompt: its classifier blocks an overeager action and the session
+  # goes on, and its breaker (3 consecutive or 20 total blocks) aborts a headless session with
+  # "Agent aborted: too many classifier denials in headless mode", which the dispatcher records as a
+  # `line` stop (FRICTION-002 Part D; the vendor survey, docs/research/2026-10-17_vendor_survey_
+  # codex_claude_code.html section 1). It replaced `bypassPermissions` on 2026-10-17. KILL RULE
+  # (Part D step 3): if the next three tasks after FRICTION-002 show more than one false-positive
+  # block per task, an Issue records it and this goes back to `bypassPermissions`. The CLI and
+  # model come from seldon's model lock for the task's `**Model:**` role or `primary` (AD-035 R3),
+  # never from this block.
+  permission_mode: auto
   stop_file: .seldon/DISPATCH_STOP
   # One instance, by flock, with an identified holder; reaped only by the operator, never by age.
   lease_file: .seldon/dispatch.lock
@@ -181,7 +188,10 @@ dispatch:
   # Desktop writes left uncommitted stalled it 3, 36 and 14 hours), so it alarms on its first pass.
   stuck_after_passes_by_criterion:
     dirty_tree: 1
-  # AD-034: one task at a time until a project opts into worktrees deliberately. AD-037-R9 holds it at 1 in every
+  # FRICTION-002 (AD-034 ADDENDUM 01): every task runs in its own Claude Code worktree,
+  # .claude/worktrees/<stem> on branch worktree-<stem>, at every max_parallel. The value below is
+  # how many may run at once.
+  # AD-034: one task at a time until a project opts into parallel dispatch deliberately. AD-037-R9 holds it at 1 in every
   # project until AD-037-R6's four stations and the dispatcher's disk preflight are live; after that a project opts
   # in only on measured demand, by an accepted register record anchored at AD-037-R9 that names it in its scope
   # (seldon tests/test_dispatch_parallel_held.py fails otherwise).

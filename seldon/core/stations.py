@@ -53,6 +53,16 @@ EVENT_ANDON_HALTED = "andon_halted"
 EVENT_ANDON_REAPED = "andon_reaped"
 EVENT_HUDDLE = "huddle"
 EVENT_HUDDLE_CLOSED = "huddle_closed"
+#: FRICTION-002 Part C: what the Stop hook found when the session tried to end (the milestone station reads it).
+EVENT_STOP_GATE = "stop_gate"
+#: FRICTION-002 Part D: one action the auto-mode classifier blocked, from the session's `PermissionDenied` hook.
+EVENT_CLASSIFIER_BLOCK = "classifier_block"
+#: How much of a blocked tool call's input `classifier_block` keeps: enough to judge a false positive by, bounded so a
+#: blocked heredoc does not grow the tracked event store by its size.
+CLASSIFIER_INPUT_CHARS = 500
+#: The CLI's own text when its auto-mode breaker trips in a headless session (3 consecutive or 20 total blocks;
+#: CLI 2.1.302: `Agent aborted: too many classifier denials in headless mode`). Read from the session's log.
+CLASSIFIER_BREAKER_TEXT = "too many classifier denials in headless mode"
 #: Station (a)'s refusal reasons, written on `dispatch_refused` (`seldon.core.dispatch.EVENT_REFUSED`).
 REFUSED_PREMISE_FALSE = "premise_false"
 REFUSED_ENVIRONMENT_IN_FLIGHT = "environment_in_flight"
@@ -97,6 +107,17 @@ STATIONS_DEFAULTS = {
     # How long one `check:` command may run before it is a failure. ASSUMPTION: the longest single check in
     # this portfolio's tasks is a full seldon suite, about 15 minutes; twice that.
     "check_timeout_s": 1800,
+    # FRICTION-002 Part C: how long the Stop hook may run all of a session's declared Parts' checks before the CLI
+    # kills it (the hook's `timeout`, seconds). ASSUMPTION: two `check_timeout_s`, since a task's Parts rarely
+    # carry more than two suite-sized checks; a killed hook lets the session end, and its milestones then wait
+    # unanswered, which `seldon dispatch inspect` shows.
+    "stop_gate_timeout_s": 3600,
+    # FRICTION-002 Part C: `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, the CLI's own limit on consecutive Stop-hook refusals
+    # (its default is 9, observed 2026-10-17 in docs/evidence/friction002/stop_gate_live_probe.jsonl). The same
+    # probe showed a session that cannot make its check pass re-asserting that on every refusal without progress,
+    # so the cap bounds that waste; 20 leaves room for several real fix rounds. NO MEASURED BASIS beyond that one
+    # probe. A session the cap ends with a check failing is not merged (`stop_gate_unpassed`).
+    "stop_hook_block_cap": 20,
     # Where the projects this task's environment includes are named (premise `environment_in_flight`): a
     # `path#key` reference to a list of sibling repository names (squiddy: `squiddy/kit.yaml#environment_packages`).
     # Unset means `decisions.repositories` in this project's seldon.yaml.
@@ -129,7 +150,7 @@ def load_stations_config(cfg: dict) -> dict:
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
             raise StationsConfigError(f"dispatch.stations.{key} must be a positive number, got {v!r}")
-    for key in ("first_article_polls", "reap_after_intervals"):
+    for key in ("first_article_polls", "reap_after_intervals", "stop_gate_timeout_s", "stop_hook_block_cap"):
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, int) or v < 1:
             raise StationsConfigError(f"dispatch.stations.{key} must be a whole number of at least 1, got {v!r}")
@@ -517,6 +538,82 @@ def judgment_plan(judgments: list, reserve_left_share: float, base_rate: float, 
             "model_calls": 0}
 
 
+def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Path, branch: str | None, *,
+              run: Callable[..., dict] = run_check, stop_hook_active: bool = False) -> dict:
+    """FRICTION-002 Part C: the Stop hook's decision for a dispatched session that is trying to end.
+
+    Runs the `check:` criteria of every Part the session has declared complete (`part_complete` since its launch)
+    in the session's own tree (`cwd`, its worktree), and decides:
+
+    * every check passes, or no Part is declared: the session may end (`verdict: pass`). The negative control
+      (AD-038-R6): a correct session ends on its first Stop.
+    * a check fails and the session is under its token ceiling (the `**Spend:**` estimate times
+      `spend_ceiling_factor`): the end is refused (`verdict: block`) with the failing commands in `reason`, which
+      the CLI hands back to the model as the next instruction.
+    * a check fails at or over the ceiling: the session may end, and a hard stop (`session_stop`, kind `hard`,
+      reason `spend_ceiling`) is written with the failures (`verdict: ceiling`).
+
+    A check that could not run (`unrunnable`) never blocks: a defective command would hold the session forever.
+    The milestone station opens its huddle from this record. Prior art: Claude Code's Stop hook as a completion
+    gate ("give Claude a pass/fail check"), docs/research/2026-10-17_vendor_survey_codex_claude_code.html section 1.
+
+    Returns ``{"record": <stop_gate payload>, "block": bool, "reason": str | None, "hard_stop": payload | None}``.
+    """
+    from seldon.core.dispatch import spend_tokens, parse_headers, HEADER_SPEND
+
+    lp = launch["payload"]
+    task_id = lp["task_id"]
+    since = _ts(launch)
+    records = task_records(events, task_id, since)
+    task_file = Path(project_dir) / lp["source_file"]
+    text = task_file.read_text(encoding="utf-8", errors="surrogateescape") if task_file.is_file() else ""
+    declared: dict[str, list] = {}
+    for e in records:
+        if e.get("event_type") == EVENT_PART_COMPLETE:
+            declared.setdefault((e.get("payload") or {}).get("part"), []).append(e["event_id"])
+    parts, failed = [], []
+    for name, answers in declared.items():
+        crit = part_criteria(text, name)
+        results = [run_station_check(cmd, cwd, scfg["check_timeout_s"], branch, run=run) for cmd in crit["checks"]]
+        parts.append({"part": name, "answers": answers, "checks": results, "section_found": crit["section_found"]})
+        failed += [{"part": name, **r} for r in results if r["outcome"] == "fail"]
+    estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
+    log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
+    tokens = session_tokens(log)["tokens"] if log and log.is_file() else None
+    ceiling = int(estimate * scfg["spend_ceiling_factor"]) if estimate else None
+    over = ceiling is not None and tokens is not None and tokens >= ceiling
+    verdict = "pass" if not failed else ("ceiling" if over else "block")
+    record = {"task_id": task_id, "child_session_id": lp.get("child_session_id"), "cwd": str(cwd), "branch": branch,
+              "parts": parts, "failed": [f["command"] for f in failed], "tokens": tokens, "ceiling": ceiling,
+              "verdict": verdict, "stop_hook_active": bool(stop_hook_active)}
+    reason, hard = None, None
+    if verdict == "block":
+        reason = ("FRICTION-002 stop gate: this session may not end while a declared Part's check fails. "
+                  + " ".join(f"Part {f['part']}: `{f['command']}` exit {f['exit']}"
+                             + (f" ({f['output_tail'][-300:].strip()})" if f.get("output_tail") else "") + "."
+                             for f in failed)
+                  + f" Fix the work so the check passes, then end the session again ({tokens} of {ceiling} "
+                    f"tokens used). If it cannot be made to pass, write the RESULT saying why and end: the session "
+                    f"is then let go at the CLI's refusal cap or the token ceiling, and its branch is NOT merged.")
+    elif verdict == "ceiling":
+        hard = {"task_id": task_id, "station": "stop_gate", "kind": "hard", "reason": "spend_ceiling",
+                "by": "dispatcher", "reading": {"tokens": tokens, "estimate": estimate,
+                                                "factor": scfg["spend_ceiling_factor"]},
+                "failed": record["failed"]}
+    return {"record": record, "block": verdict == "block", "reason": reason, "hard_stop": hard}
+
+
+def gate_reading(records: list, part_event_id: str) -> dict | None:
+    """The newest `stop_gate` part entry that answers `part_event_id`, or None while no Stop has run its checks."""
+    for e in reversed(records):
+        if e.get("event_type") != EVENT_STOP_GATE:
+            continue
+        for part in (e.get("payload") or {}).get("parts") or []:
+            if part_event_id in (part.get("answers") or []):
+                return {**part, "stop_gate_event_id": e["event_id"]}
+    return None
+
+
 def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_interval_s: float, emit: Emit, *,
             run: Callable[..., dict] = run_check, judge: Callable[[], str] | None = None,
             disk: Callable[[], dict] | None = None, now: datetime | None = None) -> dict:
@@ -565,17 +662,21 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
         if e["event_id"] in answered:
             continue
         crit = part_criteria(text, p.get("part"))
-        # AD-038-R4: the checks run in the tree the session works in, as its `part_complete` recorded it; a record
-        # from before FRICTION-001 (no `cwd`), or a tree that is gone, falls back to the project checkout.
-        where = Path(p["cwd"]) if p.get("cwd") and Path(p["cwd"]).is_dir() else Path(project_dir)
-        results = [run_station_check(cmd, where, scfg["check_timeout_s"], p.get("branch"), run=run)
-                   for cmd in crit["checks"]]
+        # FRICTION-002 Part C: the station runs no check of its own. The session's Stop hook runs the Part's checks
+        # in the session's tree when it tries to end and records `stop_gate`; the milestone is the reading of that
+        # record, and waits, unanswered, until a Stop has run them. A failure there keeps the session working
+        # (the hook refuses the end), so it is recorded here as a defect and is not a line stop.
+        gate = gate_reading(records, e["event_id"])
+        if gate is None:
+            continue
+        results = gate["checks"]
         value = cpi(parts["parts"], completed, p.get("tokens"), estimate)
         plan = judgment_plan(crit["judgments"], (reserve - spent_inspection) / reserve if reserve else 0.0,
                              scfg["judgment_sample_rate"], judge)
         defects = [r for r in results if r["outcome"] == "fail"]
         unrunnable = [r for r in results if r["outcome"] == "unrunnable"]
         milestone = {"task_id": task_id, "answers": e["event_id"], "part": p.get("part"),
+                     "checks_source": "stop_gate", "stop_gate_event_id": gate["stop_gate_event_id"],
                      "planned_share": p.get("planned_share"), "tokens": p.get("tokens"), "estimate": estimate,
                      **value, "checks": results, "section_found": crit["section_found"], "defect": bool(defects),
                      "judgment": plan,
@@ -584,9 +685,6 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
                                     "share_of_estimate": 0.0 if estimate else None}}
         emit(EVENT_MILESTONE, milestone)
         out["milestones"].append(milestone)
-        if defects:
-            stop("milestone", "line", "check_failed", answers_part=p.get("part"),
-                 failed=[r["command"] for r in defects])
         for r in unrunnable:
             extra = {"reason": r["reason"], "missing": r["missing"], "cwd": r["cwd"]} if r.get("reason") else {}
             huddle(f"check could not run at Part {p.get('part')}: `{r['command']}` exit {r['exit']}"
@@ -763,7 +861,32 @@ def chart(events: list, project: str, seed: list | None = None, min_points: int 
                    else {"drawn": False, "n": len(cpis), "needs": min_points})
     return {"project": project, "premise_false_rate": rate(premise_false, reviews),
             "first_article_reject_rate": rate(rejects, articles), "milestone_defect_rate": rate(defects, milestones),
-            "tasks": rows, "huddles": len(n(EVENT_HUDDLE)), "individuals_chart": individuals}
+            "tasks": rows, "huddles": len(n(EVENT_HUDDLE)), "individuals_chart": individuals,
+            "classifier": classifier_per_launch(events)}
+
+
+def classifier_per_launch(events: list) -> list:
+    """FRICTION-002 Part D step 2: per launch, its permission mode, how many actions the auto-mode classifier blocked
+    (`classifier_block`) and whether its breaker stopped the session (`session_stop` from station `classifier`).
+    A launch in another mode is listed with its mode, so a zero is never read as "auto mode blocked nothing"."""
+    rows, by_child = [], {}
+    for e in events:
+        p = e.get("payload") or {}
+        if e.get("event_type") == "dispatch_launched":
+            row = {"task": (p.get("task_id") or "")[:8], "task_id": p.get("task_id"),
+                   "child_session_id": p.get("child_session_id"), "launched_at": p.get("launched_at"),
+                   "permission_mode": p.get("permission_mode"), "blocks": 0, "breaker": False}
+            rows.append(row)
+            if p.get("child_session_id"):
+                by_child[p["child_session_id"]] = row
+        elif e.get("event_type") == EVENT_CLASSIFIER_BLOCK and p.get("child_session_id") in by_child:
+            by_child[p["child_session_id"]]["blocks"] += 1
+        elif e.get("event_type") == EVENT_SESSION_STOP and p.get("station") == "classifier":
+            for row in reversed(rows):
+                if row["task_id"] == p.get("task_id"):
+                    row["breaker"] = True
+                    break
+    return rows
 
 
 def load_seed(path: Path) -> list:

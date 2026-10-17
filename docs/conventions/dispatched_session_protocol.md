@@ -12,9 +12,10 @@ three lines below in every Claude Code session.
 
 1. **At each Part boundary:** `seldon dispatch part-complete --part <name>`. It appends `part_complete` with the
    Part's planned share, the tokens used so far (input plus cache writes plus output, read from the dispatch log's
-   stream-json usage) and the wall time since launch, and prints the tokens. The dispatcher then runs that Part's
-   `check:` criteria and records `milestone` with the CPI. **Exit 3 means a stop is written:** write the RESULT with
-   what stands and end the session.
+   stream-json usage) and the wall time since launch, and prints the tokens. **Exit 3 means a stop is written:**
+   write the RESULT with what stands and end the session. When the session tries to end, its Stop hook runs the
+   `check:` criteria of every Part it declared complete (FRICTION-002 Part C, below); the dispatcher records
+   `milestone` with the CPI from that record.
 2. **After the first unit of a loop the task marks `**First article:**`:** `seldon dispatch first-article --loop
    <name> --output <path>`. It appends `first_article` and waits on the dispatcher's verdict. Continue the loop only
    on exit 0 (`first_article_pass`). Exit 3 is a stop, or no verdict within `first_article_polls` polls (a huddle).
@@ -58,6 +59,23 @@ huddle (QC-002 Part A, the first one recorded).
 - **R7's reserve:** `dispatch_launched` records `inspection_reserve` (10% of the estimate). Each `milestone` records
   the inspection actually spent (check seconds, model tokens: zero until QC-003).
 
+## Every task runs in its own worktree, with a completion gate (FRICTION-002, AD-034 ADDENDUM 01)
+
+- **The worktree.** The dispatcher cuts `.claude/worktrees/<stem>` on branch `worktree-<stem>` and launches the CLI
+  with `--worktree <stem>`. Claude Code refuses Edit/Write and git aimed at the primary checkout. Work, test and
+  commit on the branch, the RESULT included. Do not merge, push or run `seldon cc complete`: the dispatcher merges
+  on green and completes the task (AD-034-R5, R6). An unmerged task keeps its worktree and branch
+  (`worktree_kept`); a merged one's worktree is removed by the sweep and its branch kept.
+- **The Stop hook.** `seldon dispatch stop-gate`, installed per launch, runs the declared Parts' checks in the
+  session's tree when it tries to end. While one fails and the session is under its token ceiling (the `**Spend:**`
+  estimate times `spend_ceiling_factor`), the end is refused and the failing commands come back as the next
+  instruction. At the ceiling the session may end and a hard stop is written. The milestone station runs no check of
+  its own, so a failed check is a defect on the record, not a line stop.
+- **Auto mode** (seldon). Sessions run with `--permission-mode auto`. Each classifier block is a `classifier_block`
+  record (the `PermissionDenied` hook). The CLI's breaker (3 consecutive or 20 total) aborts the session, and the
+  dispatcher records a `line` stop of station `classifier` with the classifier's reason. Answer it with
+  `seldon dispatch redrive <task>`.
+
 ## Where the dispatcher reads the records
 
 The lease holder (the pass that launched the session) inspects every `poll_interval_s` while it waits. launchd does
@@ -71,7 +89,8 @@ from the worktree. The record is written to the PRIMARY checkout's event store (
 where the dispatcher reads it, and carries the session's `cwd` and `branch`; the station runs the Part's checks in that
 `cwd`. A check naming a file absent from the tree it ran in is `unrunnable` (a huddle with reason
 `check_unrunnable_wrong_tree` when the session's branch holds the file), never a failed check. Merging each Part to
-main before its `part-complete`, the workaround for Issue 02d52bc4, is no longer needed.
+main before its `part-complete`, the workaround for Issue 02d52bc4, is no longer needed, and since FRICTION-002 it
+is not possible: the CLI refuses a session's git aimed at the primary.
 
 **A false stop is redriven, not re-issued (AD-038-R2).** `seldon dispatch redrive <task>` walks a blocked task back to
 `accepted` with its file, id and history; the dispatcher redrives a wrong-tree or database-outage stop by itself.

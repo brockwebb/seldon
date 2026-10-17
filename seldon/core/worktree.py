@@ -102,24 +102,20 @@ def add(primary: Path, worktree: Path, branch: str, base: str) -> dict:
     return {"ok": r.returncode == 0, "stderr": (r.stderr or r.stdout).strip()}
 
 
-def remove(primary: Path, worktree: Path, branch: str) -> dict:
-    """Remove a MERGED task's worktree and delete its branch with `-d`, which git refuses for
-    an unmerged branch, so this can never discard work that is not on main.
+def remove(primary: Path, worktree: Path) -> dict:
+    """Remove a MERGED task's worktree. The branch is kept: nothing deletes a branch
+    (FRICTION-002 Part B step 3, AD-034 ADDENDUM 01).
 
-    `--force` on the worktree removal is for the symlinks `link` made and for untracked build
-    debris; the caller has already checked that nothing tracked is modified or unstaged.
+    The Claude Code CLI locks a worktree it enters with `--worktree` (`git worktree list`
+    shows `locked`), and git refuses to remove a locked worktree, so it is unlocked first; an
+    unlock of a worktree that is not locked fails harmlessly and is not reported. `--force` on
+    the removal is for the symlinks `link` made and for untracked build debris; the caller has
+    already checked that nothing tracked is modified or unstaged.
     """
-    out = {"worktree_removed": False, "branch_deleted": False, "stderr": ""}
+    git(primary, "worktree", "unlock", str(worktree))
     r = git(primary, "worktree", "remove", "--force", str(worktree))
-    out["worktree_removed"] = r.returncode == 0
-    if r.returncode != 0:
-        out["stderr"] = (r.stderr or r.stdout).strip()
-        return out
-    b = git(primary, "branch", "-q", "-d", branch)
-    out["branch_deleted"] = b.returncode == 0
-    if b.returncode != 0:
-        out["stderr"] = (b.stderr or b.stdout).strip()
-    return out
+    return {"worktree_removed": r.returncode == 0,
+            "stderr": "" if r.returncode == 0 else (r.stderr or r.stdout).strip()}
 
 
 def link(primary: Path, worktree: Path, rels: list) -> list:

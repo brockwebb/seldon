@@ -39,9 +39,11 @@ def test_checks_never_skip_when_the_reserve_is_spent(tmp_path):
     F.launch(p, at=F.ago(60))
     F.record(p, S.EVENT_PART_COMPLETE, {"part": "B", "planned_share": 0.5, "tokens": 10})
     ran = []
+    # FRICTION-002 Part C: the Stop hook runs the checks; the station reads its record.
+    F.gate(p, run=lambda cmd, *a, **k: ran.append(cmd) or {"command": cmd, "outcome": "pass", "exit": 0,
+                                                          "seconds": 0.0, "tail": ""})
     S.inspect(p, F.TASK_ID, F.events(p), S.load_stations_config({"stations": {"inspection_reserve_share": 1e-9}}),
-              300, F.emitter(p), run=lambda cmd, *a, **k: ran.append(cmd) or {"command": cmd, "outcome": "pass",
-                                                                             "exit": 0, "seconds": 0.0, "tail": ""})
+              300, F.emitter(p))
     (m,) = F.events(p, S.EVENT_MILESTONE)
     assert ran == [F.PASS] and m["payload"]["judgment"]["sampled"] == 0
     assert m["payload"]["inspection"] == {"check_seconds": 0.0, "model_tokens": 0, "reserve_tokens": 0,
@@ -68,6 +70,7 @@ def test_station_rates_are_counted_from_the_records(tmp_path):
     p = F.make_project(tmp_path)
     F.launch(p, at=F.ago(60))
     F.record(p, S.EVENT_PART_COMPLETE, {"part": "A", "planned_share": 0.5, "tokens": 900_000})
+    F.gate(p)
     S.inspect(p, F.TASK_ID, F.events(p), S.load_stations_config({}), 300, F.emitter(p))
     out = S.chart(F.events(p), "proj", seed=[], min_points=10)
     assert out["milestone_defect_rate"] == {"k": 0, "n": 1, "rate": 0.0}

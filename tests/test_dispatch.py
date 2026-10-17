@@ -91,7 +91,7 @@ def project(tmp_path) -> Path:
     # The runtime directories are ignored, exactly as they are in the real project: a STOP file
     # or a lease that counted as a dirty tree would make c7 fail every time c8 did, and no
     # fixture could then isolate either.
-    (p / ".gitignore").write_text(".seldon/\nlogs/\n", encoding="utf-8")
+    (p / ".gitignore").write_text(".seldon/\nlogs/\n.claude/\n", encoding="utf-8")
     (p / "cc_tasks").mkdir()
     subprocess.run(["git", "add", "-A"], cwd=p, check=True, capture_output=True)
     subprocess.run(["git", "commit", "-m", "init"], cwd=p, check=True, capture_output=True)
@@ -226,9 +226,10 @@ def test_all_nine_criteria_pass_on_a_clean_task(project):
     row = _evaluate(project, f)
     assert row["candidate"]
     assert row["eligible"], json.dumps(row["criteria"], indent=1)
-    # c10 and c11 are SEL-004's, present only when declared or in parallel mode; c12 (free space against the
-    # launch's measured need, SQ-010 ADDENDUM 02 D3.4) is evaluated for every candidate.
-    assert sorted(row["criteria"]) == sorted([f"c{i}" for i in range(1, 10)] + ["c12"])
+    # c10 is SEL-004's, present only when declared or in parallel mode; c11 (the task's worktree is free) is every
+    # task's since FRICTION-002 (every task runs in a worktree); c12 (free space against the launch's measured
+    # need, SQ-010 ADDENDUM 02 D3.4) is evaluated for every candidate.
+    assert sorted(row["criteria"]) == sorted([f"c{i}" for i in range(1, 10)] + ["c11", "c12"])
 
 
 def test_c1_fails_when_the_task_file_is_not_git_tracked(project):
@@ -238,7 +239,7 @@ def test_c1_fails_when_the_task_file_is_not_git_tracked(project):
     # IGNORED, not merely unstaged. An unstaged file is dirt, so it would fail c7 as well and
     # the fixture would stop isolating c1; an ignored one is untracked and invisible to
     # `git status`, which is exactly "git cannot recover this task file".
-    (project / ".gitignore").write_text(".seldon/\nlogs/\ncc_tasks/untracked.md\n",
+    (project / ".gitignore").write_text(".seldon/\nlogs/\n.claude/\ncc_tasks/untracked.md\n",
                                         encoding="utf-8")
     _commit(project)
     row = _evaluate(project, f)

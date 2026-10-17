@@ -11,6 +11,11 @@ ran in is `unrunnable` (a huddle) with reason `check_unrunnable_wrong_tree` when
 never a failed check. A genuinely failing test still stops the line.
 
 No Neo4j: the stations read and write only the event store.
+
+**Erratum, FRICTION-002 Part C (2026-10-17).** The station runs no check of its own: the session's Stop hook runs the
+declared Parts' checks in the session's tree (`_gate`, standing in for it, runs where the session stands) and the
+milestone reads that record. A genuinely failing test is a defect the hook holds the session on until it passes or
+the token ceiling is reached; it is no longer a line stop.
 """
 from __future__ import annotations
 
@@ -74,6 +79,15 @@ def _worktree(p: Path, body: str) -> Path:
     return wt
 
 
+def _gate(p: Path, cwd: Path, branch: str | None) -> dict:
+    events = read_events(p)
+    cfg = D.load_dispatch_config(p, yaml.safe_load((p / "seldon.yaml").read_text()))
+    out = S.stop_gate(p, S.last_launch(events, "aaaaaaaa-0000-0000-0000-000000000001"), events,
+                      S.load_stations_config(cfg), cwd, branch)
+    append_event(p, make_event(S.EVENT_STOP_GATE, "cc", "accepted", out["record"]))
+    return out
+
+
 def _inspect(p: Path) -> dict:
     cfg = D.load_dispatch_config(p, yaml.safe_load((p / "seldon.yaml").read_text()))
     return ST.inspect_in_flight(p, cfg, "aaaaaaaa-0000-0000-0000-000000000001", holder=True)
@@ -90,6 +104,7 @@ def test_the_desk002_case_passes(project):
     assert rec[0]["payload"]["branch"] == "feat/t1"
     assert not (wt / "seldon_events.jsonl").read_text().count(S.EVENT_PART_COMPLETE)
 
+    assert _gate(project, wt, "feat/t1")["block"] is False
     got = _inspect(project)
     assert [c["outcome"] for c in got["milestones"][0]["checks"]] == ["pass"], got
     assert got["stops"] == [] and got["huddles"] == []
@@ -102,6 +117,7 @@ def test_a_check_run_in_the_wrong_tree_is_a_huddle_not_a_stop(project):
     append_event(project, make_event(S.EVENT_PART_COMPLETE, "cc", "accepted",
                                      {"task_id": "aaaaaaaa-0000-0000-0000-000000000001", "part": "A",
                                       "planned_share": 0.5, "tokens": None, "branch": "feat/t1"}))
+    assert _gate(project, project, "feat/t1")["block"] is False, "an unrunnable check never holds a session"
     got = _inspect(project)
     check = got["milestones"][0]["checks"][0]
     assert check["outcome"] == "unrunnable" and check["reason"] == S.REASON_WRONG_TREE, check
@@ -110,16 +126,14 @@ def test_a_check_run_in_the_wrong_tree_is_a_huddle_not_a_stop(project):
     assert got["huddles"][0]["missing"] == ["tests/test_new.py"]
 
 
-def test_a_genuinely_failing_test_still_stops_the_line(project):
+def test_a_genuinely_failing_test_is_a_defect_the_gate_holds_the_session_on(project):
     wt = _worktree(project, FAILING)
     out = run_cli(wt, dispatch_group, ["part-complete", "--part", "A"])
     assert out.exit_code == 0, out.output
+    assert _gate(project, wt, "feat/t1")["block"] is True, "the Stop hook refuses the session's end"
     got = _inspect(project)
     assert [c["outcome"] for c in got["milestones"][0]["checks"]] == ["fail"], got
-    assert len(got["stops"]) == 1 and got["stops"][0]["reason"] == "check_failed"
-    # The session's next boundary halts on it.
-    halt = run_cli(wt, dispatch_group, ["boundary"])
-    assert halt.exit_code == S.HALT_EXIT, halt.output
+    assert got["milestones"][0]["defect"] is True and got["stops"] == []
 
 
 def test_a_missing_file_no_branch_holds_is_named_as_missing():
