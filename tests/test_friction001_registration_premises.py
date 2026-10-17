@@ -25,7 +25,6 @@ from click.testing import CliRunner
 from seldon.commands.cc import cc_group
 from seldon.commands.dispatch import dispatch_group
 from seldon.core import stations as S
-from seldon.core import toil as T
 from seldon.core.events import make_event, read_events
 from tests.dispatch_scaffold import make_project, run_cli
 from tests.testdb import TEST_DATABASE
@@ -183,6 +182,7 @@ def _ev(kind, actor, ts, **payload):
 
 
 def test_the_toil_measure_counts_each_week(tmp_path):
+    from seldon.core import toil as T
     log = tmp_path / "seldon_dispatch.log"
     log.write_text(LOG, encoding="utf-8")
     stale = tmp_path / "mcp_stale.jsonl"
