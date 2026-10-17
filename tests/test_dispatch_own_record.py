@@ -312,11 +312,13 @@ def test_a_line_left_by_an_earlier_pass_is_committed_by_the_next(
 
 # ============================================ what the dispatcher must never commit or stage
 
-def test_a_line_somebody_else_wrote_is_never_committed_by_the_dispatcher(
+def test_a_line_somebody_else_wrote_is_committed_by_the_reconciler(
         project, neo4j_driver, domain_config, clean_test_db, clock, monkeypatch):
-    """The pathspec limits WHICH FILE; the actor check limits WHOSE LINES. A session that
-    wrote to the store and failed to commit is a finding for the OODA, not a line for the
-    dispatcher to launder under its own message — and a dirty tree is how c7 surfaces it."""
+    """Reversed by AD-038-R1 (FRICTION-001 Part A). This test held that a `cc` line was never committed by the
+    dispatcher (the retired `COMMITTABLE_ACTORS`), and that refusal is what kept c7 false for the whole queue: 797
+    passes in a week, every one on the system's own writes. The pass holds the lease with no claim in flight, so no
+    session is working in the checkout; the store's append is committed whoever wrote it, and the message names the
+    writers it found. What still refuses is an append that is not one (`test_a_rewritten_store_is_not_committed`)."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     from seldon.core.events import append_event, make_event
     append_event(project, make_event(
@@ -325,18 +327,12 @@ def test_a_line_somebody_else_wrote_is_never_committed_by_the_dispatcher(
     append_event(project, make_event(
         event_type=D.EVENT_FINISHED, actor="dispatcher", authority="accepted",
         payload={"task_id": "deadbeef-0000"}))
-    head = _git(project, "rev-parse", "HEAD").stdout.strip()
 
     res = _run(project, ["once"])
-    assert res.exit_code == 0
-    assert _git(project, "rev-parse", "HEAD").stdout.strip() == head
-    assert _store_status(project) != ""
-    # ADDENDUM_01 decision 6a widened `COMMITTABLE_ACTORS` to dispatcher AND desktop, so the
-    # message names the actor it found rather than saying "not dispatcher-only". The claim
-    # this test makes is unchanged and is the one that matters: a `cc` line is never
-    # committed by the dispatcher, because that one is DD-019's class.
-    assert "written by cc" in res.output
-    assert "not one of dispatcher, desktop" in res.output
+    assert res.exit_code == 0, res.output
+    assert _store_status(project) == ""
+    head = _messages(project, 1)[0]
+    assert "written by cc, dispatcher" in head and "event_store" in head, head
 
 
 def test_nothing_outside_the_store_is_ever_staged_or_committed(

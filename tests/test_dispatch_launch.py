@@ -761,7 +761,8 @@ def test_the_dispatcher_commits_a_registered_task_file_nobody_committed(
     assert _run(project, ["once"]).exit_code == 0
 
     assert D.is_tracked(project, path), "the registered file is still untracked"
-    assert _head_message(project).startswith("register: cc_tasks/t2.md")
+    # FRICTION-001 (AD-038-R1): committed by the reconciler's `task_files` class.
+    assert _head_message(project).startswith("reconcile: 1 registered task file(s): cc_tasks/t2.md")
 
     # And then the SAME pass launches it. The commit runs before candidacy for this reason:
     # a task freed by a pass is a task that pass may serve, which is the cadence's shape
@@ -820,10 +821,14 @@ def test_the_dispatcher_commits_the_registration_record_with_the_file_it_records
 
     # Looked up by message, not read off HEAD: the dispatcher's own record commits
     # (`dispatch_launched`, `dispatch_finished`) now follow it in the same pass.
-    sha = _git(project, "log", "--pretty=%H", "--grep=^register: cc_tasks/t4.md").stdout.split()
+    #
+    # FRICTION-001 (AD-038-R1): one commit per class, so the footprint's two halves are the
+    # `task_files` commit and the `event_store` commit of the same reconcile, made before c7.
+    sha = _git(project, "log", "--pretty=%H", "--grep=registered task file(s): cc_tasks/t4.md").stdout.split()
     assert len(sha) == 1
-    names = _git(project, "show", "--name-only", "--pretty=", sha[0]).stdout
-    assert "cc_tasks/t4.md" in names and "seldon_events.jsonl" in names
+    assert _git(project, "show", "--name-only", "--pretty=", sha[0]).stdout.split() == ["cc_tasks/t4.md"]
+    store = _git(project, "log", "--pretty=%H", "--grep=artifact_created .* (event_store, AD-038-R1)").stdout.split()
+    assert store and "seldon_events.jsonl" in _git(project, "show", "--name-only", "--pretty=", store[-1]).stdout
 
     # The point of the whole decision: c7 is TRUE at the moment candidacy is evaluated. Read
     # off the launch event's own vector.
@@ -907,7 +912,8 @@ def test_the_commit_is_reported_on_stdout_where_the_wrapper_log_carries_it(
     _register(project, neo4j_driver, domain_config, rel="cc_tasks/t7.md")
     before = len(_events(project))
     res = _run(project, ["once"])
-    assert "register:" in res.output and "cc_tasks/t7.md" in res.output
+    # FRICTION-001 (AD-038-R1): the reconciler's `task_files` commit, named on stdout.
+    assert "registered task file(s): cc_tasks/t7.md" in res.output, res.output
     kinds = [e["event_type"] for e in _events(project)[before:]]
     assert "cadence_created" not in kinds
     assert D.EVENT_REFUSED not in kinds

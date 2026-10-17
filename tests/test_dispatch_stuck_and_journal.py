@@ -175,17 +175,17 @@ def test_a_pass_commits_an_uncommitted_desktop_line_and_dispatches(project, neo4
     assert _porcelain(project).strip() == "", _porcelain(project)
 
 
-def test_an_uncommitted_cc_line_still_refuses(project, neo4j_driver, domain_config):
-    """The DD-019 guard, unchanged. A dispatched session's uncommitted event is not a line to
-    launder under a dispatcher message."""
+def test_an_uncommitted_cc_line_is_reconciled_and_the_task_launches(project, neo4j_driver, domain_config):
+    """Reversed by AD-038-R1 (FRICTION-001 Part A): this held that a `cc` line refused the pass (the DD-019 guard).
+    The guard is the lease: a pass reconciles only while it holds it with no claim in flight, so no session is
+    working here, and a finished writer's line is committed like any other machine-written state."""
     _register(project, neo4j_driver, domain_config, commit=True)
     append_event(project, make_event(event_type="artifact_updated", actor="cc",
                                      authority="accepted", payload={"note": "mid-session"}))
     out = _run(project, ["once"])
     assert out.exit_code == 0, out.output
-    assert "launching" not in out.output
-    assert "NOT committed" in out.output
-    assert "cc" in out.output
+    assert "launching" in out.output, out.output
+    assert "NOT committed" not in out.output
 
 
 def test_an_mcp_write_tool_commits_its_own_append(project, neo4j_driver):
