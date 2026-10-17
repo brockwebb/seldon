@@ -50,6 +50,7 @@ Working engine: Neo4j graph + JSONL event store + CLI. 341 tests passing. Domain
 | `task chain`      | Order a whole sequence of tasks | `seldon task chain <A> <B> <C> ...` |
 | `task unprecede`  | Retire an ordering that no longer holds | `seldon task unprecede <A> <B>` |
 | `cc complete`     | After executing a CC task | `seldon cc complete <task-filepath>` |
+| `dispatch redrive` | A blocked task should run again (AD-038-R2) | `seldon dispatch redrive <task>` |
 | `models show`     | Which model each role runs on today | `seldon models show` |
 | `models resolve`  | A role's model id, or with `--json` the full launch block | `seldon models resolve <role> [--json]` |
 | `models refresh`  | Re-resolve the lock from the newest CLI (four calls, cached for the day) | `seldon models refresh [--force]` |
@@ -73,6 +74,7 @@ Desktop sessions (Claude Desktop, claude.ai threads) can do graph housekeeping v
 | `seldon_issue_create` | Create Issue (Eisenhower 3×3) |
 | `seldon_issue_update` | Update Issue state/priority |
 | `seldon_cc_complete` | Mark CC task file as completed |
+| `seldon_dispatch_redrive` | Put a blocked task back on the queue (AD-038-R2) |
 | `seldon_cc_register` | Register CC task file as proposed |
 | `seldon_handoff` | Close the session: write the handoff, return the resume and CC dispatch blocks |
 | `seldon_cc_register` | ...also returns the Rulings the task is constrained by, and refuses a task citing no AD/DN (AD-030-R9) |
@@ -126,10 +128,19 @@ commits only with `draft:` in the subject (the tracked `.githooks/commit-msg`); 
 instead of refusing, and the dispatcher refuses that one task as `governing_unverified` (c14), not the whole queue.
 A dirty tree alarms on the first refused pass, and `seldon go` prints the last pass's refusal lines.
 
-**seldon-mcp refuses `server_stale` after a merge (SEL-006 Part B).** The server records the HEAD tree of `seldon/`
-and the sha256 of `models/registry.yaml` and `seldon.yaml` at start and re-checks them before every tool call. On
-`server_stale`, restart Claude Desktop; the answer it would have given came from pre-merge code. `squiddy serve`
-does the same for `squiddy/` and its graph's `config.yaml`.
+**seldon-mcp runs HEAD (AD-038-R3, FRICTION-001).** Every mutating tool runs `python -P -m seldon mcp-call <tool>`
+in a fresh process on the checkout's current code, so a merge under `seldon/` no longer needs a Desktop restart. Only
+the read-only tools (`seldon_go`, `seldon_task_list`, `seldon_query`, `seldon_decision_show|list|check`) stay in
+process behind SEL-006's stale guard; theirs is the only `server_stale` left, it asks for no restart, and each one is
+logged to `mcp.stale_log` for `seldon qc chart`. A new tool is mutating unless declared `@_tool(read_only=True)`.
+`squiddy serve` still refuses and asks for a restart for `squiddy/` and its graph's `config.yaml`.
+
+**The dispatcher reconciles before c7 (AD-038-R1).** Each pass commits every dirty path of machine-written governed
+state (event store, prior-art logs, decision register, the cadence's `last_instance`, registered task files and their
+addenda), one commit per class, whoever wrote it; c7 then refuses only on what it could not commit and names each path
+with its reason (`unreconciled:`). **A halted task is redriven, not re-issued (R2):** `seldon dispatch redrive <task>`
+(MCP `seldon_dispatch_redrive`) walks `blocked -> accepted`; the dispatcher redrives its own wrong-tree and
+database-outage stops. **Registration runs `check:` premises (R5).** `seldon qc chart` reports toil per week (R6).
 
 **Prior-art evidence lives with the caller (AD-036-R10, R11).** `seldon prior-art search` and `verify` log to, and
 commit in, the calling project: `--project`, else the note's repository, else the project at or above the working

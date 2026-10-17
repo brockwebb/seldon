@@ -65,3 +65,13 @@ not start another pass while that one runs, so the holder is the only inspector 
 finds the lease held by a holder from before QC-002 (no `stations` field in the lease body) inspects in its place and
 reaps nothing; `seldon dispatch inspect` runs the same inspection by hand. Worktree sessions (`max_parallel > 1`) are not
 inspected yet, which is why AD-037-R9's opt-in stays closed (`stations_live()["worktree"]`).
+
+**A session working in a git worktree (AD-038-R4, FRICTION-001).** Run `part-complete`, `first-article` and `boundary`
+from the worktree. The record is written to the PRIMARY checkout's event store (the parent of git's common directory),
+where the dispatcher reads it, and carries the session's `cwd` and `branch`; the station runs the Part's checks in that
+`cwd`. A check naming a file absent from the tree it ran in is `unrunnable` (a huddle with reason
+`check_unrunnable_wrong_tree` when the session's branch holds the file), never a failed check. Merging each Part to
+main before its `part-complete`, the workaround for Issue 02d52bc4, is no longer needed.
+
+**A false stop is redriven, not re-issued (AD-038-R2).** `seldon dispatch redrive <task>` walks a blocked task back to
+`accepted` with its file, id and history; the dispatcher redrives a wrong-tree or database-outage stop by itself.
