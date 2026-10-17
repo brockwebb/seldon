@@ -1,0 +1,29 @@
+seq: 290
+event: accept
+id: seldon:AD-038-R5
+date: '2026-10-17'
+decided_by: desktop
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_the_machine_reconciles_its_own_state.md:1: AD-038 (Desktop session, squiddy thread SQ8, 2026-10-17)'
+reason: AD-038 ruling registered from the note's own bytes (AD-033-R3)
+kind: decision
+status: accepted
+statement: '- **AD-038-R5. Registration runs the task''s `check:` premises.** A false premise refuses registration with the command''s output, so the author sees it in the same turn. Dispatch keeps its review (the environment may change between). **Basis:** measured (SQ-016, 19 hours to a one-line path error).'
+source:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  lines:
+  - 68
+  - 68
+  sha256: 27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415
+  text: '- **AD-038-R5. Registration runs the task''s `check:` premises.** A false premise refuses registration with the command''s output, so the author sees it in the same turn. Dispatch keeps its review (the environment may change between). **Basis:** measured (SQ-016, 19 hours to a one-line path error).'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  anchor: AD-038-R5
+consumer:
+- cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md
+written_by: seldon decision 0.1.0
+prev_hash: 85ff0ef0d21fecd3ba6ee50a2f84b65840dbca08c29f79656ba91166fb8739d0
+record_hash: a71229b6358a9a0d5e2c667105678f1d051d0f7d37b6968043b0e643bb8307fb

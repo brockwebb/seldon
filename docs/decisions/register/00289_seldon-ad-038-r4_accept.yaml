@@ -1,0 +1,29 @@
+seq: 289
+event: accept
+id: seldon:AD-038-R4
+date: '2026-10-17'
+decided_by: desktop
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_the_machine_reconciles_its_own_state.md:1: AD-038 (Desktop session, squiddy thread SQ8, 2026-10-17)'
+reason: AD-038 ruling registered from the note's own bytes (AD-033-R3)
+kind: decision
+status: accepted
+statement: '- **AD-038-R4. A station inspects the tree the session works in.** `part_complete` carries the session''s checkout path and branch; the milestone and first-article stations run their checks there. A check that names a file absent from that tree is `unrunnable` (a huddle), never `check_failed` (a stop). **Basis:** AD-037-R6 as written assumed in-place work; measured (02d52bc4).'
+source:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  lines:
+  - 67
+  - 67
+  sha256: 27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415
+  text: '- **AD-038-R4. A station inspects the tree the session works in.** `part_complete` carries the session''s checkout path and branch; the milestone and first-article stations run their checks there. A check that names a file absent from that tree is `unrunnable` (a huddle), never `check_failed` (a stop). **Basis:** AD-037-R6 as written assumed in-place work; measured (02d52bc4).'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  anchor: AD-038-R4
+consumer:
+- cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md
+written_by: seldon decision 0.1.0
+prev_hash: 88149178f89cb2994e365691d20a803e9d22c9744e66f19508d185f2f2117f61
+record_hash: 85ff0ef0d21fecd3ba6ee50a2f84b65840dbca08c29f79656ba91166fb8739d0

@@ -1,0 +1,29 @@
+seq: 287
+event: accept
+id: seldon:AD-038-R2
+date: '2026-10-17'
+decided_by: desktop
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_the_machine_reconciles_its_own_state.md:1: AD-038 (Desktop session, squiddy thread SQ8, 2026-10-17)'
+reason: AD-038 ruling registered from the note's own bytes (AD-033-R3)
+kind: decision
+status: accepted
+statement: '- **AD-038-R2. A halted task is redriven, not re-issued.** `blocked` gains the transition `blocked -> accepted`, taken by `seldon dispatch redrive <task>` (CLI and MCP), which clears `claimed_by`, records `dispatch_redrive` with the stop it answers, and leaves the task''s file, id and history intact. The dispatcher redrives automatically when the stop''s cause is one of its own recorded defects (a station that ran in the wrong tree, a database outage); any other cause waits for a redrive from a Desktop or CC session. **Basis:** SQS dead-letter redrive; measured (DESK-002''s halt cost one task file, one supersede and 44 minutes).'
+source:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  lines:
+  - 65
+  - 65
+  sha256: 27a9d6e70162bd20c5bfb471b54a3e4b986c0cd812eba6798397337598857415
+  text: '- **AD-038-R2. A halted task is redriven, not re-issued.** `blocked` gains the transition `blocked -> accepted`, taken by `seldon dispatch redrive <task>` (CLI and MCP), which clears `claimed_by`, records `dispatch_redrive` with the stop it answers, and leaves the task''s file, id and history intact. The dispatcher redrives automatically when the stop''s cause is one of its own recorded defects (a station that ran in the wrong tree, a database outage); any other cause waits for a redrive from a Desktop or CC session. **Basis:** SQS dead-letter redrive; measured (DESK-002''s halt cost one task file, one supersede and 44 minutes).'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_the_machine_reconciles_its_own_state.md
+  anchor: AD-038-R2
+consumer:
+- cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md
+written_by: seldon decision 0.1.0
+prev_hash: c18c24b246509c948f978f1e7118825b89a6f4226e054068bbd201c225469e0a
+record_hash: 230f10d350732f3a2360e057bde24c14a8afade2b1e76defdf1764a450796a6a
