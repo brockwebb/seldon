@@ -3405,3 +3405,43 @@ documents:
     acquisition_status: "acquired"
     verification_status: "verified"
     cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+# AD-030-R1: every governed markdown file is a Document node.
+
+  - id: cc_tasks_2026_10_17_friction_002_vendor_isolation_replaces_hand_built_plumbing_result
+    verification_method: "local governed file, sha256 b2ef413ecd0dad97, 4,207 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing_RESULT.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'FRICTION-002 RESULT: worktree-only dispatch, Stop-hook completion gate, auto mode with the breaker'
+    source_url: cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing_RESULT.md
+    local_path: "../cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing_RESULT.md"
+    doc_kind: cc_task
+    provenance_flag: local_authored
+    sha256: "b2ef413ecd0dad974f4279d9982dea26debbfaa3993800a24626b7cb669e3010"
+    bytes: 4218
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
+
+  - id: docs_design_ad_034_addendum_01_worktree_is_the_only_mode
+    verification_method: "local governed file, sha256 028b0c9c9f6185a1, 6,954 characters"
+    retrieved_date: "2026-10-17"
+    notes: "ADMITTED under criterion local_file_present: the governed file ../docs/design/AD-034_ADDENDUM_01_worktree_is_the_only_mode.md is present on disk. Assessed mechanically by squiddy.assess on 2026-10-17."
+    kind: local_document
+    stage: "in_graph"
+    disposition: active
+    title: 'AD-034 ADDENDUM 01: worktree is the only mode; the CLI''s `--worktree` enforces the boundary'
+    source_url: docs/design/AD-034_ADDENDUM_01_worktree_is_the_only_mode.md
+    local_path: "../docs/design/AD-034_ADDENDUM_01_worktree_is_the_only_mode.md"
+    doc_kind: design
+    provenance_flag: local_authored
+    sha256: "028b0c9c9f6185a1884eb686aa5cd5f23ac93a20ec5feab0e44acb6cb91b0903"
+    bytes: 6956
+    acquisition: none
+    acquisition_status: "acquired"
+    verification_status: "verified"
+    cataloged_by: AD-030-R1 (docs/design/AD-030_governed_documents_as_graph_content.md)
