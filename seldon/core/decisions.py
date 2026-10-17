@@ -62,7 +62,8 @@ ACTIVE = frozenset({"proposed", "accepted"})
 #: The one status that binds (AD-033-R4).
 BINDING = "accepted"
 
-#: Fields an `amend` event may change. Everything else is fixed at creation (schema, `Changes`).
+#: Fields an `amend` event may change. Everything else is fixed at creation (schema, `Changes`), save that
+#: `source.sha256` may be corrected to the digest of the file's current bytes (`_source_correction`, DESK-002).
 AMENDABLE = ("statement", "statement_check", "kind", "mirrors", "scope", "scope_note", "consumer",
              "review_only", "rationale")
 
@@ -314,6 +315,47 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def _span_text(lines: list[str], span: Any) -> Optional[str]:
+    """The file's text at a record's `source.lines` (1-based, inclusive), or None for a span the file lacks."""
+    if not (isinstance(span, list) and span and all(isinstance(n, int) for n in span)):
+        return None
+    a, b = span[0], span[-1]
+    if not 1 <= a <= b <= len(lines):
+        return None
+    return "\n".join(lines[a - 1:b])
+
+
+def checked_source(u: "Universe", qid: str, source: Any, *, given_sha: Any = None) -> Any:
+    """`source` with `sha256` taken from the file's bytes, after checking it (Issue 5bfc2788, DESK-002 Part C).
+
+    The register's convention is the digest of the WHOLE file at `source.path` in the record's home repository
+    (squiddy seq 972 to 975: one digest each for different spans of one note), never a hash of the span or of a
+    transcription. A caller-supplied digest that differs is refused, naming both. `source.text` must equal the file's
+    text at `source.lines`, compared without leading and trailing whitespace, which is how registration takes the
+    span (`governing_commit.plan_records`). A value that is not a mapping is returned as is, for the shape check.
+    """
+    if not isinstance(source, dict):
+        return source
+    repo, _ = split_id(qid)
+    root = u.s.repositories.get(repo)
+    rel = source.get("path") or ""
+    path = Path(root) / rel if root else None
+    if path is None or not rel or not path.is_file():
+        raise RegisterError(f"source {rel!r} of {qid} resolves to no file in {repo}")
+    actual = sha256_file(path)
+    given = source.get("sha256") if given_sha is None else given_sha
+    if not _blank(given) and given != actual:
+        raise RegisterError(f"source.sha256 of {qid} is {given}, but {rel} hashes to {actual}: the register takes "
+                            f"the digest of the whole file's bytes (omit it and it is computed)")
+    span = _span_text(path.read_text(encoding="utf-8").splitlines(), source.get("lines"))
+    if span is None:
+        raise RegisterError(f"source.lines {source.get('lines')!r} of {qid} is not a span of {rel}")
+    if span.strip() != str(source.get("text") or "").strip():
+        raise RegisterError(f"source.text of {qid} is not the text of {rel} at lines {source.get('lines')}: "
+                            f"a record carries the note's own bytes (AD-033-R3)")
+    return dict(source, sha256=actual)
 
 
 def file_name(seq: int, qid: str, event: str) -> str:
@@ -791,6 +833,8 @@ def create(u: Universe, event: str, record: dict, *, date: str, decided_by: str,
         raise RegisterError("supersede of a new record names what it supersedes")
     if event != "supersede" and data.get("supersedes"):
         raise RegisterError("only `seldon decision supersede` may name `supersedes`")
+    if "source" in data:
+        data["source"] = checked_source(u, qid, data["source"])
     _check_shape_or_refuse(data)
     if u.get(qid) is not None:
         raise RegisterError(f"id {qid} is already used in the {split_id(qid)[0]} register")
@@ -860,9 +904,10 @@ def amend(u: Universe, qid: str, *, date: str, decided_by: str, reason: str,
                 raise RegisterError("a record does not amend itself; change its fields instead")
         data["amendment"] = {k: v for k, v in amendment.items() if v is not None}
     if changes:
-        bad = set(changes) - set(AMENDABLE)
+        bad = set(changes) - set(AMENDABLE) - {"source"}
         if bad:
-            raise RegisterError(f"fields {sorted(bad)} are fixed at creation; amendable: {list(AMENDABLE)}")
+            raise RegisterError(f"fields {sorted(bad)} are fixed at creation; amendable: {list(AMENDABLE)}, "
+                                f"and source.sha256 to the file's digest")
         st = changes.get("statement")
         pointer = deictic_reference(st) if st else None
         if pointer:
@@ -878,8 +923,33 @@ def amend(u: Universe, qid: str, *, date: str, decided_by: str, reason: str,
         if changes.get("rationale"):
             _rationale_resolves(u, qid, changes["rationale"], refuse=True)
         data["changes"] = dict(changes)
+        if "source" in changes:
+            data["changes"]["source"] = _source_correction(u, rec, changes["source"])
     _check_shape_or_refuse(data)
     return [_write(u, data)]
+
+
+def _source_correction(u: Universe, rec: Record, change: Any) -> dict:
+    """The record's `source` with only `sha256` changed, to the digest of the file's current bytes (DESK-002 Part C).
+
+    A verifiable correction, not a rewrite: the record's span must still be the file's text at its lines, so the
+    new digest names the bytes the record quotes. A different path, span or text is a different record and stays
+    fixed at creation. The event carries the whole corrected `source`, so the fold (`apply`) needs no special case.
+    """
+    cur = rec.get("source") or {}
+    if not isinstance(change, dict):
+        raise RegisterError(f"source of {rec.id} is fixed at creation; an amend changes only source.sha256")
+    moved = sorted(f"source.{k}" for k, v in change.items() if k != "sha256" and v != cur.get(k))
+    if moved:
+        raise RegisterError(f"fields {moved} are fixed at creation; an amend changes only source.sha256, "
+                            f"to the digest of the file's current bytes")
+    new = change.get("sha256")
+    if _blank(new):
+        raise RegisterError(f"an amend of {rec.id}'s source names the new source.sha256")
+    fixed = checked_source(u, rec.id, cur, given_sha=new)
+    if fixed["sha256"] == cur.get("sha256"):
+        raise RegisterError(f"source.sha256 of {rec.id} is already {new}; nothing to correct")
+    return fixed
 
 
 def _rationale_resolves(u: Universe, qid: str, rationale: dict, refuse: bool = False) -> bool:

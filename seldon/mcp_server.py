@@ -1744,7 +1744,9 @@ def seldon_decision_propose(record_yaml: str, decided_by: str, project_dir: str 
 
     Args:
         record_yaml: YAML mapping of the record's fields (id, kind, statement, source{path, lines,
-            sha256, text}, scope, rationale{path, anchor}, consumer or review_only, waits_on, ...).
+            text}, scope, rationale{path, anchor}, consumer or review_only, waits_on, ...).
+            source.sha256 is computed from the whole file's bytes; a different value given is
+            refused, and source.text must be the file's text at source.lines (DESK-002 Part C).
         decided_by: operator, desktop, cc:<task id>, or inherited:<repository>.
         project_dir: Project root.
         date: YYYY-MM-DD; default today.
@@ -1763,7 +1765,8 @@ def seldon_decision_accept(decided_by: str, project_dir: str = ".", record_id: s
                            receipts: str = "", operator_stated: bool = False) -> str:
     """Register a new record accepted (record_yaml), or accept a proposed one (record_id).
 
-    Desktop decisions under L4 are accepted when registered (AD-033-R4).
+    Desktop decisions under L4 are accepted when registered (AD-033-R4). source.sha256 is
+    computed from the file and checked as in `seldon_decision_propose`.
     """
     return _decision_write(project_dir, "accept", qid=record_id or None,
                            record=_yaml_mapping(record_yaml, "record_yaml"), decided_by=decided_by,
@@ -1807,7 +1810,9 @@ def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_
                           clause: str = "", text: str = "", by: str = "", changes_yaml: str = "",
                           date: str = "", receipts: str = "") -> str:
     """Amend an active record's clause (clause + text, optionally by another record), change its
-    amendable fields (changes_yaml), or both."""
+    amendable fields (changes_yaml), or both. `source: {sha256: <hex>}` in changes_yaml corrects a
+    record's digest to the file's current bytes, only while its source.text is still the file's
+    text at its lines; every other change to source is refused (DESK-002 Part C)."""
     amendment = {"clause": clause, "text": text, "by": by or None} if (clause or text) else None
     return _decision_write(project_dir, "amend", qid=record_id, decided_by=decided_by,
                            date=date or None, reason=reason, receipts=_receipts(receipts),

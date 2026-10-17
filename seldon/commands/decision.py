@@ -190,7 +190,8 @@ for _a in ("reject", "deprecate"):
 @click.option("--text", default=None, help="The amendment, in words.")
 @click.option("--by", "by", default=None, help="The record that makes the amendment, if one does.")
 @click.option("--changes", "changes_file", default=None,
-              help=f"YAML mapping of field changes; amendable: {', '.join(dr.AMENDABLE)}.")
+              help=f"YAML mapping of field changes; amendable: {', '.join(dr.AMENDABLE)}; and "
+                   f"`source: {{sha256: <hex>}}`, only to the file's current digest.")
 @_common
 def amend_cmd(qid, clause, text, by, changes_file, decided_by, date, reason, receipts, operator_stated):
     """Amend an active record's clause, change its amendable fields, or both."""

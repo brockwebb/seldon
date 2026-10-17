@@ -119,7 +119,7 @@ slots:
   # nested
   path: {description: "Repository-relative path."}
   lines: {range: integer, multivalued: true, description: "First and last line, 1-based, inclusive."}
-  sha256: {description: "sha256 of the whole source file at the baseline commit or at registration."}
+  sha256: {description: "sha256 of the whole source file at the baseline commit or at registration (computed by the write path), or as an amend corrected it."}
   text: {description: "The verbatim span. The full body, never the heading alone."}
   anchor: {description: "Heading, label or row id inside the file."}
   target: {description: "The record whose clause is amended."}
@@ -152,8 +152,10 @@ classes:
   Changes:
     description: >-
       The amendable fields. Anything else on a record is fixed at creation: a different source,
-      id or date is a different record.
-    slots: [statement, statement_check, kind, mirrors, scope, scope_note, consumer, review_only, rationale]
+      id or date is a different record. `source` appears here only as a correction of its
+      sha256 to the digest of the file's current bytes, with path, lines and text unchanged
+      and the text still the file's at those lines (checked in code, DESK-002 Part C).
+    slots: [statement, statement_check, kind, mirrors, scope, scope_note, consumer, review_only, rationale, source]
 
   RegisterFile:
     description: Every field any event may carry. The event classes below say which are required.
