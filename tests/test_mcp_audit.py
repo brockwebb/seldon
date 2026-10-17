@@ -12,7 +12,11 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from seldon.mcp_server import seldon_audit, _next_run_id, _resolve_paper_root
+from seldon.mcp_server import seldon_audit as _registered_audit, _next_run_id, _resolve_paper_root
+
+#: The tool's body, in this process (AD-038-R3, FRICTION-001 Part C): the registered tool runs its body in a fresh
+#: process, where `patch` below would not reach and a real model call would be made.
+seldon_audit = _registered_audit.__wrapped__
 
 from tests.testdb import TEST_DATABASE
 

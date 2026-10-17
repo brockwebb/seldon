@@ -223,8 +223,10 @@ def test_the_mcp_handoff_ends_the_session_file(handoff_project, monkeypatch):
     monkeypatch.setattr(core_handoff, "build_handoff",
                         lambda **kw: _FakeDocument(handoff_project / "handoffs" / "h.md"))
     start_session(handoff_project)
-    out = mcp_server.seldon_handoff(slug="x", summary="y", next="z",
-                                    project_dir=str(handoff_project))
+    # The tool's body, in this process: the fakes above exist only here, and since AD-038-R3 the
+    # registered tool runs its body in a fresh process (FRICTION-001 Part C).
+    out = mcp_server.seldon_handoff.__wrapped__(slug="x", summary="y", next="z",
+                                                project_dir=str(handoff_project))
     assert "Wrote" in out, out
     assert get_current_session_data(handoff_project) is None
 

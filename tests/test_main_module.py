@@ -66,7 +66,11 @@ def test_python_m_seldon_exposes_the_same_commands_as_the_console_script():
 
     result = _run_module("--help")
     assert result.returncode == 0, result.stderr
-    for command in main.commands:
+    for command, cmd in main.commands.items():
+        # A hidden command (`mcp-call`, the MCP server's child half, AD-038-R3) is not listed by
+        # `--help` by design; that it resolves under `-m` is what the MCP server itself relies on.
+        if cmd.hidden:
+            continue
         assert command in result.stdout, f"{command!r} missing from `python -m seldon --help`"
 
 
