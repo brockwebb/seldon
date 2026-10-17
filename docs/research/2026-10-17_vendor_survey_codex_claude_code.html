@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What Codex and Claude Code do that Seldon does by hand</title>
+  <style>
+body { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #1a1a1a; max-width: 7.6in; margin: 2em auto; padding: 0 1em; }
+h1.title { font-size: 20pt; margin-bottom: 2pt; }
+p.subtitle { color: #555; margin-top: 0; font-size: 11pt; }
+h2 { font-size: 14pt; border-bottom: 1px solid #bbb; padding-bottom: 2pt; margin-top: 20pt; }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 6pt 0 10pt; }
+th, td { border: 1px solid #ccc; padding: 4pt 5pt; vertical-align: top; text-align: left; }
+th { background: #f2f2f2; }
+code { font-size: 9pt; background: #f4f4f4; padding: 0 2px; }
+li { margin-bottom: 3pt; }
+  </style>
+</head>
+<body>
+<header>
+<h1 class="title">What Codex and Claude Code do that Seldon does by hand</h1>
+<p class="subtitle">17 October 2026. Research against this week's friction, with the four articles weighed</p>
+</header>
+<h2>Bottom line</h2>
+<ul>
+<li><strong>Both vendors solved the problems that cost you this week, and in the same way.</strong> One isolated workspace per task, credentials kept out of it by a proxy, verification that is machine-checked and evidenced, a second model replacing the human approver with a circuit breaker, and resume-not-restart on failure. None of it is novel to Seldon's doctrine. The gap is that Seldon re-implemented each piece from scratch and is still debugging the implementations.</li>
+<li><strong>Three things to adopt outright,</strong> because they are built, tested and free: Claude Code's <code>--worktree</code> isolation with hard checks, its <code>Stop</code> hook as the completion gate, and auto mode's classifier with the 3-consecutive-denial breaker. Each replaces something Seldon hand-built this month (SEL-004 worktrees, the stations, the per-task premise review).</li>
+<li><strong>Two things Seldon does that neither vendor offers,</strong> and should keep: the decision register bound to tasks, and the prior-art gate. Those are the research-discipline layer. The vendors stop at "did the tests pass."</li>
+<li><strong>The articles point the same way.</strong> Goodfire: look at the thing directly before building a clever decomposition of it. SHIP: stage, then prune on a schedule. ASD-STE100: a controlled vocabulary with one meaning per word. Composio: the repository is the factory; a rule is a lint check or it is not a rule. All four argue for less machinery and more observation.</li>
+</ul>
+<h2>1. What the vendors converged on</h2>
+<table>
+<thead><tr><th>Problem this week</th><th>Codex</th><th>Claude Code</th><th>Seldon today</th></tr></thead>
+<tbody>
+<tr><td>A task's writes dirty the shared tree</td><td>Each task has its own VM workspace from a published snapshot</td><td><code>--worktree</code> per task; hard isolation blocks edits or git aimed at the main checkout</td><td>One primary checkout, exclusive tasks run in place, one global clean-tree gate (c7)</td></tr>
+<tr><td>Stale tools after a merge</td><td>Not applicable: the VM is rebuilt from the snapshot</td><td>Not applicable: each <code>-p</code> run is a fresh process</td><td>In-process MCP server refuses until Desktop restarts (AD-038-R3)</td></tr>
+<tr><td>A false stop</td><td><code>codex exec resume</code>; no automatic retry</td><td><code>--resume</code>; checkpoints and <code>/rewind</code>; Routines re-fire</td><td><code>blocked</code> is terminal; supersede and re-register (AD-038-R2)</td></tr>
+<tr><td>Preconditions</td><td>AGENTS.md is guidance only; nothing runs it</td><td>Hooks run commands; <code>Stop</code> hook can refuse completion</td><td>Premises checked at dispatch, not registration (AD-038-R5)</td></tr>
+<tr><td>Who approves</td><td><code>on-request</code>, or auto-review by a reviewer model with a breaker at 3 consecutive denials</td><td><code>auto</code> mode classifier, breaker at 3 consecutive or 20 total blocks; <code>bypassPermissions</code> container-gated</td><td><code>bypassPermissions</code> in a launchd job, no classifier, no breaker</td></tr>
+<tr><td>Secrets</td><td>Proxy substitutes them; raw credential never enters the VM</td><td>Same for cloud; sandbox plus proxy locally</td><td>Inline in <code>claude_desktop_config.json</code> (SEC-001)</td></tr>
+<tr><td>Verification</td><td>Tests and linters run, logs cited in the result</td><td>"Give Claude a pass/fail check"; evaluator tuned skeptical because self-grading is lenient; grade outcome, not path</td><td>Stations, <code>check:</code> criteria, <code>seldon verify</code>. Same idea, newer code</td></tr>
+<tr><td>Parallelism</td><td>Many tasks at once; merge conflicts not addressed</td><td>Subagents (20 concurrent, worktree isolation); agent teams experimental, not under <code>-p</code></td><td><code>max_parallel: 1</code></td></tr>
+</tbody>
+</table>
+<p>Sources: Codex docs at learn.chatgpt.com (environments, worktrees, hooks, automations, approvals, auto-review); Claude Code docs at code.claude.com (headless, hooks, sub-agents, worktrees, permission modes, routines, checkpointing); Anthropic engineering posts on harness design, long-running agents, context engineering, auto mode and sandboxing. All fetched 17 October.</p>
+<p><strong>What neither vendor has:</strong> a decision register that binds rulings to tasks by retrieval, a prior-art receipt gate, result immutability with provenance, or a spend ledger with stop-the-line. Those are Seldon's research layer, and they are the reason to keep Seldon rather than switch to Routines. Everything below that layer is commodity now.</p>
+<h2>2. The four articles, applied</h2>
+<p><strong>Goodfire, "Neural Networks Are Already Clean."</strong> The essay's method is the lesson, not its subject. The field assumed the network was a knot and built a second model (sparse autoencoders) to untangle it before looking. Looking directly, with better tools and bigger models, found 90 percent of neurons had one job. The essay's own rule: superposition should have been the last hypothesis, not the null, because it is the most radical and the least testable, and "bad tools" or "an architecture problem" explain the same symptoms. Applied here: this month Seldon added four inspection stations, a prior-art gate, a commit hook, a model registry and worktree dispatch, then spent eight tasks debugging them. The direct observation (797 refusals, all machine dirt) took one evening and pointed at one cause. The essay's closing line fits: scaling ordinary investigation beats engineering a clever decomposition. For Seldon that means <code>qc chart</code> reading the logs every week (AD-038-R6) before any new control is added.</p>
+<p><strong>SHIP (Medium, Weathers).</strong> Stage, handle within 48 hours, integrate with a commit message, prune on a schedule. Seldon and Squiddy already do the first three by construction: the manifest is the staging area, admission is the gate, provenance is the commit message, supersession is deprecation. The missing stage is prune. Squiddy has 61 open issues of which 28 say "fixed" in their own text; Seldon has 20 FUTURE proposals nobody re-reads; the R-186 exit bar was last re-measured by accident. A scheduled prune pass (oldest open artifacts, "still true?", close or re-date) is one small task and matches the factory doctrine of maintenance as scheduled stages with gates.</p>
+<p><strong>ASD-STE100.</strong> A controlled language: 900 approved words, one meaning each, imperative mood, 20-word procedural sentences, one instruction per sentence. Three of this week's four Desktop errors were specification errors: a guessed path, a diagnosis copied unverified, a check whose location the author did not know. A task-file dictionary in that spirit (approved verbs: <code>run</code>, <code>write</code>, <code>merge</code>, <code>stop</code>, <code>record</code>; approved nouns for each file class; standing facts such as "the station checks main" as dictionary entries, not author knowledge) would have caught two of the three at registration, and the premise check in AD-038-R5 catches the third. The agent-stylebooks repo is the same idea for human prose (GOV.UK, 18F) and is worth installing for the working-group deliverables; it does nothing for task files.</p>
+<p><strong>Composio, "an anti-slop software factory" (Sarah, 12 Oct 2026).</strong> The repository is the factory, not the agent or the harness. Her ranking: co-location, end-to-end types, lint rules, end-to-end tests, then bugbots, then cloud agents, in that order. Her reason for lint over skills: "a skill can tell the agent a rule, but a lint rule tells the agent it broke the rule right away," and "every skill we've written has eventually gone out of date." This week's evidence agrees: every real catch was a mechanism that refused (the commit hook, the prior-art verifier, the premise check) and every miss was an instruction (the standing "verify against the record" rule, the dispatch line, the addendum convention). QC-002's stations are bugbots built before the lint layer existed, which is her ordering error, named. What does not transfer: her "duplication is OK" is right for UI helpers and wrong for rulings, and her factory has 50 humans approving one-shot PRs where yours has one human who refuses to be the approver, so her bugbot is a second opinion and yours must be the only one.</p>
+<h2>3. What to do, in order</h2>
+<ol>
+<li><strong>Let FRICTION-001 land.</strong> It fixes the five mechanisms already identified. Nothing below is worth doing before it.</li>
+<li><strong>Replace, do not re-fix, three hand-built pieces</strong> with the vendor's versions, each as one task after FRICTION-001:
+<ul>
+<li>Dispatcher launches every task with <code>--worktree</code> and lets Claude Code's hard isolation enforce the boundary. SEL-004's worktree code and the stations' "which tree" problem both go away.</li>
+<li>The <code>Stop</code> hook becomes the completion gate: it runs the task's <code>check:</code> criteria and refuses to end the session until they pass or the token ceiling is hit. The milestone station becomes a reader of that hook's output, not a second checker.</li>
+<li>Dispatched sessions run in <code>auto</code> mode instead of <code>bypassPermissions</code>, with the breaker. Headless runs keep going; the classifier pauses only on the 17 percent of overeager actions it catches, which is better than the zero it catches today.</li>
+</ul></li>
+<li><strong>Add the prune stage</strong> as a weekly sweep in each repo: close issues that say fixed, re-date or withdraw FUTURE proposals older than 60 days, re-run the exit measurement. One task, under 0.3M.</li>
+<li><strong>Write the task-file dictionary</strong> as a design note with ASD-STE100 as prior art, and have registration refuse unapproved verbs. Small, after the above.</li>
+<li><strong>Mechanism, not instruction.</strong> Any new rule in Seldon ships as a check that refuses at registration, commit or completion, or it does not ship. Instructions in CLAUDE.md and dispatch lines are documentation of the checks, never the enforcement.</li>
+<li><strong>Keep the research layer as is.</strong> Decision register, prior-art gate, results with provenance, spend ledger. These are the product; the dispatcher is plumbing.</li>
+</ol>
+<h2>Sources</h2>
+<ul>
+<li>OpenAI Codex documentation (learn.chatgpt.com): cloud environments, git worktrees, hooks, automations, approvals and security, auto-review, non-interactive mode. Fetched 2026-10-17.</li>
+<li>Claude Code documentation (code.claude.com): headless, hooks, sub-agents, worktrees, agent teams, Claude Code on the web, routines, checkpointing, permission modes, best practices. Fetched 2026-10-17.</li>
+<li>Anthropic engineering: building agents with the Agent SDK; effective context engineering; effective harnesses for long-running agents; harness design for long-running apps; multi-agent research system; demystifying evals; auto mode; sandboxing.</li>
+<li>N. Cammarata, "Neural Networks Are Already Clean," Goodfire, 2026.</li>
+<li>L. Weathers, "I Deleted My Entire Personal Knowledge Management System...," Medium, 1 July 2026.</li>
+<li>ASD-STE100, Simplified Technical English (overview sheet supplied).</li>
+<li>github.com/Neeeophytee/agent-stylebooks (v0.1, MIT).</li>
+<li>@sarahfim (Composio), "How to build an anti-slop software factory for teams of 30+," X, 12 October 2026.</li>
+</ul>
+</body>
+</html>
