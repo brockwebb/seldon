@@ -8,6 +8,7 @@ there.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import yaml
@@ -137,13 +138,60 @@ def test_the_secret_scan_refuses_a_flagged_handoff(repo, tmp_path):
     (repo["dir"] / "handoffs").mkdir()
     (repo["dir"] / "handoffs" / "h.md").write_text("session\n")
     scanner = tmp_path / "scan.sh"
-    scanner.write_text("#!/bin/sh\necho \"$1:1 aws_key\"\nexit 1\n")
+    # squiddy.secret_scan's output: one line per hit, then its trailer (DESK-003).
+    scanner.write_text("#!/bin/sh\necho \"$1:1 aws_key\"\n"
+                       "echo \"scanned 1 file(s); exit 1\"\nexit 1\n")
     scanner.chmod(0o755)
-    cfg = dict(repo["config"], desktop_commit={"roots": DC.DEFAULT_ROOTS,
-                                               "scan": {"roots": ["handoffs/"],
-                                                        "command": [str(scanner)]}})
-    out = DC.commit_governed(repo["dir"], ["handoffs/h.md"], cfg)
+    out = DC.commit_governed(repo["dir"], ["handoffs/h.md"], _scan_config(repo, str(scanner)))
     assert out.refusal == DC.SECRET_FOUND and "aws_key" in out.detail
+    assert _porcelain(repo, "handoffs/h.md").startswith("??")
+
+
+def _scan_config(repo, program: str) -> dict:
+    return dict(repo["config"], desktop_commit={"roots": DC.DEFAULT_ROOTS,
+                                                "scan": {"roots": ["handoffs/"],
+                                                         "command": [program]}})
+
+
+def test_a_relative_scan_program_keeps_its_symlink_path(repo, tmp_path):
+    """DESK-003: `../squiddy/.venv/bin/python` is a symlink to a bare CPython in another
+    directory. Resolving it ran the scanner outside the venv (no `pyvenv.cfg` beside the target),
+    so it could not import squiddy. The spawned argv must name the symlink, not its target."""
+    (repo["dir"] / "handoffs").mkdir()
+    (repo["dir"] / "handoffs" / "h.md").write_text("session\n")
+    argv0 = tmp_path / "argv0.txt"
+    real = tmp_path / "cpython" / "bin" / "python3"
+    real.parent.mkdir(parents=True)
+    real.write_text(f"#!/bin/sh\nprintf '%s' \"$0\" > {argv0}\n"
+                    "echo \"scanned 1 file(s); exit 0\"\nexit 0\n")
+    real.chmod(0o755)
+    link = tmp_path / "venv" / "bin" / "python"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(real)
+    rel = os.path.relpath(link, repo["dir"])
+    assert rel.startswith("..") and not Path(rel).is_absolute()
+
+    out = DC.commit_governed(repo["dir"], ["handoffs/h.md"], _scan_config(repo, rel))
+
+    assert out.committed, out.detail
+    assert argv0.read_text() == os.path.normpath(Path(repo["dir"]).resolve() / rel)
+    assert argv0.read_text() != str(real.resolve())
+
+
+def test_a_scanner_that_did_not_run_is_scan_failed_not_secret_found(repo, tmp_path):
+    """DESK-003: exit 1 with no scanner trailer is a launch failure (here, the import error the
+    bare interpreter printed all week), never a finding."""
+    (repo["dir"] / "handoffs").mkdir()
+    (repo["dir"] / "handoffs" / "h.md").write_text("session\n")
+    scanner = tmp_path / "scan.sh"
+    scanner.write_text("#!/bin/sh\necho \"ModuleNotFoundError: No module named 'squiddy'\" >&2\n"
+                       "exit 1\n")
+    scanner.chmod(0o755)
+
+    out = DC.commit_governed(repo["dir"], ["handoffs/h.md"], _scan_config(repo, str(scanner)))
+
+    assert out.refusal == DC.SCAN_FAILED, out.detail
+    assert "ModuleNotFoundError: No module named 'squiddy'" in out.detail
     assert _porcelain(repo, "handoffs/h.md").startswith("??")
 
 
