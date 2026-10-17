@@ -24,9 +24,13 @@ that has uncommitted changes, counting its addenda:
    schema refuses, refuses the registration as `ruling_unrecorded`. AD-033-R8's statement pass is
    a model call and stays with the executing session; the verbatim body is the statement until it
    runs, as at every earlier registration of rulings (PA-001, QC-001).
+   A label whose record already exists on disk but is not committed (the Desktop session wrote it
+   with `seldon_decision_accept` while writing the note, as AD-033-R2 asks) is not recorded again:
+   its record file is staged with the note (DESK-002, Issue 5c689098; `uncommitted_record_paths`).
 3. `commit` (after every other refusal, before the task's node is created): write the records,
-   stage the notes, their pending addenda, the task file when untracked, the register files, the
-   rendered register and the verdict ledger, and make ONE path-scoped commit through the hooks
+   stage the notes, their pending addenda, the task file when untracked, the register files (written
+   here or found uncommitted), the rendered register and the verdict ledger, and make ONE path-scoped
+   commit through the hooks
    (never `--no-verify`). A refused commit unstages what it staged, removes the register files it
    wrote, restores the rendered register and refuses as `governing_note_uncommitted`.
 
@@ -80,6 +84,7 @@ class Plan:
     """What `commit` writes and stages, computed before anything is created."""
     pending: list = field(default_factory=list)       # [Pending]
     records: list = field(default_factory=list)       # [dict] register records to accept
+    record_paths: list = field(default_factory=list)  # register files already on disk, uncommitted
     ledger_paths: list = field(default_factory=list)  # verdict ledger / query log to stage
     verdicts: list = field(default_factory=list)      # [(note, verdict)] recorded by `verify`
 
@@ -293,6 +298,50 @@ def plan_records(project_dir: Path, config: dict, pending: list[Pending], task_r
     return records, refusals
 
 
+def uncommitted_record_paths(project_dir: Path, config: dict, pending: list[Pending]) -> list[str]:
+    """The register files on disk, not committed, that answer a label of a pending note (DESK-002).
+
+    `plan_records` writes a record only for a label with none, so a record Desktop wrote with
+    `seldon_decision_accept` while writing the note is on disk, uncommitted, and was never staged:
+    the hook then refused the note (`decision_findings`: "has no record in the staged register").
+    Those files are staged with the note. So is every uncommitted register file BEFORE the last one
+    of them: the register is a hash chain (AD-033-R2), uncommitted files are always its tail, and a
+    staged register missing a link fails the hook's chain check. Files after the last one answering
+    a label are another decision's and are left alone.
+    """
+    from seldon.core import decisions as dr
+
+    s = dr.settings(project_dir, config)
+    if s is None:
+        return []
+    labels = set()
+    for pn in pending:
+        for rel in pn.paths:
+            if not dr.is_design_note(s, rel):
+                continue
+            if s.baseline_commit and dr._in_tree(s.root, s.baseline_commit, rel):
+                continue
+            text = (Path(project_dir) / rel).read_text(encoding="utf-8")
+            labels.update(dr.labeled_ids_in(s, rel, text))
+    return register_files_answering(project_dir, s, labels)
+
+
+def register_files_answering(project_dir: Path, s, qids) -> list[str]:
+    """The uncommitted files of this repository's register that carry an event about one of `qids`,
+    with every uncommitted file before them in the chain (`uncommitted_record_paths`)."""
+    from seldon.core import decisions as dr
+
+    slugs = {dr.slug(q) for q in qids}
+    if not slugs:
+        return []
+    reg = dr.Register(s.repository, Path(project_dir), s.register_dir)
+    rels = [p.relative_to(Path(project_dir)).as_posix() for p in reg.files()]
+    loose = [r for r in rels if uncommitted(project_dir, r)]
+    last = max((i for i, r in enumerate(loose)
+                if Path(r).name.split("_", 1)[-1].rsplit("_", 1)[0] in slugs), default=None)
+    return [] if last is None else loose[:last + 1]
+
+
 def _reason(task_rel: str) -> str:
     return (f"recorded by `seldon cc register` of {task_rel} from the governing note's bytes (SEL-006 Part A; "
             f"AD-033-R3, R4: a Desktop decision under L4 is accepted when registered); the AD-033-R8 statement "
@@ -314,13 +363,13 @@ def commit(project_dir: Path, config: dict, plan: Plan, task_rel: str, task_untr
     written: list[Path] = []
     rendered_rel, rendered_before = None, None
     s = dr.settings(project_dir, config)
-    if plan.records and s is not None:
+    if (plan.records or plan.record_paths) and s is not None:
         u = dr.Universe(s)
         rendered = project_dir / s.rendered
         rendered_rel = s.rendered
         rendered_before = rendered.read_bytes() if rendered.is_file() else None
         try:
-            for rec in plan.records:
+            for rec in plan.records:  # none when Desktop already wrote every record: render only
                 written += dr.create(u, "accept", rec, date=date or dr.today(), decided_by="desktop",
                                      operator_stated=False, receipts=[task_rel], reason=_reason(task_rel))
             if u.register(s.repository).exists():
@@ -333,6 +382,7 @@ def commit(project_dir: Path, config: dict, plan: Plan, task_rel: str, task_untr
         paths += pn.paths
     if task_untracked:
         paths.append(task_rel)
+    paths += plan.record_paths
     paths += [p.relative_to(project_dir).as_posix() for p in written]
     if rendered_rel and (project_dir / rendered_rel).is_file():
         paths.append(rendered_rel)

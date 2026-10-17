@@ -1100,8 +1100,12 @@ def seldon_commit_governed(
     with no passing prior-art verdict commits as a `draft:`, and tasks governed by it are held at
     registration and dispatch until `seldon prior-art verify <note>` passes.
 
-    Refuses (nothing staged) a path outside docs/design/, cc_tasks/, handoffs/, issues/, ontology/;
-    a missing, gitignored or unchanged file; a handoff the secret scan flags; and anything the
+    A note that labels a new ruling commits with the record `seldon_decision_accept` wrote for it:
+    name the note, the `docs/decisions/register/*.yaml` file(s) and `docs/decisions/REGISTER.md`
+    in ONE call (DESK-002). A register path alone, or beside a note that does not label it, refuses.
+
+    Refuses (nothing staged) a path outside docs/design/, cc_tasks/, handoffs/, issues/, ontology/
+    (save a register path as above); a missing, gitignored or unchanged file; a handoff the secret scan flags; and anything the
     commit hooks refuse, with the hook's text verbatim.
 
     Args:
@@ -1212,6 +1216,14 @@ def seldon_cc_register(
     ]
     if outcome["source_commit"]:
         lines.append(f"  source_commit: {outcome['source_commit']}")
+    # DESK-002 Part B: registration commits its own event lines; a skip says why, never silently.
+    rc = outcome.get("record_commit") or {}
+    if rc.get("committed"):
+        lines.append(f"  event lines committed: {rc.get('commit')}")
+    elif rc.get("reason") not in (None, "untracked", "nothing_to_commit", "clean"):
+        lines.append(f"  event lines NOT committed ({rc['reason']}"
+                     f"{': ' + ', '.join(rc['foreign_actors']) if rc.get('foreign_actors') else ''}); "
+                     f"the dispatcher refuses every task on c7 until they are")
     if outcome.get("after"):
         lines.append(f"  after: {', '.join(p[:8] for p in outcome['after'])} "
                      f"({outcome['after_edges']} precedes edge(s) written)")

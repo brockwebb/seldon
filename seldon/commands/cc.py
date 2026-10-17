@@ -657,6 +657,46 @@ def _commit_registered_file(
     return head.stdout.strip(), None
 
 
+def _commit_registration_lines(project_dir: Path, config: dict, rel_path: str, task_id: str,
+                               store_before: dict, actors: set) -> dict:
+    """Commit the event-store lines this registration wrote, path-scoped, through the hooks (DESK-002 Part B).
+
+    **The defect (Issue 70bf1a21, measured in `docs/evidence/desk002/registration_event_lines.md`).**
+    Registration appends `artifact_created` (its actor) and one `link_created` per constraining ruling
+    (actor `governed_sync`) to the TRACKED store, and committed none of them. The dispatcher's record step
+    commits only `dispatch.COMMITTABLE_ACTORS`, and its registration sweep only an `artifact_created` with a
+    `source_commit`, i.e. only when registration had committed the task file. So a task file committed
+    first (by `seldon_commit_governed`) left `governed_sync` lines that no one would commit, and c7 refused
+    every task (squiddy SQ-016R, 2026-10-16).
+
+    **A second commit, not the task's.** The task's `artifact_created` line carries `source_commit`, the sha
+    of the commit holding the task file, so it cannot be inside that commit. The lines go in the commit
+    right after it, as the dispatcher's sweep has always placed them; only the committer changes.
+
+    **What it will not commit.** Only when the store was clean before this registration began
+    (`store_before`) and every line appended since was written by `actors` (the registering actor and
+    `governed_sync`): anything else in the store is another writer's, and stays c7's business. The skip
+    is returned with its reason, never silent.
+    """
+    from seldon.core import dispatch as D
+
+    store = (config or {}).get("event_store", {}).get("path", "seldon_events.jsonl")
+    if store_before.get("reason") == "untracked":
+        return {"committed": False, "reason": "untracked"}
+    if store_before.get("reason") != "clean":
+        return {"committed": False, "reason": "store_dirty_before_registration"}
+    appended = D.appended_events(project_dir, store)
+    if not appended["ok"]:
+        return {"committed": False, "reason": appended["reason"]}
+    foreign = sorted({str(e.get("actor")) for e in appended["events"]} - set(actors))
+    if foreign:
+        return {"committed": False, "reason": "foreign_lines", "foreign_actors": foreign}
+    types = ", ".join(dict.fromkeys(str(e.get("event_type")) for e in appended["events"]))
+    message = (f"register: record of {rel_path} ({task_id[:8]}) — {len(appended['events'])} line(s) "
+               f"({types}) written by its registration (DESK-002)")
+    return {**D.commit_paths(project_dir, [store], message), "message": message}
+
+
 def _find_existing(driver, database: str, rel_path: str) -> str | None:
     """Return artifact_id of any ResearchTask with matching source_file, or None."""
     with driver.session(database=database) as session:
@@ -1158,6 +1198,10 @@ def register_task_file(
     say = emit or (lambda _msg: None)
     if not task_path.exists():
         raise FileNotFoundError(f"file not found: {task_path}")
+    # DESK-002 Part B: the store as registration found it, so the lines it appends can be committed by it.
+    from seldon.core import dispatch as _D
+    store_before = _D.appended_events(
+        project_dir, (config or {}).get("event_store", {}).get("path", "seldon_events.jsonl"))
     try:
         rel_path = str(task_path.relative_to(project_dir))
     except ValueError:
@@ -1211,9 +1255,13 @@ def register_task_file(
             refusals = [refusal] if refusal else []
         if refusals:
             raise ValueError("; ".join(refusals) + f" File: {rel_path}")
-        plan = gc.Plan(pending=pending, records=records, ledger_paths=ledger, verdicts=verdicts)
+        # DESK-002: a ruling's record Desktop already wrote, uncommitted, goes in the same commit.
+        record_paths = gc.uncommitted_record_paths(project_dir, config, pending)
+        plan = gc.Plan(pending=pending, records=records, record_paths=record_paths, ledger_paths=ledger,
+                       verdicts=verdicts)
         say(f"  governing note(s) to commit with the task: {named}"
-            + (f"; {len(records)} ruling record(s) to write" if records else ""))
+            + (f"; {len(records)} ruling record(s) to write" if records else "")
+            + (f"; {len(record_paths)} register file(s) already written to commit" if record_paths else ""))
 
     # AD-036-R4, registration, as amended by ADDENDUM 05 (DESK-001): a governing note of this project
     # with no passing prior-art verdict for its current bytes is a HOLD, reported here and enforced by
@@ -1333,6 +1381,16 @@ def register_task_file(
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
         session_id=session_id,
     )
+    from seldon.core.governed import ACTOR as GOVERNED_ACTOR
+    record_commit = _commit_registration_lines(project_dir, config, rel_path, artifact_id, store_before,
+                                               {actor, GOVERNED_ACTOR})
+    if record_commit.get("committed"):
+        say(f"  event lines committed: {record_commit.get('commit')}")
+    elif record_commit.get("reason") not in ("untracked", "nothing_to_commit", "clean"):
+        say(f"Warning: this registration's event lines were NOT committed ({record_commit.get('reason')}"
+            f"{': ' + ', '.join(record_commit['foreign_actors']) if record_commit.get('foreign_actors') else ''}"
+            f"{': ' + record_commit['stderr'] if record_commit.get('stderr') else ''}); "
+            f"the dispatcher refuses every task on c7 until they are")
     for h in holds:
         say(gc.hold_line(h["note"], h["why"]))
     say("")
@@ -1341,7 +1399,7 @@ def register_task_file(
             "description": description, "existing": False, "rulings": matches,
             "edges_written": written, "warning": warning, "source_commit": source_commit,
             "after": predecessors, "after_edges": after_edges,
-            "sequencing_warning": sequencing_warning, "holds": holds}
+            "sequencing_warning": sequencing_warning, "holds": holds, "record_commit": record_commit}
 
 
 @cc_group.command("register")

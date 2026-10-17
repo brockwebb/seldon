@@ -921,9 +921,13 @@ def test_the_commit_is_reported_on_stdout_where_the_wrapper_log_carries_it(
 # after the commit it names. Left alone, that one line keeps c7 false for every task in the
 # queue, which is decision 3's wedge reborn. The sweep therefore also commits the store when an
 # uncommitted appended line records a registration that committed its own file.
+#
+# DESK-002 Part B (docs/evidence/desk002/registration_event_lines.md): registration now commits
+# those lines itself, in a `register: record` commit right after the task's. The store is clean
+# when registration returns, so the sweep finds nothing and the next pass launches on c7.
 
 
-def test_the_record_of_a_self_committing_registration_is_committed_by_the_next_pass(
+def test_the_record_of_a_self_committing_registration_is_committed_by_the_registration(
         project, neo4j_driver, domain_config, clean_test_db, monkeypatch):
     from seldon.commands.cc import register_task_file
 
@@ -941,7 +945,7 @@ def test_the_record_of_a_self_committing_registration_is_committed_by_the_next_p
 
     assert outcome["source_commit"]
     assert D.is_tracked(project, path)
-    assert D.tree_state(project)["dirty_paths"] == ["seldon_events.jsonl"]
+    assert D.tree_state(project)["dirty_paths"] == []
 
     res = _run(project, ["once"])
     assert res.exit_code == 0
