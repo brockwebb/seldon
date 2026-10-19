@@ -1,0 +1,34 @@
+seq: 294
+event: accept
+id: seldon:AD-037-R13
+date: '2026-10-19'
+decided_by: cc:eadf9e03
+operator_stated: false
+receipts:
+- 'docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md:44: AD-037-R13'
+reason: DISP-001R Part B step 3; evidence andon_reaped d787bf17 (waited_s 300.6 against reap_after_s 300; no liveness read)
+kind: decision
+status: accepted
+statement: The lease holder shall reap a dispatched session for an unanswered hard stop only when the stop has aged past reap_after_intervals times poll_interval_s and the session's log has not grown for that same interval, and andon_reaped shall record last_log_growth_s.
+source:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  lines:
+  - 44
+  - 47
+  sha256: a693e8273ec3aa9c1474896cfc8795ffa36e9cb2b72e4d4e25379161e27f72e2
+  text: |-
+    **AD-037-R13. Liveness (amends R6 d).** The reap stays as the backstop. It fires only when the unanswered hard stop has aged past
+    `reap_after_intervals x poll_interval_s` and the session's log has not grown for that same interval. A session that
+    is writing to its log is alive and gets its boundary (`reap_deferred` in the inspection). `andon_reaped` records
+    `last_log_growth_s`. Code: `seldon/core/stations.py` `inspect`, `log_growth_s`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  anchor: AD-037-R13
+consumer:
+- cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor.md
+- tests/test_disp001r_stations.py
+written_by: seldon decision 0.1.0
+prev_hash: a90819c26098eca2335bc1988d498081e0d4189bea7cf8f43700641898d48a08
+record_hash: cff744d28e4013cedb22b0a1c0cea47750ca8997da916f7dde9651edf24c08a0

@@ -1,0 +1,37 @@
+seq: 293
+event: accept
+id: seldon:AD-037-R12
+date: '2026-10-19'
+decided_by: cc:eadf9e03
+operator_stated: false
+receipts:
+- 'docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md:36: AD-037-R12'
+reason: DISP-001R Part B step 2; evidence andon_reaped d787bf17 (DISP-001 reaped by SIGTERM inside a pytest call, with no boundary to read its stop)
+kind: decision
+status: accepted
+statement: When a hard session_stop on a dispatched session's task is unanswered, the session's PreToolUse hook shall refuse its next tool call with the stop's reason and record andon_halted at the tool boundary.
+source:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  lines:
+  - 36
+  - 42
+  sha256: a693e8273ec3aa9c1474896cfc8795ffa36e9cb2b72e4d4e25379161e27f72e2
+  text: |-
+    **AD-037-R12. The boundary (amends R6 d).** A hard stop is delivered to the session, not only written to the ledger. Every dispatched
+    session is launched with a `PreToolUse` hook, `seldon dispatch tool-gate`. It reads the ledger for an unanswered
+    hard `session_stop` on this session's task. If it finds one, it refuses the next tool call with the stop's reason
+    (`permissionDecision: deny`) and records `andon_halted` (`at: tool boundary`) itself. So the session halts at its
+    next boundary, between tool calls, and is never killed inside one. Only a hard stop is delivered there; a line or
+    andon stop is still read at a Part or loop boundary. Code: `seldon/commands/dispatch_stations.py`
+    `tool_gate_command`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  anchor: AD-037-R12
+consumer:
+- cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor.md
+- tests/test_disp001r_stations.py
+written_by: seldon decision 0.1.0
+prev_hash: 3d51a6ad091af2c008569c16c1afac5c8949381c8693df533c417fc52fbddf85
+record_hash: a90819c26098eca2335bc1988d498081e0d4189bea7cf8f43700641898d48a08

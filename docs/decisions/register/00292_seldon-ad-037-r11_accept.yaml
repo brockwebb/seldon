@@ -1,0 +1,37 @@
+seq: 292
+event: accept
+id: seldon:AD-037-R11
+date: '2026-10-19'
+decided_by: cc:eadf9e03
+operator_stated: false
+receipts:
+- 'docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md:21: AD-037-R11'
+reason: DISP-001R Part B step 1; evidence session_stop 04926773 (DISP-001 read 134746 against 80000 x 1.2 at its first inspection)
+kind: decision
+status: accepted
+statement: The dispatcher's spend ceiling for a dispatched session shall be the larger of the task's estimate and the measured floor, multiplied by spend_ceiling_factor, where the floor is the median token reading at the first inspection over the repository's last floor_launches finished launches, and a session_stop whose binding term is the floor shall record that floor.
+source:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  lines:
+  - 21
+  - 27
+  sha256: a693e8273ec3aa9c1474896cfc8795ffa36e9cb2b72e4d4e25379161e27f72e2
+  text: |-
+    **AD-037-R11. The floor (amends R6 d).** The spend ceiling is `max(estimate, floor) x spend_ceiling_factor`. `floor` is measured,
+    never configured: the median token reading at the first inspection (`poll_interval_s` after launch) over the
+    repository's last `dispatch.stations.floor_launches` (10) finished launches, read from `dispatch_launched` and each
+    session's own log (assistant records carry a `timestamp`). A launch that never reached the model is not a data point.
+    When the floor is the binding term the `session_stop` reading records it, with the launches it came from.
+    `seldon qc chart` prints the floor as it stood each week. Code: `seldon/core/stations.py` `tokens_at`,
+    `spend_floor`, `spend_ceiling`, `floor_by_week`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md
+  anchor: AD-037-R11
+consumer:
+- cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor.md
+- tests/test_disp001r_stations.py
+written_by: seldon decision 0.1.0
+prev_hash: b0063bf7db9b4a36bf6067547f6e77ee920eb14132344c6312592cee411e3977
+record_hash: 3d51a6ad091af2c008569c16c1afac5c8949381c8693df533c417fc52fbddf85
