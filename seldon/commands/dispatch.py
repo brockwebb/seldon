@@ -196,7 +196,9 @@ def _survey(project_dir, config, driver, database):
     tree = D.tree_state(project_dir)
     claim = _claim_in_flight(driver, database)
     holds = _premise_holds(project_dir, driver, database)
-    rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds)
+    launch_holds = _launch_holds(project_dir)
+    rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
+                       launch_holds=launch_holds)
             for t in _tasks(driver, database)]
     return cfg, band, tree, lease_body, claim, D.fifo(rows)
 
@@ -916,7 +918,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         tree["unreconciled"] = _unreconciled(project_dir, config, driver, database, done)
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     holds = _premise_holds(project_dir, driver, database)
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds)
+    launch_holds = _launch_holds(project_dir)
+    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
+                              launch_holds=launch_holds)
                    for t in _tasks(driver, database)])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
@@ -988,10 +992,12 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     """Claim, cut the task's worktree, launch the CLI into it, wait, merge on green: DN-006 decisions 4 and 5
     with AD-034-R5/R6's finish, under the pass lease held for the whole run.
 
-    FRICTION-002 Part B (AD-034 ADDENDUM 01): every task runs in its own worktree,
-    `.claude/worktrees/<stem>` on branch `worktree-<stem>`, cut here from main's HEAD (after the claim's records
-    are committed) with `dispatch.worktree_links` linked in, and entered by the CLI's `--worktree <stem>`, which
-    turns on its hard isolation: Edit/Write and git aimed at the primary checkout are refused. The primary is then
+    FRICTION-002 Part B (AD-034 ADDENDUM 01): every task runs in its own worktree, which turns on the CLI's hard
+    isolation: Edit/Write and git aimed at the primary checkout are refused. DISP-001R Part A: the CLI names and
+    cuts it (`--worktree` with no name: `.claude/worktrees/<generated>` on `worktree-<generated>`, from main's HEAD
+    after the claim's records are committed); the dispatcher reads the path from the session's `init` record,
+    links `dispatch.worktree_links` in and records `dispatch_worktree_named`. A session that ends before its first
+    model turn is `launch_failed` (`dispatch_worktree.finish_session`). The primary is then
     touched only by the dispatcher's own commits, merges on green and Desktop's governed commits. The name says
     where the session's LEASE is held (in place, by this pass, for the whole run), not where it works; the
     parallel mode's exclusive tasks use it too.
@@ -1005,8 +1011,6 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     from seldon.commands import dispatch_worktree as W
     rel = chosen["source_file"]
     stem = Path(rel).stem
-    wt_rel, branch = chosen["criteria"]["c11"]["worktree"], chosen["criteria"]["c11"]["branch"]
-    wt = project_dir / wt_rel
     log_dir = project_dir / cfg["log_dir"]
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{stem}.log"
@@ -1031,7 +1035,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # run keeps the spec it starts with to the end.
     refresh_note = models.ensure_fresh("dispatch")
     spec = _session_spec(project_dir, rel)
-    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, project_dir), spec, worktree=True,
                       settings=_session_settings(project_dir, cfg))
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).
@@ -1045,29 +1049,18 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "log_path": log_rel,
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
-           "mode": "worktree", "worktree": wt_rel, "branch": branch,
+           "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
            **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note)})
-    # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the
-    # worktree is cut, so the task's branch starts from a main that already carries its own claim.
+    # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the CLI
+    # cuts the worktree, so the task's branch starts from a main that already carries its own claim.
     _record_and_push(project_dir, config, cfg)
     base = WT.rev(project_dir, "HEAD")
-    added = WT.add(project_dir, wt, branch, base)
-    finish0 = {"task_id": chosen["task_id"], "source_file": rel, "child_session_id": child_session_id,
-               "exit_code": None, "wall_clock_s": 0, "result_present": False,
-               "result_path": f"cc_tasks/{stem}_RESULT.md", "graph_state_observed": "in_progress",
-               "log_path": log_rel, "mode": "worktree", "worktree": wt_rel, "branch": branch, "base": base}
-    if not added["ok"]:
-        click.echo(f"worktree add failed for {chosen['task_id'][:8]}: {added['stderr']}", err=True)
-        W._finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
-                           {**finish0, "error": added["stderr"]}, chosen.get("name") or stem,
-                           "worktree_add_failed")
-        return
-    linked = WT.link(project_dir, wt, cfg["worktree_links"])
-    extra = {"worktree_task": chosen["task_id"], "stem": stem, "source_file": rel, "worktree": wt_rel,
-             "branch": branch, "base": base, "child_session_id": child_session_id, "linked": linked,
+    # `worktree`, `branch` and `linked` are filled by `name_worktree` at the session's `init` record.
+    extra = {"worktree_task": chosen["task_id"], "stem": stem, "source_file": rel, "worktree": None,
+             "branch": None, "base": base, "child_session_id": child_session_id, "linked": [],
              "model_spec": spec}
-    click.echo(f"launching {chosen['task_id'][:8]} {rel} in {wt_rel} on {branch} -> {log_rel}")
+    click.echo(f"launching {chosen['task_id'][:8]} {rel} in a worktree the CLI names -> {log_rel}")
 
     started = time.monotonic()
     offset = _log_offset(log_path)
@@ -1078,7 +1071,8 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
                 extra_env=_worktree_env(project_dir, cfg, spec),
                 inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
                 inspect_every_s=cfg["poll_interval_s"],
-                on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig))
+                on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig),
+                on_init=lambda init: W.name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"]))
     wall = round(time.monotonic() - started, 3)
     W.finish_session(project_dir, config, driver, database, domain_config, session_id, cfg,
                      chosen["task_id"], extra, code, wall, log_path, offset, spec,
@@ -1330,7 +1324,7 @@ def _stuck_due(project_dir, cfg, rows, tree, claim) -> list:
 
 
 def _notify(project_dir, session_id, cfg, finish: dict, task_name: str,
-            outcome: str | None = None) -> None:
+            outcome: str | None = None, message: str | None = None) -> None:
     """Run `dispatch.notify`, the operator's finish signal, once per finished task.
 
     `ai-readiness-kg/cc_tasks/2026-09-17_dispatcher_notifies.md` decision 1. Prior art: cron's
@@ -1353,7 +1347,8 @@ def _notify(project_dir, session_id, cfg, finish: dict, task_name: str,
         # The word a notification body wants, so a template needs no shell conditional.
         "SELDON_NOTIFY_OUTCOME": outcome or ("ok" if finish["ok"] else "blocked"),
         # DESK-001: the body text, set on every notification so one template serves both kinds.
-        "SELDON_NOTIFY_MESSAGE": outcome or ("ok" if finish["ok"] else "blocked"),
+        # DISP-001R: `message` carries a launch failure's stderr line.
+        "SELDON_NOTIFY_MESSAGE": message or outcome or ("ok" if finish["ok"] else "blocked"),
         "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
         "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
         "SELDON_NOTIFY_WALL_SECONDS": str(finish["wall_clock_s"]),
@@ -1448,10 +1443,12 @@ def _session_settings(project_dir: Path, cfg: dict) -> dict:
         return h
     return {"worktree": {"baseRef": "head"},
             "hooks": {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
-                      "PermissionDenied": [{"hooks": [hook("classifier-denied")]}]}}
+                      "PermissionDenied": [{"hooks": [hook("classifier-denied")]}],
+                      # DISP-001R Part B step 2: a hard stop is delivered at the session's next tool boundary.
+                      "PreToolUse": [{"matcher": "*", "hooks": [hook("tool-gate")]}]}}
 
 
-def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
+def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: bool = False,
                 settings: dict | None = None) -> list:
     """The lock's CLI, `-p "<the dispatch line>"`, the permission mode, and the model block.
 
@@ -1463,10 +1460,6 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
     this project's config: `dispatch.cli` and `dispatch.model` are refused at load.
     """
     cmd = [spec["cli_path"], "-p", prompt, *SESSION_OUTPUT_ARGS]
-    if worktree:
-        # FRICTION-002 Part B: the CLI enters `.claude/worktrees/<worktree>` (cut by the dispatcher) and its hard
-        # isolation refuses Edit/Write and git aimed at the primary checkout.
-        cmd += ["--worktree", worktree]
     mode = cfg["permission_mode"]
     if mode:
         cmd += ["--permission-mode", mode]
@@ -1480,6 +1473,14 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
         # One `--settings`: the lock's own keys (AD-035 R6) merged over this launch's.
         i = args.index("--settings")
         args[i + 1] = models.settings_json({**settings, **json.loads(args[i + 1])})
+    if worktree:
+        # DISP-001R Part A (AD-034 ADDENDUM 01): `--worktree` with NO name, so the CLI names the worktree ("If you
+        # omit the name, Claude generates one such as `bright-running-fox`", code.claude.com/docs/en/worktrees),
+        # cuts `.claude/worktrees/<name>` on `worktree-<name>` from HEAD (`worktree.baseRef: head`), enters it and
+        # turns on its hard isolation. A name the dispatcher made up hit the CLI's 64-character limit twice
+        # (RECALL-001, MCP-001). Last on the line because the flag's value is optional: nothing may follow it
+        # that the CLI could read as the name.
+        args = args + ["--worktree"]
     return cmd + args
 
 
@@ -1515,9 +1516,19 @@ def _model_fields(spec: dict, refresh_note: str | None) -> dict:
 REAP_GRACE_S = 30
 
 
+#: DISP-001R Part A: how long `_run` watches a new session's log for the CLI's `init` record (the worktree it named)
+#: before it stops watching and leaves the name to the finish. ASSUMPTION: the probe of CLI 2.1.303 wrote `init`
+#: within two seconds of start (docs/evidence/disp001r/), after the operator's SessionStart hooks, which can run
+#: for tens of seconds; two minutes bounds both. A session past it is named from its log when it ends.
+INIT_WAIT_S = 120
+#: The watch's read interval. Small, because the worktree's links (`dispatch.worktree_links`) are made at `init`
+#: and the session's first tool call can follow its first model turn by a few seconds.
+INIT_POLL_S = 0.2
+
+
 def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
          network_allowlist: list | None = None, extra_env: dict | None = None,
-         inspector=None, inspect_every_s: float | None = None, on_reap=None) -> int:
+         inspector=None, inspect_every_s: float | None = None, on_reap=None, on_init=None) -> int:
     """Detached, logged, `EXIT=$?` appended.
 
     Working directory is the PROJECT ROOT, so `CLAUDE.md` loads — the exact inverse of
@@ -1554,8 +1565,22 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
         # the reap interval) ends its children too; the holder is the only process that reaps (DN-006 decision 6).
         # An uninspected one (the worktree supervisor's) stays in its caller's group, which
         # `dispatch_worktree._terminate_orphaned_session` relies on.
+        start = fh.tell()
         proc = subprocess.Popen(cmd, cwd=project_dir, stdout=fh, stderr=subprocess.STDOUT, env=env,
                                 start_new_session=inspector is not None)
+        if on_init is not None:
+            # DISP-001R Part A: the CLI names the worktree, so the dispatcher learns it from the session's `init`
+            # record and hands it to `on_init` (link, record) while the session runs.
+            from seldon.commands import dispatch_worktree as W
+            deadline = time.monotonic() + INIT_WAIT_S
+            while True:
+                init = W.cli_init(log_path, start)
+                if init is not None:
+                    on_init(init)
+                    break
+                if proc.poll() is not None or time.monotonic() >= deadline:
+                    break
+                time.sleep(INIT_POLL_S)
         while True:
             try:
                 returncode = proc.wait(timeout=inspect_every_s if inspector else None)
@@ -1669,6 +1694,47 @@ def _premise_holds(project_dir: Path, driver, database) -> dict:
             r = s.run("MATCH (i:Issue {artifact_id: $id}) RETURN i.state AS state", id=issue_id).single()
         return r["state"] if r else None
     return _stations_mod().premise_holds(read_events(project_dir), issue_state)
+
+
+def launcher_fingerprint(project_dir: Path, rel: str) -> dict:
+    """What a launch failure's stderr line can depend on (DISP-001R Part A step 2): the CLI the lock names, the
+    dispatcher's own code (the last commit touching the installed `seldon/` package) and the task file's bytes.
+
+    A `launch_failed` task is held while all three are unchanged, because the same launcher given the same task
+    writes the same stderr line; any change can make the line differ, so the task is launched again.
+    """
+    import hashlib
+
+    pkg_root = Path(__file__).resolve().parent.parent.parent
+    code = D.git(pkg_root, "log", "-1", "--format=%H", "--", "seldon")
+    path = Path(project_dir) / rel
+    return {"cli_version": _session_spec(project_dir, rel)["cli_version"],
+            "dispatcher_code": code.stdout.strip() if code.returncode == 0 else None,
+            "task_file_sha256": hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None}
+
+
+def _launch_holds(project_dir: Path) -> dict:
+    """Tasks whose newest finish is `launch_failed` with the launcher unchanged since (c15, DISP-001R Part A).
+
+    `{task_id: {stderr_line, finished_at, fingerprint}}`. The hold clears by itself when `launcher_fingerprint`
+    differs from the one the failure recorded, so a repeating launcher defect is noticed once and does not loop.
+    """
+    from seldon.core.events import read_events
+
+    newest: dict[str, dict] = {}
+    for e in read_events(project_dir):
+        if e.get("event_type") == D.EVENT_FINISHED:
+            newest[(e.get("payload") or {}).get("task_id")] = e
+    holds = {}
+    for task_id, e in newest.items():
+        p = e.get("payload") or {}
+        if p.get("outcome") != "launch_failed" or not p.get("source_file"):
+            continue
+        now = launcher_fingerprint(project_dir, p["source_file"])
+        if now == p.get("fingerprint"):
+            holds[task_id] = {"stderr_line": p.get("stderr_line"), "finished_at": e.get("timestamp"),
+                              "fingerprint": now}
+    return holds
 
 
 def _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row, dry_run) -> dict:

@@ -97,11 +97,17 @@ def _stub(project: Path, *, exit_code=0, write_result=True, complete=True, task_
           stem="t1", commit=True):
     """A shell script standing in for `claude -p`. Writes what a real CC session writes.
 
-    FRICTION-002: like the CLI, it enters `.claude/worktrees/<name>` when launched with `--worktree <name>`, and
-    the RESULT is written and committed there, on the task's branch, which is where the dispatcher looks for it."""
+    DISP-001R Part A: like CLI 2.1.303, `--worktree` with no name (its last argument) makes the CLI name and cut
+    `.claude/worktrees/<name>` on `worktree-<name>` from HEAD and enter it; it then writes its `init` record (whose
+    `cwd` is the worktree) and its first `assistant` message. The RESULT is written and committed there, on the
+    task's branch, which is where the dispatcher looks for it."""
     lines = ["#!/bin/sh", 'echo "stub cc: $*"',
-             'prev=""; for a in "$@"; do if [ "$prev" = "--worktree" ]; then '
-             'cd "$(git rev-parse --show-toplevel)/.claude/worktrees/$a" || exit 9; fi; prev="$a"; done']
+             'for a in "$@"; do last="$a"; done',
+             'if [ "$last" = "--worktree" ]; then top="$(git rev-parse --show-toplevel)"; '
+             f'git -C "$top" worktree add -q -b worktree-cli-{stem} "$top/.claude/worktrees/cli-{stem}" HEAD '
+             f'|| exit 9; cd "$top/.claude/worktrees/cli-{stem}" || exit 9; fi',
+             'printf \'{"type":"system","subtype":"init","cwd":"%s"}\\n\' "$(pwd -P)"',
+             'printf \'{"type":"assistant","message":{"id":"stub-1","role":"assistant","content":[]}}\\n\'']
     if write_result:
         lines.append(f'printf "# RESULT\\n" > cc_tasks/{stem}_RESULT.md')
         if commit:
@@ -370,7 +376,7 @@ def test_a_result_not_committed_on_the_branch_still_blocks(project, neo4j_driver
     assert _state(neo4j_driver, tid)[0] == "blocked"
     fl = _events(project, D.EVENT_FINISHED)[0]["payload"]
     assert fl["result_present"] is False and fl["graph_state_observed"] == "in_progress"
-    assert (project / ".claude" / "worktrees" / "t1" / "cc_tasks" / "t1_RESULT.md").is_file()
+    assert (project / ".claude" / "worktrees" / "cli-t1" / "cc_tasks" / "t1_RESULT.md").is_file()
 
 
 # ============================================================ the kill switches and the lease

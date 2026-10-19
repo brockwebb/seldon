@@ -1,0 +1,32 @@
+DISP-001R Part A step 1: what CLI 2.1.303 writes when `--worktree` is given no name.
+
+Probe: 2026-10-19, a scratch repository (/tmp/disp001r_scratch/repo, one empty commit), run by
+/tmp/disp001r_scripts/probe.py:
+
+  claude -p "reply ok" --output-format stream-json --verbose --worktree --model claude-haiku-5-5 \
+         --settings '{"worktree": {"baseRef": "head"}}'
+
+terminated as soon as the `init` record arrived (no model turn was paid for). Records in order:
+
+  TYPE system hook_started
+  TYPE system hook_response
+  TYPE system init
+  INIT {"type": "system", "subtype": "init", "cwd": "/private/tmp/disp001r_scratch/repo/.claude/worktrees/serene-prancing-whale", "original_cwd": "/private/tmp/disp001r_scratch/repo/.claude/worktrees/serene-prancing-whale", "claude_code_version": "2.1.303"}
+  EXIT 143   (SIGTERM from the probe)
+
+  .git/worktrees/serene-prancing-whale/HEAD: ref: refs/heads/worktree-serene-prancing-whale
+
+Findings the dispatcher relies on:
+- The CLI generates the name (here `serene-prancing-whale`), cuts `.claude/worktrees/<name>` on branch
+  `worktree-<name>`, and enters it.
+- The worktree's path is `init.cwd` (resolved through symlinks: /tmp -> /private/tmp).
+- `init` is NOT the first stream-json record: the operator's SessionStart hooks' `hook_started` /
+  `hook_response` records come first. `dispatch_worktree.cli_init` therefore looks for the first
+  `system/init` record, not the first line.
+
+The same field in a named launch, from this session's own dispatch log (logs/dispatch/
+2026-10-19_DISP-001R_worktree_name_and_spend_floor.log, launched by the FRICTION-002 dispatcher with
+`--worktree <stem>`):
+  {'type': 'system', 'subtype': 'init', 'cwd': '/Users/brock/GitHub/seldon/.claude/worktrees/2026-10-19_DISP-001R_worktree_name_and_spend_floor', 'session_id': 'f6021f65-d89f-4de0-98dc-f8ad81ed2f02', 'model': 'claude-opus-5-5', 'claude_code_version': '2.1.303'}
+
+Fallback (capped name `<8 of task id>_<stem truncated to 60>`): NOT built, because the output carries the path.

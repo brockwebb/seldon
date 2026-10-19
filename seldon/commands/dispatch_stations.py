@@ -106,7 +106,9 @@ def holder_inspector(project_dir: Path, cfg: dict, task_id: str):
 def record_reap(project_dir: Path, task_id: str, reap: dict, pid: int, signal_name: str) -> None:
     _emit(project_dir, S.EVENT_ANDON_REAPED, {"task_id": task_id, "stop_event_id": reap["stop_event_id"],
                                              "reason": reap["reason"], "pid": pid, "signal": signal_name,
-                                             "waited_s": reap["age_s"], "reap_after_s": reap["wait_s"]})
+                                             "waited_s": reap["age_s"], "reap_after_s": reap["wait_s"],
+                                             # DISP-001R Part B step 3: the liveness reading the reap acted on.
+                                             "last_log_growth_s": reap.get("last_log_growth_s")})
 
 
 def inspect_for_held_lease(project_dir: Path, cfg: dict, body: dict) -> dict | None:
@@ -425,8 +427,11 @@ def stop_gate_command(project):
     cwd = Path(hook.get("cwd") or os.getcwd())
     tree = _session_tree(cwd)
     cfg = D.load_dispatch_config(project_dir)
-    out = S.stop_gate(project_dir, launch, events, _scfg(cfg), tree["cwd"], tree["branch"],
-                      stop_hook_active=bool(hook.get("stop_hook_active")))
+    scfg = _scfg(cfg)
+    floor = S.spend_floor(project_dir, events, cfg["poll_interval_s"], scfg["floor_launches"],
+                          exclude_session=launch["payload"].get("child_session_id"))
+    out = S.stop_gate(project_dir, launch, events, scfg, tree["cwd"], tree["branch"],
+                      stop_hook_active=bool(hook.get("stop_hook_active")), floor=floor)
     gate = _emit(project_dir, S.EVENT_STOP_GATE, out["record"], actor=resolve_cli_actor())
     if out["hard_stop"]:
         stop = _emit(project_dir, S.EVENT_SESSION_STOP, {**out["hard_stop"], "stop_gate_event_id": gate["event_id"]})
@@ -438,6 +443,64 @@ def stop_gate_command(project):
               actor=resolve_cli_actor())
     if out["block"]:
         click.echo(json.dumps({"decision": "block", "reason": out["reason"]}))
+
+
+#: The event types the PreToolUse gate reads. It runs before EVERY tool call of every dispatched session, so it
+#: parses only the lines that can carry one of these rather than the whole event store (16 MB in seldon today).
+TOOL_GATE_EVENTS = (D.EVENT_LAUNCHED, S.EVENT_SESSION_STOP, S.EVENT_ANDON_HALTED, S.EVENT_ANDON_REAPED)
+
+
+def _tool_gate_events(project_dir: Path) -> list:
+    from seldon.core.events import _events_path
+
+    path = _events_path(project_dir)
+    if not path.is_file():
+        return []
+    marks = tuple(f'"{t}"' for t in TOOL_GATE_EVENTS)
+    out = []
+    with path.open("r", encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if any(m in line for m in marks):
+                try:
+                    e = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if e.get("event_type") in TOOL_GATE_EVENTS:
+                    out.append(e)
+    return out
+
+
+@dispatch_group.command("tool-gate", hidden=True)
+@click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
+              help="the primary checkout, whose event store the dispatcher reads")
+def tool_gate_command(project):
+    """DISP-001R Part B step 2: the PreToolUse hook each dispatched session is launched with. Not for operators.
+
+    A hard stop on the ledger for this session's task, not yet answered, is delivered here: the tool call is
+    refused with the stop's reason (the CLI's `permissionDecision: deny`, whose reason the model reads), and the
+    session records `andon_halted` itself, so it halts at a tool boundary instead of being killed inside a call.
+    Every other call, and every call of a session the dispatcher did not launch, proceeds untouched."""
+    hook = _hook_input()
+    project_dir = Path(project).resolve()
+    events = _tool_gate_events(project_dir)
+    launch = _hook_launch(project_dir, events)
+    if launch is None:
+        return
+    task_id = launch["payload"]["task_id"]
+    stop = S.pending_hard_stop(S.task_records(events, task_id, S._ts(launch)))
+    if stop is None:
+        return
+    p = stop.get("payload") or {}
+    _emit(project_dir, S.EVENT_ANDON_HALTED, {"task_id": task_id, "stop_event_id": stop["event_id"],
+                                             "at": "tool boundary", "tool_name": hook.get("tool_name"),
+                                             "stop_reason": p.get("reason"), "stop_kind": p.get("kind")},
+          actor=resolve_cli_actor())
+    reason = (f"HALT: a hard stop is written for task {task_id[:8]} by {p.get('station') or p.get('by')} "
+              f"({p.get('reason')}; reading {json.dumps(p.get('reading'), default=str)[:400]}). This tool call is "
+              f"refused and `andon_halted` is recorded. Write the RESULT with what stands, commit it on this "
+              f"branch, and end the session.")
+    click.echo(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                                  "permissionDecisionReason": reason}}))
 
 
 @dispatch_group.command("classifier-denied", hidden=True)

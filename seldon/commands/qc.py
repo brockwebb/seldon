@@ -89,6 +89,11 @@ def chart_command(as_json):
     events = read_events(project_dir)
     out = S.chart(events, name, seed=seed, min_points=min_points)
     out["toil"] = _toil(project_dir, config, events)
+    # DISP-001R Part B step 1: the spend ceiling's measured floor, as it stood each week.
+    from seldon.core import dispatch as D
+    dcfg = D.load_dispatch_config(project_dir, config)
+    out["spend_floor"] = S.floor_by_week(project_dir, events, dcfg["poll_interval_s"],
+                                         S.load_stations_config(dcfg)["floor_launches"])
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
         return
@@ -133,6 +138,12 @@ def chart_command(as_json):
                    f"{w['interventions']:>13d}")
     if not t["weeks"]:
         click.echo("    (no dispatcher log, stale log or intervention recorded yet)")
+    click.echo("  spend-ceiling floor per week (DISP-001R; median tokens at the first inspection, last "
+               f"{S.load_stations_config(dcfg)['floor_launches']} finished launches):")
+    for w in out["spend_floor"]:
+        click.echo(f"    {w['week']:9s} {(f'{w["value"]:,}' if w['value'] is not None else '-'):>12s}  n {w['n']}")
+    if not out["spend_floor"]:
+        click.echo("    (no finished launch yet)")
     click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
                f"{t['sources']['stale_log'] or '(none)'}, the event store")
 

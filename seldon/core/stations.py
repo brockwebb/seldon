@@ -30,6 +30,7 @@ import json
 import os
 import re
 import shlex
+import statistics
 import subprocess
 import sys
 import time
@@ -104,6 +105,10 @@ STATIONS_DEFAULTS = {
     # The spend ceiling of a hard stop, as a multiple of the task's declared estimate. INHERITED: every QC and SQ
     # task's stop condition is the estimate plus 20% (QC-002: 1.5M, stop at 1.8M; SQ-015 the same).
     "spend_ceiling_factor": 1.2,
+    # DISP-001R Part B step 1: the spend ceiling's floor is the median token reading at the first inspection over
+    # this many of the repository's most recent finished launches. The window is the task's number; the floor
+    # itself is measured, never configured (`spend_floor`).
+    "floor_launches": 10,
     # How long one `check:` command may run before it is a failure. ASSUMPTION: the longest single check in
     # this portfolio's tasks is a full seldon suite, about 15 minutes; twice that.
     "check_timeout_s": 1800,
@@ -150,7 +155,8 @@ def load_stations_config(cfg: dict) -> dict:
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
             raise StationsConfigError(f"dispatch.stations.{key} must be a positive number, got {v!r}")
-    for key in ("first_article_polls", "reap_after_intervals", "stop_gate_timeout_s", "stop_hook_block_cap"):
+    for key in ("first_article_polls", "reap_after_intervals", "stop_gate_timeout_s", "stop_hook_block_cap",
+                "floor_launches"):
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, int) or v < 1:
             raise StationsConfigError(f"dispatch.stations.{key} must be a whole number of at least 1, got {v!r}")
@@ -327,6 +333,119 @@ def session_tokens(log_path: Path) -> dict:
     return {"tokens": tokens, "cache_read": cache, "messages": len(usage), "error": None}
 
 
+_LOG_HEADER_TS_RE = re.compile(r"^=== (?P<ts>\S+) \| dispatch \|")
+
+
+def _usage_tokens(u: dict) -> int:
+    return (int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0)
+            + int(u.get("output_tokens") or 0))
+
+
+def tokens_at(log_path: Path, launched_at: str, within_s: float) -> int | None:
+    """Tokens (as `session_tokens` counts them) the session launched at `launched_at` had used `within_s` seconds
+    after its log header: the reading its first inspection saw (DISP-001R Part B step 1).
+
+    The session is the log's first segment whose `=== <ts> | dispatch |` header is at or after `launched_at` (the
+    header is written after `dispatch_launched`, and a relaunch appends a later segment). An assistant record is
+    counted when its own `timestamp` is within the window. None when the log or the segment is absent.
+    """
+    if not Path(log_path).is_file():
+        return None
+    start = _parse_ts(launched_at)
+    header, usage = None, {}
+    with Path(log_path).open("r", encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            m = _LOG_HEADER_TS_RE.match(line)
+            if m:
+                if header is not None:
+                    break
+                ts = _parse_ts(m.group("ts"))
+                if ts >= start:
+                    header = ts
+                continue
+            if header is None or not line.startswith("{"):
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            msg = obj.get("message") if obj.get("type") == "assistant" else None
+            if not (isinstance(msg, dict) and isinstance(msg.get("usage"), dict) and obj.get("timestamp")):
+                continue
+            if (_parse_ts(obj["timestamp"]) - header).total_seconds() <= within_s:
+                usage[msg.get("id") or obj.get("uuid") or str(len(usage))] = msg["usage"]
+    if header is None:
+        return None
+    return sum(_usage_tokens(u) for u in usage.values())
+
+
+def spend_floor(project_dir: Path, events: list, within_s: float, launches: int, until: str | None = None,
+                exclude_session: str | None = None) -> dict:
+    """The spend ceiling's floor, measured (DISP-001R Part B step 1): the median of the token reading at the first
+    inspection (`within_s` after launch) over the repository's last `launches` finished launches.
+
+    A launch counts once it has a `dispatch_finished` (any outcome: DISP-001's reaped session is a data point) and
+    its log yields a positive reading; a launch that never reached the model reads zero and says nothing about the
+    cost of loading a session. `until` cuts the history at a timestamp (the weekly chart). `exclude_session` leaves
+    out the session being inspected. Returns `{value, n, window, within_s, launches: [...]}`; `value` is None
+    with no data point, and the ceiling is then the estimate's alone.
+    """
+    finished = {(e.get("payload") or {}).get("child_session_id") for e in events
+                if e.get("event_type") == "dispatch_finished" and (until is None or _ts(e) <= until)}
+    candidates = [e for e in events if e.get("event_type") == "dispatch_launched"
+                  and (e.get("payload") or {}).get("child_session_id") in finished
+                  and (e.get("payload") or {}).get("child_session_id") != exclude_session
+                  and (e.get("payload") or {}).get("log_path")]
+    points = []
+    for e in reversed(candidates):
+        if len(points) >= launches:
+            break
+        p = e["payload"]
+        tokens = tokens_at(Path(project_dir) / p["log_path"], p.get("launched_at") or _ts(e), within_s)
+        if tokens:
+            points.append({"task_id": p.get("task_id"), "source_file": p.get("source_file"),
+                           "child_session_id": p.get("child_session_id"), "launched_at": p.get("launched_at"),
+                           "tokens": tokens})
+    points.reverse()
+    value = int(statistics.median([pt["tokens"] for pt in points])) if points else None
+    return {"value": value, "n": len(points), "window": launches, "within_s": within_s, "launches": points}
+
+
+def spend_ceiling(estimate: int | None, factor: float, floor: dict | None) -> dict:
+    """The token ceiling of a hard stop (DISP-001R Part B step 1): never below the cost of loading a session.
+
+    `ceiling = max(estimate, floor) x factor`. The task wrote `max(estimate x factor, floor)`; a ceiling AT the
+    median first-inspection reading would stop about half the sessions whose estimate is below it at their first
+    inspection, which is DISP-001's defect again, so the factor's margin applies to whichever term binds. None
+    when the task declares no estimate (no ceiling is invented for it).
+    """
+    if not estimate:
+        return {"ceiling": None, "estimate": estimate, "factor": factor, "binding": None}
+    value = (floor or {}).get("value")
+    binding = "floor" if value and value > estimate else "estimate"
+    out = {"ceiling": int(max(estimate, value or 0) * factor), "estimate": estimate, "factor": factor,
+           "binding": binding}
+    if binding == "floor":
+        out["floor"] = {k: floor[k] for k in ("value", "n", "window", "within_s", "launches")}
+    return out
+
+
+def floor_by_week(project_dir: Path, events: list, within_s: float, launches: int) -> list:
+    """`spend_floor` as it stood at the end of each ISO week with a finished launch (`seldon qc chart`, DISP-001R
+    Part B step 1). `[{week, value, n}]`, oldest first."""
+    weeks: dict[str, str] = {}
+    for e in events:
+        if e.get("event_type") == "dispatch_finished" and _ts(e):
+            y, w, _ = _parse_ts(_ts(e)).isocalendar()
+            key = f"{y}-W{w:02d}"
+            weeks[key] = max(weeks.get(key, ""), _ts(e))
+    out = []
+    for week in sorted(weeks):
+        f = spend_floor(project_dir, events, within_s, launches, until=weeks[week])
+        out.append({"week": week, "value": f["value"], "n": f["n"]})
+    return out
+
+
 def cpi(parts: list, completed: list, tokens: int | None, estimate: int | None) -> dict:
     """Earned value over actual cost, both as shares of the task's estimate (AD-037-R6 c).
 
@@ -483,6 +602,20 @@ def task_records(events: list, task_id: str, since: str = "") -> list:
     return [e for e in events if (e.get("payload") or {}).get("task_id") == task_id and _ts(e) >= since]
 
 
+def log_growth_s(log: Path | None, now: datetime) -> float | None:
+    """Seconds since the session's log last grew (its mtime), or None with no log to read."""
+    if log is None or not Path(log).is_file():
+        return None
+    return (now - datetime.fromtimestamp(Path(log).stat().st_mtime, timezone.utc)).total_seconds()
+
+
+def pending_hard_stop(records: list) -> dict | None:
+    """The first hard `session_stop` in `records` not yet answered by `andon_halted` or `andon_reaped`: what the
+    PreToolUse gate delivers at the session's next tool call (DISP-001R Part B step 2)."""
+    return pending_stop([e for e in records if e.get("event_type") != EVENT_SESSION_STOP
+                         or (e.get("payload") or {}).get("kind") == "hard"])
+
+
 def pending_stop(records: list) -> dict | None:
     """The first `session_stop` not yet answered by `andon_halted` or `andon_reaped`."""
     answered = {(e.get("payload") or {}).get("stop_event_id") for e in records
@@ -539,7 +672,8 @@ def judgment_plan(judgments: list, reserve_left_share: float, base_rate: float, 
 
 
 def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Path, branch: str | None, *,
-              run: Callable[..., dict] = run_check, stop_hook_active: bool = False) -> dict:
+              run: Callable[..., dict] = run_check, stop_hook_active: bool = False,
+              floor: dict | None = None) -> dict:
     """FRICTION-002 Part C: the Stop hook's decision for a dispatched session that is trying to end.
 
     Runs the `check:` criteria of every Part the session has declared complete (`part_complete` since its launch)
@@ -580,7 +714,9 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
     tokens = session_tokens(log)["tokens"] if log and log.is_file() else None
-    ceiling = int(estimate * scfg["spend_ceiling_factor"]) if estimate else None
+    # DISP-001R Part B step 1: `floor` is `spend_floor`'s measurement; the ceiling is never below it.
+    limit = spend_ceiling(estimate, scfg["spend_ceiling_factor"], floor)
+    ceiling = limit["ceiling"]
     over = ceiling is not None and tokens is not None and tokens >= ceiling
     verdict = "pass" if not failed else ("ceiling" if over else "block")
     record = {"task_id": task_id, "child_session_id": lp.get("child_session_id"), "cwd": str(cwd), "branch": branch,
@@ -597,8 +733,7 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
                     f"is then let go at the CLI's refusal cap or the token ceiling, and its branch is NOT merged.")
     elif verdict == "ceiling":
         hard = {"task_id": task_id, "station": "stop_gate", "kind": "hard", "reason": "spend_ceiling",
-                "by": "dispatcher", "reading": {"tokens": tokens, "estimate": estimate,
-                                                "factor": scfg["spend_ceiling_factor"]},
+                "by": "dispatcher", "reading": {"tokens": tokens, **limit},
                 "failed": record["failed"]}
     return {"record": record, "block": verdict == "block", "reason": reason, "hard_stop": hard}
 
@@ -730,16 +865,22 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
                     if e.get("event_type") == EVENT_SESSION_STOP and (e.get("payload") or {}).get("kind") == "hard"}
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
     used = session_tokens(log)["tokens"] if log else None
-    if estimate and used is not None and used > estimate * scfg["spend_ceiling_factor"] \
+    # DISP-001R Part B step 1: the ceiling is never below the measured cost of loading a session.
+    limit = spend_ceiling(estimate, scfg["spend_ceiling_factor"],
+                          spend_floor(project_dir, events, poll_interval_s, scfg["floor_launches"],
+                                      exclude_session=lp.get("child_session_id")) if estimate else None)
+    out["ceiling"] = limit
+    if limit["ceiling"] is not None and used is not None and used > limit["ceiling"] \
             and "spend_ceiling" not in hard_reasons:
-        stop("dispatcher", "hard", "spend_ceiling", reading={"tokens": used, "estimate": estimate,
-                                                           "factor": scfg["spend_ceiling_factor"]})
+        stop("dispatcher", "hard", "spend_ceiling", reading={"tokens": used, **limit})
     if disk is not None and "disk_ceiling" not in hard_reasons:
         d = disk()
         if not d.get("ok", True):
             stop("dispatcher", "hard", "disk_ceiling", reading=d)
 
-    # (d) the reap: a hard stop with no `andon_halted` within the reap interval.
+    # (d) the reap: a hard stop with no `andon_halted` within the reap interval, of a session whose log has not
+    # grown for that interval either (DISP-001R Part B step 3). A session writing to its log is alive and is given
+    # its tool boundary, where the PreToolUse gate delivers the stop (`tool_gate`); the reap is the backstop.
     # Read over the records as they stood when this inspection began: a stop written just now is not yet due.
     halted = {(e.get("payload") or {}).get("stop_event_id") for e in records
               if e.get("event_type") in (EVENT_ANDON_HALTED, EVENT_ANDON_REAPED)}
@@ -748,10 +889,16 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
         p = e.get("payload") or {}
         if e.get("event_type") == EVENT_SESSION_STOP and p.get("kind") == "hard" and e.get("event_id") not in halted:
             age = (now - _parse_ts(_ts(e))).total_seconds()
-            if age >= wait_s:
-                out["reap"] = {"stop_event_id": e["event_id"], "reason": p.get("reason"), "age_s": round(age, 1),
-                               "wait_s": wait_s}
+            if age < wait_s:
+                continue
+            growth = log_growth_s(log, now)
+            if growth is not None and growth < wait_s:
+                out["reap_deferred"] = {"stop_event_id": e["event_id"], "age_s": round(age, 1), "wait_s": wait_s,
+                                        "last_log_growth_s": round(growth, 1)}
                 break
+            out["reap"] = {"stop_event_id": e["event_id"], "reason": p.get("reason"), "age_s": round(age, 1),
+                           "wait_s": wait_s, "last_log_growth_s": None if growth is None else round(growth, 1)}
+            break
     return out
 
 

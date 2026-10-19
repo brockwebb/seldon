@@ -1495,18 +1495,22 @@ def worktree_leases(project_dir: Path, cfg: dict) -> list:
     return out
 
 
-def worktree_state(project_dir: Path, cfg: dict, stem: str) -> dict:
-    """c11's raw material: is this task's worktree path and branch free, and is the worktree
-    directory ignored so a worktree inside the checkout is not c7's dirt."""
-    wt_rel = f"{CLI_WORKTREE_DIR}/{stem}"
-    branch = f"{CLI_BRANCH_PREFIX}{stem}"
-    exists = (Path(project_dir) / wt_rel).exists()
-    branch_exists = git(project_dir, "rev-parse", "--verify", "--quiet",
-                        f"refs/heads/{branch}").returncode == 0
-    ignored = git(project_dir, "check-ignore", "-q", "--", wt_rel).returncode == 0
-    return {"worktree": wt_rel, "exists": exists, "branch": branch,
-            "branch_exists": branch_exists, "ignored": ignored,
-            "ok": ignored and not exists and not branch_exists}
+def worktree_state(project_dir: Path, cfg: dict) -> dict:
+    """c11's raw material: is the CLI's worktree directory ignored, so a worktree inside the checkout is not c7's
+    dirt.
+
+    DISP-001R Part A: the CLI names each worktree (`--worktree` with no name), so there is no path or branch to
+    find taken before the launch; the name is learned from the session's `init` record. A probe path under the
+    directory stands for every name the CLI could choose.
+    """
+    probe = f"{CLI_WORKTREE_DIR}/{CLI_NAME_PROBE}"
+    ignored = git(project_dir, "check-ignore", "-q", "--", probe).returncode == 0
+    return {"worktree_dir": CLI_WORKTREE_DIR, "named_by": "cli", "ignored": ignored, "ok": ignored}
+
+
+#: The name `worktree_state` asks `git check-ignore` about: any name stands for all of them, since the CLI's names
+#: are one path segment under `CLI_WORKTREE_DIR`.
+CLI_NAME_PROBE = "cli-named"
 
 
 def read_lease(path: Path) -> dict:
@@ -1628,7 +1632,7 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
 
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
              claim_in_flight: dict | None, lease_body: dict, running=None,
-             premise_holds: dict | None = None) -> dict:
+             premise_holds: dict | None = None, launch_holds: dict | None = None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1733,7 +1737,7 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     # `max_parallel`, so c11 (the worktree path and branch are free and ignored) is every task's criterion.
     # `Exclusive:` decides only whether a task may run beside others, never where it runs.
     if conc["error"] is None:
-        c["c11"] = worktree_state(project_dir, cfg, Path(source).stem)
+        c["c11"] = worktree_state(project_dir, cfg)
     # SQ-010 ADDENDUM 02 D3.4: free space against this launch's own measured need, before any claim. Every
     # launch checks a tree out into a worktree.
     c["c12"] = disk_state(project_dir, cfg, worktree=conc["error"] is None)
@@ -1749,6 +1753,11 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     unverified = governing_unverified(project_dir, task_file)
     if unverified:
         c["c14"] = {"unverified": unverified, "ok": False}
+    # DISP-001R Part A step 2: a task whose last launch ended before any model turn waits until the launcher or
+    # the task changes (`seldon.commands.dispatch._launch_holds`). Absent otherwise, like c13.
+    failed_launch = (launch_holds or {}).get(task.get("artifact_id"))
+    if failed_launch:
+        c["c15"] = {**failed_launch, "ok": False}
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1781,6 +1790,8 @@ def first_refusal_reason(row: dict) -> str | None:
         return "premise_false"
     if not c.get("c14", {}).get("ok", True):
         return "governing_unverified"
+    if not c.get("c15", {}).get("ok", True):
+        return "launch_failed"
     return None
 
 

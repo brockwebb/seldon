@@ -1,0 +1,23 @@
+_ test_a_cli_exiting_before_its_first_turn_is_launch_failed_proposed_and_not_relaunched _
+    def test_a_cli_exiting_before_its_first_turn_is_launch_failed_proposed_and_not_relaunched(tmp_path, neo4j_driver,
+>       assert fin["outcome"] == "launch_failed" and fin["stderr_line"] == INVALID, fin
+E       assert ('session_failed' == 'launch_failed'
+E         - launch_failed
+E         + session_failed)
+____________ test_a_changed_task_file_clears_the_launch_failed_hold ____________
+    def test_a_changed_task_file_clears_the_launch_failed_hold(tmp_path, neo4j_driver, dc):
+E       assert 'session_failed' == 'merged'
+E         + session_failed
+FAILED tests/test_disp001_launch.py::test_a_cli_exiting_before_its_first_turn_is_launch_failed_proposed_and_not_relaunched
+FAILED tests/test_disp001_launch.py::test_a_90_character_stem_launches_without_error
+FAILED tests/test_disp001_launch.py::test_a_changed_task_file_clears_the_launch_failed_hold
+FAILED tests/test_disp001r_stations.py::test_with_no_measured_floor_the_estimate_alone_still_stops_disp001
+FAILED tests/test_disp001r_stations.py::test_a_reading_above_the_floor_ceiling_records_the_floor_in_its_stop
+FAILED tests/test_disp001r_stations.py::test_a_hard_stop_past_the_interval_with_a_log_quiet_for_wait_s_plus_1_is_reaped
+FAILED tests/test_disp001r_stations.py::test_an_estimate_below_the_floor_does_not_stop_at_the_first_inspection
+FAILED tests/test_disp001r_stations.py::test_a_hard_stop_on_the_ledger_makes_the_next_tool_call_refuse_with_its_reason
+FAILED tests/test_disp001r_stations.py::test_a_session_the_dispatcher_did_not_launch_is_untouched
+FAILED tests/test_disp001r_stations.py::test_an_andon_stop_is_not_delivered_at_the_tool_boundary
+FAILED tests/test_disp001r_stations.py::test_the_launch_settings_carry_the_tool_gate
+FAILED tests/test_disp001r_stations.py::test_a_hard_stop_past_the_interval_with_a_log_that_grew_10s_ago_is_not_reaped
+12 failed, 1 passed in 39.62s

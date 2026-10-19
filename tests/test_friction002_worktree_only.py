@@ -1,8 +1,8 @@
 """FRICTION-002 Part B: every dispatched task runs in a Claude Code worktree; worktree is the only mode.
 
 `cc_tasks/2026-10-17_FRICTION-002_vendor_isolation_replaces_hand_built_plumbing.md` Part B and AD-034 ADDENDUM 01.
-The dispatcher cuts `.claude/worktrees/<stem>` on branch `worktree-<stem>` from main and launches the CLI with
-`--worktree <stem>`, which enters it and turns on the CLI's hard isolation. The session's work reaches main only by
+The dispatcher launches the CLI with `--worktree` and no name (DISP-001R Part A): the CLI names and cuts
+`.claude/worktrees/<name>` on `worktree-<name>` from main, enters it and turns on its hard isolation. The session's work reaches main only by
 the dispatcher's merge on green (AD-034-R5); a task that ends unmerged keeps its worktree and branch with a
 `worktree_kept` record; a merged task's worktree is removed by the sweep and its branch kept.
 
@@ -62,13 +62,15 @@ def test_a_launched_task_runs_in_its_cli_worktree_and_merges_on_green(tmp_path, 
     p = make_project(tmp_path)
     add_task(p, "a")
     register(p, neo4j_driver, dc, "a", "2026-10-17T00:00:00Z")
-    write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}}})
+    # DISP-001R Part A: the CLI names the worktree; the stub is told which name to generate.
+    write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}, "worktree_name": "a"}})
     out = _once(p)
 
     launch = _events(p, D.EVENT_LAUNCHED)[-1]
-    assert launch["mode"] == "worktree"
-    assert launch["worktree"] == ".claude/worktrees/a" and launch["branch"] == "worktree-a"
-    assert "--worktree a" in launch["command"], launch["command"]
+    assert launch["mode"] == "worktree" and launch["worktree_named_by"] == "cli"
+    named = _events(p, W.EVENT_WORKTREE_NAMED)[-1]
+    assert named["worktree"] == ".claude/worktrees/a" and named["branch"] == "worktree-a"
+    assert launch["command"].endswith(" --worktree"), launch["command"]
     log = (p / "logs" / "dispatch" / "a.log").read_text()
     assert "stub cwd: worktree" in log, log
     # The dispatcher merged the branch and completed the task; the session did neither.
@@ -85,7 +87,7 @@ def test_a_merged_tasks_worktree_is_removed_by_the_sweep_and_its_branch_kept(tmp
     p = make_project(tmp_path)
     add_task(p, "a")
     register(p, neo4j_driver, dc, "a", "2026-10-17T00:00:00Z")
-    write_stub(p, {"a": {}})
+    write_stub(p, {"a": {"worktree_name": "a"}})
     _once(p)
     assert not (p / ".claude" / "worktrees" / "a").exists()
     removed = _events(p, D.EVENT_WORKTREE_REMOVED)
@@ -112,7 +114,7 @@ def test_an_unmerged_task_keeps_its_worktree_and_branch_with_a_worktree_kept_rec
     p = make_project(tmp_path)
     add_task(p, "a")
     register(p, neo4j_driver, dc, "a", "2026-10-17T00:00:00Z")
-    write_stub(p, {"a": {"write": {"out/a.txt": "partial\n"}, "exit": 1}})
+    write_stub(p, {"a": {"write": {"out/a.txt": "partial\n"}, "exit": 1, "worktree_name": "a"}})
     _once(p)
 
     assert task_states(neo4j_driver)["a"] == "blocked"
@@ -156,18 +158,18 @@ def test_a_write_to_the_primary_from_inside_the_session_is_refused_recorded_prob
 
 
 def test_the_launch_enters_the_cut_worktree_with_the_cli_flag(tmp_path):
-    """The mechanism the recorded refusal depends on: `--worktree <stem>`, the CLI's own path and branch names,
-    and `worktree.baseRef: head` so the CLI never cuts its own tree from origin instead."""
+    """The mechanism the recorded refusal depends on: `--worktree` (DISP-001R: with no name, last, so the CLI names
+    it), and `worktree.baseRef: head` so the CLI never cuts its own tree from origin instead."""
     spec = {"cli_path": "/x/claude", "args": ["--model", "m", "--settings", '{"switchModelsOnFlag":false}',
                                               "--effort", "medium"]}
     cfg = {"permission_mode": "auto", "stations": {}}
-    cmd = S._launch_cmd(cfg, "p", spec, worktree="2026-10-17_T", settings=S._session_settings(tmp_path, cfg))
-    assert cmd[cmd.index("--worktree") + 1] == "2026-10-17_T"
+    cmd = S._launch_cmd(cfg, "p", spec, worktree=True, settings=S._session_settings(tmp_path, cfg))
+    assert cmd[-1] == "--worktree"
     settings = json.loads(cmd[cmd.index("--settings") + 1])
     assert settings["worktree"] == {"baseRef": "head"} and settings["switchModelsOnFlag"] is False
     assert cmd.count("--settings") == 1
-    st = D.worktree_state(tmp_path, {}, "2026-10-17_T")
-    assert st["worktree"] == ".claude/worktrees/2026-10-17_T" and st["branch"] == "worktree-2026-10-17_T"
+    st = D.worktree_state(tmp_path, {})
+    assert st["worktree_dir"] == ".claude/worktrees" and st["named_by"] == "cli"
 
 
 def test_a_configured_worktree_dir_or_branch_prefix_is_refused():

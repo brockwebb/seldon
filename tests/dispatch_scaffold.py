@@ -136,12 +136,31 @@ sys.stdout.reconfigure(line_buffering=True)  # a test may wait on a line of this
 prompt = sys.argv[sys.argv.index("-p") + 1]
 stem = re.search(r"cc_tasks/([A-Za-z0-9_.-]+)\\.md", prompt).group(1)
 spec = json.loads(Path({spec!r}).read_text()).get(stem, {{}})
+if spec.get("launch_error"):
+    # DISP-001R Part A: a CLI that exits before any model turn, its error on stderr.
+    print(spec["launch_error"], file=sys.stderr)
+    sys.exit(spec.get("exit", 1))
 if "--worktree" in sys.argv:
-    # As the CLI does (FRICTION-002): enter `<repo>/.claude/worktrees/<name>`, which the dispatcher has cut.
+    # As CLI 2.1.303 does (DISP-001R Part A): a name over 64 characters is refused; with no name the CLI generates
+    # one, cuts `<repo>/.claude/worktrees/<name>` on `worktree-<name>` from HEAD and enters it.
+    i = sys.argv.index("--worktree")
+    name = sys.argv[i + 1] if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("-") else None
+    if name is not None and len(name) > 64:
+        print("Error: Invalid worktree name: must be 64 characters or fewer", file=sys.stderr)
+        sys.exit(1)
     top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
                          check=True).stdout.strip()
-    os.chdir(Path(top) / ".claude" / "worktrees" / sys.argv[sys.argv.index("--worktree") + 1])
+    name = name or spec.get("worktree_name") or "cli-" + __import__("hashlib").sha1(stem.encode()).hexdigest()[:8]
+    wt = Path(top) / ".claude" / "worktrees" / name
+    if not wt.exists():
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "worktree-" + name, str(wt), "HEAD"], cwd=top,
+                       check=True, capture_output=True)
+    os.chdir(wt)
 cwd = Path.cwd()
+# The CLI's own first records: `init` names its working directory (the worktree), then the first model turn.
+print(json.dumps({{"type": "system", "subtype": "init", "cwd": str(cwd.resolve()), "session_id": "stub",
+                  "claude_code_version": "stub"}}))
+print(json.dumps({{"type": "assistant", "message": {{"id": "stub-1", "role": "assistant", "content": []}}}}))
 print("stub cc:", " ".join(sys.argv[1:]))
 print("stub cwd:", "worktree" if "/worktrees/" in str(cwd) else "primary")
 def mark(what):

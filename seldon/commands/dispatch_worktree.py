@@ -54,7 +54,9 @@ from seldon.core.artifacts import create_artifact, create_link, update_artifact,
 #: verbatim (`S.DISPATCH_LINE`); this says what differs when the session is not alone. It is
 #: protocol text, not a tunable, as `HEADLESS_CLAUSE` is.
 WORKTREE_CLAUSE = (
-    "This session runs in a git worktree at {worktree} on branch {branch}, not in the primary "
+    "This session runs in a git worktree the Claude Code CLI created and named under "
+    "{primary}/" + D.CLI_WORKTREE_DIR + "/ (your working directory, on branch "
+    "`" + D.CLI_BRANCH_PREFIX + "<its name>`), not in the primary "
     "checkout at {primary}; Claude Code refuses edits and git aimed at the primary. Do all work "
     "and testing here and commit everything on this branch, including the RESULT. Do not merge, "
     "push, switch branches, or run `seldon cc complete` for this task, whatever the task file "
@@ -83,9 +85,94 @@ OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
 MERGE_PROPERTY = "dispatch_merge"
 
 
-def worktree_prompt(rel: str, stem: str, worktree: Path, branch: str, primary: Path) -> str:
-    return (S.DISPATCH_LINE.format(rel=rel, stem=stem) + " "
-            + WORKTREE_CLAUSE.format(worktree=worktree, branch=branch, primary=primary))
+def worktree_prompt(rel: str, primary: Path) -> str:
+    return (S.DISPATCH_LINE.format(rel=rel, stem=Path(rel).stem) + " "
+            + WORKTREE_CLAUSE.format(primary=primary))
+
+
+# ================================================================ the CLI names the worktree (DISP-001R Part A)
+
+#: The record that maps a launch to the worktree the CLI named: task id, stem, path, branch, base and the `init`
+#: line it was read from. A record of its own, because `dispatch_launched` is committed before the CLI starts (so
+#: the branch carries its own claim) and the name does not exist until the CLI has made it.
+EVENT_WORKTREE_NAMED = "dispatch_worktree_named"
+
+#: How much of the CLI's `init` line `dispatch_worktree_named` quotes (its tool and skill lists run to kilobytes).
+INIT_FIELDS = ("type", "subtype", "cwd", "original_cwd", "session_id", "claude_code_version", "model")
+
+#: How much of a launch failure's stderr line is recorded and notified.
+STDERR_LINE_CHARS = 500
+
+
+def _segment(log_path: Path, offset: int) -> list:
+    """The session's lines: everything the CLI wrote after `offset`, without `_run`'s header and `EXIT=` lines."""
+    if not Path(log_path).is_file():
+        return []
+    with Path(log_path).open("r", encoding="utf-8", errors="replace") as fh:
+        fh.seek(offset)
+        lines = fh.read().splitlines()
+    return [ln for ln in lines if ln.strip() and not ln.startswith("=== ") and not ln.startswith("EXIT=")]
+
+
+def _records(lines: list):
+    for ln in lines:
+        if ln.startswith("{"):
+            try:
+                obj = json.loads(ln)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                yield obj
+
+
+def cli_init(log_path: Path, offset: int) -> dict | None:
+    """The session's `system/init` stream-json record after `offset`, or None while there is none.
+
+    Not the first record: the CLI writes its SessionStart hooks' `hook_started`/`hook_response` records ahead of
+    `init` (CLI 2.1.303, docs/evidence/disp001r/cli_init_probe.txt). `init.cwd` is the worktree the CLI made.
+    """
+    for obj in _records(_segment(log_path, offset)):
+        if obj.get("type") == "system" and obj.get("subtype") == "init" and obj.get("cwd"):
+            return obj
+    return None
+
+
+def reached_model(log_path: Path, offset: int) -> bool:
+    """Did the session get as far as its first `assistant` message? A CLI exit before it is `launch_failed`."""
+    return any(obj.get("type") == "assistant" for obj in _records(_segment(log_path, offset)))
+
+
+def launch_stderr_line(log_path: Path, offset: int) -> str | None:
+    """The CLI's last line that is not stream-json: its error, for a session that never reached the model. The
+    CLI's stderr is merged into the log (`_run`), and everything the CLI writes on stdout in this mode is JSON."""
+    plain = [ln.strip() for ln in _segment(log_path, offset) if not ln.startswith("{")]
+    return plain[-1][:STDERR_LINE_CHARS] if plain else None
+
+
+def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links: list) -> dict:
+    """Fill `extra` with the worktree the CLI named in `init`, link `links` into it, record it. Returns the record.
+
+    The branch is read from the worktree, not composed from its name; `base` is the branch's commit now, before the
+    session has committed, which is the commit the CLI cut it from. A path outside the checkout, or no branch, is
+    recorded with its `error` and fills nothing: the finish then keeps whatever it finds and merges nothing.
+    """
+    project_dir = Path(project_dir)
+    wt = Path(init["cwd"]).resolve()
+    record = {"task_id": extra["worktree_task"], "stem": extra["stem"], "source_file": extra["source_file"],
+              "child_session_id": extra["child_session_id"], "init": {k: init.get(k) for k in INIT_FIELDS}}
+    try:
+        rel = str(wt.relative_to(project_dir.resolve()))
+    except ValueError:
+        rel = None
+    branch = WT.git(wt, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() if wt.is_dir() else ""
+    if rel is None or not rel.startswith(D.CLI_WORKTREE_DIR + "/") or not branch or branch == "HEAD":
+        record["error"] = f"init cwd {wt} is not a branch worktree under {project_dir}/{D.CLI_WORKTREE_DIR}"
+    else:
+        extra.update({"worktree": rel, "branch": branch, "base": WT.rev(wt, "HEAD") or extra.get("base"),
+                      "linked": WT.link(project_dir, wt, links)})
+        record.update({k: extra[k] for k in ("worktree", "branch", "base", "linked")})
+    S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, record)
+    return record
 
 
 # =============================================================================== the pass
@@ -343,11 +430,9 @@ def _commit_shared(project_dir: Path, cfg: dict) -> None:
 
 def _launch_worktree(project_dir, config, driver, database, domain_config, session_id, cfg,
                      chosen) -> None:
-    """Claim, record, create the worktree, start its supervisor. Returns at once."""
+    """Claim, record, start its supervisor, which launches the CLI into a worktree the CLI names. Returns at once."""
     rel, tid = chosen["source_file"], chosen["task_id"]
     stem = Path(rel).stem
-    wt_rel, branch = chosen["criteria"]["c11"]["worktree"], chosen["criteria"]["c11"]["branch"]
-    wt = project_dir / wt_rel
     log_dir = project_dir / cfg["log_dir"]
     log_dir.mkdir(parents=True, exist_ok=True)
     log_rel = str((log_dir / f"{stem}.log").relative_to(project_dir))
@@ -363,7 +448,7 @@ def _launch_worktree(project_dir, config, driver, database, domain_config, sessi
     child_session_id = str(uuid.uuid4())
     try:
         _start_claimed(project_dir, config, driver, database, domain_config, session_id, cfg,
-                       chosen, claimed, child_session_id, wt, wt_rel, branch, log_dir, log_rel)
+                       chosen, claimed, child_session_id, log_dir, log_rel)
     except Exception as exc:                                        # noqa: BLE001
         # A claim with no lease record reads as an in-place claim, which holds every gate in
         # the primary checkout shut until someone intervenes. Any failure after the claim is
@@ -376,22 +461,21 @@ def _launch_worktree(project_dir, config, driver, database, domain_config, sessi
                                "wall_clock_s": 0, "result_present": False,
                                "result_path": f"cc_tasks/{stem}_RESULT.md",
                                "graph_state_observed": "in_progress", "log_path": log_rel,
-                               "mode": "worktree", "worktree": wt_rel, "branch": branch,
+                               "mode": "worktree", "worktree": None, "branch": None,
                                "error": error},
                          chosen.get("name") or stem, "launch_failed")
 
 
 def _start_claimed(project_dir, config, driver, database, domain_config, session_id, cfg,
-                   chosen, claimed, child_session_id, wt, wt_rel, branch, log_dir,
-                   log_rel) -> None:
-    """Everything after a successful claim: record, cut the worktree, start the supervisor."""
+                   chosen, claimed, child_session_id, log_dir, log_rel) -> None:
+    """Everything after a successful claim: record, start the supervisor (the CLI cuts and names the worktree)."""
     rel, tid = chosen["source_file"], chosen["task_id"]
     stem = Path(rel).stem
     # AD-035 R2 and R7: refreshed (cached for the day) before the run; the supervisor launches
     # with THIS spec, carried in the lease, so a lock bump while it starts changes nothing.
     refresh_note = S.models.ensure_fresh("dispatch")
     spec = S._session_spec(project_dir, rel)
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir), spec, worktree=True,
                         settings=S._session_settings(project_dir, cfg))
     conc = chosen["concurrency"]
     S._emit(project_dir, session_id, D.EVENT_LAUNCHED,
@@ -401,30 +485,17 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "network_allowlist": chosen["criteria"]["c5"]["network_allowlist"],
              "log_path": log_rel, "command": " ".join(shlex.quote(p) for p in cmd),
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
-             "mode": "worktree", "worktree": wt_rel, "branch": branch,
+             "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
              "touches": {"resources": conc["resources"], "paths": conc["paths"]},
              **S._model_fields(spec, refresh_note)})
-    # Committed and pushed BEFORE the worktree is cut, so the task's branch starts from a main
-    # that already carries its own claim.
+    # Committed and pushed BEFORE the CLI cuts the worktree, so the task's branch starts from a
+    # main that already carries its own claim.
     S._record_and_push(project_dir, config, cfg)
     base = WT.rev(project_dir, "HEAD")
-    added = WT.add(project_dir, wt, branch, base)
-    if not added["ok"]:
-        finish = {"task_id": tid, "source_file": rel, "child_session_id": child_session_id,
-                  "exit_code": None,
-                  "wall_clock_s": 0, "result_present": False,
-                  "result_path": f"cc_tasks/{stem}_RESULT.md",
-                  "graph_state_observed": "in_progress", "log_path": log_rel,
-                  "mode": "worktree", "worktree": wt_rel, "branch": branch, "base": base,
-                  "error": added["stderr"]}
-        click.echo(f"worktree add failed for {tid[:8]}: {added['stderr']}", err=True)
-        _finish_unmerged(project_dir, config, driver, database, domain_config, session_id,
-                         cfg, finish, chosen.get("name") or stem, "worktree_add_failed")
-        return
-    linked = WT.link(project_dir, wt, cfg["worktree_links"])
-    extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": wt_rel,
-             "branch": branch, "base": base, "child_session_id": child_session_id,
-             "linked": linked, "model_spec": spec}
+    # `worktree`, `branch` and `linked` are filled by the supervisor at the session's `init` (`name_worktree`).
+    extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": None,
+             "branch": None, "base": base, "child_session_id": child_session_id,
+             "linked": [], "model_spec": spec}
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
     lease_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "seldon", "dispatch", "supervise", tid,
@@ -447,7 +518,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
         fh.write(json.dumps({"holder": D.holder_id(proc.pid), "pid": proc.pid,
                              "acquired_at": now, "heartbeat_at": now, "task": tid, **extra},
                             indent=1) + "\n")
-    click.echo(f"launching {tid[:8]} {rel} in {wt_rel} on {branch} -> {log_rel} "
+    click.echo(f"launching {tid[:8]} {rel} in a worktree the CLI names -> {log_rel} "
                f"(supervisor pid {proc.pid})")
 
 
@@ -498,20 +569,30 @@ def _pass_lease(project_dir: Path, cfg: dict):
 
 def _supervise(project_dir, config, driver, database, domain_config, session_id, cfg,
                task_id, extra) -> None:
-    stem, rel, branch = extra["stem"], extra["source_file"], extra["branch"]
-    wt = project_dir / extra["worktree"]
+    stem, rel = extra["stem"], extra["source_file"]
     log_path = project_dir / cfg["log_dir"] / f"{stem}.log"
     headers = D.parse_headers((project_dir / rel).read_text(encoding="utf-8",
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
     spec = extra["model_spec"]
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, stem, wt, branch, project_dir), spec, worktree=stem,
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir), spec, worktree=True,
                         settings=S._session_settings(project_dir, cfg))
     started = time.monotonic()
     offset = S._log_offset(log_path)
-    # Started in the PRIMARY checkout: the CLI resolves `--worktree <stem>` against the repository it starts in.
+    lease_path = D.worktree_lease_path(project_dir, cfg, stem)
+
+    def named(init: dict) -> None:
+        # The lease says which worktree it guards once the CLI has named it (`_reap_stale`, `_classify` read it).
+        # Rewritten in place: this process's flock is on the file's inode.
+        name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"])
+        with lease_path.open("r+", encoding="utf-8") as fh:
+            body = {**json.loads(fh.read() or "{}"), **{k: extra[k] for k in ("worktree", "branch", "base", "linked")}}
+            fh.seek(0)
+            fh.truncate()
+            fh.write(json.dumps(body, indent=1) + "\n")
+    # Started in the PRIMARY checkout: the CLI cuts its worktree in the repository it starts in.
     code = S._run(cmd, project_dir, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env=S._worktree_env(project_dir, cfg, spec))
+                  extra_env=S._worktree_env(project_dir, cfg, spec), on_init=named)
     wall = round(time.monotonic() - started, 3)
     finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
                    code, wall, log_path, offset, spec)
@@ -526,6 +607,27 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     holds it and passes `contextlib.nullcontext`.
     """
     lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
+    if not extra.get("worktree"):
+        # DISP-001R Part A: `_run` stopped watching before the CLI's `init`, or never watched (a supervisor started
+        # by an older pass); the log still says which worktree the CLI made.
+        init = cli_init(log_path, offset)
+        if init is not None:
+            name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"])
+    if not reached_model(log_path, offset):
+        finish = {"task_id": task_id, "source_file": extra["source_file"],
+                  "child_session_id": extra["child_session_id"], "exit_code": code, "wall_clock_s": wall,
+                  "result_present": False, "result_path": f"cc_tasks/{extra['stem']}_RESULT.md",
+                  "graph_state_observed": "in_progress", "log_path": str(log_path.relative_to(project_dir)),
+                  "mode": "worktree", "worktree": extra.get("worktree"), "branch": extra.get("branch"),
+                  "base": extra.get("base"), "linked": extra.get("linked") or []}
+        try:
+            with lease_cm():
+                _finish_launch_failed(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                      finish, name or extra["stem"], launch_stderr_line(log_path, offset))
+        except D.LeaseHeld as held:
+            click.echo(f"could not take the pass lease in {cfg['merge_lock_timeout_s']}s (held by "
+                       f"{held.body.get('holder')}); left for the next pass", err=True)
+        return
     stem, rel, branch = extra["stem"], extra["source_file"], extra["branch"]
     receipt = S._model_receipt(log_path, offset, spec)
     result_rel = f"cc_tasks/{stem}_RESULT.md"
@@ -597,6 +699,51 @@ def finish_session(project_dir, config, driver, database, domain_config, session
         # caller with no finish, which the next pass reads as `released_unfinished`.
         click.echo(f"could not take the pass lease in {cfg['merge_lock_timeout_s']}s (held by "
                    f"{held.body.get('holder')}); left for the next pass", err=True)
+
+
+def last_launch_failure(events: list, task_id: str) -> dict | None:
+    """The payload of the task's newest `launch_failed` finish that recorded a stderr line, or None."""
+    for e in reversed(events):
+        p = e.get("payload") or {}
+        if e.get("event_type") == D.EVENT_FINISHED and p.get("task_id") == task_id \
+                and p.get("outcome") == "launch_failed" and "stderr_line" in p:
+            return p
+    return None
+
+
+def _finish_launch_failed(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name,
+                          stderr_line: str | None) -> None:
+    """Under the pass lease: the CLI exited before its first model turn (DISP-001R Part A step 2).
+
+    The task never ran, so it is put back on the queue rather than blocked: `in_progress -> blocked -> accepted`,
+    the redrive's own walk (AD-038-R2), because the ResearchTask machine has no edge back to `proposed`; `accepted`
+    is the dispatchable state a claimed task returns to. c15 then holds it until the launcher or the task changes
+    (`S._launch_holds`). The operator is notified with the CLI's line, once: a relaunch that fails with the same
+    line is recorded `repeat` and not notified again.
+    """
+    from seldon.core import redrive as R
+    from seldon.core.events import read_events
+
+    task_id = finish["task_id"]
+    line = stderr_line or f"the CLI exited {finish.get('exit_code')} before its first model turn and wrote no error"
+    previous = last_launch_failure(read_events(project_dir), task_id)
+    repeat = previous is not None and previous.get("stderr_line") == line
+    record = {**finish, "ok": False, "outcome": "launch_failed", "stderr_line": line, "repeat": repeat,
+              "fingerprint": S.launcher_fingerprint(project_dir, finish["source_file"])}
+    S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
+    state = S._state_of(driver, database, task_id)
+    S._block(project_dir, driver, database, domain_config, session_id, task_id, state,
+             finish.get("exit_code"), finish["log_path"])
+    if S._state_of(driver, database, task_id) == "blocked":
+        R.redrive(project_dir, driver, database, domain_config, task_id, actor=S.ACTOR, session_id=session_id)
+    after = S._state_of(driver, database, task_id)
+    _record_kept(project_dir, session_id, finish, "launch_failed", line)
+    click.echo(f"finished {task_id[:8]} launch_failed exit={finish.get('exit_code')} -> {after}"
+               f"{' (repeat, not notified)' if repeat else ''}: {line}", err=True)
+    if not repeat:
+        S._notify(project_dir, session_id, cfg, {**record, "wall_clock_s": record["wall_clock_s"] or 0}, name,
+                  outcome="launch_failed", message=f"launch_failed: {line}")
+    S._record_and_push(project_dir, config, cfg)
 
 
 def _finish_unreadable(project_dir, config, driver, database, domain_config, session_id, cfg, finish,
@@ -846,7 +993,7 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
     if record.get("graph_completed_unmerged"):
         click.echo(f"GRAPH SAYS COMPLETED for {task_id[:8]}, whose branch did not merge",
                    err=True)
-    kept = (project_dir / finish["worktree"]).exists()
+    kept = bool(finish.get("worktree")) and (project_dir / finish["worktree"]).exists()
     if outcome == "merge_blocked":
         update_artifact(project_dir=project_dir, driver=driver, database=database,
                         artifact_id=task_id, properties={MERGE_PROPERTY: "merge_blocked"},
