@@ -149,12 +149,16 @@ def launch_stderr_line(log_path: Path, offset: int) -> str | None:
     return plain[-1][:STDERR_LINE_CHARS] if plain else None
 
 
-def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links: list) -> dict:
+def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links: list, emit: bool = True) -> dict:
     """Fill `extra` with the worktree the CLI named in `init`, link `links` into it, record it. Returns the record.
 
     The branch is read from the worktree, not composed from its name; `base` is the branch's commit now, before the
     session has committed, which is the commit the CLI cut it from. A path outside the checkout, or no branch, is
     recorded with its `error` and fills nothing: the finish then keeps whatever it finds and merges nothing.
+
+    `emit=False` (the parallel supervisor) holds the record in `extra` for `finish_session` to write: mid-session the
+    lease carries the mapping, and a record appended to the primary's event store then would leave the tree dirty
+    for every read-only `status` until the next pass reconciles it.
     """
     project_dir = Path(project_dir)
     wt = Path(init["cwd"]).resolve()
@@ -171,8 +175,15 @@ def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links:
         extra.update({"worktree": rel, "branch": branch, "base": WT.rev(wt, "HEAD") or extra.get("base"),
                       "linked": WT.link(project_dir, wt, links)})
         record.update({k: extra[k] for k in ("worktree", "branch", "base", "linked")})
-    S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, record)
+    if emit:
+        S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, record)
+    else:
+        extra[NAMED_PENDING] = record
     return record
+
+
+#: The `extra` key under which a held `dispatch_worktree_named` record waits for the finish (never in the lease).
+NAMED_PENDING = "_worktree_named_pending"
 
 
 # =============================================================================== the pass
@@ -520,6 +531,13 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
                             indent=1) + "\n")
     click.echo(f"launching {tid[:8]} {rel} in a worktree the CLI names -> {log_rel} "
                f"(supervisor pid {proc.pid})")
+    # SQ-010 ADDENDUM 02 D3.4: the pass measures free space again before each further launch, and that reading
+    # must include this launch's checkout. The CLI cuts the tree after the supervisor starts it, so the pass waits
+    # until the supervisor has recorded the CLI's worktree in the lease (at `init`), the supervisor has exited, or
+    # `INIT_WAIT_S` has passed.
+    deadline = time.monotonic() + S.INIT_WAIT_S
+    while proc.poll() is None and time.monotonic() < deadline and not D.read_lease(lease_path).get("worktree"):
+        time.sleep(S.INIT_POLL_S)
 
 
 # ========================================================================= the supervisor
@@ -584,7 +602,7 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
     def named(init: dict) -> None:
         # The lease says which worktree it guards once the CLI has named it (`_reap_stale`, `_classify` read it).
         # Rewritten in place: this process's flock is on the file's inode.
-        name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"])
+        name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"], emit=False)
         with lease_path.open("r+", encoding="utf-8") as fh:
             body = {**json.loads(fh.read() or "{}"), **{k: extra[k] for k in ("worktree", "branch", "base", "linked")}}
             fh.seek(0)
@@ -607,6 +625,9 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     holds it and passes `contextlib.nullcontext`.
     """
     lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
+    pending = extra.pop(NAMED_PENDING, None)
+    if pending is not None:
+        S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, pending)
     if not extra.get("worktree"):
         # DISP-001R Part A: `_run` stopped watching before the CLI's `init`, or never watched (a supervisor started
         # by an older pass); the log still says which worktree the CLI made.

@@ -63,6 +63,13 @@ worktree finish's (`session exit=...`, `merged ...`, `sweep: removed ...`, `unde
 `worktree_removed` and a failed one `worktree_kept`; main's log gains the merged session commit. HEX tokens renumber
 accordingly. Re-recorded twice on the FRICTION-002 code (byte-identical). The four scenarios and their outcomes (one
 green launch completed, one failing launch blocked, the dirty-tree refusal, the held-lease refusal) are unchanged.
+
+**Erratum, DISP-001R Part A (AD-034 ADDENDUM 01, 2026-10-19).** The CLI names the worktree: the launch passes a bare
+`--worktree` (last on the line), `dispatch_launched` records `worktree`/`branch` as null with `worktree_named_by:
+cli` and `stem`, and c11 reads `{worktree_dir, named_by, ignored}`. Each session's `init` adds a
+`dispatch_worktree_named` record (task, stem, path, branch, base, the `init` line), which the finish commits ahead of
+the merge, so the green launch pushes one more commit. The `launching` line reads `in a worktree the CLI names`. HEX
+and UUID tokens renumber accordingly. The four scenarios and their outcomes are unchanged.
 """
 from __future__ import annotations
 

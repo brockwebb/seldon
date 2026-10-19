@@ -204,7 +204,8 @@ def test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones(
 
     out = _once(p)   # x runs in place, synchronously, and b waits behind it
     # FRICTION-002 Part B: an exclusive task runs alone, as before, but in its own worktree like every task.
-    assert f"launching {tx[:8]} cc_tasks/x.md in .claude/worktrees/x on worktree-x -> logs/dispatch/x.log" in out, out
+    # DISP-001R Part A: the CLI names the worktree; the pass records it from the session's `init`.
+    assert f"launching {tx[:8]} cc_tasks/x.md in a worktree the CLI names -> logs/dispatch/x.log" in out, out
     assert "stub cwd: worktree" in (p / "logs" / "dispatch" / "x.log").read_text()
     assert task_states(neo4j_driver)["x"] == "completed"
     assert task_states(neo4j_driver)["b"] == "proposed"
@@ -398,7 +399,8 @@ def test_status_shows_a_running_worktree_and_why_the_next_task_waits(
     p = _project(tmp_path)
     add_task(p, "a", NONEXCL.format(touches="neo4j"))
     add_task(p, "b", NONEXCL.format(touches="neo4j"))
-    write_stub(p, {"a": {"sleep": 4}})
+    # DISP-001R: the pass now returns only once the CLI has cut a's worktree, so a must outlast two status calls.
+    write_stub(p, {"a": {"sleep": 12}})
     ta = register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
     register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:02Z")
     assert _once(p).count("launching") == 1

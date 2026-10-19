@@ -150,7 +150,10 @@ if "--worktree" in sys.argv:
         sys.exit(1)
     top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
                          check=True).stdout.strip()
-    name = name or spec.get("worktree_name") or "cli-" + __import__("hashlib").sha1(stem.encode()).hexdigest()[:8]
+    # The stand-in names the tree after the stem when that fits, so a test can find it; the real CLI's names are
+    # random words. A longer stem gets a short generated name, as the real CLI's always is.
+    name = name or spec.get("worktree_name") or (stem if len(stem) <= 64 else
+                                                 "cli-" + __import__("hashlib").sha1(stem.encode()).hexdigest()[:8])
     wt = Path(top) / ".claude" / "worktrees" / name
     if not wt.exists():
         subprocess.run(["git", "worktree", "add", "-q", "-b", "worktree-" + name, str(wt), "HEAD"], cwd=top,

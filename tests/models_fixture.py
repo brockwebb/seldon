@@ -53,8 +53,16 @@ RECEIPT_LINE = ('{"type":"result","subtype":"success","usage":{"output_tokens":1
 
 
 def shell_receipt(served: str = "claude-opus-5-5") -> str:
-    """The shell line that prints a stream-json result naming `served`."""
-    return "echo '" + RECEIPT_LINE.replace("claude-opus-5-5", served) + "'"
+    """The shell lines that print a first model turn and a stream-json result naming `served`.
+
+    DISP-001R Part A: the CLI always writes an `assistant` message before its result, and the dispatcher records
+    a session with none as `launch_failed`, so the stand-in writes one too."""
+    return ("echo '" + ASSISTANT_LINE + "'\n"
+            + "echo '" + RECEIPT_LINE.replace("claude-opus-5-5", served) + "'")
+
+
+#: A first model turn, as stream-json writes it (no usage: it costs a stand-in nothing).
+ASSISTANT_LINE = '{"type": "assistant", "message": {"id": "stub-1", "role": "assistant", "content": []}}'
 
 
 def use_stub_cli(tmp_path: Path, stub: Path) -> Path:

@@ -182,7 +182,7 @@ def test_a_session_let_go_with_its_gate_unpassed_is_never_merged(tmp_path, neo4j
     p = make_project(tmp_path)
     add_task(p, "a", PARTS)
     register(p, neo4j_driver, dc, "a", "2026-10-17T00:00:00Z")
-    write_stub(p, {"a": {"write": writes, "part_complete": ["A"], "stop_hook": True}})
+    write_stub(p, {"a": {"write": writes, "part_complete": ["A"], "stop_hook": True, "worktree_name": "a"}})
     assert run_cli(p, dispatch_group, ["once"]).exit_code == 0
     fin = [e["payload"] for e in read_events(p) if e["event_type"] == D.EVENT_FINISHED][-1]
     gates = [e["payload"] for e in read_events(p) if e["event_type"] == Q.EVENT_STOP_GATE]
