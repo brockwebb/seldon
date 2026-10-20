@@ -1,0 +1,4 @@
+STD-001R Part C, 2026-10-20 (ADDENDUM 01 session).
+/Users/brock/GitHub/CLAUDE.md is a plain file, not a symlink (`readlink` exit 1), so it is in no repository.
+It carries §6.1 and AD-039 (`grep -q AD-039` exit 0). Left as is.
+sha256 3f6d3491d264e5f9f9fc61294fcd7d33545851c40a818609c00c99a53f387416 (same as the first run, 2026-10-19).
