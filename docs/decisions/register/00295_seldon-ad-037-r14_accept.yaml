@@ -1,0 +1,37 @@
+seq: 295
+event: accept
+id: seldon:AD-037-R14
+date: '2026-10-20'
+decided_by: cc:5e228d82
+operator_stated: false
+receipts:
+- 'docs/design/AD-037_ADDENDUM_02_a_check_runs_the_branch_code.md:22: AD-037-R14'
+reason: DISP-003R Part A; evidence PA-002 (314a3942) finished stop_gate_unpassed with exit 0, RESULT committed and tests green, because its `seldon prior-art verify` check ran the primary checkout's code
+kind: decision
+status: accepted
+statement: 'A station shall run every check: command with the tree it runs in first on PYTHONPATH, and shall run a check''s seldon (and pytest) as the dispatcher''s interpreter with -m, recording interpreter and path in the stop_gate record.'
+source:
+  path: docs/design/AD-037_ADDENDUM_02_a_check_runs_the_branch_code.md
+  lines:
+  - 22
+  - 28
+  sha256: 108da05bd807e96cf316e00a9cf940c635ba456b20b7f1028af903cfb648128b
+  text: |-
+    - **AD-037-R14. A station runs every `check:` with the tree it runs in first on the import path, and runs a check's `seldon` as `<interpreter> -m seldon`.**
+      `run_check` sets `PYTHONPATH` to the check's cwd, followed by whatever the environment already carried, so every
+      child the check starts imports the same tree. A check whose first word is `seldon` or `pytest` runs as
+      `<the dispatcher's python> -m <it>`. The `stop_gate` record names `interpreter` and `path`. Each check row names
+      `interpreter` and `pythonpath`. This covers every station that calls `run_check`: the Stop gate, the first article and
+      the premises. A premise runs in the primary checkout, so its path is the primary and nothing changes for it.
+      Code: `seldon/core/stations.py` `MODULE_COMMANDS`, `check_argv`, `tree_path`, `run_check`, `stop_gate`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_02_a_check_runs_the_branch_code.md
+  anchor: AD-037-R14
+consumer:
+- cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md
+- tests/test_disp003_gate_path.py
+written_by: seldon decision 0.1.0
+prev_hash: cff744d28e4013cedb22b0a1c0cea47750ca8997da916f7dde9651edf24c08a0
+record_hash: ab6ad05f923a6b76e1f716df589e6a4e6f53f2fd8897f8b50f09f88c542214a8
