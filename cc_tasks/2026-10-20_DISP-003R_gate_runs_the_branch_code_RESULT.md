@@ -1,0 +1,11 @@
+# RESULT: DISP-003R (5e228d82): the gate runs the branch's code, self-citations, governing is the header, regate
+
+Recall used: none. The DISP-002 remerge pattern came from reading `dispatch_worktree.py`, not from a recall hit.
+
+- **Addenda:** AD-037 ADDENDUM 02 (AD-037-R14: a check runs with its tree first on `PYTHONPATH`, and `seldon` runs as `python -m seldon`). AD-036 ADDENDUM 07 (R14: `self_citation`; R15: governing notes come from the `**Governing:**` header only). AD-034 ADDENDUM 03 (R10: `seldon dispatch regate`, also run on every pass). Register records 00295 to 00298.
+- **Tests (each fails on HEAD; each has a negative control):** `tests/test_disp003_gate_path.py` (4), `tests/test_disp003_self_citation.py` (5), `tests/test_disp003_governing_header.py` (3), `tests/test_disp003_regate.py` (2). `tests/test_prior_art.py::test_a_receipt_citing_the_note_itself...` now expects `self_citation`; the note still fails.
+- **AD-036 line 106** now reads `self_citation`. AD-036's remaining failures are `release_unavailable` library receipts, which PA-002 fixes.
+- **Repair beyond the task:** `state/prior_art_queries.jsonl` is now `merge=union`. Without it, rebasing PA-002 onto this branch conflicted on that log, so its regate would have ended `rebase_conflict`.
+- **PA-002 regate: not run against the real repository from this session.** It would rebase PA-002's kept branch and merge it to main, which the session instructions forbid, and the launching pass holds the lease. I rehearsed it on a `/tmp` clone (main `1ee592f` + this branch `d0895c6` + PA-002 rebased, `/tmp/disp003r/sim.py`). All 3 of PA-002's checks PASS through `run_task_checks`, including `seldon prior-art verify` of AD-036. **Merge sha: none yet.** The dispatcher's first pass after this branch merges regates `314a3942` and records `dispatch_regated` and the merged finish.
+- **Full suite:** 2701 passed, 1 failed, 7 skipped in 47 min. The failure, `test_friction002_auto_mode.py::test_a_classifier_breaker_becomes_a_line_stop...`, looks up its task by the name `a` in the shared test DB; that file alone passes 6/6. It is a name collision, not this change.
+- **Tokens:** ~245K at the end (240,728 at Part C) against the 0.3M estimate.
