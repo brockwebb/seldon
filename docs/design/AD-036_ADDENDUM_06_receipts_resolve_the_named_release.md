@@ -80,10 +80,10 @@ with its base note. The verdicts are recorded in each repository's governed ledg
 
 | Repository | Note (with its addenda) | Library receipts, by release | Verdict |
 |---|---|---|---|
-| seldon | AD-035 | m002 (2), sq013_01 (1) | PASS, event `b087610c` |
-| seldon | AD-036 (ADDENDA 01 to 05) | m002 (6), sq013_01 (1) | PASS, event `9e516a51` |
-| seldon | AD-037 | m002 (8) | PASS, event `b6718fc1` |
-| seldon | AD-038 | sq013_01 (2) | PASS, event `a11e3d5e` |
+| seldon | AD-035 | m002 (2), sq013_01 (1) | PASS, event `cc0f26bc` |
+| seldon | AD-036 (ADDENDA 01 to 05) | m002 (6), sq013_01 (1), sq018_02 (1) | FAIL, event `8cb63ebd`: one problem, below |
+| seldon | AD-037 | m002 (8) | PASS, event `4d1cd030` |
+| seldon | AD-038 | sq013_01 (2) | PASS, event `4732ce73` |
 | squiddy | DN-043 (ADDENDUM 02) | m002 (4) | PASS, event `fe1af92d` |
 | squiddy | DN-044 | m002 (8) | PASS, event `ea2c3bd4` |
 | squiddy | DN-045 (ADDENDUM 01) | sq011_11 (5) | PASS, event `9487ac69` |
@@ -93,7 +93,7 @@ with its base note. The verdicts are recorded in each repository's governed ledg
 
 No receipt named the served release, so every receipt ran on a rebuilt index. The rebuilds used these library commits:
 `20260930_m002` from `c40f79cc`, `20261012_sq011_11` from `12bd2fda`, and `20261012_sq013_01` from `a34b25cf`. The query logs
-(`state/prior_art_queries.jsonl` in each repository) record each run's release, index and commit. No note still fails.
+(`state/prior_art_queries.jsonl` in each repository) record each run's release, index and commit. Every library receipt now passes. One note still fails, for a reason that has nothing to do with releases. AD-036 ADDENDUM 03 line 106 is an internal receipt that cites the base note (`AD-036_prior_art_receipts_gate.md:95`). Since SQ-012 (2026-10-12), the internal arm leaves out the note being verified, together with its addenda ("a note is not prior art for itself"). So that receipt has been `id_not_returned` since then. It was the eighth problem in verdict `3ab498a4`; the task counted seven. Addenda are immutable (R7), so clearing it needs a ruling, either an erratum mechanism or an exception for an addendum citing its base note. That is outside this addendum.
 The verifications ran from this task's worktree, which also exercises section 2 rule 6.
 
 ## 5. Prior art
