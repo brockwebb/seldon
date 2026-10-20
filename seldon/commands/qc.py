@@ -150,6 +150,8 @@ def chart_command(as_json):
         click.echo(f"    {w['week']:9s} {(f'{w["value"]:,}' if w['value'] is not None else '-'):>12s}  n {w['n']}")
     if not out["spend_floor"]:
         click.echo("    (no finished launch yet)" if dcfg else "    (no dispatch: block in seldon.yaml)")
+    click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
+               f"{t['sources']['stale_log'] or '(none)'}, the event store")
     rc = out["recall"]
     click.echo("  recall per week (RECALL-001 Part B; by the week a task was registered):")
     click.echo(f"    {'week':9s} {'registered':>10s} {'with-hits':>9s} {'results-read':>12s} {'used-a-hit':>10s}")
@@ -164,8 +166,6 @@ def chart_command(as_json):
         click.echo(f"    {w['week']:9s} {w['total']:>3d}  {classes}")
     if not rc["catches"]:
         click.echo("    (no operator catch recorded yet)")
-    click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
-               f"{t['sources']['stale_log'] or '(none)'}, the event store")
 
 
 def _toil(project_dir: Path, config: dict, events: list) -> dict:

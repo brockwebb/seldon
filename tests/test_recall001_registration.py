@@ -182,6 +182,30 @@ def test_the_launch_prompt_carries_the_list(repo):
     assert worktree_prompt(rel, repo, "bbbb0000-0000-4000-8000-000000000005").startswith("Read CLAUDE.md")
 
 
+def test_a_served_graph_that_cannot_serve_is_named_not_fatal(repo, monkeypatch):
+    """Squiddy exits with `SystemExit("FATAL: no served export ...")` on a graph never admitted (a worktree has no
+    gitignored export). Found running RECALL-001 on itself: that exit would have aborted the registration."""
+    import squiddy.config
+    import squiddy.serve
+
+    graph = repo / "governed"
+    graph.mkdir()
+    (graph / "config.yaml").write_text("{}\n", encoding="utf-8")
+
+    def fatal(_graph):
+        raise SystemExit(f"FATAL: no served export at {graph}/exports/governed_graph.json; run an admission first")
+
+    monkeypatch.setattr(squiddy.config, "load_graph", lambda p: p)
+    monkeypatch.setattr(squiddy.serve, "Verbs", fatal)
+    cfg = _config()
+    cfg["recall"] = {**RECALL_BLOCK, "served": {"enabled": True, "k": 20, "rrf_k": 60, "graphs": {"test": "governed"}}}
+    path = repo / "cc_tasks" / "2026-02-01_frobnicator_returns.md"
+    r = R.recall(repo, cfg, path.read_text(encoding="utf-8"), task_stem=path.stem)
+    assert "test:2026-01-05_frobnicator_pin_RESULT" in [h.id for h in r.hits]       # the lexical arm still ran
+    assert any("served arm failed for test" in n and "no served export" in n for n in r.notes), r.notes
+    assert "(note: served arm failed for test" in R.render(r)
+
+
 def test_a_malformed_recall_block_is_refused():
     with pytest.raises(R.RecallError, match="missing"):
         R.settings({"recall": {"top_n": 3}})

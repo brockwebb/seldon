@@ -446,7 +446,9 @@ def served(query: str, repos: dict, cands: list[Candidate], s: Settings, notes: 
         except ImportError as exc:
             notes.append(f"served arm unavailable: squiddy is not importable here ({exc})")
             return [i for _r, i in sorted(ranked)]
-        except Exception as exc:  # noqa: BLE001 -- a squiddy failure is NAMED on the Recall block, never dropped
+        except (Exception, SystemExit) as exc:  # noqa: BLE001 -- NAMED on the Recall block, never dropped
+            # Squiddy states a graph it cannot serve as `SystemExit("FATAL: no served export ...")` (a worktree has
+            # no gitignored export); uncaught, that would end the registration it is only advising.
             notes.append(f"served arm failed for {repo}: {type(exc).__name__}: {_clip(str(exc), 200)}")
             continue
         if res.get("error"):
