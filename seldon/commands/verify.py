@@ -38,6 +38,7 @@ from seldon.config import (
     get_shared_ontology_sources,
     ONTOLOGY_MASTER_DB,
 )
+from seldon.core import tracked_dirs as TD
 from seldon.core.graph import get_stale_artifacts
 from seldon.core.staleness import (
     partition_stale,
@@ -410,6 +411,34 @@ def check_commit_hook(project_dir: Path, config: dict) -> CheckResult:
                        summary=f"installed ({H.HOOKS_DIR}); {scope}")
 
 
+# ---------------------------------------------------------------------------
+# Check 18: cc_tasks/ and handoffs/ are tracked (AD-039, STD-001R)
+# ---------------------------------------------------------------------------
+
+def check_tracked_dirs(project_dir: Path, config: dict | None = None) -> CheckResult:
+    """Fail when git would ignore a record under `cc_tasks/` or `handoffs/` (`tracked_dirs_ignored`).
+
+    Tier A: the `.gitignore` is in the change in hand, and the fix is deleting the line quoted.
+    Not `--fix`able: which line goes is the author's edit, and a wrong automatic rewrite of a
+    `.gitignore` would start tracking what someone meant to hide.
+    """
+    try:
+        findings = TD.ignored(project_dir)
+    except TD.TrackedDirsError as exc:
+        if "not a git repository" in str(exc).lower():
+            return CheckResult(name=TD.CHECK_NAME, symbol="pass",
+                               summary="Not a git repository; skipping (AD-039)")
+        return CheckResult(name=TD.CHECK_NAME, symbol="fail",
+                           summary=f"cannot be checked: {exc}"[:300])
+    if findings:
+        return CheckResult(name=TD.CHECK_NAME, symbol="fail",
+                           summary=f"{TD.FINDING}: {len(findings)} of {', '.join(TD.TRACKED_DIRS)} "
+                                   "ignored (AD-039)",
+                           details=[TD.describe(f) for f in findings])
+    return CheckResult(name=TD.CHECK_NAME, symbol="pass",
+                       summary=f"{' and '.join(d + '/' for d in TD.TRACKED_DIRS)} tracked (AD-039)")
+
+
 def _fix_commit_hook(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon hooks install` (per-repository config only)."""
     result = subprocess.run([sys.executable, "-m", "seldon", "hooks", "install"],
@@ -473,6 +502,9 @@ TIER_A_CHECKS = frozenset({
     # AD-036-R4: a design note added without a passing prior-art verdict is a property of the
     # change in hand; the author who wrote the note is the one who can run the search.
     "Prior art",
+    # AD-039: a `.gitignore` that ignores cc_tasks/ or handoffs/ is in the change in hand, zero
+    # after STD-001R's sweep, and the fix is deleting the line the finding quotes.
+    TD.CHECK_NAME,
 })
 
 
@@ -1919,6 +1951,7 @@ def _run_all_checks(
         check_decisions(driver, database, project_dir, config),
         check_prior_art(project_dir, config),
         check_commit_hook(project_dir, config),
+        check_tracked_dirs(project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 

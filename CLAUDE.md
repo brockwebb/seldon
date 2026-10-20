@@ -226,8 +226,8 @@ Before iterative editing of sections, establish the constraint surface. This red
 |-----------|---------|
 | `docs/design/` | Architectural decisions, design insights |
 | `docs/requirements/` | Requirements specifications |
-| `handoffs/` | Session handoff notes (gitignored) |
-| `cc_tasks/` | Claude Code task files and RESULTs. `cc_tasks/` is intentionally tracked; `handoffs/` is not. |
+| `handoffs/` | Session handoff notes (tracked; secret-scanned before commit, FC-02) |
+| `cc_tasks/` | Claude Code task files and RESULTs (tracked). Both directories are tracked in every repository; only `*.json`/`*.jsonl` under them are ignored, and `seldon verify` refuses a `.gitignore` that says otherwise (AD-039). |
 | `output/results/` | Registered results as YAML |
 | `ontology/` | Shared ontology definitions (validity vocabulary) |
 

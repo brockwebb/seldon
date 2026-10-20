@@ -7,6 +7,9 @@
 # never left outside the record). Arnold's precedent (arnold/.gitignore, tracked since
 # 2026-08-13): data blobs dropped into handoffs/ stay ignored by SIZE, not privacy. Each
 # handoff is scanned with `python -m squiddy.secret_scan` before it is committed.
+# AD-039: cc_tasks/ and handoffs/ are TRACKED; only data blobs under them are ignored, by size. Handoffs are secret-scanned before commit (FC-02).
+cc_tasks/*.json
+cc_tasks/*.jsonl
 handoffs/*.json
 handoffs/*.jsonl
 tmp/

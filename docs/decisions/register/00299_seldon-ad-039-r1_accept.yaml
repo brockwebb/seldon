@@ -1,0 +1,45 @@
+seq: 299
+event: accept
+id: seldon:AD-039-R1
+date: '2026-10-20'
+decided_by: cc:729a80ba
+operator_stated: false
+receipts:
+- 'docs/design/AD-039_tracked_dirs.md:9: AD-039-R1 (STD-001R, from operator rulings 2026-09-25, 2026-10-12, 2026-10-14)'
+reason: AD-039 ruling registered from the note's own bytes (AD-033-R3); re-recorded at the next free seq by STD-001R ADDENDUM 01 after the first run's seq 292 collided with DISP-001R (Issue 8788b2ef)
+kind: decision
+status: accepted
+statement: |-
+  ### AD-039-R1. The record directories are tracked; only blobs under them are ignored; handoffs are scanned.
+
+  In every repository Seldon serves or scaffolds, `cc_tasks/` and `handoffs/` MUST be tracked. The only ignore rules
+  that may match anything under them are `cc_tasks/*.json`, `cc_tasks/*.jsonl`, `handoffs/*.json` and
+  `handoffs/*.jsonl` (data blobs, ignored by size). A handoff is committed only after `python -m squiddy.secret_scan`
+  passes on it; the scan, never an ignore rule, is what keeps a secret out of a public repository. `seldon verify`
+  refuses a repository where git would ignore `cc_tasks/probe.md` or `handoffs/probe.md` (finding
+  `tracked_dirs_ignored`, Tier A), and `seldon init` writes the four blob lines into a new project's `.gitignore`.
+source:
+  path: docs/design/AD-039_tracked_dirs.md
+  lines:
+  - 9
+  - 16
+  sha256: 3af1a78d221f2cfd327c26f3465eca2ea7e5475ba63ffbadf4d4e6ba220117cb
+  text: |-
+    ### AD-039-R1. The record directories are tracked; only blobs under them are ignored; handoffs are scanned.
+
+    In every repository Seldon serves or scaffolds, `cc_tasks/` and `handoffs/` MUST be tracked. The only ignore rules
+    that may match anything under them are `cc_tasks/*.json`, `cc_tasks/*.jsonl`, `handoffs/*.json` and
+    `handoffs/*.jsonl` (data blobs, ignored by size). A handoff is committed only after `python -m squiddy.secret_scan`
+    passes on it; the scan, never an ignore rule, is what keeps a secret out of a public repository. `seldon verify`
+    refuses a repository where git would ignore `cc_tasks/probe.md` or `handoffs/probe.md` (finding
+    `tracked_dirs_ignored`, Tier A), and `seldon init` writes the four blob lines into a new project's `.gitignore`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-039_tracked_dirs.md
+  anchor: AD-039-R1
+consumer:
+- cc_tasks/2026-10-19_STD-001R_tracked_dirs_everywhere.md
+written_by: seldon decision 0.1.0
+prev_hash: bf592f494ad668e00439fa4f1f31cde30a619e7b3db77b06f3a5d3dde2da99f5
+record_hash: dace9e7bb7bafa75a67d5a79e009eaa3ac4509e0ad395c7961b3398fd0855c83

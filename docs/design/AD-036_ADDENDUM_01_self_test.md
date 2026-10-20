@@ -22,6 +22,8 @@ ignored. Every bullet that says `receipt:` is parsed strictly; one that does not
   accepted form of "no prior art"; a sentence saying so with no such receipt fails.
 - A hit in a file the repository does not track (a gitignored handoff) is cited
   `<path>:<line>#sha256=<first 12 hex of the file>`, because a commit does not pin it.
+  *Erratum 2026-10-19 (AD-039): handoffs are tracked in every repository; this form now covers any
+  file the named commit does not hold (untracked, not yet committed, or a non-git root).*
 - A root that is not a git repository is named `<name>@tree:<64 hex>`, the digest of every path
   and content hash searched.
 - A query may not contain a double quote.

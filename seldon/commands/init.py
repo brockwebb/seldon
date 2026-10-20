@@ -9,6 +9,7 @@ import click
 import yaml
 
 from seldon.config import slugify
+from seldon.core import tracked_dirs
 from seldon.core.graph import create_indexes
 from seldon.core.handoff import (
     DEFAULT_REQUIRE_DESIGN_NOTE,
@@ -232,7 +233,17 @@ def init_command(
             "# NEO4J_PASSWORD=password\n"
         )
 
-    # 5. Connect to Neo4j and set up project database
+    # 5. .gitignore: credentials out, records in (AD-039). The stanza tracks cc_tasks/ and
+    #    handoffs/ and ignores only data blobs under them; existing lines are kept, and one that
+    #    still ignores either directory is reported, not rewritten.
+    gitignore_added = tracked_dirs.ensure_stanza(project_dir / ".gitignore", extra_lines=(".env",))
+    try:
+        gitignore_findings = tracked_dirs.ignored(project_dir)
+    except tracked_dirs.TrackedDirsError:
+        # Not a git repository yet: the stanza is written for when it becomes one.
+        gitignore_findings = []
+
+    # 6. Connect to Neo4j and set up project database
     uri = neo4j_uri
     username = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
     password = os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASS") or "password"
@@ -317,4 +328,11 @@ def init_command(
     click.echo(f"  {neo4j_status}")
     if ontology_status:
         click.echo(f"  {ontology_status}")
-    click.echo(f"  Note: add .env to your .gitignore (credentials live there)")
+    written = [ln for ln in gitignore_added if not ln.startswith("#")]
+    if written:
+        click.echo(f"  .gitignore: added {', '.join(written)} "
+                   "(.env ignored; cc_tasks/ and handoffs/ tracked, AD-039)")
+    else:
+        click.echo("  .gitignore: already ignores .env and carries the AD-039 stanza")
+    for f in gitignore_findings:
+        click.echo(f"  WARNING: {tracked_dirs.describe(f)}", err=True)

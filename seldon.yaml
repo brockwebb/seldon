@@ -83,7 +83,8 @@ prior_art:
   log: state/prior_art_queries.jsonl
   # AD-036-R3's declared internal corpus. Each root is searched at its HEAD commit (git objects,
   # so a receipt can be re-run at that commit) plus the files on disk the commit does not hold
-  # (gitignored handoffs), which a receipt cites with their content hash.
+  # (an untracked or uncommitted file; handoffs are tracked since AD-039), which a receipt cites
+  # with their content hash.
   internal_roots:
     - {name: seldon, path: .}
     - {name: squiddy, path: ../squiddy}
