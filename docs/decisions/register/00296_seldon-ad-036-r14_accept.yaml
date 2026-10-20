@@ -1,0 +1,35 @@
+seq: 296
+event: accept
+id: seldon:AD-036-R14
+date: '2026-10-20'
+decided_by: cc:5e228d82
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md:26: AD-036-R14'
+reason: DISP-003R Part B step 1; evidence AD-036 ADDENDUM 03 line 106 cites the base note's own line 95 and read id_not_returned on every verification since SQ-012, and addenda are immutable (AD-036-R7)
+kind: decision
+status: accepted
+statement: An internal receipt whose every cited location lies inside the note under verification (base or any addendum) shall be reported self_citation and shall neither pass nor fail the note; a subsection carried only by self-citations is empty.
+source:
+  path: docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md
+  lines:
+  - 26
+  - 30
+  sha256: 42de2be3af15d05c6583cb17ac93c837982a6028336ea388d4ee1930cd75db14
+  text: |-
+    - **AD-036-R14. An internal receipt whose every cited location lies inside the note under verification (its base or any addendum) is a self-citation: reported `self_citation`, and it neither passes nor fails the note.**
+      In a receipt that also cites other locations, those are checked as before and the self-citations are named in its
+      detail. A subsection whose receipts are all self-citations carries no prior art and fails as empty. The verdict
+      payload lists `self_citations`. A self-citation is not re-run, so it writes no query-log line. Code:
+      `seldon/core/prior_art.py` `SELF_CITATION`, `_verify_internal`, `verify_note`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md
+  anchor: AD-036-R14
+consumer:
+- cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md
+- tests/test_disp003_self_citation.py
+written_by: seldon decision 0.1.0
+prev_hash: ab6ad05f923a6b76e1f716df589e6a4e6f53f2fd8897f8b50f09f88c542214a8
+record_hash: 4012371bc0ebc2d9c0766e82e6ddba681830d1cb2c2b89bb3c7e580c10f81d24

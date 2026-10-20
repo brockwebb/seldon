@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 150 records: accepted 127, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 152 records: accepted 129, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (127)
+## Accepted (129)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -216,6 +216,10 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 150 records: accept
   - source `docs/design/AD-036_ADDENDUM_04_query_log_in_the_calling_repo.md`:61-65; decided by cc:defca7cc; consumer seldon/commands/cc.py, CLAUDE.md
 - **seldon:AD-036-R13** - **AD-036-R13. A design note without a passing prior-art verdict may be committed as a declared draft, and the gate holds every task the note governs until the note passes.** - **Commit.** A commit that carries such a note passes only if its subject line has the `draft:` token. The git `commit-msg` hook enforces this from the tracked `.githooks/commit-msg`. That hook reads the message and the same index pre-commit reads. A checkout without that hook keeps the check in pre-commit and refuses as before, so the gate fails closed. A merge is not judged: its commits were judged on their branch. -  [...]
   - source `docs/design/AD-036_ADDENDUM_05_drafts_commit_the_gate_holds_the_task.md`:28-42; decided by cc:5558c652; consumer seldon/core/hooks.py, seldon/core/desktop_commit.py, seldon/commands/cc.py, seldon/core/dispatch.py, tests/test_desk001_desktop_commit.py
+- **seldon:AD-036-R14** An internal receipt whose every cited location lies inside the note under verification (base or any addendum) shall be reported self_citation and shall neither pass nor fail the note; a subsection carried only by self-citations is empty.
+  - source `docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md`:26-30; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_self_citation.py
+- **seldon:AD-036-R15** A task's governing notes shall be the notes its **Governing:** header names, by path or identifier; a docs/design path elsewhere in the task is text and holds nothing.
+  - source `docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md`:31-35; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_governing_header.py
 - **seldon:AD-037-R1** The dispatch system shall decide every acceptance criterion that a program can decide by running that program, never by a judge reading output; each acceptance criterion in a dispatched task shall be marked either `check: <command>` or `judgment: <why no program decides it>`, a reading judge shall see only the `judgment:` criteria, and a task with an unmarked criterion shall fail registration as `criterion_unmarked`, because self-preference persists on checkable rubrics.
   - source `docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md`:177-181; decided by desktop; review only: dispatch
 - **seldon:AD-037-R2** The reading judge for a generator's output shall be the next tier above the generator, run in a fresh context with no access to the generator's reasoning, self-assessment or chat; the `checker` role in `models/registry.yaml` maps haiku to sonnet, sonnet to opus and opus to fable, and is resolved through the lock (AD-035-R1), never typed. Because Fable has no higher tier, its judge shall be a fresh Fable context reading an authorship-obfuscated text (S2, a partial fix), which carries the catch rate measured in R3 while R1 carries the rest, since a same-family judge is not independent of family  [...]

@@ -439,6 +439,8 @@ def test_receipts_taken_without_the_note_still_verify_after_they_are_inserted(pr
 
 
 def test_a_receipt_citing_the_note_itself_fails_and_says_why(proj):
+    """Since AD-036-R14 (DISP-003R) the receipt is `self_citation`, not `id_not_returned`: it neither passes nor
+    fails. The note still fails, because a self-citation is the only thing in its `### Internal`."""
     s = _settings(proj)
     note = _self_note(proj)
     h = [x for x in pa.Internal(s).search("unit of extraction")["hits"] if x.path == "docs/design/DN-002_new.md"][0]
@@ -448,4 +450,5 @@ def test_a_receipt_citing_the_note_itself_fails_and_says_why(proj):
                     f"| hits {h.cite()}\n")
     v = pa.verify_note(note, s, library=StubLibrary())
     (r,) = [x for x in v.receipts if x.kind == "internal"]
-    assert r.status == pa.ID_NOT_RETURNED and "not prior art for itself" in r.detail
+    assert r.status == pa.SELF_CITATION and "not prior art for itself" in r.detail
+    assert v.verdict == "fail" and any("only self-citations" in p for p in v.problems), v.problems

@@ -1,0 +1,34 @@
+seq: 297
+event: accept
+id: seldon:AD-036-R15
+date: '2026-10-20'
+decided_by: cc:5e228d82
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md:31: AD-036-R15'
+reason: DISP-003R Part B step 2; evidence STD-001 (ac82552e) and DISP-003 (7f5de59e) held governing_unverified for naming, outside their Governing header, the note each repairs
+kind: decision
+status: accepted
+statement: A task's governing notes shall be the notes its **Governing:** header names, by path or identifier; a docs/design path elsewhere in the task is text and holds nothing.
+source:
+  path: docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md
+  lines:
+  - 31
+  - 35
+  sha256: 42de2be3af15d05c6583cb17ac93c837982a6028336ea388d4ee1930cd75db14
+  text: |
+    - **AD-036-R15. A task's governing notes are the notes its `**Governing:**` header names, by path or by AD-/DN- identifier, and nothing else.**
+      A `docs/design/` path elsewhere in the task, in a premise, a step or the note it repairs, is text. It is not a
+      governing note and holds nothing. Registration's holds and the dispatcher's c14 both read
+      `prior_art.governing_notes`, so both change. Code: `seldon/core/prior_art.py` `governing_notes`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md
+  anchor: AD-036-R15
+consumer:
+- cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md
+- tests/test_disp003_governing_header.py
+written_by: seldon decision 0.1.0
+prev_hash: 4012371bc0ebc2d9c0766e82e6ddba681830d1cb2c2b89bb3c7e580c10f81d24
+record_hash: a723777da4cba30b25f6be9c9947e02f1ac1a3abf92699b7e8a46ad5849bb8d8

@@ -76,6 +76,12 @@ PASS = "pass"
 ID_NOT_RETURNED = "id_not_returned"
 RELEASE_UNAVAILABLE = "release_unavailable"
 MALFORMED = "malformed"
+#: AD-036-R14 (ADDENDUM 07, DISP-003R): an internal receipt whose every cited location is inside the note under
+#: verification (its base or any addendum). The internal arm leaves that note out of its own search (a note is not
+#: prior art for itself), so such a receipt can never be returned; it neither passes nor fails the note.
+SELF_CITATION = "self_citation"
+#: Statuses that do not fail a note.
+NOT_FAILING = (PASS, SELF_CITATION)
 
 #: The governed-ledger event type a verdict is written as.
 VERDICT_EVENT = "prior_art_verdict"
@@ -1016,8 +1022,9 @@ class Verdict:
     def as_payload(self) -> dict:
         return {"note": self.note, "sha256": self.sha256, "addenda": self.addenda,
                 "verdict": self.verdict, "problems": self.problems,
-                "receipts": [r.as_dict() for r in self.receipts], "tool": TOOL_VERSION,
-                "authority": "AD-036-R2, R4"}
+                "receipts": [r.as_dict() for r in self.receipts],
+                "self_citations": [f"{r.source}:{r.line}" for r in self.receipts if r.status == SELF_CITATION],
+                "tool": TOOL_VERSION, "authority": "AD-036-R2, R4, R14"}
 
 
 def _rel(s: Settings, p: Path) -> str:
@@ -1077,7 +1084,11 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
     for r in receipts:
         if r.kind == "web" and not r.status:
             r.status, r.detail = PASS, "well-formed; a web page is not re-fetched"
-    bad = [r for r in receipts if r.status != PASS]
+    for sub in ("External", "Internal"):
+        rs = by_sub[sub]
+        if rs and all(r.status == SELF_CITATION for r in rs):
+            problems.append(f"`### {sub}` carries only self-citations, which are not prior art (AD-036-R14)")
+    bad = [r for r in receipts if r.status not in NOT_FAILING]
     for r in bad:
         problems.append(f"{r.source}:{r.line} {r.kind} receipt {r.status}: {r.detail}")
     return Verdict(note=_rel(s, note), sha256=_sha(note.read_bytes()),
@@ -1116,13 +1127,20 @@ def _verify_library(receipts: list, s: Settings, library: Library) -> None:
 
 def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: frozenset = frozenset()) -> None:
     """Each receipt re-run at its commit. The note being verified and its addenda (`exclude`) are left out of the
-    search, so a receipt that cites them fails: a note is not prior art for itself (QC-001 premise 3)."""
+    search: a note is not prior art for itself (QC-001 premise 3). A cited location inside them is therefore a
+    self-citation, not a miss (AD-036-R14): a receipt citing only such locations is `self_citation` and is not
+    re-run; in a receipt that also cites other locations those are checked as usual and the self-citations named."""
     roots = {r.name: r for r in s.roots}
     for r in receipts:
         root = roots.get(r.repo)
         if root is None:
             r.status, r.detail = MALFORMED, (f"repo {r.repo!r} is not in prior_art.internal_roots "
                                              f"({', '.join(roots)})")
+            continue
+        own = [f"{path}:{line}" for path, line, _sha in r.hits if (root.name, path) in exclude]
+        if r.hits and len(own) == len(r.hits):
+            r.status, r.detail = SELF_CITATION, ("cites the note under verification, which is not prior art for "
+                                                 "itself: " + ", ".join(own[:5]) + " (AD-036-R14)")
             continue
         try:
             corpus = internal.corpus(root, r.commit)
@@ -1136,10 +1154,9 @@ def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: f
         missing, moved = [], []
         for path, line, sha12 in r.hits:
             h = found.get((path, line))
-            if h is None and (root.name, path) in exclude:
-                missing.append(f"{path}:{line} (the note being verified, which the internal arm leaves out: a note "
-                               f"is not prior art for itself)")
-            elif h is None:
+            if (root.name, path) in exclude:
+                continue                    # a self-citation beside other hits: named below, never a miss
+            if h is None:
                 missing.append(f"{path}:{line}")
             elif sha12 and h.sha12 != sha12:
                 moved.append(f"{path} (sha256 now {h.sha12})")
@@ -1152,7 +1169,9 @@ def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: f
         elif missing:
             r.status, r.detail = ID_NOT_RETURNED, "not in the result: " + ", ".join(missing[:5])
         else:
-            r.status, r.detail = PASS, f"{len(r.hits)} hit(s) returned of {len(hits)}"
+            r.status, r.detail = PASS, f"{len(r.hits) - len(own)} hit(s) returned of {len(hits)}"
+        if own:
+            r.detail += "; self-citation(s) not checked: " + ", ".join(own[:5]) + " (AD-036-R14)"
 
 
 # ------------------------------------------------------------------------- the ledger verdict
@@ -1314,19 +1333,23 @@ _ID_RE = re.compile(r"\b((?:AD|DN)-\d{3})\b")
 
 
 def governing_notes(task_text: str, project_dir: Path, s: Settings) -> list[str]:
-    """The design notes in THIS project a task is governed by: every `docs/design/*.md` path the
-    task names that resolves here, and every AD-/DN- identifier in its `**Governing:**` block,
-    resolved to `docs/design/<id>_*.md` (addenda and errata excluded)."""
+    """The design notes in THIS project a task is governed by, read from its `**Governing:**` block only
+    (AD-036-R15): every `docs/design/*.md` path in the block that resolves here, and every AD-/DN- identifier
+    in it, resolved to `docs/design/<id>_*.md` (addenda and errata excluded). A `docs/design/` path anywhere
+    else in the task (a premise, the note a task repairs) is text: STD-001 and DISP-003 were held
+    `governing_unverified` for naming the note they repair."""
     project_dir = Path(project_dir).resolve()
     found = set()
-    for m in _PATH_RE.finditer(task_text):
-        raw = m.group(1)
-        idx = raw.find(s.design_dir + "/")
-        rel = raw[idx:] if idx >= 0 else raw
-        if (project_dir / rel).is_file():
-            found.add(rel)
+    blocks = _GOVERNING_BLOCK_RE.findall(task_text)
+    for block in blocks:
+        for m in _PATH_RE.finditer(block):
+            raw = m.group(1)
+            idx = raw.find(s.design_dir + "/")
+            rel = raw[idx:] if idx >= 0 else raw
+            if (project_dir / rel).is_file():
+                found.add(rel)
     exempt = [_glob_re(g) for g in s.exempt_globs]
-    for block in _GOVERNING_BLOCK_RE.findall(task_text):
+    for block in blocks:
         for ident in _ID_RE.findall(block):
             for p in sorted((project_dir / s.design_dir).glob(f"*{ident}_*.md")):
                 own = _NOTE_ID_RE.match(p.name)
