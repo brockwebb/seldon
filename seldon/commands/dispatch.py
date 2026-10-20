@@ -1035,7 +1035,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # run keeps the spec it starts with to the end.
     refresh_note = models.ensure_fresh("dispatch")
     spec = _session_spec(project_dir, rel)
-    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, project_dir), spec, worktree=True,
+    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, project_dir, chosen["task_id"]), spec, worktree=True,
                       settings=_session_settings(project_dir, cfg))
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).

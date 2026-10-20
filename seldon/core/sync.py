@@ -93,6 +93,10 @@ _AUDIT_ONLY_EVENT_TYPES = frozenset(
         # AD-035 R2: the model lock moved. The lock FILE is the state; the event is its audit
         # trail (old and new ids, the evidence file), and there is no graph node to project.
         "models_lock_bumped",
+        # RECALL-001: what registration listed for a task, and what its RESULT says it used. The chart reads
+        # them; there is no graph node to project.
+        "recall_listed",
+        "recall_used",
     }
 )
 

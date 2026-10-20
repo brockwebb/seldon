@@ -85,8 +85,13 @@ OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
 MERGE_PROPERTY = "dispatch_merge"
 
 
-def worktree_prompt(rel: str, primary: Path) -> str:
-    return (S.DISPATCH_LINE.format(rel=rel, stem=Path(rel).stem) + " "
+def worktree_prompt(rel: str, primary: Path, task_id: str | None = None) -> str:
+    """The launch prompt: the task's Recall block (RECALL-001, read from its `recall_listed` record, so the session
+    reads its history before CLAUDE.md), the protocol's dispatch line verbatim, then the worktree clause."""
+    from seldon.core import recall as RC
+
+    return (RC.task_prompt_block(primary, task_id)
+            + S.DISPATCH_LINE.format(rel=rel, stem=Path(rel).stem) + " "
             + WORKTREE_CLAUSE.format(primary=primary))
 
 
@@ -486,7 +491,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     # with THIS spec, carried in the lease, so a lock bump while it starts changes nothing.
     refresh_note = S.models.ensure_fresh("dispatch")
     spec = S._session_spec(project_dir, rel)
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir), spec, worktree=True,
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir, tid), spec, worktree=True,
                         settings=S._session_settings(project_dir, cfg))
     conc = chosen["concurrency"]
     S._emit(project_dir, session_id, D.EVENT_LAUNCHED,
@@ -593,7 +598,7 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
     spec = extra["model_spec"]
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir), spec, worktree=True,
+    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir, task_id), spec, worktree=True,
                         settings=S._session_settings(project_dir, cfg))
     started = time.monotonic()
     offset = S._log_offset(log_path)

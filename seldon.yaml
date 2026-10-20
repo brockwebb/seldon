@@ -331,3 +331,35 @@ qc:
   # read from the launchd wrapper's log (scripts/jobs/seldon_dispatch.sh) and its rotations.
   toil:
     dispatch_log: logs/seldon_dispatch.log
+
+# RECALL-001 (AD-031-R1; squiddy DN-009 R-40): `seldon cc register` searches this repository's history and its
+# `decisions.repositories` siblings' (RESULTs, Issues, decision records, kept or superseded tasks), prints the hits
+# under `Recall:`, records them (`recall_listed`) and puts them ahead of CLAUDE.md in the launch prompt. Code:
+# seldon/core/recall.py. No block, no recall: a project turns it on by adding one.
+recall:
+  # How many hits are printed and handed to the session.
+  top_n: 8
+  # A lexical hit must share this many distinct query terms with the task, so a task with no history prints
+  # `Recall: none` instead of the top of an arbitrary ranking. Untuned first value; RECALL-001's chart is the
+  # evidence for moving it.
+  min_shared_terms: 3
+  # A RESULT over this size is a data dump, not a report (the prior-art arm's limit).
+  max_file_bytes: 2000000
+  headline_chars: 120
+  # Where a task's RESULT lives (the dispatcher's `<stem>_RESULT.md`, and the older lowercase form).
+  result_globs: ['cc_tasks/*_RESULT*.md', 'cc_tasks/*_result*.md']
+  # A kept or superseded task whose reason contains one of these (at a word start) is marked `dead end`.
+  # The words the dispatcher's outcomes and refusals use (`session_failed`, `stop_gate_unpassed`,
+  # `merge_blocked`, `classifier_breaker`, `rebase_conflict`).
+  failure_terms: [fail, unpassed, blocked, breaker, conflict, refus, error, abandon, revert, regress, wrong]
+  # BM25's textbook parameters (Robertson and Zaragoza 2009), untuned, as the prior-art arm uses them.
+  bm25: {k1: 1.2, b: 0.75}
+  served:
+    # Squiddy's served hybrid `search` (FTS5 + dense, DN-025 R-110) over each repository's governed graph,
+    # fused with the lexical arm by reciprocal rank fusion. About 12 s per graph to load the encoder.
+    enabled: true
+    k: 20
+    # Cormack, Clarke and Buettcher 2009; the value squiddy's own fusion uses.
+    rrf_k: 60
+    # Repository name -> its governed graph directory, relative to that repository's root.
+    graphs: {seldon: governed, squiddy: governed, arnold: governed}

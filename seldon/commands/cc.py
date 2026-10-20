@@ -1295,6 +1295,13 @@ def register_task_file(
     if premise_refusal:
         raise ValueError(f"{premise_refusal} File: {rel_path}")
 
+    # RECALL-001: a malformed `recall:` block refuses BEFORE anything is created; no block means recall is off.
+    from seldon.core import recall as recall_mod
+    try:
+        recall_on = recall_mod.settings(config) is not None
+    except recall_mod.RecallError as exc:
+        raise ValueError(f"{exc} File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "
@@ -1387,6 +1394,15 @@ def register_task_file(
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
         session_id=session_id,
     )
+    # RECALL-001 Part A: the repositories' own history for this task, recorded (`recall_listed`) so the
+    # dispatcher can put it ahead of CLAUDE.md in the launch prompt, and so the chart can count it.
+    recall_text = ("Recall: not configured (seldon.yaml has no `recall:` block; RECALL-001)"
+                   if not recall_on else None)
+    if recall_on:
+        found = recall_mod.recall(project_dir, config, text, task_stem=Path(rel_path).stem, task_id=artifact_id)
+        recall_mod.record_listed(project_dir, found, task_id=artifact_id, source_file=rel_path, actor=actor,
+                                 session_id=session_id)
+        recall_text = recall_mod.render(found)
     from seldon.core.governed import ACTOR as GOVERNED_ACTOR
     record_commit = _commit_registration_lines(project_dir, config, rel_path, artifact_id, store_before,
                                                {actor, GOVERNED_ACTOR})
@@ -1401,7 +1417,9 @@ def register_task_file(
         say(gc.hold_line(h["note"], h["why"]))
     say("")
     say(render_rulings(matches, written))
-    return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path,
+    say("")
+    say(recall_text)
+    return {"artifact_id": artifact_id, "name": name, "rel_path": rel_path, "recall": recall_text,
             "description": description, "existing": False, "rulings": matches,
             "edges_written": written, "warning": warning, "source_commit": source_commit,
             "after": predecessors, "after_edges": after_edges,

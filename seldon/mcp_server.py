@@ -1324,6 +1324,8 @@ def seldon_cc_register(
     for h in outcome.get("holds") or []:
         lines.append(gc.hold_line(h["note"], h["why"]))
     lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])
+    if outcome.get("recall"):
+        lines.extend(["", outcome["recall"]])
     return "\n".join(lines)
 
 
