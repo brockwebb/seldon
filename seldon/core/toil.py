@@ -12,8 +12,10 @@ Four counts per week, each read from a record that already exists or that this t
   wrapper's log) that refused a candidate as `dirty_tree` while every dirty path it named was machine-written
   governed state (`seldon.core.reconcile`'s classes, by path). Passes refused on other dirt are counted beside it.
 * **redrives by an operator**: `dispatch_redrive` events whose actor is not `dispatcher` (AD-038-R2).
-* **Desktop restarts**: inferred from `server_stale` refusals, which seldon-mcp appends to its stale log since
-  AD-038-R3: each server process (its `loaded_at` and HEAD) that refused at least once was replaced by a restart.
+* **Desktop restarts**: inferred from the stale refusals seldon-mcp's read-only tools appended to its stale log
+  between AD-038-R3 and MCP-001: each server process (its `loaded_at` and HEAD) that refused at least once was
+  replaced by a restart. Since MCP-001 (AD-038 ADDENDUM 01) every tool runs the checkout's current code in a fresh
+  process and none refuses, so nothing appends and the count is zero by construction; the old rows still count.
 * **re-issues**: ResearchTasks walked to `superseded` that were never launched (`dispatch_launched`), DESK-002 to
   DESK-002R's shape.
 """
@@ -89,7 +91,7 @@ def dirt_passes(log_paths: list, gp: dict) -> dict:
 
 
 def stale_restarts(stale_log: Path | None) -> dict:
-    """`{week: n}`: server processes that refused `server_stale` at least once, by the week of their first refusal."""
+    """`{week: n}`: server processes that refused as stale at least once, by the week of their first refusal."""
     if stale_log is None or not Path(stale_log).is_file():
         return {}
     first: dict = {}

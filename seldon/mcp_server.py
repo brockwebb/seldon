@@ -14,104 +14,27 @@ mcp = FastMCP("seldon")
 
 
 # ---------------------------------------------------------------------------
-# What this process loaded, re-checked before every tool call (SEL-006 Part B)
+# Every tool runs HEAD's code in a fresh process (AD-038-R3, extended to reads by MCP-001)
 # ---------------------------------------------------------------------------
 #
-# Claude Desktop keeps this server for days while the seldon checkout moves under it. On
-# 2026-10-14 a server holding pre-MODEL-003 code answered with a registry parse error instead of
-# saying it was stale (Issue fed23c36). squiddy DN-046 R-202: a process records what it loaded and
-# re-checks it. See `seldon/core/loaded_state.py` for why the code tree, not HEAD, is compared.
-
-def _capture_loaded():
-    from seldon import models
-    from seldon.core import loaded_state
-
-    repo = Path(__file__).resolve().parent.parent
-    try:
-        registry = models.models_home() / models.REGISTRY_FILE
-    except models.ModelsError:
-        registry = repo / "models" / models.REGISTRY_FILE
-    return loaded_state.capture("seldon-mcp", repo, ["seldon"], [registry, repo / "seldon.yaml"])
-
-
-_LOADED = _capture_loaded()
-
-
-#: The read-only guard's advice. Never a restart (AD-038-R3): the mutating tools already run HEAD.
-STALE_READ_ONLY_ADVICE = ("This read-only tool answers from the code this server loaded, so it refuses rather than "
-                          "answer from it; every tool that writes runs the checkout's current code in a fresh process "
-                          "and is unaffected. The server picks up the new code at its next start.")
-
-
-def _refuses_when_stale(fn):
-    """Answer `server_stale` instead of running the read-only tool `fn` when the checkout no longer
-    holds what this process loaded; the underlying error a stale process would raise is never reached.
-
-    Read-only tools only (AD-038-R3). The message never asks for a restart: a Desktop restart after
-    every merge under `seldon/` was the toil R3 removes, and the mutating tools no longer need one."""
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        from seldon.core import loaded_state
-
-        refusal = loaded_state.stale(_LOADED, advice=STALE_READ_ONLY_ADVICE)
-        if refusal:
-            _record_stale(fn.__name__)
-            return f"Error: {refusal}"
-        return fn(*args, **kwargs)
-    return wrapper
-
-
-#: `mcp.stale_log` in the repository's seldon.yaml when it names none: runtime state, gitignored with the lease.
-STALE_LOG_DEFAULT = ".seldon/mcp_stale.jsonl"
-#: Points the stale log somewhere else. Unset in production; the test suite sets it for every test, so a test's
-#: deliberate `server_stale` is never counted as a Desktop restart (the `SELDON_DISPATCH_STUCK_STATE` precedent).
-STALE_LOG_ENV = "SELDON_MCP_STALE_LOG"
-
-
-def _record_stale(tool: str) -> None:
-    """Append one line per `server_stale` refusal to `mcp.stale_log`: the record `seldon qc chart` infers Desktop
-    restarts from (AD-038-R6; one server process that refused is one restart). A failed write is reported on
-    stderr, which Claude Desktop keeps in the server's log; it never changes the tool's answer."""
-    import json
-    import sys
-    from datetime import datetime, timezone
-
-    import yaml
-
-    try:
-        override = os.environ.get(STALE_LOG_ENV)
-        if override:
-            path = Path(override).expanduser()
-        else:
-            block = (yaml.safe_load((_repo() / "seldon.yaml").read_text(encoding="utf-8")) or {}).get("mcp") or {}
-            path = _repo() / block.get("stale_log", STALE_LOG_DEFAULT)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        row = {"at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "tool": tool, "pid": os.getpid(),
-               "loaded_head": _LOADED.head if _LOADED else None, "loaded_at": _LOADED.at if _LOADED else None}
-        with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(row) + "\n")
-    except (OSError, yaml.YAMLError) as exc:
-        print(f"seldon-mcp: server_stale not recorded: {exc}", file=sys.stderr)
-
-
-# ---------------------------------------------------------------------------
-# Mutating tools run HEAD's code in a fresh process (AD-038-R3, FRICTION-001 Part C)
-# ---------------------------------------------------------------------------
-#
-# Every merge under `seldon/` used to disable Desktop for the rest of its session: the stale guard
-# refused every tool and asked for a restart (three restarts in three days, AD-038 §1 mechanism 3).
-# Reloading in place cannot follow HEAD: `importlib.reload` "does not redefine the objects imported"
-# with `from ... import`, and this server imports that way. So each mutating tool runs as
-# `<python> -P -m seldon mcp-call <tool>` with the repository first on PYTHONPATH (`-P`: the caller's
-# working directory never shadows it), its keyword arguments on stdin, and its answer relayed. The
-# child keeps the server's working directory and environment, so `project_dir="."` and
-# SELDON_DEFAULT_PROJECT mean what they meant in process.
+# Claude Desktop keeps this server for days while the seldon checkout moves under it, several merges a
+# day. SEL-006 made a stale process refuse (`loaded_state`, squiddy DN-046 R-202) rather than answer from
+# old code; every merge under `seldon/` then made the operator restart Desktop (four restarts on
+# 2026-10-17 alone; AD-038 ADDENDUM 01). Reloading in place cannot follow HEAD: `importlib.reload`
+# "does not redefine the objects imported" with `from ... import`, and this server imports that way.
+# So every tool, reads included, runs as `<python> -P -m seldon mcp-call <tool>` with the repository
+# first on PYTHONPATH (`-P`: the caller's working directory never shadows it), its keyword arguments on
+# stdin, and its answer relayed. This process keeps only transport and argument marshalling, so there is
+# nothing in it to go stale and no staleness check. The child ends each answer with a `code: <sha>` line
+# (`seldon.commands.mcp_call.code_line`) so a transcript shows which code answered. The child keeps the
+# server's working directory and environment, so `project_dir="."` and SELDON_DEFAULT_PROJECT mean what
+# they meant in process.
 
 #: Every registered tool's undecorated body, by name: what `seldon mcp-call` runs in the child.
 RAW_TOOLS: dict = {}
 
 #: Read from `mcp.call_timeout_s` in the repository's seldon.yaml; this is the value when the key is absent.
-#: Half an hour: the longest mutating tool, `seldon_cc_register`, runs a prior-art verify (minutes, not hours).
+#: Half an hour: the longest tool, `seldon_cc_register`, runs a prior-art verify (minutes, not hours).
 #: NO MEASURED BASIS beyond that; a call that overruns is reported, never retried.
 CALL_TIMEOUT_S_DEFAULT = 1800
 
@@ -162,7 +85,7 @@ def _run_in_head(name: str, kwargs: dict) -> str:
 
 
 def _runs_head(fn):
-    """The mutating tool `fn`, run by `_run_in_head` unless this process is already the child."""
+    """The tool `fn`, run by `_run_in_head` unless this process is already the child."""
     sig = inspect.signature(fn)
 
     @functools.wraps(fn)
@@ -175,17 +98,16 @@ def _runs_head(fn):
     return wrapper
 
 
-def _tool(*args, read_only: bool = False, **kwargs):
-    """`mcp.tool()`, and how the tool runs (AD-038-R3).
+def _tool(*args, **kwargs):
+    """`mcp.tool()`, run in a fresh process on the checkout's current code (AD-038-R3, MCP-001).
 
-    A tool is mutating unless declared `read_only=True`, so a new tool runs HEAD's code by default:
-    the safe direction for a long-lived process. Read-only tools stay in process behind the stale guard.
+    Every tool, read or write: there is no in-process path for a long-lived server to answer from old code.
     """
     register = mcp.tool(*args, **kwargs)
 
     def decorator(fn):
         RAW_TOOLS[fn.__name__] = fn
-        return register(_refuses_when_stale(fn) if read_only else _runs_head(fn))
+        return register(_runs_head(fn))
     return decorator
 
 
@@ -427,7 +349,7 @@ def _mcp_terminal_transition(
 # seldon_go (existing)
 # ---------------------------------------------------------------------------
 
-@_tool(read_only=True)
+@_tool()
 def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
     """Orient to a Seldon-managed project. Returns engineering standards,
     project context, latest handoff, current state, and available commands.
@@ -681,7 +603,7 @@ def seldon_task_close(
         driver.close()
 
 
-@_tool(read_only=True)
+@_tool()
 def seldon_task_list(
     project_dir: str = ".",
     state_filter: str = "open",
@@ -1797,7 +1719,7 @@ _WRITE_PATTERN = re.compile(
 )
 
 
-@_tool(read_only=True)
+@_tool()
 def seldon_query(
     cypher: str,
     project_dir: str = ".",
@@ -1986,7 +1908,7 @@ def seldon_decision_amend(record_id: str, decided_by: str, reason: str, project_
                            amendment=amendment, changes=_yaml_mapping(changes_yaml, "changes_yaml"))
 
 
-@_tool(read_only=True)
+@_tool()
 def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
     """One record as its events say it stands now."""
     from seldon.commands.decision import run_read
@@ -1997,7 +1919,7 @@ def seldon_decision_show(record_id: str, project_dir: str = ".") -> str:
         return f"Error: {exc}"
 
 
-@_tool(read_only=True)
+@_tool()
 def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "") -> str:
     """List records of this repository and its imports, optionally by status or repository."""
     from seldon.commands.decision import run_read
@@ -2009,7 +1931,7 @@ def seldon_decision_list(project_dir: str = ".", status: str = "", repo: str = "
         return f"Error: {exc}"
 
 
-@_tool(read_only=True)
+@_tool()
 def seldon_decision_check(project_dir: str = ".") -> str:
     """The register checks `seldon verify` fails on: chain, hashes, rationale, unregistered labels."""
     from seldon.commands.decision import run_read

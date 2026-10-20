@@ -3,8 +3,8 @@
 Before this, any merge under `seldon/` made every seldon-mcp tool answer `server_stale` and ask for a Claude Desktop
 restart (three restarts in three days; AD-038 §1 mechanism 3). Reloading in place cannot fix that (`importlib.reload`
 does not rebind names imported with `from ... import`), so each mutating tool now runs `python -P -m seldon mcp-call
-<tool>` in a fresh process on the checkout's current code; only the read-only tools stay in process behind the stale
-guard, whose message no longer asks for a restart.
+<tool>` in a fresh process on the checkout's current code. MCP-001 extended that to the read-only tools and removed
+the stale guard; its tests are `tests/test_mcp001_fresh_process.py`, and the ones here were rewritten to match.
 
 The plant is the one SEL-006 used: a temp checkout stands in for the code the server loaded, and a commit under its
 `seldon/` moves it. The second test goes further and points the child at a copy of the package whose
@@ -12,7 +12,6 @@ The plant is the one SEL-006 used: a temp checkout stands in for the code the se
 """
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import subprocess
@@ -21,14 +20,11 @@ from pathlib import Path
 import pytest
 
 import seldon.mcp_server as m
-from seldon.core import loaded_state as L
 from tests.testdb import TEST_DATABASE
 
 pytestmark = pytest.mark.usefixtures("neo4j_available", "clean_test_db")
 
 SELDON_PKG = Path(m.__file__).resolve().parent
-READ_ONLY = {"seldon_go", "seldon_task_list", "seldon_query", "seldon_decision_show", "seldon_decision_list",
-             "seldon_decision_check"}
 
 
 def _git(cwd: Path, *args: str) -> str:
@@ -78,8 +74,8 @@ def _merge_under_seldon(co: Path, marker: str = "") -> None:
     _git(co, "commit", "-qm", "merge under seldon/")
 
 
-def test_after_a_merge_a_mutating_tool_succeeds_and_a_read_only_tool_reports_stale(checkout, project, monkeypatch):
-    monkeypatch.setattr(m, "_LOADED", L.capture("seldon-mcp", checkout, ["seldon"], [checkout / "seldon.yaml"]))
+def test_after_a_merge_a_mutating_tool_and_a_read_tool_both_answer(checkout, project, monkeypatch):
+    monkeypatch.setattr(m, "_repo", lambda: checkout)
     _merge_under_seldon(checkout)
 
     wrote = m.seldon_task_create("a task after the merge", project_dir=str(project))
@@ -87,13 +83,12 @@ def test_after_a_merge_a_mutating_tool_succeeds_and_a_read_only_tool_reports_sta
     assert "Created ResearchTask" in wrote, wrote
 
     read = m.seldon_task_list(project_dir=str(project))
-    assert read.startswith("Error: server_stale: seldon-mcp loaded "), read
-    assert "restart" not in read.lower(), read
+    assert "server_stale" not in read, read
+    assert "a task after the merge" in read, read
 
 
 def test_the_mutating_tool_runs_the_checkouts_current_code(checkout, project, monkeypatch):
     """The child imports the repository as it stands now: the merged code's answer comes back."""
-    monkeypatch.setattr(m, "_LOADED", L.capture("seldon-mcp", checkout, ["seldon"], [checkout / "seldon.yaml"]))
     monkeypatch.setattr(m, "_repo", lambda: checkout)
     _merge_under_seldon(checkout, marker="HEAD-CODE-RAN")
     out = m.seldon_task_create("proof of which code ran", project_dir=str(project))
@@ -108,27 +103,10 @@ def test_a_child_that_cannot_answer_is_reported_not_swallowed(monkeypatch):
     assert "no seldon-mcp tool named" in out, out
 
 
-def test_every_tool_is_read_only_guarded_or_runs_head():
+def test_every_tool_runs_head():
+    """Rewritten by MCP-001: no tool is read-only guarded any longer; every one runs HEAD."""
     import asyncio
     names = {t.name for t in asyncio.run(m.mcp.list_tools())}
-    guarded = m._refuses_when_stale(lambda: None).__code__
     head = m._runs_head(lambda: None).__code__
-    seen_read_only = {n for n in names if getattr(m, n).__code__ is guarded}
-    seen_head = {n for n in names if getattr(m, n).__code__ is head}
-    assert seen_read_only == READ_ONLY, seen_read_only
-    assert seen_head == names - READ_ONLY
-    assert "seldon_dispatch_redrive" in seen_head
-
-
-def test_a_stale_refusal_in_a_test_never_reaches_the_repositorys_stale_log(checkout, project, monkeypatch, tmp_path):
-    """The stale log is the toil measure's record of Desktop restarts (AD-038-R6). On 2026-10-17 the Part C station
-    check, run in the main checkout, appended this module's deliberate `server_stale` to the real log, and the first
-    `qc chart` reading counted a restart nobody made. Tests point `SELDON_MCP_STALE_LOG` elsewhere (conftest)."""
-    real = m._repo() / ".seldon" / "mcp_stale.jsonl"
-    before = real.read_bytes() if real.is_file() else None
-    monkeypatch.setattr(m, "_LOADED", L.capture("seldon-mcp", checkout, ["seldon"], [checkout / "seldon.yaml"]))
-    _merge_under_seldon(checkout)
-    assert m.seldon_task_list(project_dir=str(project)).startswith("Error: server_stale")
-    assert (real.read_bytes() if real.is_file() else None) == before
-    logged = Path(os.environ[m.STALE_LOG_ENV]).read_text().splitlines()
-    assert json.loads(logged[-1])["tool"] == "seldon_task_list"
+    assert {n for n in names if getattr(m, n).__code__ is head} == names
+    assert "seldon_dispatch_redrive" in names

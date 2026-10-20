@@ -259,12 +259,14 @@ desktop_commit:
     command: [../squiddy/.venv/bin/python, -m, squiddy.secret_scan]
 
 mcp:
-  # AD-038-R3: every mutating seldon-mcp tool runs `python -P -m seldon mcp-call <tool>` in a fresh
-  # process on the checkout's current code. A call that runs longer is answered with an error and not
-  # retried. NO MEASURED BASIS: half an hour bounds the slowest tool (cc_register's prior-art verify).
+  # AD-038-R3, extended to every tool by MCP-001 (AD-038 ADDENDUM 01): each seldon-mcp tool runs
+  # `python -P -m seldon mcp-call <tool>` in a fresh process on the checkout's current code. A call that
+  # runs longer is answered with an error and not retried. NO MEASURED BASIS: half an hour bounds the
+  # slowest tool (cc_register's prior-art verify).
   call_timeout_s: 1800
-  # AD-038-R6: each read-only tool's `server_stale` refusal is appended here; `seldon qc chart` infers
-  # Desktop restarts from it (one refusing server process, one restart). Gitignored runtime state.
+  # AD-038-R6: the read-only tools' stale refusals were appended here from R3 until MCP-001 removed the
+  # refusal; nothing appends now. `seldon qc chart` still reads it, so the historical restarts it infers
+  # (one refusing server process, one restart) stay in the toil chart. Gitignored runtime state.
   stale_log: .seldon/mcp_stale.jsonl
 
 jobs:

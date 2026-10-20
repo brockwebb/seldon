@@ -70,14 +70,6 @@ def _disk_free_is_a_fake(monkeypatch):
     monkeypatch.setenv(D.DISK_FREE_ENV, str(FAKE_FREE_BYTES))
 
 
-@pytest.fixture(autouse=True)
-def _isolated_mcp_stale_log(monkeypatch, tmp_path):
-    """No test writes the repository's seldon-mcp stale log. It is the record `seldon qc chart` infers Desktop
-    restarts from (AD-038-R6), and on 2026-10-17 a station check run in the main checkout appended a test's
-    deliberate `server_stale` to it. Set through the environment so a child process a test starts writes here too."""
-    monkeypatch.setenv("SELDON_MCP_STALE_LOG", str(tmp_path / "mcp_stale.jsonl"))
-
-
 # ── Model lock isolation (AD-035) ─────────────────────────────────────────────
 
 @pytest.fixture(scope="session")

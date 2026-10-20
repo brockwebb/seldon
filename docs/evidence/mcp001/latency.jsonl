@@ -1,0 +1,66 @@
+{"phase": "before", "tool": "seldon_query", "i": 0, "seconds": 0.8439, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.101344Z"}
+{"phase": "before", "tool": "seldon_query", "i": 1, "seconds": 0.0851, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.186629Z"}
+{"phase": "before", "tool": "seldon_query", "i": 2, "seconds": 0.1351, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.321850Z"}
+{"phase": "before", "tool": "seldon_query", "i": 3, "seconds": 0.0836, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.405562Z"}
+{"phase": "before", "tool": "seldon_query", "i": 4, "seconds": 0.0839, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.489568Z"}
+{"phase": "before", "tool": "seldon_query", "i": 5, "seconds": 0.0832, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.572889Z"}
+{"phase": "before", "tool": "seldon_query", "i": 6, "seconds": 0.0816, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.654592Z"}
+{"phase": "before", "tool": "seldon_query", "i": 7, "seconds": 0.0841, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.738784Z"}
+{"phase": "before", "tool": "seldon_query", "i": 8, "seconds": 0.0827, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.821586Z"}
+{"phase": "before", "tool": "seldon_query", "i": 9, "seconds": 0.0834, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:53.905040Z"}
+{"phase": "before", "tool": "seldon_query", "summary": true, "n": 10, "median_s": 0.0838, "min_s": 0.0816, "max_s": 0.8439, "over_limit": false, "limit_s": 2.0, "code": "424969c"}
+{"phase": "before", "tool": "seldon_task_list", "i": 0, "seconds": 0.1201, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.025313Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 1, "seconds": 0.0966, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.122000Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 2, "seconds": 0.0927, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.214843Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 3, "seconds": 0.0944, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.309400Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 4, "seconds": 0.0931, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.402582Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 5, "seconds": 0.1455, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.548164Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 6, "seconds": 0.095, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.643298Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 7, "seconds": 0.0946, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.738018Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 8, "seconds": 0.0924, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.830524Z"}
+{"phase": "before", "tool": "seldon_task_list", "i": 9, "seconds": 0.093, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:54.923587Z"}
+{"phase": "before", "tool": "seldon_task_list", "summary": true, "n": 10, "median_s": 0.0945, "min_s": 0.0924, "max_s": 0.1455, "over_limit": false, "limit_s": 2.0, "code": "424969c"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 0, "seconds": 1.0187, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:55.942426Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 1, "seconds": 0.97, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:56.912546Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 2, "seconds": 0.9947, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:57.907361Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 3, "seconds": 0.9911, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:58.898602Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 4, "seconds": 0.9778, "ok": true, "code": "424969c", "at": "2026-10-20T13:23:59.893878Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 5, "seconds": 0.9849, "ok": true, "code": "424969c", "at": "2026-10-20T13:24:00.878900Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 6, "seconds": 0.9834, "ok": true, "code": "424969c", "at": "2026-10-20T13:24:01.862451Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 7, "seconds": 0.9714, "ok": true, "code": "424969c", "at": "2026-10-20T13:24:02.833945Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 8, "seconds": 0.9805, "ok": true, "code": "424969c", "at": "2026-10-20T13:24:03.814590Z"}
+{"phase": "before", "tool": "seldon_decision_show", "i": 9, "seconds": 0.9721, "ok": true, "code": "424969c", "at": "2026-10-20T13:24:04.786859Z"}
+{"phase": "before", "tool": "seldon_decision_show", "summary": true, "n": 10, "median_s": 0.982, "min_s": 0.97, "max_s": 1.0187, "over_limit": false, "limit_s": 2.0, "code": "424969c"}
+{"phase": "after", "tool": "seldon_query", "i": 0, "seconds": 2.8068, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:00.391171Z"}
+{"phase": "after", "tool": "seldon_query", "i": 1, "seconds": 2.6068, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:02.999629Z"}
+{"phase": "after", "tool": "seldon_query", "i": 2, "seconds": 2.4377, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:05.437511Z"}
+{"phase": "after", "tool": "seldon_query", "i": 3, "seconds": 2.3158, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:07.753405Z"}
+{"phase": "after", "tool": "seldon_query", "i": 4, "seconds": 2.273, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:10.026536Z"}
+{"phase": "after", "tool": "seldon_query", "i": 5, "seconds": 2.3461, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:12.372792Z"}
+{"phase": "after", "tool": "seldon_query", "i": 6, "seconds": 2.3471, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:14.720001Z"}
+{"phase": "after", "tool": "seldon_query", "i": 7, "seconds": 2.3505, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:17.070600Z"}
+{"phase": "after", "tool": "seldon_query", "i": 8, "seconds": 2.3573, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:19.428048Z"}
+{"phase": "after", "tool": "seldon_query", "i": 9, "seconds": 2.3211, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:21.749274Z"}
+{"phase": "after", "tool": "seldon_query", "summary": true, "n": 10, "median_s": 2.3488, "min_s": 2.273, "max_s": 2.8068, "over_limit": true, "limit_s": 2.0, "code": "424969c"}
+{"phase": "after", "tool": "seldon_task_list", "i": 0, "seconds": 2.3788, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:24.128264Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 1, "seconds": 2.3121, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:26.440488Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 2, "seconds": 2.368, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:28.808608Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 3, "seconds": 2.2862, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:31.094965Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 4, "seconds": 2.3708, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:33.465935Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 5, "seconds": 2.3326, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:35.799629Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 6, "seconds": 2.2721, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:38.071846Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 7, "seconds": 2.3153, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:40.387337Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 8, "seconds": 2.3135, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:42.700967Z"}
+{"phase": "after", "tool": "seldon_task_list", "i": 9, "seconds": 2.3357, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:45.036808Z"}
+{"phase": "after", "tool": "seldon_task_list", "summary": true, "n": 10, "median_s": 2.324, "min_s": 2.2721, "max_s": 2.3788, "over_limit": true, "limit_s": 2.0, "code": "424969c"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 0, "seconds": 3.2127, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:48.249743Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 1, "seconds": 3.119, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:51.368911Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 2, "seconds": 3.1016, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:54.470696Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 3, "seconds": 3.2378, "ok": true, "code": "424969c", "at": "2026-10-20T13:28:57.708638Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 4, "seconds": 3.1506, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:00.859424Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 5, "seconds": 3.1873, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:04.046855Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 6, "seconds": 3.153, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:07.200026Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 7, "seconds": 3.1789, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:10.379101Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 8, "seconds": 3.2139, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:13.593093Z"}
+{"phase": "after", "tool": "seldon_decision_show", "i": 9, "seconds": 3.1403, "ok": true, "code": "424969c", "at": "2026-10-20T13:29:16.733547Z"}
+{"phase": "after", "tool": "seldon_decision_show", "summary": true, "n": 10, "median_s": 3.166, "min_s": 3.1016, "max_s": 3.2378, "over_limit": true, "limit_s": 2.0, "code": "424969c"}
