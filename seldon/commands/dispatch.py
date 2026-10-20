@@ -277,6 +277,9 @@ def _breaker_and_stale(project_dir, config, driver, database, domain_config, ses
     from seldon.commands import dispatch_worktree as W
     for step, call in (("remerge", lambda: W.remerge_breaker_green(project_dir, config, driver, database,
                                                                     domain_config, session_id, cfg)),
+                       # DISP-003R (AD-034 ADDENDUM 03): kept work blocked `stop_gate_unpassed` is re-gated in place.
+                       ("regate", lambda: W.regate(project_dir, config, driver, database, domain_config,
+                                                   session_id, cfg)),
                        ("stale kept sweep", lambda: W.sweep_stale_kept(project_dir, driver, database, session_id))):
         try:
             call()
@@ -591,6 +594,44 @@ def dispatch_redrive(task, actor):
     committed = D.commit_journal_append(project_dir, config, by="seldon dispatch redrive", actor=actor)
     if committed.get("committed"):
         click.echo(f"committed {committed['commit']}")
+
+
+@dispatch_group.command("regate")
+@click.argument("task")
+def dispatch_regate(task):
+    """Re-gate a task blocked `stop_gate_unpassed` in its kept worktree, and merge it on pass (AD-034 ADDENDUM 03).
+
+    TASK is an artifact id, a unique id prefix, or the task file's stem. The task must be blocked, its last finish
+    `stop_gate_unpassed`, its worktree kept and its RESULT committed on its branch. The branch is rebased onto main,
+    every `check:` line of the task runs in the worktree with the tree's own code (AD-037-R14), and on pass the
+    branch goes to the merge path (merge on green, complete, sweep). On fail the task stays blocked and the failing
+    checks are printed (exit 1). Takes the pass lease; the dispatcher runs the same step on every pass.
+    """
+    from seldon.commands import dispatch_worktree as W
+    project_dir, config, driver, database, domain_config, session_id = _open_project()
+    cfg = D.load_dispatch_config(project_dir)
+    try:
+        task_id = _resolve_task(driver, database, task)
+        if task_id is None:
+            raise click.ClickException(f"no ResearchTask matches {task!r}")
+        try:
+            with W._pass_lease(project_dir, cfg):
+                out = W.regate(project_dir, config, driver, database, domain_config, session_id, cfg,
+                               task_id=task_id)
+                _record_and_push(project_dir, config, cfg)
+        except W.RegateRefused as exc:
+            raise click.ClickException(f"regate refused: {exc}")
+        except D.LeaseHeld as held:
+            raise click.ClickException(f"the pass lease is held by {held.body.get('holder')}; the dispatcher's "
+                                       f"next pass regates {task_id[:8]} itself")
+    finally:
+        driver.close()
+    (rec,) = out
+    if rec["outcome"] != "pass":
+        raise click.ClickException(f"{task_id[:8]} stays blocked ({rec['reason']}): "
+                                   + ("; ".join(f"`{f['command']}` {f['outcome']} exit {f['exit']}"
+                                                for f in rec["failed"]) or ", ".join(rec.get("files") or [])))
+    click.echo(f"regated {task_id[:8]}: {len(rec['checks'])} check(s) pass; handed to the merge path")
 
 
 def _resolve_task(driver, database, ref: str) -> str | None:

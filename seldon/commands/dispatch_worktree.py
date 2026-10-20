@@ -1280,3 +1280,151 @@ def remerge_breaker_green(project_dir, config, driver, database, domain_config, 
                lease_cm=nullcontext)
         tried.append(task_id)
     return tried
+
+
+# ================================================= a kept worktree is re-gated in place (DISP-003R, AD-034 ADDENDUM 03)
+
+#: One regate attempt: the checks run, their outcome, and what the next pass compares to decide whether to try again.
+EVENT_REGATED = "dispatch_regated"
+
+
+class RegateRefused(Exception):
+    """The task is not a regate candidate (not blocked `stop_gate_unpassed` with a kept tree and a committed RESULT)."""
+
+
+def regate_candidates(project_dir: Path, driver, database: str) -> list:
+    """The last `dispatch_finished` of every task that may be re-gated: a worktree finish of outcome
+    `stop_gate_unpassed`, its worktree on disk, its RESULT committed on its branch, the task still `blocked`."""
+    from seldon.core.events import read_events
+    last = {}
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == D.EVENT_FINISHED and p.get("task_id"):
+            last[p["task_id"]] = p
+    out = []
+    for task_id, fin in last.items():
+        if fin.get("outcome") != "stop_gate_unpassed" or fin.get("mode") != "worktree" or not fin.get("worktree"):
+            continue
+        if not (Path(project_dir) / fin["worktree"]).exists() or not fin.get("branch"):
+            continue
+        if WT.show(project_dir, fin["branch"], fin.get("result_path") or "") is None:
+            continue
+        if S._state_of(driver, database, task_id) != "blocked":
+            continue
+        out.append(fin)
+    return out
+
+
+def task_checks(text: str) -> list:
+    """Every `check:` command of every Part the task declares, in order: what its Stop gate runs once all its Parts
+    are complete, which a regate requires (a kept task's RESULT says the work is done)."""
+    from seldon.core import stations as Q
+    return [(part["name"], cmd) for part in Q.parse_parts(text)["parts"]
+            for cmd in Q.part_criteria(text, part["name"])["checks"]]
+
+
+def run_task_checks(project_dir: Path, cfg: dict, tree: Path, branch: str | None, text: str,
+                    run=None) -> dict:
+    """Run `task_checks(text)` in `tree` through the stations' own runner, so each check has AD-037-R14's path (the
+    tree first on `PYTHONPATH`, `seldon` as `python -m seldon`). `{checks, failed, passed}`; a check that is not
+    `pass` (fail or unrunnable) fails the regate: nothing unverified is merged."""
+    from seldon.core import stations as Q
+    scfg = Q.load_stations_config(cfg)
+    rows = [{"part": name, **Q.run_station_check(cmd, tree, scfg["check_timeout_s"], branch,
+                                                 run=run or Q.run_check)}
+            for name, cmd in task_checks(text)]
+    failed = [r for r in rows if r["outcome"] != "pass"]
+    return {"checks": rows, "failed": failed, "passed": bool(rows) and not failed}
+
+
+def _branch_diff_key(wt: Path, main: str) -> str:
+    """What the branch changed, independent of where it is based: a regate that failed is not re-run while this and
+    main's non-housekeeping files stay the same (`_regate_unchanged`)."""
+    import hashlib
+    fork = WT.git(wt, "merge-base", "HEAD", main).stdout.strip()
+    return hashlib.sha256(WT.git(wt, "diff", "--binary", fork, "HEAD").stdout.encode("utf-8", "surrogateescape")
+                          ).hexdigest()
+
+
+def _regate_unchanged(project_dir: Path, cfg: dict, wt: Path, last: dict | None, key: str) -> bool:
+    """True when the task's last regate failed on this same branch diff and main has since changed only housekeeping
+    (the `merge=union` files and `shared_paths`, as `_merge` counts it): running the checks again would read the same
+    code. A changed branch or a real change on main is a new reading."""
+    if not last or last.get("outcome") != "fail" or last.get("diff_key") != key or not last.get("main"):
+        return False
+    arrived = WT.changed_files(wt, last["main"], WT.rev(project_dir, cfg["branch"]))
+    housekeeping = set(WT.union_files(wt, arrived)) | set(cfg["shared_paths"])
+    return set(arrived) <= housekeeping
+
+
+def regate(project_dir, config, driver, database, domain_config, session_id, cfg, task_id: str | None = None,
+           run=None) -> list:
+    """Re-gate kept work in place: DISP-003R Part C, AD-034 ADDENDUM 03 (AD-034-R7).
+
+    For each `regate_candidates` task (or only `task_id`, which must be one, else `RegateRefused`): rebase the kept
+    branch onto main in its worktree, run every `check:` line of the task in that tree with AD-037-R14's path, and
+    record `dispatch_regated`. On pass, walk the task `blocked -> in_progress` and hand the branch to `_merge`, which
+    re-gates when main changed a file it changed, fast-forwards, completes and sweeps, or blocks it again with a
+    `merge_blocked` Issue. On fail the task stays blocked with the failing checks quoted, and the pass does not run
+    the same reading again (`_regate_unchanged`); an explicit `task_id` always runs. Called with the pass lease held
+    and no session in flight. Returns the `dispatch_regated` payloads.
+    """
+    from seldon.core.events import read_events
+    project_dir = Path(project_dir)
+    cands = regate_candidates(project_dir, driver, database)
+    if task_id is not None:
+        cands = [f for f in cands if f["task_id"] == task_id]
+        if not cands:
+            raise RegateRefused(f"{task_id[:8]} is not a regate candidate: it must be blocked, its last finish "
+                                f"stop_gate_unpassed, its worktree kept and its RESULT committed on its branch")
+    last_regate = {}
+    for e in read_events(project_dir):
+        if e.get("event_type") == EVENT_REGATED:
+            last_regate[(e.get("payload") or {}).get("task_id")] = e["payload"]
+    out = []
+    for fin in cands:
+        tid, wt, branch = fin["task_id"], project_dir / fin["worktree"], fin["branch"]
+        main = cfg["branch"]
+        record = {"task_id": tid, "regate_id": str(uuid.uuid4()), "worktree": fin["worktree"], "branch": branch,
+                  "finish_answered": fin.get("child_session_id"), "by": "explicit" if task_id else "pass"}
+        dirt = WT.dirty_paths(wt, exclude=fin.get("linked") or [])
+        if dirt:
+            record.update(outcome="fail", reason="uncommitted_changes", files=dirt[:20], checks=[], failed=[])
+        else:
+            key = _branch_diff_key(wt, main)
+            if task_id is None and _regate_unchanged(project_dir, cfg, wt, last_regate.get(tid), key):
+                continue
+            main_sha = WT.rev(project_dir, main)
+            rb = WT.rebase(wt, main_sha)
+            record.update(diff_key=key, main=main_sha)
+            if not rb["ok"]:
+                record.update(outcome="fail", reason="rebase_conflict", files=rb["conflicts"],
+                              stderr=rb["stderr"][-500:], checks=[], failed=[])
+            else:
+                text = (wt / fin["source_file"]).read_text(encoding="utf-8", errors="surrogateescape")
+                res = run_task_checks(project_dir, cfg, wt, branch, text, run=run)
+                record.update(outcome="pass" if res["passed"] else "fail", checks=res["checks"],
+                              failed=[{"command": r["command"], "part": r["part"], "outcome": r["outcome"],
+                                       "exit": r.get("exit"), "tail": (r.get("tail") or "")[-300:]}
+                                      for r in res["failed"]],
+                              reason=None if res["passed"] else ("no_checks" if not res["checks"] else "check_failed"))
+        S._emit(project_dir, session_id, EVENT_REGATED, record)
+        out.append(record)
+        if record["outcome"] != "pass":
+            click.echo(f"regate: {tid[:8]} stays blocked ({record['reason']}): "
+                       + ("; ".join(f"`{f['command']}` {f['outcome']} exit {f['exit']}" for f in record["failed"])
+                          or ", ".join(record.get("files") or []) or "-"), err=True)
+            continue
+        S.transition_task(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+                          artifact_id=tid, current_state="blocked", new_state="in_progress", actor=S.ACTOR,
+                          authority="accepted", session_id=session_id)
+        finish = {**fin, "regate": {"regate_id": record["regate_id"],
+                                    "checks": [r["command"] for r in record["checks"]]}}
+        extra = {"stem": wt.name, "branch": branch, "source_file": fin["source_file"], "worktree": fin["worktree"],
+                 "linked": fin.get("linked") or []}
+        name = _task_name(driver, database, tid) or wt.name
+        click.echo(f"regate: {tid[:8]} blocked stop_gate_unpassed; its {len(record['checks'])} check(s) pass in "
+                   f"{fin['worktree']}; merging {branch} (AD-034 ADDENDUM 03)")
+        _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name, extra,
+               lease_cm=nullcontext)
+    return out
