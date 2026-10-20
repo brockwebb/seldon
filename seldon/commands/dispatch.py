@@ -267,6 +267,21 @@ def _unreconciled(project_dir, config, driver, database, done: dict | None) -> l
         return []
 
 
+def _breaker_and_stale(project_dir, config, driver, database, domain_config, session_id, cfg) -> None:
+    """DISP-002 (AD-034 ADDENDUM 02), run by a pass with no session in flight: merge each task blocked by the
+    classifier breaker whose work was green (`remerge_breaker_green`), then remove each kept worktree that holds
+    nothing (`sweep_stale_kept`). A failure of either is reported, not raised, as `_auto_redrive`'s is: the pass that
+    launches the queue must not die on a housekeeping step, and the next pass tries again."""
+    from seldon.commands import dispatch_worktree as W
+    for step, call in (("remerge", lambda: W.remerge_breaker_green(project_dir, config, driver, database,
+                                                                    domain_config, session_id, cfg)),
+                       ("stale kept sweep", lambda: W.sweep_stale_kept(project_dir, driver, database, session_id))):
+        try:
+            call()
+        except Exception as exc:                                        # noqa: BLE001
+            click.echo(f"{step}: NOT done: {type(exc).__name__}: {exc}", err=True)
+
+
 def _auto_redrive(project_dir, driver, database, domain_config, session_id) -> list:
     """Redrive the blocked tasks whose stop was the dispatcher's own defect (AD-038-R2;
     `seldon.core.redrive.AUTO_REDRIVE_REASONS`). Each is printed; a failure is reported, not raised, since
@@ -881,6 +896,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # the `worktree_removed` lines are committed in this pass.
         from seldon.commands import dispatch_worktree as W
         W.sweep(project_dir, session_id)
+        # DISP-002 (AD-034 ADDENDUM 02): green work a breaker trip blocked is merged, and a kept tree that holds
+        # nothing is removed with its branch, before the reconcile so their lines are committed in this pass.
+        _breaker_and_stale(project_dir, config, driver, database, domain_config, session_id, cfg)
         # AD-038-R2: a task blocked by one of the dispatcher's own recorded defects goes back on the
         # queue by itself, before the reconcile so its lines are committed in this pass.
         _auto_redrive(project_dir, driver, database, domain_config, session_id)
@@ -1087,8 +1105,9 @@ def _classifier_reading(project_dir: Path, child_session_id: str, log_path: Path
         with log_path.open("r", encoding="utf-8", errors="replace") as fh:
             fh.seek(offset)
             text = fh.read()
-    return {"blocks": len(blocks),
-            "last_reason": (blocks[-1].get("payload") or {}).get("reason") if blocks else None,
+    reasons = [(b.get("payload") or {}).get("reason") for b in blocks]
+    return {"blocks": len(blocks), "reasons": reasons,
+            "last_reason": reasons[-1] if reasons else None,
             "breaker": QS.CLASSIFIER_BREAKER_TEXT in text}
 
 
@@ -1452,6 +1471,11 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
     if mode:
         cmd += ["--permission-mode", mode]
     args = list(spec["args"])
+    if settings and cfg.get("allow"):
+        # DISP-002 Part B (AD-034 ADDENDUM 02): the command shapes a task may legitimately run, each with the task-file
+        # instruction that needs it beside it in seldon.yaml (`dispatch.allow`). Everything else, secrets writes
+        # included, stays with the auto-mode classifier.
+        settings = {**settings, "permissions": {"allow": [a["rule"] for a in cfg["allow"]]}}
     if settings:
         # One `--settings`: the lock's own keys (AD-035 R6) merged over this launch's.
         i = args.index("--settings")

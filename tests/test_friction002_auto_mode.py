@@ -41,13 +41,21 @@ def _payloads(p, kind):
     return [e["payload"] for e in read_events(p) if e["event_type"] == kind]
 
 
-def test_seldon_launches_its_sessions_in_auto_mode():
-    cfg = D.load_dispatch_config(SELDON_REPO)
-    assert cfg["permission_mode"] == "auto"
+def test_a_project_in_auto_mode_launches_its_sessions_in_auto_mode(tmp_path):
+    p = make_project(tmp_path, dispatch_extra={"permission_mode": "auto"})
+    cfg = D.load_dispatch_config(p)
     spec = {"cli_path": "/x/claude", "args": ["--model", "m", "--settings", "{}"]}
-    cmd = S._launch_cmd(cfg, "p", spec, worktree="t", settings=S._session_settings(SELDON_REPO, cfg))
+    cmd = S._launch_cmd(cfg, "p", spec, worktree="t", settings=S._session_settings(p, cfg))
     assert cmd[cmd.index("--permission-mode") + 1] == "auto"
     assert "bypassPermissions" not in cmd
+
+
+def test_seldon_is_back_on_bypass_permissions_by_the_kill_rule():
+    """Part D step 3's kill rule, applied by DISP-002 (AD-034 ADDENDUM 02 section 5). The classifier hook stays
+    installed, so the per-launch block count keeps being measured for a return to auto mode."""
+    cfg = D.load_dispatch_config(SELDON_REPO)
+    assert cfg["permission_mode"] == "bypassPermissions"
+    assert "PermissionDenied" in S._session_settings(SELDON_REPO, cfg)["hooks"]
 
 
 def test_the_launch_installs_the_classifier_hook(tmp_path):
