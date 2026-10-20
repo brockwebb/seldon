@@ -114,14 +114,14 @@ The verifications ran from this task's worktree, which also exercises section 2 
   that is "no longer loadable". The decision register holds R2's acceptance (`00223`). Searches in squiddy,
   ai-readiness-kg, arnold, icsp_notebook, wintermute and the workbench audit found no rebuild rule and no other
   treatment of an unavailable release.
-- internal receipt: query "release_unavailable rebuild" | repo seldon@0849d1b05da2391c686f303b76426f7c7cef563d | hits docs/design/AD-036_prior_art_receipts_gate.md:80, docs/decisions/register/00223_seldon-ad-036-r2_accept.yaml:1
+- internal receipt: query "release_unavailable rebuild" | repo seldon@0849d1b05da2391c686f303b76426f7c7cef563d | hits docs/decisions/register/00223_seldon-ad-036-r2_accept.yaml:1
 - internal receipt: query "release_unavailable rebuild" | repo squiddy@15a1a1e9bfe93d0edcb99d5ff5bfc39ebe7d9e8e | hits none
 - internal receipt: query "release_unavailable rebuild" | repo ai-readiness-kg@788400fd7046eafb6e7855e7867e389f2c4bf45b | hits none
 - internal receipt: query "release_unavailable rebuild" | repo arnold@f089fc8c79403a5371c823c6c3f2aec30fa90e57 | hits none
 - internal receipt: query "release_unavailable rebuild" | repo icsp_notebook@ccfb76201f842fb968e7abc1a513d5d1aefdb405 | hits none
 - internal receipt: query "release_unavailable rebuild" | repo wintermute@2a78c392f4d998227d2433338ea45aee82c67f1e | hits none
 - internal receipt: query "release_unavailable rebuild" | repo workbench-audit@tree:c03bc86f0e4d7087c6f9cc417ee42ef66f7bc07268d5316448b4344c744b5412 | hits none
-- internal receipt: query "reproducible builds second party re-derives" | repo seldon@0849d1b05da2391c686f303b76426f7c7cef563d | hits docs/design/AD-036_prior_art_receipts_gate.md:80
+- internal receipt: query "reproducible builds second party re-derives" | repo seldon@0849d1b05da2391c686f303b76426f7c7cef563d | hits docs/decisions/register/00223_seldon-ad-036-r2_accept.yaml:1
 - The worktree half (rule 6) was first recorded in `cc_tasks/2026-10-17_MCP-001_every_mcp_tool_runs_the_checkout_in_a_fresh_process_RESULT.md`,
   line 8. `seldon/core/worktree.py` (`primary_checkout`) resolves the primary checkout the same way for the spend
   ledger (AD-034 decision 5).

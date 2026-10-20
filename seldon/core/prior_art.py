@@ -899,11 +899,14 @@ def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:
     out = set()
     for p in paths:
         rp = Path(p).resolve()
-        for r in s.roots:
-            try:
-                out.add((r.name, rp.relative_to(r.path.resolve()).as_posix()))
-            except ValueError:
-                continue
+        # A note in a linked worktree is the same note as its path in the primary checkout, where the roots are
+        # anchored (`corpus_anchor`); without this, a note verified from a worktree was prior art for itself.
+        for cand in {rp, corpus_anchor(rp.parent) / rp.name}:
+            for r in s.roots:
+                try:
+                    out.add((r.name, cand.relative_to(r.path.resolve()).as_posix()))
+                except ValueError:
+                    continue
     return frozenset(out)
 
 

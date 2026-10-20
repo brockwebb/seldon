@@ -222,6 +222,10 @@ def test_a_worktree_resolves_its_corpus_beside_the_primary_checkout(proj):
     assert s.roots[0].path == (proj["tmp"] / "sib").resolve()
     assert s.library_graph == (proj["tmp"] / "nolib").resolve()
     assert s.log == (wt / "state" / "q.jsonl").resolve()
+    # the note being verified, in the worktree, is still left out of the primary-anchored root (QC-001 premise 3)
+    config["prior_art"]["internal_roots"].append({"name": "self", "path": "."})
+    s2 = pa.settings(wt, config)
+    assert ("self", "docs/design/AD-099_x.md") in pa.note_keys(s2, [wt / "docs" / "design" / "AD-099_x.md"])
     assert pa.corpus_anchor(primary) == primary.resolve()
     assert pa.corpus_anchor(proj["tmp"] / "loose") == (proj["tmp"] / "loose").resolve()   # not a git work tree
 
