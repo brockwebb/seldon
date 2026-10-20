@@ -1446,15 +1446,9 @@ def _session_settings(project_dir: Path, cfg: dict) -> dict:
         if timeout:
             h["timeout"] = timeout
         return h
-    settings = {"worktree": {"baseRef": "head"},
-                "hooks": {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
-                          "PermissionDenied": [{"hooks": [hook("classifier-denied")]}]}}
-    if cfg.get("allow"):
-        # DISP-002 Part B (AD-034 ADDENDUM 02): the command shapes a task may legitimately run, each with the task-file
-        # instruction that needs it beside it in seldon.yaml. An allow rule decides before the auto-mode classifier
-        # is asked; everything else, secrets writes included, stays with the classifier.
-        settings["permissions"] = {"allow": [a["rule"] for a in cfg["allow"]]}
-    return settings
+    return {"worktree": {"baseRef": "head"},
+            "hooks": {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
+                      "PermissionDenied": [{"hooks": [hook("classifier-denied")]}]}}
 
 
 def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
@@ -1477,6 +1471,11 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: str | None = None,
     if mode:
         cmd += ["--permission-mode", mode]
     args = list(spec["args"])
+    if settings and cfg.get("allow"):
+        # DISP-002 Part B (AD-034 ADDENDUM 02): the command shapes a task may legitimately run, each with the task-file
+        # instruction that needs it beside it in seldon.yaml (`dispatch.allow`). Everything else, secrets writes
+        # included, stays with the auto-mode classifier.
+        settings = {**settings, "permissions": {"allow": [a["rule"] for a in cfg["allow"]]}}
     if settings:
         # One `--settings`: the lock's own keys (AD-035 R6) merged over this launch's.
         i = args.index("--settings")

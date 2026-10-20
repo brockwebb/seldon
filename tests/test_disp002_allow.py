@@ -27,20 +27,26 @@ from tests.dispatch_scaffold import (
 FIVE = ["Bash(git worktree *)", "Bash(git branch -D *)", "Bash(cp *)", "Bash(pytest *)", "Bash(python -m pytest *)"]
 
 
+SPEC = {"cli_path": "/x/claude", "args": ["--model", "m", "--settings", json.dumps({"switchModelsOnFlag": False})]}
+
+
+def _launched_settings(project_dir) -> dict:
+    """The one `--settings` JSON a launch hands the CLI, built as the dispatcher builds it."""
+    cfg = D.load_dispatch_config(project_dir)
+    cmd = S._launch_cmd(cfg, "p", SPEC, settings=S._session_settings(project_dir, cfg))
+    return json.loads(cmd[cmd.index("--settings") + 1])
+
+
 def test_a_seldon_launch_carries_the_five_allow_rules_and_no_others():
+    launched = _launched_settings(SELDON_REPO)
+    assert launched["permissions"] == {"allow": FIVE}
+    assert launched["switchModelsOnFlag"] is False and "Stop" in launched["hooks"], "merged, not replaced"
     cfg = D.load_dispatch_config(SELDON_REPO)
-    settings = S._session_settings(SELDON_REPO, cfg)
-    assert settings["permissions"] == {"allow": FIVE}
-    spec = {"cli_path": "/x/claude", "args": ["--model", "m", "--settings", json.dumps({"switchModelsOnFlag": False})]}
-    cmd = S._launch_cmd(cfg, "p", spec, worktree="t", settings=settings)
-    launched = json.loads(cmd[cmd.index("--settings") + 1])
-    assert launched["permissions"] == {"allow": FIVE}, "the rules reach the CLI's one --settings"
     assert all(a["instruction"].strip() for a in cfg["allow"]), "each rule carries the instruction that needs it"
 
 
 def test_a_project_without_allow_rules_launches_without_a_permissions_block(tmp_path):
-    p = make_project(tmp_path)
-    assert "permissions" not in S._session_settings(p, D.load_dispatch_config(p))
+    assert "permissions" not in _launched_settings(make_project(tmp_path))
 
 
 @pytest.mark.parametrize("entry", [{"rule": "Bash(cp *)"}, {"rule": "Bash(cp *)", "instruction": " "},
