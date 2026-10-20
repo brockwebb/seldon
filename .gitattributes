@@ -4,3 +4,7 @@
 # duplicated line.
 seldon_events.jsonl merge=union
 governed/ledger/events.jsonl merge=union
+# The prior-art query log (AD-036-R10) is the same kind of file: one fsynced JSON line per query, appended by every
+# branch that runs `seldon prior-art search|verify`. Without union, two such branches conflict on rebase, and a kept
+# branch could never be re-gated (DISP-003R: PA-002's rebase onto DISP-003R conflicted on this file alone).
+state/prior_art_queries.jsonl merge=union
