@@ -39,7 +39,7 @@ import subprocess
 import sys
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 import click
@@ -109,6 +109,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     done = None
     if inplace_claim is None and not dry_run:
         sweep(project_dir, session_id)
+        S._breaker_and_stale(project_dir, config, driver, database, domain_config, session_id, cfg)
         # AD-038-R1: the serial pass's reconcile, before the shared files and before the tree is read.
         done = S._reconcile(project_dir, config, cfg, driver, database)
         _commit_shared(project_dir, cfg)
@@ -550,7 +551,12 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     click.echo(f"session exit={code} result_committed={committed} graph={graph_state} "
                f"model={receipt['served']} (requested {receipt['requested']}) "
                f"classifier_blocks={classifier['blocks']}")
-    if classifier["breaker"]:
+    # DISP-002 (AD-034 ADDENDUM 02): the breaker does not veto green work. A trip whose session exited 0 with its
+    # RESULT committed and its Stop gate passed goes on to the merge, carrying the denials; only an unpassed one stops.
+    breaker_green = classifier["breaker"] and is_green(code, committed, gate)
+    if breaker_green:
+        finish["breaker"] = breaker_record(classifier["blocks"], classifier["reasons"])
+    elif classifier["breaker"]:
         S._classifier_stop(project_dir, session_id, task_id, classifier)
     if db_failure:
         with lease_cm():
@@ -560,7 +566,7 @@ def finish_session(project_dir, config, driver, database, domain_config, session
         return
     name = name or _task_name(driver, database, task_id) or stem
     try:
-        if classifier["breaker"]:
+        if classifier["breaker"] and not breaker_green:
             with lease_cm():
                 _finish_unmerged(project_dir, config, driver, database, domain_config,
                                  session_id, cfg, finish, name, "classifier_breaker")
@@ -804,7 +810,8 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
                    f"{', '.join(merge['undeclared_writes'])}", err=True)
     click.echo(f"merged {task_id[:8]} {extra['branch']} at {merge['commit'][:8]} "
                f"(attempt {merge['attempts']}, regated={merge['regated']})")
-    S._notify(project_dir, session_id, cfg, done, name, outcome="merged")
+    S._notify(project_dir, session_id, cfg, done, name,
+              outcome=BREAKER_MERGED if finish.get("breaker") else "merged")
     # FRICTION-002 Part B: the merged task's worktree is removed by the sweep, which keeps the branch.
     sweep(project_dir, session_id)
     S._record_and_push(project_dir, config, cfg)
@@ -961,3 +968,133 @@ def sweep(project_dir: Path, session_id=None) -> list:
         click.echo(f"sweep: removed {rel} (branch {branch} kept)")
         removed.append(record)
     return removed
+
+
+#: Task states in which a kept worktree no longer evidences an open stop (AD-034 ADDENDUM 02, DISP-002 Part B): the
+#: task was redriven (it will run again in a new tree) or ended. `blocked` and `in_progress` keep their tree.
+STALE_KEPT_STATES = ("proposed", "accepted", "superseded", "withdrawn", "completed")
+#: Of those, the states in which the task will never run again, so an untracked file in its tree is the only copy of
+#: something nothing will ask for; it is named in the record and removed with the tree. In a redriven task's tree an
+#: untracked file keeps the tree.
+TERMINAL_KEPT_STATES = ("superseded", "withdrawn", "completed")
+
+
+def sweep_stale_kept(project_dir: Path, driver, database: str, session_id=None) -> list:
+    """Remove a KEPT worktree that holds nothing, and delete its branch. Returns what was removed.
+
+    DISP-002 Part B step 2 (AD-034 ADDENDUM 02). A task that ended unmerged keeps its tree and branch as evidence for
+    the operator (`_record_kept`). Once the task is redriven or ended (`STALE_KEPT_STATES`) and its branch carries
+    no commit beyond main and no modified tracked file, the tree is evidence of nothing and only blocks a relaunch
+    on the same name. Such a tree is removed and its branch deleted with `git branch -d`, which refuses a branch main
+    does not contain, so no commit can be lost. Untracked files are allowed only for a terminal task and are named
+    in the `worktree_removed` record. Before this, three such trees (RECALL-001, MCP-001, DISP-001) waited on an
+    operator because a dispatched session's classifier refuses `git worktree remove`.
+    """
+    from seldon.core.events import read_events
+    project_dir = Path(project_dir)
+    kept, merged = {}, set()
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == D.EVENT_WORKTREE_KEPT and p.get("worktree"):
+            kept[p["worktree"]] = p
+        elif e.get("event_type") == D.EVENT_FINISHED and p.get("outcome") == "merged" and p.get("worktree"):
+            merged.add(p["worktree"])
+    main = D.load_dispatch_config(project_dir)["branch"]
+    removed = []
+    for rel, p in kept.items():
+        wt, branch = project_dir / rel, p.get("branch")
+        if rel in merged or not wt.exists() or not branch or not p.get("task_id"):
+            continue
+        state = S._state_of(driver, database, p["task_id"])
+        if state not in STALE_KEPT_STATES:
+            continue
+        ahead = WT.git(project_dir, "rev-list", "--count", f"{main}..{branch}")
+        if ahead.returncode != 0 or ahead.stdout.strip() != "0":
+            click.echo(f"sweep: kept {rel} stays ({state}; branch {branch} "
+                       f"{'unreadable' if ahead.returncode else ahead.stdout.strip() + ' commit(s) beyond ' + main})",
+                       err=True)
+            continue
+        status = [ln for ln in WT.git(wt, "status", "--porcelain").stdout.split("\n") if ln.strip()]
+        tracked = [ln[3:] for ln in status if not ln.startswith("??")]
+        untracked = [ln[3:] for ln in status if ln.startswith("??")]
+        if tracked or (untracked and state not in TERMINAL_KEPT_STATES):
+            click.echo(f"sweep: kept {rel} stays ({state}; "
+                       f"{'modified: ' + ', '.join(tracked[:5]) if tracked else 'untracked: ' + ', '.join(untracked[:5])})",
+                       err=True)
+            continue
+        ignored = WT.ignored_paths(wt)
+        out = WT.remove(project_dir, wt)
+        if not out["worktree_removed"]:
+            click.echo(f"sweep: kept {rel} NOT removed: {out['stderr']}", err=True)
+            continue
+        deleted = WT.git(project_dir, "branch", "-d", branch)
+        record = {"task_id": p["task_id"], "worktree": rel, "branch": branch, "reason": "stale_kept",
+                  "task_state": state, "branch_kept": deleted.returncode != 0,
+                  "branch_delete_error": (deleted.stderr or deleted.stdout).strip()[-300:] if deleted.returncode else None,
+                  "discarded_untracked": untracked, "discarded_ignored": ignored}
+        S._emit(project_dir, session_id, D.EVENT_WORKTREE_REMOVED, record)
+        click.echo(f"sweep: removed kept {rel} ({state}; branch {branch} "
+                   f"{'kept: ' + record['branch_delete_error'] if record['branch_kept'] else 'deleted'})")
+        removed.append(record)
+    return removed
+
+
+# ====================================================== the breaker does not veto green (DISP-002, AD-034 ADDENDUM 02)
+
+#: The notification outcome, and `dispatch_finished.breaker.outcome`, of green work merged over a breaker trip.
+BREAKER_MERGED = "breaker_tripped_merged"
+
+
+def is_green(exit_code, result_committed, gate: dict) -> bool:
+    """The session's own evidence that its work is done: exit 0, its RESULT committed on the branch, and a Stop gate
+    that RAN and passed. A gate that never ran (no Part declared) is not evidence here, though it lets an ordinary
+    finish through: the breaker's veto is lifted only by a pass on the record."""
+    return exit_code == 0 and bool(result_committed) and (gate or {}).get("verdict") == "pass"
+
+
+def breaker_record(blocks, reasons) -> dict:
+    return {"outcome": BREAKER_MERGED, "blocks": blocks, "denials": list(reasons or [])}
+
+
+def remerge_breaker_green(project_dir, config, driver, database, domain_config, session_id, cfg) -> list:
+    """Apply the ruling to a finish recorded before it: merge a task blocked as `classifier_breaker` with green work.
+
+    A task qualifies when it is `blocked`, its last `dispatch_finished` is a worktree finish with outcome
+    `classifier_breaker` that `is_green`, and its worktree is still on disk. It is walked `blocked -> in_progress`
+    and handed to `_merge`, which rebases, re-gates when main changed a file it changed, fast-forwards, completes and
+    sweeps, or blocks it again with a `merge_blocked` Issue. Either way a new `dispatch_finished` is written, so a
+    task is reconsidered once. A task redriven in the meantime (`accepted`) is left to its relaunch. Called by a pass
+    with the pass lease held and no session in flight. Returns the task ids attempted.
+    """
+    from seldon.core.events import read_events
+    events = read_events(project_dir)
+    last = {}
+    for e in events:
+        p = e.get("payload") or {}
+        if e.get("event_type") == D.EVENT_FINISHED and p.get("task_id"):
+            last[p["task_id"]] = p
+    tried = []
+    for task_id, fin in last.items():
+        if fin.get("outcome") != "classifier_breaker" or fin.get("mode") != "worktree" or not fin.get("worktree"):
+            continue
+        if not is_green(fin.get("exit_code"), fin.get("result_present"), fin.get("stop_gate")):
+            continue
+        wt = Path(project_dir) / fin["worktree"]
+        if not wt.exists() or S._state_of(driver, database, task_id) != "blocked":
+            continue
+        reasons = [(e.get("payload") or {}).get("reason") for e in events
+                   if e.get("event_type") == S.QS.EVENT_CLASSIFIER_BLOCK
+                   and (e.get("payload") or {}).get("child_session_id") == fin.get("child_session_id")]
+        S.transition_task(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+                          artifact_id=task_id, current_state="blocked", new_state="in_progress", actor=S.ACTOR,
+                          authority="accepted", session_id=session_id)
+        finish = {**fin, "breaker": {**breaker_record(fin.get("classifier_blocks"), reasons), "remerged": True}}
+        extra = {"stem": wt.name, "branch": fin["branch"], "source_file": fin["source_file"],
+                 "worktree": fin["worktree"], "linked": fin.get("linked") or []}
+        name = _task_name(driver, database, task_id) or wt.name
+        click.echo(f"remerge: {task_id[:8]} blocked by the classifier breaker with green work; merging "
+                   f"{fin['branch']} (AD-034 ADDENDUM 02)")
+        _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name, extra,
+               lease_cm=nullcontext)
+        tried.append(task_id)
+    return tried

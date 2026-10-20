@@ -168,6 +168,28 @@ dispatch:
   # model come from seldon's model lock for the task's `**Model:**` role or `primary` (AD-035 R3),
   # never from this block.
   permission_mode: auto
+  # DISP-002 Part B (AD-034 ADDENDUM 02): the launch's `permissions.allow`, decided before the classifier is asked.
+  # Exactly the command classes the classifier refused against work a task file ordered (DISP-001R's three blocks),
+  # each with the instruction that ordered it. Nothing else: a secrets write stays with the classifier (SEC-001R's
+  # two blocks were right). Adding a rule needs its instruction quoted here; the loader refuses one without it.
+  allow:
+    - rule: Bash(git worktree *)
+      instruction: "DISP-002 Part B step 2: Remove the three empty kept worktrees and branches the classifier refused in DISP-001R (RECALL-001, MCP-001, DISP-001; 0 commits beyond main each)"
+    - rule: Bash(git branch -D *)
+      instruction: "DISP-001R RESULT item 7: `git worktree unlock`/`remove --force` each tree, then `git branch -D` each branch"
+    - rule: Bash(cp *)
+      instruction: "DISP-002, the measurement: DISP-001R's block of a plain `cp` out of a kept worktree, preserving DISP-001's untracked test file before its tree was removed"
+    - rule: Bash(pytest *)
+      instruction: "CLAUDE.md (engineering standards) section 5: Run the full suite before pushing. `python -m pytest tests/ -v` is not optional."
+    - rule: Bash(python -m pytest *)
+      instruction: "seldon CLAUDE.md, Environment: Run the suite via python-dotenv: `python -m dotenv -f .env run -- python -m pytest tests/ -v`"
+  # The re-gate (AD-034 decision 3): run in the task's worktree when main changed a file the task changed, before the
+  # fast-forward. Without one such a task is blocked `regate_unavailable`. DISP-002 Part A step 2 needs it: DISP-001R's
+  # branch is merged over main's later changes to the dispatcher, and the task orders the full suite on that merge.
+  # The worktree's own code (PYTHONPATH=.) is what is tested, with the primary's credentials (.env is gitignored).
+  gate_command: >-
+    python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
+    -p no:cacheprovider
   stop_file: .seldon/DISPATCH_STOP
   # One instance, by flock, with an identified holder; reaped only by the operator, never by age.
   lease_file: .seldon/dispatch.lock

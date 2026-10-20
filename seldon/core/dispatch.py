@@ -642,6 +642,7 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.disk_need_factor must be a number of at least 1 (the launch's measured footprint is "
             f"multiplied by it), got {factor!r}")
     block["disk_need_factor"] = factor
+    block["allow"] = _load_allow(block.get("allow"))
     _load_parallel_config(block)
     # QC-002: the stations' block, validated at load like every other key, so a misspelt ceiling refuses here.
     from seldon.core import stations as S
@@ -650,6 +651,31 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     except S.StationsConfigError as exc:
         raise DispatchConfigError(str(exc)) from exc
     return block
+
+
+#: The shape of one `dispatch.allow` rule: a Claude Code permission rule for the Bash tool with a non-empty pattern.
+_ALLOW_RULE_RE = re.compile(r"^Bash\([^()]+\)$")
+
+
+def _load_allow(value) -> list:
+    """`dispatch.allow` (DISP-002 Part B, AD-034 ADDENDUM 02): the `permissions.allow` rules a dispatched session is
+    launched with. Optional, default none. Each entry is `{rule, instruction}`: a Bash permission rule and the
+    task-file instruction that needs it, quoted, so the reason a session may run a command without the classifier is
+    in the file an operator reads. An entry without its instruction refuses at load."""
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise DispatchConfigError(f"dispatch.allow must be a list of {{rule, instruction}} entries, got {value!r}")
+    out = []
+    for entry in value:
+        rule = entry.get("rule") if isinstance(entry, dict) else None
+        why = entry.get("instruction") if isinstance(entry, dict) else None
+        if not isinstance(rule, str) or not _ALLOW_RULE_RE.match(rule):
+            raise DispatchConfigError(f"dispatch.allow rule must look like `Bash(<pattern>)`, got {entry!r}")
+        if not isinstance(why, str) or not why.strip():
+            raise DispatchConfigError(f"dispatch.allow rule {rule!r} must quote the task instruction that needs it")
+        out.append({"rule": rule, "instruction": why})
+    return out
 
 
 #: `dispatch.max_parallel` when absent: one task at a time, the pre-SEL-004 dispatcher, which
