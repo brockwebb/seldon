@@ -74,7 +74,9 @@ huddle (QC-002 Part A, the first one recorded).
 - **Auto mode** (seldon). Sessions run with `--permission-mode auto`. Each classifier block is a `classifier_block`
   record (the `PermissionDenied` hook). The CLI's breaker (3 consecutive or 20 total) aborts the session, and the
   dispatcher records a `line` stop of station `classifier` with the classifier's reason. Answer it with
-  `seldon dispatch redrive <task>`.
+  `seldon dispatch redrive <task>`. Since DISP-002 (AD-034 ADDENDUM 02): a breaker trip whose session exited 0
+  with its RESULT committed and its Stop gate passed is merged (`breaker_tripped_merged`), not stopped; launches
+  carry `dispatch.allow`'s rules; and seldon itself is back on `bypassPermissions` by the kill rule (section 5).
 
 ## Where the dispatcher reads the records
 

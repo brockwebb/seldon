@@ -167,7 +167,12 @@ dispatch:
   # block per task, an Issue records it and this goes back to `bypassPermissions`. The CLI and
   # model come from seldon's model lock for the task's `**Model:**` role or `primary` (AD-035 R3),
   # never from this block.
-  permission_mode: auto
+  # KILL RULE APPLIED 2026-10-19 (DISP-002, AD-034 ADDENDUM 02 section 5): the fourth task under auto mode, DISP-002
+  # itself, drew four refusals of read-only commands (`git diff`, `grep`, `ls`), a false-positive class the allow
+  # rules below do not cover, after DISP-001R's three. DISP-002's task file: "If a fourth task under auto mode shows
+  # a new false positive class, the kill rule applies as written." Back to `bypassPermissions`. The allow rules and
+  # the classifier hooks stay, so returning to `auto` is this one line.
+  permission_mode: bypassPermissions
   # DISP-002 Part B (AD-034 ADDENDUM 02): the launch's `permissions.allow`, decided before the classifier is asked.
   # Exactly the command classes the classifier refused against work a task file ordered (DISP-001R's three blocks),
   # each with the instruction that ordered it. Nothing else: a secrets write stays with the classifier (SEC-001R's
