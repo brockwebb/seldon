@@ -90,6 +90,11 @@ class StubLibrary:
         return {"query": query, "release": "lib.json", "sha256": self.sha, "rows": self.rows,
                 "hits": []}
 
+    def search_release(self, query, release, sha256, k=None):
+        # No release but the served one is on this stub's disk (PA-002: only an absent release is unavailable).
+        raise pa.PriorArtError(f"{pa.RELEASE_UNAVAILABLE}: release {release} is not on disk: "
+                               f"looked for /nonexistent/{release}")
+
 
 def _settings(proj):
     return pa.settings(proj["dir"], proj["config"])

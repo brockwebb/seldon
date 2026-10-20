@@ -218,6 +218,31 @@ def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional
     return merged, target.parent, target
 
 
+def corpus_anchor(definer_dir: Path) -> Path:
+    """The directory a block's relative CORPUS paths resolve against: `definer_dir`, or, when it lies in a linked git
+    worktree, the same directory in that repository's primary checkout (AD-036 ADDENDUM 06).
+
+    The corpus is the machine's: `../squiddy` in seldon's block names the repository beside the primary checkout.
+    Resolved inside a dispatched session's worktree (`<primary>/.claude/worktrees/<name>`) it named
+    `.claude/worktrees/squiddy`, which does not exist, so every sibling receipt and every library receipt verified
+    from a worktree failed as `release_unavailable` (MCP-001 RESULT, 2026-10-17). A worktree shares the primary's
+    object store, so a receipt's commit is readable from either; only the on-disk layout differs. A directory that is
+    not in a git work tree, or is the primary itself, is returned unchanged.
+    """
+    definer_dir = Path(definer_dir).resolve()
+    top = _git(definer_dir, "rev-parse", "--show-toplevel")
+    common = _git(definer_dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if top.returncode != 0 or common.returncode != 0:
+        return definer_dir
+    common_dir = Path(common.stdout.decode().strip()).resolve()
+    if common_dir.name != ".git":
+        return definer_dir            # a bare repository's worktree: no primary checkout to anchor at
+    primary, here = common_dir.parent, Path(top.stdout.decode().strip()).resolve()
+    if here == primary:
+        return definer_dir
+    return primary / definer_dir.relative_to(here)
+
+
 def settings(project_dir: Path, config: dict) -> Settings:
     """The `prior_art:` block of seldon.yaml, validated. Every key is required: a missing one is a
     configuration error named here, never a default the reader cannot see.
@@ -229,9 +254,14 @@ def settings(project_dir: Path, config: dict) -> Settings:
     defining file's directory; the PROJECT'S OWN STATE (log, gate.design_dir, gate.baseline,
     gate.verdict_ledger_without_governed) resolves against the project using the block. For a
     block a project defines itself the two directories are the same.
+
+    A defining file inside a linked git worktree anchors its corpus at the PRIMARY checkout
+    (`corpus_anchor`, AD-036 ADDENDUM 06): `../squiddy` names the primary's sibling, and a
+    dispatched session's worktree under `.claude/worktrees/` has no siblings.
     """
     project_dir = Path(project_dir).resolve()
     block, definer_dir, defined_in = resolve_block(project_dir, config)
+    corpus_dir = corpus_anchor(definer_dir)
     where = f"{defined_in} prior_art" if defined_in else "seldon.yaml prior_art"
     missing = [k for k in _REQUIRED if k not in block]
     if missing:
@@ -254,7 +284,7 @@ def settings(project_dir: Path, config: dict) -> Settings:
     for row in block["internal_roots"]:
         if not isinstance(row, dict) or not row.get("name") or not row.get("path"):
             raise PriorArtError(f"prior_art.internal_roots row {row!r} needs `name` and `path`")
-        roots.append(Root(name=str(row["name"]), path=at(definer_dir, row["path"]),
+        roots.append(Root(name=str(row["name"]), path=at(corpus_dir, row["path"]),
                           include=tuple(row.get("include") or internal["default_include"])))
     names = [r.name for r in roots]
     if len(set(names)) != len(names):
@@ -264,7 +294,7 @@ def settings(project_dir: Path, config: dict) -> Settings:
                     suffixes=tuple(internal["suffixes"]), top_n=int(internal["top_n"]),
                     max_file_bytes=int(internal["max_file_bytes"]),
                     k1=float(internal["bm25"]["k1"]), b=float(internal["bm25"]["b"]),
-                    library_graph=at(definer_dir, library["graph"]), library_k=int(library["k"]),
+                    library_graph=at(corpus_dir, library["graph"]), library_k=int(library["k"]),
                     design_dir=str(gate["design_dir"]), baseline=at(project_dir, gate["baseline"]),
                     exempt_globs=tuple(gate["exempt_globs"]),
                     verdict_ledger_without_governed=at(project_dir,
@@ -576,49 +606,291 @@ class Internal:
         return out
 
 
+#: The library graph's export register: one row per release, carrying the first 16 hex of the release's sha256.
+#: Its name and place are the kit's (`squiddy.registers` writes it, `squiddy.gates.derive_position` reads it), so
+#: this is a file-format coupling, as the governed ledger is (AD-030-R10), not a tunable.
+EXPORT_REGISTER = "EXPORT_VERSIONS.md"
+#: The corpus checkpoint and the dense shard directory inside the index work directory, as `squiddy.index.build`
+#: names them (`wd / "corpus_rows.jsonl"`, `wd / "dense"`). The same coupling as EXPORT_REGISTER.
+CORPUS_ROWS = "corpus_rows.jsonl"
+DENSE_DIR = "dense"
+
+
 class Library:
-    """The library arm: squiddy's served `search` verb, in-process (AD-036-R3)."""
+    """The library arm: squiddy's served `search` verb, in-process (AD-036-R3), and any older release a receipt names,
+    rebuilt from the library's own checkpoints (AD-036 ADDENDUM 06)."""
 
     def __init__(self, s: Settings):
         self.s = s
         self._verbs = None
+        self._graph = None
+        self._qenc = None
+        self._digests: dict = {}
+        #: The one rebuilt older release held open: `(sha256, index, info, TemporaryDirectory)`. One at a time,
+        #: because each holds a dense matrix the size of the served one; `_verify_library` orders its work by release.
+        self._rebuilt = None
 
-    def verbs(self):
-        if self._verbs is None:
-            # The library search is local; nothing here may reach a network (PA-001: Network none).
-            os.environ.setdefault("HF_HUB_OFFLINE", "1")
-            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-            # The internal arm forks git after the encoder has loaded; say so up front rather than
-            # let the tokenizer library warn on every fork.
-            os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    @staticmethod
+    def _offline() -> None:
+        # The library search is local; nothing here may reach a network (PA-001: Network none).
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+        # The internal arm forks git after the encoder has loaded; say so up front rather than
+        # let the tokenizer library warn on every fork.
+        os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
+    def graph(self):
+        """The library graph's squiddy `Graph`, loaded once."""
+        if self._graph is None:
+            self._offline()
             try:
                 from squiddy.config import load_graph
-                from squiddy.serve import Verbs
             except ImportError as exc:
                 raise PriorArtError(f"the library arm needs squiddy installed in this interpreter "
                                     f"(pip install -e <squiddy> --no-deps): {exc}") from exc
             if not self.s.library_graph.is_dir():
                 raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library graph "
                                     f"{self.s.library_graph} does not exist")
-            self._verbs = Verbs(load_graph(str(self.s.library_graph)))
+            self._graph = load_graph(str(self.s.library_graph))
+        return self._graph
+
+    def verbs(self):
+        if self._verbs is None:
+            graph = self.graph()
+            from squiddy.serve import Verbs
+            self._verbs = Verbs(graph)
+            # One query encoder for the served index and any rebuilt one (`Verbs` reads this attribute when it opens
+            # its index): each is the pinned model, so two would only double the memory.
+            self._verbs._query_encoder = self._encoder
         return self._verbs
 
+    def _encoder(self, q: str):
+        if self._qenc is None:
+            from squiddy import index as ix
+            self._qenc = ix.query_encoder(ix.load_config(self.graph())["encoder"])
+        return self._qenc(q)
+
+    @staticmethod
+    def _rows(hits: list) -> list:
+        return [r["receipt"]["row_id"] for h in hits for r in h["rows"]
+                if (r.get("receipt") or {}).get("row_id")]
+
     def search(self, query: str, k: int | None = None) -> dict:
+        """The served release's top-k: the receipt `search --library` prints, and verification's current-release
+        path."""
         terms_of(query)
         res = self.verbs().search(query, k=k or self.s.library_k)
         if res.get("error"):
             raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library search failed: {res['error']}")
         rel = (res.get("index") or {}).get("release") or {}
-        rows = [r["receipt"]["row_id"] for h in res["hits"] for r in h["rows"]
-                if (r.get("receipt") or {}).get("row_id")]
         return {"query": query, "release": Path(str(rel.get("export"))).name,
-                "sha256": rel.get("sha256"), "rows": rows, "hits": res["hits"]}
+                "sha256": rel.get("sha256"), "rows": self._rows(res["hits"]), "hits": res["hits"],
+                "index": "served"}
+
+    def exports_dir(self) -> Path:
+        """Where the library keeps its release exports (the graph's `exports_dir`)."""
+        return Path(self.graph().path("exports_dir"))
+
+    def export_path(self, release: str) -> Path:
+        """The export file a receipt's `release` names. A release is a file NAME in the exports directory; a name
+        carrying a path is refused rather than followed out of it."""
+        if not release or Path(release).name != release or release in (".", ".."):
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release {release!r} is not a file name in the library's "
+                                f"exports directory")
+        return self.exports_dir() / release
+
+    def _digest(self, path: Path) -> str:
+        st = path.stat()
+        key = (str(path), st.st_size, st.st_mtime_ns)
+        if key not in self._digests:
+            self._digests[key] = _sha_file(path)
+        return self._digests[key]
+
+    def search_release(self, query: str, release: str, sha256: str, k: int | None = None) -> dict:
+        """The top-k of the release a receipt NAMES (AD-036-R2, R3; ADDENDUM 06): its export must be on disk and hash
+        to `sha256`; its index is rebuilt in a temporary directory (`rebuild_release`) and queried exactly as the
+        served one is.
+
+        Raises:
+            PriorArtError: `release_unavailable`, naming the path looked for, when the export is absent or its
+                bytes do not hash to `sha256`, or when the release cannot be rebuilt (the reason named).
+        """
+        terms_of(query)
+        path = self.export_path(release)
+        if not path.is_file():
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release {release} is not on disk: looked for {path}")
+        got = self._digest(path)
+        if got != sha256:
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: {path} hashes to sha256:{got[:12]}..., not the "
+                                f"sha256:{sha256[:12]}... the receipt names")
+        idx, info = self._release_index(release, sha256, path)
+        res = idx.search(query, k or self.s.library_k)
+        return {"query": query, "release": release, "sha256": sha256, "rows": self._rows(res["hits"]),
+                "hits": res["hits"], "index": "rebuilt", "export_path": str(path),
+                "commit": info.get("commit"), "index_rows": info.get("rows")}
+
+    def _release_index(self, release: str, sha256: str, path: Path):
+        """`(index, info)` for an older release, rebuilt once and held until another release is asked for."""
+        if self._rebuilt and self._rebuilt[0] == sha256:
+            return self._rebuilt[1], self._rebuilt[2]
+        self.close()
+        import tempfile
+        tmp = tempfile.TemporaryDirectory(prefix="prior-art-release-")
+        try:
+            idx, info = self._rebuild(sha256, Path(tmp.name))
+        except BaseException:
+            tmp.cleanup()
+            raise
+        self._rebuilt = (sha256, idx, info, tmp)
+        return idx, info
+
+    def _rebuild(self, sha256: str, work: Path):
+        """`(index, info)`: the release rebuilt in `work` and opened for query."""
+        info = rebuild_release(self.graph(), sha256, work)
+        return open_rebuilt(info, self._encoder), info
+
+    def close(self) -> None:
+        """Drop the rebuilt release and its temporary directory."""
+        if self._rebuilt:
+            self._rebuilt[3].cleanup()
+            self._rebuilt = None
 
     @staticmethod
     def receipt(result: dict) -> str:
         rows = ", ".join(result["rows"]) or "none"
         return (f'- library receipt: query "{result["query"]}" | release {result["release"]} '
                 f'sha256:{result["sha256"]} | rows {rows}')
+
+
+def _sha_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for block in iter(lambda: fh.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def release_commit(register: Path, sha256: str) -> str | None:
+    """The first commit of the register's repository whose `register` carries the release's digest (its first 16 hex
+    in backticks, as the kit writes a row), or None.
+
+    That commit records the release, so it holds the corpus manifest the release's index was built from: on
+    2026-10-19 the commit recording `20261017_sq018_02` held a `corpus/manifest.yaml` hashing to exactly the sha256
+    the served index manifest records (AD-036 ADDENDUM 06)."""
+    register = Path(register).resolve()
+    r = _git(register.parent, "log", "--reverse", "--format=%H", f"-S`{sha256[:16]}`", "--", register.name)
+    if r.returncode != 0:
+        return None
+    lines = r.stdout.decode().split()
+    return lines[0] if lines else None
+
+
+def rebuild_release(graph, sha256: str, work: Path) -> dict:
+    """Rebuild the library index of the release whose export hashes to `sha256`, in `work`, encoding nothing.
+
+    The served index is rebuilt in place at every release, so an older release's index survives only as its inputs,
+    and the kit keeps every one of them (AD-036 ADDENDUM 06):
+
+    1. the corpus manifest, from the commit that recorded the release (`release_commit`);
+    2. the rows, from the index's corpus checkpoint, which keeps one line per (unit, content sha256, rule) and never
+       drops one (`squiddy.index.iter_rows`; a unit it lacks is a refusal, not a gap);
+    3. the database, built by the kit's own `build_db` into `work`;
+    4. the vectors, from the dense shard log, which never deletes a shard: for each entry, the shard KEYED under the
+       key the kit computes from that entry's rows at that release (`squiddy.index.unit_key`), live or retired,
+       its bytes and row ids verified as the kit verifies them.
+
+    The query-time configuration is today's `index:` block, which must equal the block at the release's commit;
+    otherwise the rebuilt index would rank under parameters the receipt never ran with.
+
+    Returns:
+        `{commit, db, dense_dir, shards, rows, row_fingerprint, shard_set_sha256, cfg, release_sha256}`, which
+        `open_rebuilt` opens for query.
+
+    Raises:
+        PriorArtError: `release_unavailable`, naming what is missing.
+    """
+    from squiddy import index as ix
+    unavailable = f"{RELEASE_UNAVAILABLE}: release sha256:{sha256[:12]}... cannot be rebuilt"
+    try:
+        cfg = ix.load_config(graph)
+    except ix.NotApplicable as exc:
+        raise PriorArtError(f"{unavailable}: the library declares no index ({exc})") from exc
+    if ix.units_source(cfg) == ix.UNITS_LEDGER_NODES:
+        raise PriorArtError(f"{unavailable}: an index over ledger nodes depends on the ledger at the release, which "
+                            f"this rebuild does not replay")
+    register = Path(graph.path("exports_dir")) / EXPORT_REGISTER
+    commit = release_commit(register, sha256)
+    if commit is None:
+        raise PriorArtError(f"{unavailable}: no commit of {register} carries `{sha256[:16]}`")
+    top = _git(register.parent, "rev-parse", "--show-toplevel")
+    repo = Path(top.stdout.decode().strip()).resolve()
+
+    def at_commit(p: Path) -> str:
+        rel = Path(p).resolve().relative_to(repo).as_posix()
+        r = _git(repo, "show", f"{commit}:{rel}")
+        if r.returncode != 0:
+            raise PriorArtError(f"{unavailable}: {rel} is not in commit {commit[:12]}: "
+                                f"{r.stderr.decode().strip()}")
+        return r.stdout.decode("utf-8")
+
+    control = Path(ix.control_path(graph))
+    then = (yaml.safe_load(at_commit(control)) or {}).get("index")
+    now = (yaml.safe_load(control.read_text(encoding="utf-8")) or {}).get("index")
+    if then != now:
+        raise PriorArtError(f"{unavailable}: the `index:` block of {control} at {commit[:12]} differs from today's; "
+                            f"the release ranked under other parameters")
+    manifest = (yaml.safe_load(at_commit(graph.manifest_path)) or {}).get("documents")
+    if not isinstance(manifest, list):
+        raise PriorArtError(f"{unavailable}: the corpus manifest at {commit[:12]} has no `documents` list")
+    stage = ix.in_graph_stage(graph)
+    wd = ix.work_dir(graph, cfg)
+    try:
+        rows = list(ix.iter_rows(wd / CORPUS_ROWS, manifest, ix.meta_renderer(cfg), stage, None))
+    except SystemExit as exc:          # the kit's refusal: a unit of that release has no checkpointed rows
+        raise PriorArtError(f"{unavailable}: {exc}") from exc
+    db = Path(work) / "corpus.db"
+    built = ix.build_db(rows, db)
+    del rows
+    enc, dense = cfg["encoder"], cfg["dense"]
+    text_sha = {e["id"]: (e["text_sha256"] if ix.acquired(e) else None) for e in manifest if ix.indexed(e, stage)}
+    ddir = wd / DENSE_DIR
+    log = ddir / ix.SHARD_LOG
+    if not log.is_file():
+        raise PriorArtError(f"{unavailable}: no dense shard log at {log}")
+    keyed = {(ev["entry"], ev["key"]): ev for ev in ix.read_jsonl(log) if ev.get("event") == "keyed"}
+    shards = []
+    for entry, erows in sorted(ix.unit_rows(db).items()):
+        key = ix.unit_key(entry, text_sha.get(entry), erows, enc, dense["pad_to"])
+        rec = keyed.get((entry, key))
+        if rec is None:
+            raise PriorArtError(f"{unavailable}: entry {entry} has no dense shard keyed {key[:12]} in {log}")
+        p = ddir / rec["npy"]
+        if not p.is_file() or _sha_file(p) != rec["npy_sha256"]:
+            raise PriorArtError(f"{unavailable}: dense shard {p} is missing or does not hash to its keyed line")
+        want = [row for _rid, row, _t in erows]
+        if json.loads((ddir / rec["ids"]).read_text(encoding="utf-8")) != want:
+            raise PriorArtError(f"{unavailable}: dense shard {p}: its row ids are not the release's rows for {entry}")
+        shards.append({**rec, "row_ids": want})
+    return {"commit": commit, "db": str(db), "dense_dir": str(ddir), "shards": shards, "rows": built["rows"],
+            "row_fingerprint": ix.row_fingerprint(db), "shard_set_sha256": ix.shard_set_sha256(shards),
+            "cfg": cfg, "release_sha256": sha256}
+
+
+def open_rebuilt(info: dict, query_encoder) -> object:
+    """A rebuilt release (`rebuild_release`) opened for query through the kit's own `Index`: the served query path,
+    line for line."""
+    import numpy as np
+    from squiddy import index as ix
+    ddir = Path(info["dense_dir"])
+    parts, ids = [], []
+    for s in info["shards"]:
+        parts.append(np.load(ddir / s["npy"]))
+        ids.extend(s["row_ids"])
+    dim = int(info["cfg"]["encoder"]["dimension"])
+    matrix = np.concatenate(parts, axis=0) if parts else np.zeros((0, dim), dtype="float32")
+    man = {"rule": ix.INDEX_RULE, "release": {"sha256": info["release_sha256"], "rebuilt_from": info["commit"]},
+           "rows": info["rows"]}
+    return ix.Index(Path(info["db"]), (ids, matrix), info["cfg"], query_encoder, man)
 
 
 def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:
@@ -1041,6 +1313,7 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
     if not note.is_file():
         raise PriorArtError(f"no such note: {note}")
     internal = internal or Internal(s)
+    owned = library is None
     library = library or Library(s)
     files = [note] + (addenda_of(note) if include_addenda else [])
     parsed = [parse_note(f, _rel(s, f)) for f in files]
@@ -1078,7 +1351,11 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
     for r in receipts:
         if r.error:
             r.status, r.detail = MALFORMED, r.error
-    _verify_library([r for r in receipts if r.kind == "library" and not r.status], s, library)
+    try:
+        _verify_library([r for r in receipts if r.kind == "library" and not r.status], s, library)
+    finally:
+        if owned:
+            library.close()       # a rebuilt release's temporary index goes with the Library that built it
     _verify_internal([r for r in receipts if r.kind == "internal" and not r.status], s, internal,
                      exclude=note_keys(s, files))
     for r in receipts:
@@ -1098,31 +1375,54 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
 
 
 def _verify_library(receipts: list, s: Settings, library: Library) -> None:
+    """Each library receipt re-run against the release it NAMES (AD-036-R2, R3; ADDENDUM 06).
+
+    A receipt naming the served release is judged on the served search, as before. Any other receipt is re-run with
+    `library.search_release`, which rebuilds the named release when its export is on disk with the named digest and
+    raises `release_unavailable` (naming the path) when it is not. That work runs grouped by release, so each older
+    release is rebuilt once per verification. Every run is logged with the release it ran against."""
+    def judge(r: Receipt, res: dict) -> None:
+        got = set(res["rows"])
+        missing = [x for x in r.rows if x not in got]
+        if missing:
+            r.status = ID_NOT_RETURNED
+            r.detail = f"not returned in the top {s.library_k}: {', '.join(missing[:5])}"
+        else:
+            r.status, r.detail = PASS, f"{len(r.rows)} row(s) returned"
+
+    def logged(res: dict) -> None:
+        log_query(s, {"arm": "library", "purpose": "verify", "query": res["query"], "release": res["release"],
+                      "sha256": res["sha256"], "rows": len(res["rows"]), "index": res.get("index", "served"),
+                      **{k: res[k] for k in ("export_path", "commit") if res.get(k)}})
+
     groups: dict = {}
     for r in receipts:
         groups.setdefault(r.query, []).append(r)
+    elsewhere: dict = {}
     for query, rs in groups.items():
         try:
             res = library.search(query)
         except PriorArtError as exc:
-            for r in rs:
-                r.status, r.detail = RELEASE_UNAVAILABLE, str(exc)
-            continue
-        log_query(s, {"arm": "library", "purpose": "verify", "query": query,
-                      "release": res["release"], "sha256": res["sha256"], "rows": len(res["rows"])})
-        got = set(res["rows"])
+            served_error, res = str(exc), None
+        else:
+            served_error = None
+            logged(res)
         for r in rs:
-            if r.sha256 != res["sha256"]:
-                r.status = RELEASE_UNAVAILABLE
-                r.detail = (f"release {r.release} sha256:{r.sha256[:12]}... is not the one the "
-                            f"index serves ({res['release']} sha256:{str(res['sha256'])[:12]}...)")
-                continue
-            missing = [x for x in r.rows if x not in got]
-            if missing:
-                r.status = ID_NOT_RETURNED
-                r.detail = f"not returned in the top {s.library_k}: {', '.join(missing[:5])}"
+            if res is not None and r.sha256 == res["sha256"]:
+                judge(r, res)
             else:
-                r.status, r.detail = PASS, f"{len(r.rows)} row(s) returned"
+                elsewhere.setdefault((r.sha256, r.release, query), []).append((r, served_error))
+    for (sha, release, query), items in sorted(elsewhere.items()):
+        try:
+            res = library.search_release(query, release, sha)
+        except PriorArtError as exc:
+            for r, served_error in items:
+                r.status = RELEASE_UNAVAILABLE
+                r.detail = str(exc) + (f" (and the served search failed: {served_error})" if served_error else "")
+            continue
+        logged(res)
+        for r, _e in items:
+            judge(r, res)
 
 
 def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: frozenset = frozenset()) -> None:
