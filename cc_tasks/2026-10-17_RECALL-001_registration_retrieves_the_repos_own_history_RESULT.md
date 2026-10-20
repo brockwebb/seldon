@@ -6,13 +6,8 @@
 **What was built.** `seldon/core/recall.py`. `cc register` (CLI and MCP) prints `Recall:` and records `recall_listed`. The list covers RESULTs, Issues (open and resolved), decision records of any status, and kept or superseded tasks, for seldon plus its `decisions.repositories` siblings, which resolve against the primary checkout. Retrieval is BM25 over all of it, fused by RRF with squiddy's served hybrid search, with zero model calls. A kept or superseded task whose reason names a failure is marked `DEAD END`. The dispatcher puts the list ahead of the dispatch line in all three launch-prompt paths. `cc complete` refuses a RESULT without `Recall used:`. `decision operator-catch` (CLI and MCP) adds a new `catch` kind to the register schema, which binds nothing. `qc chart` gains both weekly series. The config is the `recall:` block in seldon.yaml, and a project without the block gets no recall.
 
 **First `Recall:` output on a real task** (this one, from the worktree, served arm against the primary's built graphs, 28.6 s):
-```
-- result  squiddy:2026-10-10_SQ-010_governed_admission_dn043_RESULT  2026-10-10  SQ-010 RESULT: governed admission in seconds ...
-- result  squiddy:2026-10-11_SQ-011_admit_judge_bias_literature_s1_s9_by_maintenance_RESULT  2026-10-11  ...
-- result  seldon:2026-09-12_ad030_governed_docs_ingest_RESULT  2026-09-12  RESULT: AD-030 governed documents ingest ...
-- decision [accepted]  seldon:AD-036-R3 / seldon:AD-031-R3 / squiddy:R-110;  [proposed] seldon:AD-032-FC-17, FC-20
-```
-The lexical arm alone takes 7.2 s. Reading roughly 1,300 register files and three event stores is most of that.
+three `result` hits that both arms found (squiddy SQ-010 and SQ-011 RESULTs, seldon's 2026-09-12 AD-030 ingest RESULT), then the decisions seldon:AD-036-R3, seldon:AD-031-R3 and squiddy:R-110 (accepted) and seldon:AD-032-FC-17 and FC-20 (proposed). The lexical arm alone takes 7.2 s. Reading roughly 1,300 register files and three event stores is most of that.
+**`seldon verify`:** 3 issues, none from this task. Governed documents from before this task are uncataloged, AD-037-R11..R13 are unprojected, and the worktree's `core.hooksPath` is absolute. `--fix` was not run from the worktree.
 
 **First chart reading** (`qc chart`, worktree): recall per week shows "no task registered with a Recall list yet"; operator catches show "none recorded yet". Both series start at the first registration after the merge.
 
