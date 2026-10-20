@@ -128,12 +128,11 @@ commits only with `draft:` in the subject (the tracked `.githooks/commit-msg`); 
 instead of refusing, and the dispatcher refuses that one task as `governing_unverified` (c14), not the whole queue.
 A dirty tree alarms on the first refused pass, and `seldon go` prints the last pass's refusal lines.
 
-**seldon-mcp runs HEAD (AD-038-R3, FRICTION-001).** Every mutating tool runs `python -P -m seldon mcp-call <tool>`
-in a fresh process on the checkout's current code, so a merge under `seldon/` no longer needs a Desktop restart. Only
-the read-only tools (`seldon_go`, `seldon_task_list`, `seldon_query`, `seldon_decision_show|list|check`) stay in
-process behind SEL-006's stale guard; theirs is the only `server_stale` left, it asks for no restart, and each one is
-logged to `mcp.stale_log` for `seldon qc chart`. A new tool is mutating unless declared `@_tool(read_only=True)`.
-`squiddy serve` still refuses and asks for a restart for `squiddy/` and its graph's `config.yaml`.
+**seldon-mcp runs HEAD, every tool (AD-038-R3, ADDENDUM 01; MCP-001).** Every tool, reads included, runs
+`python -P -m seldon mcp-call <tool>` in a fresh process on the checkout's current code, so a merge under `seldon/`
+never leaves a tool answering from old code and never refuses. Each answer ends with `code: <sha>`, the code that
+answered. The cost is about 2 s per call (process start; `docs/evidence/mcp001/latency.jsonl`). `@_tool()` takes no
+`read_only` flag. `squiddy serve` still refuses as stale for `squiddy/` and its graph's `config.yaml`; that is squiddy's.
 
 **The dispatcher reconciles before c7 (AD-038-R1).** Each pass commits every dirty path of machine-written governed
 state (event store, prior-art logs, decision register, the cadence's `last_instance`, registered task files and their
