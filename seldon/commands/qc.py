@@ -89,6 +89,10 @@ def chart_command(as_json):
     events = read_events(project_dir)
     out = S.chart(events, name, seed=seed, min_points=min_points)
     out["toil"] = _toil(project_dir, config, events)
+    # RECALL-001 Parts B and C: does a listed hit change the task, and what did the operator catch that the system
+    # did not (the measured boundary of L4).
+    from seldon.core import recall as RC
+    out["recall"] = RC.chart(events, RC.catches(project_dir, config))
     # DISP-001R Part B step 1: the spend ceiling's measured floor, as it stood each week.
     # A project with no `dispatch:` block launches nothing, so it has no floor to report.
     from seldon.core import dispatch as D
@@ -146,6 +150,20 @@ def chart_command(as_json):
         click.echo(f"    {w['week']:9s} {(f'{w["value"]:,}' if w['value'] is not None else '-'):>12s}  n {w['n']}")
     if not out["spend_floor"]:
         click.echo("    (no finished launch yet)" if dcfg else "    (no dispatch: block in seldon.yaml)")
+    rc = out["recall"]
+    click.echo("  recall per week (RECALL-001 Part B; by the week a task was registered):")
+    click.echo(f"    {'week':9s} {'registered':>10s} {'with-hits':>9s} {'results-read':>12s} {'used-a-hit':>10s}")
+    for w in rc["weeks"]:
+        click.echo(f"    {w['week']:9s} {w['registered']:>10d} {w['with_hits']:>9d} {w['results_read']:>12d} "
+                   f"{w['used']:>10d}")
+    if not rc["weeks"]:
+        click.echo("    (no task registered with a Recall list yet)")
+    click.echo("  operator catches per week (RECALL-001 Part C; `seldon decision operator-catch`):")
+    for w in rc["catches"]:
+        classes = ", ".join(f"{k} {v}" for k, v in sorted(w["by_class"].items()))
+        click.echo(f"    {w['week']:9s} {w['total']:>3d}  {classes}")
+    if not rc["catches"]:
+        click.echo("    (no operator catch recorded yet)")
     click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
                f"{t['sources']['stale_log'] or '(none)'}, the event store")
 

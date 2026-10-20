@@ -966,6 +966,15 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
         walk_to_completed(project_dir=project_dir, driver=driver, database=database,
                           domain_config=domain_config, artifact_id=task_id,
                           current_state="in_progress", actor=S.ACTOR, session_id=session_id)
+    # RECALL-001 Part B: the dispatcher completes a worktree task, so it reads the merged RESULT's `Recall used:`
+    # line for the chart. Recorded, never a merge refusal: a missing or refused line is counted as such.
+    from seldon.core import recall as RC
+    used = RC.used_at_merge(project_dir, task_id, finish["result_path"])
+    if used is not None:
+        RC.record_used(project_dir, used, actor=S.ACTOR, session_id=session_id)
+        if used["missing"] or used.get("refused"):
+            click.echo(f"recall: {task_id[:8]}'s RESULT {'has no' if used['missing'] else 'has a refused'} "
+                       f"`Recall used:` line{': ' + used['refused'] if used.get('refused') else ''}", err=True)
     # Named before `git worktree remove --force` discards them: committed work is safe (the
     # branch is merged and deleted with `-d`), gitignored output is not, and losing it
     # silently is the one thing the removal may not do.

@@ -1056,6 +1056,16 @@ def cc_complete(filepath, note, allow_untracked):
                 err=True,
             )
 
+        # RECALL-001 Part B: a task registered with a Recall list owes its RESULT a `Recall used:` line naming
+        # which listed hits changed its approach, or `none`. Refused before anything is written.
+        from seldon.core import recall as recall_mod
+        try:
+            used = recall_mod.used_for_completion(project_dir, task_path, existing_id)
+        except recall_mod.RecallError as exc:
+            click.echo(f"ERROR: {exc}\n  File: {rel_path}", err=True)
+            driver.close()
+            raise SystemExit(1)
+
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
         click.echo(
@@ -1088,6 +1098,9 @@ def cc_complete(filepath, note, allow_untracked):
             click.echo(f"  source_file: {rel_path}")
             click.echo(f"  id: {existing_id[:8]}...")
             click.echo(f"  state: completed")
+            if used is not None:
+                recall_mod.record_used(project_dir, used, actor="cc", session_id=session_id)
+                click.echo(f"  recall used: {', '.join(used['used']) or 'none'} ({used['result_path']})")
         finally:
             driver.close()
         return
