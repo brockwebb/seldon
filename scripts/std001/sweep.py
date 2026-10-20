@@ -15,12 +15,13 @@ Per repository (the task's 29; the 5 already correct are not touched):
    `.gitignore` alone and record file and line, never the value.
 3. Append one row per repository to docs/evidence/std001/sweep.jsonl.
 
-Nothing is pushed: the dispatched session's instructions forbid a push; the RESULT lists the repos.
+4. Push a committed repository that has a remote (ADDENDUM 01 item 2: the dispatched session's
+   "do not push" binds seldon's own branch, not these 29, which are committed on main). A refused
+   push is recorded on the row; the local commit stands.
 
-**Status 2026-10-19:** `--dry-run` ran in STD-001R's session (docs/evidence/std001/sweep_dryrun.jsonl);
-`--apply` was refused twice by the session's auto-mode classifier ("Modify Shared Resources"), so it is
-the operator's step: run `python scripts/std001/sweep.py --apply` from seldon's checkout. It appends
-docs/evidence/std001/sweep.jsonl, which that commit then carries.
+**Status:** `--dry-run` ran in STD-001R's first session 2026-10-19 (docs/evidence/std001/sweep_dryrun.jsonl);
+`--apply` was refused there by the auto-mode classifier and ran in the ADDENDUM 01 session 2026-10-20,
+which commits docs/evidence/std001/sweep.jsonl on its branch.
 Paths are committed by name (`git commit -- <paths>` semantics via an explicit add list), so another
 session's dirt in the same repository is never swept in.
 """
@@ -165,6 +166,14 @@ def scan(repo: Path, files: list[str]) -> tuple[str, list[str]]:
     return status, hits
 
 
+def push(repo: Path) -> str:
+    """`pushed`, `no_remote`, or `refused: <tail of git's output>`; a refused push is a row, not a crash."""
+    if not git(repo, "remote").stdout.strip():
+        return "no_remote"
+    r = git(repo, "push", check=False)
+    return "pushed" if r.returncode == 0 else "refused: " + (r.stdout + r.stderr).strip()[-300:]
+
+
 def one(name: str, apply: bool) -> dict:
     repo = GITHUB / name
     row = {"repo": name, "ts": datetime.now(timezone.utc).isoformat(), "mode": "apply" if apply else "dry-run"}
@@ -220,9 +229,14 @@ def one(name: str, apply: bool) -> dict:
                 check=False)
         if c.returncode != 0:
             git(repo, "reset", "-q", "--", *paths, check=False)
+            gi.write_text(before)
+            for rel, old, new in EXTRA.get(name, []):
+                p = repo / rel
+                p.write_text(p.read_text().replace(new, old, 1))
             return {**row, "action": "commit_refused", "why": (c.stdout + c.stderr).strip()[-800:]}
         row["sha"] = git(repo, "rev-parse", "HEAD").stdout.strip()
         row["committed_paths"] = len(paths)
+        row["push"] = push(repo)
         return {**row, "action": "committed"}
     except Exception:
         gi.write_text(before)
