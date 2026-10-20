@@ -470,25 +470,42 @@ UNRUNNABLE_EXITS = (126, 127)
 _TAIL_CHARS = 1500
 
 
+#: Commands a check names that run as `<this python> -m <module>` (AD-037 ADDENDUM 02). `pytest`, so a check runs
+#: against the interpreter the dispatcher runs in, not whichever `pytest` is first on launchd's PATH; `seldon`, so a
+#: check runs the code of the tree it runs in: the console script imports the primary checkout's code (seldon is
+#: installed editable from it), and a branch that changed the code its check depends on could never pass its own
+#: gate (PA-002's Part B, 2026-10-19).
+MODULE_COMMANDS = ("pytest", "seldon")
+
+
 def check_argv(command: str) -> list:
-    """The command as argv. `pytest` runs as `<this python> -m pytest`, so a check runs against the interpreter
-    the dispatcher (and the installed seldon) runs in, not whichever `pytest` is first on launchd's PATH."""
+    """The command as argv, with a `MODULE_COMMANDS` first word run as `<this python> -m <it>`."""
     argv = shlex.split(command)
-    if argv and argv[0] == "pytest":
-        argv = [sys.executable, "-m", "pytest", *argv[1:]]
+    if argv and argv[0] in MODULE_COMMANDS:
+        argv = [sys.executable, "-m", argv[0], *argv[1:]]
     return argv
+
+
+def tree_path(cwd: Path, env: dict) -> str:
+    """`PYTHONPATH` for a check run in `cwd`: the tree first, then whatever the environment already carried. A child
+    the check starts (a git hook, a test's subprocess) inherits it, so it imports the tree's code too; `python -m`
+    alone puts the tree on the check's own path and on no child's (AD-037 ADDENDUM 02)."""
+    rest = [x for x in (env.get("PYTHONPATH") or "").split(os.pathsep) if x and x != str(cwd)]
+    return os.pathsep.join([str(cwd), *rest])
 
 
 def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None,
               output: str | None = None) -> dict:
-    """Run one `check:` command. `outcome` is `pass` (exit 0), `fail`, or `unrunnable` (no reading)."""
+    """Run one `check:` command in `cwd`, with `cwd` first on `PYTHONPATH` (`tree_path`). `outcome` is `pass`
+    (exit 0), `fail`, or `unrunnable` (no reading). The row names the interpreter and the path it ran with."""
     started = time.monotonic()
-    row = {"command": command}
+    run_env = dict(os.environ if env is None else env)
+    run_env["PYTHONPATH"] = tree_path(Path(cwd), run_env)
+    row = {"command": command, "interpreter": sys.executable, "pythonpath": run_env["PYTHONPATH"]}
     try:
         argv = check_argv(command.replace("{output}", output) if output else command)
     except ValueError as exc:
         return {**row, "outcome": "unrunnable", "exit": None, "seconds": 0.0, "tail": f"does not parse: {exc}"}
-    run_env = dict(os.environ if env is None else env)
     for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
         run_env.pop(var, None)
     if output:
@@ -720,6 +737,8 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     over = ceiling is not None and tokens is not None and tokens >= ceiling
     verdict = "pass" if not failed else ("ceiling" if over else "block")
     record = {"task_id": task_id, "child_session_id": lp.get("child_session_id"), "cwd": str(cwd), "branch": branch,
+              # AD-037 ADDENDUM 02: what a check's `seldon` and `pytest` ran as, and the tree they imported.
+              "interpreter": sys.executable, "path": tree_path(Path(cwd), dict(os.environ)),
               "parts": parts, "failed": [f["command"] for f in failed], "tokens": tokens, "ceiling": ceiling,
               "verdict": verdict, "stop_hook_active": bool(stop_hook_active)}
     reason, hard = None, None
