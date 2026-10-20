@@ -146,6 +146,14 @@ def test_the_code_line_names_a_directory_that_is_not_a_checkout(tmp_path):
     assert code_line(tmp_path) == f"code: unknown ({tmp_path} is not a git checkout)"
 
 
+def test_without_code_line_strips_only_the_trailing_note():
+    from seldon.commands.mcp_call import without_code_line
+    assert without_code_line("Error: a cycle.\n\ncode: abc1234") == "Error: a cycle."
+    assert without_code_line("x\n\ncode: abc1234 + uncommitted changes under seldon/") == "x"
+    assert without_code_line("no note here") == "no note here"
+    assert without_code_line("a\n\ncode: in the body\nmore") == "a\n\ncode: in the body\nmore"
+
+
 def test_the_code_line_names_uncommitted_edits_under_seldon(checkout):
     from seldon.commands.mcp_call import code_line
     sha = _git(checkout, "rev-parse", "--short=7", "HEAD")

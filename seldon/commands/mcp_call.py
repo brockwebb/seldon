@@ -44,6 +44,16 @@ def code_line(repo: Path) -> str:
     return f"code: {head.stdout.strip()}" + (" + uncommitted changes under seldon/" if dirty else "")
 
 
+#: What separates a tool's own answer from its `code_line()`.
+CODE_LINE_SEPARATOR = "\n\n"
+
+
+def without_code_line(answer: str) -> str:
+    """`answer` with the trailing `code_line()` removed: the tool's own words, for a comparison with the CLI's."""
+    body, sep, tail = answer.rpartition(CODE_LINE_SEPARATOR)
+    return body if sep and tail.startswith("code: ") and "\n" not in tail else answer
+
+
 @click.command("mcp-call", hidden=True)
 @click.argument("tool")
 def mcp_call_command(tool):
@@ -62,5 +72,5 @@ def mcp_call_command(tool):
         raise click.ClickException("the arguments on stdin must be a JSON object")
     answer = fn(**kwargs)
     if isinstance(answer, str):
-        answer = f"{answer}\n\n{code_line(Path(mcp_server.__file__).resolve().parent.parent)}"
+        answer = f"{answer}{CODE_LINE_SEPARATOR}{code_line(Path(mcp_server.__file__).resolve().parent.parent)}"
     click.echo(RESULT_PREFIX + json.dumps(answer))

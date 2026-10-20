@@ -579,7 +579,10 @@ def test_cli_and_mcp_reject_a_cycle_with_the_same_message(
         before_id=b[:8], after_id=a[:8], project_dir=str(cli_project)
     )
 
-    assert cli_out.strip().removeprefix("Error: ") == mcp_out.strip().removeprefix(
+    # Since MCP-001 every MCP answer ends with the `code: <sha>` note; the parity is in the message.
+    from seldon.commands.mcp_call import without_code_line
+
+    assert cli_out.strip().removeprefix("Error: ") == without_code_line(mcp_out).strip().removeprefix(
         "Error: "
     )
 
