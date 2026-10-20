@@ -1,0 +1,42 @@
+seq: 298
+event: accept
+id: seldon:AD-034-R10
+date: '2026-10-20'
+decided_by: cc:5e228d82
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_03_kept_work_is_regated_in_place.md:26: AD-034-R10'
+reason: DISP-003R Part C; evidence PA-002 (314a3942) blocked stop_gate_unpassed with exit 0, RESULT committed and tests green, with no way back but a relaunch
+kind: decision
+status: accepted
+statement: 'A task blocked stop_gate_unpassed whose kept worktree holds its committed RESULT shall be re-gated in place: rebased onto main, its check: lines run in the worktree with the tree''s own code, merged by the merge path on pass and left blocked with the failing checks quoted on fail; every pass does this, and seldon dispatch regate does it for one task.'
+source:
+  path: docs/design/AD-034_ADDENDUM_03_kept_work_is_regated_in_place.md
+  lines:
+  - 26
+  - 37
+  sha256: 2b1424ed85688674147e15dc763e9577a078ea34e50fc3a84db7ad269cd29ae3
+  text: |-
+    - **AD-034-R10. A task blocked `stop_gate_unpassed` whose kept worktree holds its committed RESULT is re-gated in place: its branch is rebased onto main, every `check:` line of the task runs in the worktree with the tree's own code, and on pass the branch goes to the merge path; on fail it stays blocked with the failing checks quoted.**
+      `seldon dispatch regate <task>` does this for one task under the pass lease. Every pass with no session in flight
+      does it for every such task (`_breaker_and_stale`, beside the remerge). Each attempt writes `dispatch_regated`:
+      `regate_id`, checks with interpreter and path, outcome, failing commands, the branch-diff key and main's sha. A pass
+      does not repeat a failed reading. It skips the task while the branch's diff is unchanged and main has moved only by
+      housekeeping files (union files and `shared_paths`, the set `_merge` already uses). An explicit `regate` always
+      runs. The checks are all Parts' checks, since a committed RESULT says every Part is done. A check that is not `pass`
+      fails the regate, `unrunnable` included, because nothing unverified merges. A dirty tree or a rebase conflict fails
+      the regate and names the files. On pass the task walks `blocked -> in_progress`, and `_merge` re-gates when main
+      changed a file the task changed, then fast-forwards, completes, sweeps and records the merged finish with
+      `regate.regate_id`. Code: `seldon/commands/dispatch_worktree.py` `regate`, `regate_candidates`, `task_checks`,
+      `run_task_checks`; `seldon/commands/dispatch.py` `dispatch_regate`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_03_kept_work_is_regated_in_place.md
+  anchor: AD-034-R10
+consumer:
+- cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md
+- tests/test_disp003_regate.py
+written_by: seldon decision 0.1.0
+prev_hash: a723777da4cba30b25f6be9c9947e02f1ac1a3abf92699b7e8a46ad5849bb8d8
+record_hash: bf592f494ad668e00439fa4f1f31cde30a619e7b3db77b06f3a5d3dde2da99f5

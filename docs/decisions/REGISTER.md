@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 152 records: accepted 129, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 153 records: accepted 130, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (129)
+## Accepted (130)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -165,6 +165,8 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 152 records: accept
   - source `docs/design/AD-034_worktree_per_task_dispatch.md`:43-43; decided by cc:aa428cde; consumer seldon/core/worktree.py, seldon/commands/dispatch_worktree.py, tests/test_worktree_shared_state.py
 - **seldon:AD-034-R9** A worktree task whose supervisor is gone is blocked by the next pass, and its worktree and lease are kept.
   - source `docs/design/AD-034_worktree_per_task_dispatch.md`:45-45; decided by cc:aa428cde; consumer seldon/commands/dispatch_worktree.py, seldon/core/dispatch.py, tests/test_dispatch_parallel.py
+- **seldon:AD-034-R10** A task blocked stop_gate_unpassed whose kept worktree holds its committed RESULT shall be re-gated in place: rebased onto main, its check: lines run in the worktree with the tree's own code, merged by the merge path on pass and left blocked with the failing checks quoted on fail; every pass does this, and seldon dispatch regate does it for one task.
+  - source `docs/design/AD-034_ADDENDUM_03_kept_work_is_regated_in_place.md`:26-37; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_regate.py
 - **seldon:AD-035-R1** The repository shall keep one machine-wide model registry and one machine-wide lock: models/registry.yaml holds intent (role to family, plus effort, with roles named by use such as primary, extractor, rater, adjudicator, teacher, judge and background), and models/models.lock.yaml holds the resolved model id per family, the CLI version that resolved it, the date and the evidence file. The command `seldon models show` shall print both files, and the Python accessor `seldon.models.resolve(role)` shall be the only way any code on the machine obtains a model id.
   - source `docs/design/AD-035_config_driven_model_selection.md`:46-50; decided by operator; operator-stated; consumer seldon/core/decisions.py
 - **seldon:AD-035-R2** When `seldon models refresh` runs, it shall resolve "latest in family" using Anthropic's own resolver, the newest Claude Code CLI, by installing the newest Claude Code into a versioned prefix with `npm install --prefix` and never the global install, running one minimal `-p --model <alias> --output-format json` call per family and recording the `modelUsage` model id, writing the lock, appending a `models_lock_bumped` event naming the old and new ids, and committing. The refresh shall cost four short calls, shall run when a task is authored and when a run starts, and its result shall be cached f [...]

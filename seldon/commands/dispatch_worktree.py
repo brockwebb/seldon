@@ -1359,7 +1359,7 @@ def _regate_unchanged(project_dir: Path, cfg: dict, wt: Path, last: dict | None,
 
 def regate(project_dir, config, driver, database, domain_config, session_id, cfg, task_id: str | None = None,
            run=None) -> list:
-    """Re-gate kept work in place: DISP-003R Part C, AD-034 ADDENDUM 03 (AD-034-R7).
+    """Re-gate kept work in place: DISP-003R Part C, AD-034 ADDENDUM 03 (AD-034-R10).
 
     For each `regate_candidates` task (or only `task_id`, which must be one, else `RegateRefused`): rebase the kept
     branch onto main in its worktree, run every `check:` line of the task in that tree with AD-037-R14's path, and
