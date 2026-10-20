@@ -517,6 +517,12 @@ def validate_shape(data: dict) -> list[str]:
             out.append(f"{ev} requires statement")
         if _blank(data.get("consumer")) and _blank(data.get("review_only")):
             out.append("a record names its consumer, or carries review_only with a reason (R6)")
+        if data.get("kind") == "catch":
+            for k in ("catch_class", "task"):
+                if _blank(data.get(k)):
+                    out.append(f"a catch requires {k} (RECALL-001 Part C)")
+        elif not _blank(data.get("catch_class")) or not _blank(data.get("task")):
+            out.append("catch_class and task belong to a catch only (RECALL-001 Part C)")
         if data.get("status") == "proposed" and _blank(data.get("waits_on")):
             out.append("a proposed record names the measurement it waits on (R4)")
         if data.get("status") not in (None, "proposed", "accepted"):
@@ -1403,7 +1409,10 @@ def bind(u: Universe, task_text: str, threshold: float) -> list[DecisionMatch]:
     """
     from seldon.core.governed import concept_terms, overlap_score
 
-    accepted = [r for repo in u.scope_repos() for r in u.records(repo).values() if r.status == BINDING]
+    # An operator catch is an observation, not a rule: it reaches a later task through recall (RECALL-001), never
+    # as a binding.
+    accepted = [r for repo in u.scope_repos() for r in u.records(repo).values()
+                if r.status == BINDING and r.get("kind") != "catch"]
     by_id = {r.id: r for r in accepted}
     named = [q for q in resolve_mentions(u, task_text) if q in by_id]
     out = [DecisionMatch(id=q, status=BINDING, statement=_statement_of(by_id[q]),
@@ -1477,6 +1486,7 @@ def _props(rec: Record, imported: bool) -> dict:
         "amendments": [f"{a['clause']} | {' '.join(str(a['text']).split())} | by {a.get('by') or a.get('decided_by')}"
                        for a in rec.amendments],
         "control_type": rec.get("control_type"), "pattern": rec.get("pattern"),
+        "catch_class": rec.get("catch_class"), "task": rec.get("task"),
         "register_hash": rec.last_hash,
         "description": (statement.splitlines() or [""])[0][:200],
     }

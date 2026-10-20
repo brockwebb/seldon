@@ -432,7 +432,13 @@ artifact_types:
         description: "True when this graph holds the record by `decisions.import`, not as its own (AD-033-R1)."
       kind:
         category: system
-        description: "decision, requirement or mirror."
+        description: "decision, requirement, mirror or catch (an operator catch, RECALL-001)."
+      catch_class:
+        category: system
+        description: "For a catch: the error class the operator caught (RECALL-001 Part C)."
+      task:
+        category: system
+        description: "For a catch: the ResearchTask artifact id it was made in."
       statement:
         category: system
         description: "The stand-alone statement (AD-033-R3, R8); the verbatim body until Part E writes one."

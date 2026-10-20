@@ -54,6 +54,7 @@ enums:
       decision: {description: "A choice or a rule."}
       requirement: {description: "A numbered requirement (EX-REQ)."}
       mirror: {description: "A row that points at the record it mirrors and carries no statement of its own (FC-16)."}
+      catch: {description: "What the operator saw that the system did not, bound to the task it was seen in (RECALL-001 Part C). Binds nothing; counted by `seldon qc chart` per class, the measured boundary of L4."}
   DecisionStatus:
     description: MADR 4.0's statuses (AD-033-R4). Only `accepted` binds.
     permissible_values:
@@ -111,6 +112,8 @@ slots:
   constrains: {multivalued: true, description: "Ids this record constrains (Kruchten 2004)."}
   control_type: {range: ControlType}
   pattern: {description: "The factory design pattern a control record applies (FC-07)."}
+  catch_class: {description: "For a `catch`: the error class the operator caught (for example `numerical_instability`), the series key of the chart (RECALL-001 Part C)."}
+  task: {description: "For a `catch`: the ResearchTask artifact id the catch was made in."}
   amendment: {range: Amendment}
   changes: {range: Changes}
   written_by: {description: "The command and version that wrote the file."}
@@ -162,7 +165,7 @@ classes:
     slots: [seq, event, id, date, decided_by, operator_stated, receipts, reason, kind, status,
             statement, source, scope, scope_note, rationale, consumer, review_only, waits_on,
             supersedes, superseded_by, amends, mirrors, constrains, control_type, pattern,
-            amendment, changes, written_by, prev_hash, record_hash]
+            catch_class, task, amendment, changes, written_by, prev_hash, record_hash]
     slot_usage:
       seq: {required: true}
       event: {required: true}
@@ -178,7 +181,8 @@ classes:
     description: >-
       The create form: a new id with every field AD-033-R3 requires. `statement` is required
       unless `kind` is mirror, and a mirror requires `mirrors`; one of `consumer` (non-empty) or
-      `review_only` is required. Those three conditionals are checked in code, named here.
+      `review_only` is required; a catch requires `catch_class` and `task` (RECALL-001). Those four
+      conditionals are checked in code, named here.
     is_a: RegisterFile
     slot_usage:
       kind: {required: true}

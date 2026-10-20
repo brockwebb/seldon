@@ -184,6 +184,48 @@ for _a in ("reject", "deprecate"):
     _transition_only(_a)
 
 
+def run_operator_catch(project_dir: Path, task: str, catch_class: str, text: str, *,
+                       date: Optional[str] = None, receipts: Optional[list[str]] = None) -> list[Path]:
+    """RECALL-001 Part C, CLI and MCP: record what the operator saw that the system did not, bound to the task.
+
+    The record is `kind: catch`, `decided_by: operator`, accepted when written; it binds no task (`bind` skips it),
+    it is listed by recall, and `seldon qc chart` counts it per class. `operator_stated` is set only with a receipt.
+
+    Raises:
+        seldon.core.decisions.RegisterError: The task does not resolve, or the register refuses the record.
+    """
+    from seldon.core import recall as RC
+
+    config = load_project_config(project_dir)
+    try:
+        record = RC.operator_catch_record(project_dir, config, task, catch_class, text)
+    except RC.RecallError as exc:
+        raise dr.RegisterError(str(exc)) from exc
+    return run_write(project_dir, "accept", record=record, decided_by="operator", date=date,
+                     reason=f"operator catch in task {record['task'][:8]} (RECALL-001 Part C)",
+                     receipts=receipts, operator_stated=bool(receipts))
+
+
+@decision_group.command("operator-catch")
+@click.argument("task")
+@click.option("--class", "catch_class", required=True,
+              help="The error class he caught, one lowercase identifier (e.g. numerical_instability).")
+@click.option("--text", required=True, help="What he saw, in a stand-alone sentence.")
+@click.option("--date", default=None, help="YYYY-MM-DD; default today.")
+@click.option("--receipt", "receipts", multiple=True, help="Where he said it (sets operator_stated).")
+def operator_catch_cmd(task, catch_class, text, date, receipts):
+    """Record an operator catch: what he saw that the system did not, in TASK (its file, stem or id).
+
+    RECALL-001 Part C. `seldon qc chart` reports catches per week by class: the measured boundary of L4.
+    """
+    project_dir = Path.cwd()
+    try:
+        written = run_operator_catch(project_dir, task, catch_class, text, date=date, receipts=list(receipts))
+    except dr.RegisterError as exc:
+        _fail(exc)
+    _emit(written, project_dir)
+
+
 @decision_group.command("amend")
 @click.argument("qid")
 @click.option("--clause", default=None, help="Which part of the record the amendment changes.")

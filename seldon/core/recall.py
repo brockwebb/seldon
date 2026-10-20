@@ -707,6 +707,76 @@ def chart(events: list, catches: list) -> dict:
     return {"weeks": [weeks[w] for w in sorted(weeks)], "catches": [cw[w] for w in sorted(cw)]}
 
 
+#: A catch's class is the chart's series key, so it is one lowercase identifier (`numerical_instability`).
+CATCH_CLASS_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+CATCH_PREFIX = "CATCH-"
+
+
+def resolve_task(project_dir: Path, ref: str) -> tuple[str, str]:
+    """`(artifact id, source_file)` of the one ResearchTask `ref` names: its task file's path, its stem, its id or an
+    id prefix (eight characters or more), read from the event store.
+
+    Raises:
+        RecallError: `ref` names no registered task, or more than one.
+    """
+    from seldon.core.events import read_events
+
+    ref = (ref or "").strip()
+    p = Path(ref)
+    rel = ref
+    if p.is_absolute():
+        try:
+            rel = p.resolve().relative_to(Path(project_dir).resolve()).as_posix()
+        except ValueError:
+            rel = ref
+    tasks = {aid: a for aid, a in _fold_artifacts(read_events(Path(project_dir))).items()
+             if a["type"] == "ResearchTask"}
+    found = [(aid, a["props"].get("source_file") or "") for aid, a in tasks.items()
+             if (a["props"].get("source_file") or "") == rel
+             or (a["props"].get("source_file") and Path(a["props"]["source_file"]).stem == ref)
+             or (len(ref) >= 8 and aid.startswith(ref))]
+    if len(found) != 1:
+        raise RecallError(f"{ref!r} names {'no' if not found else len(found)} registered ResearchTask(s); name the "
+                          f"task by its file, its stem or its id")
+    return found[0]
+
+
+def operator_catch_record(project_dir: Path, config: dict, task_ref: str, catch_class: str, text: str) -> dict:
+    """The decision record for one operator catch (Part C): `kind: catch`, bound to the task, binding nothing.
+
+    The source is the task file's title line, so the record carries the task's own bytes (AD-033-R3) and its
+    sha256 at the moment of the catch; the rationale is the task file. The statement is what the operator saw.
+
+    Raises:
+        RecallError: An empty text, a class that is not one identifier, or a task that does not resolve.
+    """
+    from seldon.core import decisions as dr
+
+    if not (text or "").strip():
+        raise RecallError("an operator catch states what he saw (--text)")
+    if not CATCH_CLASS_RE.match(catch_class or ""):
+        raise RecallError(f"--class {catch_class!r} must be one lowercase identifier (e.g. numerical_instability): "
+                          f"it is the chart's series key")
+    s = dr.settings(project_dir, config)
+    if s is None:
+        raise RecallError("this project declares no decision register (seldon.yaml `decisions:`)")
+    task_id, source_file = resolve_task(project_dir, task_ref)
+    path = Path(project_dir) / source_file
+    if not path.is_file():
+        raise RecallError(f"task {task_id[:8]}'s file {source_file} does not exist")
+    lines = path.read_text(encoding="utf-8").splitlines()
+    n = next((i for i, ln in enumerate(lines, 1) if ln.strip()), None)
+    if n is None:
+        raise RecallError(f"{source_file} is empty; a catch's source is the task file's title line")
+    reg = dr.Register(s.repository, s.root, s.register_dir)
+    taken = {r.id for r in dr.fold(reg.events()).values()} if reg.exists() else set()
+    seq = 1 + sum(1 for q in taken if q.split(":", 1)[1].startswith(CATCH_PREFIX))
+    return {"id": f"{s.repository}:{CATCH_PREFIX}{seq:03d}", "kind": "catch", "status": "accepted",
+            "statement": " ".join(text.split()), "catch_class": catch_class, "task": task_id,
+            "source": {"path": source_file, "lines": [n, n], "text": lines[n - 1]},
+            "scope": [s.repository], "rationale": {"path": source_file}, "review_only": "rationale"}
+
+
 def catches(project_dir: Path, config: dict) -> list[dict]:
     """Every operator catch in this repository's register: `[{id, date, class, task}]`."""
     from seldon.core import decisions as dr

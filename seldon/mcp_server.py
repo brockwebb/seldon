@@ -1866,6 +1866,30 @@ def seldon_decision_accept(decided_by: str, project_dir: str = ".", record_id: s
 
 
 @_tool()
+def seldon_decision_operator_catch(task: str, catch_class: str, text: str, project_dir: str = ".",
+                                   date: str = "", receipts: str = "") -> str:
+    """Record an operator catch (RECALL-001 Part C): what the operator saw that the system did not.
+
+    Args:
+        task: The task it was seen in: its file, stem or artifact id.
+        catch_class: The error class, one lowercase identifier (e.g. numerical_instability).
+        text: What he saw, in a stand-alone sentence.
+        project_dir: Project root.
+        date: YYYY-MM-DD; default today.
+        receipts: One receipt per line (sets operator_stated).
+    """
+    from seldon.commands.decision import run_operator_catch
+    from seldon.core.decisions import RegisterError
+
+    p = _decision_project_path(project_dir)
+    try:
+        written = run_operator_catch(p, task, catch_class, text, date=date or None, receipts=_receipts(receipts))
+    except RegisterError as exc:
+        return f"REFUSED: {exc}"
+    return "\n".join(f"wrote {w.relative_to(p) if w.is_relative_to(p) else w}" for w in written)
+
+
+@_tool()
 def seldon_decision_reject(record_id: str, decided_by: str, reason: str, project_dir: str = ".",
                            date: str = "", receipts: str = "") -> str:
     """Reject a proposed record."""
