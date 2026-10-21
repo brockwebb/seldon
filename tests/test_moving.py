@@ -158,7 +158,8 @@ def test_go_prints_the_line_first_in_both_forms(tmp_path, monkeypatch):
     monkeypatch.setattr(M, "project_moving", lambda project_dir, now=None: EXPECTED)
     from seldon.commands import go as G
     text = G.assemble_go_context(project_dir=str(tmp_path), brief=True)
-    assert text.splitlines()[0] == M.moving_line(EXPECTED)
+    # PRUNE-002 Part B: the context path rides on the same first line, after the Moving line.
+    assert text.splitlines()[0].startswith(M.moving_line(EXPECTED) + " Context: ")
     data = G.assemble_go_context_as_dict(project_dir=str(tmp_path), brief=True)
     assert next(iter(data)) == "moving" and data["moving"] == M.moving_line(EXPECTED)
 

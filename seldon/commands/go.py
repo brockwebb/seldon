@@ -58,53 +58,54 @@ You are orienting to a Seldon-managed project.
 - Before describing any workflow, process, or pipeline to the user, verify by reading the relevant convention document (docs/conventions/) or querying the graph. Never reconstruct a process from inference. If you don't know, say so.
 - Before asserting the state of a task, artifact, or run, query the graph first. Do not rely on memory or handoff text that may be stale."""
 
-_AVAILABLE_COMMANDS_SECTION = """\
-## Available Seldon Commands
+#: PRUNE-002 Part B: each command's one-line help is cut to this many characters, so the generated list stays a
+#: list (click's own `get_short_help_str` default is 45, which truncates most of seldon's help lines mid-clause).
+COMMAND_HELP_LIMIT = 100
 
-### Session
-- `seldon go` — orient to project (this command)
-- `seldon briefing` — detailed session briefing
-- `seldon closeout` — end session, log notebook entry
-- `seldon handoff --slug <s> --summary <s> --next <s>` — close a Desktop session: write the handoff from graph state, print the resume and CC dispatch blocks (AD-030-R9)
-- `seldon verify [--fix] [--quiet]` — **run before every commit**: checks file integrity, ontology freshness, glossary, references, stale artifacts, unregistered files
 
-### Artifacts & Links
-- `seldon artifact create/list/update` — manage artifacts
-- `seldon link create/list` — manage relationships
-- `seldon result register/verify/list/trace` — result registry
-- `seldon task create/list/update` — task tracking
-- `seldon issue create/list/update/show/summary` — issue tracking (Eisenhower 3×3)
-- `seldon cc complete <filepath>` — record a CC task as completed (run after each task)
+def registered_commands() -> list[tuple[str, str]]:
+    """Every leaf command of the `seldon` click group, as `(path, one-line help)`, sorted by path.
 
-### Paper/Book
-- `seldon paper sync` — reconcile graph with files on disk (content hashes, subsection parsing, reference edges)
-- `seldon paper build [--no-render]` — resolve `{{result:...}}`, `{{figure:...}}`, `{{table:...}}` tokens and assemble
-- `seldon paper audit` — prose quality checks (Tier 2/3)
-- `seldon paper impact <n>` — blast radius: what's affected if this artifact changes
-- `seldon paper context <section-name> [--format yaml|text]` — structured context for drafting/revision (anchor props, assumes, cross-refs, siblings)
+    Read from the group at call time, so the list `seldon go` prints is the set the CLI accepts (PRUNE-002 Part B:
+    the hand-written list it replaced had no governed, models, dispatch, decision or prior-art commands).
+    """
+    import click as _click
+    from seldon.cli import main
 
-### Ontology
-- `seldon ontology ingest` — parse vocabulary markdown, write to master (seldon-ontology)
-- `seldon ontology sync` — pull latest vocabulary from master into this project
-- `seldon ontology list [--category] [--verbose] [--master]` — show inherited terms
+    def walk(cmd, path):
+        if isinstance(cmd, _click.Group):
+            return [row for name in sorted(cmd.commands) for row in walk(cmd.commands[name], path + [name])]
+        return [(" ".join(path), cmd.get_short_help_str(limit=COMMAND_HELP_LIMIT))]
+    return walk(main, [])
 
-### Documentation
-- `seldon docs check` — documentation completeness
-- `seldon docs generate` — project reference docs from graph
-- `seldon status` — project overview
 
-### MCP Tools (Desktop sessions)
-- `seldon_go(project_dir, brief)` — orient to project
-- `seldon_task_create(description, project_dir, blocks)` — create ResearchTask
-- `seldon_task_update(task_id, state, project_dir, note)` — single state transition
-- `seldon_task_close(task_id, project_dir, note)` — walk task to completed in one call
-- `seldon_task_list(project_dir, state_filter, brief)` — list tasks by state
-- `seldon_issue_create(name, description, importance, urgency, project_dir)` — create Issue
-- `seldon_issue_update(issue_id, project_dir, state, importance, urgency)` — update Issue
-- `seldon_cc_complete(filepath, project_dir, note)` — mark CC task completed
-- `seldon_cc_register(filepath, project_dir)` — register CC task as proposed
-- `seldon_handoff(project_dir, slug, summary, next)` — close the session; returns the resume and CC dispatch blocks
-- `seldon_query(cypher, project_dir)` — read-only Cypher query"""
+def registered_mcp_tools() -> list[tuple[str, str]]:
+    """Every tool `seldon-mcp` registers, as `(signature, first docstring line)`, sorted by name.
+
+    Read from `seldon.mcp_server.RAW_TOOLS`, the registry `_tool()` fills for every tool it registers.
+    """
+    import inspect as _inspect
+    from seldon.mcp_server import RAW_TOOLS
+
+    rows = []
+    for name in sorted(RAW_TOOLS):
+        fn = RAW_TOOLS[name]
+        params = ", ".join(_inspect.signature(fn).parameters)
+        doc = (_inspect.getdoc(fn) or "").strip().splitlines()
+        rows.append((f"{name}({params})", doc[0] if doc else ""))
+    return rows
+
+
+def _available_commands_section() -> str:
+    """The commands and MCP tools section, generated from the registries (PRUNE-002 Part B)."""
+    lines = ["## Available Seldon Commands", "",
+             "Generated from the `seldon` click group at call time; `seldon <command> --help` for options.", ""]
+    lines += [f"- `seldon {path}` — {help_}" if help_ else f"- `seldon {path}`"
+              for path, help_ in registered_commands()]
+    lines += ["", "### MCP Tools (Desktop sessions)", "",
+              "Generated from the tools `seldon-mcp` registers.", ""]
+    lines += [f"- `{sig}` — {doc}" if doc else f"- `{sig}`" for sig, doc in registered_mcp_tools()]
+    return "\n".join(lines)
 
 
 def _read_system_standards() -> Optional[str]:
@@ -968,10 +969,36 @@ def _resolve_project_dir(project_dir: str) -> str:
     return project_dir
 
 
+#: PRUNE-002 Part B step 2: the two context paths, named on the first line of `seldon go`'s output.
+CONTEXT_PATH_CLAUDE_CODE = "claude_code"
+CONTEXT_PATH_EMBEDDED = "embedded"
+
+
+def _context_path(in_claude_code: Optional[bool]) -> str:
+    """Which path `seldon go` takes for the two CLAUDE.md files.
+
+    Inside Claude Code the CLI has already loaded `~/GitHub/CLAUDE.md` and the project's `CLAUDE.md`, so
+    embedding them again sends every session the same bytes twice. A Desktop call (the MCP tool) loads
+    neither, so there they are embedded. `in_claude_code=None` reads `CLAUDECODE` from the environment.
+    """
+    if in_claude_code is None:
+        in_claude_code = _in_claude_code_session()
+    return CONTEXT_PATH_CLAUDE_CODE if in_claude_code else CONTEXT_PATH_EMBEDDED
+
+
+def _context_line(path: str) -> str:
+    """The sentence that names the path taken, appended to the first line of the output."""
+    if path == CONTEXT_PATH_CLAUDE_CODE:
+        return ("Context: claude_code (CLAUDECODE=1; the CLI already loaded ~/GitHub/CLAUDE.md and the project "
+                "CLAUDE.md, so neither is embedded).")
+    return "Context: embedded (not a Claude Code session; both CLAUDE.md files are embedded below)."
+
+
 def assemble_go_context(
     project_dir: str = ".",
     brief: bool = False,
     handoff_path: Optional[str] = None,
+    in_claude_code: Optional[bool] = None,
 ) -> str:
     """Assemble full orientation context for an AI consumer.
 
@@ -983,33 +1010,39 @@ def assemble_go_context(
             emits — ``seldon go --brief <absolute handoff path>`` — a runnable
             command: the next thread opens on the handoff it was handed, not on
             whichever file happens to sort last.
+        in_claude_code: Whether the caller is a Claude Code session, whose CLI already loaded both
+            CLAUDE.md files; None reads `CLAUDECODE` (PRUNE-002 Part B).
 
     Returns:
         The assembled markdown context.
     """
     project_dir = _resolve_project_dir(project_dir)
+    path = _context_path(in_claude_code)
     sections = []
 
-    # Section 0 — what is moving (TRIAGE-001 Part B), first so it is the first thing read.
-    sections.append(_get_moving_line(project_dir))
+    # Section 0 — what is moving (TRIAGE-001 Part B), first so it is the first thing read; the
+    # context path (PRUNE-002 Part B) rides on the same first line.
+    sections.append(f"{_get_moving_line(project_dir)} {_context_line(path)}")
 
     # Section 1 — Role Directive (always)
     sections.append(_ROLE_SECTION)
 
-    # Section 2 — Engineering Standards (skip if brief=True)
-    if not brief:
-        contents = _read_system_standards()
-        if contents is None:
-            sections.append("## Engineering Standards\n\n*System CLAUDE.md not found.*")
-        else:
-            sections.append(f"## Engineering Standards\n\n{contents}")
+    # Sections 2 and 3 — the two CLAUDE.md files, only where nothing else loaded them.
+    if path == CONTEXT_PATH_EMBEDDED:
+        # Section 2 — Engineering Standards (skip if brief=True)
+        if not brief:
+            contents = _read_system_standards()
+            if contents is None:
+                sections.append("## Engineering Standards\n\n*System CLAUDE.md not found.*")
+            else:
+                sections.append(f"## Engineering Standards\n\n{contents}")
 
-    # Section 3 — Project Context
-    project_claude_md = _read_project_claude_md(project_dir)
-    if project_claude_md is None:
-        sections.append("## Project Context\n\n*No CLAUDE.md found in project directory.*")
-    else:
-        sections.append(f"## Project Context\n\n{project_claude_md}")
+        # Section 3 — Project Context
+        project_claude_md = _read_project_claude_md(project_dir)
+        if project_claude_md is None:
+            sections.append("## Project Context\n\n*No CLAUDE.md found in project directory.*")
+        else:
+            sections.append(f"## Project Context\n\n{project_claude_md}")
 
     # Section 4 — Latest Handoff
     handoff = _read_handoff(project_dir, handoff_path)
@@ -1047,7 +1080,7 @@ def assemble_go_context(
         sections.append(agent_roles)
 
     # Section 7 — Available Commands (always)
-    sections.append(_AVAILABLE_COMMANDS_SECTION)
+    sections.append(_available_commands_section())
 
     return "\n\n---\n\n".join(sections)
 
@@ -1056,6 +1089,7 @@ def assemble_go_context_as_dict(
     project_dir: str = ".",
     brief: bool = False,
     handoff_path: Optional[str] = None,
+    in_claude_code: Optional[bool] = None,
 ) -> dict:
     """Assemble orientation context as a structured dict for JSON output.
 
@@ -1063,16 +1097,18 @@ def assemble_go_context_as_dict(
         project_dir: Project root.
         brief: Skip the system-wide engineering standards.
         handoff_path: Read this handoff instead of the newest one.
+        in_claude_code: As for :func:`assemble_go_context`; on the Claude Code path both CLAUDE.md keys are None.
 
     Returns:
         The orientation context, one key per section.
     """
     project_dir = _resolve_project_dir(project_dir)
+    path = _context_path(in_claude_code)
     # Role
     role = _ROLE_SECTION
 
     # Engineering Standards
-    if brief:
+    if brief or path == CONTEXT_PATH_CLAUDE_CODE:
         system_standards = None
     else:
         contents = _read_system_standards()
@@ -1082,8 +1118,10 @@ def assemble_go_context_as_dict(
             system_standards = contents
 
     # Project Context
-    project_claude_md = _read_project_claude_md(project_dir)
-    if project_claude_md is None:
+    project_claude_md = None if path == CONTEXT_PATH_CLAUDE_CODE else _read_project_claude_md(project_dir)
+    if path == CONTEXT_PATH_CLAUDE_CODE:
+        project_context = None
+    elif project_claude_md is None:
         project_context = "*No CLAUDE.md found in project directory.*"
     else:
         project_context = project_claude_md
@@ -1102,10 +1140,11 @@ def assemble_go_context_as_dict(
     agent_roles = _get_agent_roles_section(project_dir)
 
     # Available Commands
-    available_commands = _AVAILABLE_COMMANDS_SECTION
+    available_commands = _available_commands_section()
 
     return {
         "moving": _get_moving_line(project_dir),
+        "context_path": path,
         "role": role,
         "system_standards": system_standards,
         "project_context": project_context,

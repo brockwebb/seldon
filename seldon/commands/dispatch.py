@@ -47,6 +47,7 @@ from seldon.config import (
 from seldon.core import cadence as C
 from seldon.core import qc
 from seldon.core import dispatch as D
+from seldon.core import instruction_context as IC
 from seldon.core import stations as QS
 from seldon.core import worktree as WT
 from seldon.core.artifacts import transition_task
@@ -1092,7 +1093,9 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
            "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
            **_station_fields(cfg, chosen),
-           **_model_fields(spec, refresh_note)})
+           **_model_fields(spec, refresh_note),
+           # PRUNE-002 Part B: the instruction context this session receives, for `qc chart`'s toil reading.
+           IC.PAYLOAD_KEY: IC.measure(project_dir)})
     # The claim's transitions and `dispatch_launched` are committed and pushed BEFORE the CLI
     # cuts the worktree, so the task's branch starts from a main that already carries its own claim.
     _record_and_push(project_dir, config, cfg)

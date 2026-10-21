@@ -100,6 +100,9 @@ def chart_command(as_json):
     floor_window = S.load_stations_config(dcfg)["floor_launches"] if dcfg else None
     out["spend_floor"] = (S.floor_by_week(project_dir, events, dcfg["poll_interval_s"], floor_window)
                           if dcfg else [])
+    # PRUNE-002 Part B step 3: the instruction context a launched session receives, from the launch records.
+    from seldon.core import instruction_context as IC
+    out["instruction_context"] = IC.by_week(events)
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
         return
@@ -152,6 +155,15 @@ def chart_command(as_json):
         click.echo("    (no finished launch yet)" if dcfg else "    (no dispatch: block in seldon.yaml)")
     click.echo(f"    sources: {len(t['sources']['dispatch_logs'])} dispatcher log(s), stale log "
                f"{t['sources']['stale_log'] or '(none)'}, the event store")
+    click.echo("  instruction context per launched session, per week (PRUNE-002; bytes of both CLAUDE.md files "
+               "plus the go output):")
+    click.echo(f"    {'week':9s} {'median':>9s} {'max':>9s} {'n':>4s} {'unmeasured':>10s}")
+    for w in out["instruction_context"]:
+        fmt = (lambda v: f"{v:>9,d}" if v is not None else f"{'-':>9s}")
+        click.echo(f"    {w['week']:9s} {fmt(w['median_total'])} {fmt(w['max_total'])} {w['n']:>4d} "
+                   f"{w['unmeasured']:>10d}")
+    if not out["instruction_context"]:
+        click.echo("    (no launch recorded yet)")
     rc = out["recall"]
     click.echo("  recall per week (RECALL-001 Part B; by the week a task was registered):")
     click.echo(f"    {'week':9s} {'registered':>10s} {'with-hits':>9s} {'results-read':>12s} {'used-a-hit':>10s}")
