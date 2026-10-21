@@ -70,6 +70,12 @@ cli` and `stem`, and c11 reads `{worktree_dir, named_by, ignored}`. Each session
 `dispatch_worktree_named` record (task, stem, path, branch, base, the `init` line), which the finish commits ahead of
 the merge, so the green launch pushes one more commit. The `launching` line reads `in a worktree the CLI names`. HEX
 and UUID tokens renumber accordingly. The four scenarios and their outcomes are unchanged.
+
+**Erratum, PRUNE-002 Part B (AD-038-R6, 2026-10-21).** Each `dispatch_launched` records `instruction_context`,
+the bytes of instruction context the session receives (`seldon.core.instruction_context`). Its values depend on the
+machine's standards file and the test graph, so it is masked whole as `<READING>`. Re-recorded on the PRUNE-002
+code; the re-recording equals the pre-change fixture once exactly the two `"instruction_context": <READING>` keys
+are removed (string strip, `True`). Every other line is unchanged.
 """
 from __future__ import annotations
 
@@ -135,6 +141,10 @@ def _scenario(tmp_path, driver, dispatch_extra) -> str:
     # seldon.yaml files (one has `max_parallel: 1`), so the counts differ by exactly that line. They are the
     # measurement's inputs, not the serial behaviour this test holds; masked the way wall clock is.
     text = re.sub(r'"(footprint_bytes|need_bytes)": \d+', r'"\1": <BYTES>', "\n".join(out))
+    # PRUNE-002's instruction-context reading measures the machine's standards file and the go output against
+    # the test graph, neither of which is the serial behaviour this test holds; its tests are
+    # tests/test_prune002_go_generated.py. The reading is a flat object, masked whole.
+    text = re.sub(r'"instruction_context": \{[^{}]*\}', '"instruction_context": <READING>', text)
     return normalize(text, p) + "\n"
 
 
