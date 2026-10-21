@@ -1,3 +1,4 @@
+seq: 300
 event: accept
 id: seldon:AD-034-R11
 date: '2026-10-20'
@@ -35,3 +36,5 @@ consumer:
 - seldon/core/stations.py
 written_by: seldon decision 0.1.0
 provisional_id: 59e8bdbafbade4e0b567e558760256303e9af9b003881b6e26045856c9ac7c80
+prev_hash: dace9e7bb7bafa75a67d5a79e009eaa3ac4509e0ad395c7961b3398fd0855c83
+record_hash: 527a996c8066826ec3e5328d6b4f902f5270c4f59127cab158ee2d651a51991e

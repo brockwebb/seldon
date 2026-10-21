@@ -1,3 +1,4 @@
+seq: 301
 event: accept
 id: seldon:AD-033-R12
 date: '2026-10-20'
@@ -36,3 +37,5 @@ consumer:
 - seldon/core/decisions.py
 written_by: seldon decision 0.1.0
 provisional_id: f87d14d4a0f65a92dcc7780adf99491b424fa670f559614e53120c06e6277a54
+prev_hash: 527a996c8066826ec3e5328d6b4f902f5270c4f59127cab158ee2d651a51991e
+record_hash: f98b9982f83869aaaf1afe51d402e1260924a7377fe07b40180714bcaf680539
