@@ -339,7 +339,10 @@ def register_files_answering(project_dir: Path, s, qids) -> list[str]:
     loose = [r for r in rels if uncommitted(project_dir, r)]
     last = max((i for i, r in enumerate(loose)
                 if Path(r).name.split("_", 1)[-1].rsplit("_", 1)[0] in slugs), default=None)
-    return [] if last is None else loose[:last + 1]
+    # LOOP-001 Part B: a record written on a branch is pending and outside the chain, so only its own file is staged.
+    pending = [r for r in (p.relative_to(Path(project_dir)).as_posix() for p in reg.pending_files())
+               if uncommitted(project_dir, r) and Path(r).name.split("_", 2)[-1].rsplit("_", 1)[0] in slugs]
+    return ([] if last is None else loose[:last + 1]) + pending
 
 
 def _reason(task_rel: str) -> str:

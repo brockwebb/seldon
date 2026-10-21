@@ -1109,7 +1109,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # the repository it starts in, and enters it.
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
-                extra_env=_worktree_env(project_dir, cfg, spec),
+                extra_env=_worktree_env(project_dir, spec),
                 inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
                 inspect_every_s=cfg["poll_interval_s"],
                 on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig),
@@ -1120,11 +1120,11 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
                      name=chosen.get("name") or stem, lease_cm=held)
 
 
-def _worktree_env(project_dir: Path, cfg: dict, spec: dict) -> dict:
-    """What a worktree session's environment adds: the model lock's ids (AD-035 R3), where the primary checkout is
-    (AD-034-R8), and the CLI's Stop-hook block cap (FRICTION-002 Part C)."""
-    return {**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir),
-            STOP_HOOK_BLOCK_CAP_ENV: str(QS.load_stations_config(cfg)["stop_hook_block_cap"])}
+def _worktree_env(project_dir: Path, spec: dict) -> dict:
+    """What a worktree session's environment adds: the model lock's ids (AD-035 R3) and where the primary checkout
+    is (AD-034-R8). No Stop-hook block cap: LOOP-001 (AD-034 ADDENDUM 04) withdrew FRICTION-002's, so the gate's
+    no-progress rule lets a stuck session go and the CLI's own default cap is only the backstop."""
+    return {**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
 
 
 def _classifier_reading(project_dir: Path, child_session_id: str, log_path: Path, offset: int) -> dict:
@@ -1150,8 +1150,9 @@ def _gate_reading(project_dir: Path, task_id: str, child_session_id: str) -> dic
     """FRICTION-002 Part C at the finish: did the session's Stop gate pass when it ended?
 
     `passed` is True when the last `stop_gate` record of this launch says `pass`, or when the session declared no
-    Part and no gate record exists (nothing to gate). It is False when the last verdict is `block` (the CLI's own
-    block cap ended the session over the hook, observed at 9 consecutive refusals on CLI 2.1.302) or `ceiling`, and
+    Part and no gate record exists (nothing to gate). It is False when the last verdict is `no_progress` (two
+    consecutive refused rounds with the same check output, LOOP-001), `block` (the CLI's own block cap ended the
+    session over the hook, observed at 9 consecutive refusals on CLI 2.1.302; now only the backstop) or `ceiling`, and
     when the session declared a Part but no gate ran (a hook that never ran is not a pass)."""
     from seldon.core.events import read_events
     gates, declared = [], False
@@ -1457,10 +1458,6 @@ def _session_spec(project_dir: Path, rel: str) -> dict:
 
 #: The role a task with no `**Model:**` header runs as.
 MODEL_ROLE_DEFAULT = "primary"
-
-
-#: The CLI's limit on how many times a Stop hook may refuse the end of a session (FRICTION-002 Part C).
-STOP_HOOK_BLOCK_CAP_ENV = "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP"
 
 
 def _session_settings(project_dir: Path, cfg: dict) -> dict:

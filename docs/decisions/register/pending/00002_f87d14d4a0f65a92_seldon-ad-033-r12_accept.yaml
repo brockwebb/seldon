@@ -1,0 +1,38 @@
+event: accept
+id: seldon:AD-033-R12
+date: '2026-10-20'
+decided_by: cc:486adda5
+operator_stated: false
+receipts:
+- 'docs/design/AD-033_ADDENDUM_01_register_numbers_at_merge.md:20: AD-033-R12'
+reason: LOOP-001 Part B; evidence STD-001R and DISP-001R both took seq 292 on 2026-10-19 (rebase_conflict); prior art positions assigned at the commit point (Kafka broker offsets, database sequences)
+kind: decision
+status: accepted
+statement: A record written in a linked git worktree shall be written under pending/ with a provisional content-hash id and no seq; the dispatcher's merge step on the primary checkout shall number every pending record in written order, render REGISTER.md, commit and record register_numbered with the mapping; a record whose provisional id the chain already holds shall never be numbered again.
+source:
+  path: docs/design/AD-033_ADDENDUM_01_register_numbers_at_merge.md
+  lines:
+  - 20
+  - 28
+  sha256: f60f49c6bd9cbd3a0ea1d186c6b553c9dced5a4620b04fba8bfbe61259a3ebad
+  text: |-
+    - **AD-033-R12. A record written in a linked git worktree is written under the register's `pending/` directory with a provisional id (the sha256 of its content) and no seq, prev_hash or record_hash; the dispatcher's merge step, after the fast-forward and under the pass lease on the primary checkout, appends every pending record to the chain in written order, renders REGISTER.md, commits both and records `register_numbered` with the mapping from provisional id to seq; a record whose provisional id the chain already holds is never numbered again.**
+      A branch's pending records fold after the chain, so they bind the branch's later commands. REGISTER.md renders
+      the chain only, so a branch never edits it. Before the fast-forward, the merge verifies the rebased branch's
+      register, pending records included. Two branches that create one id are blocked there as `register_invalid`.
+      A numbering that fails after the merge is recorded on `register_numbered` with its `error`. `seldon decision
+      number` retries it on the primary and refuses in a worktree. A primary checkout on a non-main branch still
+      numbers directly, as before. Code: `seldon/core/decisions.py` `Register.append_pending`, `Register.number`,
+      `number_register`, `is_linked_worktree`; `seldon/commands/dispatch_worktree.py` `number_merged_register`,
+      `_register_findings`; tests `tests/test_loop001_register_seq.py`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-033_ADDENDUM_01_register_numbers_at_merge.md
+  anchor: AD-033-R12
+consumer:
+- cc_tasks/2026-10-20_LOOP-001_stop_hook_no_progress_rule.md
+- tests/test_loop001_register_seq.py
+- seldon/core/decisions.py
+written_by: seldon decision 0.1.0
+provisional_id: f87d14d4a0f65a92dcc7780adf99491b424fa670f559614e53120c06e6277a54

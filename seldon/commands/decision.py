@@ -303,6 +303,28 @@ def run_probe(project_dir: Path) -> tuple[str, bool]:
     return "\n".join(lines), rep.clean
 
 
+@decision_group.command("number")
+def number_cmd():
+    """Number the register's pending records (written on a branch) and render REGISTER.md (LOOP-001 Part B).
+
+    The dispatcher does this at every merge, on the primary checkout under the pass lease; run it by hand only to
+    retry a numbering the merge step recorded as failed, or after merging a branch outside the dispatcher. Refused in
+    a linked worktree. Writes files; commit them."""
+    project_dir = Path.cwd()
+    try:
+        out = dr.number_register(project_dir, load_project_config(project_dir))
+    except dr.RegisterError as exc:
+        _fail(exc)
+    for r in out["numbered"]:
+        click.echo(f"numbered {r['id']} {r['event']} -> seq {r['seq']} ({r['provisional_id'][:16]})")
+    for r in out["already"]:
+        click.echo(f"already numbered {r['id']} {r['event']} at seq {r['seq']}; pending file removed")
+    if not out["numbered"] and not out["already"]:
+        click.echo("nothing pending")
+    elif out["rendered"]:
+        click.echo(f"rendered {out['rendered']}")
+
+
 @decision_group.command("project")
 def project_cmd():
     """Replay the register (own and imported) into `Decision` nodes; render REGISTER.md."""

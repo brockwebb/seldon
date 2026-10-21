@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-034-R11
+date: '2026-10-20'
+decided_by: cc:486adda5
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_04_stop_gate_ends_on_no_progress.md:23: AD-034-R11'
+reason: LOOP-001 Part A; evidence FRICTION-002's live probe (13 identical re-assertions until the CLI's cap); prior art the vendor's loop pattern and Reflexion (Shinn et al. 2023); withdraws stop_hook_block_cap (no measured basis)
+kind: decision
+status: accepted
+statement: Each Stop the gate refuses shall be a round with a recorded fingerprint of its check outputs (exit code, stdout and stderr, hashed after configured volatile spans are masked); a round whose fingerprint equals the previous refused round's shall let the session end with verdict no_progress, treated as stop_gate_unpassed and not merged; rounds whose outputs differ shall continue with no count and no dispatcher cap.
+source:
+  path: docs/design/AD-034_ADDENDUM_04_stop_gate_ends_on_no_progress.md
+  lines:
+  - 23
+  - 30
+  sha256: 8efe2b9241960c3507bda924c828de29540adb60c950d951e262cd5347a39912
+  text: |-
+    - **AD-034-R11. Each Stop the gate refuses is a round, and the gate records a fingerprint of the round's check outputs (exit code, stdout and stderr, hashed after the configured volatile spans are masked); when a round's fingerprint equals the previous refused round's, the gate lets the session end with verdict `no_progress` and the finish treats it as `stop_gate_unpassed`, so the branch is not merged; rounds whose outputs differ continue with no count and no cap of the dispatcher's own.**
+      The record carries `round`, `fingerprint` and `no_progress: {rounds: [n-1, n]}`. The CLI's own refusal cap is
+      still there as the backstop. The launch no longer sets `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, so the CLI's default
+      applies, and it fires only on a session whose output keeps changing. `dispatch.stations.no_progress_volatile` is
+      a list of regular expressions for spans that differ on every run (durations, timestamps, addresses, temporary
+      paths). Without the duration mask, pytest's "1 failed in 0.42s" would make every round look new. The loader
+      refuses `stop_hook_block_cap` and names this addendum. Code: `seldon/core/stations.py` `stop_gate`,
+      `round_fingerprint`, `output_fingerprint`, `WITHDRAWN_KEYS`; tests `tests/test_loop001_no_progress.py`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_04_stop_gate_ends_on_no_progress.md
+  anchor: AD-034-R11
+consumer:
+- cc_tasks/2026-10-20_LOOP-001_stop_hook_no_progress_rule.md
+- tests/test_loop001_no_progress.py
+- seldon/core/stations.py
+written_by: seldon decision 0.1.0
+provisional_id: 59e8bdbafbade4e0b567e558760256303e9af9b003881b6e26045856c9ac7c80

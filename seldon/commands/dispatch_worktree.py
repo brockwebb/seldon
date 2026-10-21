@@ -615,7 +615,7 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
             fh.write(json.dumps(body, indent=1) + "\n")
     # Started in the PRIMARY checkout: the CLI cuts its worktree in the repository it starts in.
     code = S._run(cmd, project_dir, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env=S._worktree_env(project_dir, cfg, spec), on_init=named)
+                  extra_env=S._worktree_env(project_dir, spec), on_init=named)
     wall = round(time.monotonic() - started, 3)
     finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
                    code, wall, log_path, offset, spec)
@@ -923,6 +923,12 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 bad = union_bad(tip, main_sha, writes)
                 if bad:
                     return unmerged("union_invalid", sorted(bad), union=bad)
+            # LOOP-001 Part B: the rebased branch's register, its pending records included, verifies before main
+            # takes it, so the numbering after the fast-forward cannot refuse (two branches creating one id).
+            reg_bad = _register_findings(wt, config)
+            if reg_bad:
+                return unmerged("register_invalid", sorted({x.split(":", 1)[0] for x in reg_bad}),
+                                findings=reg_bad[:12], attempt=attempt)
             if D.tree_state(project_dir)["branch"] != cfg["branch"]:
                 last = ("primary_wrong_branch", [], {"attempts": attempt})
                 continue
@@ -931,14 +937,79 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 last = ("ff_refused", [], {"attempts": attempt,
                                            "stderr": (ff.stderr or ff.stdout).strip()[-500:]})
                 continue
+            merge = {"commit": tip, "attempts": attempt, "regated": regated, "gate": gate, "writes": writes,
+                     "undeclared_writes": _undeclared(project_dir, cfg, rel, writes)}
+            numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch)
+            if numbered:
+                merge["register_numbered"] = numbered
             _finish_merged(project_dir, config, driver, database, domain_config, session_id,
-                           cfg, finish, name, extra,
-                           {"commit": tip, "attempts": attempt, "regated": regated,
-                            "gate": gate, "writes": writes,
-                            "undeclared_writes": _undeclared(project_dir, cfg, rel, writes)})
+                           cfg, finish, name, extra, merge)
             return
     reason, files, detail = last
     return blocked(reason, files, **detail)
+
+
+#: LOOP-001 Part B: what the merge step records when it numbers a merged branch's pending register records.
+EVENT_REGISTER_NUMBERED = "register_numbered"
+
+
+def _register_findings(wt: Path, config: dict) -> list:
+    """The decision register's findings in the worktree's tree (chain and pending), or [] with no register."""
+    from seldon.core import decisions as dr
+    s = dr.settings(wt, config)
+    if s is None:
+        return []
+    return dr.Register(s.repository, Path(wt), s.register_dir).verify()
+
+
+def number_merged_register(project_dir: Path, config: dict, session_id, task_id: str | None,
+                           branch: str | None) -> dict | None:
+    """LOOP-001 Part B (AD-033 ADDENDUM 01), after the fast-forward, under the pass lease, in the primary: give every
+    unnumbered record the merge brought the next seq, render REGISTER.md, commit both, and record
+    `register_numbered` with the mapping (provisional id -> seq). None when nothing was pending.
+
+    A numbering that fails after the merge is recorded on the same event with its `error` and printed; the merge
+    stands (main already holds it), and the pending files stay for `seldon decision number` to retry."""
+    from seldon.core import decisions as dr
+    s = dr.settings(project_dir, config)
+    if s is None or not dr.Register(s.repository, Path(project_dir), s.register_dir).pending_files():
+        return None
+    payload = {"task_id": task_id, "branch": branch}
+    try:
+        out = dr.number_register(project_dir, config)
+    except (dr.RegisterError, dr.BrokenRegister) as exc:
+        payload["error"] = str(exc)[-1000:]
+        S._emit(project_dir, session_id, EVENT_REGISTER_NUMBERED, payload)
+        click.echo(f"REGISTER NOT NUMBERED after merging {branch}: {exc}", err=True)
+        return payload
+    payload["mapping"] = [{"provisional_id": r["provisional_id"], "id": r["id"], "event": r["event"],
+                           "seq": r["seq"], "already": r["already"]} for r in out["numbered"] + out["already"]]
+    paths = [s.register_dir, s.rendered]
+    commit = commit_register(project_dir, paths,
+                             f"register: numbered {len(out['numbered'])} record(s) merged from {branch} "
+                             f"(LOOP-001, AD-033 ADDENDUM 01)")
+    payload["commit"] = commit
+    S._emit(project_dir, session_id, EVENT_REGISTER_NUMBERED, payload)
+    done = ", ".join(f"{r['id']} {r['event']} -> {r['seq']}" for r in out["numbered"])
+    click.echo(f"register: numbered {done or 'nothing'}"
+               + (f"; {len(out['already'])} already numbered" if out["already"] else ""))
+    return payload
+
+
+def commit_register(project_dir: Path, paths: list, message: str) -> dict:
+    """Commit the register directory and REGISTER.md as they stand, deletions included (`D.commit_paths` drops a
+    path that no longer exists, and numbering removes the pending files)."""
+    added = WT.git(project_dir, "add", "-A", "--", *paths)
+    if added.returncode != 0:
+        click.echo(f"register: NOT committed (git add): {added.stderr.strip()}", err=True)
+        return {"committed": False, "reason": "git_add_failed", "stderr": added.stderr.strip()}
+    done = WT.git(project_dir, "commit", "-q", "-m", message, "--", *paths)
+    if done.returncode != 0:
+        WT.git(project_dir, "reset", "-q", "--", *paths)
+        err = (done.stderr or done.stdout).strip()
+        click.echo(f"register: NOT committed: {err}", err=True)
+        return {"committed": False, "reason": "git_commit_failed", "stderr": err[-500:]}
+    return {"committed": True, "commit": WT.rev(project_dir, "HEAD")}
 
 
 def _undeclared(project_dir: Path, cfg: dict, rel: str, writes: list) -> list:

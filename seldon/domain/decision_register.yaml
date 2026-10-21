@@ -117,6 +117,7 @@ slots:
   amendment: {range: Amendment}
   changes: {range: Changes}
   written_by: {description: "The command and version that wrote the file."}
+  provisional_id: {description: "sha256 of the record's content (without seq, prev_hash, record_hash or itself), given when it was written on a branch, unnumbered, under pending/; the chain record the merge numbered from it keeps it, so a record is never numbered twice (LOOP-001 Part B, AD-033 ADDENDUM 01)."}
   prev_hash: {description: "The previous file's record_hash in this repository; 64 zeros for the first."}
   record_hash: {description: "sha256 of this file's data without record_hash (DN-041's form)."}
   # nested
@@ -165,7 +166,7 @@ classes:
     slots: [seq, event, id, date, decided_by, operator_stated, receipts, reason, kind, status,
             statement, source, scope, scope_note, rationale, consumer, review_only, waits_on,
             supersedes, superseded_by, amends, mirrors, constrains, control_type, pattern,
-            catch_class, task, amendment, changes, written_by, prev_hash, record_hash]
+            catch_class, task, amendment, changes, written_by, provisional_id, prev_hash, record_hash]
     slot_usage:
       seq: {required: true}
       event: {required: true}

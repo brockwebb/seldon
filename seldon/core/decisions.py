@@ -364,6 +364,52 @@ def file_name(seq: int, qid: str, event: str) -> str:
 
 _FILE_RE = re.compile(r"^(\d{5})_([a-z0-9-]+)_([a-z]+)\.yaml$")
 
+# LOOP-001 Part B (AD-033 ADDENDUM 01): a record written on a branch is not numbered there. STD-001R and DISP-001R
+# both took seq 292 on 2026-10-19 because each branch appended `00292_...` after the same tail. A record written in
+# a linked git worktree (the dispatcher's branch per task, AD-034) goes to `pending/` with a provisional id (its
+# content hash) and no seq, prev_hash or record_hash; the merge step on the primary checkout appends every pending
+# record to the chain in the order it was written (`Register.number`). Prior art: an append-only log with one writer
+# assigns positions at the commit point, not at the proposal (Kafka's offset is assigned by the broker on append; a
+# database sequence is drawn inside the transaction that commits).
+
+#: The subdirectory of the register that holds a branch's unnumbered records.
+PENDING_DIR = "pending"
+#: `<n>_<provisional id, 16 hex>_<id-slug>_<event>.yaml`; `n` orders one branch's records, the hash keeps two
+#: branches' names apart so their files never conflict.
+_PENDING_RE = re.compile(r"^(\d{5})_([0-9a-f]{16})_([a-z0-9-]+)_([a-z]+)\.yaml$")
+#: The fields only the chain gives a record.
+_CHAIN_FIELDS = ("seq", "prev_hash", "record_hash")
+
+
+def pending_name(n: int, pid: str, qid: str, event: str) -> str:
+    return f"{n:05d}_{pid[:16]}_{slug(qid)}_{event}.yaml"
+
+
+def provisional_id(data: dict) -> str:
+    """sha256 of a record's content: the canonical JSON of its data without the chain's fields or this id."""
+    body = {k: v for k, v in data.items() if k not in _CHAIN_FIELDS + ("provisional_id",)}
+    return hashlib.sha256(json.dumps(body, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def _load_quiet(path: Path) -> Any:
+    """A register file's data, or None when it is not YAML (`verify` reports that file itself)."""
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return None
+
+
+def is_linked_worktree(root: Path) -> bool:
+    """True when `root` is a linked git worktree (its git dir is not the common dir): a branch the dispatcher cut
+    for one task, whose register writes are provisional. False for a primary checkout and for a directory git does
+    not know."""
+    r = subprocess.run(["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-dir",
+                        "--git-common-dir"], capture_output=True, text=True)
+    if r.returncode != 0:
+        return False
+    lines = r.stdout.split()
+    return len(lines) == 2 and Path(lines[0]).resolve() != Path(lines[1]).resolve()
+
 
 # ---------------------------------------------------------------------------
 # One repository's register
@@ -381,16 +427,110 @@ class Register:
     def path(self) -> Path:
         return self.root / self.register_dir
 
+    @property
+    def pending_path(self) -> Path:
+        return self.path / PENDING_DIR
+
+    @property
+    def provisional(self) -> bool:
+        """Writes here are unnumbered (LOOP-001 Part B): the register's repository is a linked worktree."""
+        if not hasattr(self, "_provisional"):
+            self._provisional = is_linked_worktree(self.root)
+        return self._provisional
+
     def exists(self) -> bool:
-        return self.path.is_dir() and any(self.path.glob("*.yaml"))
+        return bool(self.files() or self.pending_files())
 
     def files(self) -> list[Path]:
         if not self.path.is_dir():
             return []
         return sorted(p for p in self.path.glob("*.yaml"))
 
+    def pending_files(self) -> list[Path]:
+        """The unnumbered records, in the order they were written."""
+        if not self.pending_path.is_dir():
+            return []
+        return sorted(self.pending_path.glob("*.yaml"))
+
     def verify(self) -> list[str]:
         """Every finding about files the command did not write, or []."""
+        return self._verify_chain() + self._verify_pending()
+
+    def _verify_pending(self) -> list[str]:
+        """The pending records' own checks (LOOP-001 Part B): name, canonical bytes, provisional id, shape, and no
+        create of an id the chain or an earlier pending record already created. A pending record the chain already
+        holds (its provisional id is there; a rebase re-adds the file main's numbering removed) is not a finding:
+        it is skipped by `events` and removed by `number`, never numbered twice."""
+        out: list[str] = []
+        pending = self.pending_files()
+        if not pending:
+            return out
+        created: set[str] = set()
+        numbered: set[str] = set()
+        for p in self.files():
+            data = _load_quiet(p)
+            if not isinstance(data, dict):
+                continue
+            if event_form(data) == "DecisionRecord":
+                created.add(str(data.get("id")))
+            if data.get("provisional_id"):
+                numbered.add(data["provisional_id"])
+        for p in pending:
+            rel = p.relative_to(self.root).as_posix()
+            m = _PENDING_RE.match(p.name)
+            if not m:
+                out.append(f"{rel}: the name is not <n>_<provisional id>_<id-slug>_<event>.yaml")
+                continue
+            raw = p.read_text(encoding="utf-8")
+            try:
+                data = yaml.safe_load(raw)
+            except yaml.YAMLError as exc:
+                out.append(f"{rel}: not YAML ({exc})")
+                continue
+            if not isinstance(data, dict):
+                out.append(f"{rel}: not a mapping")
+                continue
+            pid = data.get("provisional_id")
+            if pid in numbered:
+                continue
+            if any(k in data for k in _CHAIN_FIELDS):
+                out.append(f"{rel}: a pending record carries no {'/'.join(_CHAIN_FIELDS)} (the chain gives them)")
+            if pid != provisional_id(data):
+                out.append(f"{rel}: the data does not hash to its provisional_id (edited after it was written)")
+            elif m.group(2) != pid[:16]:
+                out.append(f"{rel}: the name does not carry its provisional_id")
+            if m.group(3) != slug(str(data.get("id", ""))) or m.group(4) != data.get("event"):
+                out.append(f"{rel}: the name does not match the id and event inside")
+            if canonical_yaml(data) != raw:
+                out.append(f"{rel}: the bytes are not the canonical serialization of the data "
+                           f"(the file was edited by hand)")
+            try:
+                home, _ = split_id(str(data.get("id")))
+                if home != self.repository:
+                    out.append(f"{rel}: holds an event about {data.get('id')}, whose home is not "
+                               f"{self.repository}")
+            except RegisterError as exc:
+                out.append(f"{rel}: {exc}")
+            probe = dict(data, seq=1, prev_hash=CHAIN_START, record_hash="x")
+            probe.pop("provisional_id", None)
+            out.extend(f"{rel}: {e}" for e in validate_shape(probe))
+            if event_form(data) == "DecisionRecord":
+                if data.get("id") in created:
+                    out.append(f"{rel}: creates {data.get('id')}, which the register already holds (two branches "
+                               f"decided the same id)")
+                created.add(str(data.get("id")))
+        return out
+
+    def numbered_ids(self) -> dict[str, int]:
+        """provisional id -> seq, for every chain record that was numbered from a pending one."""
+        out: dict[str, int] = {}
+        for p in self.files():
+            data = _load_quiet(p)
+            if isinstance(data, dict) and data.get("provisional_id"):
+                out[data["provisional_id"]] = data.get("seq")
+        return out
+
+    def _verify_chain(self) -> list[str]:
         out: list[str] = []
         prev = CHAIN_START
         for n, p in enumerate(self.files(), 1):
@@ -444,8 +584,12 @@ class Register:
             raise BrokenRegister(f"FATAL: the register of {self.repository} changed under this "
                                  f"process (expected {want}, found {have}); re-run to re-verify")
 
-    def events(self) -> list[dict]:
-        """Every event, after the register verifies. A broken register is fatal, never read."""
+    def events(self, include_pending: bool = True) -> list[dict]:
+        """Every event, after the register verifies. A broken register is fatal, never read.
+
+        The chain's events in seq order, then (unless `include_pending` is False) the pending records in the order
+        they were written, so a branch's own records bind its later commands; a pending record the chain already
+        numbered is skipped. REGISTER.md renders the chain alone (`render_register`), so a branch never edits it."""
         bad = self.verify()
         if bad:
             raise BrokenRegister(
@@ -454,7 +598,63 @@ class Register:
                 + "\n  ".join(bad[:12]) + (f"\n  ... and {len(bad) - 12} more" if len(bad) > 12 else ""))
         files = self.files()
         self._tail = (len(files), files[-1].name if files else None)
-        return [yaml.safe_load(p.read_text(encoding="utf-8")) for p in files]
+        chain = [yaml.safe_load(p.read_text(encoding="utf-8")) for p in files]
+        if not include_pending:
+            return chain
+        numbered = {e["provisional_id"] for e in chain if e.get("provisional_id")}
+        pending = [yaml.safe_load(p.read_text(encoding="utf-8")) for p in self.pending_files()]
+        return chain + [e for e in pending if e.get("provisional_id") not in numbered]
+
+    def append_pending(self, data: dict) -> Path:
+        """Write one event unnumbered, under `pending/` (LOOP-001 Part B). Caller holds the lock and has validated."""
+        rec = {k: v for k, v in data.items() if k not in _CHAIN_FIELDS + ("provisional_id",)}
+        rec["written_by"] = WRITER
+        rec = ordered(rec)
+        rec["provisional_id"] = provisional_id(rec)
+        rec = ordered(rec)
+        self.pending_path.mkdir(parents=True, exist_ok=True)
+        path = self.pending_path / pending_name(len(self.pending_files()) + 1, rec["provisional_id"], rec["id"],
+                                                rec["event"])
+        tmp = path.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(canonical_yaml(rec))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+        return path
+
+    def number(self) -> list[dict]:
+        """Append every pending record to the chain, in written order, and remove its pending file (LOOP-001 Part
+        B). The merge step calls this on the primary checkout under the pass lease. A pending record whose
+        provisional id the chain already holds is removed and reported `already`, never numbered twice.
+
+        Returns one row per pending file: `{provisional_id, id, event, seq, file, pending, already}`.
+
+        Raises:
+            RegisterError: In a linked worktree: a branch never numbers (that is the collision this prevents).
+            BrokenRegister: The register, chain or pending, does not verify.
+        """
+        if self.provisional:
+            raise RegisterError(f"{self.root} is a linked worktree: its records are numbered when its branch "
+                                f"merges, on the primary checkout (LOOP-001, AD-033 ADDENDUM 01)")
+        out: list[dict] = []
+        with self.locked():
+            self.events()                  # verifies chain and pending, or raises
+            numbered = self.numbered_ids()
+            for p in self.pending_files():
+                data = yaml.safe_load(p.read_text(encoding="utf-8"))
+                pid = data["provisional_id"]
+                row = {"provisional_id": pid, "id": data["id"], "event": data["event"], "pending": p.name}
+                if pid in numbered:
+                    out.append({**row, "seq": numbered[pid], "file": None, "already": True})
+                else:
+                    path = self.append(data)
+                    numbered[pid] = self._tail[0]
+                    out.append({**row, "seq": self._tail[0], "file": path.name, "already": False})
+                p.unlink()
+            if self.pending_path.is_dir() and not any(self.pending_path.iterdir()):
+                self.pending_path.rmdir()
+        return out
 
     @contextlib.contextmanager
     def locked(self):
@@ -612,7 +812,7 @@ def apply(recs: dict[str, Record], ev: dict) -> None:
         rec.superseded_by = ev.get("superseded_by")
     elif kind == "amend":
         if ev.get("amendment"):
-            rec.amendments.append({**ev["amendment"], "seq": ev["seq"], "date": ev.get("date"),
+            rec.amendments.append({**ev["amendment"], "seq": ev.get("seq"), "date": ev.get("date"),
                                    "decided_by": ev.get("decided_by"), "reason": ev.get("reason")})
         for k, v in (ev.get("changes") or {}).items():
             if v is None:
@@ -807,7 +1007,8 @@ def _write(u: Universe, data: dict) -> Path:
     recs = u.records(repo)          # verifies in full on first use
     with reg.locked():
         reg.assert_tail()
-        path = reg.append(data)
+        # LOOP-001 Part B: on a branch the record waits for its number until the branch merges.
+        path = reg.append_pending(data) if reg.provisional else reg.append(data)
     apply(recs, yaml.safe_load(path.read_text(encoding="utf-8")))
     return path
 
@@ -1008,7 +1209,7 @@ def render_record(rec: Record) -> str:
         lines.append(f"  amended ({a.get('date')}, {a.get('decided_by')}"
                      + (f", by {a['by']}" if a.get("by") else "") + f"): {a['clause']}: "
                      + " ".join(str(a["text"]).split()))
-    lines.append(f"  events: {', '.join(str(e['seq']) + ' ' + e['event'] for e in rec.events)}")
+    lines.append(f"  events: {', '.join(str(e.get('seq') or 'pending') + ' ' + e['event'] for e in rec.events)}")
     return "\n".join(lines)
 
 
@@ -1038,7 +1239,10 @@ RENDER_BANNER = ("<!-- Rendered by `seldon decision project` from docs/decisions
 
 
 def render_register(u: Universe) -> str:
-    recs = list_records(u, [u.s.repository])
+    # The chain alone (LOOP-001 Part B): a branch's pending records are rendered when the merge numbers them, so a
+    # branch never edits REGISTER.md and two branches never conflict on it.
+    recs = sorted(fold(u.register(u.s.repository).events(include_pending=False)).values(),
+                  key=lambda r: _sort_key(r.id))
     counts: dict[str, int] = {}
     for r in recs:
         counts[r.status] = counts.get(r.status, 0) + 1
@@ -1085,6 +1289,24 @@ def write_rendered(u: Universe) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(render_register(u), encoding="utf-8")
     return path
+
+
+def number_register(project_dir: Path, config: dict) -> dict:
+    """LOOP-001 Part B: number this repository's pending records (`Register.number`) and render REGISTER.md again.
+
+    Returns `{"numbered": [rows], "already": [rows], "rendered": <rel> | None}`; nothing pending is all empty.
+    """
+    s = settings(project_dir, config)
+    if s is None:
+        return {"numbered": [], "already": [], "rendered": None}
+    u = Universe(s)
+    reg = u.register(s.repository)
+    if not reg.pending_files():
+        return {"numbered": [], "already": [], "rendered": None}
+    rows = reg.number()
+    write_rendered(Universe(s))
+    return {"numbered": [r for r in rows if not r["already"]], "already": [r for r in rows if r["already"]],
+            "rendered": s.rendered}
 
 
 # ---------------------------------------------------------------------------

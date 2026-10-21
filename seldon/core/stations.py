@@ -26,6 +26,7 @@ R8's chart, drawn only from `qc.chart_min_points` points on (FC-15). See
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -117,16 +118,30 @@ STATIONS_DEFAULTS = {
     # carry more than two suite-sized checks; a killed hook lets the session end, and its milestones then wait
     # unanswered, which `seldon dispatch inspect` shows.
     "stop_gate_timeout_s": 3600,
-    # FRICTION-002 Part C: `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, the CLI's own limit on consecutive Stop-hook refusals
-    # (its default is 9, observed 2026-10-17 in docs/evidence/friction002/stop_gate_live_probe.jsonl). The same
-    # probe showed a session that cannot make its check pass re-asserting that on every refusal without progress,
-    # so the cap bounds that waste; 20 leaves room for several real fix rounds. NO MEASURED BASIS beyond that one
-    # probe. A session the cap ends with a check failing is not merged (`stop_gate_unpassed`).
-    "stop_hook_block_cap": 20,
+    # LOOP-001 Part A (AD-034 ADDENDUM 04): what a Stop round's fingerprint masks before it is hashed, so two rounds
+    # compare equal when only a volatile span differs. pytest prints its run time on its summary line ("1 failed in
+    # 0.42s") on every run, so without the duration mask two identical pytest failures never match and the
+    # no-progress rule could not fire on the commonest check; timestamps, addresses and temporary paths are the
+    # same class. Each is a regular expression replaced by `<v>`. A pattern too broad hides real progress (the
+    # session is let go a round early and is not merged); one too narrow leaves the CLI's own cap as the backstop.
+    "no_progress_volatile": [
+        r"\b\d+(?:\.\d+)?\s?(?:s|ms|sec|secs|seconds)\b",
+        r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?",
+        r"\b0x[0-9a-fA-F]+\b",
+        r"pytest-\d+",
+        r"\btmp[A-Za-z0-9_]{6,}\b",
+    ],
     # Where the projects this task's environment includes are named (premise `environment_in_flight`): a
     # `path#key` reference to a list of sibling repository names (squiddy: `squiddy/kit.yaml#environment_packages`).
     # Unset means `decisions.repositories` in this project's seldon.yaml.
     "environment_ref": None,
+}
+
+#: Keys an earlier build read that are withdrawn, with why. The loader names the ruling, so a seldon.yaml that still
+#: carries one is refused with its reason rather than as an unknown key.
+WITHDRAWN_KEYS = {
+    "stop_hook_block_cap": "withdrawn by LOOP-001 (AD-034 ADDENDUM 04): the Stop hook lets a session go when two "
+                           "consecutive rounds make no progress, not at a count; the CLI's own cap is the backstop",
 }
 
 #: A `**Parts:**` header's shares must sum to 1 within this. Two-decimal shares of four Parts round to within 0.01.
@@ -146,6 +161,9 @@ def load_stations_config(cfg: dict) -> dict:
     block = (cfg or {}).get("stations") or {}
     if not isinstance(block, dict):
         raise StationsConfigError(f"dispatch.stations must be a mapping, got {block!r}")
+    withdrawn = sorted(set(block) & set(WITHDRAWN_KEYS))
+    if withdrawn:
+        raise StationsConfigError("; ".join(f"dispatch.stations.{k} is {WITHDRAWN_KEYS[k]}" for k in withdrawn))
     unknown = sorted(set(block) - set(STATIONS_DEFAULTS))
     if unknown:
         raise StationsConfigError(f"dispatch.stations has unknown key(s) {unknown}; known: {sorted(STATIONS_DEFAULTS)}")
@@ -155,11 +173,19 @@ def load_stations_config(cfg: dict) -> dict:
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
             raise StationsConfigError(f"dispatch.stations.{key} must be a positive number, got {v!r}")
-    for key in ("first_article_polls", "reap_after_intervals", "stop_gate_timeout_s", "stop_hook_block_cap",
-                "floor_launches"):
+    for key in ("first_article_polls", "reap_after_intervals", "stop_gate_timeout_s", "floor_launches"):
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, int) or v < 1:
             raise StationsConfigError(f"dispatch.stations.{key} must be a whole number of at least 1, got {v!r}")
+    vol = out["no_progress_volatile"]
+    if not isinstance(vol, list) or not all(isinstance(x, str) for x in vol):
+        raise StationsConfigError(f"dispatch.stations.no_progress_volatile must be a list of regular expressions, "
+                                  f"got {vol!r}")
+    for x in vol:
+        try:
+            re.compile(x)
+        except re.error as exc:
+            raise StationsConfigError(f"dispatch.stations.no_progress_volatile: {x!r} does not compile: {exc}") from exc
     return out
 
 
@@ -494,10 +520,24 @@ def tree_path(cwd: Path, env: dict) -> str:
     return os.pathsep.join([str(cwd), *rest])
 
 
+def output_fingerprint(exit_code, stdout: str, stderr: str, volatile: list | tuple = ()) -> str:
+    """sha256 over a check's exit code, stdout and stderr, each with the `volatile` patterns replaced by `<v>`
+    (LOOP-001 Part A). Two runs with the same fingerprint told the session nothing new."""
+    def mask(text: str) -> str:
+        for pat in volatile:
+            text = re.sub(pat, "<v>", text)
+        return text
+    body = json.dumps([exit_code, mask(stdout or ""), mask(stderr or "")], ensure_ascii=False)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
 def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None,
-              output: str | None = None) -> dict:
+              output: str | None = None, volatile: list | tuple | None = None) -> dict:
     """Run one `check:` command in `cwd`, with `cwd` first on `PYTHONPATH` (`tree_path`). `outcome` is `pass`
-    (exit 0), `fail`, or `unrunnable` (no reading). The row names the interpreter and the path it ran with."""
+    (exit 0), `fail`, or `unrunnable` (no reading). The row names the interpreter and the path it ran with, and
+    carries `output_sha256` (`output_fingerprint`, masking `volatile`; the configured default when None)."""
+    if volatile is None:
+        volatile = STATIONS_DEFAULTS["no_progress_volatile"]
     started = time.monotonic()
     run_env = dict(os.environ if env is None else env)
     run_env["PYTHONPATH"] = tree_path(Path(cwd), run_env)
@@ -526,7 +566,8 @@ def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None
     else:
         outcome = "fail"
     return {**row, "outcome": outcome, "exit": proc.returncode, "seconds": round(time.monotonic() - started, 3),
-            "tail": text[-_TAIL_CHARS:]}
+            "tail": text[-_TAIL_CHARS:],
+            "output_sha256": output_fingerprint(proc.returncode, proc.stdout, proc.stderr, volatile)}
 
 
 #: A huddle's reason when a check names a file its tree lacks and the session's branch holds (AD-038-R4): the station
@@ -576,10 +617,11 @@ def missing_file_reading(command: str, cwd: Path, branch: str | None) -> dict | 
 
 
 def run_station_check(command: str, cwd: Path, timeout_s: float, branch: str | None = None,
-                      run: Callable[..., dict] = run_check) -> dict:
+                      run: Callable[..., dict] = run_check, **run_kw) -> dict:
     """`run_check`, then AD-038-R4: a check that did not pass and names a file its tree lacks is `unrunnable`
-    (a huddle), never `fail` (a stop). A genuinely failing check, whose files are all present, still fails."""
-    r = run(command, cwd, timeout_s)
+    (a huddle), never `fail` (a stop). A genuinely failing check, whose files are all present, still fails.
+    `run_kw` (the Stop gate's `volatile`) is passed to `run` only when given."""
+    r = run(command, cwd, timeout_s, **run_kw)
     if r.get("outcome") == "pass":
         return r
     miss = missing_file_reading(command, Path(cwd), branch)
@@ -688,6 +730,16 @@ def judgment_plan(judgments: list, reserve_left_share: float, base_rate: float, 
             "model_calls": 0}
 
 
+def round_fingerprint(parts: list) -> str:
+    """sha256 over every check a Stop round ran: part, command, outcome, exit and output (`output_sha256`; for a row
+    without one, a check that never produced output or a stubbed runner, its exit and `tail`). Equal fingerprints
+    in consecutive refused rounds are LOOP-001's no progress."""
+    rows = sorted([part["part"] or "", r.get("command") or "", r.get("outcome"), r.get("exit"),
+                   r.get("output_sha256") or hashlib.sha256(str(r.get("tail") or "").encode("utf-8")).hexdigest()]
+                  for part in parts for r in part["checks"])
+    return hashlib.sha256(json.dumps(rows).encode("utf-8")).hexdigest()
+
+
 def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Path, branch: str | None, *,
               run: Callable[..., dict] = run_check, stop_hook_active: bool = False,
               floor: dict | None = None) -> dict:
@@ -704,9 +756,17 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     * a check fails at or over the ceiling: the session may end, and a hard stop (`session_stop`, kind `hard`,
       reason `spend_ceiling`) is written with the failures (`verdict: ceiling`).
 
+    * a check fails, under the ceiling, and this round's checks produced exactly what the previous refused round's
+      did (`round_fingerprint`): the session may end (`verdict: no_progress`, with `no_progress: {rounds: [n-1,
+      n]}`). LOOP-001 Part A (AD-034 ADDENDUM 04): each refused Stop is a round, a round that repeats its
+      predecessor carried no new information, and there is no count and no cap; the finish reads the verdict as
+      `stop_gate_unpassed`, so the branch is not merged. The CLI's own refusal cap stays as the backstop.
+
     A check that could not run (`unrunnable`) never blocks: a defective command would hold the session forever.
     The milestone station opens its huddle from this record. Prior art: Claude Code's Stop hook as a completion
-    gate ("give Claude a pass/fail check"), docs/research/2026-10-17_vendor_survey_codex_claude_code.html section 1.
+    gate ("give Claude a pass/fail check"), docs/research/2026-10-17_vendor_survey_codex_claude_code.html section 1;
+    for the no-progress rule, the vendor's loop pattern (code.claude.com/docs/en/workflows: "keep fixing until a
+    check passes ... or two rounds in a row make no progress") and Reflexion (Shinn et al. 2023).
 
     Returns ``{"record": <stop_gate payload>, "block": bool, "reason": str | None, "hard_stop": payload | None}``.
     """
@@ -725,7 +785,8 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     parts, failed = [], []
     for name, answers in declared.items():
         crit = part_criteria(text, name)
-        results = [run_station_check(cmd, cwd, scfg["check_timeout_s"], branch, run=run) for cmd in crit["checks"]]
+        results = [run_station_check(cmd, cwd, scfg["check_timeout_s"], branch, run=run,
+                                     volatile=scfg["no_progress_volatile"]) for cmd in crit["checks"]]
         parts.append({"part": name, "answers": answers, "checks": results, "section_found": crit["section_found"]})
         failed += [{"part": name, **r} for r in results if r["outcome"] == "fail"]
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
@@ -736,20 +797,35 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     ceiling = limit["ceiling"]
     over = ceiling is not None and tokens is not None and tokens >= ceiling
     verdict = "pass" if not failed else ("ceiling" if over else "block")
+    # LOOP-001 Part A: this session's earlier rounds (its refused Stops since the launch), and whether this one
+    # repeats the last of them.
+    prior = [(e.get("payload") or {}) for e in records if e.get("event_type") == EVENT_STOP_GATE
+             and (e.get("payload") or {}).get("child_session_id") == lp.get("child_session_id")]
+    refused = [g for g in prior if g.get("verdict") == "block"]
+    fingerprint = round_fingerprint(parts)
+    rnd, no_progress = len(refused) + 1, None
+    if verdict == "block" and prior and prior[-1].get("verdict") == "block" \
+            and prior[-1].get("fingerprint") == fingerprint:
+        verdict = "no_progress"
+        no_progress = {"rounds": [prior[-1].get("round") or len(refused), rnd]}
     record = {"task_id": task_id, "child_session_id": lp.get("child_session_id"), "cwd": str(cwd), "branch": branch,
               # AD-037 ADDENDUM 02: what a check's `seldon` and `pytest` ran as, and the tree they imported.
               "interpreter": sys.executable, "path": tree_path(Path(cwd), dict(os.environ)),
               "parts": parts, "failed": [f["command"] for f in failed], "tokens": tokens, "ceiling": ceiling,
-              "verdict": verdict, "stop_hook_active": bool(stop_hook_active)}
+              "verdict": verdict, "stop_hook_active": bool(stop_hook_active),
+              "round": rnd, "fingerprint": fingerprint}
+    if no_progress:
+        record["no_progress"] = no_progress
     reason, hard = None, None
     if verdict == "block":
         reason = ("FRICTION-002 stop gate: this session may not end while a declared Part's check fails. "
                   + " ".join(f"Part {f['part']}: `{f['command']}` exit {f['exit']}"
-                             + (f" ({f['output_tail'][-300:].strip()})" if f.get("output_tail") else "") + "."
+                             + (f" ({f['tail'][-300:].strip()})" if f.get("tail") else "") + "."
                              for f in failed)
-                  + f" Fix the work so the check passes, then end the session again ({tokens} of {ceiling} "
-                    f"tokens used). If it cannot be made to pass, write the RESULT saying why and end: the session "
-                    f"is then let go at the CLI's refusal cap or the token ceiling, and its branch is NOT merged.")
+                  + f" Fix the work so the check passes, then end the session again (round {rnd}; {tokens} of "
+                    f"{ceiling} tokens used). If it cannot be made to pass, write the RESULT saying why and end: a "
+                    f"round whose check output repeats this one's lets the session go (`no_progress`), and its "
+                    f"branch is NOT merged.")
     elif verdict == "ceiling":
         hard = {"task_id": task_id, "station": "stop_gate", "kind": "hard", "reason": "spend_ceiling",
                 "by": "dispatcher", "reading": {"tokens": tokens, **limit},
