@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 156 records: accepted 133, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 157 records: accepted 134, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (133)
+## Accepted (134)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -254,6 +254,8 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 156 records: accept
   - source `docs/design/AD-037_ADDENDUM_01_spend_floor_tool_boundary_liveness.md`:44-47; decided by cc:eadf9e03; consumer cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor.md, tests/test_disp001r_stations.py
 - **seldon:AD-037-R14** A station shall run every check: command with the tree it runs in first on PYTHONPATH, and shall run a check's seldon (and pytest) as the dispatcher's interpreter with -m, recording interpreter and path in the stop_gate record.
   - source `docs/design/AD-037_ADDENDUM_02_a_check_runs_the_branch_code.md`:22-28; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_gate_path.py
+- **seldon:AD-037-R15** The interpreter a project's checks and dispatched sessions run under shall be the project's declaration (dispatch.stations.interpreter, a path relative to its primary checkout, refused at load when it does not exist), never the dispatcher's own; a check's pytest, seldon and python shall run as it with its bin first on PATH and VIRTUAL_ENV set, the row and stop_gate record shall name it, and undeclared shall be AD-037-R14 exactly.
+  - source `docs/design/AD-037_ADDENDUM_03_a_check_runs_the_projects_interpreter.md`:25-38; decided by cc:1f4db4cc; consumer cc_tasks/2026-10-22_STATION-001_a_check_runs_the_projects_declared_interpreter.md, tests/test_station001_project_interpreter.py
 - **seldon:AD-038-R1** - **AD-038-R1. The dispatcher reconciles before it judges.** Before c7 is evaluated, the lease holder commits every dirty path that is machine-written governed state: the event store, the decision register and REGISTER.md, the prior-art query log and verdict ledger, the cadence, registered task files and their addenda. The commit is path-scoped and runs the hooks (R11 kept). The actor allowlist is removed; what qualifies a file is its path class and that its change is append-only or a registration output, never who wrote it. c7 then refuses only on dirt the reconciler could not or may not comm [...]
   - source `docs/design/AD-038_the_machine_reconciles_its_own_state.md`:64-64; decided by desktop; consumer cc_tasks/2026-10-17_FRICTION-001_the_machine_reconciles_its_own_state.md
 - **seldon:AD-038-R2** - **AD-038-R2. A halted task is redriven, not re-issued.** `blocked` gains the transition `blocked -> accepted`, taken by `seldon dispatch redrive <task>` (CLI and MCP), which clears `claimed_by`, records `dispatch_redrive` with the stop it answers, and leaves the task's file, id and history intact. The dispatcher redrives automatically when the stop's cause is one of its own recorded defects (a station that ran in the wrong tree, a database outage); any other cause waits for a redrive from a Desktop or CC session. **Basis:** SQS dead-letter redrive; measured (DESK-002's halt cost one task fil [...]
