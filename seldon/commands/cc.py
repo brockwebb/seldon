@@ -12,7 +12,10 @@ import click
 
 from seldon import models
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
-from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
+from seldon.core.artifacts import (
+    create_artifact, ledger_only, plan_artifact, plan_update_artifact, walk_to_completed,
+)
+from seldon.core.events import make_event
 from seldon.core.dispatch import (
     AFTER_GRAMMAR,
     HEADER_AFTER,
@@ -1074,7 +1077,10 @@ def cc_complete(filepath, note, allow_untracked):
         )
         completed_at = datetime.now(timezone.utc).isoformat()
         try:
-            update_artifact(
+            # completed_at, the walk and the recall reading go down in one ledger
+            # append, and the walk is planned before it: a task in a state with no
+            # path to completed is refused with nothing written (SEL-007).
+            stamp = plan_update_artifact(
                 project_dir=project_dir,
                 driver=driver,
                 database=database,
@@ -1084,22 +1090,30 @@ def cc_complete(filepath, note, allow_untracked):
                 authority="accepted",
                 session_id=session_id,
             )
-            walk_to_completed(
-                project_dir=project_dir,
-                driver=driver,
-                database=database,
-                domain_config=domain_config,
-                artifact_id=existing_id,
-                current_state=current_state,
-                actor="cc",
-                session_id=session_id,
-            )
+            reading = [] if used is None else [ledger_only(make_event(
+                recall_mod.EVENT_USED, "cc", "accepted", used, session_id=session_id,
+            ))]
+            try:
+                walk_to_completed(
+                    project_dir=project_dir,
+                    driver=driver,
+                    database=database,
+                    domain_config=domain_config,
+                    artifact_id=existing_id,
+                    current_state=current_state,
+                    actor="cc",
+                    session_id=session_id,
+                    before=[stamp],
+                    after=reading,
+                )
+            except ValueError as exc:
+                click.echo(f"Error: {exc} Nothing was written.", err=True)
+                raise SystemExit(1)
             click.echo(f"Completed: {name}")
             click.echo(f"  source_file: {rel_path}")
             click.echo(f"  id: {existing_id[:8]}...")
             click.echo(f"  state: completed")
             if used is not None:
-                recall_mod.record_used(project_dir, used, actor="cc", session_id=session_id)
                 click.echo(f"  recall used: {', '.join(used['used']) or 'none'} ({used['result_path']})")
         finally:
             driver.close()
@@ -1114,10 +1128,9 @@ def cc_complete(filepath, note, allow_untracked):
     completed_at = datetime.now(timezone.utc).isoformat()
 
     try:
-        artifact_id = create_artifact(
+        # The creation and the walk go down in one ledger append (SEL-007).
+        artifact_id, creation = plan_artifact(
             project_dir=project_dir,
-            driver=driver,
-            database=database,
             domain_config=domain_config,
             artifact_type="ResearchTask",
             properties={
@@ -1140,6 +1153,7 @@ def cc_complete(filepath, note, allow_untracked):
             current_state="proposed",
             actor="cc",
             session_id=session_id,
+            before=[creation],
         )
 
         click.echo(f"Recorded: {name}")

@@ -24,6 +24,7 @@ from seldon.core.events import EVENTS_FILENAME, append_events, read_events
 from seldon.domain.loader import load_domain_config
 
 from tests.testdb import TEST_DATABASE
+from tests.test_prune001 import owner  # noqa: F401 — fixture reused by the prune test
 
 pytestmark = pytest.mark.usefixtures("neo4j_available")
 
@@ -307,3 +308,223 @@ def test_the_domain_validator_names_the_relationship_a_pair_is_legal_under(domai
     assert "'precedes'" in text
     for legal in domain_config.relationship_types["depends_on"].to_types:
         assert legal in text
+
+
+# ── Part C: every other command that writes more than one line ────────────────
+#
+# Each test asserts the command's lines reach the ledger in ONE append_events call
+# (the both-or-neither property), and, where a refusal used to land after a write,
+# that the refusal now leaves the ledger untouched.
+
+@pytest.fixture
+def one_append(monkeypatch):
+    """Record the size of every batch handed to the ledger by seldon.core.artifacts."""
+    import seldon.core.artifacts as artifacts_module
+    calls: list[list[str]] = []
+    real = artifacts_module.append_events
+
+    def counting(project_path, batch):
+        calls.append([e["event_type"] for e in batch])
+        return real(project_path, batch)
+
+    monkeypatch.setattr(artifacts_module, "append_events", counting)
+    return calls
+
+
+def test_task_supersede_writes_reason_state_and_edge_in_one_append(
+    neo4j_driver, cli_project, domain_config, clean_test_db, one_append,
+):
+    old = _task(cli_project, neo4j_driver, domain_config, "old")
+    new = _task(cli_project, neo4j_driver, domain_config, "new")
+    one_append.clear()
+
+    result = CliRunner().invoke(
+        task_group, ["supersede", old[:8], "--reason", "overtaken", "--superseded-by", new[:8]],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert one_append == [["artifact_updated", "artifact_state_changed", "link_created"]]
+
+
+def test_task_claim_writes_the_marker_and_the_state_in_one_append(
+    neo4j_driver, cli_project, domain_config, clean_test_db, one_append,
+):
+    from seldon.core.artifacts import transition_task
+
+    tid = _task(cli_project, neo4j_driver, domain_config)
+    transition_task(project_dir=cli_project, driver=neo4j_driver, database=NEO4J_DB,
+                    domain_config=domain_config, artifact_id=tid, current_state="proposed",
+                    new_state="accepted", actor="human")
+    one_append.clear()
+    transition_task(project_dir=cli_project, driver=neo4j_driver, database=NEO4J_DB,
+                    domain_config=domain_config, artifact_id=tid, current_state="accepted",
+                    new_state="in_progress", actor="human")
+
+    assert one_append == [["artifact_updated", "artifact_state_changed"]]
+
+
+def test_task_close_walks_in_one_append(
+    neo4j_driver, cli_project, domain_config, clean_test_db, one_append,
+):
+    tid = _task(cli_project, neo4j_driver, domain_config)
+    one_append.clear()
+
+    result = CliRunner().invoke(task_group, ["close", tid[:8]])
+
+    assert result.exit_code == 0, result.output
+    assert one_append == [[
+        "artifact_state_changed", "artifact_updated", "artifact_state_changed",
+        "artifact_state_changed",
+    ]]
+
+
+def test_a_walk_refused_at_its_start_writes_what_was_planned_before_it_neither(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    """`cc complete` on a superseded task used to stamp completed_at, then raise."""
+    from seldon.core.artifacts import plan_update_artifact, walk_to_completed
+
+    tid = _task(cli_project, neo4j_driver, domain_config)
+    before = _ledger_lines(cli_project)
+    stamp = plan_update_artifact(project_dir=cli_project, driver=neo4j_driver, database=NEO4J_DB,
+                                 artifact_id=tid, properties={"completed_at": "now"},
+                                 actor="cc", authority="accepted")
+
+    with pytest.raises(ValueError):
+        walk_to_completed(project_dir=cli_project, driver=neo4j_driver, database=NEO4J_DB,
+                          domain_config=domain_config, artifact_id=tid,
+                          current_state="superseded", before=[stamp])
+    assert _ledger_lines(cli_project) == before
+
+
+def test_cc_complete_on_a_superseded_task_writes_nothing(
+    neo4j_driver, project_dir, clean_test_db, domain_config, monkeypatch,
+):
+    import subprocess
+
+    from seldon.commands.cc import cc_group
+    from seldon.core.artifacts import transition_task
+    from seldon.mcp_server import seldon_cc_register
+
+    rel = "cc_tasks/2026-10-21_sel007_probe.md"
+    for args in (["init", "-q", "-b", "main"], ["config", "user.email", "t@t"],
+                 ["config", "user.name", "t"]):
+        subprocess.run(["git", *args], cwd=project_dir, check=True)
+    (project_dir / "seldon.yaml").write_text(
+        "project:\n  name: test\n  domain: research\n"
+        f"neo4j:\n  database: {NEO4J_DB}\n  uri: bolt://localhost:7687\n"
+        "event_store:\n  path: seldon_events.jsonl\n")
+    (project_dir / "cc_tasks").mkdir()
+    (project_dir / rel).write_text("# CC Task: probe\n\n**Implements:** DN-006\n\nA probe.\n")
+    out = seldon_cc_register.__wrapped__(filepath=rel, project_dir=str(project_dir),
+                                         allow_untracked=True)
+    assert "Registered" in out, out
+    with neo4j_driver.session(database=NEO4J_DB) as s:
+        tid = s.run("MATCH (t:ResearchTask {source_file: $f}) RETURN t.artifact_id AS id",
+                    f=rel).single()["id"]
+    transition_task(project_dir=project_dir, driver=neo4j_driver, database=NEO4J_DB,
+                    domain_config=domain_config, artifact_id=tid, current_state="proposed",
+                    new_state="superseded", actor="human", terminal_reason="probe")
+    before = _ledger_lines(project_dir)
+
+    monkeypatch.chdir(project_dir)
+    result = CliRunner().invoke(cc_group, ["complete", rel])
+
+    assert result.exit_code == 1, result.output
+    assert "Nothing was written" in result.output
+    assert _ledger_lines(project_dir) == before
+
+
+def test_issue_update_refused_transition_leaves_no_property_update(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    from seldon.commands.issue import issue_group
+
+    iid = _make(cli_project, neo4j_driver, domain_config, "Issue", {
+        "description": "probe", "issue_type": "citation_gap", "importance": "low",
+        "urgency": "low", "detection_method": "audit", "target": "content",
+    })
+    before = _ledger_lines(cli_project)
+
+    result = CliRunner().invoke(
+        issue_group, ["update", iid, "--urgency", "high", "--state", "verified"],
+    )
+
+    assert result.exit_code == 1
+    assert _ledger_lines(cli_project) == before
+
+
+def test_mcp_issue_update_refused_enum_leaves_no_state_change(
+    neo4j_driver, cli_project, domain_config, clean_test_db,
+):
+    from seldon.mcp_server import seldon_issue_update
+
+    iid = _make(cli_project, neo4j_driver, domain_config, "Issue", {
+        "description": "probe", "issue_type": "citation_gap", "importance": "low",
+        "urgency": "low", "detection_method": "audit", "target": "content",
+    })
+    before = _ledger_lines(cli_project)
+
+    out = seldon_issue_update.__wrapped__(
+        issue_id=iid[:8], project_dir=str(cli_project), state="in_progress", urgency="extreme",
+    )
+
+    assert out.startswith("Error:"), out
+    assert _ledger_lines(cli_project) == before
+
+
+def test_redrive_writes_its_three_lines_in_one_append(
+    tmp_path, neo4j_driver, clean_test_db, domain_config, one_append, monkeypatch,
+):
+    from tests.test_friction001_redrive import TIDS, _halt
+    from tests.test_friction001_redrive import project as redrive_project
+    from seldon.core.redrive import redrive
+
+    p = redrive_project.__wrapped__(tmp_path, neo4j_driver, None, monkeypatch, domain_config)
+    tid = _halt(p, neo4j_driver, domain_config, "check_failed")
+    one_append.clear()
+
+    redrive(p, neo4j_driver, NEO4J_DB, domain_config, tid, actor="human")
+
+    assert one_append == [["artifact_updated", "dispatch_redrive", "artifact_state_changed"]]
+
+
+def test_task_chain_writes_every_edge_in_one_append(
+    neo4j_driver, cli_project, domain_config, clean_test_db, one_append,
+):
+    a, b, c = (_task(cli_project, neo4j_driver, domain_config, d) for d in "abc")
+    one_append.clear()
+
+    result = CliRunner().invoke(task_group, ["chain", a[:8], b[:8], c[:8]])
+
+    assert result.exit_code == 0, result.output
+    assert one_append == [["link_created", "link_created"]]
+
+
+def test_issue_create_writes_the_issue_and_its_affects_links_in_one_append(
+    neo4j_driver, cli_project, domain_config, clean_test_db, one_append,
+):
+    from seldon.commands.issue import issue_group
+
+    section = _make(cli_project, neo4j_driver, domain_config, "PaperSection",
+                    {"name": "sel007_section", "title": "A section"})
+    one_append.clear()
+
+    result = CliRunner().invoke(issue_group, [
+        "create", "--description", "probe", "--type", "citation_gap", "--importance", "low",
+        "--urgency", "low", "--detection", "audit", "--target", "content", "--affects", section,
+    ])
+
+    assert result.exit_code == 0, result.output
+    assert one_append == [["artifact_created", "link_created"]]
+
+
+def test_prune_resolves_an_issue_with_its_note_in_one_append(owner, one_append):
+    from tests.test_prune001 import NOW, _issue, run_prune
+
+    _issue(owner, "S-099 defect 1, FIXED with its test (tests/test_x.py).")
+    one_append.clear()
+
+    run_prune(owner["repo"], now=NOW, echo=lambda s: None)
+
+    assert ["artifact_updated", "artifact_state_changed"] in one_append

@@ -365,7 +365,7 @@ def prune_repository(repo: Path, driver, database: str, domain_config, cfg: dict
         list holds the decisions taken. A failed write is a row in `errors`, never a crash that
         takes the completed writes with it (doctrine section 15.7).
     """
-    from seldon.core.artifacts import transition_state, transition_task, update_artifact
+    from seldon.core.artifacts import commit_writes, plan_state_change, plan_update_artifact, transition_task
 
     git = git or Git(repo)
     issues, tasks = read_rows(driver, database)
@@ -381,15 +381,19 @@ def prune_repository(repo: Path, driver, database: str, domain_config, cfg: dict
         echo(f"  resolve {decision['artifact_id'][:8]} ({decision['rule']}, {decision['commit']})")
         try:
             if not dry_run:
-                update_artifact(project_dir=repo, driver=driver, database=database,
-                                artifact_id=decision["artifact_id"],
-                                properties={"resolution_notes": decision["resolution_notes"]},
-                                actor=PRUNE_ACTOR, authority="accepted", session_id=session_id)
-                transition_state(project_dir=repo, driver=driver, database=database,
-                                 domain_config=domain_config, artifact_id=decision["artifact_id"],
-                                 artifact_type="Issue", current_state=issue["state"],
-                                 new_state="resolved", actor=PRUNE_ACTOR, authority="accepted",
-                                 session_id=session_id)
+                # The note and the resolution go down in one ledger append, the
+                # transition validated before it (SEL-007): no resolved-without-note
+                # or note-without-resolution Issue is left behind by an error row.
+                commit_writes(repo, driver, database, [
+                    plan_update_artifact(project_dir=repo, driver=driver, database=database,
+                                         artifact_id=decision["artifact_id"],
+                                         properties={"resolution_notes": decision["resolution_notes"]},
+                                         actor=PRUNE_ACTOR, authority="accepted", session_id=session_id),
+                    plan_state_change(domain_config=domain_config, artifact_id=decision["artifact_id"],
+                                      artifact_type="Issue", current_state=issue["state"],
+                                      new_state="resolved", actor=PRUNE_ACTOR, authority="accepted",
+                                      session_id=session_id),
+                ])
             out["resolved"].append(decision)
         except Exception as exc:                                    # noqa: BLE001 — recorded as a row
             out["errors"].append({"artifact_id": decision["artifact_id"], "action": "resolve",

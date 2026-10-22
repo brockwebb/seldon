@@ -243,6 +243,7 @@ def _walk_task_to_completed(
     artifact_id: str,
     current_state: str,
     on_warning=None,
+    before=(),
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
@@ -259,6 +260,8 @@ def _walk_task_to_completed(
         current_state: The task's current state in the graph.
         on_warning: Optional sink for advisory `precedes` warnings (AD-029),
             passed straight through to the shared walker.
+        before: Planned writes appended in the same ledger write ahead of the
+            walk (SEL-007), passed straight through.
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -277,6 +280,7 @@ def _walk_task_to_completed(
         current_state=current_state,
         actor=MCP_ACTOR,
         on_warning=on_warning,
+        before=before,
     )
 
 
@@ -939,9 +943,10 @@ def seldon_issue_update(
         importance: New importance if changing (high, medium, low)
         urgency: New urgency if changing (high, medium, low)
     """
-    from seldon.core.artifacts import transition_state, update_artifact
+    from seldon.core.artifacts import commit_writes, plan_state_change, plan_update_artifact
     from seldon.core.graph import get_artifact
     from seldon.core.issue_utils import validate_issue_enum
+    from seldon.core.state import InvalidStateTransition
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
     p = Path(project_dir)
@@ -956,34 +961,40 @@ def seldon_issue_update(
         if node is None:
             return f"Error: issue '{issue_id}' not found."
 
+        # Planned (and so validated) before the first write, appended in one
+        # ledger write: a refused enum no longer strands the state change (SEL-007).
         result_parts = []
+        writes = []
+        try:
+            if state:
+                current_state = node.get("state", "")
+                writes.append(plan_state_change(
+                    domain_config=domain_config,
+                    artifact_id=full_id, artifact_type="Issue",
+                    current_state=current_state, new_state=state,
+                    actor="desktop", authority="accepted",
+                ))
+                result_parts.append(f"state: {current_state} → {state}")
 
-        if state:
-            current_state = node.get("state", "")
-            transition_state(
-                project_dir=p, driver=driver, database=database,
-                domain_config=domain_config,
-                artifact_id=full_id, artifact_type="Issue",
-                current_state=current_state, new_state=state,
-                actor="desktop", authority="accepted",
-            )
-            result_parts.append(f"state: {current_state} → {state}")
+            props_to_update: dict[str, Any] = {}
+            if importance:
+                validate_issue_enum("importance", importance)
+                props_to_update["importance"] = importance
+            if urgency:
+                validate_issue_enum("urgency", urgency)
+                props_to_update["urgency"] = urgency
 
-        props_to_update: dict[str, Any] = {}
-        if importance:
-            validate_issue_enum("importance", importance)
-            props_to_update["importance"] = importance
-        if urgency:
-            validate_issue_enum("urgency", urgency)
-            props_to_update["urgency"] = urgency
+            if props_to_update:
+                writes.append(plan_update_artifact(
+                    project_dir=p, driver=driver, database=database,
+                    artifact_id=full_id, properties=props_to_update,
+                    actor="desktop", authority="accepted",
+                ))
+                result_parts.extend(f"{k}: {v}" for k, v in props_to_update.items())
+        except (ValueError, InvalidStateTransition) as exc:
+            return f"Error: {exc} Nothing was written."
 
-        if props_to_update:
-            update_artifact(
-                project_dir=p, driver=driver, database=database,
-                artifact_id=full_id, properties=props_to_update,
-                actor="desktop", authority="accepted",
-            )
-            result_parts.extend(f"{k}: {v}" for k, v in props_to_update.items())
+        commit_writes(p, driver, database, writes)
 
         if not result_parts:
             return "No changes specified (provide state, importance, or urgency)."
@@ -1065,7 +1076,7 @@ def seldon_cc_complete(
     from seldon.commands.cc import (
         _find_existing, _name_from_filepath, _extract_description,
     )
-    from seldon.core.artifacts import create_artifact, update_artifact, walk_to_completed
+    from seldon.core.artifacts import plan_artifact, plan_update_artifact
     from datetime import datetime, timezone
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
@@ -1107,17 +1118,23 @@ def seldon_cc_complete(
         name = _name_from_filepath(rel_path)
         completed_at = datetime.now(timezone.utc).isoformat()
         try:
-            update_artifact(
+            # completed_at and the walk go down in one ledger append, and the walk
+            # is planned before it: a task in a state with no path to completed is
+            # refused with nothing written (SEL-007).
+            stamp = plan_update_artifact(
                 project_dir=p, driver=driver, database=database,
                 artifact_id=existing_id,
                 properties={"completed_at": completed_at},
                 actor="desktop", authority="accepted",
             )
-            transitions = _walk_task_to_completed(
-                project_dir=p, driver=driver, database=database,
-                domain_config=domain_config, artifact_id=existing_id,
-                current_state=current_state,
-            )
+            try:
+                transitions = _walk_task_to_completed(
+                    project_dir=p, driver=driver, database=database,
+                    domain_config=domain_config, artifact_id=existing_id,
+                    current_state=current_state, before=[stamp],
+                )
+            except ValueError as exc:
+                return f"Error: {exc} Nothing was written."
             path_str = " → ".join(t.split(" → ")[1] for t in transitions) if transitions else "completed"
             return (
                 f"Completed pre-registered task: {name}\n"
@@ -1134,8 +1151,9 @@ def seldon_cc_complete(
     completed_at = datetime.now(timezone.utc).isoformat()
 
     try:
-        artifact_id = create_artifact(
-            project_dir=p, driver=driver, database=database,
+        # The creation and the walk go down in one ledger append (SEL-007).
+        artifact_id, creation = plan_artifact(
+            project_dir=p,
             domain_config=domain_config, artifact_type="ResearchTask",
             properties={
                 "description": description,
@@ -1145,10 +1163,10 @@ def seldon_cc_complete(
             },
             actor="desktop", authority="accepted",
         )
-        walk_to_completed(
+        _walk_task_to_completed(
             project_dir=p, driver=driver, database=database,
             domain_config=domain_config, artifact_id=artifact_id,
-            current_state="proposed", actor="desktop",
+            current_state="proposed", before=[creation],
         )
         return (
             f"Recorded: {name}\n"

@@ -810,7 +810,7 @@ def add_chain(
             or a pair would close a cycle. Nothing is written in any of those
             cases.
     """
-    from seldon.core.artifacts import create_link, resolve_artifact_id
+    from seldon.core.artifacts import commit_writes, plan_link, resolve_artifact_id
     from seldon.core.graph import get_artifact
 
     if len(task_ids) < 2:
@@ -850,10 +850,12 @@ def add_chain(
         created.append((before, after))
         working.add((before, after))
 
+    # Validated above against the graph plus the earlier pairs; plan_link re-runs
+    # the per-edge checks, and every edge then goes down in one ledger append
+    # (SEL-007), so a chain cannot land half-written.
     rel_properties = {"reason": reason} if reason else {}
-    for before, after in created:
-        create_link(
-            project_dir=project_dir,
+    writes = [
+        plan_link(
             driver=driver,
             database=database,
             domain_config=domain_config,
@@ -867,6 +869,9 @@ def add_chain(
             session_id=session_id,
             rel_properties=rel_properties,
         )
+        for before, after in created
+    ]
+    commit_writes(project_dir, driver, database, writes)
 
     return ChainResult(resolved=resolved, created=created, skipped=skipped)
 

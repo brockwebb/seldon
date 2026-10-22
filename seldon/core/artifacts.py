@@ -94,6 +94,11 @@ def commit_writes(
             w.project(session)
 
 
+def ledger_only(event: Dict[str, Any]) -> PlannedWrite:
+    """A planned write for an event the graph does not project (an observation record)."""
+    return PlannedWrite(event=event, project=lambda session: None)
+
+
 def plan_artifact(
     project_dir: Path,
     domain_config: DomainConfig,
@@ -208,7 +213,7 @@ def create_artifact(
     return artifact_id
 
 
-def update_artifact(
+def plan_update_artifact(
     project_dir: Path,
     driver: Driver,
     database: str,
@@ -217,14 +222,14 @@ def update_artifact(
     actor: str,
     authority: str,
     session_id: Optional[str] = None,
-) -> None:
-    """
-    Write JSONL event then update Neo4j node properties.
+) -> PlannedWrite:
+    """Validate a property update and build its event without writing anything.
+
+    The checks and the event are exactly those of :func:`update_artifact`, which
+    is this plus :func:`commit_writes`.
 
     Raises:
-        ValueError: If attempting to update an OntologyTerm artifact in a project with
-            shared_ontology.inheritance configured as "read-only", or if ``snapshot``
-            is present and not a bool.
+        ValueError: As :func:`update_artifact`.
     """
     validate_snapshot_property(properties)
 
@@ -258,10 +263,77 @@ def update_artifact(
         },
         session_id=session_id,
     )
-    append_event(project_dir, event)
 
-    with driver.session(database=database) as session:
+    def project(session) -> None:
         graph.update_artifact(session, artifact_id, properties)
+
+    return PlannedWrite(event=event, project=project)
+
+
+def update_artifact(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    artifact_id: str,
+    properties: Dict[str, Any],
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+) -> None:
+    """
+    Write JSONL event then update Neo4j node properties.
+
+    Raises:
+        ValueError: If attempting to update an OntologyTerm artifact in a project with
+            shared_ontology.inheritance configured as "read-only", or if ``snapshot``
+            is present and not a bool.
+    """
+    write = plan_update_artifact(
+        project_dir=project_dir, driver=driver, database=database,
+        artifact_id=artifact_id, properties=properties, actor=actor,
+        authority=authority, session_id=session_id,
+    )
+    commit_writes(project_dir, driver, database, [write])
+
+
+def plan_state_change(
+    domain_config: DomainConfig,
+    artifact_id: str,
+    artifact_type: str,
+    current_state: str,
+    new_state: str,
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+) -> PlannedWrite:
+    """Validate a state transition and build its event without writing anything.
+
+    :func:`transition_state` is this plus :func:`commit_writes`, plus staleness
+    propagation when the new state is ``stale``.
+
+    Raises:
+        InvalidStateTransition: If the state machine does not allow the move.
+    """
+    validate_transition(domain_config, artifact_type, current_state, new_state)
+
+    event = make_event(
+        event_type="artifact_state_changed",
+        actor=actor,
+        authority=authority,
+        payload={
+            "artifact_id": artifact_id,
+            "artifact_type": artifact_type,
+            "from_state": current_state,
+            "to_state": new_state,
+        },
+        session_id=session_id,
+    )
+
+    def project(session) -> None:
+        graph.change_state(session, artifact_id, new_state)
+        graph.update_artifact(session, artifact_id, {"updated_at": _now_iso()})
+
+    return PlannedWrite(event=event, project=project)
 
 
 def transition_state(
@@ -278,25 +350,13 @@ def transition_state(
     session_id: Optional[str] = None,
 ) -> None:
     """Validate transition, write JSONL event, then update Neo4j state."""
-    validate_transition(domain_config, artifact_type, current_state, new_state)
-
-    event = make_event(
-        event_type="artifact_state_changed",
-        actor=actor,
-        authority=authority,
-        payload={
-            "artifact_id": artifact_id,
-            "artifact_type": artifact_type,
-            "from_state": current_state,
-            "to_state": new_state,
-        },
+    write = plan_state_change(
+        domain_config=domain_config, artifact_id=artifact_id,
+        artifact_type=artifact_type, current_state=current_state,
+        new_state=new_state, actor=actor, authority=authority,
         session_id=session_id,
     )
-    append_event(project_dir, event)
-
-    with driver.session(database=database) as session:
-        graph.change_state(session, artifact_id, new_state)
-        graph.update_artifact(session, artifact_id, {"updated_at": _now_iso()})
+    commit_writes(project_dir, driver, database, [write])
 
     # Auto-propagate staleness downstream when an artifact goes stale
     if new_state == "stale":
@@ -588,7 +648,7 @@ def resolve_artifact_id(driver: Driver, database: str, id_prefix: str) -> str:
     return records[0]["id"]
 
 
-def transition_task(
+def plan_task_transition(
     project_dir: Path,
     driver: Driver,
     database: str,
@@ -602,8 +662,8 @@ def transition_task(
     claimed_by: Optional[str] = None,
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
-) -> List[str]:
-    """Transition a ResearchTask, applying the AD-028 lifecycle side effects.
+) -> Tuple[List[PlannedWrite], List[str]]:
+    """Plan a ResearchTask transition, applying the AD-028 lifecycle side effects.
 
     Wraps :func:`transition_state` with the two ResearchTask-specific behaviours that
     the plain state machine cannot express:
@@ -638,10 +698,11 @@ def transition_task(
             that overtook this task. Only valid when ``new_state`` is 'superseded'.
 
     Returns:
-        Advisory warning lines the caller should surface — currently the AD-029
+        Tuple of (the planned writes, nothing appended yet; advisory warning lines
+        the caller should surface). The warnings are currently the AD-029
         `precedes` warning raised when work starts ahead of an unsatisfied
-        predecessor. Empty when there is nothing to say. Advisory means
-        advisory: the transition has already happened when these are returned.
+        predecessor, empty when there is nothing to say. Advisory means advisory:
+        the caller commits the writes regardless.
 
     Raises:
         ValueError: If a required reason is missing, if a reason/claim/superseded_by
@@ -703,7 +764,9 @@ def transition_task(
         driver, database, artifact_id, new_state
     )
 
-    # --- Writes: property event first, then the state event, then the edge ---
+    # --- Writes: property event first, then the state event, then the edge.
+    # Planned here, appended by the caller in one ledger write (SEL-007).
+    writes: List[PlannedWrite] = []
     properties: Dict[str, Any] = {}
     if new_state in REASON_REQUIRED_STATES:
         properties["terminal_reason"] = terminal_reason.strip()
@@ -712,7 +775,7 @@ def transition_task(
         properties["claimed_at"] = _now_iso()
 
     if properties:
-        update_artifact(
+        writes.append(plan_update_artifact(
             project_dir=project_dir,
             driver=driver,
             database=database,
@@ -721,12 +784,9 @@ def transition_task(
             actor=actor,
             authority=authority,
             session_id=session_id,
-        )
+        ))
 
-    transition_state(
-        project_dir=project_dir,
-        driver=driver,
-        database=database,
+    writes.append(plan_state_change(
         domain_config=domain_config,
         artifact_id=artifact_id,
         artifact_type=artifact_type,
@@ -735,11 +795,10 @@ def transition_task(
         actor=actor,
         authority=authority,
         session_id=session_id,
-    )
+    ))
 
     if superseded_by_id is not None:
-        create_link(
-            project_dir=project_dir,
+        writes.append(plan_link(
             driver=driver,
             database=database,
             domain_config=domain_config,
@@ -751,8 +810,44 @@ def transition_task(
             actor=actor,
             authority=authority,
             session_id=session_id,
-        )
+        ))
 
+    return writes, warnings
+
+
+def transition_task(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    domain_config: DomainConfig,
+    artifact_id: str,
+    current_state: str,
+    new_state: str,
+    actor: str,
+    authority: str = "accepted",
+    session_id: Optional[str] = None,
+    claimed_by: Optional[str] = None,
+    terminal_reason: Optional[str] = None,
+    superseded_by: Optional[str] = None,
+) -> List[str]:
+    """Transition a ResearchTask and append its events in one ledger write.
+
+    :func:`plan_task_transition` (which documents the AD-028 rules, the
+    arguments and the refusals) plus :func:`commit_writes`. A transition writes
+    up to three lines: the reason or claim properties, the state change, and the
+    ``superseded_by`` edge. SEL-007: they go down together or not at all.
+
+    Returns:
+        The advisory warning lines from :func:`plan_task_transition`.
+    """
+    writes, warnings = plan_task_transition(
+        project_dir=project_dir, driver=driver, database=database,
+        domain_config=domain_config, artifact_id=artifact_id,
+        current_state=current_state, new_state=new_state, actor=actor,
+        authority=authority, session_id=session_id, claimed_by=claimed_by,
+        terminal_reason=terminal_reason, superseded_by=superseded_by,
+    )
+    commit_writes(project_dir, driver, database, writes)
     return warnings
 
 
@@ -767,6 +862,8 @@ def walk_to_completed(
     session_id: Optional[str] = None,
     claimed_by: Optional[str] = None,
     on_warning: Optional[Callable[[str], None]] = None,
+    before: Sequence[PlannedWrite] = (),
+    after: Sequence[PlannedWrite] = (),
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
@@ -792,6 +889,10 @@ def walk_to_completed(
             (AD-029). A callback rather than a second return value so that the
             walk's return contract — the thing both surfaces render and the
             parity test compares — stays exactly what it was.
+        before: Writes the caller has planned that go into the same ledger
+            append ahead of the walk (`cc complete`'s ``completed_at``).
+        after: Writes that go into the same append after it (`cc complete`'s
+            ``recall_used`` record).
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -813,10 +914,15 @@ def walk_to_completed(
             f"Cannot walk ResearchTask to completed from state '{current_state}'"
         )
 
+    # Every step is planned before the first write, and the walk's events go
+    # down in one ledger append (SEL-007): a close that is refused at its last
+    # step does not leave the task half-walked.
     transitions = []
+    writes: List[PlannedWrite] = list(before)
+    warnings: List[str] = []
     state = current_state
     for next_state in steps:
-        step_warnings = transition_task(
+        step_writes, step_warnings = plan_task_transition(
             project_dir=project_dir,
             driver=driver,
             database=database,
@@ -829,12 +935,15 @@ def walk_to_completed(
             session_id=session_id,
             claimed_by=claimed_by if (state, next_state) == CLAIM_TRANSITION else None,
         )
-        if on_warning is not None:
-            for line in step_warnings:
-                on_warning(line)
+        writes.extend(step_writes)
+        warnings.extend(step_warnings)
         transitions.append(f"{state} → {next_state}")
         state = next_state
 
+    commit_writes(project_dir, driver, database, writes + list(after))
+    if on_warning is not None:
+        for line in warnings:
+            on_warning(line)
     return transitions
 
 

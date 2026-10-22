@@ -91,8 +91,8 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
     Raises:
         RedriveRefused: When the task does not exist or is not `blocked`.
     """
-    from seldon.core.artifacts import transition_task, update_artifact
-    from seldon.core.events import append_event, make_event, read_events
+    from seldon.core.artifacts import commit_writes, ledger_only, plan_task_transition, plan_update_artifact
+    from seldon.core.events import make_event, read_events
 
     with driver.session(database=database) as s:
         row = s.run("MATCH (t:ResearchTask {artifact_id: $id}) RETURN t.state AS state, t.claimed_by AS claimed_by, "
@@ -109,15 +109,18 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
                "cleared_claim": row["claimed_by"], "by": actor,
                "automatic": actor == "dispatcher"}
     # The claim first: an `accepted` task still carrying `claimed_by` would read as in flight to anything that keys
-    # on the marker rather than the state.
-    update_artifact(project_dir=project_dir, driver=driver, database=database, artifact_id=task_id,
-                    properties={"claimed_by": None, "claimed_at": None}, actor=actor, authority="accepted",
-                    session_id=session_id)
-    append_event(project_dir, make_event(event_type=EVENT_REDRIVE, actor=actor, authority="accepted",
-                                         payload=payload, session_id=session_id))
-    transition_task(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
-                    artifact_id=task_id, current_state="blocked", new_state="accepted", actor=actor,
-                    authority="accepted", session_id=session_id)
+    # on the marker rather than the state. All three lines are planned (the transition validated) before the first
+    # is appended, and they go down in one ledger write (SEL-007).
+    writes = [plan_update_artifact(project_dir=project_dir, driver=driver, database=database, artifact_id=task_id,
+                                   properties={"claimed_by": None, "claimed_at": None}, actor=actor,
+                                   authority="accepted", session_id=session_id),
+              ledger_only(make_event(event_type=EVENT_REDRIVE, actor=actor, authority="accepted",
+                                     payload=payload, session_id=session_id))]
+    transition, _ = plan_task_transition(project_dir=project_dir, driver=driver, database=database,
+                                          domain_config=domain_config, artifact_id=task_id,
+                                          current_state="blocked", new_state="accepted", actor=actor,
+                                          authority="accepted", session_id=session_id)
+    commit_writes(project_dir, driver, database, writes + transition)
     return payload
 
 

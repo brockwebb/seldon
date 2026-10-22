@@ -10,7 +10,7 @@ from seldon.config import (
     get_current_session, get_neo4j_driver, load_project_config, resolve_cli_actor,
 )
 from seldon.core.artifacts import (
-    create_artifact, create_link, transition_state, update_artifact,
+    commit_writes, plan_artifact, plan_link, plan_state_change, plan_update_artifact,
 )
 from seldon.core.graph import get_artifact, find_any_artifact_by_name
 from seldon.core.issue_utils import (
@@ -92,8 +92,9 @@ def issue_create(description, issue_type, importance, urgency, detection, target
                 raise ValueError(f"AFFECTS '{ref}': {exc}; nothing written") from exc
             targets.append(target_node)
 
-        issue_id = create_artifact(
-            project_dir=project_dir, driver=driver, database=database,
+        # The Issue and its AFFECTS links go down in one ledger append (SEL-007).
+        issue_id, creation = plan_artifact(
+            project_dir=project_dir,
             domain_config=domain_config, artifact_type="Issue",
             properties={
                 # `name` only when given: an Issue created without one keeps the shape every
@@ -112,17 +113,19 @@ def issue_create(description, issue_type, importance, urgency, detection, target
             session_id=session_id,
         )
 
+        writes = [creation]
         links_created = []
         for target_node in targets:
-            create_link(
-                project_dir=project_dir, driver=driver, database=database,
+            writes.append(plan_link(
+                driver=driver, database=database,
                 domain_config=domain_config,
                 from_id=issue_id, to_id=target_node["artifact_id"],
                 from_type="Issue", to_type=target_node["artifact_type"],
                 rel_type="affects", actor=actor, authority="accepted",
                 session_id=session_id,
-            )
+            ))
             links_created.append(f"AFFECTS {target_node.get('name', target_node['artifact_id'][:8])}")
+        commit_writes(project_dir, driver, database, writes)
 
         quadrant = eisenhower_quadrant(importance, urgency)
         click.echo(f"Created Issue: {issue_id}")
@@ -259,7 +262,10 @@ def issue_update(issue_id, state, urgency, resolution_notes, description):
         raise SystemExit(1)
 
     try:
-        # Property updates (urgency, resolution_notes)
+        # Every write is planned (and so validated) before the first is appended,
+        # and they go down in one ledger write: a refused transition no longer
+        # leaves the property update behind (SEL-007).
+        writes = []
         props = {}
         if urgency:
             validate_issue_enum("urgency", urgency)
@@ -269,27 +275,27 @@ def issue_update(issue_id, state, urgency, resolution_notes, description):
         if description:
             props["description"] = description
         if props:
-            update_artifact(
+            writes.append(plan_update_artifact(
                 project_dir=project_dir, driver=driver, database=database,
                 artifact_id=issue_id, properties=props,
                 actor=actor, authority="accepted",
                 session_id=session_id,
-            )
+            ))
 
-        # State transition
+        old_state = node["state"]
         if state:
-            old_state = node["state"]
-            transition_state(
-                project_dir=project_dir, driver=driver, database=database,
+            writes.append(plan_state_change(
                 domain_config=domain_config, artifact_id=issue_id,
                 artifact_type="Issue", current_state=old_state, new_state=state,
                 actor=actor, authority="accepted",
                 session_id=session_id,
-            )
-            click.echo(f"Updated Issue: {issue_id[:8]}...")
+            ))
+
+        commit_writes(project_dir, driver, database, writes)
+
+        click.echo(f"Updated Issue: {issue_id[:8]}...")
+        if state:
             click.echo(f"  state: {old_state} → {state}")
-        else:
-            click.echo(f"Updated Issue: {issue_id[:8]}...")
 
         if urgency:
             new_quad = eisenhower_quadrant(node.get("importance", ""), urgency)
