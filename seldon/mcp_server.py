@@ -377,53 +377,38 @@ def seldon_task_create(
 ) -> str:
     """Create a ResearchTask in the project graph.
 
+    All or nothing (SEL-007): the `blocks` target is resolved and the edge
+    validated before anything is written, and the task and its link are appended
+    in one write. An unresolvable target or an illegal edge returns an error and
+    creates nothing.
+
     Args:
         description: Task description (what needs to be done)
         project_dir: Path to project root (default: current directory or SELDON_DEFAULT_PROJECT)
         blocks: Optional artifact ID (full or prefix) that this task blocks
     """
-    from seldon.core.artifacts import create_artifact, create_link
-    from seldon.core.graph import get_artifact
+    from seldon.commands.task import NOTHING_WRITTEN
+    from seldon.core.artifacts import create_task
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
-    p = Path(project_dir)
+    links = [("blocks", blocks.strip())] if blocks.strip() else []
 
     try:
-        artifact_id = create_artifact(
-            project_dir=p, driver=driver, database=database,
-            domain_config=domain_config, artifact_type="ResearchTask",
-            properties={"description": description},
-            actor="desktop", authority="accepted",
+        artifact_id, _ = create_task(
+            project_dir=Path(project_dir), driver=driver, database=database,
+            domain_config=domain_config, description=description, links=links,
+            actor=MCP_ACTOR, authority="accepted",
         )
-
-        if blocks:
-            target_id = _resolve_artifact_id(driver, database, blocks)
-            if target_id:
-                with driver.session(database=database) as session:
-                    target_node = get_artifact(session, target_id)
-                create_link(
-                    project_dir=p, driver=driver, database=database,
-                    domain_config=domain_config,
-                    from_id=artifact_id, to_id=target_id, rel_type="blocks",
-                    from_type="ResearchTask",
-                    to_type=target_node.get("artifact_type", ""),
-                    actor=MCP_ACTOR, authority="accepted",
-                )
-            else:
-                return (
-                    f"Created ResearchTask: {artifact_id[:8]}...\n"
-                    f"  description: {description}\n"
-                    f"  state: proposed\n"
-                    f"Warning: could not resolve blocks target '{blocks}' — link not created"
-                )
-
-        return (
-            f"Created ResearchTask: {artifact_id[:8]}...\n"
-            f"  description: {description}\n"
-            f"  state: proposed"
-        )
+    except ValueError as exc:
+        return f"Error: {exc} {NOTHING_WRITTEN}"
     finally:
         driver.close()
+
+    return (
+        f"Created ResearchTask: {artifact_id[:8]}...\n"
+        f"  description: {description}\n"
+        f"  state: proposed"
+    )
 
 
 @_tool()

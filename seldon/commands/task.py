@@ -14,8 +14,7 @@ import click
 
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import (
-    create_artifact,
-    create_link,
+    create_task,
     open_states,
     resolve_artifact_id,
     transition_task,
@@ -132,81 +131,55 @@ def task_group():
     pass
 
 
+#: Appended to every refusal of `task create`: since SEL-007 the command validates
+#: everything before its first write, so a refusal means the ledger is untouched.
+NOTHING_WRITTEN = "Nothing was written: no task was created."
+
+
+def _split_ids(raw):
+    """Comma-separated ids from an option value, blanks dropped."""
+    return [part.strip() for part in (raw or "").split(",") if part.strip()]
+
+
 @task_group.command("create")
 @click.option("--description", required=True, help="What needs to be done")
-@click.option("--blocks", default=None, help="Comma-separated artifact UUIDs this task blocks")
-@click.option("--depends-on", "depends_on", default=None, help="Comma-separated artifact UUIDs this task depends on")
+@click.option("--blocks", default=None, help="Comma-separated artifact ids or prefixes this task blocks")
+@click.option(
+    "--depends-on", "depends_on", default=None,
+    help="Comma-separated artifact ids or prefixes this task depends on (a Result, "
+         "DataFile, Script or Document). To order tasks, use `seldon task precede`.",
+)
 def task_create(description, blocks, depends_on):
-    """Create a new ResearchTask."""
-    config = load_project_config()
-    project_dir = Path.cwd()
-    driver = get_neo4j_driver(config)
-    domain_config = _get_domain_config(config)
-    database = config["neo4j"]["database"]
-    session_id = get_current_session(project_dir)
+    """Create a new ResearchTask.
+
+    All or nothing (SEL-007): every --blocks and --depends-on target is resolved
+    and every edge validated before the first write, and the task and its links
+    are appended to the event log in one write. An unknown target or an illegal
+    edge is refused and nothing is created.
+    """
+    project_dir, driver, database, domain_config, session_id = _open_project()
+    links = [("blocks", t) for t in _split_ids(blocks)]
+    links += [("depends_on", t) for t in _split_ids(depends_on)]
 
     try:
-        task_id = create_artifact(
+        task_id, written = create_task(
             project_dir=project_dir, driver=driver, database=database,
-            domain_config=domain_config, artifact_type="ResearchTask",
-            properties={"description": description},
-            actor="human", authority="accepted",
-            session_id=session_id,
+            domain_config=domain_config, description=description, links=links,
+            actor=CLI_ACTOR, authority="accepted", session_id=session_id,
         )
-
-        links_created = []
-
-        if blocks:
-            for target_id in blocks.split(","):
-                target_id = target_id.strip()
-                if not target_id:
-                    continue
-                with driver.session(database=database) as session:
-                    target_node = get_artifact(session, target_id)
-                if target_node is None:
-                    click.echo(f"Warning: artifact '{target_id}' not found — skipping BLOCKS link", err=True)
-                    continue
-                create_link(
-                    project_dir=project_dir, driver=driver, database=database,
-                    domain_config=domain_config,
-                    from_id=task_id, to_id=target_id,
-                    from_type="ResearchTask", to_type=target_node["artifact_type"],
-                    rel_type="blocks", actor="human", authority="accepted",
-                    session_id=session_id,
-                )
-                links_created.append(f"BLOCKS {target_id[:8]}...")
-
-        if depends_on:
-            for dep_id in depends_on.split(","):
-                dep_id = dep_id.strip()
-                if not dep_id:
-                    continue
-                with driver.session(database=database) as session:
-                    dep_node = get_artifact(session, dep_id)
-                if dep_node is None:
-                    click.echo(f"Warning: artifact '{dep_id}' not found — skipping DEPENDS_ON link", err=True)
-                    continue
-                create_link(
-                    project_dir=project_dir, driver=driver, database=database,
-                    domain_config=domain_config,
-                    from_id=task_id, to_id=dep_id,
-                    from_type="ResearchTask", to_type=dep_node["artifact_type"],
-                    rel_type="depends_on", actor="human", authority="accepted",
-                    session_id=session_id,
-                )
-                links_created.append(f"DEPENDS_ON {dep_id[:8]}...")
-
-        click.echo(f"Created ResearchTask: {task_id}")
-        click.echo(f"  description: {description}")
-        click.echo(f"  state: proposed")
-        if links_created:
-            click.echo(f"  links: {', '.join(links_created)}")
-
     except ValueError as e:
-        click.echo(f"Error: {e}", err=True)
+        click.echo(f"Error: {e}\n{NOTHING_WRITTEN}", err=True)
         raise SystemExit(1)
     finally:
         driver.close()
+
+    click.echo(f"Created ResearchTask: {task_id}")
+    click.echo(f"  description: {description}")
+    click.echo(f"  state: proposed")
+    if written:
+        click.echo("  links: " + ", ".join(
+            f"{rel.upper()} {target[:8]}..." for rel, target in written
+        ))
 
 
 def _parse_claimed_at(raw) -> datetime | None:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from neo4j import Driver
 
@@ -14,7 +15,7 @@ from seldon.domain.loader import (
     validate_relationship_properties,
 )
 from seldon.core.state import validate_transition
-from seldon.core.events import append_event, make_event
+from seldon.core.events import append_event, append_events, make_event
 from seldon.core import graph, precedence
 
 # AD-028 — ResearchTask lifecycle semantics.
@@ -59,10 +60,42 @@ def validate_snapshot_property(properties: Dict[str, Any]) -> None:
         )
 
 
-def create_artifact(
+@dataclass
+class PlannedWrite:
+    """One validated event and the graph write that projects it (SEL-007).
+
+    A command that writes more than one event line plans every write first,
+    which is where all validation runs, then hands the whole list to
+    :func:`commit_writes`. Nothing reaches the event log until every write in
+    the command has been planned, so a refusal anywhere leaves no line behind.
+
+    Attributes:
+        event: The event dict, ready to append.
+        project: Applies the event to the graph, given an open Neo4j session.
+    """
+
+    event: Dict[str, Any]
+    project: Callable[[Any], None]
+
+
+def commit_writes(
+    project_dir: Path, driver: Driver, database: str, writes: Sequence[PlannedWrite],
+) -> None:
+    """Append every planned event in one ledger write, then project them in order.
+
+    The JSONL log is the source of truth (AD-001: event-sourced, append-only)
+    and the graph is its projection, so the all-or-nothing boundary is the
+    single :func:`append_events` call. A graph failure after it is a projection
+    fault that `seldon rebuild` repairs from the log, not a partial command.
+    """
+    append_events(project_dir, [w.event for w in writes])
+    with driver.session(database=database) as session:
+        for w in writes:
+            w.project(session)
+
+
+def plan_artifact(
     project_dir: Path,
-    driver: Driver,
-    database: str,
     domain_config: DomainConfig,
     artifact_type: str,
     properties: Dict[str, Any],
@@ -70,20 +103,17 @@ def create_artifact(
     authority: str,
     session_id: Optional[str] = None,
     artifact_id: Optional[str] = None,
-) -> str:
-    """
-    Validate, write JSONL event, then write Neo4j node.
+) -> Tuple[str, PlannedWrite]:
+    """Validate an artifact creation and build its event without writing anything.
 
-    ``artifact_id`` is minted here unless the caller passes one. A caller passes one when
-    something must name the artifact before its creation event is written — `seldon cc
-    register` commits the task file under a message naming the task, then records that
-    commit on the creation event (ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md).
+    The checks and the event are exactly those of :func:`create_artifact`, which
+    is this plus :func:`commit_writes`.
 
-    Returns the new artifact_id.
+    Returns:
+        Tuple of (artifact_id, the planned write).
 
     Raises:
-        ValueError: If artifact_type is "OntologyTerm" and the project has shared_ontology.inheritance
-            configured as "read-only", or if required properties are missing.
+        ValueError: As :func:`create_artifact`.
     """
     validate_artifact_type(domain_config, artifact_type)
     validate_snapshot_property(properties)
@@ -127,7 +157,6 @@ def create_artifact(
         },
         session_id=session_id,
     )
-    append_event(project_dir, event)
 
     now = _now_iso()
     props = dict(properties)
@@ -138,9 +167,44 @@ def create_artifact(
     props.setdefault("created_at", now)
     props["updated_at"] = now
 
-    with driver.session(database=database) as session:
+    def project(session) -> None:
         graph.create_artifact(session, artifact_type, props)
 
+    return artifact_id, PlannedWrite(event=event, project=project)
+
+
+def create_artifact(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    domain_config: DomainConfig,
+    artifact_type: str,
+    properties: Dict[str, Any],
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+    artifact_id: Optional[str] = None,
+) -> str:
+    """
+    Validate, write JSONL event, then write Neo4j node.
+
+    ``artifact_id`` is minted here unless the caller passes one. A caller passes one when
+    something must name the artifact before its creation event is written — `seldon cc
+    register` commits the task file under a message naming the task, then records that
+    commit on the creation event (ai-readiness-kg/cc_tasks/2026-09-18_registration_commits.md).
+
+    Returns the new artifact_id.
+
+    Raises:
+        ValueError: If artifact_type is "OntologyTerm" and the project has shared_ontology.inheritance
+            configured as "read-only", or if required properties are missing.
+    """
+    artifact_id, write = plan_artifact(
+        project_dir=project_dir, domain_config=domain_config,
+        artifact_type=artifact_type, properties=properties, actor=actor,
+        authority=authority, session_id=session_id, artifact_id=artifact_id,
+    )
+    commit_writes(project_dir, driver, database, [write])
     return artifact_id
 
 
@@ -247,6 +311,59 @@ def transition_state(
         )
 
 
+def plan_link(
+    driver: Driver,
+    database: str,
+    domain_config: DomainConfig,
+    from_id: str,
+    to_id: str,
+    from_type: str,
+    to_type: str,
+    rel_type: str,
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+    rel_properties: Optional[Dict[str, Any]] = None,
+) -> PlannedWrite:
+    """Validate a relationship and build its event without writing anything.
+
+    The checks and the event are exactly those of :func:`create_link`, which is
+    this plus :func:`commit_writes`.
+
+    Raises:
+        ValueError: As :func:`create_link`.
+    """
+    validate_relationship(domain_config, rel_type, from_type, to_type)
+
+    props = rel_properties or {}
+    validate_relationship_properties(domain_config, rel_type, props)
+
+    # The DAG invariant is enforced here rather than in the CLI so that every
+    # write path reaches it, `seldon link create` included (AD-029).
+    if rel_type == precedence.REL_TYPE:
+        precedence.validate_precedes_write(driver, database, from_id, to_id)
+
+    event = make_event(
+        event_type="link_created",
+        actor=actor,
+        authority=authority,
+        payload={
+            "from_id": from_id,
+            "to_id": to_id,
+            "from_type": from_type,
+            "to_type": to_type,
+            "rel_type": rel_type,
+            "properties": props,
+        },
+        session_id=session_id,
+    )
+
+    def project(session) -> None:
+        graph.create_link(session, from_id, to_id, rel_type.upper(), props)
+
+    return PlannedWrite(event=event, project=project)
+
+
 def create_link(
     project_dir: Path,
     driver: Driver,
@@ -276,34 +393,92 @@ def create_link(
             declared edge-property schema is violated, or — for `precedes` — if
             the edge would be a self-loop or close a cycle (AD-029).
     """
-    validate_relationship(domain_config, rel_type, from_type, to_type)
-
-    props = rel_properties or {}
-    validate_relationship_properties(domain_config, rel_type, props)
-
-    # The DAG invariant is enforced here rather than in the CLI so that every
-    # write path reaches it, `seldon link create` included (AD-029).
-    if rel_type == precedence.REL_TYPE:
-        precedence.validate_precedes_write(driver, database, from_id, to_id)
-
-    event = make_event(
-        event_type="link_created",
-        actor=actor,
-        authority=authority,
-        payload={
-            "from_id": from_id,
-            "to_id": to_id,
-            "from_type": from_type,
-            "to_type": to_type,
-            "rel_type": rel_type,
-            "properties": props,
-        },
-        session_id=session_id,
+    write = plan_link(
+        driver=driver, database=database, domain_config=domain_config,
+        from_id=from_id, to_id=to_id, from_type=from_type, to_type=to_type,
+        rel_type=rel_type, actor=actor, authority=authority,
+        session_id=session_id, rel_properties=rel_properties,
     )
-    append_event(project_dir, event)
+    commit_writes(project_dir, driver, database, [write])
 
-    with driver.session(database=database) as session:
-        graph.create_link(session, from_id, to_id, rel_type.upper(), props)
+
+#: Shown when `task create` is asked to link a task to another task: ordering two
+#: tasks is AD-029's `precedes`, which needs the new task's id, so it is a second
+#: command rather than an option on the first (SEL-007, HB-01e section 10a).
+TASK_ORDERING_HINT = (
+    " To order this task after another task, create it without that option, then run "
+    "`seldon task precede <predecessor> <new task>` (MCP: seldon_task_precede)."
+)
+
+
+def create_task(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    domain_config: DomainConfig,
+    description: str,
+    links: Sequence[Tuple[str, str]],
+    actor: str,
+    authority: str,
+    session_id: Optional[str] = None,
+) -> Tuple[str, List[Tuple[str, str]]]:
+    """Create a ResearchTask and its outgoing links, all of them or none (SEL-007).
+
+    Every target is resolved and every edge validated before anything is written;
+    the creation event and the link events then go down in one ledger append
+    (:func:`commit_writes`). An unknown or ambiguous target is a refusal, not a
+    skipped link: a task created without the link the operator asked for is the
+    partial write this function exists to prevent.
+
+    Args:
+        project_dir: Project root, for the JSONL event store.
+        driver: Neo4j driver.
+        database: Project database name.
+        domain_config: Loaded domain configuration.
+        description: What the task is for.
+        links: ``(rel_type, target id or unambiguous prefix)`` pairs, from the
+            new task to each target, in the order they are written.
+        actor: Actor string written to the events.
+        authority: Authority string written to the events.
+        session_id: Optional Seldon session id recorded on the events.
+
+    Returns:
+        Tuple of (new task id, ``(rel_type, full target id)`` for each link written).
+
+    Raises:
+        ValueError: On an invalid task, an unknown or ambiguous target, or an
+            edge the domain does not allow. Nothing is written in any of those
+            cases, and the message says which link was refused and why.
+    """
+    task_id, task_write = plan_artifact(
+        project_dir=project_dir, domain_config=domain_config,
+        artifact_type="ResearchTask", properties={"description": description},
+        actor=actor, authority=authority, session_id=session_id,
+    )
+    writes = [task_write]
+    written: List[Tuple[str, str]] = []
+    for rel_type, given in links:
+        try:
+            target_id = resolve_artifact_id(driver, database, given)
+        except ValueError as exc:
+            raise ValueError(f"'{rel_type}' link to '{given}': {exc}") from exc
+        with driver.session(database=database) as session:
+            target_type = graph.get_artifact(session, target_id)["artifact_type"]
+        try:
+            writes.append(plan_link(
+                driver=driver, database=database, domain_config=domain_config,
+                from_id=task_id, to_id=target_id,
+                from_type="ResearchTask", to_type=target_type,
+                rel_type=rel_type, actor=actor, authority=authority,
+                session_id=session_id,
+            ))
+        except ValueError as exc:
+            hint = TASK_ORDERING_HINT if target_type == "ResearchTask" else ""
+            raise ValueError(f"'{rel_type}' link to '{given}': {exc}{hint}") from exc
+        written.append((rel_type, target_id))
+
+    commit_writes(project_dir, driver, database, writes)
+    return task_id, written
 
 
 def _state_machine(domain_config: DomainConfig, artifact_type: str) -> Dict[str, list]:

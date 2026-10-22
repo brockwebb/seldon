@@ -183,12 +183,39 @@ def validate_relationship(
         raise ValueError(
             f"'{from_type}' cannot originate a '{rel_type}' relationship. "
             f"Valid from_types: {rel_config.from_types}"
+            f"{_legal_alternatives(domain_config, rel_type, from_type, to_type)}"
         )
     if to_type not in rel_config.to_types:
         raise ValueError(
             f"'{to_type}' cannot target a '{rel_type}' relationship. "
             f"Valid to_types: {rel_config.to_types}"
+            f"{_legal_alternatives(domain_config, rel_type, from_type, to_type)}"
         )
+
+
+def _legal_alternatives(
+    domain_config: DomainConfig, rel_type: str, from_type: str, to_type: str,
+) -> str:
+    """Name the relationship types under which ``from_type -> to_type`` IS legal.
+
+    The refusal alone tells the operator what they cannot write; this tells them
+    what they probably meant. The case that motivated it (SEL-007): ordering one
+    ResearchTask after another is `precedes`, not `depends_on`.
+
+    Returns:
+        A sentence starting with a space, or "" when no relationship type allows
+        the pair.
+    """
+    legal = sorted(
+        name for name, cfg in domain_config.relationship_types.items()
+        if name != rel_type and from_type in cfg.from_types and to_type in cfg.to_types
+    )
+    if not legal:
+        return ""
+    return (
+        f" A '{from_type}' -> '{to_type}' edge is legal as: "
+        + ", ".join(f"'{name}'" for name in legal) + "."
+    )
 
 
 def validate_relationship_properties(

@@ -56,10 +56,25 @@ def append_event(project_path: Path, event: Dict[str, Any]) -> None:
     Writes the JSON line atomically as a single write call followed by fsync.
     The event log is created if it does not exist.
     """
+    append_events(project_path, [event])
+
+
+def append_events(project_path: Path, events: List[Dict[str, Any]]) -> None:
+    """Append several events to the JSONL event log in one write.
+
+    The all-or-nothing half of a command that writes more than one line
+    (SEL-007): every line is serialised first, so an event that cannot be
+    encoded raises before the file is touched, and the lines then go down in a
+    single ``write`` followed by one fsync. A command validates everything,
+    builds its events, then calls this once; a refusal at any step before it
+    leaves the log exactly as it was. An empty list writes nothing.
+    """
+    if not events:
+        return
+    payload = "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events)
     path = _events_path(project_path)
-    line = json.dumps(event, ensure_ascii=False) + "\n"
     with open(path, "a", encoding="utf-8") as f:
-        f.write(line)
+        f.write(payload)
         f.flush()
         os.fsync(f.fileno())
 
