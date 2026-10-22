@@ -5,6 +5,12 @@
 **Addenda:** none (`cc_tasks/*SEL-007*ADDENDUM*.md` globbed: no match)
 **Premise:** `grep -q "7b76e2c3" /Users/brock/GitHub/hazbrief-mcp/seldon_events.jsonl` → exit 0 (orphan present)
 
+Recall used: none
+
+(The recall list was in the ledger, not in the task file, and was not read during the work. Its first hit,
+`seldon:2026-09-06_task_precedes_relationship_RESULT`, is the AD-029 work whose all-or-nothing rule SEL-007
+generalises. That rule was found directly in `docs/design/AD-029_task_precedence.md`, not through the recall list.)
+
 ## Governing decisions, and the prior art this implements
 
 - **AD-001** (`docs/seldon_architectural_decisions_updated.md`): the event-sourced, append-only JSONL log is the
