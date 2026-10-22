@@ -115,15 +115,19 @@ that a re-run does **not** repair, so they are defects, not exemptions:
 
 ## Gate
 
-- Targeted: `tests/test_sel007_atomic_multi_event.py` passes 22/22.
-- Full suite on the branch: see the commit that merges this RESULT (recorded below).
+- Targeted: `tests/test_sel007_atomic_multi_event.py` 22/22.
+- Full suite on the branch (`python -m dotenv -f .env run -- python -m pytest tests/`, PYTHONPATH=worktree):
+  **2766 passed, 7 skipped, 0 failed** (37 min).
+- The first full run stopped at one failure: `tests/test_friction001_mcp_head.py` patched `mcp_server.py` by a
+  12-space-indented source literal, and SEL-007 moved `seldon_task_create`'s `return` to function level. The
+  test's anchor is now indentation-free (commit 996408a). The behaviour it checks is unchanged.
 
 ## Files
 
 - `seldon/core/events.py`, `seldon/core/artifacts.py`, `seldon/domain/loader.py`, `seldon/core/precedence.py`,
   `seldon/core/redrive.py`, `seldon/core/prune.py`
 - `seldon/commands/task.py`, `seldon/commands/issue.py`, `seldon/commands/cc.py`, `seldon/mcp_server.py`
-- `tests/test_sel007_atomic_multi_event.py`
+- `tests/test_sel007_atomic_multi_event.py`, `tests/test_friction001_mcp_head.py` (anchor only)
 
 ## For the operator
 
