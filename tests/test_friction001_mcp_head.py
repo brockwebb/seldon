@@ -66,9 +66,10 @@ def _merge_under_seldon(co: Path, marker: str = "") -> None:
     path = co / "seldon" / "mcp_server.py"
     text = path.read_text()
     if marker:
-        old = '\n            f"Created ResearchTask: '
+        # Indentation-free anchor: the tool's body moves when it is refactored (SEL-007).
+        old = 'f"Created ResearchTask: '
         assert text.count(old) == 1
-        text = text.replace(old, f'\n            "{marker} " f"Created ResearchTask: ', 1)
+        text = text.replace(old, f'"{marker} " f"Created ResearchTask: ', 1)
     path.write_text(text + "\n# merged after the server loaded\n")
     _git(co, "add", "-A")
     _git(co, "commit", "-qm", "merge under seldon/")
