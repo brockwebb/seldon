@@ -110,6 +110,10 @@ wrong). The adopter pair shows the masking: under anaconda, a test SQ-019 needed
   `test_dispatch_stuck_and_journal.py::test_a_project_with_no_dispatch_block_is_left_alone`, whose assertion reads
   the repository's own dirty state ("uncommitted changes under seldon/"). It passed once the work was committed.
 
+## Spend
+
+`part_complete` read 145,864 tokens at each Part's boundary, against the 0.25M estimate and the 0.30M stop.
+
 ## For the operator, and SUITE-001
 
 squiddy needs one line under `dispatch.stations`: `interpreter: .venv/bin/python`. Until it is there, squiddy's checks
