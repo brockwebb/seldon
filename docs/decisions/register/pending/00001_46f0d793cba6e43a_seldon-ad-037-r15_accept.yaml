@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-037-R15
+date: '2026-10-22'
+decided_by: cc:1f4db4cc
+operator_stated: false
+receipts:
+- 'docs/design/AD-037_ADDENDUM_03_a_check_runs_the_projects_interpreter.md:25: AD-037-R15'
+reason: 'STATION-001 Part B; evidence squiddy SQ-019 RESULT ''Stop gate, round 1'': every pytest check ran as anaconda''s python without linkml; measured: squiddy tests/test_init.py 28 failed under anaconda, 56 passed under the declared .venv/bin/python'
+kind: decision
+status: accepted
+statement: The interpreter a project's checks and dispatched sessions run under shall be the project's declaration (dispatch.stations.interpreter, a path relative to its primary checkout, refused at load when it does not exist), never the dispatcher's own; a check's pytest, seldon and python shall run as it with its bin first on PATH and VIRTUAL_ENV set, the row and stop_gate record shall name it, and undeclared shall be AD-037-R14 exactly.
+source:
+  path: docs/design/AD-037_ADDENDUM_03_a_check_runs_the_projects_interpreter.md
+  lines:
+  - 25
+  - 38
+  sha256: 1d64c54e05acb3a5fd8da932df5f6215568a05495c02fb0474bfcdb91353d8a8
+  text: |-
+    - **AD-037-R15. The interpreter a project's checks and dispatched sessions run under is the project's declaration, never the dispatcher's own.**
+      `dispatch.stations.interpreter` is a path to the project's python, relative to its primary checkout (squiddy:
+      `.venv/bin/python`). It is resolved at config load, and a declared path that does not exist or is not executable
+      refuses there with a `StationsConfigError` that names the key. It never falls back silently. When it is declared,
+      a check's `pytest` and `seldon` run as `<interpreter> -m <it>`, a first word of `python` or `python3` becomes
+      `<interpreter>`, and `run_check` puts the interpreter's `bin` first on `PATH` and sets `VIRTUAL_ENV` to its parent.
+      A child the check starts therefore resolves the same python. The row records that interpreter and the `pytest` that
+      `PATH` resolves, and the `stop_gate` record names it. The dispatched session's environment (`_worktree_env`) gets the
+      same `PATH` prefix and `VIRTUAL_ENV`. When it is absent, the interpreter is `sys.executable`, and the argv, the row
+      and the session environment are exactly R14's. Seldon's own config does not change. Code: `seldon/core/stations.py`
+      `STATIONS_DEFAULTS["interpreter"]`, `resolve_interpreter`, `interpreter_kw`, `interpreter_env`, `check_argv`,
+      `run_check`, `stop_gate`, `inspect`, `review_premises`; `seldon/core/dispatch.py` `load_dispatch_config`;
+      `seldon/commands/dispatch.py` `_worktree_env`; `seldon/commands/dispatch_worktree.py` `run_task_checks`; tests
+      `tests/test_station001_project_interpreter.py`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_03_a_check_runs_the_projects_interpreter.md
+  anchor: AD-037-R15
+consumer:
+- cc_tasks/2026-10-22_STATION-001_a_check_runs_the_projects_declared_interpreter.md
+- tests/test_station001_project_interpreter.py
+written_by: seldon decision 0.1.0
+provisional_id: 46f0d793cba6e43a1d47993e01193b49b9ccc39f1b13419c6ec4cbf1e4451848

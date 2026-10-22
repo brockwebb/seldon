@@ -88,6 +88,6 @@ def test_the_block_cap_key_is_refused_at_load():
 
 def test_the_launch_sets_no_block_cap(tmp_path):
     p = F.make_project(tmp_path)
-    env = S._worktree_env(p, {"env": {}})
+    env = S._worktree_env(p, {"env": {}}, F.config(p)["dispatch"])
     assert "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP" not in env
     assert not hasattr(S, "STOP_HOOK_BLOCK_CAP_ENV")

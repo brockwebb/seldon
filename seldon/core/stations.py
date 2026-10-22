@@ -31,6 +31,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import statistics
 import subprocess
 import sys
@@ -135,6 +136,11 @@ STATIONS_DEFAULTS = {
     # `path#key` reference to a list of sibling repository names (squiddy: `squiddy/kit.yaml#environment_packages`).
     # Unset means `decisions.repositories` in this project's seldon.yaml.
     "environment_ref": None,
+    # STATION-001 (AD-037-R15): the python a check's `pytest`, `seldon` and `python` run as, and whose `bin` a check
+    # and the dispatched session get first on PATH. A path relative to the project's primary checkout (squiddy:
+    # `.venv/bin/python`, PEP 405), resolved and checked at load. Unset means the dispatcher's own interpreter
+    # (`sys.executable`), which is right for a project whose environment IS the dispatcher's, as seldon's is.
+    "interpreter": None,
 }
 
 #: Keys an earlier build read that are withdrawn, with why. The loader names the ruling, so a seldon.yaml that still
@@ -155,9 +161,10 @@ class StationsConfigError(ValueError):
     """A `dispatch.stations` value is malformed."""
 
 
-def load_stations_config(cfg: dict) -> dict:
+def load_stations_config(cfg: dict, project_dir: Path | None = None) -> dict:
     """`dispatch.stations` over `STATIONS_DEFAULTS`, validated. Unknown keys refuse: a misspelt ceiling would
-    otherwise be silently the default."""
+    otherwise be silently the default. A relative `interpreter` resolves against `project_dir` (`resolve_interpreter`);
+    `load_dispatch_config` passes it and writes the absolute path back, so every later load sees the resolved one."""
     block = (cfg or {}).get("stations") or {}
     if not isinstance(block, dict):
         raise StationsConfigError(f"dispatch.stations must be a mapping, got {block!r}")
@@ -186,7 +193,43 @@ def load_stations_config(cfg: dict) -> dict:
             re.compile(x)
         except re.error as exc:
             raise StationsConfigError(f"dispatch.stations.no_progress_volatile: {x!r} does not compile: {exc}") from exc
+    out["interpreter"] = resolve_interpreter(out["interpreter"], project_dir)
     return out
+
+
+def resolve_interpreter(value, project_dir: Path | None) -> str | None:
+    """`dispatch.stations.interpreter` as an absolute path, or None when undeclared. A declared path that is not an
+    executable file refuses here, never later as a silent fall back to the dispatcher's own python (AD-037-R15). The
+    path is not resolved through symlinks: a venv's `bin/python` is a link, and its `bin` is what PATH needs."""
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise StationsConfigError(f"dispatch.stations.interpreter must be a non-empty path string, got {value!r}")
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        if project_dir is None:
+            raise StationsConfigError(f"dispatch.stations.interpreter {value!r} is relative and no project directory "
+                                      f"was given to resolve it against")
+        path = Path(project_dir).absolute() / path
+    if not path.exists():
+        raise StationsConfigError(f"dispatch.stations.interpreter {value!r} does not exist (looked for {path})")
+    if not path.is_file() or not os.access(path, os.X_OK):
+        raise StationsConfigError(f"dispatch.stations.interpreter {value!r} is not an executable file ({path})")
+    return str(path)
+
+
+def interpreter_kw(scfg: dict) -> dict:
+    """`{"interpreter": <path>}` for a station's `run`, or `{}` when undeclared, so an undeclared project's call is
+    today's call exactly."""
+    return {"interpreter": scfg["interpreter"]} if scfg.get("interpreter") else {}
+
+
+def interpreter_env(interpreter: str, env: dict) -> dict:
+    """What a process under `interpreter` gets so that its children resolve the same python: the interpreter's `bin`
+    first on `PATH`, and `VIRTUAL_ENV` its parent (what a venv's `activate` sets, PEP 405)."""
+    bin_dir = Path(interpreter).parent
+    rest = [x for x in (env.get("PATH") or "").split(os.pathsep) if x and x != str(bin_dir)]
+    return {"PATH": os.pathsep.join([str(bin_dir), *rest]), "VIRTUAL_ENV": str(bin_dir.parent)}
 
 
 # ------------------------------------------------------------------------------------------- the task file
@@ -500,15 +543,23 @@ _TAIL_CHARS = 1500
 #: against the interpreter the dispatcher runs in, not whichever `pytest` is first on launchd's PATH; `seldon`, so a
 #: check runs the code of the tree it runs in: the console script imports the primary checkout's code (seldon is
 #: installed editable from it), and a branch that changed the code its check depends on could never pass its own
-#: gate (PA-002's Part B, 2026-10-19).
+#: gate (PA-002's Part B, 2026-10-19). STATION-001 (AD-037-R15): `<this python>` is the project's declared
+#: interpreter when it declares one.
 MODULE_COMMANDS = ("pytest", "seldon")
+#: First words that ARE the interpreter, replaced by a declared one (AD-037-R15). Undeclared, they are left to PATH,
+#: as AD-037 ADDENDUM 02 left them.
+PYTHON_COMMANDS = ("python", "python3")
 
 
-def check_argv(command: str) -> list:
-    """The command as argv, with a `MODULE_COMMANDS` first word run as `<this python> -m <it>`."""
+def check_argv(command: str, interpreter: str | None = None) -> list:
+    """The command as argv, with a `MODULE_COMMANDS` first word run as `<interpreter> -m <it>` (the dispatcher's own
+    `sys.executable` when undeclared), and, when an interpreter is declared, a `PYTHON_COMMANDS` first word replaced
+    by it."""
     argv = shlex.split(command)
     if argv and argv[0] in MODULE_COMMANDS:
-        argv = [sys.executable, "-m", argv[0], *argv[1:]]
+        argv = [interpreter or sys.executable, "-m", argv[0], *argv[1:]]
+    elif argv and interpreter and argv[0] in PYTHON_COMMANDS:
+        argv = [interpreter, *argv[1:]]
     return argv
 
 
@@ -532,18 +583,25 @@ def output_fingerprint(exit_code, stdout: str, stderr: str, volatile: list | tup
 
 
 def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None,
-              output: str | None = None, volatile: list | tuple | None = None) -> dict:
+              output: str | None = None, volatile: list | tuple | None = None, interpreter: str | None = None) -> dict:
     """Run one `check:` command in `cwd`, with `cwd` first on `PYTHONPATH` (`tree_path`). `outcome` is `pass`
     (exit 0), `fail`, or `unrunnable` (no reading). The row names the interpreter and the path it ran with, and
-    carries `output_sha256` (`output_fingerprint`, masking `volatile`; the configured default when None)."""
+    carries `output_sha256` (`output_fingerprint`, masking `volatile`; the configured default when None).
+
+    `interpreter` is the project's declared python (AD-037-R15): the check's `pytest`, `seldon` and `python` run as
+    it, its `bin` is first on `PATH` and `VIRTUAL_ENV` is set (`interpreter_env`), and the row records it and the
+    `pytest` that `PATH` now resolves. None is today's check: the dispatcher's interpreter, its PATH, today's row."""
     if volatile is None:
         volatile = STATIONS_DEFAULTS["no_progress_volatile"]
     started = time.monotonic()
     run_env = dict(os.environ if env is None else env)
     run_env["PYTHONPATH"] = tree_path(Path(cwd), run_env)
-    row = {"command": command, "interpreter": sys.executable, "pythonpath": run_env["PYTHONPATH"]}
+    row = {"command": command, "interpreter": interpreter or sys.executable, "pythonpath": run_env["PYTHONPATH"]}
+    if interpreter:
+        run_env.update(interpreter_env(interpreter, run_env))
+        row["pytest"] = shutil.which("pytest", path=run_env["PATH"])
     try:
-        argv = check_argv(command.replace("{output}", output) if output else command)
+        argv = check_argv(command.replace("{output}", output) if output else command, interpreter)
     except ValueError as exc:
         return {**row, "outcome": "unrunnable", "exit": None, "seconds": 0.0, "tail": f"does not parse: {exc}"}
     for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
@@ -786,7 +844,8 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     for name, answers in declared.items():
         crit = part_criteria(text, name)
         results = [run_station_check(cmd, cwd, scfg["check_timeout_s"], branch, run=run,
-                                     volatile=scfg["no_progress_volatile"]) for cmd in crit["checks"]]
+                                     volatile=scfg["no_progress_volatile"], **interpreter_kw(scfg))
+                   for cmd in crit["checks"]]
         parts.append({"part": name, "answers": answers, "checks": results, "section_found": crit["section_found"]})
         failed += [{"part": name, **r} for r in results if r["outcome"] == "fail"]
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
@@ -809,8 +868,9 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
         verdict = "no_progress"
         no_progress = {"rounds": [prior[-1].get("round") or len(refused), rnd]}
     record = {"task_id": task_id, "child_session_id": lp.get("child_session_id"), "cwd": str(cwd), "branch": branch,
-              # AD-037 ADDENDUM 02: what a check's `seldon` and `pytest` ran as, and the tree they imported.
-              "interpreter": sys.executable, "path": tree_path(Path(cwd), dict(os.environ)),
+              # AD-037 ADDENDUM 02: what a check's `seldon` and `pytest` ran as, and the tree they imported; the
+              # project's declared interpreter when it declares one (AD-037-R15).
+              "interpreter": scfg.get("interpreter") or sys.executable, "path": tree_path(Path(cwd), dict(os.environ)),
               "parts": parts, "failed": [f["command"] for f in failed], "tokens": tokens, "ceiling": ceiling,
               "verdict": verdict, "stop_hook_active": bool(stop_hook_active),
               "round": rnd, "fingerprint": fingerprint}
@@ -935,7 +995,7 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
             stop("first_article", "line", "first_article_undeclared", answers=e["event_id"], loop=p.get("loop"))
             continue
         where = Path(p["cwd"]) if p.get("cwd") and Path(p["cwd"]).is_dir() else Path(project_dir)
-        r = run(command, where, scfg["check_timeout_s"], output=p.get("output"))
+        r = run(command, where, scfg["check_timeout_s"], output=p.get("output"), **interpreter_kw(scfg))
         if r.get("outcome") != "pass":
             miss = missing_file_reading(command.replace("{output}", p.get("output") or ""), where, p.get("branch"))
             if miss is not None:
@@ -1043,7 +1103,7 @@ def review_premises(project_dir: Path, text: str, scfg: dict, run: Callable[...,
     rows = []
     for p in parsed["premises"]:
         if p["kind"] == "check":
-            r = run(p["command"], Path(project_dir), scfg["check_timeout_s"])
+            r = run(p["command"], Path(project_dir), scfg["check_timeout_s"], **interpreter_kw(scfg))
             rows.append({**p, "outcome": "true" if r["outcome"] == "pass" else
                          ("false" if r["outcome"] == "fail" else "unrunnable"), "check": r})
         else:
@@ -1202,7 +1262,7 @@ def premises_registration_refusal(task_path: Path, project_dir: Path, config: di
     if not parse_premises(text)["declared"]:
         return None
     try:
-        scfg = load_stations_config((config or {}).get("dispatch") or {})
+        scfg = load_stations_config((config or {}).get("dispatch") or {}, Path(project_dir))
     except StationsConfigError:
         scfg = dict(STATIONS_DEFAULTS)
     review = review_premises(Path(project_dir), text, scfg, run=run)

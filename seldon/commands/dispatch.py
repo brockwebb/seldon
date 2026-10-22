@@ -1112,7 +1112,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # the repository it starts in, and enters it.
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
-                extra_env=_worktree_env(project_dir, spec),
+                extra_env=_worktree_env(project_dir, spec, cfg),
                 inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
                 inspect_every_s=cfg["poll_interval_s"],
                 on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig),
@@ -1123,11 +1123,17 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
                      name=chosen.get("name") or stem, lease_cm=held)
 
 
-def _worktree_env(project_dir: Path, spec: dict) -> dict:
-    """What a worktree session's environment adds: the model lock's ids (AD-035 R3) and where the primary checkout
-    is (AD-034-R8). No Stop-hook block cap: LOOP-001 (AD-034 ADDENDUM 04) withdrew FRICTION-002's, so the gate's
-    no-progress rule lets a stuck session go and the CLI's own default cap is only the backstop."""
-    return {**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
+def _worktree_env(project_dir: Path, spec: dict, cfg: dict) -> dict:
+    """What a worktree session's environment adds: the model lock's ids (AD-035 R3), where the primary checkout
+    is (AD-034-R8) and, when the project declares one, its interpreter's `bin` first on `PATH` with `VIRTUAL_ENV`
+    (AD-037-R15), so a bare `pytest` or `python` the session types is the project's and not the launchd job's. No
+    Stop-hook block cap: LOOP-001 (AD-034 ADDENDUM 04) withdrew FRICTION-002's, so the gate's no-progress rule lets
+    a stuck session go and the CLI's own default cap is only the backstop."""
+    env = {**spec["env"], WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
+    interpreter = QS.load_stations_config(cfg)["interpreter"]
+    if interpreter:
+        env.update(QS.interpreter_env(interpreter, dict(os.environ)))
+    return env
 
 
 def _classifier_reading(project_dir: Path, child_session_id: str, log_path: Path, offset: int) -> dict:

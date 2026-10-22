@@ -647,9 +647,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     # QC-002: the stations' block, validated at load like every other key, so a misspelt ceiling refuses here.
     from seldon.core import stations as S
     try:
-        S.load_stations_config(block)
+        scfg = S.load_stations_config(block, project_dir)
     except S.StationsConfigError as exc:
         raise DispatchConfigError(str(exc)) from exc
+    # STATION-001 (AD-037-R15): the declared interpreter, resolved against this project, so every later
+    # `load_stations_config(cfg)` reads the absolute path whatever its working directory.
+    if scfg["interpreter"]:
+        block["stations"] = {**block["stations"], "interpreter": scfg["interpreter"]}
     return block
 
 

@@ -615,7 +615,7 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
             fh.write(json.dumps(body, indent=1) + "\n")
     # Started in the PRIMARY checkout: the CLI cuts its worktree in the repository it starts in.
     code = S._run(cmd, project_dir, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env=S._worktree_env(project_dir, spec), on_init=named)
+                  extra_env=S._worktree_env(project_dir, spec, cfg), on_init=named)
     wall = round(time.monotonic() - started, 3)
     finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
                    code, wall, log_path, offset, spec)
@@ -1397,12 +1397,13 @@ def task_checks(text: str) -> list:
 def run_task_checks(project_dir: Path, cfg: dict, tree: Path, branch: str | None, text: str,
                     run=None) -> dict:
     """Run `task_checks(text)` in `tree` through the stations' own runner, so each check has AD-037-R14's path (the
-    tree first on `PYTHONPATH`, `seldon` as `python -m seldon`). `{checks, failed, passed}`; a check that is not
-    `pass` (fail or unrunnable) fails the regate: nothing unverified is merged."""
+    tree first on `PYTHONPATH`, `seldon` as `python -m seldon`) and AD-037-R15's interpreter (the project's, when it
+    declares one). `{checks, failed, passed}`; a check that is not `pass` (fail or unrunnable) fails the regate:
+    nothing unverified is merged."""
     from seldon.core import stations as Q
-    scfg = Q.load_stations_config(cfg)
+    scfg = Q.load_stations_config(cfg, project_dir)
     rows = [{"part": name, **Q.run_station_check(cmd, tree, scfg["check_timeout_s"], branch,
-                                                 run=run or Q.run_check)}
+                                                 run=run or Q.run_check, **Q.interpreter_kw(scfg))}
             for name, cmd in task_checks(text)]
     failed = [r for r in rows if r["outcome"] != "pass"]
     return {"checks": rows, "failed": failed, "passed": bool(rows) and not failed}
