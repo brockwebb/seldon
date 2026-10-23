@@ -108,4 +108,4 @@ run the gate by hand.
 - `docs/evidence/hook002/replay_gate.py`, `docs/evidence/hook002/replay_2026-10-22.jsonl`.
 - Commits on `worktree-binary-stirring-otter`. Not merged, pushed or completed, per the session's instruction.
 
-**Tokens:** 0.13M at the Part B mark (`part-complete`: 131,619), against the 0.2M estimate and the 0.24M stop. The Part C line follows in the dispatch log.
+**Tokens:** 0.14M at the Part C mark (`part-complete`: 140,757; Part B mark 131,619), against the 0.2M estimate and the 0.24M stop.
