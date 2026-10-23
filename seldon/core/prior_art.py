@@ -181,10 +181,12 @@ def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional
         raise PriorArtError(f"prior_art.ref {ref!r} is not a reference: expected "
                             f"`<file>#<dotted.key>` (AD-036 ADDENDUM 03)")
     rel, dotted = ref.split("#", 1)
-    target = Path(os.path.expanduser(rel))
-    if not target.is_absolute():
-        target = project_dir / target
-    target = target.resolve()
+    written = Path(os.path.expanduser(rel))
+    # The ref is a repository-level path, like the corpus paths, so it anchors where they do: at the primary
+    # checkout when the project is a linked worktree (AD-036 ADDENDUM 08). Read from the worktree,
+    # `../seldon/seldon.yaml` named `.claude/worktrees/seldon/seldon.yaml` and the hook refused every commit.
+    naive = (written if written.is_absolute() else project_dir / written).resolve()
+    target = (written if written.is_absolute() else corpus_anchor(project_dir) / written).resolve()
     extra = sorted(set(block) - set(REF_LOCAL_KEYS))
     gate_local = block.get("gate") or {}
     if not isinstance(gate_local, dict):
@@ -200,7 +202,9 @@ def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional
                             f"each project lists its own grandfathered notes (AD-036-R4, "
                             f"ADDENDUM 03)")
     if not target.is_file():
-        raise PriorArtError(f"prior_art.ref {ref!r} names {target}, which does not exist")
+        also = "" if naive == target else f" (read from this worktree it would name {naive})"
+        raise PriorArtError(f"prior_art.ref {ref!r} names {target}, which does not exist{also}; a ref resolves "
+                            f"at the primary checkout (AD-036 ADDENDUM 08)")
     node = yaml.safe_load(target.read_text(encoding="utf-8"))
     for part in dotted.split("."):
         if not isinstance(node, dict) or part not in node:
