@@ -1,0 +1,46 @@
+event: accept
+id: seldon:AD-035-R13
+date: '2026-10-24'
+decided_by: cc:30c0de2c
+operator_stated: false
+receipts:
+- 'docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md:34: AD-035-R13'
+reason: 'SEL-009; evidence: lock resolved_at 2026-10-24T00:09:23Z under hazbrief HB-24''s run, re-pilot 4,212,332 weighted (hazbrief HB-25 RESULT); AD-035-R7 had no implementation in refresh'
+kind: decision
+status: accepted
+statement: 'While a run holds the model lock, `seldon models refresh` shall not move it: a refresh that finds a live dispatcher lease in a repository named by refresh.holders (other than the calling process''s own) or a live run hold under refresh.holds_dir shall write nothing to the lock, make no npm or probe call, append one lock_refresh_deferred event per cache day and holder set, and exit 0 as deferred; a listed repository that does not exist shall fail the refresh loudly with the current lock standing; a first refresh with no lock shall not be deferred; --force shall refresh anyway and name the overridden holders on the models_lock_bumped event.'
+source:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  lines:
+  - 34
+  - 51
+  sha256: 7a861e2dc2ab950505bc7040594445745762cf6b6174730f264e893053a7a343
+  text: |-
+    - **AD-035-R13. While a run holds the lock, `seldon models refresh` does not move it; it records the deferral.**
+      A refresh that finds a live holder writes nothing to the lock and spends nothing (no npm call, no probe). It appends one
+      `lock_refresh_deferred` event to seldon's event store, with the cache day, the holders and the lock's CLI version.
+      A second deferral on the same day with the same holders writes no second line. The event is not committed by the
+      refresh, because the dispatcher's reconciler commits store lines (AD-038-R1). The CLI exits 0 with status `deferred`.
+      There are two kinds of holder:
+      (a) a live dispatcher lease in any repository named by `refresh.holders` in `models/registry.yaml`. That is the
+      global `dispatch.lease_file` by `lease_is_held`, or a worktree lease under `dispatch.lease_dir` by
+      `worktree_holder_alive`. The list resolves against the seldon primary checkout, and a lease naming the calling
+      process is excluded, since the dispatcher's own launch is the boundary R7 allows;
+      (b) a run hold, an flock on `<refresh.holds_dir>/<run>.lock` taken for the run's life by
+      `seldon models hold --run <name> -- <command>`, or `seldon.models.hold(...)` in process.
+      A listed repository that does not exist fails the refresh loudly, and the current lock stands. A first refresh,
+      with no lock, is never deferred. `--force` refreshes anyway, and the `models_lock_bumped` payload names the overridden
+      holders as `forced_over_holders`.
+      Code: `seldon/models.py` `lock_holders`, `hold`, `refresh`, `_already_deferred`, `_primary_root`;
+      `seldon/commands/models.py` `models_hold`, `models_refresh`; tests
+      `tests/test_sel009_refresh_defers_and_pilot_declaration.py`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  anchor: AD-035-R13
+consumer:
+- cc_tasks/2026-10-24_SEL-009_models_refresh_does_not_bump_the_lock_under_a_held_lease.md
+- tests/test_sel009_refresh_defers_and_pilot_declaration.py
+written_by: seldon decision 0.1.0
+provisional_id: 03ee92a13f300e3b539d9566aca5d46f3ad0c8a9dd08759560424d5d146d3ab7

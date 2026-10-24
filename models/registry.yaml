@@ -259,6 +259,20 @@ refresh:
   npm_timeout_s: 600
   # The lock is re-resolved at most once per UTC day unless forced (R2: "cached for the day").
   cache: day
+  # AD-035-R14 (SEL-009): the instant the day's cache turns over, HH:MM UTC. The day a refresh keys on is the date
+  # of (now - this). There is NO clock job: the refresh runs at the first `seldon cc register` or dispatcher launch
+  # after this instant with no run holding the lock (R13). `seldon models show` prints the next eligible instant.
+  # "00:00" is the behaviour before SEL-009, when the operator remembered "about 00:49Z" and the bump came at 00:09Z.
+  cache_boundary_utc: "00:00"
+  # AD-035-R13 (SEL-009, implementing R7): a refresh defers while any of these repositories has a live dispatcher
+  # lease (its `dispatch.lease_file`, or a worktree lease under `dispatch.lease_dir`), except the calling process's
+  # own. Paths resolve against the seldon PRIMARY checkout, so a worktree reads the same list. Every sibling with a
+  # `dispatch:` block is listed, and arnold and hazbrief-mcp too, which have none today and so hold nothing until they
+  # do. A listed directory that does not exist fails the refresh loudly; the current lock then stands.
+  holders: [., ../squiddy, ../ai-readiness-kg, ../arnold, ../hazbrief-mcp]
+  # R13's other holder: a run that is not dispatched registers itself here for its whole life with
+  # `seldon models hold --run <name> -- <command>` (or `seldon.models.hold(...)` in process). One flock per run.
+  holds_dir: ~/.local/share/seldon/model-holds
   # Where each refresh writes its evidence, relative to the seldon repository root.
   evidence_dir: docs/evidence/model001
   # Commit the lock, the evidence and the event only when the checkout is on this branch; on any

@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-035-R14
+date: '2026-10-24'
+decided_by: cc:30c0de2c
+operator_stated: false
+receipts:
+- 'docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md:52: AD-035-R14'
+reason: 'SEL-009; evidence: lock resolved_at 2026-10-24T00:09:23Z under hazbrief HB-24''s run, re-pilot 4,212,332 weighted (hazbrief HB-25 RESULT); AD-035-R7 had no implementation in refresh'
+kind: decision
+status: accepted
+statement: The instant the refresh's day cache turns over shall be one configured value, refresh.cache_boundary_utc (HH:MM UTC, validated at load), the cache day being the date of now minus it; `seldon models show` shall print the boundary, the next eligible refresh instant and the live holders, and say that no clock job runs the refresh, which runs at the first cc register or dispatcher launch after that instant with no holder.
+source:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  lines:
+  - 52
+  - 58
+  sha256: 7a861e2dc2ab950505bc7040594445745762cf6b6174730f264e893053a7a343
+  text: |-
+    - **AD-035-R14. The instant the day's cache turns over is one configured value, and `seldon models show` prints it with the next eligible refresh.**
+      `refresh.cache_boundary_utc` (`HH:MM`, UTC, validated at load; `"00:00"` keeps R2's behaviour) sets the day a
+      refresh keys on: the date of now minus the boundary. `show` prints the boundary, the next eligible instant (the
+      lock's cache day plus one day, at the boundary) and the live holders. It also says that no clock job runs the refresh:
+      it runs at the first `seldon cc register` or dispatcher launch after that instant with no holder. An operator who
+      plans a run around the bump reads that instant instead of remembering one.
+      Code: `seldon/models.py` `cache_day`, `next_refresh_at`, `show`; `seldon/commands/models.py` `models_show`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  anchor: AD-035-R14
+consumer:
+- cc_tasks/2026-10-24_SEL-009_models_refresh_does_not_bump_the_lock_under_a_held_lease.md
+- tests/test_sel009_refresh_defers_and_pilot_declaration.py
+written_by: seldon decision 0.1.0
+provisional_id: 4fabcbc4b3d9d2200f85d81e5a778d35a4c4119e2060470a238774e093c213eb
