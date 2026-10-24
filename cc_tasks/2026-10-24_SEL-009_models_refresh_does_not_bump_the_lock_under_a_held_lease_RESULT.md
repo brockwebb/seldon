@@ -8,6 +8,11 @@
 `2026-10-24_SEL-009_ADDENDUM_01_squiddy_r232_landed.md` (R-232 is the consumer's half; do not duplicate it).
 **Model calls:** zero. Every refresh in the tests runs the fake CLI and fake npm of `tests/test_models.py`.
 
+Recall used: seldon:AD-035-R7
+
+(Registration's recall returned AD-035-R7, ADDENDUM-00 turned Part A from a new feature into R7's conformance, and
+the deferral was built as R7's implementation, AD-035-R13.)
+
 ## Premises, as checked at start
 
 All five held, each with exit 0, run from the primary checkout before the worktree was cut:

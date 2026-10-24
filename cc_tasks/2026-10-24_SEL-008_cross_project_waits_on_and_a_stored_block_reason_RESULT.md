@@ -6,6 +6,12 @@
 **Addenda:** `cc_tasks/*SEL-008*ADDENDUM*.md` globbed: no match.
 **Model calls:** zero. **Network:** none beyond git push.
 
+Recall used: none
+
+(The registration's recall list was in the ledger and was not read during the work. Its first hit,
+`seldon:2026-09-06_task_precedes_relationship_RESULT`, is the AD-029 work this extends; AD-029 was read directly in
+`docs/design/AD-029_task_precedence.md`, not through the list.)
+
 ## Premises, as checked at start
 
 Both held, exit 0, run from the primary checkout:
