@@ -178,12 +178,12 @@ cites SEL-009, SQ-038R, R-232 (c), SQ-062 and SQ-086. It was registered with
 by its registration (squiddy 41eda58). Two refusals came first, both fixed in the file: `parts_undeclared` (no
 `**Parts:**`), then a Parts entry that did not parse. The registration's event lines were left uncommitted:
 squiddy's store was dirty with its standing dispatcher's lines, so it skipped them with reason
-`store_dirty_before_registration`, and that dispatcher reconciles them (AD-038-R1). Not pushed.
+`store_dirty_before_registration`, and that dispatcher reconciles them (AD-038-R1). Not pushed by this session; on origin/main as of the merge (pushed by that repository's own sessions).
 
 **hazbrief stub:** `../hazbrief-mcp/cc_tasks/2026-10-24_HB-31_long_runs_hold_the_model_lock.md`, task `ed287bf0`. The
 registration's own commit lost a ref race with HB-30's record commit:
 `fatal: cannot lock ref 'HEAD': is at 68475a18... but expected 61b975bc...`. hazbrief has no dispatcher to pick the file
-up, so it was committed path-scoped by hand, and the one registration line after it. Not pushed.
+up, so it was committed path-scoped by hand, and the one registration line after it. Not pushed by this session; on origin/main as of the merge (pushed by that repository's own sessions).
 
 ## Tests, red then green
 
@@ -218,7 +218,7 @@ Targeted runs, `PYTHONPATH=<worktree> python -m dotenv -f /Users/brock/GitHub/se
   `test_cadence_pass.py`, `test_audit_dispatch.py`) use the shared Neo4j test database and were left to the full-suite
   gate, by agreement with the parallel SEL-008 work.
 
-**Full-suite gate:** _PLACEHOLDER: filled by the session that runs the full suite on the combined SEL-008 + SEL-009 branch._
+**Full-suite gate** (combined SEL-008 + SEL-009 tree, merge c434836, run once because the suite's Neo4j tier and the two branches overlap in `tests/models_fixture.py` consumers): `PYTHONPATH=<worktree> python -m dotenv -f .env run -- python -m pytest tests/ -q`: **2870 passed, 7 skipped, 2 failed** in 38 min 22 s. (1) `tests/test_verify_event_log.py::test_all_checks_include_the_two_new_ones` pinned 18 checks; SEL-008 adds the 19th ("Blocks and waits"), so the test now pins 19 and names it (14 passed after). (2) `tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index` fails identically on unmodified main (run on main 20f9c8e: 1 failed): `release_unavailable ... the index: block of squiddy/graphs/library/extract/control.yaml at edd5d5d66bf differs from today's`. It is the squiddy library's index drift, the same cause as SEL-009's stale AD-035 receipts; not this change's, filed as an Issue (see After the merge).
 
 ## Decision records and the prior-art verdict
 
@@ -234,8 +234,11 @@ Targeted runs, `PYTHONPATH=<worktree> python -m dotenv -f /Users/brock/GitHub/se
   `AD-035_ADDENDUM_02_pinned_roles.md:54`. The reason given is "the `index:` block of
   squiddy/graphs/library/extract/control.yaml at c40f79ccd445 [a34b25cf5283] differs from today's". This existed
   before SEL-009: no edit to ADDENDUM 03 can change it, because a committed note is immutable (AD-036-R7). It is the
-  index-rule drift that SEL-009 ADDENDUM-00 already recorded as "not this task's". It probably also holds any task
-  whose `**Governing:**` names AD-035 under c14 until the library's indexes are rebuilt.
+  index-rule drift that SEL-009 ADDENDUM-00 already recorded as "not this task's". **Correction (by the merging
+  session):** it holds no task. Addenda are exempt from the gate (`seldon.yaml` `prior_art.exempt_globs:
+  ['*_ADDENDUM_*.md', ...]`) and `governing_notes` resolves `AD-035` to the base note only, whose verdict is unchanged;
+  `check_prior_art` on the merged tree passes (3 notes outside the baseline, each passing), as on main. The FAIL verdict
+  is a record, not a hold.
 
 ## Not done, and why
 

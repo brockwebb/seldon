@@ -127,7 +127,7 @@ Related suites run on the branch before the gate (`test_after_header`, `test_dis
 `test_friction001_redrive`): 468 passed and 8 failed, all 8 the fixtures above; after the changes, the 5 affected files
 plus the new one: 125 passed.
 
-**Full-suite gate:** _PLACEHOLDER: filled after the combined SEL-008 + SEL-009 branch's full run._
+**Full-suite gate** (combined SEL-008 + SEL-009 tree, merge c434836, run once because the suite's Neo4j tier and the two branches overlap in `tests/models_fixture.py` consumers): `PYTHONPATH=<worktree> python -m dotenv -f .env run -- python -m pytest tests/ -q`: **2870 passed, 7 skipped, 2 failed** in 38 min 22 s. (1) `tests/test_verify_event_log.py::test_all_checks_include_the_two_new_ones` pinned 18 checks; SEL-008 adds the 19th ("Blocks and waits"), so the test now pins 19 and names it (14 passed after). (2) `tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index` fails identically on unmodified main (run on main 20f9c8e: 1 failed): `release_unavailable ... the index: block of squiddy/graphs/library/extract/control.yaml at edd5d5d66bf differs from today's`. It is the squiddy library's index drift, the same cause as SEL-009's stale AD-035 receipts; not this change's, filed as an Issue (see After the merge).
 
 ## Backfill: projects whose ledgers hold a block with no reason, or a wait kept in prose
 
