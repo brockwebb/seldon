@@ -141,7 +141,7 @@ def _tasks(driver, database, include_future: bool = False) -> list:
          "OPTIONAL MATCH (p:ResearchTask)-[:PRECEDES|precedes]->(t) "
          "RETURN t.artifact_id AS artifact_id, t.name AS name, t.state AS state, "
          "       t.source_file AS source_file, t.created_at AS created_at, "
-         "       t.description AS description, "
+         "       t.description AS description, t.waits_on_external AS waits_on_external, "
          "       collect({artifact_id: p.artifact_id, state: p.state}) AS predecessors "
          "ORDER BY t.created_at")
     with driver.session(database=database) as s:
@@ -151,6 +151,17 @@ def _tasks(driver, database, include_future: bool = False) -> list:
     if not include_future:
         rows = [r for r in rows if not is_future(r.get("description"))]
     return rows
+
+
+def _cross_waits(project_dir: Path, tasks: list) -> dict:
+    """c17's input (AD-038-R8): each task's unsatisfied waits on tasks in other projects' graphs, read once per pass.
+
+    A target whose graph cannot be read is unsatisfied, and each one is logged to stderr (the pass's log), so an
+    outage in another project is visible where the held task is. The waiting project's config is read here; a
+    config that cannot be read is raised, not defaulted, because a pass that guessed would read the wrong graphs.
+    """
+    from seldon.core import cross_project as X
+    return X.unsatisfied_waits(project_dir, tasks, on_error=lambda line: click.echo(line, err=True))
 
 
 def _claim_in_flight(driver, database) -> dict | None:
@@ -199,9 +210,11 @@ def _survey(project_dir, config, driver, database):
     holds = _premise_holds(project_dir, driver, database)
     launch_holds = _launch_holds(project_dir)
     union = D.union_state(project_dir)
+    tasks = _tasks(driver, database)
+    cross = _cross_waits(project_dir, tasks)
     rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                       launch_holds=launch_holds, union=union)
-            for t in _tasks(driver, database)]
+                       launch_holds=launch_holds, union=union, cross_waits=cross)
+            for t in tasks]
     return cfg, band, tree, lease_body, claim, D.fifo(rows)
 
 
@@ -994,9 +1007,11 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     holds = _premise_holds(project_dir, driver, database)
     launch_holds = _launch_holds(project_dir)
     union = D.union_state(project_dir)
+    tasks = _tasks(driver, database)
+    cross = _cross_waits(project_dir, tasks)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                              launch_holds=launch_holds, union=union)
-                   for t in _tasks(driver, database)])
+                              launch_holds=launch_holds, union=union, cross_waits=cross)
+                   for t in tasks])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
     _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
@@ -1739,15 +1754,21 @@ def _state_of(driver, database, task_id) -> str | None:
     return r["state"] if r else None
 
 
+def block_reason(outcome: str, code, log_rel) -> str:
+    """The reason a dispatcher block stores (AD-038-R7): the finish's outcome, its exit code and its log, so the
+    task says why it stopped without a reader opening the event store."""
+    return f"dispatcher: {outcome} (exit {code}; log {log_rel})"
+
+
 def _block(project_dir, driver, database, domain_config, session_id, task_id, state, code,
-           log_rel):
+           log_rel, *, reason: str):
     if state != "in_progress":
         return
     try:
         transition_task(project_dir=project_dir, driver=driver, database=database,
                         domain_config=domain_config, artifact_id=task_id,
                         current_state="in_progress", new_state="blocked", actor=ACTOR,
-                        authority="accepted", session_id=session_id)
+                        authority="accepted", session_id=session_id, block_reason=reason)
     except Exception as exc:                                        # noqa: BLE001
         click.echo(f"could not block {task_id[:8]}: {exc}", err=True)
 

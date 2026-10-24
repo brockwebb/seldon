@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-038-R9
+date: '2026-10-24'
+decided_by: cc:30a4b346
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md:62: AD-038-R9'
+reason: 'SEL-008; evidence: hazbrief HB-20 (311388f9) waited on squiddy SQ-048 with only a handoff paragraph to say so; blocking it took proposed->accepted->in_progress->blocked with a false claim and stored no reason (2026-10-24)'
+kind: decision
+status: accepted
+statement: The dispatcher shall hold a candidate with an unsatisfied cross-project wait (criterion c17, `waits_on_unsatisfied`) or one whose other graph cannot be read (`waits_on_unreachable`, logged), c17 being absent unless it fails; it shall redrive to accepted a declared block (no dispatcher claim) on a task whose cross-project waits are all satisfied, recording dispatch_redrive with stop_reason waits_on_satisfied, and shall not so redrive a session it halted; `seldon verify` shall fail a wait whose target no longer resolves and warn on a reasonless block, a wait on a superseded, withdrawn or rejected target, and a wait whose graph cannot be read.
+source:
+  path: docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md
+  lines:
+  - 62
+  - 72
+  sha256: 053b050e79ff5d754478831e7533f81949f93aeb280551039c708c37b3ecc2ee
+  text: |-
+    - **AD-038-R9. The dispatcher reads both graphs, fails closed, and lifts a declared block by rule.**
+      Criterion **c17**: a candidate with an unsatisfied cross-project wait is not eligible (`waits_on_unsatisfied`), and
+      one whose other graph cannot be read is not eligible either (`waits_on_unreachable`), each unreadable target logged
+      to the pass's stderr. c17 is absent from the criteria vector unless it fails, so every other task's vector, and the
+      recorded serial transcript, are unchanged except for the dispatcher block's new reason line. The automatic redrive
+      (AD-038-R2) gains one case: a **declared** block (one no `dispatcher:` claim set) on a task with cross-project waits
+      is redriven to `accepted` once every wait is satisfied, recording `dispatch_redrive` with `stop_reason:
+      waits_on_satisfied` answering the block's own state change. A session the dispatcher halted keeps R2's rule: a
+      satisfied wait says nothing about why that session stopped. `seldon verify` gains "Blocks and waits": a wait whose
+      target no longer resolves is a failure; a blocked task with no reason, a wait on a dead end, and a wait whose graph
+      cannot be read now are warnings, each naming its command.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md
+  anchor: AD-038-R9
+consumer:
+- cc_tasks/2026-10-24_SEL-008_cross_project_waits_on_and_a_stored_block_reason.md
+- tests/test_sel008_cross_project_waits_and_block_reason.py
+written_by: seldon decision 0.1.0
+provisional_id: 238518aef9ecd912703ce8efd0c559236369acd7ff4794c62bdf6cba7a70c9c1

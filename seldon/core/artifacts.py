@@ -35,6 +35,12 @@ REASON_REQUIRED_STATES = ("withdrawn", "superseded")
 # Relationship written by `seldon task supersede --superseded-by`.
 SUPERSEDED_BY_REL = "superseded_by"
 
+# AD-038-R7 (SEL-008): every move into `blocked` stores why, as `block_reason`. A block with nothing attached can
+# only be lifted by someone who remembers why it was set; a stored reason is what a rule (the redrive of a satisfied
+# cross-project wait, AD-038-R8) or the next reader can act on. Cleared when the task leaves `blocked`.
+BLOCKED_STATE = "blocked"
+BLOCK_REASON_PROPERTY = "block_reason"
+
 
 def _now_iso() -> str:
     """ISO-8601 UTC timestamp for updated_at."""
@@ -662,6 +668,7 @@ def plan_task_transition(
     claimed_by: Optional[str] = None,
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
+    block_reason: Optional[str] = None,
 ) -> Tuple[List[PlannedWrite], List[str]]:
     """Plan a ResearchTask transition, applying the AD-028 lifecycle side effects.
 
@@ -673,6 +680,9 @@ def plan_task_transition(
     * ``withdrawn`` and ``superseded`` require a ``terminal_reason``, and
       ``superseded`` may additionally point at the artifact that overtook the task
       via a ``superseded_by`` edge.
+    * ``blocked`` requires a ``block_reason`` (AD-038-R7), stored on the task and
+      cleared when it leaves ``blocked``. Replacing the reason of a task that is
+      already blocked is not a transition: :func:`set_block_reason`.
 
     Every precondition is checked before the first event is appended, so a rejected
     call leaves no trace: an unknown ``superseded_by`` target, an illegal edge
@@ -696,6 +706,8 @@ def plan_task_transition(
             refused for every other target state.
         superseded_by: Optional artifact_id (or unambiguous prefix) of the artifact
             that overtook this task. Only valid when ``new_state`` is 'superseded'.
+        block_reason: Why the task is blocked. Required for 'blocked', refused for
+            every other target state.
 
     Returns:
         Tuple of (the planned writes, nothing appended yet; advisory warning lines
@@ -715,6 +727,18 @@ def plan_task_transition(
     is_claim = (current_state, new_state) == CLAIM_TRANSITION
 
     # --- Precondition checks: everything that can fail must fail before any write ---
+    if new_state == BLOCKED_STATE:
+        if block_reason is None or not block_reason.strip():
+            raise ValueError(
+                "A block needs a reason (AD-038-R7): say what the task waits on, so the "
+                "block can be lifted by a rule or by the next reader, not only by whoever "
+                "remembers why it was set."
+            )
+    elif block_reason is not None:
+        raise ValueError(
+            f"A block reason is only recorded on a move into '{BLOCKED_STATE}', "
+            f"not for a transition to '{new_state}'."
+        )
     if new_state in REASON_REQUIRED_STATES:
         if terminal_reason is None or not terminal_reason.strip():
             raise ValueError(
@@ -773,6 +797,16 @@ def plan_task_transition(
     if is_claim:
         properties["claimed_by"] = (claimed_by or actor).strip()
         properties["claimed_at"] = _now_iso()
+    if new_state == BLOCKED_STATE:
+        properties[BLOCK_REASON_PROPERTY] = block_reason.strip()
+    elif current_state == BLOCKED_STATE:
+        # Leaving `blocked`: a stale reason on an open task would say it is blocked when it
+        # is not. Only a task that carries one writes the clear, so a task blocked before
+        # AD-038-R7 leaves the state the way it always did, with no extra line.
+        with driver.session(database=database) as session:
+            node = graph.get_artifact(session, artifact_id)
+        if node and node.get(BLOCK_REASON_PROPERTY):
+            properties[BLOCK_REASON_PROPERTY] = None
 
     if properties:
         writes.append(plan_update_artifact(
@@ -815,6 +849,38 @@ def plan_task_transition(
     return writes, warnings
 
 
+def set_block_reason(
+    project_dir: Path,
+    driver: Driver,
+    database: str,
+    artifact_id: str,
+    current_state: str,
+    block_reason: Optional[str],
+    actor: str,
+    authority: str = "accepted",
+    session_id: Optional[str] = None,
+) -> None:
+    """Replace the stored reason of a task that is already ``blocked`` (AD-038-R7). One line; the state does not move.
+
+    The backfill path for a task blocked before reasons were stored (hazbrief HB-20 on 2026-10-24), and the way a
+    block's reason is corrected. Not a state transition, so it is not :func:`transition_task`: ``blocked -> blocked``
+    stays outside the state machine.
+
+    Raises:
+        ValueError: The task is not blocked, or the reason is empty. Nothing is written.
+    """
+    if current_state != BLOCKED_STATE:
+        raise ValueError(f"Only a blocked task's reason can be replaced; this task is '{current_state}'.")
+    if block_reason is None or not block_reason.strip():
+        raise ValueError("A block needs a reason (AD-038-R7).")
+    write = plan_update_artifact(
+        project_dir=project_dir, driver=driver, database=database, artifact_id=artifact_id,
+        properties={BLOCK_REASON_PROPERTY: block_reason.strip()}, actor=actor, authority=authority,
+        session_id=session_id,
+    )
+    commit_writes(project_dir, driver, database, [write])
+
+
 def transition_task(
     project_dir: Path,
     driver: Driver,
@@ -829,6 +895,7 @@ def transition_task(
     claimed_by: Optional[str] = None,
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
+    block_reason: Optional[str] = None,
 ) -> List[str]:
     """Transition a ResearchTask and append its events in one ledger write.
 
@@ -846,6 +913,7 @@ def transition_task(
         current_state=current_state, new_state=new_state, actor=actor,
         authority=authority, session_id=session_id, claimed_by=claimed_by,
         terminal_reason=terminal_reason, superseded_by=superseded_by,
+        block_reason=block_reason,
     )
     commit_writes(project_dir, driver, database, writes)
     return warnings

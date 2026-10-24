@@ -770,13 +770,17 @@ class OpenTask:
     ready: bool
 
 
-def open_tasks(driver, database: str, domain_config) -> list[OpenTask]:
+def open_tasks(driver, database: str, domain_config, project_dir: Path | None = None,
+               config: dict | None = None) -> list[OpenTask]:
     """Return open tasks with ready ones first (AD-029 ordering).
 
     Args:
         driver: Neo4j driver.
         database: Database name.
         domain_config: Loaded domain configuration, for the open-state set.
+        project_dir: The project root. When given, cross-project waits are read from the other graphs and the
+            satisfied ones released (AD-038-R8); without it every such wait counts as unsatisfied (fail closed).
+        config: The project's seldon.yaml, for resolving the other projects' names.
 
     Returns:
         Open tasks: ready ones in creation order, then the blocked ones.
@@ -787,6 +791,9 @@ def open_tasks(driver, database: str, domain_config) -> list[OpenTask]:
     open_set = set(open_states(domain_config, "ResearchTask"))
     with driver.session(database=database) as session:
         view = precedence_view(session, open_set)
+    if project_dir is not None:
+        from seldon.core import cross_project
+        cross_project.overlay(view, Path(project_dir), config)
 
     states = view["states"]
     descriptions = view["descriptions"]
@@ -1140,7 +1147,7 @@ def build_handoff(
 
     changes = graph_changes(events, driver, database)
     files = files_touched(project_dir, window, REPORTED_DIRS)
-    tasks = open_tasks(driver, database, domain_config)
+    tasks = open_tasks(driver, database, domain_config, project_dir=project_dir, config=config)
     paths, reason = registered_cc_tasks(events, driver, database)
     dispatch = dispatch_block(paths, reason)
 

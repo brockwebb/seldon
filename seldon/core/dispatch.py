@@ -147,7 +147,8 @@ _HOSTNAME_RE = re.compile(
 HEADER_AFTER = "After"
 AFTER_GRAMMAR = ("`**After:** none`, or `**After:** <ref>[, <ref> ...]` where each ref is a "
                  "cc_tasks file stem (with or without `.md`) or an artifact id prefix of 8 or "
-                 "more hex characters")
+                 "more hex characters, optionally qualified `<project>:<ref>` for a task in "
+                 "another project's graph (a cross-project wait, AD-038-R8)")
 #: `none` must LEAD the value, for the reason `_NETWORK_NONE_RE` gives: a `none` matched
 #: anywhere would read "after the scan, none of the report tasks" as declaring no predecessor.
 _AFTER_NONE_RE = re.compile(r"^[\s`*_]*none\b", re.IGNORECASE)
@@ -158,6 +159,10 @@ _AFTER_REF_RE = re.compile(r"^(?:cc_tasks/)?(?P<stem>[A-Za-z0-9][A-Za-z0-9._-]*?
 #: file and commit message in these projects quotes.
 AFTER_ID_MIN_HEX = 8
 _AFTER_ID_RE = re.compile(r"^[0-9a-f]{%d,}$" % AFTER_ID_MIN_HEX)
+#: SEL-008 (AD-038-R8): `<project>:<ref>`, a ref in another project's graph. `cc register` records it as a
+#: cross-project wait on the created task (the other graph is read, never written); the ref is resolved there by the
+#: same rule a local ref is. The project is a directory-style name, so no `:` or `/` inside it.
+_AFTER_XREF_RE = re.compile(r"^(?P<project>[A-Za-z0-9][A-Za-z0-9._-]*):(?P<ref>.+)$")
 
 
 def parse_after(value: str | None) -> dict:
@@ -180,11 +185,12 @@ def parse_after(value: str | None) -> dict:
     items = [r.strip().strip("`").strip() for r in stripped.split(",")]
     refs, bad = [], []
     for item in items:
-        m = _AFTER_REF_RE.match(item)
+        x = _AFTER_XREF_RE.match(item)
+        m = _AFTER_REF_RE.match(x.group("ref") if x else item)
         if not item or not m:
             bad.append(item)
             continue
-        stem = m.group("stem")
+        stem = f"{x.group('project')}:{m.group('stem')}" if x else m.group("stem")
         if stem not in refs:
             refs.append(stem)
     if bad:
@@ -534,7 +540,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "governing_unverified",
                    # FRICTION-001 Part E (AD-038-R6, Issue 59b2db84): Neo4j unreachable. Written once
                    # per outage, with one STUCK notification, instead of a traceback every pass.
-                   "database_unavailable")
+                   "database_unavailable",
+                   # SEL-008 (AD-038-R8, c17): a wait on a task in another project's graph that is not yet
+                   # satisfied, and one whose other graph could not be read (not ready, never ready by default).
+                   "waits_on_unsatisfied", "waits_on_unreachable")
 
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
@@ -1654,7 +1663,7 @@ def union_state(project_dir: Path) -> dict:
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
              claim_in_flight: dict | None, lease_body: dict, running=None,
              premise_holds: dict | None = None, launch_holds: dict | None = None,
-             union: dict | None = None) -> dict:
+             union: dict | None = None, cross_waits: dict | None = None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1785,6 +1794,13 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     # pass reads `union_state` once and passes it; absent unless it fails, like c13, so the criteria vector is unchanged.
     if union is not None and not union["ok"]:
         c["c16"] = {**union, "ok": False}
+    # SEL-008 (AD-038-R8): a task that waits on a task in ANOTHER project's graph is not ready until that task reaches
+    # terminal success, and a wait whose graph could not be read is not ready either (fail closed, like c14). The
+    # caller reads the other graphs once per pass (`seldon.core.cross_project.unsatisfied_waits`) and passes only the
+    # unsatisfied waits; absent unless it fails, like c13, so the criteria vector is unchanged for every other task.
+    waits = (cross_waits or {}).get(task.get("artifact_id"))
+    if waits:
+        c["c17"] = {"waits_on": waits, "ok": False}
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1822,6 +1838,11 @@ def first_refusal_reason(row: dict) -> str | None:
         return "governing_unverified"
     if not c.get("c15", {}).get("ok", True):
         return "launch_failed"
+    if not c.get("c17", {}).get("ok", True):
+        return ("waits_on_unreachable" if any(w.get("error") and w.get("state") is None
+                                              and w.get("error") != "no longer resolves"
+                                              for w in c["c17"]["waits_on"])
+                else "waits_on_unsatisfied")
     return None
 
 

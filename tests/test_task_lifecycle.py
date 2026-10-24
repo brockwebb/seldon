@@ -158,6 +158,7 @@ def test_matrix_permits_exactly_what_the_config_declares(
                     domain_config=domain_config, artifact_id=task_id,
                     current_state=source, new_state=target,
                     actor="test", terminal_reason=reason,
+                    block_reason="matrix probe" if target == "blocked" else None,
                 )
                 assert _state_of(neo4j_driver, task_id) == target
                 checked_allowed += 1
@@ -168,6 +169,7 @@ def test_matrix_permits_exactly_what_the_config_declares(
                         domain_config=domain_config, artifact_id=task_id,
                         current_state=source, new_state=target,
                         actor="test", terminal_reason=reason,
+                        block_reason="matrix probe" if target == "blocked" else None,
                     )
                 assert _state_of(neo4j_driver, task_id) == source
                 checked_forbidden += 1
@@ -218,6 +220,7 @@ def test_nothing_is_reachable_out_of_a_reason_terminal_state(
                 current_state=dead_end, new_state=target,
                 actor="test",
                 terminal_reason="probe" if target in REASON_REQUIRED_STATES else None,
+                block_reason="probe" if target == "blocked" else None,
             )
     assert _state_of(neo4j_driver, task_id) == dead_end
 

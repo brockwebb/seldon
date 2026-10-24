@@ -422,6 +422,7 @@ def seldon_task_update(
     state: str,
     project_dir: str = ".",
     note: str = "",
+    reason: str = "",
 ) -> str:
     """Update a ResearchTask's state (single transition).
 
@@ -430,6 +431,12 @@ def seldon_task_update(
     argument is echoed back and not stored, and a terminal state with a silently
     dropped reason is indistinguishable from the other terminal states later.
 
+    `blocked` is reachable from proposed, accepted and in_progress, and requires
+    `reason`, which IS stored (as `block_reason`, cleared when the task leaves
+    `blocked`; AD-038-R7). On a task already blocked, state='blocked' with a reason
+    replaces the stored reason. To record a dependency on a task in another
+    project, use seldon_task_wait_on as well, so the block can be lifted by rule.
+
     Args:
         task_id: Artifact ID (full UUID or prefix)
         state: New state (accepted, in_progress, completed, verified, blocked,
@@ -437,8 +444,10 @@ def seldon_task_update(
             ('desktop') and claimed_at.
         project_dir: Path to project root
         note: Optional note (echoed back, not stored)
+        reason: Why the task is blocked. Required for state='blocked', refused
+            for any other state.
     """
-    from seldon.core.artifacts import REASON_REQUIRED_STATES, transition_task
+    from seldon.core.artifacts import REASON_REQUIRED_STATES, set_block_reason, transition_task
     from seldon.core.graph import get_artifact
     from seldon.core.state import InvalidStateTransition
 
@@ -463,17 +472,26 @@ def seldon_task_update(
 
         current_state = node.get("state", "")
 
-        warnings = transition_task(
-            project_dir=p, driver=driver, database=database,
-            domain_config=domain_config,
-            artifact_id=full_id,
-            current_state=current_state, new_state=state,
-            actor=MCP_ACTOR, authority="accepted",
-        )
+        if state == "blocked" and current_state == "blocked":
+            # Already blocked: the reason is replaced, nothing else moves (AD-038-R7).
+            set_block_reason(project_dir=p, driver=driver, database=database, artifact_id=full_id,
+                             current_state=current_state, block_reason=reason or None, actor=MCP_ACTOR)
+            warnings = []
+        else:
+            warnings = transition_task(
+                project_dir=p, driver=driver, database=database,
+                domain_config=domain_config,
+                artifact_id=full_id,
+                current_state=current_state, new_state=state,
+                actor=MCP_ACTOR, authority="accepted",
+                # Refused by the transition for any state but `blocked` (AD-038-R7), never silently dropped.
+                block_reason=reason or None,
+            )
 
         out = (
             f"Updated: {full_id[:8]}...\n"
             f"  {current_state} → {state}"
+            + (f"\n  reason: {reason}" if reason else "")
             + (f"\n  note: {note}" if note else "")
         )
         for line in warnings:
@@ -642,6 +660,8 @@ def seldon_task_list(
             view = precedence.precedence_view(session, open_set)
     finally:
         driver.close()
+    from seldon.core import cross_project
+    cross_project.overlay(view, Path(project_dir), config)
 
     if not records:
         return f"No ResearchTasks found (filter: {state_filter})"
@@ -667,6 +687,8 @@ def seldon_task_list(
                 lines.append(f"    source: {source}")
             if t.get("terminal_reason"):
                 lines.append(f"    reason: {t['terminal_reason']}")
+        if state == "blocked":
+            lines.append(f"    blocked: {t.get('block_reason') or '(no reason recorded)'}")
         if waits:
             lines.append(
                 f"    waits_on: {', '.join(precedence.short(w) for w in waits)}"
@@ -813,6 +835,74 @@ def seldon_task_chain(
     if len(task_ids) < 2:
         return "Error: a chain needs at least two tasks."
     return _mcp_add_chain(list(task_ids), reason, project_dir, "Chained")
+
+
+@_tool()
+@_commits_its_append
+def seldon_task_wait_on(
+    task_id: str,
+    target: str,
+    project_dir: str = ".",
+) -> str:
+    """Record that a ResearchTask waits on a task in ANOTHER project's graph (AD-038-R8).
+
+    `target` is `<project>:<task-prefix>`, e.g. `squiddy:3f2a1b9c`. The project
+    name resolves through this project's seldon.yaml `tasks.projects`, then
+    `decisions.repositories`, then `../<project>`. One event is written, in THIS
+    project's ledger; the other graph is read, never written. An unknown target
+    is refused and nothing is written. The dispatcher holds the task until the
+    target is completed or verified (c17), and lifts a declared block on it then.
+
+    Args:
+        task_id: The waiting ResearchTask (full UUID or prefix), in this project
+        target: `<project>:<task-prefix>` of the task it waits on
+        project_dir: Path to project root
+    """
+    from seldon.core import cross_project, precedence
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    try:
+        full_id = _resolve_artifact_id(driver, database, task_id)
+        if full_id is None:
+            return f"Error: artifact '{task_id}' not found or ambiguous."
+        qualified, written = cross_project.add_wait(Path(project_dir), driver, database, full_id, target,
+                                                    config, actor=MCP_ACTOR)
+    except ValueError as exc:
+        return f"Error: {exc}\nNothing was written."
+    finally:
+        driver.close()
+    arrow = f"{precedence.short(full_id)} ⇢ {precedence.short(qualified)}"
+    return f"Waits on: {arrow}" if written else f"= {arrow} (already recorded)"
+
+
+@_tool()
+@_commits_its_append
+def seldon_task_unwait(
+    task_id: str,
+    target: str,
+    project_dir: str = ".",
+) -> str:
+    """Remove a ResearchTask's wait on a task in another project (`<project>:<task-prefix>`).
+
+    Args:
+        task_id: The waiting ResearchTask (full UUID or prefix)
+        target: `<project>:<task-prefix>` of the stored wait; it need not resolve any more
+        project_dir: Path to project root
+    """
+    from seldon.core import cross_project, precedence
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    try:
+        full_id = _resolve_artifact_id(driver, database, task_id)
+        if full_id is None:
+            return f"Error: artifact '{task_id}' not found or ambiguous."
+        removed = cross_project.remove_wait(Path(project_dir), driver, database, full_id, target,
+                                            actor=MCP_ACTOR)
+    except ValueError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+    return f"Removed: {precedence.short(full_id)} ⇢ {precedence.short(removed)}"
 
 
 @_tool()

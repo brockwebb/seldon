@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-038-R8
+date: '2026-10-24'
+decided_by: cc:30a4b346
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md:48: AD-038-R8'
+reason: 'SEL-008; evidence: hazbrief HB-20 (311388f9) waited on squiddy SQ-048 with only a handoff paragraph to say so; blocking it took proposed->accepted->in_progress->blocked with a false claim and stored no reason (2026-10-24)'
+kind: decision
+status: accepted
+statement: A ResearchTask may wait on a task in another project's graph, recorded (by `seldon task wait-on <task> <project>:<prefix>`, MCP seldon_task_wait_on, or a `<project>:<ref>` After-header entry at registration) as the task's `waits_on_external` list of `<project>:<artifact_id>` in one event in the waiting project's ledger only, the other graph being read and never written; `<project>` shall resolve through tasks.projects, then decisions.repositories, then the side-by-side convention; a target resolving to no ResearchTask shall be refused before any write; a wait shall be satisfied only when its target is completed or verified; every read surface shall print each wait with the target's state as of the call, and a surface that does not read the other graph shall count the wait unsatisfied.
+source:
+  path: docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md
+  lines:
+  - 48
+  - 60
+  sha256: 053b050e79ff5d754478831e7533f81949f93aeb280551039c708c37b3ecc2ee
+  text: |-
+    - **AD-038-R8. A task may wait on a task in another project's graph; the edge lives in the waiting ledger only.**
+      `seldon task wait-on <task> <project>:<task-prefix>` (MCP `seldon_task_wait_on`), or a `<project>:<ref>` entry in
+      the task file's `**After:**` header at registration, records the wait as the task's `waits_on_external` list of
+      `<project>:<artifact_id>`, in one event in the waiting project's ledger. The other graph is read and never
+      written. `<project>` resolves, first match wins, through the waiting project's `seldon.yaml` `tasks.projects`,
+      then `decisions.repositories`, then the side-by-side convention (`../<project>` beside the primary checkout); the
+      other project's own `seldon.yaml` names its database. A target that resolves to no ResearchTask is refused before
+      any write (SEL-007's rule). A wait is **satisfied only when its target is `completed` or `verified`**: unlike a
+      `precedes` predecessor (AD-029 section 3), a superseded, withdrawn or rejected target does not satisfy it, because
+      the waiter depends on work landing in another repository and a superseded target means that work moved elsewhere;
+      such a wait is a dead end that `seldon verify` names. `seldon go`, `seldon task show`, `seldon task list` and the
+      MCP task list print each wait with the target's state as of the call. A surface that does not read the other
+      graph counts every cross-project wait as unsatisfied (`precedence_view`): it can under-report what is ready, never
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_02_waits_on_across_graphs_and_a_stored_block_reason.md
+  anchor: AD-038-R8
+consumer:
+- cc_tasks/2026-10-24_SEL-008_cross_project_waits_on_and_a_stored_block_reason.md
+- tests/test_sel008_cross_project_waits_and_block_reason.py
+written_by: seldon decision 0.1.0
+provisional_id: 297bf77b1aec9720b637b6dd48fd3a49372647a33e0c34d34b428dc2ef21bc16

@@ -14,12 +14,16 @@ import click
 
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import (
+    BLOCKED_STATE,
+    BLOCK_REASON_PROPERTY,
     create_task,
     open_states,
     resolve_artifact_id,
+    set_block_reason,
     transition_task,
     walk_to_completed,
 )
+from seldon.core import cross_project
 from seldon.core.graph import get_artifact
 from seldon.core import precedence
 from seldon.domain.loader import load_domain_config
@@ -290,6 +294,8 @@ def task_list(state, open_only, show_all, stale_claims):
         view = precedence.precedence_view(session, open_set)
 
     driver.close()
+    # AD-038-R8: release the cross-project waits whose targets are done, by reading the other graphs.
+    cross_project.overlay(view, Path.cwd(), config)
 
     for t in tasks:
         tid = t["artifact_id"]
@@ -348,9 +354,12 @@ def task_list(state, open_only, show_all, stale_claims):
         waits_text = ", ".join(precedence.short(w) for w in waits)[:22] or "-"
         marker = READY_MARKER if t.get("ready") else " "
         any_ready = any_ready or bool(t.get("ready"))
+        # AD-038-R7: a block says why, on the same line, so the list answers "blocked on what?".
+        why = (f"  [blocked: {t.get(BLOCK_REASON_PROPERTY) or 'no reason recorded'}]"
+               if t.get("state") == BLOCKED_STATE else "")
         click.echo(
             f"{marker:<2}{tid:<10} {st:<14} {bc:<7} {dc:<5} "
-            f"{waits_text:<22} {claim:<28} {desc}"
+            f"{waits_text:<22} {claim:<28} {desc}{why}"
         )
 
     if any_ready:
@@ -370,7 +379,9 @@ def task_list(state, open_only, show_all, stale_claims):
 @click.option("--state", required=True, help="New state to transition to")
 @click.option(
     "--reason", default=None,
-    help="Why the task ended. Required for --state withdrawn and --state superseded.",
+    help="Why the task ended or is blocked. Required for --state withdrawn, --state "
+         "superseded and --state blocked. On a task already blocked, --state blocked "
+         "--reason replaces the stored reason and changes nothing else.",
 )
 @click.option(
     "--superseded-by", "superseded_by", default=None, metavar="ARTIFACT_ID",
@@ -385,22 +396,34 @@ def task_update(task_id, state, reason, superseded_by, claimed_by):
     """Transition a ResearchTask to a new state.
 
     `withdrawn` and `superseded` require `--reason`; the reason is stored as
-    `terminal_reason` on the task. The `accepted → in_progress` transition records
+    `terminal_reason` on the task. `blocked` is reachable from every open state and
+    requires `--reason`, stored as `block_reason` and cleared when the task leaves
+    `blocked` (AD-038-R7). The `accepted → in_progress` transition records
     `claimed_by` and `claimed_at`.
     """
     project_dir, driver, database, domain_config, session_id = _open_project()
+    blocking = state == BLOCKED_STATE
     try:
         full_id, node = _load_task(driver, database, task_id)
         old_state = node["state"]
 
-        warnings = transition_task(
-            project_dir=project_dir, driver=driver, database=database,
-            domain_config=domain_config, artifact_id=full_id,
-            current_state=old_state, new_state=state,
-            actor=CLI_ACTOR, authority="accepted", session_id=session_id,
-            claimed_by=claimed_by, terminal_reason=reason,
-            superseded_by=superseded_by,
-        )
+        if blocking and old_state == BLOCKED_STATE and not (claimed_by or superseded_by):
+            # Already blocked: the reason is replaced, nothing else moves (AD-038-R7).
+            set_block_reason(project_dir=project_dir, driver=driver, database=database,
+                             artifact_id=full_id, current_state=old_state, block_reason=reason,
+                             actor=CLI_ACTOR, session_id=session_id)
+            warnings = []
+        else:
+            warnings = transition_task(
+                project_dir=project_dir, driver=driver, database=database,
+                domain_config=domain_config, artifact_id=full_id,
+                current_state=old_state, new_state=state,
+                actor=CLI_ACTOR, authority="accepted", session_id=session_id,
+                claimed_by=claimed_by,
+                terminal_reason=None if blocking else reason,
+                superseded_by=superseded_by,
+                block_reason=reason if blocking else None,
+            )
         for line in warnings:
             click.echo(line, err=True)
         click.echo(f"Updated Task: {full_id[:8]}...")
@@ -589,6 +612,56 @@ def task_unprecede(before_id, after_id):
     )
 
 
+@task_group.command("wait-on")
+@click.argument("task_id")
+@click.argument("target")
+def task_wait_on(task_id, target):
+    """Record that TASK_ID waits on TARGET, a task in ANOTHER project's graph.
+
+    TARGET is `<project>:<task-prefix>` (AD-038-R8). The project name resolves
+    through this project's seldon.yaml `tasks.projects`, then
+    `decisions.repositories`, then the side-by-side convention (`../<project>`).
+    One event is written, in THIS project's ledger; the other graph is read and
+    never written. A target that resolves to no ResearchTask is refused before
+    any write. The wait is satisfied when the target is completed or verified;
+    until then the dispatcher holds TASK_ID (c17), and a declared block on it is
+    lifted by the dispatcher once every wait is satisfied.
+    """
+    project_dir, driver, database, domain_config, session_id = _open_project()
+    try:
+        full_id, _node = _load_task(driver, database, task_id)
+        qualified, written = cross_project.add_wait(
+            project_dir, driver, database, full_id, target, load_project_config(project_dir),
+            actor=CLI_ACTOR, session_id=session_id)
+    except ValueError as e:
+        click.echo(f"Error: {e}\nNothing was written.", err=True)
+        raise SystemExit(1)
+    finally:
+        driver.close()
+    if written:
+        click.echo(f"Waits on: {precedence.short(full_id)} ⇢ {precedence.short(qualified)}")
+    else:
+        click.echo(f"= {precedence.short(full_id)} ⇢ {precedence.short(qualified)} (already recorded)")
+
+
+@task_group.command("unwait")
+@click.argument("task_id")
+@click.argument("target")
+def task_unwait(task_id, target):
+    """Remove TASK_ID's wait on TARGET (`<project>:<task-prefix>`). The target need not resolve."""
+    project_dir, driver, database, domain_config, session_id = _open_project()
+    try:
+        full_id, _node = _load_task(driver, database, task_id)
+        removed = cross_project.remove_wait(project_dir, driver, database, full_id, target,
+                                            actor=CLI_ACTOR, session_id=session_id)
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    finally:
+        driver.close()
+    click.echo(f"Removed: {precedence.short(full_id)} ⇢ {precedence.short(removed)}")
+
+
 @task_group.command("show")
 @click.argument("task_id")
 def task_show(task_id):
@@ -621,12 +694,44 @@ def task_show(task_id):
         ).data()
         deps = [dict(r["dep"]) for r in dep_records]
 
+        # AD-029 ordering, both directions: `show` is where a reader confirms what a task waits on.
+        preceded_by = session.run(
+            "MATCH (p:Artifact:ResearchTask)-[:PRECEDES]->(t:Artifact {artifact_id: $id}) "
+            "RETURN p.artifact_id AS id, p.state AS state ORDER BY p.created_at", id=full_id).data()
+        precedes = session.run(
+            "MATCH (t:Artifact {artifact_id: $id})-[:PRECEDES]->(s:Artifact:ResearchTask) "
+            "RETURN s.artifact_id AS id, s.state AS state ORDER BY s.created_at", id=full_id).data()
+
     driver.close()
+
+    waits = list(node.get(cross_project.PROPERTY) or [])
+    as_of = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    external = cross_project.read_targets(waits, Path.cwd(), config) if waits else {}
 
     click.echo(f"\nTask: {full_id}")
     click.echo(f"  description: {node.get('description', '(none)')}")
     click.echo(f"  state:       {node.get('state', '?')}")
+    if node.get("state") == BLOCKED_STATE:
+        click.echo(f"  blocked:     {node.get(BLOCK_REASON_PROPERTY) or '(no reason recorded)'}")
     click.echo(f"  created_at:  {node.get('created_at', '?')}")
+
+    if preceded_by:
+        click.echo(f"\n  Preceded by ({len(preceded_by)}):")
+        for p in preceded_by:
+            click.echo(f"    ← {precedence.short(p['id'])} ({p['state']})")
+    if precedes:
+        click.echo(f"\n  Precedes ({len(precedes)}):")
+        for p in precedes:
+            click.echo(f"    → {precedence.short(p['id'])} ({p['state']})")
+    if waits:
+        click.echo(f"\n  Waits on, in other projects ({len(waits)}), as of {as_of}:")
+        for q in waits:
+            st = external.get(q)
+            label = (st.name or (st.description or "")[:60]) if st and not st.error else ""
+            line = f"    ⇢ {cross_project.render(q, st)} {label}".rstrip()
+            if st and st.error:
+                line += f" — {st.error}"
+            click.echo(line)
 
     if blocked:
         click.echo(f"\n  Blocks ({len(blocked)}):")

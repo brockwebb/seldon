@@ -1,9 +1,10 @@
 """
 seldon verify — project integrity checks.
 
-Runs 12 checks in order: file hash integrity, ontology freshness,
+Runs its checks in order: file hash integrity, ontology freshness,
 glossary compliance, reference resolution, stale artifacts,
-open blocking tasks, unregistered files, relationship-type case,
+open blocking tasks, blocks and cross-project waits (AD-038-R7, R8),
+unregistered files, relationship-type case,
 `precedes` DAG integrity, task source-file resolution, event-log readability,
 and event-log replay.
 Reports issues with actionable remediation guidance.
@@ -1141,6 +1142,72 @@ def check_blocking_tasks(driver, database: str) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# Check 6b: Blocks and cross-project waits (AD-038-R7, R8)
+# ---------------------------------------------------------------------------
+
+def check_blocks_and_waits(driver, database: str, project_dir: Path, config: dict) -> CheckResult:
+    """Report a block nobody can lift by rule, and a cross-project wait that can never be satisfied.
+
+    Three findings, by severity:
+
+    * **fail** — a ``waits_on_external`` target that no longer resolves: the other graph was read and holds no such
+      task, so the waiter waits forever (the cross-project twin of a dangling ``precedes`` endpoint, which
+      "Precedence" fails on);
+    * **warn** — a ``blocked`` task with no ``block_reason`` (AD-038-R7). Every block written since SEL-008 stores
+      one; a task blocked before it did not, and the finding names the backfill command;
+    * **warn** — a wait whose target ended without success (superseded, withdrawn, rejected), so it will never be
+      satisfied and needs re-pointing or removing, and a wait whose other graph could not be read now.
+
+    Not Tier A, like "Precedence": it reports accumulated graph state, which a task cannot make clean by doing its
+    own work correctly.
+    """
+    from seldon.core import cross_project as X
+    from seldon.core.precedence import short
+
+    with driver.session(database=database) as session:
+        rows = session.run(
+            "MATCH (t:Artifact:ResearchTask) "
+            "WHERE t.state = 'blocked' OR size(coalesce(t.waits_on_external, [])) > 0 "
+            "RETURN t.artifact_id AS id, t.state AS state, t.block_reason AS block_reason, "
+            "       t.waits_on_external AS waits, t.claimed_by AS claimed_by ORDER BY t.created_at"
+        ).data()
+
+    fails: list[str] = []
+    warns: list[str] = []
+    for r in rows:
+        if r["state"] == "blocked" and not r["block_reason"]:
+            warns.append(f"{short(r['id'])} is blocked with no reason recorded: "
+                         f"seldon task update {short(r['id'])} --state blocked --reason \"<why>\"")
+    open_waiters = [r for r in rows if r["waits"] and r["state"] not in ("completed", "verified", "superseded",
+                                                                         "withdrawn", "rejected")]
+    targets = sorted({q for r in open_waiters for q in r["waits"]})
+    states = X.read_targets(targets, project_dir, config) if targets else {}
+    for r in open_waiters:
+        for q in r["waits"]:
+            st = states.get(q)
+            if st is None or st.error:
+                warns.append(f"{short(r['id'])} waits on {short(q)}, whose graph could not be read: "
+                             f"{st.error if st else 'not read'}")
+            elif st.missing:
+                fails.append(f"{short(r['id'])} waits on {short(q)}, which no longer resolves: the other graph "
+                             f"holds no such task (seldon task unwait {short(r['id'])} {short(q)})")
+            elif st.state in X.DEAD_END_STATES:
+                warns.append(f"{short(r['id'])} waits on {short(q)}, which is {st.state} and will never be "
+                             f"satisfied: re-point it or seldon task unwait {short(r['id'])} {short(q)}")
+
+    details = fails + warns
+    if fails:
+        return CheckResult(name="Blocks and waits", symbol="fail",
+                           summary=f"{len(fails)} wait(s) on a task that no longer resolves", details=details)
+    if warns:
+        return CheckResult(name="Blocks and waits", symbol="warn",
+                           summary=f"{len(warns)} finding(s)", details=details)
+    return CheckResult(name="Blocks and waits", symbol="pass",
+                       summary=f"{len(rows)} blocked or waiting task(s), every block with a reason"
+                       if rows else "None")
+
+
+# ---------------------------------------------------------------------------
 # Check 7: Unregistered files
 # ---------------------------------------------------------------------------
 
@@ -1941,6 +2008,7 @@ def _run_all_checks(
         check_references(driver, database, project_dir),
         check_stale_artifacts(driver, database),
         check_blocking_tasks(driver, database),
+        check_blocks_and_waits(driver, database, project_dir, config),
         check_unregistered_files(driver, database, project_dir, config),
         check_relationship_types(driver, database),
         check_precedence(driver, database),

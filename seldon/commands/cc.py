@@ -425,9 +425,36 @@ def read_after(text: str, driver, database: str) -> list:
     parsed = parse_after(_header_value(text, HEADER_AFTER))
     if parsed["kind"] is None:
         raise ValueError(f"{AFTER_UNRESOLVED}: {parsed['error']} Nothing was written.")
-    if not parsed["refs"]:
+    local = [r for r in parsed["refs"] if ":" not in r]
+    if not local:
         return []
-    return resolve_after_refs(driver, database, parsed["refs"])
+    return resolve_after_refs(driver, database, local)
+
+
+def read_after_waits(text: str, project_dir: Path, config: dict) -> list:
+    """The cross-project waits this task file declares (`<project>:<ref>` After entries), resolved to their stored
+    `<project>:<artifact_id>` form in the OTHER graph, which is read and never written (AD-038-R8).
+
+    Raises:
+        ValueError: A ref whose project or task does not resolve, carrying `after_unresolved`; the caller writes
+            nothing.
+    """
+    from seldon.core import cross_project
+
+    parsed = parse_after(_header_value(text, HEADER_AFTER))
+    if parsed["kind"] is None:
+        raise ValueError(f"{AFTER_UNRESOLVED}: {parsed['error']} Nothing was written.")
+    out = []
+    for ref in (r for r in parsed["refs"] if ":" in r):
+        try:
+            out.append(cross_project.resolve_after_ref(ref, project_dir, config))
+        except ValueError as exc:
+            message = str(exc)
+            if not message.startswith(AFTER_UNRESOLVED):
+                message = (f"{AFTER_UNRESOLVED}: After ref {ref!r}: {message} Grammar: {AFTER_GRAMMAR}. "
+                           f"Nothing was written.")
+            raise ValueError(message) from exc
+    return out
 
 
 def write_after_edges(*, project_dir, driver, database, domain_config, session_id,
@@ -1344,6 +1371,9 @@ def register_task_file(
     # dispatcher (decision 3).
     text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
     predecessors = read_after(text, driver, database)
+    # SEL-008: `<project>:<ref>` entries are waits on tasks in other projects' graphs, resolved there now and
+    # recorded on the created task in its one `artifact_created` line.
+    external_waits = read_after_waits(text, project_dir, config)
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -1394,6 +1424,7 @@ def register_task_file(
             "file_hash": content_hash,
             "hash_scope": HASH_SCOPE_SPEC,
             "source_commit": source_commit,
+            **({"waits_on_external": external_waits} if external_waits else {}),
         },
         actor=actor,
         authority="accepted",
@@ -1413,6 +1444,9 @@ def register_task_file(
     if predecessors:
         say(f"  after: {', '.join(p[:8] for p in predecessors)} "
             f"({after_edges} precedes edge(s) written)")
+    if external_waits:
+        from seldon.core.precedence import short
+        say(f"  waits on (other projects): {', '.join(short(w) for w in external_waits)}")
     sequencing_warning = sequencing_lint(text, Path(rel_path).stem)
     if sequencing_warning:
         say(sequencing_warning)

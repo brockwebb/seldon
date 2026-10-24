@@ -254,6 +254,14 @@ artifact_types:
       claimed_at:
         category: system
         description: "ISO-8601 UTC timestamp of the accepted -> in_progress transition that set claimed_by. Advisory: staleness is reported, never auto-released. See AD-028."
+      block_reason:
+        # `system` for terminal_reason's reason: present only on a blocked task.
+        category: system
+        description: "Why the task is blocked. Required on every move into `blocked` (`seldon task update --state blocked --reason`, MCP seldon_task_update `reason`, the dispatcher's own blocks), cleared when the task leaves `blocked`. See AD-038-R7."
+      waits_on_external:
+        # `system`: absent on every task that waits on nothing outside its own graph.
+        category: system
+        description: "Tasks in OTHER projects' graphs this task waits on, as `<project>:<artifact_id>` (`seldon task wait-on`, or a `<project>:<ref>` entry in the task file's `**After:**` header). Read, never written, in the other graph; satisfied when the target is completed or verified. See AD-038-R8."
       dispatch_merge:
         category: system
         description: "What became of a worktree task's branch under the parallel dispatcher: merged (fast-forwarded onto main on green) or merge_blocked (a rebase conflict, a red re-gate or an invalid union file; the task is blocked and an Issue names the files). Absent on tasks run in place. See AD-034."
@@ -1148,8 +1156,13 @@ state_machines:
     # false — the work was never valid to do, as opposed to `superseded`, where
     # the work was valid but something else overtook it. Same reachability as
     # superseded: active states only, never from completed/verified.
-    proposed: [accepted, rejected, superseded, withdrawn]
-    accepted: [in_progress, superseded, withdrawn]
+    #
+    # blocked from every open state (AD-038-R7, SEL-008): a known dependency is recordable at registration, so
+    # `proposed -> blocked` and `accepted -> blocked` exist. Before them, marking a waiting task blocked took
+    # proposed -> accepted -> in_progress -> blocked and recorded a claim nobody made (hazbrief HB-20, 2026-10-24).
+    # Every move into `blocked` stores `block_reason`; a block with no reason is refused.
+    proposed: [accepted, blocked, rejected, superseded, withdrawn]
+    accepted: [in_progress, blocked, superseded, withdrawn]
     in_progress: [completed, blocked, superseded, withdrawn]
     completed: [verified]
     # accepted (AD-038-R2): the redrive. A halted task goes back on the queue with its file, id and

@@ -636,11 +636,14 @@ def short(artifact_id: str) -> str:
     """Return the display prefix of an artifact_id.
 
     Args:
-        artifact_id: Full artifact_id.
+        artifact_id: Full artifact_id, or a cross-project ``<project>:<artifact_id>`` (AD-038-R8).
 
     Returns:
-        Its first :data:`SHORT_ID` characters.
+        Its first :data:`SHORT_ID` characters; a cross-project id keeps its project in front.
     """
+    if artifact_id and ":" in artifact_id:
+        project, _, rest = artifact_id.partition(":")
+        return f"{project}:{rest[:SHORT_ID]}"
     return (artifact_id or "?")[:SHORT_ID]
 
 
@@ -950,25 +953,35 @@ def precedence_view(session, open_state_set: Iterable[str]) -> Dict[str, Any]:
             ``pairs`` — the `precedes` pairs;
             ``states`` — artifact_id to state for every ResearchTask;
             ``rank`` — artifact_id to creation-order index;
-            ``waits_on`` — artifact_id to its unsatisfied predecessor ids;
+            ``waits_on`` — artifact_id to its unsatisfied predecessor ids, then
+            its cross-project waits (``<project>:<id>``, AD-038-R8), all of
+            which count as unsatisfied until ``cross_project.overlay`` reads them;
             ``ready`` — open task ids with no unsatisfied predecessor, in
             creation order;
-            ``chains`` — the connected components, as :class:`Chain` objects.
+            ``chains`` — the connected components, as :class:`Chain` objects;
+            ``external`` — artifact_id to its stored cross-project waits;
+            ``open_states`` — the open set this view was computed with.
     """
     records = session.run(
         f"MATCH (t:Artifact:{ARTIFACT_TYPE}) "
         "RETURN t.artifact_id AS id, t.state AS state, "
-        "t.description AS description ORDER BY t.created_at"
+        "t.description AS description, t.waits_on_external AS external "
+        "ORDER BY t.created_at"
     ).data()
     states = {r["id"]: r["state"] for r in records if r["id"]}
     descriptions = {r["id"]: r["description"] for r in records if r["id"]}
     rank = {r["id"]: i for i, r in enumerate(records) if r["id"]}
+    # AD-038-R8: waits on tasks in OTHER projects' graphs. This view reads one graph only, so every such wait counts
+    # as unsatisfied here (fail closed); `seldon.core.cross_project.overlay` reads the other graphs and releases the
+    # satisfied ones. A surface that skips the overlay can under-report what is ready, never over-report it.
+    external = {r["id"]: list(r["external"]) for r in records if r["id"] and r["external"]}
 
     pairs = read_pairs(session)
     open_set = set(open_state_set)
 
     waits_on = {
-        tid: unsatisfied_predecessors(tid, pairs, states) for tid in states
+        tid: unsatisfied_predecessors(tid, pairs, states) + external.get(tid, [])
+        for tid in states
     }
     ready = [
         tid
@@ -984,6 +997,8 @@ def precedence_view(session, open_state_set: Iterable[str]) -> Dict[str, Any]:
         "waits_on": waits_on,
         "ready": ready,
         "chains": chains(pairs, rank),
+        "external": external,
+        "open_states": sorted(open_set),
     }
 
 

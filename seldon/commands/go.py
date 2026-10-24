@@ -395,6 +395,19 @@ def _format_precedence(precedence_data: dict) -> list[str]:
         rendered = chain_lines(chain, states, descriptions)
         lines.append(f"- {rendered[0]}")
         lines.extend(f"    - {line}" for line in rendered[1:])
+
+    # AD-038-R8: waits on tasks in other projects' graphs, with each target's state as of this call.
+    external = precedence_data.get("external") or {}
+    if external:
+        from seldon.core.cross_project import render
+        ext_states = precedence_data.get("external_states") or {}
+        lines.append("")
+        lines.append(f"**Waits on other projects:** {sum(len(v) for v in external.values())}")
+        for task_id, targets in external.items():
+            for q in targets:
+                st = ext_states.get(q)
+                label = (st.name or (st.description or "")[:60]) if st and not st.error and not st.missing else ""
+                lines.append(f"- {render_node(task_id, states)} ⇢ {render(q, st)} {label}".rstrip())
     return lines
 
 
@@ -579,7 +592,8 @@ def _get_project_state_section(project_dir: str) -> str:
         domain_config = load_domain_config(domain_yaml)
 
         try:
-            briefing_data = get_briefing_data(driver, database, domain_config)
+            briefing_data = get_briefing_data(driver, database, domain_config,
+                                              project_dir=Path(project_dir), config=config)
         finally:
             driver.close()
 

@@ -473,7 +473,7 @@ def test_mcp_issue_update_refused_enum_leaves_no_state_change(
     assert _ledger_lines(cli_project) == before
 
 
-def test_redrive_writes_its_three_lines_in_one_append(
+def test_redrive_writes_its_lines_in_one_append(
     tmp_path, neo4j_driver, clean_test_db, domain_config, one_append, monkeypatch,
 ):
     from tests.test_friction001_redrive import TIDS, _halt
@@ -486,7 +486,9 @@ def test_redrive_writes_its_three_lines_in_one_append(
 
     redrive(p, neo4j_driver, NEO4J_DB, domain_config, tid, actor="human")
 
-    assert one_append == [["artifact_updated", "dispatch_redrive", "artifact_state_changed"]]
+    # The claim clear, the redrive record, then the transition out of `blocked`, which clears the block's stored
+    # reason (AD-038-R7, SEL-008) before the state change: four lines, still one append.
+    assert one_append == [["artifact_updated", "dispatch_redrive", "artifact_updated", "artifact_state_changed"]]
 
 
 def test_task_chain_writes_every_edge_in_one_append(

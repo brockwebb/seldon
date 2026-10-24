@@ -9,10 +9,16 @@ re-registration: DESK-002's halt became DESK-002R at the cost of one task file, 
 dead-letter queue to a source queue." A blocked task is a dead-lettered message; the queue needs a redrive, not a new
 message. The task keeps its file, its id and its history; `blocked -> accepted` is the one new edge.
 
-`redrive` clears `claimed_by`, records `dispatch_redrive` naming the stop it answers, and walks the task to `accepted`.
-The dispatcher redrives on its own only when the stop's cause is one of its own recorded defects
-(`AUTO_REDRIVE_REASONS`): a station that ran its check in the wrong tree (AD-038-R4) or a database outage (R6's
-59b2db84). Any other cause waits for a redrive from a Desktop or CC session.
+`redrive` clears `claimed_by` (and, through the transition out of `blocked`, `block_reason`), records `dispatch_redrive` naming the stop it answers, and walks the
+task to `accepted`. The dispatcher redrives on its own in two cases:
+
+- a session it halted, when the stop's cause is one of its own recorded defects (`AUTO_REDRIVE_REASONS`): a station
+  that ran its check in the wrong tree (AD-038-R4) or a database outage (R6's 59b2db84);
+- a DECLARED block (one no dispatcher claim set) on a task with cross-project waits, once every wait's target has
+  reached terminal success (AD-038-R8, SEL-008). The block's stored reason (AD-038-R7) and the waits are what make
+  this a rule rather than a memory: Airflow's `ExternalTaskSensor` releases a waiting task on the same condition.
+
+Any other cause waits for a redrive from a Desktop or CC session.
 """
 from __future__ import annotations
 
@@ -23,6 +29,9 @@ EVENT_REDRIVE = "dispatch_redrive"
 #: Stops that are the dispatcher's own defects, so it answers them itself (AD-038-R2). Not a tunable: adding a reason
 #: here decides that a class of stop is never the session's fault, which is a ruling, not a setting.
 AUTO_REDRIVE_REASONS = ("check_unrunnable_wrong_tree", "database_unavailable")
+
+#: The stop reason a lifted declared block records (AD-038-R8).
+WAITS_SATISFIED = "waits_on_satisfied"
 
 
 class RedriveRefused(ValueError):
@@ -71,7 +80,7 @@ def already_redriven(events: list, stop: dict | None) -> bool:
 
 
 def redrive(project_dir: Path, driver, database: str, domain_config, task_id: str, actor: str,
-            session_id: str | None = None, events: list | None = None) -> dict:
+            session_id: str | None = None, events: list | None = None, stop: dict | None = None) -> dict:
     """Walk a blocked task back to `accepted`, recording the stop it answers.
 
     Args:
@@ -84,6 +93,8 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
             qc chart` counts a non-dispatcher redrive as an operator intervention (AD-038-R6).
         session_id: Recorded on the events.
         events: The event store, when the caller has read it already.
+        stop: The stop this redrive answers, `{event_id, event_type, reason}`, when the caller knows it better than
+            :func:`answered_stop` does (a declared block has no session records to read it from).
 
     Returns:
         The `dispatch_redrive` payload.
@@ -96,17 +107,17 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
 
     with driver.session(database=database) as s:
         row = s.run("MATCH (t:ResearchTask {artifact_id: $id}) RETURN t.state AS state, t.claimed_by AS claimed_by, "
-                    "t.source_file AS source_file", id=task_id).single()
+                    "t.source_file AS source_file, t.block_reason AS block_reason", id=task_id).single()
     if row is None:
         raise RedriveRefused(f"no ResearchTask {task_id}")
     if row["state"] != "blocked":
         raise RedriveRefused(f"task {task_id[:8]} is {row['state']}, not blocked: only a halted task is redriven "
                              f"(AD-038-R2)")
     events = read_events(Path(project_dir)) if events is None else events
-    stop = answered_stop(events, task_id)
+    stop = stop or answered_stop(events, task_id)
     payload = {"task_id": task_id, "source_file": row["source_file"], "answers": stop and stop["event_id"],
                "stop_event_type": stop and stop["event_type"], "stop_reason": stop and stop["reason"],
-               "cleared_claim": row["claimed_by"], "by": actor,
+               "cleared_claim": row["claimed_by"], "cleared_block_reason": row["block_reason"], "by": actor,
                "automatic": actor == "dispatcher"}
     # The claim first: an `accepted` task still carrying `claimed_by` would read as in flight to anything that keys
     # on the marker rather than the state. All three lines are planned (the transition validated) before the first
@@ -125,7 +136,8 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
 
 
 def auto_redrive(project_dir: Path, driver, database: str, domain_config, session_id: str | None = None) -> list:
-    """Redrive every dispatcher-claimed blocked task whose stop is one of `AUTO_REDRIVE_REASONS`, once per stop.
+    """Redrive every dispatcher-claimed blocked task whose stop is one of `AUTO_REDRIVE_REASONS`, once per stop, and
+    every declared block whose cross-project waits are all satisfied (:func:`lift_satisfied_waits`).
 
     Returns the `dispatch_redrive` payloads written. The caller holds the lease with no claim in flight.
     """
@@ -135,14 +147,62 @@ def auto_redrive(project_dir: Path, driver, database: str, domain_config, sessio
         blocked = [dict(r) for r in s.run(
             "MATCH (t:ResearchTask {state: 'blocked'}) WHERE t.claimed_by STARTS WITH 'dispatcher:' "
             "RETURN t.artifact_id AS id ORDER BY t.created_at")]
-    if not blocked:
+    done = []
+    if blocked:
+        events = read_events(Path(project_dir))
+        for b in blocked:
+            stop = answered_stop(events, b["id"])
+            if stop is None or stop["reason"] not in AUTO_REDRIVE_REASONS or already_redriven(events, stop):
+                continue
+            done.append(redrive(project_dir, driver, database, domain_config, b["id"], "dispatcher", session_id,
+                                events=events))
+    return done + lift_satisfied_waits(project_dir, driver, database, domain_config, session_id)
+
+
+def _last_block_event(events: list, task_id: str) -> dict | None:
+    """The newest `artifact_state_changed` into `blocked` for this task: the stop a lifted declared block answers."""
+    for e in reversed(events):
+        p = e.get("payload") or {}
+        if (e.get("event_type") == "artifact_state_changed" and p.get("artifact_id") == task_id
+                and p.get("to_state") == "blocked"):
+            return e
+    return None
+
+
+def lift_satisfied_waits(project_dir: Path, driver, database: str, domain_config,
+                         session_id: str | None = None) -> list:
+    """Redrive every declared block whose cross-project waits are all satisfied (AD-038-R8).
+
+    A declared block is one no dispatcher claim set (`claimed_by` absent or not `dispatcher:`): a Desktop, CC or
+    operator session recorded that the task waits. A session the dispatcher halted keeps AD-038-R2's rule, because a
+    satisfied wait says nothing about why that session stopped. A wait whose other graph could not be read is not
+    satisfied, so an outage never lifts a block.
+
+    Returns the `dispatch_redrive` payloads written, each answering the block's own state-change event with reason
+    :data:`WAITS_SATISFIED`.
+    """
+    from seldon.core import cross_project as X
+    from seldon.core.events import read_events
+
+    with driver.session(database=database) as s:
+        rows = [dict(r) for r in s.run(
+            "MATCH (t:ResearchTask {state: 'blocked'}) "
+            "WHERE size(coalesce(t.waits_on_external, [])) > 0 "
+            "  AND NOT coalesce(t.claimed_by, '') STARTS WITH 'dispatcher:' "
+            "RETURN t.artifact_id AS artifact_id, t.waits_on_external AS waits_on_external "
+            "ORDER BY t.created_at")]
+    if not rows:
+        return []
+    unmet = X.unsatisfied_waits(Path(project_dir), rows)
+    ready = [r["artifact_id"] for r in rows if r["artifact_id"] not in unmet]
+    if not ready:
         return []
     events = read_events(Path(project_dir))
     done = []
-    for b in blocked:
-        stop = answered_stop(events, b["id"])
-        if stop is None or stop["reason"] not in AUTO_REDRIVE_REASONS or already_redriven(events, stop):
-            continue
-        done.append(redrive(project_dir, driver, database, domain_config, b["id"], "dispatcher", session_id,
-                            events=events))
+    for tid in ready:
+        block = _last_block_event(events, tid)
+        stop = {"event_id": block and block.get("event_id"), "event_type": "artifact_state_changed",
+                "reason": WAITS_SATISFIED}
+        done.append(redrive(project_dir, driver, database, domain_config, tid, "dispatcher", session_id,
+                            events=events, stop=stop))
     return done

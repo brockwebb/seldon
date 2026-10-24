@@ -228,8 +228,10 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     ids = [r["task_id"] for r in running]
     union = D.union_state(project_dir)
+    tasks = S._tasks(driver, database)
+    cross = S._cross_waits(project_dir, tasks)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,
-                              running=ids, union=union) for t in S._tasks(driver, database)])
+                              running=ids, union=union, cross_waits=cross) for t in tasks])
     S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
 
@@ -294,8 +296,10 @@ def survey(project_dir, cfg, driver, database, band, lease_body) -> dict:
     tree = D.tree_state(project_dir, cfg["shared_paths"])
     ids = [r["task_id"] for r in running]
     union = D.union_state(project_dir)
+    tasks = S._tasks(driver, database)
+    cross = S._cross_waits(project_dir, tasks)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, running=ids,
-                              union=union) for t in S._tasks(driver, database)])
+                              union=union, cross_waits=cross) for t in tasks])
     ready = [r for r in rows if r["eligible"]]
     plan = D.plan_launches(
         [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in ready],
@@ -381,7 +385,7 @@ def _reap_stale(project_dir, driver, database, domain_config, session_id, cfg,
                   "orphaned_session_terminated": killed}
         S._emit(project_dir, session_id, D.EVENT_FINISHED, finish)
         S._block(project_dir, driver, database, domain_config, session_id, r["task_id"],
-                 "in_progress", None, log_rel)
+                 "in_progress", None, log_rel, reason=S.block_reason(outcome, None, log_rel))
         click.echo(f"STALE: {r['task_id'][:8]} {r['stem']}: supervisor {finish['holder']} is "
                    f"gone ({outcome}); blocked; worktree {body.get('worktree')} and lease kept "
                    f"(`seldon dispatch lease reap --task {r['stem']}`)", err=True)
@@ -761,7 +765,8 @@ def _finish_launch_failed(project_dir, config, driver, database, domain_config, 
     S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
     state = S._state_of(driver, database, task_id)
     S._block(project_dir, driver, database, domain_config, session_id, task_id, state,
-             finish.get("exit_code"), finish["log_path"])
+             finish.get("exit_code"), finish["log_path"],
+             reason=S.block_reason("launch_failed", finish.get("exit_code"), finish["log_path"]))
     if S._state_of(driver, database, task_id) == "blocked":
         R.redrive(project_dir, driver, database, domain_config, task_id, actor=S.ACTOR, session_id=session_id)
     after = S._state_of(driver, database, task_id)
@@ -780,7 +785,8 @@ def _finish_unreadable(project_dir, config, driver, database, domain_config, ses
     record = {**finish, "ok": False, "outcome": "database_unavailable"}
     S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
     S._block(project_dir, driver, database, domain_config, session_id, finish["task_id"], "in_progress",
-             finish.get("exit_code"), finish["log_path"])
+             finish.get("exit_code"), finish["log_path"],
+             reason=S.block_reason("database_unavailable", finish.get("exit_code"), finish["log_path"]))
     _record_kept(project_dir, session_id, finish, "database_unavailable", "database_unavailable")
     click.echo(f"finished {finish['task_id'][:8]} database_unavailable -> blocked; worktree "
                f"{finish['worktree']} kept", err=True)
@@ -1089,7 +1095,8 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
         record["graph_completed_unmerged"] = True
     S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
     S._block(project_dir, driver, database, domain_config, session_id, task_id, state,
-             finish.get("exit_code"), finish["log_path"])
+             finish.get("exit_code"), finish["log_path"],
+             reason=S.block_reason(outcome, finish.get("exit_code"), finish["log_path"]))
     reason = (merge or {}).get("reason") or outcome
     if outcome == "stop_gate_unpassed":
         reason = f"stop_gate_unpassed: {(finish.get('stop_gate') or {}).get('why')}"

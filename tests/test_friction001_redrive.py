@@ -57,8 +57,10 @@ def _halt(p: Path, driver, domain_config, reason: str) -> str:
     append_event(p, make_event("session_stop", "dispatcher", "accepted",
                                {"task_id": tid, "station": "milestone", "kind": "line", "reason": reason}))
     append_event(p, make_event("dispatch_finished", "dispatcher", "accepted", {"task_id": tid, "ok": False}))
+    # The dispatcher's block stores its reason (AD-038-R7, SEL-008), as `S._block` does.
     transition_task(project_dir=p, driver=driver, database=NEO4J_DB, domain_config=domain_config,
-                    artifact_id=tid, current_state="in_progress", new_state="blocked", actor="dispatcher")
+                    artifact_id=tid, current_state="in_progress", new_state="blocked", actor="dispatcher",
+                    block_reason=f"dispatcher: {reason}")
     git(p, "commit", "-q", "-m", "halted", "--", STORE)
     return tid
 

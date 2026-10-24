@@ -33,7 +33,8 @@ def _get_domain_config(config: dict):
     return load_domain_config(domain_yaml)
 
 
-def get_briefing_data(driver, database: str, domain_config=None) -> dict:
+def get_briefing_data(driver, database: str, domain_config=None, project_dir: Path | None = None,
+                      config: dict | None = None) -> dict:
     """Query graph for briefing data. Returns dict with keys:
     open_tasks, stale_artifacts, stale_decided, incomplete_provenance, docs_health,
     graph_stats, citation_health, open_issues, precedence
@@ -47,7 +48,11 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
     `precedence` is the AD-029 view: `ready` task ids, `chains`, and the
     `waits_on` map. It is assembled by `seldon.core.precedence.precedence_view`
     so that `seldon briefing`, `seldon go` and `seldon task list` all read one
-    computation of what is ready rather than three.
+    computation of what is ready rather than three. With ``project_dir``, the
+    cross-project waits (AD-038-R8) are read from the other graphs as of this call
+    (`seldon.core.cross_project.overlay`); without it they all count as
+    unsatisfied, so the briefing can under-report what is ready, never over-report.
+    ``config`` is the project's seldon.yaml, read from ``project_dir`` when omitted.
     """
     with driver.session(database=database) as session:
         # 1. Open tasks
@@ -103,6 +108,11 @@ def get_briefing_data(driver, database: str, domain_config=None) -> dict:
             else OPEN_TASK_STATES
         )
         precedence_data = precedence_view(session, open_set)
+        if project_dir is not None:
+            from seldon.core import cross_project
+            if config is None:
+                config = load_project_config(Path(project_dir))
+            cross_project.overlay(precedence_data, Path(project_dir), config)
 
         # 7. Open issues
         open_issue_records = session.run(
@@ -149,7 +159,7 @@ def briefing_command():
     start_session(project_dir)
 
     domain_config = _get_domain_config(config)
-    data = get_briefing_data(driver, database, domain_config)
+    data = get_briefing_data(driver, database, domain_config, project_dir=project_dir, config=config)
     driver.close()
 
     open_tasks = data["open_tasks"]
