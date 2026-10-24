@@ -1,3 +1,4 @@
+seq: 308
 event: accept
 id: seldon:AD-035-R15
 date: '2026-10-24'
@@ -41,3 +42,5 @@ consumer:
 - tests/test_sel009_refresh_defers_and_pilot_declaration.py
 written_by: seldon decision 0.1.0
 provisional_id: c8d0ec6cd3fc50ca6a2eebe2e7e3075374715bdeed83adbf754b3af8d2605519
+prev_hash: d2c05d48c540ba376b7242bf3aa80b81d14c71044e77cad89319550950ac7e3a
+record_hash: e33ae4375deb4596f2bef2f674a38652fbbe9cb7a0fe7e11331eb482eabbb916

@@ -1,3 +1,4 @@
+seq: 305
 event: accept
 id: seldon:AD-038-R8
 date: '2026-10-24'
@@ -39,3 +40,5 @@ consumer:
 - tests/test_sel008_cross_project_waits_and_block_reason.py
 written_by: seldon decision 0.1.0
 provisional_id: 297bf77b1aec9720b637b6dd48fd3a49372647a33e0c34d34b428dc2ef21bc16
+prev_hash: 5918d34b68f0ac34215f79b76a684ca6525175bcec369d24d3b74e11771309e6
+record_hash: 2b967740dc23695b303ff6ac3d484a9d4cc63d02d250597b96a1c0c0d2c3d0b4
