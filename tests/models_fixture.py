@@ -31,6 +31,10 @@ def write_models_home(root: Path, cli_path: str | Path = "/nonexistent/claude",
     reg = yaml.safe_load(REAL_REGISTRY.read_text(encoding="utf-8"))
     reg["refresh"]["auto_on_register"] = False
     reg["refresh"]["auto_on_dispatch"] = False
+    # AD-035-R13: no test reads the machine's real dispatcher leases or run holds. A test that wants a holder
+    # writes its own list.
+    reg["refresh"]["holders"] = []
+    reg["refresh"]["holds_dir"] = str(Path(root) / "model-holds")
     (home / M.REGISTRY_FILE).write_text(yaml.safe_dump(reg, sort_keys=False), encoding="utf-8")
     lock = {"schema": 1, "resolved_on": resolved_on, "resolved_at": f"{resolved_on}T00:00:00Z",
             "cli": {"version": FIXTURE_CLI_VERSION, "path": str(cli_path),

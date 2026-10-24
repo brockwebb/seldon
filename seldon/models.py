@@ -3,6 +3,7 @@
     seldon models show                  # the registry's roles and the lock's ids
     seldon models resolve <role> [--json]
     seldon models refresh [--force] [--version V] [--no-commit]
+    seldon models hold --run NAME [--by X] -- CMD ...
 
 **Why this exists.** Before AD-035 a model was named three ways on this machine: an alias in a
 config, an id typed into a task file from a Desktop session's memory, and whatever the CLI binary
@@ -24,6 +25,10 @@ is the one place a model id comes from.
   the four `ANTHROPIC_DEFAULT_*_MODEL` variables, and `switchModelsOnFlag: false`.
 - :func:`check_receipt` compares the served model against the requested one and raises
   :class:`ModelSubstituted` (`model_substituted`) on a mismatch (R6).
+- **A run holds the lock** (R7, implemented by AD-035 ADDENDUM 03, SEL-009). :func:`refresh` defers, writing one
+  `lock_refresh_deferred` line, while :func:`lock_holders` finds a live dispatcher lease in a `refresh.holders`
+  repository or a run hold taken by :func:`hold` (R13). The day its cache keys on turns over at
+  `refresh.cache_boundary_utc` (R14). A project's tiered-pilot declaration is read by :func:`pilot_declaration` (R15).
 
 **Where the files are.** `$SELDON_MODELS_HOME` when set; otherwise the `models/` directory beside
 this package in the seldon checkout. A non-editable install has no such directory and fails loudly
@@ -34,6 +39,7 @@ repository that otherwise has no use for Seldon's graph.
 """
 from __future__ import annotations
 
+import contextlib
 import datetime as _dt
 import json
 import os
@@ -97,7 +103,18 @@ ALIASES = tuple(FAMILY_ENV)
 REGISTRY_REQUIRED_REFRESH = ("npm_package", "install_root", "bin_relpath", "families",
                              "probe_prompt", "probe_timeout_s", "npm_timeout_s", "cache",
                              "evidence_dir", "commit_branch", "auto_on_register",
-                             "auto_on_dispatch", "documented_default_effort")
+                             "auto_on_dispatch", "documented_default_effort", "cache_boundary_utc",
+                             "holders", "holds_dir")
+#: AD-035-R13 (SEL-009): the event a refresh appends instead of touching the lock while a run holds it.
+EVENT_REFRESH_DEFERRED = "lock_refresh_deferred"
+#: AD-035-R14: `HH:MM`, UTC.
+_BOUNDARY_RE = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+#: A run hold's name is one path segment under `holds_dir`.
+_RUN_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+#: AD-035-R15: the keys of a project's `models.pilot` declaration, and the values `full_on` may name.
+PILOT_KEYS = ("cost_calls", "cost_band", "content_sample", "full_on")
+PILOT_REQUIRED = ("cost_calls", "content_sample", "full_on")
+PILOT_FULL_ON = ("major", "minor", "band_tripped")
 
 
 class ModelsError(Exception):
@@ -192,6 +209,7 @@ def load_registry(home: Path | None = None) -> dict:
         raise ModelsError(f"{path}: refresh block missing {missing}")
     _check_documented_defaults(path, refresh_cfg["documented_default_effort"],
                                refresh_cfg["families"])
+    _check_hold_config(path, refresh_cfg)
     heads = {f: r["model"] for f, r in refresh_cfg["documented_default_effort"]["families"].items()}
     catalog = _check_catalog(path, data.get("models"), heads)
     for name, row in roles.items():
@@ -199,6 +217,19 @@ def load_registry(home: Path | None = None) -> dict:
     _check_checker(path, data.get(CHECKER_ROLE), roles)
     _check_calibration(path, data.get("calibration"))
     return data
+
+
+def _check_hold_config(path: Path, cfg: dict) -> None:
+    """AD-035-R13 and R14: the boundary is `HH:MM` UTC, `holders` is a list of paths, `holds_dir` is a path."""
+    boundary = cfg["cache_boundary_utc"]
+    if not isinstance(boundary, str) or not _BOUNDARY_RE.match(boundary):
+        raise ModelsError(f"{path}: refresh.cache_boundary_utc must be HH:MM in UTC (00:00 to 23:59), "
+                          f"got {boundary!r}")
+    holders = cfg["holders"]
+    if not isinstance(holders, list) or not all(isinstance(h, str) and h.strip() for h in holders):
+        raise ModelsError(f"{path}: refresh.holders must be a list of repository paths, got {holders!r}")
+    if not isinstance(cfg["holds_dir"], str) or not cfg["holds_dir"].strip():
+        raise ModelsError(f"{path}: refresh.holds_dir must be a directory path, got {cfg['holds_dir']!r}")
 
 
 def _check_catalog(path: Path, catalog, heads: dict) -> dict:
@@ -767,8 +798,22 @@ def check_task_models(text: str, home: Path | None = None) -> dict:
 
 # ------------------------------------------------------------------------------- refresh (R2)
 
-def _today() -> str:
-    return _dt.datetime.now(_dt.timezone.utc).date().isoformat()
+def _boundary_delta(boundary: str) -> _dt.timedelta:
+    hours, minutes = (int(x) for x in boundary.split(":"))
+    return _dt.timedelta(hours=hours, minutes=minutes)
+
+
+def cache_day(now: _dt.datetime | None = None, boundary: str = "00:00") -> str:
+    """AD-035-R14: the day the refresh cache keys on, the UTC date of `now - boundary`."""
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    return (now.astimezone(_dt.timezone.utc) - _boundary_delta(boundary)).date().isoformat()
+
+
+def next_refresh_at(resolved_on: str, boundary: str) -> str:
+    """AD-035-R14: the first instant a lock resolved on cache day `resolved_on` is no longer the day's, ISO Z."""
+    day = _dt.datetime.fromisoformat(str(resolved_on)).replace(tzinfo=_dt.timezone.utc)
+    at = day + _dt.timedelta(days=1) + _boundary_delta(boundary)
+    return at.isoformat().replace("+00:00", "Z")
 
 
 def _now() -> str:
@@ -800,12 +845,14 @@ def _default_runner(cmd: list, *, cwd: str | None, env: dict, timeout: int) -> s
 class RefreshOutcome:
     """What a refresh did, as values."""
 
-    status: str                      # cached | unchanged | bumped | written | skipped
+    status: str                      # cached | unchanged | bumped | written | skipped | deferred
     lock: dict
     evidence: str | None = None
     event: dict | None = None
     committed: str | None = None
     messages: list = field(default_factory=list)
+    #: AD-035-R13: the live holders a deferral waited on, or a forced refresh overrode.
+    holders: list = field(default_factory=list)
 
 
 def _repo_root(home: Path) -> Path:
@@ -814,6 +861,154 @@ def _repo_root(home: Path) -> Path:
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
+
+
+def _primary_root(root: Path) -> Path:
+    """The primary checkout of the repository at `root` (a worktree's main tree), else `root` itself.
+
+    `refresh.holders` names siblings (`../squiddy`); resolved against a worktree under `.claude/worktrees/` they would
+    name nothing. The same anchoring AD-036 ADDENDUM 08 made for prior-art refs."""
+    got = _git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if got.returncode != 0 or not got.stdout.strip():
+        return root
+    return Path(got.stdout.strip()).parent
+
+
+# -------------------------------------------------------------------- holders of the lock (AD-035-R7, R13)
+
+def _holds_dir(cfg: dict) -> Path:
+    return Path(cfg["holds_dir"]).expanduser()
+
+
+def _lease_row(repo: str, kind: str, body: dict, path: Path) -> dict:
+    return {"repo": repo, "kind": kind, "holder": body.get("holder"), "task": body.get("task"),
+            "pid": body.get("pid"), "path": str(path)}
+
+
+def lock_holders(home: Path | None = None, reg: dict | None = None) -> list:
+    """Every live holder of the lock (AD-035-R13): dispatcher leases in `refresh.holders`, then run holds.
+
+    Rows are `{repo, kind, holder, task, pid, path}`, `kind` one of `dispatch_lease`, `worktree_lease`, `run_hold`.
+    A dispatcher lease is live by the dispatcher's own rule (`seldon.core.dispatch.lease_is_held`, DD-022 PID
+    liveness; a worktree lease by `worktree_holder_alive`). A lease naming THIS process is left out: the dispatcher
+    refreshes at a launch while it holds its own pass lease, and that launch is the boundary R7 allows. A run hold is
+    live while its flock is held, whoever holds it.
+
+    Raises:
+        ModelsError: a listed repository does not exist, or its `seldon.yaml` does not parse. Loud on purpose: a
+            holder that cannot be read is a run that cannot be ruled out.
+    """
+    from seldon.core import dispatch as D        # lazy: `import seldon.models` stays cheap for other repositories
+
+    home = _home(home)
+    reg = reg or load_registry(home)
+    cfg = reg["refresh"]
+    primary = _primary_root(_repo_root(home))
+    rows = []
+    for rel in cfg["holders"]:
+        repo = (primary / Path(rel).expanduser()).resolve()
+        if not repo.is_dir():
+            raise ModelsError(f"refresh.holders names {rel!r}, which resolves to {repo}, not a directory: fix "
+                              f"{home / REGISTRY_FILE} (AD-035-R13)")
+        conf = repo / "seldon.yaml"
+        if not conf.is_file():
+            continue
+        try:
+            block = (yaml.safe_load(conf.read_text(encoding="utf-8")) or {}).get("dispatch")
+        except yaml.YAMLError as exc:
+            raise ModelsError(f"{conf}: does not parse, so its dispatcher leases cannot be read: {exc}") from exc
+        if not isinstance(block, dict) or not block.get("lease_file"):
+            continue
+        lease = repo / block["lease_file"]
+        body = D.read_lease(lease)
+        if D.lease_is_held(repo, block) and body.get("pid") != os.getpid():
+            rows.append(_lease_row(str(repo), "dispatch_lease", body, lease))
+        for w in D.worktree_leases(repo, block):
+            if w["alive"] and w["body"].get("pid") != os.getpid():
+                rows.append(_lease_row(str(repo), "worktree_lease", w["body"], repo / w["path"]))
+    holds = _holds_dir(cfg)
+    for path in sorted(holds.glob("*.lock")) if holds.is_dir() else []:
+        if D.flock_held(path):
+            body = D.read_lease(path)
+            rows.append({"repo": None, "kind": "run_hold", "holder": body.get("by"), "task": body.get("run", path.stem),
+                         "pid": body.get("pid"), "path": str(path)})
+    return rows
+
+
+@contextlib.contextmanager
+def hold(run: str, by: str | None = None, home: Path | None = None):
+    """Hold the lock for a run's whole life (AD-035-R7: "a run in flight keeps its lock entry to the end").
+
+    An `fcntl.flock` on `<refresh.holds_dir>/<run>.lock`, the same guard as the dispatcher's lease, with a JSON body
+    naming the run, who holds it, the PID and the CLI version the lock named when it began. `refresh` defers while it
+    is held (R13). The kernel drops the flock when the holder dies, so a crashed run never holds the lock forever.
+
+    Raises:
+        ModelsError: the name is not one path segment, or another process already holds a run of that name.
+    """
+    import fcntl
+
+    if not isinstance(run, str) or not _RUN_NAME_RE.match(run):
+        raise ModelsError(f"run name {run!r} must be one path segment of letters, digits, '.', '_' or '-'")
+    home = _home(home)
+    holds = _holds_dir(load_registry(home)["refresh"])
+    holds.mkdir(parents=True, exist_ok=True)
+    path = holds / f"{run}.lock"
+    try:
+        cli_version = load_lock(home)["cli"]["version"]
+    except ModelsError:
+        cli_version = None
+    fh = path.open("a+", encoding="utf-8")
+    try:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ModelsError(f"run {run!r} is already held ({path}); a second run needs another name") from exc
+
+        def write(body: dict) -> None:
+            fh.seek(0)
+            fh.truncate()
+            fh.write(json.dumps(body, indent=1) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        acquired = _now()
+        write({"run": run, "by": by, "pid": os.getpid(), "lock_cli_version": cli_version,
+               "acquired_at": acquired})
+        try:
+            yield path
+        finally:
+            # The file is kept (stable inode for the flock, as the dispatcher's lease is) and records the release.
+            write({"run": run, "by": by, "pid": None, "lock_cli_version": cli_version,
+                   "acquired_at": acquired, "released_at": _now()})
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+    finally:
+        fh.close()
+
+
+def _holder_key(rows: list) -> list:
+    return sorted([r["kind"], r["repo"] or "", r["holder"] or "", str(r["task"] or ""), str(r["pid"])]
+                  for r in rows)
+
+
+def _already_deferred(root: Path, today: str, rows: list) -> bool:
+    """Has this cache day already recorded a deferral on exactly these holders? Keeps R13 to one line per set."""
+    from seldon.core.events import EVENTS_FILENAME
+
+    store = root / EVENTS_FILENAME
+    if not store.is_file():
+        return False
+    last = None
+    with store.open(encoding="utf-8") as fh:
+        for line in fh:
+            if EVENT_REFRESH_DEFERRED in line:
+                try:
+                    last = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+    if not last or last.get("event_type") != EVENT_REFRESH_DEFERRED:
+        return False
+    p = last.get("payload") or {}
+    return p.get("date") == today and _holder_key(p.get("holders") or []) == _holder_key(rows)
 
 
 def refresh(*, home: Path | None = None, force: bool = False, version: str | None = None,
@@ -826,14 +1021,15 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
     agrees with the current lock and the day is the same: re-running is idempotent. When an id or
     the CLI version changes, a `models_lock_bumped` event naming old and new is appended to the
     seldon event store. The lock, the evidence and the event are committed only on the configured
-    branch.
+    branch. While a run holds the lock (:func:`lock_holders`) and `force` is not given, nothing is installed, probed
+    or written but one `lock_refresh_deferred` line, and the status is `deferred` (AD-035-R7, R13).
     """
     home = _home(home)
     reg = load_registry(home)
     cfg = reg["refresh"]
     runner = runner or _default_runner
     npm = npm or runner
-    today = today or _today()
+    today = today or cache_day(boundary=cfg["cache_boundary_utc"])
     old = None
     if (home / LOCK_FILE).is_file():
         old = load_lock(home)
@@ -854,6 +1050,37 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
         if why:
             return RefreshOutcome(status="skipped", lock=old,
                                   messages=[f"not refreshed: {why}; the current lock stands (AD-036-R11)"])
+
+    # AD-035-R13, implementing R7: while a run holds the lock, the lock does not move. Checked before any npm or
+    # probe call, so a deferral spends nothing. A first refresh (no lock) is never deferred: there is nothing to hold.
+    holders = []
+    if old is not None:
+        try:
+            holders = lock_holders(home, reg)
+        except ModelsError:
+            if not force:
+                raise
+            # The operator's `--force` overrides the gate it would have applied (gates bind the machine, not the
+            # operator); a holder that cannot be read is then reported, not a refusal.
+            holders = [{"repo": None, "kind": "unreadable", "holder": None, "task": None, "pid": None,
+                        "path": None}]
+    if holders and not force:
+        root = _repo_root(home)
+        msgs = [f"deferred: the lock is held by {len(holders)} run(s); the current lock (CLI "
+                f"{old['cli']['version']}) stands (AD-035-R7, R13)"]
+        msgs += [f"  {r['kind']} {r['repo'] or ''} {r['task'] or ''} {r['holder'] or ''} pid {r['pid']}".rstrip()
+                 for r in holders]
+        event = None
+        if not _already_deferred(root, today, holders):
+            from seldon.core.events import append_event, make_event
+            # Appended, never committed here: a dispatcher pass may be working in the primary checkout, and its
+            # reconciler commits every store line it finds (AD-038-R1).
+            event = make_event(EVENT_REFRESH_DEFERRED, actor="seldon-models", authority="AD-035-R13",
+                               payload={"date": today, "holders": holders,
+                                        "lock_cli_version": old["cli"]["version"],
+                                        "lock_resolved_on": str(old.get("resolved_on")), "lock": LOCK_FILE})
+            append_event(root, event)
+        return RefreshOutcome(status="deferred", lock=old, event=event, messages=msgs, holders=holders)
 
     pkg = cfg["npm_package"]
     if version is None:
@@ -961,6 +1188,9 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
                                     "profile_missing": sorted(
                                         m for m in new_ids.values() if m not in reg["models"]),
                                     "evidence": evidence_rel, "lock": LOCK_FILE})
+        if holders:
+            # AD-035-R13: `--force` refreshed while these runs held the lock; the bump says whose run it moved under.
+            event["payload"]["forced_over_holders"] = holders
         append_event(root, event)
         touched.append("seldon_events.jsonl")
     committed = None
@@ -973,7 +1203,7 @@ def refresh(*, home: Path | None = None, force: bool = False, version: str | Non
             msgs.append(f"not committed: {why}")
     return RefreshOutcome(status="bumped" if changed else "written", lock=lock,
                           evidence=evidence_rel, event=event, committed=committed,
-                          messages=msgs)
+                          messages=msgs, holders=holders)
 
 
 def _probe_named(named: list, cli_path: str, cfg: dict, runner: Callable, env: dict,
@@ -1086,15 +1316,81 @@ def ensure_fresh(trigger: str, home: Path | None = None, **kw) -> str | None:
         return f"WARNING: model lock not refreshed ({type(exc).__name__}: {exc}); using the current lock"
 
 
+# ------------------------------------------------------------------- the project's pilot declaration (R15)
+
+def pilot_declaration(project_dir: Path) -> dict | None:
+    """AD-035-R15: a project's tiered-pilot declaration, `models.pilot` in its `seldon.yaml`, validated; None when absent.
+
+    Seldon declares and validates; the consumer that pilots a CLI (squiddy's `pin_cli` and `squiddy pilot`) reads it
+    and decides. The contract (SEL-009 RESULT, AD-035 ADDENDUM 03):
+
+    - `cost_calls` (int >= 1): the first N calls on a new CLI are read against the recorded pilot's weighted cost per
+      call;
+    - `cost_band` (number > 1): the band is tripped when that ratio, new over recorded, is above it or below its
+      inverse. Required when `full_on` names `band_tripped`; otherwise the cost line is recorded and gates nothing;
+    - `content_sample` (int >= 1): the units re-run on the new CLI and compared on content with the recorded pilot;
+    - `full_on` (list, any of `major`, `minor`, `band_tripped`): what escalates to the full pilot. `major` is a change
+      in X of the CLI version X.Y.Z, `minor` a change in X or Y. A content comparison that fails ALWAYS escalates, so
+      it is not a value here.
+
+    Raises:
+        ModelsError: `models` or `models.pilot` is not a mapping, a key is unknown or missing, or a value is out of range.
+    """
+    path = Path(project_dir) / "seldon.yaml"
+    if not path.is_file():
+        return None
+    try:
+        config = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        raise ModelsError(f"{path}: does not parse: {exc}") from exc
+    block = config.get("models")
+    if block is None:
+        return None
+    if not isinstance(block, dict):
+        raise ModelsError(f"{path}: `models:` must be a mapping")
+    unknown = sorted(set(block) - {"pilot"})
+    if unknown:
+        raise ModelsError(f"{path}: unknown key(s) under `models:` {unknown}; known ['pilot'] (AD-035-R15)")
+    decl = block.get("pilot")
+    if decl is None:
+        return None
+    where = f"{path}: models.pilot"
+    if not isinstance(decl, dict):
+        raise ModelsError(f"{where} must be a mapping")
+    unknown = sorted(set(decl) - set(PILOT_KEYS))
+    if unknown:
+        raise ModelsError(f"{where}: unknown key(s) {unknown}; known {list(PILOT_KEYS)}")
+    missing = [k for k in PILOT_REQUIRED if k not in decl]
+    if missing:
+        raise ModelsError(f"{where}: missing {missing}")
+    for key in ("cost_calls", "content_sample"):
+        v = decl[key]
+        if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+            raise ModelsError(f"{where}.{key} must be a whole number of at least 1, got {v!r}")
+    full_on = decl["full_on"]
+    if not isinstance(full_on, list) or any(v not in PILOT_FULL_ON for v in full_on):
+        raise ModelsError(f"{where}.full_on must be a list drawn from {list(PILOT_FULL_ON)}, got {full_on!r}")
+    if "cost_band" in decl:
+        band = decl["cost_band"]
+        if isinstance(band, bool) or not isinstance(band, (int, float)) or band <= 1:
+            raise ModelsError(f"{where}.cost_band must be a ratio above 1 (new over recorded weighted per call, "
+                              f"either direction), got {band!r}")
+    elif "band_tripped" in full_on:
+        raise ModelsError(f"{where}: full_on names band_tripped, so cost_band is required")
+    return decl
+
+
 def which_cli() -> str | None:
     """The interactive `claude` on PATH, for `show` to report beside the lock's. Never launched."""
     return shutil.which("claude")
 
 
-def show(home: Path | None = None) -> dict:
-    """The registry's roles with what each resolves to, and the lock."""
+def show(home: Path | None = None, project_dir: Path | None = None) -> dict:
+    """The registry's roles with what each resolves to, the lock, when it may next refresh and who holds it (R13,
+    R14), and the project's pilot declaration (R15) when `project_dir` is given."""
     home = _home(home)
     reg = load_registry(home)
+    cfg = reg["refresh"]
     try:
         lock = load_lock(home)
     except ModelsError as exc:
@@ -1110,7 +1406,20 @@ def show(home: Path | None = None) -> dict:
         model = (lock.get("families") or {}).get(row["family"], {}).get("model")
         rows.append({"role": name, "family": row["family"], "effort": row.get("effort"),
                      "model": model, "named": False, "available": model is not None})
-    return {"home": str(home), "roles": rows, "lock": lock, "path_cli": which_cli()}
+    boundary = cfg["cache_boundary_utc"]
+    refresh_info = {"cache_boundary_utc": boundary, "today": cache_day(boundary=boundary),
+                    "next_eligible": (next_refresh_at(lock["resolved_on"], boundary)
+                                      if lock.get("resolved_on") else None),
+                    "triggers": ["seldon cc register", "dispatcher launch"]}
+    try:
+        refresh_info["holders"] = lock_holders(home, reg)
+    except ModelsError as exc:
+        refresh_info["holders_error"] = str(exc)
+    out = {"home": str(home), "roles": rows, "lock": lock, "path_cli": which_cli(), "refresh": refresh_info}
+    if project_dir is not None:
+        out["project"] = str(project_dir)
+        out["pilot"] = pilot_declaration(project_dir)
+    return out
 
 
 def as_json(obj: Any) -> str:

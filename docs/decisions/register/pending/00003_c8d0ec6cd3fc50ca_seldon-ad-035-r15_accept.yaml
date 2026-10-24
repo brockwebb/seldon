@@ -1,0 +1,43 @@
+event: accept
+id: seldon:AD-035-R15
+date: '2026-10-24'
+decided_by: cc:30c0de2c
+operator_stated: false
+receipts:
+- 'docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md:59: AD-035-R15'
+reason: 'SEL-009; evidence: lock resolved_at 2026-10-24T00:09:23Z under hazbrief HB-24''s run, re-pilot 4,212,332 weighted (hazbrief HB-25 RESULT); AD-035-R7 had no implementation in refresh'
+kind: decision
+status: accepted
+statement: A project may declare a tiered pilot for a CLI change in its own seldon.yaml under models.pilot with cost_calls and content_sample (whole numbers of at least 1), cost_band (a ratio above 1, required when full_on names band_tripped) and full_on (drawn from major, minor, band_tripped); seldon.models.pilot_declaration shall return it validated or None and refuse an unknown key or bad value naming it, and `seldon models show` shall print it; the consumer that pilots acts on it, and a failed content comparison always escalates to the full pilot.
+source:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  lines:
+  - 59
+  - 73
+  sha256: 7a861e2dc2ab950505bc7040594445745762cf6b6174730f264e893053a7a343
+  text: |-
+    - **AD-035-R15. A project declares a tiered pilot for a CLI change in its own `seldon.yaml`; Seldon validates it and the consumer that pilots acts on it.**
+      The declaration is `models: {pilot: {cost_calls, cost_band, content_sample, full_on}}`. `cost_calls` and
+      `content_sample` are whole numbers of at least 1. `cost_band` is a ratio above 1, required when `full_on` names
+      `band_tripped`. `full_on` is drawn from `major`, `minor` and `band_tripped`. `seldon.models.pilot_declaration(project_dir)`
+      returns it, or None, and refuses an unknown key or a bad value naming it. `seldon models show [--project DIR]` prints it.
+      It is not in the lock, because the lock is never edited by hand (R1, R2).
+      The contract, for the reader (squiddy `pin_cli` and `squiddy pilot`, filed as a squiddy task):
+      - the first `cost_calls` calls on the new CLI are read against the recorded pilot's weighted cost per call;
+      - the band is tripped when the ratio is above `cost_band` or below its inverse;
+      - `content_sample` units are re-run and compared on content;
+      - the full pilot runs when a `full_on` condition holds: `major` is a change in X of X.Y.Z, `minor` a change in X or Y,
+        `band_tripped` a tripped band;
+      - the full pilot always runs when the content comparison fails;
+      - the cost line is always recorded, because it is the line that moved on 2026-10-24 (SQ-038R ADDENDUM-00 section 4).
+      Code: `seldon/models.py` `pilot_declaration`, `PILOT_*`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-035_ADDENDUM_03_a_run_holds_the_lock_and_a_project_declares_its_pilot.md
+  anchor: AD-035-R15
+consumer:
+- cc_tasks/2026-10-24_SEL-009_models_refresh_does_not_bump_the_lock_under_a_held_lease.md
+- tests/test_sel009_refresh_defers_and_pilot_declaration.py
+written_by: seldon decision 0.1.0
+provisional_id: c8d0ec6cd3fc50ca6a2eebe2e7e3075374715bdeed83adbf754b3af8d2605519
