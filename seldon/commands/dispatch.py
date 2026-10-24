@@ -198,8 +198,9 @@ def _survey(project_dir, config, driver, database):
     claim = _claim_in_flight(driver, database)
     holds = _premise_holds(project_dir, driver, database)
     launch_holds = _launch_holds(project_dir)
+    union = D.union_state(project_dir)
     rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                       launch_holds=launch_holds)
+                       launch_holds=launch_holds, union=union)
             for t in _tasks(driver, database)]
     return cfg, band, tree, lease_body, claim, D.fifo(rows)
 
@@ -222,6 +223,29 @@ def _registered_files(driver, database) -> set:
         return {r["f"] for r in s.run(q)}
 
 
+def _declare_union(project_dir, config) -> None:
+    """AD-034 ADDENDUM 05, by AD-038-R1 (the machine reconciles its own state): declare the project's append-only
+    logs `merge=union` when git does not merge them so, and commit `.gitattributes` alone, as `seldon hooks install`
+    does. Without it every worktree task whose main gained a line meanwhile ends `rebase_conflict` (squiddy SQ-021).
+
+    Called by `_reconcile`, so under the lease, with no claim in flight and on the configured branch. A
+    `.gitattributes` with uncommitted edits is someone's work in progress and is left alone; so is any failure to
+    write or commit, which is printed. In both cases c16 then refuses every launch and names the files."""
+    from seldon.core import hooks as H
+    if D.git(project_dir, "status", "--porcelain", "--", H.GITATTRIBUTES).stdout.strip():
+        click.echo(f"union: {H.GITATTRIBUTES} has uncommitted edits; not declaring (c16 names what is missing)",
+                   err=True)
+        return
+    try:
+        out = H.declare_union(project_dir, config)
+    except H.HookError as exc:
+        click.echo(f"union: NOT declared: {exc}", err=True)
+        return
+    if out["committed"]:
+        click.echo(f"union: {H.GITATTRIBUTES} declares {', '.join(out['added'])} merge=union -> {out['commit']} "
+                   f"(AD-034 ADDENDUM 05)")
+
+
 def _reconcile(project_dir, config, cfg, driver, database) -> dict:
     """AD-038-R1: commit every dirty path of machine-written governed state, one commit per class, before c7.
 
@@ -237,6 +261,7 @@ def _reconcile(project_dir, config, cfg, driver, database) -> dict:
     from seldon.core import reconcile as R
     if D.tree_state(project_dir)["branch"] != cfg["branch"]:
         return {"commits": [], "unreconciled": [], "skipped": "wrong_branch"}
+    _declare_union(project_dir, config)
     try:
         out = R.reconcile(project_dir, config, _registered_files(driver, database))
     except RuntimeError as exc:
@@ -392,7 +417,10 @@ def dispatch_status(as_json):
     finally:
         driver.close()
     cadence_rows = _cadence_rows(project_dir, cfg)
+    # AD-034 ADDENDUM 05: a fact about the checkout, reported once at the top as well as per task (c16).
+    union = D.union_state(project_dir)
     payload = {"enabled": cfg["enabled"], "branch": tree["branch"],
+               "union_attribute_missing": None if union["ok"] else (union["missing"] or union.get("read_error")),
                "configured_branch": cfg["branch"], "tree_dirty": tree["dirty"],
                "tree_dirty_count": tree["dirty_count"],
                "tree_read_error": tree.get("read_error"),
@@ -419,6 +447,10 @@ def dispatch_status(as_json):
     click.echo(f"dispatch: enabled={cfg['enabled']}  branch={tree['branch']}"
                f" (configured {cfg['branch']})  dirty={tree['dirty']}"
                f" ({tree['dirty_count']} path(s))")
+    if not union["ok"]:
+        click.echo(f"  union_attribute_missing: "
+                   f"{', '.join(union['missing']) or union.get('read_error')} "
+                   f"(not merge=union; run `seldon hooks install`, AD-034 ADDENDUM 05)")
     click.echo(f"  stop file   : {cfg['stop_file']} "
                f"{'PRESENT' if payload['stop_file_present'] else 'absent'}")
     click.echo(f"  standing band: {band:,} tokens  <- {cfg['standing_band_ref']}")
@@ -961,8 +993,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     holds = _premise_holds(project_dir, driver, database)
     launch_holds = _launch_holds(project_dir)
+    union = D.union_state(project_dir)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                              launch_holds=launch_holds)
+                              launch_holds=launch_holds, union=union)
                    for t in _tasks(driver, database)])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
@@ -1219,6 +1252,14 @@ def _refusal_lines(rows: list, tree: dict) -> list:
                 # AD-038-R1: each path the reconciler could not or may not commit, with its reason.
                 for u in (tree.get("unreconciled") or [])[:STUCK_DIRTY_PATHS_SHOWN]:
                     out.append(f"      unreconciled: {u['path']}: {u['why']}")
+            if reason == "union_attribute_missing":
+                # AD-034 ADDENDUM 05: name the files and the command that declares them.
+                u = r["criteria"]["c16"]
+                if u.get("read_error"):
+                    out.append(f"      append-only logs unreadable: {u['read_error']}")
+                else:
+                    out.append(f"      not merge=union: {', '.join(u['missing'])} "
+                               f"(run `seldon hooks install`)")
             if reason == "wrong_branch":
                 out.append(f"      branch: {tree.get('branch') or '(none)'}, configured "
                            f"{r['criteria']['c7'].get('configured_branch')}")

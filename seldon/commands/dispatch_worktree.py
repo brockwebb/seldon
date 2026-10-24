@@ -227,8 +227,9 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                                 if u["path"] not in set(exclude)]
     lease_body = D.read_lease(project_dir / cfg["lease_file"])
     ids = [r["task_id"] for r in running]
+    union = D.union_state(project_dir)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,
-                              running=ids) for t in S._tasks(driver, database)])
+                              running=ids, union=union) for t in S._tasks(driver, database)])
     S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
 
@@ -292,8 +293,9 @@ def survey(project_dir, cfg, driver, database, band, lease_body) -> dict:
     claim = inplace[0] if inplace else None
     tree = D.tree_state(project_dir, cfg["shared_paths"])
     ids = [r["task_id"] for r in running]
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, running=ids)
-                   for t in S._tasks(driver, database)])
+    union = D.union_state(project_dir)
+    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, running=ids,
+                              union=union) for t in S._tasks(driver, database)])
     ready = [r for r in rows if r["eligible"]]
     plan = D.plan_launches(
         [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in ready],

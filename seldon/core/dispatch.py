@@ -1634,9 +1634,27 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
 
 # ------------------------------------------------------------------------------- evaluation
 
+def union_state(project_dir: Path) -> dict:
+    """Criterion c16's raw material (AD-034 ADDENDUM 05): the project's append-only logs and those git does not merge
+    by union. `{required, missing, ok}`, plus `read_error` when the list cannot be made (fail closed: a launch whose
+    rebase may conflict on every log is the launch this criterion exists to stop). Read once per pass, like c7's tree.
+    """
+    from seldon.core import hooks as H
+
+    try:
+        path = Path(project_dir) / "seldon.yaml"
+        config = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+        required = H.append_only_paths(project_dir, config or {})
+        missing = H.union_missing(project_dir, config or {})
+    except (H.HookError, OSError, yaml.YAMLError) as exc:
+        return {"required": [], "missing": [], "ok": False, "read_error": str(exc)}
+    return {"required": required, "missing": missing, "ok": not missing}
+
+
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
              claim_in_flight: dict | None, lease_body: dict, running=None,
-             premise_holds: dict | None = None, launch_holds: dict | None = None) -> dict:
+             premise_holds: dict | None = None, launch_holds: dict | None = None,
+             union: dict | None = None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1762,6 +1780,11 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     failed_launch = (launch_holds or {}).get(task.get("artifact_id"))
     if failed_launch:
         c["c15"] = {**failed_launch, "ok": False}
+    # ATTR-001 (AD-034 ADDENDUM 05): every task merges back through a rebase, and an append-only log git does not
+    # merge by union conflicts on that rebase whenever main gained a line meanwhile (squiddy SQ-021, 2026-10-23). The
+    # pass reads `union_state` once and passes it; absent unless it fails, like c13, so the criteria vector is unchanged.
+    if union is not None and not union["ok"]:
+        c["c16"] = {**union, "ok": False}
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1782,6 +1805,9 @@ def first_refusal_reason(row: dict) -> str | None:
         return "disk_unmeasured" if c["c12"].get("read_error") else "disk_short"
     if not c.get("c7", {}).get("ok", True):
         return c7_reason(c["c7"])
+    # A fact about the checkout, like c7, so reported ahead of the task-specific reasons.
+    if not c.get("c16", {}).get("ok", True):
+        return "union_attribute_missing"
     if not c.get("c4", {}).get("ok", True):
         return "above_band"
     if not c.get("c5", {}).get("ok", True):

@@ -290,6 +290,108 @@ def ensure_installed(repo: Path) -> dict:
         return {"ok": False, "changed": False, "error": str(exc)}
 
 
+# ------------------------------------------------------------------- the union declaration
+
+#: The file git reads merge drivers from. Tracked: a driver applies on a rebase only when the attribute is in the tree.
+GITATTRIBUTES = ".gitattributes"
+#: Written above the lines `declare_union` adds, so a reader of any repository's `.gitattributes` learns why.
+UNION_COMMENT = (
+    "# Append-only logs merge by union (seldon AD-034-R7, SEL-004 decision 4; written by `seldon hooks install`,\n"
+    "# AD-034 ADDENDUM 05): two branches that each appended lines keep both sides'. The dispatcher checks the merged\n"
+    "# file is valid JSONL with unique event_ids before main moves; git's union driver alone cannot see a fused or\n"
+    "# duplicated line.\n")
+#: The commit `declare_union` makes. The tool that writes a governed file commits it (DESK-001).
+UNION_COMMIT_MESSAGE = ("chore: declare append-only logs merge=union (AD-034 ADDENDUM 05, SEL-004 decision 4)\n\n"
+                        "Written by `seldon hooks install`: {paths}.\n")
+
+
+def append_only_paths(repo: Path, config: dict) -> list[str]:
+    """The repository-relative append-only logs this project has, which must merge by union (AD-034 ADDENDUM 05).
+
+    The event store (`event_store.path`); the governed ledger where the governed graph directory exists; the
+    prior-art query log where a `prior_art:` block is configured (its own or the one its `ref` names, AD-036-R10:
+    the log is the calling project's). A path git ignores is left out: an untracked file is never merged. A path
+    outside the repository is left out: no attribute here can govern it.
+
+    Raises:
+        HookError: the `prior_art:` block cannot be resolved, or names no `log`. A list that silently omitted the
+            log would declare the repository done while its rebases still conflicted on it.
+    """
+    from seldon.core import governed, prior_art
+    from seldon.core.events import EVENTS_FILENAME
+
+    repo = Path(repo).resolve()
+    paths = [(config.get("event_store") or {}).get("path", EVENTS_FILENAME)]
+    if governed.graph_dir(repo, config).is_dir():
+        paths.append(governed.ledger_path(repo, config))
+    if config.get("prior_art") is not None:
+        try:
+            block, _definer, _defined_in = prior_art.resolve_block(repo, config)
+        except prior_art.PriorArtError as exc:
+            raise HookError(f"the prior_art block cannot be resolved, so its query log cannot be declared "
+                            f"merge=union: {exc}") from exc
+        if not block.get("log"):
+            raise HookError("the prior_art block names no `log`; its query log cannot be declared merge=union")
+        paths.append(Path(os.path.expanduser(str(block["log"]))))
+    out = []
+    for p in paths:
+        p = Path(p)
+        absolute = (p if p.is_absolute() else repo / p).resolve()
+        try:
+            rel = absolute.relative_to(repo).as_posix()
+        except ValueError:
+            continue
+        if rel in out or _git(repo, "check-ignore", "-q", "--", rel, check=False).returncode == 0:
+            continue
+        out.append(rel)
+    return out
+
+
+def union_missing(repo: Path, config: dict) -> list[str]:
+    """`append_only_paths` git does not merge by union here. Git's own answer (`git check-attr`), not a text match,
+    so a wider pattern someone already wrote (`*.jsonl merge=union`) counts."""
+    from seldon.core.worktree import union_files
+
+    repo = toplevel(Path(repo))
+    wanted = append_only_paths(repo, config)
+    have = set(union_files(repo, wanted))
+    return [p for p in wanted if p not in have]
+
+
+def declare_union(repo: Path, config: dict) -> dict:
+    """Write the missing `merge=union` lines into `.gitattributes` (creating or extending it) and commit that file
+    alone, through the hooks (DESK-001). Idempotent: nothing missing writes and commits nothing.
+
+    Returns `{added, committed, commit, path}`.
+
+    Raises:
+        HookError: `append_only_paths` cannot list the files, or the commit is refused (the file is unstaged
+            again, so the index is as it was found; the written lines stay on disk for the operator).
+    """
+    repo = toplevel(Path(repo))
+    missing = union_missing(repo, config)
+    out = {"added": missing, "committed": False, "commit": None, "path": GITATTRIBUTES}
+    if not missing:
+        return out
+    f = repo / GITATTRIBUTES
+    text = f.read_text(encoding="utf-8") if f.is_file() else ""
+    if text and not text.endswith("\n"):
+        text += "\n"
+    if UNION_COMMENT not in text:
+        text += UNION_COMMENT
+    text += "".join(f"{p} merge=union\n" for p in missing)
+    f.write_text(text, encoding="utf-8")
+    _git(repo, "add", "--", GITATTRIBUTES)
+    done = _git(repo, "commit", "-q", "-m", UNION_COMMIT_MESSAGE.format(paths=", ".join(missing)),
+                "--", GITATTRIBUTES, check=False)
+    if done.returncode != 0:
+        _git(repo, "reset", "-q", "--", GITATTRIBUTES, check=False)
+        raise HookError(f"the commit of {GITATTRIBUTES} was refused: {(done.stderr or done.stdout).strip()}")
+    out["committed"] = True
+    out["commit"] = _git(repo, "rev-parse", "--short", "HEAD").stdout.strip()
+    return out
+
+
 # ------------------------------------------------------------------------------- the index
 
 class Index:
