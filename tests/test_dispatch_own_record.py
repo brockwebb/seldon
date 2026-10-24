@@ -95,6 +95,9 @@ def project(tmp_path):
     _git(p, "config", "user.email", "t@t")
     _git(p, "config", "user.name", "t")
     (p / ".gitignore").write_text(".seldon/\nlogs/\nbin/\n.claude/\n", encoding="utf-8")
+    # The tracked store is declared merge=union, as in every governed repository (AD-034 ADDENDUM 05); without it the
+    # first pass would commit the declaration and every "no commit" assertion here would count that commit.
+    (p / ".gitattributes").write_text(f"{STORE} merge=union\n", encoding="utf-8")
     (p / "controls.yaml").write_text(
         yaml.safe_dump({"spend": {"daily_tokens": 55_000_000}}), encoding="utf-8")
     (p / STORE).write_text("", encoding="utf-8")
