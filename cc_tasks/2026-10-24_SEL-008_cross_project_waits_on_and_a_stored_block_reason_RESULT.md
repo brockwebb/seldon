@@ -163,7 +163,18 @@ project's `seldon verify` shows them as "Blocks and waits" warnings, each naming
 
 ## After the merge
 
-_Filled after the merge: the numbered decision records, seldon's own backfill, push._
+- main fast-forwarded to the combined branch (`e88e93b`; SEL-008 `39de6ad`, SEL-009 `b7eb0ee`/`dc9ede6`, merge
+  `c434836`). Main had not moved since `20f9c8e`.
+- `seldon decision number` on the primary: AD-035-R13 seq 303, **AD-038-R7 seq 304, AD-038-R8 seq 305**, AD-035-R14
+  seq 306, **AD-038-R9 seq 307**, AD-035-R15 seq 308; REGISTER.md rendered; committed `a3b26f1`. `seldon decision
+  project` then projected them, and with them the 11 records main's `seldon verify` had reported unprojected.
+- seldon's own backfill: `seldon task update 1581c3ec --state blocked --reason "..."`, the reason being the one its
+  description states (migrate-names in icsp_notebook, TickBiteRisk, brock-projects, sas2graph; unblock by migrating
+  to zero, re-running `seldon paper check-units-fallback`, deleting the fallback and the instrument together).
+- Issue `dbe38fac` (`library-index-drift-unrebuildable-receipts`): the squiddy library index drift behind the
+  pre-existing `test_pa002` failure and SEL-009's FAIL verdict, with the two options, undecided.
+- The squiddy (SQ-088, `41eda58`) and hazbrief (HB-31, `eb7a998`) stubs SEL-009 filed were already on their
+  origins.
 
 ## Not done, and why
 
