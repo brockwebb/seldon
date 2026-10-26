@@ -463,6 +463,10 @@ def test_a_pass_with_nothing_eligible_writes_no_event(project, neo4j_driver, dom
     before = log.read_bytes() if log.exists() else b""
     res = _run(project, ["once"])
     assert res.exit_code == 0 and "nothing eligible" in res.output
+    # SEL-011 Part B (Issue 9965fbed): the non-candidate is named, with its reason and file, in the pass and in status.
+    assert "not_a_candidate: no_header:" in res.output and "cc_tasks/bare.md" in res.output, res.output
+    status = _run(project, ["status"])
+    assert "NOT A CANDIDATE (no_header:" in status.output and "a dispatchable task carries each of" in status.output
     after = log.read_bytes() if log.exists() else b""
     assert after == before, "a pass with nothing eligible wrote to the log"
 

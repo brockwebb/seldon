@@ -509,6 +509,8 @@ def dispatch_status(as_json):
         if not r["candidate"]:
             click.echo(f"{head}  NOT A CANDIDATE ({r['not_a_candidate_reason']})  "
                        f"{r['source_file'] or ''}")
+            if r.get("not_a_candidate_message"):
+                click.echo(f"      {r['not_a_candidate_message']}")
             continue
         verdict = "ELIGIBLE" if r["eligible"] else f"ineligible on {','.join(r['failed'])}"
         click.echo(f"{head}  {verdict}  {r['source_file']}")
@@ -1389,15 +1391,25 @@ STUCK_DIRTY_PATHS_SHOWN = 10
 
 
 def _refusal_lines(rows: list, tree: dict) -> list:
-    """One line per refused candidate, with the evidence an operator acts on (indented detail
-    lines after it). The text `_echo_refusals` prints and `seldon go` shows from the last pass
+    """One line per refused candidate and per non-candidate (SEL-011 Part B), with the evidence an
+    operator acts on (indented detail lines after it). The text `_echo_refusals` prints and `seldon go` shows from the last pass
     (DESK-001 Part B step 5), so the log and the orientation read the same."""
     out = []
     for r in rows:
-        reason = D.first_refusal_reason(r) if r["candidate"] else None
+        if not r.get("candidate"):
+            # SEL-011 Part B (Issue 9965fbed): a non-candidate gets its line too. A pass that printed only
+            # "0 candidates" left squiddy SQ-088 and SQ-091 `proposed` for two days with no reason anywhere.
+            out.append(f"  {(r.get('task_id') or '?')[:8]} not_a_candidate: {r.get('not_a_candidate_reason')}  "
+                       f"{r.get('source_file') or ''}")
+            if r.get("not_a_candidate_message"):
+                out.append(f"      {r['not_a_candidate_message']}")
+            continue
+        reason = D.first_refusal_reason(r)
         if reason:
             out.append(f"  {(r['task_id'] or '?')[:8]} {reason}: "
                        f"{','.join(r['failed'])}  {r['source_file']}")
+            if reason == "spend_unreadable":
+                out.append(f"      {r['criteria']['c4'].get('message', '')}")
             if reason == "network_undeclared":
                 out.append(f"      {r['criteria']['c5'].get('message', '')}")
             if reason == "concurrency_undeclared":

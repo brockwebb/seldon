@@ -1,0 +1,44 @@
+event: accept
+id: seldon:AD-038-R12
+date: '2026-10-26'
+decided_by: cc:bd5f26fb
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_04_registration_runs_the_dispatchers_static_checks.md:32: AD-038-R12'
+reason: 'SEL-011; evidence: SEL-010 registered with two dispatch-refusable headers, SEL-010R refused at every pass on c10 after a clean registration, squiddy SQ-088/SQ-091 sat two days with no reason line, task 9965fbed (2026-10-15) open'
+kind: decision
+status: accepted
+statement: '`seldon cc register` shall refuse a task file on every static candidacy check the dispatcher applies (candidacy headers, Framework layer, Spend as zero or a token count, Network grammar, Exclusive/Touches, Model lock, Parts under the baseline, After grammar), naming each failure with the dispatcher''s reason code and grammar, by the one function `evaluate` also calls; checks on live state stay dispatch-only; an unparseable Spend is `spend_unreadable`; and every pass shall print one line per non-candidate naming its id, reason code and source file.'
+source:
+  path: docs/design/AD-038_ADDENDUM_04_registration_runs_the_dispatchers_static_checks.md
+  lines:
+  - 32
+  - 47
+  sha256: 7e201954ee623b70cb004bee6f99570ea45fd193722142de1f9d302c778451d9
+  text: |-
+    - **AD-038-R12. Registration refuses on every static candidacy check the dispatcher applies, by the dispatcher's own
+      function, and every pass names each non-candidate.** `seldon.core.dispatch.static_checks` is the one function both
+      `evaluate` and `seldon cc register` call. Its checks read only the task's base file and the project's configuration:
+      the `dispatch.candidacy_headers`, the Framework-layer value, Spend as `zero` or a token count, the Network grammar,
+      Exclusive/Touches (c10), the Model lock, `**Parts:**` under the project's Parts baseline, and the After grammar.
+      Registration refuses on any failure, naming every failure at once as `<reason code>: <grammar or rule>`, before
+      anything is created. A project with no `dispatch:` block is held only to the checks registration applied before
+      (Model lock, Parts, After); a `dispatch:` block that does not load refuses (`dispatch_config_unreadable`). What
+      depends on live state stays dispatch-only: c4's comparison with the band, c2, c6, c7, c11 to c18. At the dispatcher,
+      Spend, Network and Exclusive/Touches remain criteria (c4, c5, c10), so a file that fails one keeps its refusal line
+      and its `dispatch_stuck` streak; the rest make the file not a candidate, and Parts and After are new reasons there
+      (`parts_undeclared`, `after_unresolved`). An unparseable Spend is refused as `spend_unreadable`, not `above_band`.
+      Every pass prints one line per non-candidate (`<id> not_a_candidate: <reason>  <source file>`, with the grammar
+      under it) beside the lines for refused candidates, so "nothing eligible (N open, 0 candidates)" is followed by N
+      lines, in the launchd log and in `seldon go`'s last-pass view; `seldon dispatch status` prints the grammar under its
+      `NOT A CANDIDATE` line.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_04_registration_runs_the_dispatchers_static_checks.md
+  anchor: AD-038-R12
+consumer:
+- cc_tasks/2026-10-26_SEL-011_registration_refuses_what_dispatch_would_refuse_and_every_non_candidate_gets_a_reason.md
+- tests/test_sel011_registration_refuses_what_dispatch_would_refuse.py
+written_by: seldon decision 0.1.0
+provisional_id: 4061f5b941ba8d50161d3959f9937ef9047651596cd60bb64f9ac28c664f94c1

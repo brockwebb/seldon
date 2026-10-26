@@ -95,6 +95,10 @@ def _header_re(name: str) -> re.Pattern:
 #: A framework-layer value that satisfies ADDENDUM_01: a DN-005 §2 layer reference, a capability
 #: tier, or the word `none` for a hygiene task.
 _LAYER_VALUE_RE = re.compile(r"§\s?2\.[1-5]\b|\bTier\s+[MOD]\b|\bnone\b", re.IGNORECASE)
+#: The same rule as text, quoted by every refusal that reads it (SEL-011; Issue 9965fbed asked for it beside
+#: `NETWORK_GRAMMAR`).
+LAYER_GRAMMAR = ("`**Framework layer served (DN-005 §5 rule 1):** <value>` where the value names a DN-005 §2 "
+                 "reference (§2.1 to §2.5), a capability tier (Tier M, O or D), or `none` for a hygiene task")
 
 #: `zero` in a Spend header means zero model calls. Anything else must name a token count that
 #: the standing band can be compared against; `M`/`K` suffixes are the spelling the task files
@@ -554,7 +558,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "waits_on_unsatisfied", "waits_on_unreachable",
                    # SEL-010R2 (AD-038-R10, c18): a chained task whose completed predecessor has no OODA record yet
                    # and whose grace has not run out.
-                   "ooda_pending")
+                   "ooda_pending",
+                   # SEL-011 (AD-038-R12): a Spend header that names neither `zero` nor a token count. c4 used to
+                   # report it as `above_band`, which sent its reader to the band for a header that does not parse.
+                   "spend_unreadable")
 
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
@@ -693,7 +700,9 @@ def load_candidacy_headers(value) -> tuple:
     drop the two c4 and c5 cannot run without."""
     if value is None:
         return REQUIRED_HEADERS
-    if not isinstance(value, list) or not value or not all(isinstance(v, str) and v.strip() for v in value):
+    # A tuple is this loader's own output: `seldon cc register`, called from a pass's cadence with the block the
+    # pass already loaded, loads it again (SEL-011), and a loader that refuses what it returned refuses that.
+    if not isinstance(value, (list, tuple)) or not value or not all(isinstance(v, str) and v.strip() for v in value):
         raise DispatchConfigError(
             f"dispatch.candidacy_headers must be a list of header names, got {value!r}")
     names = tuple(dict.fromkeys(v.strip() for v in value))
@@ -1012,29 +1021,140 @@ def candidacy(task_file: Path, required=REQUIRED_HEADERS) -> dict:
     candidacy read across several files would need a precedence rule every other reader of the
     headers (registration, the stations' Parts and Premises, the Stop gate) would then have to
     share. A committed file's missing header is repaired by a new task file (`<id>R`).
+
+    SEL-011 (AD-038-R12): the not-a-candidate half of :func:`static_checks`, which is where the checks live, so this
+    and registration cannot drift. Kept for its callers that ask only "is it a candidate, and why not".
     """
+    s = static_checks(task_file, {"candidacy_headers": tuple(required)})
+    return {"candidate": s["candidate"], "reason": s["reason"], "message": s["message"],
+            "headers": s["headers"], "model": s["model"]}
+
+
+# ------------------------------------------------------- SEL-011: the static checks, one function
+
+#: SEL-011 (AD-038-R12): the reason codes of a task file whose `**Parts:**` header is absent or does not parse, and
+#: whose `**After:**` header does not parse. Both are registration's own words (`stations.PARTS_REFUSAL`, and the
+#: `after_unresolved` registration has refused an unparseable or unresolvable After header with since 2026-09-19);
+#: the dispatcher now reads both, so a file registered by any road is held to them.
+PARTS_UNDECLARED = "parts_undeclared"
+AFTER_UNRESOLVED = "after_unresolved"
+SPEND_GRAMMAR = ("`**Spend:** zero` (no model calls) or a token count, e.g. `**Spend:** est. 0.4M tokens` "
+                 "(`<n> tokens`, `<n>M`, `<n>K`)")
+
+
+def _no_header_message(missing: list, required) -> str:
+    return (f"the task file carries no {', '.join(f'`**{n}:**`' for n in missing)} header; a dispatchable task "
+            f"carries each of {', '.join(required)} (DN-006 decision 2, AD-038-R11: `dispatch.candidacy_headers`). "
+            f"The headers are read from this file only: an addendum cannot supply one, so a committed file that "
+            f"lacks one is re-filed as a new task file")
+
+
+def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = None,
+                  config: dict | None = None) -> dict:
+    """Every candidacy check that reads only the task file and the project's configuration (SEL-011, AD-038-R12).
+
+    The ONE function `evaluate` and `seldon cc register` both call, so a file registration accepts is a file the
+    dispatcher can run, refused on the same reason code with the same grammar. Before it, registration applied Parts,
+    the Model lock and the After grammar while the dispatcher applied the headers, Spend, Network and Exclusive/Touches,
+    and a file could pass the first and sit unlaunched at the second with nothing said (SEL-010, SEL-010R, squiddy
+    SQ-088 and SQ-091, Issue 9965fbed). What depends on live state stays at the dispatcher: the band (c4's comparison),
+    the tree (c7), the lease and claims (c6), worktrees (c11), disk (c12), premises (c13), waits (c2, c17, c18).
+
+    Args:
+        task_file: The task's base file. Addenda are never read (AD-038-R11).
+        cfg: The project's validated `dispatch:` block, or None for a project with no dispatcher, in which case the
+            dispatcher's own checks (headers, Framework layer, Spend, Network, Exclusive/Touches) do not apply and
+            only those registration has always applied do (Model lock, Parts, After).
+        project_dir: The project root, for the Parts gate's baseline. Without it the Parts check is skipped.
+        config: The project's parsed seldon.yaml, for the Parts gate (`qc.parts_baseline`). Read from
+            `project_dir` when omitted.
+
+    Returns:
+        `{candidate, reason, message, headers, model, tokens, network, concurrency, failures}`. `failures` is every
+        failed check, in the dispatcher's order, as `{code, message}`; registration refuses on any. `candidate` and
+        `reason` are the dispatcher's not-a-candidate verdict, the first failure that is not one of c4, c5 or c10:
+        Spend, Network and Exclusive/Touches stay criteria at the dispatcher, so a candidate refused on one of them
+        keeps its refusal line and its `dispatch_stuck` alarm. `tokens`, `network` and `concurrency` are the parsed
+        values c4, c5 and c10 record.
+    """
+    out = {"candidate": True, "reason": None, "message": None, "headers": {}, "model": None,
+           "tokens": None, "network": None, "concurrency": None, "failures": []}
     if not task_file.is_file():
-        return {"candidate": False, "reason": "source_file_missing", "headers": {}}
+        msg = f"the task file {task_file} does not exist"
+        return {**out, "candidate": False, "reason": "source_file_missing", "message": msg,
+                "failures": [{"code": "source_file_missing", "message": msg}]}
     text = task_file.read_text(encoding="utf-8", errors="surrogateescape")
-    headers = parse_headers(text, required)
-    missing = [n for n in required if headers[n] is None]
-    if missing:
-        return {"candidate": False, "reason": f"no_header:{','.join(missing)}",
-                "headers": headers}
-    if HEADER_LAYER in required and not layer_named(headers[HEADER_LAYER]):
-        return {"candidate": False, "reason": "framework_layer_names_no_layer",
-                "headers": headers}
-    # AD-035 R5: a `**Model:**` header or a code-block `--model` naming an id the lock does not
-    # hold is not a candidate. The refusal quotes the lock, as `seldon cc register`'s does.
+    failures = []
+    criteria_codes = set()
+    if cfg is not None:
+        required = cfg.get("candidacy_headers", REQUIRED_HEADERS)
+        headers = parse_headers(text, required)
+        out["headers"] = headers
+        missing = [n for n in required if headers[n] is None]
+        if missing:
+            failures.append({"code": f"no_header:{','.join(missing)}",
+                             "message": _no_header_message(missing, required)})
+        if HEADER_LAYER in required and headers[HEADER_LAYER] is not None and not layer_named(headers[HEADER_LAYER]):
+            failures.append({"code": "framework_layer_names_no_layer",
+                             "message": (f"`**{HEADER_LAYER}:**` {headers[HEADER_LAYER]!r} names no layer; "
+                                         f"expected {LAYER_GRAMMAR}")})
+        if headers[HEADER_SPEND] is not None:
+            out["tokens"] = spend_tokens(headers[HEADER_SPEND])
+            if out["tokens"] is None:
+                failures.append({"code": "spend_unreadable",
+                                 "message": (f"Spend header {headers[HEADER_SPEND]!r} names neither `zero` nor a "
+                                             f"token count; expected {SPEND_GRAMMAR}")})
+                criteria_codes.add("spend_unreadable")
+        if headers[HEADER_NETWORK] is not None:
+            out["network"] = parse_network(headers[HEADER_NETWORK])
+            if out["network"]["error"]:
+                failures.append({"code": "network_undeclared", "message": out["network"]["error"]})
+                criteria_codes.add("network_undeclared")
+        raw = parse_concurrency_headers(text)
+        out["concurrency"] = parse_concurrency(raw[HEADER_EXCLUSIVE], raw[HEADER_TOUCHES],
+                                               cfg.get("resources") or {})
+        if out["concurrency"]["error"]:
+            failures.append({"code": "concurrency_undeclared", "message": out["concurrency"]["error"]})
+            criteria_codes.add("concurrency_undeclared")
+    # AD-035 R5: a `**Model:**` header or a code-block `--model` naming an id the lock does not hold.
     try:
-        model = models.check_task_models(text)
+        out["model"] = models.check_task_models(text)
     except models.ModelsError as exc:
-        return {"candidate": False, "reason": "model_lock_unreadable", "headers": headers,
-                "model": {"errors": [str(exc)]}}
-    if not model["ok"]:
-        return {"candidate": False, "reason": "model_not_in_lock", "headers": headers,
-                "model": model}
-    return {"candidate": True, "reason": None, "headers": headers, "model": model}
+        out["model"] = {"errors": [str(exc)]}
+        failures.append({"code": "model_lock_unreadable", "message": f"the model lock cannot be read ({exc})"})
+    else:
+        if not out["model"]["ok"]:
+            failures.append({"code": "model_not_in_lock", "message": "; ".join(out["model"]["errors"])})
+    # AD-037-R6 (c): the Parts gate, under the project's baseline exactly as registration has applied it since QC-002.
+    if project_dir is not None:
+        from seldon.core import stations as S
+        try:
+            if config is None:
+                path = Path(project_dir) / "seldon.yaml"
+                config = (yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}) or {}
+            refusal = S.parts_registration_refusal(task_file, Path(project_dir), config)
+        except (OSError, yaml.YAMLError) as exc:
+            # Fail closed, like c14: a gate that cannot be evaluated does not pass the file.
+            refusal = f"{S.PARTS_REFUSAL}: the Parts gate cannot be evaluated ({exc})"
+        if refusal:
+            failures.append({"code": PARTS_UNDECLARED,
+                             "message": refusal.removeprefix(f"{S.PARTS_REFUSAL}: ")})
+    after = parse_after(_header_value(text, HEADER_AFTER))
+    if after["kind"] is None:
+        failures.append({"code": AFTER_UNRESOLVED, "message": after["error"]})
+    out["failures"] = failures
+    blocking = [f for f in failures if f["code"] not in criteria_codes]
+    if blocking:
+        out.update(candidate=False, reason=blocking[0]["code"], message=blocking[0]["message"])
+    return out
+
+
+def static_refusal(failures: list) -> str | None:
+    """The registration refusal text for :func:`static_checks`'s failures: one `<code>: <message>` per failure, so an
+    author with three wrong headers learns all three in one turn (SEL-010 had three). None when there are none."""
+    if not failures:
+        return None
+    return "; ".join(f"{f['code']}: {f['message']}" for f in failures) + "."
 
 
 # ------------------------------------------------------------------------- the addendum scan
@@ -1881,16 +2001,19 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     if is_future(task.get("description")):
         # TRIAGE-001 Part B: a parked idea (rule 4's `FUTURE` prefix) is never a candidate, even
         # with a task file. `_tasks` already leaves these out of a pass; this holds for any caller.
-        cand = {"candidate": False, "reason": "future", "headers": {}}
+        cand = {"candidate": False, "reason": "future", "message": None, "headers": {}}
     else:
-        cand = (candidacy(task_file, cfg.get("candidacy_headers", REQUIRED_HEADERS)) if task_file
-                else {"candidate": False, "reason": "no_source_file", "headers": {}})
+        # SEL-011 (AD-038-R12): the static checks are the ones `seldon cc register` refuses on, by the same function.
+        cand = (static_checks(task_file, cfg, project_dir) if task_file
+                else {"candidate": False, "reason": "no_source_file", "message": None, "headers": {}})
     # `created_at` is carried through because `fifo` sorts on it (decision 9). It was dropped
     # here until SEL-004, so every pass sorted by `("", task_id)`: a random uuid order.
     out = {"task_id": task.get("artifact_id"), "name": task.get("name"),
            "state": task.get("state"), "source_file": source,
            "created_at": task.get("created_at"),
            "candidate": cand["candidate"], "not_a_candidate_reason": cand["reason"],
+           # SEL-011 Part B: the grammar or rule the reason stands for, printed under the reason line.
+           "not_a_candidate_message": cand.get("message"),
            "framework_layer": cand["headers"].get(HEADER_LAYER),
            # AD-035: what the header asked for (a role, an id) and, when refused, why.
            "model": cand.get("model")}
@@ -1901,7 +2024,7 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
 
     headers = cand["headers"]
     sup = superseding_addendum(task_file)
-    tokens = spend_tokens(headers[HEADER_SPEND])
+    tokens = cand["tokens"]
     stop = project_dir / cfg["stop_file"]
 
     c = {}
@@ -1921,7 +2044,10 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     c["c4"] = {"spend_header": headers[HEADER_SPEND], "declared_tokens": tokens,
                "standing_band": band, "band_ref": cfg["standing_band_ref"],
                "ok": tokens is not None and tokens <= band}
-    net = parse_network(headers[HEADER_NETWORK])
+    if tokens is None:
+        c["c4"]["message"] = (f"Spend header {headers[HEADER_SPEND]!r} names neither `zero` nor a token count; "
+                              f"expected {SPEND_GRAMMAR}")
+    net = cand["network"]
     c["c5"] = {"network_header": headers[HEADER_NETWORK], "network_kind": net["kind"],
                "network_allowlist": net["hosts"], "ok": net["kind"] is not None}
     if net["error"]:
@@ -1952,10 +2078,7 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     # SEL-004 (AD-034). For a serial pass and a task with neither header c6 keeps its meaning and c10
     # is absent; c11 is present for every task since FRICTION-002 (below).
     parallel = cfg.get("max_parallel", MAX_PARALLEL_DEFAULT) > 1
-    raw = parse_concurrency_headers(task_file.read_text(encoding="utf-8",
-                                                        errors="surrogateescape"))
-    conc = parse_concurrency(raw[HEADER_EXCLUSIVE], raw[HEADER_TOUCHES],
-                             cfg.get("resources") or {})
+    conc = cand["concurrency"]
     out["concurrency"] = conc
     if parallel:
         # c6 in parallel mode: no claim in flight IN THIS CHECKOUT (an exclusive task runs
@@ -2037,7 +2160,7 @@ def first_refusal_reason(row: dict) -> str | None:
     if not c.get("c16", {}).get("ok", True):
         return "union_attribute_missing"
     if not c.get("c4", {}).get("ok", True):
-        return "above_band"
+        return "spend_unreadable" if c["c4"].get("declared_tokens") is None else "above_band"
     if not c.get("c5", {}).get("ok", True):
         return "network_undeclared"
     if not c.get("c10", {}).get("ok", True):

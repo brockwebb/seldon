@@ -18,6 +18,7 @@ from seldon.core.artifacts import (
 from seldon.core.events import make_event
 from seldon.core.dispatch import (
     AFTER_GRAMMAR,
+    AFTER_UNRESOLVED as _D_AFTER_UNRESOLVED,
     HEADER_AFTER,
     after_ref_is_id,
     parse_after,
@@ -340,7 +341,8 @@ def _warn_if_description_suspicious(
 #: The refusal reason, so a log and a message speak one word for it.
 #: AD-036-R4: the prefix every prior-art registration refusal starts with.
 PRIOR_ART_REFUSAL = "AD-036-R4"
-AFTER_UNRESOLVED = "after_unresolved"
+#: The dispatcher's word too since SEL-011, so it is defined once, beside the grammar.
+AFTER_UNRESOLVED = _D_AFTER_UNRESOLVED
 
 #: Decision 4: SEQUENCING stays prose, and this catches the sentence in it that is trying to
 #: be an edge. A WARNING and never a refusal — Seldon does not guess an edge from a sentence,
@@ -789,6 +791,30 @@ def enforce_task_models(task_path: Path) -> str | None:
     if check["ok"]:
         return None
     return f"{MODEL_REFUSAL}: " + "; ".join(check["errors"]) + "."
+
+
+def registration_static_refusal(task_path: Path, project_dir: Path, config: dict) -> str | None:
+    """SEL-011 (AD-038-R12): None, or the refusal text for every static candidacy check the task file fails.
+
+    The checks are `seldon.core.dispatch.static_checks`, the function the dispatcher's `evaluate` calls, so the two
+    cannot drift. A project with a `dispatch:` block is held to the dispatcher's own checks (its
+    `candidacy_headers`, `resources`); a project without one is held to the checks registration always applied (the
+    Model lock, Parts, the After grammar). A `dispatch:` block that does not load refuses: nothing is known about what
+    the dispatcher would accept, so nothing is registered.
+    """
+    import copy
+
+    from seldon.core import dispatch as D
+
+    cfg = None
+    if (config or {}).get("dispatch") is not None:
+        try:
+            # A copy: the loader normalises the block in place, and the rest of registration reads `config` as written.
+            cfg = D.load_dispatch_config(project_dir, copy.deepcopy(config))
+        except D.DispatchConfigError as exc:
+            return f"dispatch_config_unreadable: {exc}; the static candidacy checks cannot run (SEL-011)."
+    checked = D.static_checks(task_path, cfg, project_dir, config)
+    return D.static_refusal(checked["failures"])
 
 
 def enforce_design_reference(task_path: Path, config: dict, actor: str = "cc") -> str | None:
@@ -1280,9 +1306,13 @@ def register_task_file(
     model_note = models.ensure_fresh("register")
     if model_note:
         say(model_note)
-    model_check = enforce_task_models(task_path)
-    if model_check:
-        raise ValueError(f"{model_check} File: {rel_path}")
+    # SEL-011 (AD-038-R12): every static candidacy check the dispatcher applies, by the dispatcher's own function,
+    # BEFORE anything is created: the headers, the Framework layer, Spend, the Network grammar, Exclusive/Touches
+    # (c10), the Model lock, Parts and the After grammar. A file registration accepts is a file the dispatcher can
+    # run; what it refuses is refused with the dispatcher's reason code and grammar, every failure at once.
+    static_refusal = registration_static_refusal(task_path, project_dir, config)
+    if static_refusal:
+        raise ValueError(f"{static_refusal} File: {rel_path}")
 
     # SEL-006 Part A: a governing note git does not hold (untracked, or edited since its commit) is
     # verified and its rulings planned here, BEFORE anything is created, and committed with the task
@@ -1335,14 +1365,9 @@ def register_task_file(
     if criteria_refusal:
         raise ValueError(f"{criteria_refusal} File: {rel_path}")
 
-    # AD-037-R6 (c), registration (QC-002 Part A): a task lists each Part's share of its estimate in a `**Parts:**`
-    # header, so the milestone station can compute CPI. Tasks registered before QC-002's merge are baseline
-    # (`qc.parts_baseline` in seldon.yaml).
+    # AD-037-R6 (c), registration (QC-002 Part A): the `**Parts:**` header is checked above, with the dispatcher's
+    # other static checks (SEL-011).
     from seldon.core import stations
-    parts_refusal = stations.parts_registration_refusal(task_path, project_dir, config)
-    if parts_refusal:
-        raise ValueError(f"{parts_refusal} File: {rel_path}")
-
     # AD-038-R5 (FRICTION-001 Part E): the task's `check:` premises run now, BEFORE anything is created, so a
     # false one reaches its author in the same turn rather than at the dispatcher a day later (SQ-016).
     premise_refusal = stations.premises_registration_refusal(task_path, project_dir, config)
