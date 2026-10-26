@@ -1,3 +1,4 @@
+seq: 311
 event: accept
 id: seldon:AD-038-R12
 date: '2026-10-26'
@@ -42,3 +43,5 @@ consumer:
 - tests/test_sel011_registration_refuses_what_dispatch_would_refuse.py
 written_by: seldon decision 0.1.0
 provisional_id: 4061f5b941ba8d50161d3959f9937ef9047651596cd60bb64f9ac28c664f94c1
+prev_hash: f3cedd50f47471bcb3b9c9d0c97cc939f25ea47a4b77dfb22bb2aa897cfd928e
+record_hash: 405a441266110cb96546b4ceb3c30d8bb1669661d27b1a6e2ea04fdd534674fb
