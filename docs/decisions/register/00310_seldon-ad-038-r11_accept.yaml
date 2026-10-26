@@ -1,3 +1,4 @@
+seq: 310
 event: accept
 id: seldon:AD-038-R11
 date: '2026-10-26'
@@ -41,3 +42,5 @@ consumer:
 - tests/test_sel010r2_ooda_gate_and_adopt.py
 written_by: seldon decision 0.1.0
 provisional_id: aa436fa26ebd39b006fefcd98cde7a2bbb47f3dd5d949ce72ed376ea224985c3
+prev_hash: 7f2ef06f5d983d9d4c616f2eea6e1de3b531ff20d14e21aef1cc728804ca4301
+record_hash: f3cedd50f47471bcb3b9c9d0c97cc939f25ea47a4b77dfb22bb2aa897cfd928e
