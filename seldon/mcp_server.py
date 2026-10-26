@@ -751,6 +751,74 @@ def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str
 
 
 @_tool()
+def seldon_ooda_pending(project_dir: str = ".") -> str:
+    """The Desktop OODA's worklist (AD-038-R10, criterion c18): every completed task whose open successor waits for
+    its OODA record, with the RESULT to read, the successor file to amend, the record path and the grace left.
+    "ooda: nothing pending" when there is nothing to orient on. How to answer each row:
+    docs/conventions/desktop_ooda.md section 3 (seldon repository).
+
+    Args:
+        project_dir: Path to the project root.
+    """
+    from datetime import datetime, timezone
+
+    from seldon.commands.dispatch import _tasks
+    from seldon.core import dispatch as D
+    from seldon.core.events import read_events
+
+    config, driver, database, _dc, resolved = _resolve_project(project_dir)
+    project_path = Path(resolved)
+    try:
+        cfg = D.load_dispatch_config(project_path, config)
+        tasks = _tasks(driver, database)
+    except D.DispatchConfigError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+    rows = D.ooda_pending(project_path, tasks, cfg, D.ooda_index(read_events(project_path)),
+                          datetime.now(timezone.utc))
+    return "\n".join(D.ooda_pending_lines(rows))
+
+
+@_tool()
+def seldon_ooda_record(task: str, note: str = "", project_dir: str = ".") -> str:
+    """Record that the OODA on completed TASK is done (AD-038-R10): one `ooda_recorded` event, which releases every
+    successor criterion c18 holds on it. Write any addendum for the successor, or block it, BEFORE this: the record
+    releases it. The file form, `cc_tasks/<stem>_OODA.md`, carries a full reading; this is for "read, no change".
+
+    Args:
+        task: Artifact id, unique id prefix, or the task file's stem.
+        note: One line: what the OODA found.
+        project_dir: Path to the project root.
+    """
+    from seldon.core import dispatch as D
+    from seldon.core.events import append_event, make_event
+
+    config, driver, database, _dc, resolved = _resolve_project(project_dir)
+    project_path = Path(resolved)
+    try:
+        stem = Path(task).stem if task.endswith(".md") else task
+        with driver.session(database=database) as s:
+            rows = [dict(r) for r in s.run(
+                "MATCH (t:ResearchTask) WHERE t.artifact_id STARTS WITH $ref OR t.source_file = $rel "
+                "RETURN DISTINCT t.artifact_id AS id, t.state AS state", ref=task, rel=f"cc_tasks/{stem}.md")]
+    finally:
+        driver.close()
+    if len(rows) != 1:
+        return f"Error: {task!r} matches {len(rows)} ResearchTasks" + (
+            f": {', '.join(r['id'][:8] for r in rows)}" if rows else "")
+    try:
+        payload = D.ooda_record_event(rows[0]["id"], rows[0]["state"], MCP_ACTOR, note or None)
+    except ValueError as exc:
+        return f"Error: {exc}"
+    append_event(project_path, make_event(event_type=D.EVENT_OODA_RECORDED, actor=MCP_ACTOR, authority="accepted",
+                                          payload=payload))
+    committed = D.commit_journal_append(project_path, config, by="the seldon_ooda_record MCP tool", actor=MCP_ACTOR)
+    return (f"OODA recorded: {rows[0]['id'][:8]}" + (f"\n  committed {committed['commit']}" if committed.get("committed")
+                                                     else f"\n  (event store not committed: {committed.get('reason')})"))
+
+
+@_tool()
 def seldon_dispatch_redrive(task: str, project_dir: str = ".") -> str:
     """Put a blocked task back on the dispatcher's queue: blocked -> accepted, claim cleared (AD-038-R2).
 

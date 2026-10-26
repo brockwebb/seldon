@@ -1,0 +1,43 @@
+event: accept
+id: seldon:AD-038-R11
+date: '2026-10-26'
+decided_by: cc:09e3b92c
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md:55: AD-038-R11'
+reason: 'SEL-010R2; evidence: SEL-010 (hazbrief, 2026-10-25) found chains run on their first premises with the between-task OODA done by hand (DN-006 section 4), hazbrief could not opt in without hand-writing the dispatch block and plist, and SEL-010''s ADDENDUM-00 carrying every header was still refused parts_undeclared (2026-10-26)'
+kind: decision
+status: accepted
+statement: '`dispatch.candidacy_headers` shall name the headers a candidate task file carries, shall include Spend and Network, and when absent shall be Spend, Network and Framework layer served; candidacy headers, Parts and Premises shall be read from the base task file only, never an addendum, and a committed file lacking one is re-filed as a new task; `seldon dispatch adopt` shall add only a project''s missing dispatch keys (enabled false, the kit''s machine-wide values, asked band/branch/label, the minimum headers, ooda_grace_s 0), the wrapper''s log caps, the ignore lines and a launchd plist, validated before any write.'
+source:
+  path: docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md
+  lines:
+  - 55
+  - 69
+  sha256: ef2b44401d26ead1b1bd124eb03a1f13ad08b14e8ee9a3305761c622a0efe40c
+  text: |-
+    - **AD-038-R11. The candidacy headers are a per-project list with a kit-wide minimum, read from the base file only,
+      and a project adopts the dispatcher in one command.** `dispatch.candidacy_headers` names the headers a task file
+      must carry to be a candidate; it must include `Spend` and `Network` (c4 and c5 cannot run without them) and may add
+      any header of the project's own. Absent, it is `Spend`, `Network`, `Framework layer served`, the list every project
+      read before, so no project's candidates change. The headers, like `**Parts:**` and `**Premises:**`, are read from
+      the task's base file and never from an addendum: an addendum amends what a task does, and a candidacy read across
+      files would need a precedence rule that registration, the stations and the Stop gate would all have to share. A
+      committed file that lacks a header is re-filed as a new task file; the `parts_undeclared` refusal says so.
+      `seldon dispatch adopt` writes a project's missing `dispatch:` keys (a key the project has is never rewritten; the
+      machine-wide ones are copied from the kit's block in seldon's `seldon.yaml`; the band reference, branch and launchd
+      label are asked, with defaults), `candidacy_headers` at the minimum, `ooda_grace_s: 0`, `enabled: false`, the
+      wrapper's `jobs.dispatch` log caps, the ignore lines for the dispatcher's runtime state, and a launchd plist under
+      `scripts/jobs/` that runs the kit's wrapper with the project and the plist as arguments, at a path it prints. It
+      edits the configuration as text, keeping every comment, and validates the result with `load_dispatch_config` and the
+      band's resolution before writing anything; `--dry-run` writes nothing.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md
+  anchor: AD-038-R11
+consumer:
+- cc_tasks/2026-10-26_SEL-010R2_dispatch_waits_for_the_desktop_ooda_between_chained_tasks.md
+- tests/test_sel010r2_ooda_gate_and_adopt.py
+written_by: seldon decision 0.1.0
+provisional_id: aa436fa26ebd39b006fefcd98cde7a2bbb47f3dd5d949ce72ed376ea224985c3

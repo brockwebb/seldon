@@ -747,39 +747,12 @@ def ooda_pending(as_json):
     finally:
         driver.close()
     from seldon.core.events import read_events
-    grace = cfg["ooda_grace_s"]
-    # Listed whatever the grace: with no grace a record is still what the chain's author wants written. An infinite
-    # grace here releases only on a record, so every predecessor that lacks one is listed.
-    gates = D.ooda_waits(project_dir, tasks, {**cfg, "ooda_grace_s": float("inf")},
-                         D.ooda_index(read_events(project_dir)), _utcnow())
-    names = {t["artifact_id"]: t for t in tasks}
-    rows = []
-    for tid, g in gates.items():
-        for w in g["predecessors"]:
-            if w["released_by"]:
-                continue
-            src = next((p.get("source_file") for p in names[tid]["predecessors"]
-                        if p.get("artifact_id") == w["predecessor"]), None)
-            left = (max(0, grace - w["elapsed_s"]) if grace and w["elapsed_s"] is not None else None)
-            rows.append({"predecessor": w["predecessor"], "predecessor_name": w["name"],
-                         "result": str(Path(src).with_name(Path(src).stem + "_RESULT.md")) if src else None,
-                         "ooda_file": w["ooda_file"], "successor": tid,
-                         "successor_file": names[tid].get("source_file"),
-                         "grace_s": grace, "grace_left_s": left, "completed_at": w["completed_at"]})
+    rows = D.ooda_pending(project_dir, tasks, cfg, D.ooda_index(read_events(project_dir)), _utcnow())
     if as_json:
         click.echo(json.dumps(rows, indent=1, default=str))
         return
-    if not rows:
-        click.echo("ooda: nothing pending")
-        return
-    for r in rows:
-        held = ("not held (dispatch.ooda_grace_s is 0)" if not grace
-                else f"held {r['grace_left_s']} s more" if r["grace_left_s"] is not None
-                else "held until a record (completion time unknown)")
-        click.echo(f"{r['predecessor'][:8]} {r['predecessor_name'] or ''} completed {r['completed_at'] or '?'}")
-        click.echo(f"  read:    {r['result']}")
-        click.echo(f"  amend:   {r['successor_file']} ({r['successor'][:8]}), {held}")
-        click.echo(f"  release: commit {r['ooda_file']}, or `seldon dispatch ooda record {r['predecessor'][:8]}`")
+    for line in D.ooda_pending_lines(rows):
+        click.echo(line)
 
 
 @ooda_group.command("record")
@@ -800,13 +773,12 @@ def ooda_record(task, note, actor):
                           id=task_id).single()["state"]
     finally:
         driver.close()
-    if state not in D.OODA_PREDECESSOR_STATES:
-        raise click.ClickException(
-            f"{task_id[:8]} is {state}; an OODA record answers a completed task's RESULT "
-            f"({', '.join(D.OODA_PREDECESSOR_STATES)})")
+    try:
+        payload = D.ooda_record_event(task_id, state, actor, note)
+    except ValueError as exc:
+        raise click.ClickException(str(exc))
     append_event(project_dir, make_event(event_type=D.EVENT_OODA_RECORDED, actor=actor, authority="accepted",
-                                         payload={"task_id": task_id, "by": actor, "note": note},
-                                         session_id=session_id))
+                                         payload=payload, session_id=session_id))
     click.echo(f"ooda recorded: {task_id[:8]} ({actor})")
     # Committed the way `redrive` commits its line (deferred while a lease is held; the next pass reconciles it).
     committed = D.commit_journal_append(project_dir, config, by="seldon dispatch ooda record", actor=actor)

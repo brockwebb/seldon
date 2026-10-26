@@ -451,3 +451,31 @@ def test_ooda_pending_lists_the_result_to_read_and_ooda_record_releases_it(neo4j
                         datetime.now(timezone.utc))
     assert gate[n1]["ok"] and gate[n1]["predecessors"][0]["released_by"] == "ooda_event"
     assert runner.invoke(dispatch_group, ["ooda", "pending"]).output.strip() == "ooda: nothing pending"
+
+
+@neo4j_tests
+def test_the_desktop_mcp_tools_list_and_record_the_same(neo4j_driver, chain_project):
+    """A Desktop thread has no shell: `seldon_ooda_pending` and `seldon_ooda_record` are its surface (in-process
+    bodies, `__wrapped__`, as every MCP test calls them since AD-038-R3)."""
+    from seldon import mcp_server as m
+    from seldon.core.events import read_events
+    from seldon.core.precedence import add_chain
+    from seldon.domain.loader import load_domain_config
+    from tests.test_sel008_cross_project_waits_and_block_reason import RESEARCH_YAML, _task
+    from tests.testdb import TEST_DATABASE
+    dc = load_domain_config(RESEARCH_YAML)
+    n0 = _task(chain_project, neo4j_driver, TEST_DATABASE, dc, "N", state="completed",
+               source_file="cc_tasks/n0.md", name="n0")
+    n1 = _task(chain_project, neo4j_driver, TEST_DATABASE, dc, "N+1", source_file="cc_tasks/n1.md", name="n1")
+    add_chain(chain_project, neo4j_driver, TEST_DATABASE, dc, [n0, n1], reason="chain")
+
+    listed = m.seldon_ooda_pending.__wrapped__(project_dir=str(chain_project))
+    assert listed.startswith(f"{n0[:8]} n0 completed") and "read:    cc_tasks/n0_RESULT.md" in listed
+    assert f"seldon dispatch ooda record {n0[:8]}" in listed
+    assert m.seldon_ooda_record.__wrapped__(task=n1[:8], project_dir=str(chain_project)).startswith("Error:")
+    out = m.seldon_ooda_record.__wrapped__(task=n0[:8], note="read, no change", project_dir=str(chain_project))
+    assert out.startswith(f"OODA recorded: {n0[:8]}"), out
+    ev = [e for e in read_events(chain_project) if e["event_type"] == D.EVENT_OODA_RECORDED]
+    assert [(e["payload"]["task_id"], e["payload"]["note"], e["actor"]) for e in ev] == [(n0, "read, no change",
+                                                                                        "desktop")]
+    assert m.seldon_ooda_pending.__wrapped__(project_dir=str(chain_project)) == "ooda: nothing pending"

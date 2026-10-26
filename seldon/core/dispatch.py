@@ -1796,6 +1796,56 @@ def ooda_waits(project_dir: Path, tasks: list, cfg: dict, index: dict, now: date
     return out
 
 
+def ooda_pending(project_dir: Path, tasks: list, cfg: dict, index: dict, now: datetime) -> list:
+    """`seldon dispatch ooda pending` / `seldon_ooda_pending`: one row per (completed predecessor without a record,
+    open successor), with the RESULT to read, the successor to amend, the record's path and the grace left.
+
+    Listed whatever the grace: with no grace a record is still what the chain's author wants written. An infinite
+    grace here releases only on a record, so every predecessor that lacks one is listed."""
+    grace = cfg.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
+    gates = ooda_waits(project_dir, tasks, {**cfg, "ooda_grace_s": float("inf")}, index, now)
+    by_id = {t.get("artifact_id"): t for t in tasks}
+    rows = []
+    for tid, g in gates.items():
+        for w in g["predecessors"]:
+            if w["released_by"]:
+                continue
+            src = next((p.get("source_file") for p in by_id[tid].get("predecessors") or []
+                        if p.get("artifact_id") == w["predecessor"]), None)
+            rows.append({"predecessor": w["predecessor"], "predecessor_name": w["name"],
+                         "result": str(Path(src).with_name(Path(src).stem + "_RESULT.md")) if src else None,
+                         "ooda_file": w["ooda_file"], "successor": tid,
+                         "successor_file": by_id[tid].get("source_file"), "grace_s": grace,
+                         "grace_left_s": (max(0, grace - w["elapsed_s"])
+                                          if grace and w["elapsed_s"] is not None else None),
+                         "completed_at": w["completed_at"]})
+    return rows
+
+
+def ooda_pending_lines(rows: list) -> list:
+    """The text both surfaces print for `ooda_pending`'s rows."""
+    if not rows:
+        return ["ooda: nothing pending"]
+    out = []
+    for r in rows:
+        held = ("not held (dispatch.ooda_grace_s is 0)" if not r["grace_s"]
+                else f"held {r['grace_left_s']} s more" if r["grace_left_s"] is not None
+                else "held until a record (completion time unknown)")
+        out.append(f"{r['predecessor'][:8]} {r['predecessor_name'] or ''} completed {r['completed_at'] or '?'}")
+        out.append(f"  read:    {r['result']}")
+        out.append(f"  amend:   {r['successor_file']} ({r['successor'][:8]}), {held}")
+        out.append(f"  release: commit {r['ooda_file']}, or `seldon dispatch ooda record {r['predecessor'][:8]}`")
+    return out
+
+
+def ooda_record_event(task_id: str, state: str | None, by: str, note: str | None) -> dict:
+    """The `ooda_recorded` payload for completed `task_id`; ValueError for a task with no RESULT to have read."""
+    if state not in OODA_PREDECESSOR_STATES:
+        raise ValueError(f"{task_id[:8]} is {state}; an OODA record answers a completed task's RESULT "
+                         f"({', '.join(OODA_PREDECESSOR_STATES)})")
+    return {"task_id": task_id, "by": by, "note": note}
+
+
 # ------------------------------------------------------------------------------- evaluation
 
 def union_state(project_dir: Path) -> dict:

@@ -14,6 +14,10 @@ already held the answer — only the act of starting it. That is a latency defec
 only one this closes: reading a RESULT, naming its wrong premises and authoring the next task
 is still a Desktop OODA and is not automated here (DN-006 §4).
 
+*Since SEL-010R2 (AD-038-R10, 2026-10-26):* the dispatcher now waits for that Desktop OODA between
+chained tasks (criterion c18, `dispatch.ooda_grace_s`), and `docs/conventions/desktop_ooda.md` says
+what a project schedules to do it. The reading itself is still the Desktop's.
+
 ## Shape
 
 ```
@@ -129,6 +133,13 @@ Add a `dispatch:` block to that project's `seldon.yaml` with `enabled: false`, g
 lease and the log directory, install a launchd plist that runs `seldon dispatch once` from the
 project root, and author task files with the three headers. Nothing else in the project
 changes, and nothing already queued becomes dispatchable.
+
+*Since SEL-010R2 (AD-038-R11, 2026-10-26):* `seldon dispatch adopt --project <dir>` does all of
+this in one step except loading the job. It writes the block's missing keys `enabled: false`,
+with the candidacy headers at the kit-wide minimum (`Spend`, `Network`) and `ooda_grace_s: 0`. It
+also writes the wrapper's log caps, the ignore lines, and a plist under `scripts/jobs/` that runs
+this repository's wrapper for that project. It then prints the commit, `seldon hooks install` and
+`launchctl` lines to run. `--dry-run` writes nothing.
 
 ## Tests
 

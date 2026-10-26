@@ -1,0 +1,44 @@
+event: accept
+id: seldon:AD-038-R10
+date: '2026-10-26'
+decided_by: cc:09e3b92c
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md:39: AD-038-R10'
+reason: 'SEL-010R2; evidence: SEL-010 (hazbrief, 2026-10-25) found chains run on their first premises with the between-task OODA done by hand (DN-006 section 4), hazbrief could not opt in without hand-writing the dispatch block and plist, and SEL-010''s ADDENDUM-00 carrying every header was still refused parts_undeclared (2026-10-26)'
+kind: decision
+status: accepted
+statement: 'The dispatcher shall hold a task whose precedes predecessor is completed or verified (criterion c18, `ooda_pending`) until an `ooda_recorded` event names that predecessor, or its committed `<stem>_OODA.md` exists, or `dispatch.ooda_grace_s` seconds have passed since its last completion (ledger, else graph updated_at; neither: hold until a record); a grace of 0, the default, never waits and leaves c18 absent; above 0, c18 is present for every task it applies to and records released_by; superseded, withdrawn or rejected predecessors hold nothing; the reconciler shall commit an untracked `_OODA.md` beside a registered task.'
+source:
+  path: docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md
+  lines:
+  - 39
+  - 54
+  sha256: ef2b44401d26ead1b1bd124eb03a1f13ad08b14e8ee9a3305761c622a0efe40c
+  text: |-
+    - **AD-038-R10. A chained task waits for the OODA on its completed predecessor, or the project's grace.**
+      Criterion **c18**: a task with a `precedes` predecessor in `completed` or `verified` is eligible only once an OODA
+      record for that predecessor exists or `dispatch.ooda_grace_s` seconds have passed since the predecessor's completion.
+      The record is either an `ooda_recorded` event whose payload names the predecessor's id (`seldon dispatch ooda record
+      <N>`, MCP `seldon_ooda_record`), or the file `<N's stem>_OODA.md` beside N's task file, counted only once committed
+      (the successor's worktree is cut from main's HEAD); the reconciler commits an untracked one beside a registered task
+      as it commits an addendum (AD-038-R1). The completion time is the ledger's last move of N into `completed`, else the
+      graph's `updated_at` (an upper bound, so the grace is never shorter than declared); with neither, the task waits
+      until a record (fail closed, like c14 and c17). A predecessor that ended `superseded`, `withdrawn` or `rejected`
+      left no RESULT and holds nothing here. The grace defaults to 0, which never waits, and c18 is then absent from the
+      vector; with a grace above 0, c18 is present for every task it applies to, passing or not, so `dispatch_launched`
+      records what released it (`released_by`: `ooda_event`, `ooda_file` or `grace`). Its refusal reason is
+      `ooda_pending`, printed with the predecessor, the grace left and the release line; a streak of it raises
+      `dispatch_stuck` like any other, which is the signal that a Desktop OODA is due. `seldon dispatch ooda pending`
+      (MCP `seldon_ooda_pending`) lists, for every completed predecessor without a record, the RESULT to read and the
+      successor to amend. The reading itself is the Desktop's (`docs/conventions/desktop_ooda.md`).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md
+  anchor: AD-038-R10
+consumer:
+- cc_tasks/2026-10-26_SEL-010R2_dispatch_waits_for_the_desktop_ooda_between_chained_tasks.md
+- tests/test_sel010r2_ooda_gate_and_adopt.py
+written_by: seldon decision 0.1.0
+provisional_id: 446f7a7430131700c232e376a71f81561a9f8e9bdf6bb456220f981576a044e2
