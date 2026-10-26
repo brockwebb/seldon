@@ -10,7 +10,9 @@ set -u
 # The anaconda python carries seldon and neo4j. A dispatched session launches the CLI named in
 # seldon's model lock by absolute path (AD-035 R3), so PATH no longer chooses the binary.
 export PATH="/opt/anaconda3/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-REPO="$(cd "$(dirname "$0")/../.." && pwd)"
+# SEL-010R2 (AD-038-R11): `seldon dispatch adopt` writes another project's plist to run THIS wrapper with that
+# project's root and its plist as the two arguments. With none, the project is this checkout, as before.
+REPO="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
 # A test can redirect the log; launchd sets no such variable.
 LOG="${SELDON_DISPATCH_LOG:-$REPO/logs/seldon_dispatch.log}"
 LOG_DIR="$(dirname "$LOG")"
@@ -43,7 +45,7 @@ fi
 
 # seldon.yaml poll_interval_s and the plist's StartInterval are one parameter written twice;
 # refuse rather than let them drift.
-PLIST="$REPO/scripts/jobs/com.brock.seldon-dispatch.plist"
+PLIST="${2:-$REPO/scripts/jobs/com.brock.seldon-dispatch.plist}"
 declared=$(/opt/anaconda3/bin/python3 -c "
 import yaml
 print(yaml.safe_load(open('$REPO/seldon.yaml'))['dispatch']['poll_interval_s'])" 2>/dev/null)

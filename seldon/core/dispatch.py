@@ -70,6 +70,14 @@ HEADER_NETWORK = "Network"
 HEADER_LAYER = "Framework layer served"
 REQUIRED_HEADERS = (HEADER_SPEND, HEADER_NETWORK, HEADER_LAYER)
 
+#: SEL-010R2 Part B (AD-038-R11): the headers are a per-project list, `dispatch.candidacy_headers`, and these two are
+#: the kit-wide minimum no project may drop: without `Spend` c4 has no number to hold against the band, and without
+#: `Network` c5 has no declaration to refuse. `Framework layer served` is DN-005 §5 rule 1, ai-readiness-kg's
+#: framework rule, which every project that adopted the dispatcher inherited by copying the constant. A project with
+#: no `candidacy_headers` key keeps `REQUIRED_HEADERS`, so installing this build changes no project's candidates;
+#: `seldon dispatch adopt` writes the minimum for a new project, which adds what its own rules require.
+MINIMUM_HEADERS = (HEADER_SPEND, HEADER_NETWORK)
+
 #: `**Spend:** zero model calls.` / `**Network:** none.` / `**Framework layer served (DN-005 §5
 #: rule 1):** §2.2 Tier M.` — the same bolded-header shape `seldon cc register` already parses.
 #: The header name may carry a parenthetical, which the third one does.
@@ -543,7 +551,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "database_unavailable",
                    # SEL-008 (AD-038-R8, c17): a wait on a task in another project's graph that is not yet
                    # satisfied, and one whose other graph could not be read (not ready, never ready by default).
-                   "waits_on_unsatisfied", "waits_on_unreachable")
+                   "waits_on_unsatisfied", "waits_on_unreachable",
+                   # SEL-010R2 (AD-038-R10, c18): a chained task whose completed predecessor has no OODA record yet
+                   # and whose grace has not run out.
+                   "ooda_pending")
 
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
@@ -651,6 +662,14 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.disk_need_factor must be a number of at least 1 (the launch's measured footprint is "
             f"multiplied by it), got {factor!r}")
     block["disk_need_factor"] = factor
+    # SEL-010R2 (AD-038-R10): c18's grace. Optional with a default of 0, which never waits, so installing this build
+    # changes no project's queue; a project opts in by naming how long a chain waits for its Desktop OODA.
+    grace = block.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
+    if isinstance(grace, bool) or not isinstance(grace, (int, float)) or grace < 0:
+        raise DispatchConfigError(
+            f"dispatch.ooda_grace_s must be a number of seconds, 0 or more (0 never waits), got {grace!r}")
+    block["ooda_grace_s"] = grace
+    block["candidacy_headers"] = load_candidacy_headers(block.get("candidacy_headers"))
     block["allow"] = _load_allow(block.get("allow"))
     _load_parallel_config(block)
     # QC-002: the stations' block, validated at load like every other key, so a misspelt ceiling refuses here.
@@ -664,6 +683,26 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     if scfg["interpreter"]:
         block["stations"] = {**block["stations"], "interpreter": scfg["interpreter"]}
     return block
+
+
+def load_candidacy_headers(value) -> tuple:
+    """`dispatch.candidacy_headers` (AD-038-R11): the headers a task file must carry to be a candidate.
+
+    Absent: `REQUIRED_HEADERS`, the list every project read before this key existed. Present: a list of header names
+    that contains `MINIMUM_HEADERS`, refused at load otherwise, so a project can add a header of its own and never
+    drop the two c4 and c5 cannot run without."""
+    if value is None:
+        return REQUIRED_HEADERS
+    if not isinstance(value, list) or not value or not all(isinstance(v, str) and v.strip() for v in value):
+        raise DispatchConfigError(
+            f"dispatch.candidacy_headers must be a list of header names, got {value!r}")
+    names = tuple(dict.fromkeys(v.strip() for v in value))
+    missing = [h for h in MINIMUM_HEADERS if h not in names]
+    if missing:
+        raise DispatchConfigError(
+            f"dispatch.candidacy_headers must include the kit-wide minimum {list(MINIMUM_HEADERS)}; missing "
+            f"{missing} (c4 holds Spend against the band and c5 refuses an undeclared Network: AD-038-R11)")
+    return names
 
 
 #: The shape of one `dispatch.allow` rule: a Claude Code permission rule for the Bash tool with a non-empty pattern.
@@ -880,14 +919,15 @@ def _header_value(text: str, name: str) -> str | None:
     return ((m.group("v2") or "") + (m.group("rest") or "")).strip()
 
 
-def parse_headers(text: str) -> dict:
-    """The three headers, as raw values. `None` where the header is absent.
+def parse_headers(text: str, names=REQUIRED_HEADERS) -> dict:
+    """The candidacy headers, as raw values. `None` where the header is absent.
 
     Reads the same bolded-header lines `seldon cc register` already reads and adds nothing to
     the task file format — the opt-in is that a task file carries them, not that it adopts a
-    new syntax (DN-006 decision 2).
+    new syntax (DN-006 decision 2). The three `REQUIRED_HEADERS` are always read, required or not,
+    because c4, c5 and c9 record their values; `names` adds a project's own (AD-038-R11).
     """
-    return {name: _header_value(text, name) for name in REQUIRED_HEADERS}
+    return {name: _header_value(text, name) for name in dict.fromkeys(REQUIRED_HEADERS + tuple(names))}
 
 
 def spend_tokens(value: str | None) -> int | None:
@@ -960,22 +1000,28 @@ def layer_named(value: str | None) -> bool:
     return value is not None and bool(_LAYER_VALUE_RE.search(value))
 
 
-def candidacy(task_file: Path) -> dict:
+def candidacy(task_file: Path, required=REQUIRED_HEADERS) -> dict:
     """Is this task file dispatchable at all, and if not, which header failed.
 
     A task whose file lacks the headers is **not a candidate** — not "ineligible". The
     distinction is the whole opt-in (DN-006 decision 2): nothing already queued changes
     behaviour when the job is installed, and `status` can say so in one word.
+
+    `required` is the project's `dispatch.candidacy_headers` (AD-038-R11). The headers are read from
+    the BASE file only, never from an addendum: an addendum amends what a task does, and a
+    candidacy read across several files would need a precedence rule every other reader of the
+    headers (registration, the stations' Parts and Premises, the Stop gate) would then have to
+    share. A committed file's missing header is repaired by a new task file (`<id>R`).
     """
     if not task_file.is_file():
         return {"candidate": False, "reason": "source_file_missing", "headers": {}}
     text = task_file.read_text(encoding="utf-8", errors="surrogateescape")
-    headers = parse_headers(text)
-    missing = [n for n in REQUIRED_HEADERS if headers[n] is None]
+    headers = parse_headers(text, required)
+    missing = [n for n in required if headers[n] is None]
     if missing:
         return {"candidate": False, "reason": f"no_header:{','.join(missing)}",
                 "headers": headers}
-    if not layer_named(headers[HEADER_LAYER]):
+    if HEADER_LAYER in required and not layer_named(headers[HEADER_LAYER]):
         return {"candidate": False, "reason": "framework_layer_names_no_layer",
                 "headers": headers}
     # AD-035 R5: a `**Model:**` header or a code-block `--model` naming an id the lock does not
@@ -1641,6 +1687,115 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
             "ok": free >= need}
 
 
+# ------------------------------------------------------------- the OODA between chained tasks (c18)
+#
+# SEL-010R2 Part A (AD-038-R10). The dispatcher closes the latency between a clean gate and a launch; it did not close
+# the step between task N's RESULT and task N+1's launch, in which someone reads the RESULT, names the premises it
+# found wrong and amends N+1 (`docs/design/2026-09-15_standing_dispatcher.md`: "still a Desktop OODA and is not
+# automated here", DN-006 §4). c18 holds N+1 until that step has left a record, or until the project's grace runs out.
+#
+# Prior art: a manual-approval gate between pipeline stages that resumes on approval OR on a timeout. Argo Workflows'
+# `suspend` template with `duration` (resumes by `argo resume` or when the duration elapses); Jenkins Pipeline's
+# `input` step inside `timeout`; GitHub Actions environments' required reviewers and wait timer. Decided here: the
+# record releases the successor at once, the grace releases it without one, and a grace of 0 is no gate at all.
+
+#: `dispatch.ooda_grace_s` when absent: never wait (the pre-SEL-010R2 dispatcher, unchanged in every project).
+OODA_GRACE_S_DEFAULT = 0
+
+#: The event a Desktop OODA writes for task N (`seldon dispatch ooda record`), payload `{task_id, by, note}`.
+EVENT_OODA_RECORDED = "ooda_recorded"
+
+#: The file form of the record: `<N's stem>_OODA.md` beside N's task file (and its RESULT), committed. A file that is
+#: not tracked does not count: the successor's worktree is cut from main's HEAD and would not see it.
+OODA_FILE_SUFFIX = "_OODA.md"
+
+#: The predecessor states that produce a RESULT to read. A superseded, withdrawn or rejected predecessor satisfies c2
+#: (AD-029 section 3) but left nothing to orient on, so it does not hold its successor here.
+OODA_PREDECESSOR_STATES = ("completed", "verified")
+
+
+def ooda_file(source_file: str | None) -> str | None:
+    """The OODA record's path for a task whose file is `source_file` (relative to the project)."""
+    if not source_file:
+        return None
+    p = Path(source_file)
+    return str(p.with_name(p.stem + OODA_FILE_SUFFIX))
+
+
+def _parse_ts(value) -> datetime | None:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    try:
+        ts = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+
+
+def ooda_index(events: list) -> dict:
+    """c18's raw material from the ledger, read once per pass: `{recorded: {task_id: event}, completed_at:
+    {task_id: timestamp}}`. `completed_at` is the LAST move into `completed`, because a task redriven and completed
+    again has a newer RESULT, and the grace runs from the RESULT a reader would read."""
+    recorded, completed = {}, {}
+    for e in events:
+        kind, p = e.get("event_type"), e.get("payload") or {}
+        if kind == EVENT_OODA_RECORDED and p.get("task_id"):
+            recorded[p["task_id"]] = {"at": e.get("timestamp"), "by": p.get("by"), "note": p.get("note")}
+        elif (kind == "artifact_state_changed" and p.get("to_state") == "completed"
+              and p.get("artifact_id")):
+            completed[p["artifact_id"]] = e.get("timestamp")
+    return {"recorded": recorded, "completed_at": completed}
+
+
+def ooda_waits(project_dir: Path, tasks: list, cfg: dict, index: dict, now: datetime) -> dict:
+    """c18 for every task it applies to: `{task_id: criterion}`. Empty when the grace is 0 (the project has not opted
+    in). A task applies when at least one `precedes` predecessor is `completed` or `verified`; its criterion is
+    present whether it passes or not, so `dispatch_launched` records which record, or the grace, released it.
+
+    Per predecessor: `released_by` is `ooda_event`, `ooda_file`, `grace` or None (still waiting). A predecessor whose
+    completion time is in neither the ledger nor the graph's `updated_at` cannot have its grace measured and waits
+    (fail closed, like c14 and c17); `seldon dispatch ooda record <N>` releases it."""
+    grace = cfg.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
+    if not grace:
+        return {}
+    out = {}
+    for t in tasks:
+        preds = [p for p in (t.get("predecessors") or []) if p.get("state") in OODA_PREDECESSOR_STATES]
+        if not preds:
+            continue
+        rows = []
+        for p in preds:
+            pid = p.get("artifact_id")
+            rel = ooda_file(p.get("source_file"))
+            path = Path(project_dir) / rel if rel else None
+            exists = bool(path and path.is_file())
+            tracked = bool(exists and is_tracked(project_dir, path))
+            event = index["recorded"].get(pid)
+            done_at = index["completed_at"].get(pid)
+            source = "ledger" if done_at else None
+            if not done_at and p.get("updated_at"):
+                # An upper bound on the completion time: measured from it, the grace is never shorter than declared.
+                done_at, source = p["updated_at"], "graph_updated_at"
+            ts = _parse_ts(done_at)
+            elapsed = (now - ts).total_seconds() if ts else None
+            released = ("ooda_event" if event else "ooda_file" if tracked
+                        else "grace" if elapsed is not None and elapsed >= grace else None)
+            row = {"predecessor": pid, "name": p.get("name"), "state": p.get("state"),
+                   "ooda_file": rel, "ooda_file_exists": exists, "ooda_file_tracked": tracked,
+                   "ooda_event": event, "completed_at": str(done_at) if done_at else None,
+                   "completed_at_source": source,
+                   "elapsed_s": round(elapsed) if elapsed is not None else None,
+                   "released_by": released}
+            if released is None and ts is None:
+                row["message"] = "completion time unknown; the grace cannot be measured"
+            rows.append(row)
+        out[t.get("artifact_id")] = {"grace_s": grace, "predecessors": rows,
+                                     "ok": all(r["released_by"] for r in rows)}
+    return out
+
+
 # ------------------------------------------------------------------------------- evaluation
 
 def union_state(project_dir: Path) -> dict:
@@ -1663,7 +1818,8 @@ def union_state(project_dir: Path) -> dict:
 def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
              claim_in_flight: dict | None, lease_body: dict, running=None,
              premise_holds: dict | None = None, launch_holds: dict | None = None,
-             union: dict | None = None, cross_waits: dict | None = None) -> dict:
+             union: dict | None = None, cross_waits: dict | None = None,
+             ooda: dict | None = None) -> dict:
     """The eight criteria of DN-006 decision 2, each evaluated to a recorded VALUE.
 
     Never a boolean summary: a pass that says "ineligible" and nothing else is a pass a
@@ -1677,8 +1833,8 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
         # with a task file. `_tasks` already leaves these out of a pass; this holds for any caller.
         cand = {"candidate": False, "reason": "future", "headers": {}}
     else:
-        cand = candidacy(task_file) if task_file else {"candidate": False,
-                                                       "reason": "no_source_file", "headers": {}}
+        cand = (candidacy(task_file, cfg.get("candidacy_headers", REQUIRED_HEADERS)) if task_file
+                else {"candidate": False, "reason": "no_source_file", "headers": {}})
     # `created_at` is carried through because `fifo` sorts on it (decision 9). It was dropped
     # here until SEL-004, so every pass sorted by `("", task_id)`: a random uuid order.
     out = {"task_id": task.get("artifact_id"), "name": task.get("name"),
@@ -1801,6 +1957,12 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     waits = (cross_waits or {}).get(task.get("artifact_id"))
     if waits:
         c["c17"] = {"waits_on": waits, "ok": False}
+    # SEL-010R2 (AD-038-R10): a chained task waits for the Desktop OODA on its completed predecessor, or the project's
+    # grace. The caller reads the ledger once per pass (`ooda_waits`); present only for a task with a completed
+    # predecessor in a project whose grace is above 0, so every other vector, and the serial transcript, are unchanged.
+    gate = (ooda or {}).get(task.get("artifact_id"))
+    if gate:
+        c["c18"] = gate
 
     out["criteria"] = c
     out["eligible"] = all(v["ok"] for v in c.values())
@@ -1843,6 +2005,8 @@ def first_refusal_reason(row: dict) -> str | None:
                                               and w.get("error") != "no longer resolves"
                                               for w in c["c17"]["waits_on"])
                 else "waits_on_unsatisfied")
+    if not c.get("c18", {}).get("ok", True):
+        return "ooda_pending"
     return None
 
 

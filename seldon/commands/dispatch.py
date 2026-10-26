@@ -39,6 +39,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import click
+import yaml
 
 from seldon import models
 from seldon.config import (
@@ -142,7 +143,8 @@ def _tasks(driver, database, include_future: bool = False) -> list:
          "RETURN t.artifact_id AS artifact_id, t.name AS name, t.state AS state, "
          "       t.source_file AS source_file, t.created_at AS created_at, "
          "       t.description AS description, t.waits_on_external AS waits_on_external, "
-         "       collect({artifact_id: p.artifact_id, state: p.state}) AS predecessors "
+         "       collect({artifact_id: p.artifact_id, state: p.state, name: p.name, "
+         "                source_file: p.source_file, updated_at: p.updated_at}) AS predecessors "
          "ORDER BY t.created_at")
     with driver.session(database=database) as s:
         rows = [dict(r) for r in s.run(q, states=list(D.DISPATCHABLE_STATES))]
@@ -162,6 +164,15 @@ def _cross_waits(project_dir: Path, tasks: list) -> dict:
     """
     from seldon.core import cross_project as X
     return X.unsatisfied_waits(project_dir, tasks, on_error=lambda line: click.echo(line, err=True))
+
+
+def _ooda_waits(project_dir: Path, cfg: dict, tasks: list) -> dict:
+    """c18's input (AD-038-R10): each chained task's OODA gate, from one read of the ledger per pass. Nothing is read
+    when the project's grace is 0, so a project that has not opted in pays nothing for it."""
+    if not cfg.get("ooda_grace_s"):
+        return {}
+    from seldon.core.events import read_events
+    return D.ooda_waits(project_dir, tasks, cfg, D.ooda_index(read_events(project_dir)), _utcnow())
 
 
 def _claim_in_flight(driver, database) -> dict | None:
@@ -212,8 +223,9 @@ def _survey(project_dir, config, driver, database):
     union = D.union_state(project_dir)
     tasks = _tasks(driver, database)
     cross = _cross_waits(project_dir, tasks)
+    ooda = _ooda_waits(project_dir, cfg, tasks)
     rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                       launch_holds=launch_holds, union=union, cross_waits=cross)
+                       launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda)
             for t in tasks]
     return cfg, band, tree, lease_body, claim, D.fifo(rows)
 
@@ -642,6 +654,166 @@ def dispatch_redrive(task, actor):
         click.echo(f"committed {committed['commit']}")
 
 
+@dispatch_group.command("adopt")
+@click.option("--project", "project", type=click.Path(file_okay=False, path_type=Path), default=".",
+              show_default=True, help="the project to adopt the dispatcher in")
+@click.option("--standing-band-ref", default=None, help="<file>#<key path> of the machine's token cap")
+@click.option("--branch", default=None, help="the branch a pass may dispatch on")
+@click.option("--label", "launchd_label", default=None, help="the launchd label")
+@click.option("--gate-command", default=None, help="the re-gate command (the project's test suite); optional")
+@click.option("--ooda-grace-s", type=float, default=None, help="c18's grace in seconds (0, the default, never waits)")
+@click.option("--yes", is_flag=True, help="take every default without asking (headless)")
+@click.option("--dry-run", is_flag=True, help="print what would be written and write nothing")
+def dispatch_adopt(project, standing_band_ref, branch, launchd_label, gate_command, ooda_grace_s, yes, dry_run):
+    """Opt a project into the standing dispatcher in one step (AD-038-R11).
+
+    Adds the `dispatch:` block's missing keys (from the project's own config where it has them, the kit's block for
+    the machine-wide ones, and the answers for the rest), the wrapper's `jobs.dispatch` log caps, the gitignore lines
+    for the dispatcher's runtime state, and the launchd plist, at a path it prints. Written `enabled: false`; a key
+    the project already has is never rewritten. Needs no database.
+    """
+    from seldon.core import adopt as A
+    project_dir = project.resolve()
+    try:
+        config = yaml.safe_load((project_dir / "seldon.yaml").read_text(encoding="utf-8")) or {}
+        kit = A.kit_config()
+    except (OSError, yaml.YAMLError, A.AdoptError) as exc:
+        raise click.ClickException(str(exc))
+    given = {"standing_band_ref": standing_band_ref, "branch": branch, "launchd_label": launchd_label}
+    answers = {}
+    for key, prompt, default in A.questions(project_dir, config, kit):
+        if given.get(key):
+            answers[key] = given[key]
+        elif yes:
+            answers[key] = default
+        else:
+            answers[key] = click.prompt(prompt, default=default)
+    if gate_command:
+        answers["gate_command"] = gate_command
+    if ooda_grace_s is not None:
+        answers["ooda_grace_s"] = int(ooda_grace_s) if float(ooda_grace_s).is_integer() else ooda_grace_s
+    try:
+        out = A.adoption(project_dir, answers)
+    except A.AdoptError as exc:
+        raise click.ClickException(str(exc))
+    added = out["added"]
+    if not (out["seldon_yaml"] or out["plist"] or out["gitignore_add"]):
+        click.echo(f"adopt: {project_dir} already carries the dispatch block, the log caps, the ignores and its plist")
+        return
+    click.echo(f"adopt: {project_dir}" + (" (dry run: nothing written)" if dry_run else ""))
+    if added["dispatch"]:
+        click.echo(f"  seldon.yaml dispatch: + {', '.join(added['dispatch'])}")
+    if added["jobs_dispatch"]:
+        click.echo(f"  seldon.yaml jobs.dispatch: + {', '.join(added['jobs_dispatch'])}")
+    if out["gitignore_add"]:
+        click.echo(f"  .gitignore: + {', '.join(out['gitignore_add'])}")
+    if out["plist"]:
+        click.echo(f"  plist: {out['plist_path']}")
+    if dry_run:
+        if out["seldon_yaml"]:
+            click.echo("--- seldon.yaml as it would be written ---")
+            click.echo(out["seldon_yaml"], nl=False)
+        if out["plist"]:
+            click.echo(f"--- {out['plist_path']} ---")
+            click.echo(out["plist"], nl=False)
+        return
+    written = A.write_adoption(project_dir, out)
+    click.echo(f"wrote: {', '.join(written)}")
+    label = out["block"].get("launchd_label")
+    click.echo("next, in a shell, in this order:")
+    click.echo(f"  1. cd {project_dir} && git add {' '.join(written)} && git commit -m 'dispatch: adopt (AD-038-R11)'")
+    click.echo("  2. seldon hooks install")
+    if label:
+        click.echo(f"  3. ln -s {out['plist_path']} ~/Library/LaunchAgents/{label}.plist && "
+                   f"launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/{label}.plist")
+    click.echo("  4. set dispatch.enabled to true in seldon.yaml and commit it, when the first task file is ready")
+
+
+@dispatch_group.group("ooda")
+def ooda_group():
+    """The Desktop OODA between chained tasks (AD-038-R10, criterion c18): what waits for it, and its record."""
+
+
+@ooda_group.command("pending")
+@click.option("--json", "as_json", is_flag=True, help="print the rows as JSON")
+def ooda_pending(as_json):
+    """Every open task held, or about to be held, by c18: a `precedes` predecessor is completed and no OODA record for
+    it exists. Prints the RESULT to read, the successor to amend and the grace left. A Desktop wake-up reads this
+    first (docs/conventions/desktop_ooda.md); empty output means there is nothing to orient on."""
+    project_dir, config, driver, database, _dc, _sid = _open_project()
+    try:
+        cfg = D.load_dispatch_config(project_dir, config)
+        tasks = _tasks(driver, database)
+    finally:
+        driver.close()
+    from seldon.core.events import read_events
+    grace = cfg["ooda_grace_s"]
+    # Listed whatever the grace: with no grace a record is still what the chain's author wants written. An infinite
+    # grace here releases only on a record, so every predecessor that lacks one is listed.
+    gates = D.ooda_waits(project_dir, tasks, {**cfg, "ooda_grace_s": float("inf")},
+                         D.ooda_index(read_events(project_dir)), _utcnow())
+    names = {t["artifact_id"]: t for t in tasks}
+    rows = []
+    for tid, g in gates.items():
+        for w in g["predecessors"]:
+            if w["released_by"]:
+                continue
+            src = next((p.get("source_file") for p in names[tid]["predecessors"]
+                        if p.get("artifact_id") == w["predecessor"]), None)
+            left = (max(0, grace - w["elapsed_s"]) if grace and w["elapsed_s"] is not None else None)
+            rows.append({"predecessor": w["predecessor"], "predecessor_name": w["name"],
+                         "result": str(Path(src).with_name(Path(src).stem + "_RESULT.md")) if src else None,
+                         "ooda_file": w["ooda_file"], "successor": tid,
+                         "successor_file": names[tid].get("source_file"),
+                         "grace_s": grace, "grace_left_s": left, "completed_at": w["completed_at"]})
+    if as_json:
+        click.echo(json.dumps(rows, indent=1, default=str))
+        return
+    if not rows:
+        click.echo("ooda: nothing pending")
+        return
+    for r in rows:
+        held = ("not held (dispatch.ooda_grace_s is 0)" if not grace
+                else f"held {r['grace_left_s']} s more" if r["grace_left_s"] is not None
+                else "held until a record (completion time unknown)")
+        click.echo(f"{r['predecessor'][:8]} {r['predecessor_name'] or ''} completed {r['completed_at'] or '?'}")
+        click.echo(f"  read:    {r['result']}")
+        click.echo(f"  amend:   {r['successor_file']} ({r['successor'][:8]}), {held}")
+        click.echo(f"  release: commit {r['ooda_file']}, or `seldon dispatch ooda record {r['predecessor'][:8]}`")
+
+
+@ooda_group.command("record")
+@click.argument("task")
+@click.option("--note", default=None, help="one line: what the OODA found (the file form carries the full reading)")
+@click.option("--actor", default="desktop", show_default=True, help="who oriented: desktop, human or cc")
+def ooda_record(task, note, actor):
+    """Record that the OODA on completed TASK is done: one `ooda_recorded` event, which releases every successor c18
+    holds on it. TASK is an id, a unique prefix or a task file stem. Refuses a task that is not completed or verified
+    (exit 1): there is no RESULT to have read."""
+    project_dir, config, driver, database, _dc, session_id = _open_project()
+    try:
+        task_id = _resolve_task(driver, database, task)
+        if task_id is None:
+            raise click.ClickException(f"no ResearchTask matches {task!r}")
+        with driver.session(database=database) as s:
+            state = s.run("MATCH (t:ResearchTask {artifact_id: $id}) RETURN t.state AS state",
+                          id=task_id).single()["state"]
+    finally:
+        driver.close()
+    if state not in D.OODA_PREDECESSOR_STATES:
+        raise click.ClickException(
+            f"{task_id[:8]} is {state}; an OODA record answers a completed task's RESULT "
+            f"({', '.join(D.OODA_PREDECESSOR_STATES)})")
+    append_event(project_dir, make_event(event_type=D.EVENT_OODA_RECORDED, actor=actor, authority="accepted",
+                                         payload={"task_id": task_id, "by": actor, "note": note},
+                                         session_id=session_id))
+    click.echo(f"ooda recorded: {task_id[:8]} ({actor})")
+    # Committed the way `redrive` commits its line (deferred while a lease is held; the next pass reconciles it).
+    committed = D.commit_journal_append(project_dir, config, by="seldon dispatch ooda record", actor=actor)
+    if committed.get("committed"):
+        click.echo(f"committed {committed['commit']}")
+
+
 @dispatch_group.command("regate")
 @click.argument("task")
 def dispatch_regate(task):
@@ -1009,8 +1181,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     union = D.union_state(project_dir)
     tasks = _tasks(driver, database)
     cross = _cross_waits(project_dir, tasks)
+    ooda = _ooda_waits(project_dir, cfg, tasks)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                              launch_holds=launch_holds, union=union, cross_waits=cross)
+                              launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda)
                    for t in tasks])
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
@@ -1289,6 +1462,17 @@ def _refusal_lines(rows: list, tree: dict) -> list:
             if reason == "disk_unmeasured":
                 out.append(f"      disk: the launch's footprint could not be measured: "
                            f"{r['criteria']['c12'].get('read_error')}")
+            if reason == "ooda_pending":
+                # AD-038-R10: which predecessor's RESULT waits to be read, and the line that releases it.
+                g = r["criteria"]["c18"]
+                for w in g["predecessors"]:
+                    if w["released_by"]:
+                        continue
+                    left = (f"{max(0, g['grace_s'] - w['elapsed_s'])} s of {g['grace_s']} s grace left"
+                            if w["elapsed_s"] is not None else w.get("message", ""))
+                    out.append(f"      awaiting OODA on {(w['predecessor'] or '?')[:8]} {w['name'] or ''}: "
+                               f"{left}; commit {w['ooda_file']} or run "
+                               f"`seldon dispatch ooda record {(w['predecessor'] or '?')[:8]}`")
             if reason == "governing_unverified":
                 # DESK-001: the note and the command that clears the hold.
                 for u in r["criteria"]["c14"]["unverified"]:

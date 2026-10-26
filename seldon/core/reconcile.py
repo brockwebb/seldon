@@ -21,7 +21,8 @@ class                     paths                                                 
 ``prior_art``             the prior-art query log and the verdict ledger (AD-036-R3, R4)  append-only, every line parses
 ``decision_register``     a NEW record under the register dir; the rendered REGISTER.md   a new record file; any render
 ``cadence``               ``seldon.yaml``                                                 only ``last_instance:`` lines
-``task_files``            an untracked registered task file, or its untracked addendum    registration output
+``task_files``            an untracked registered task file, its untracked addendum, or   registration output
+                          its untracked ``_OODA.md`` record (AD-038-R10)
 ========================  ==============================================================  ==========================
 
 Anything else (a source file, a ledger edited in place, a deleted file, a hook refusal) is left for c7, which names
@@ -46,6 +47,10 @@ _LAST_INSTANCE_RE = re.compile(r"^\s*last_instance\s*:")
 
 #: Addenda beside a task file (`seldon.core.dispatch.addenda_for` uses the same glob).
 _ADDENDUM_RE = re.compile(r"^(?P<stem>.+)_ADDENDUM[^/]*\.md$")
+
+#: The Desktop OODA's file record beside a task file (`seldon.core.dispatch.OODA_FILE_SUFFIX`, AD-038-R10). A Desktop
+#: session writes it as it writes an addendum, so it is reconciled as one: c18 counts it only once it is committed.
+_OODA_RE = re.compile(r"^(?P<stem>.+)_OODA\.md$")
 
 
 def _git(project_dir: Path, *args: str, text: bool = True) -> subprocess.CompletedProcess:
@@ -225,6 +230,10 @@ def classify(project_dir: Path, config: dict, registered: set, entries: list | N
         m = _ADDENDUM_RE.match(path)
         if not e["tracked"] and m and f"{m.group('stem')}.md" in registered:
             admit("task_files", path, ["addendum to a registered task"])
+            continue
+        m = _OODA_RE.match(path)
+        if not e["tracked"] and m and f"{m.group('stem')}.md" in registered:
+            admit("task_files", path, ["OODA record on a registered task"])
             continue
         if e["tracked"] and path in registered:
             unreconciled.append({"path": path, "why": "a registered task file edited after registration"})

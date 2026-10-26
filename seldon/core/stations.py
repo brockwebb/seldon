@@ -1242,7 +1242,9 @@ def parts_registration_refusal(task_path: Path, project_dir: Path, config: dict)
         return None
     why = parsed["error"] or "no `**Parts:**` header"
     return (f"{PARTS_REFUSAL}: {why}. A task lists each Part's share of its estimate, e.g. "
-            f"`**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002)")
+            f"`**Parts:** A 0.35, B 0.25, C 0.25, D 0.15.`, so station (c) can compute CPI (AD-037-R6 c, QC-002). "
+            f"The header is read from this file only: an addendum cannot supply it, so a committed file that lacks "
+            f"it is re-filed as a new task file (AD-038-R11)")
 
 
 #: AD-038-R5's refusal at registration: a `check:` premise that is false when the task is registered.
