@@ -1,0 +1,38 @@
+event: accept
+id: seldon:AD-038-R15
+date: '2026-10-27'
+decided_by: cc:f7a1d2f0
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_06_the_hooks_installer_commits_what_it_writes.md:28: AD-038-R15'
+reason: 'DESK-004R Part A; evidence: squiddy .githooks/commit-msg untracked from 2026-10-21 21:17, every pass refused every candidate on c7 (SUITE-001 9324622d included); seldon_commit_governed refuses .githooks/ paths; ensure_installed runs before the lease; resolves 2f2f1174'
+kind: decision
+status: accepted
+statement: '`seldon hooks install` shall commit seldon''s hook files that are untracked or differ from HEAD and carry exactly seldon''s text, alone, path-limited and through the hooks, and raise with the index restored when the commit is refused; `ensure_installed`, which runs before the dispatcher''s lease, shall not commit; the reconciler shall commit `.githooks/pre-commit` and `.githooks/commit-msg` carrying exactly seldon''s text as class `hooks`, and leave any other bytes to c7.'
+source:
+  path: docs/design/AD-038_ADDENDUM_06_the_hooks_installer_commits_what_it_writes.md
+  lines:
+  - 28
+  - 37
+  sha256: 76ff2eae6d6b2d325775a2c874080fba141257ddf34d20a402d0ab11f054a150
+  text: |-
+    - **AD-038-R15. The hooks installer commits the hook files it writes, and the reconciler commits seldon's own hook
+      files.**
+      - `seldon hooks install` (`hooks.install`, `commit=True` by default) commits seldon's hook files that are untracked
+        or differ from HEAD and whose bytes are exactly seldon's text, whether it wrote them now or an earlier install
+        left them. It commits them alone, path-limited, through the hooks it has just pointed git at. A refused commit
+        raises, unstages the paths and leaves the files on disk.
+      - `ensure_installed` calls `install(commit=False)`: it runs outside the lease.
+      - The reconciler's class `hooks` admits `.githooks/pre-commit` and `.githooks/commit-msg` whose bytes on disk are
+        exactly seldon's text, and commits them under the lease like every other class. A hook file with other bytes is
+        someone's hook, and c7 names it ("a hook file that is not seldon's text").
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_06_the_hooks_installer_commits_what_it_writes.md
+  anchor: AD-038-R15
+consumer:
+- cc_tasks/2026-10-27_DESK-004R_every_file_the_machine_writes_is_committed_by_the_tool_that_wrote_it.md
+- tests/test_desk004r_tool_commits_what_it_writes.py
+written_by: seldon decision 0.1.0
+provisional_id: dcbff1adbf5168eb2cef430769bc3a98f5b9f74632be91fe6816e01c7f6d430d
