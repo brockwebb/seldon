@@ -30,7 +30,8 @@ def hooks_group():
 @click.option("--json", "as_json", is_flag=True, help="machine-readable result")
 def hooks_install(repo, as_json):
     """Set this repository's own core.hooksPath to the tracked .githooks/ and record the
-    interpreter. Writes .githooks/pre-commit when absent; commit it. Never touches global or
+    interpreter. Writes .githooks/pre-commit and commit-msg when absent and commits seldon's
+    hook files alone, through the hooks (DESK-004R, AD-038-R15). Never touches global or
     system config.
 
     In a seldon project (a seldon.yaml at the top), also declares the project's append-only logs
@@ -58,7 +59,7 @@ def hooks_install(repo, as_json):
             click.echo(f"{top}: {H.GITATTRIBUTES} already declares every append-only log merge=union")
         click.echo(f"{res.repo}: core.hooksPath {res.old_hooks_path or 'unset'} -> "
                    f"{res.hooks_path}; {H.PYTHON_KEY} {res.python}"
-                   + ("; wrote .githooks/ hook file(s) (commit them)" if res.wrote_hook else ""))
+                   + (f"; committed {', '.join(res.committed)} as {res.commit}" if res.committed else ""))
         for p in st["problems"]:
             click.echo(f"  still to do: {p}")
     if not st["installed"] and not res.wrote_hook:

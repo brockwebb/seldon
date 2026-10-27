@@ -54,6 +54,14 @@ the whole queue refused on c7 for hours (2026-09-22, 2026-10-12, 2026-10-14).
 non-merge commit, at or after the one that added `.githooks/pre-commit`, that carried gated
 design-note bytes with no passing verdict in the ledger. `seldon verify` reports each as
 `hook_bypassed`.
+
+**The installer commits what it writes (DESK-004R, AD-038-R15).** `install` writes the tracked hook
+files and, by default, commits them alone, path-limited, through the hooks it has just pointed git
+at. An installer that left `.githooks/commit-msg` untracked kept squiddy's dispatcher refusing every
+candidate on c7 from 2026-10-21 21:17 until a person committed it, and `seldon_commit_governed`
+refuses `.githooks/` paths, so no other tool could. `ensure_installed` runs before the dispatcher
+takes its lease and must not commit there; what it writes, the lease holder's reconciler commits
+(`seldon.core.reconcile`, class `hooks`).
 """
 from __future__ import annotations
 
@@ -126,6 +134,17 @@ exit 1
 """
 
 
+#: The commit `install` makes of the hook files it wrote or found uncommitted (DESK-004R, AD-038-R15).
+HOOKS_COMMIT_MESSAGE = ("chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)\n\n"
+                        "Written by `seldon hooks install`: {paths}.\n")
+
+
+def seldon_hook_scripts() -> dict:
+    """{path relative to the top: seldon's exact text} for each tracked hook file seldon writes. What
+    qualifies a dirty `.githooks/` file as seldon's own, for `install` and the reconciler alike."""
+    return {f"{HOOKS_DIR}/{PRE_COMMIT}": HOOK_SCRIPT, f"{HOOKS_DIR}/{COMMIT_MSG}": COMMIT_MSG_SCRIPT}
+
+
 def is_draft(message: str) -> bool:
     """True when the commit message's subject line carries the draft marker."""
     subject = (message or "").lstrip("\n").split("\n", 1)[0]
@@ -164,6 +183,9 @@ class InstallResult:
     python: str
     wrote_hook: bool
     changed: bool
+    #: The hook files `install` committed, and the commit (DESK-004R); empty when none was uncommitted.
+    committed: tuple = ()
+    commit: Optional[str] = None
 
 
 def hook_file(repo: Path) -> Path:
@@ -203,16 +225,56 @@ def drafts_enabled(repo: Path) -> bool:
     return hp == HOOKS_DIR
 
 
-def install(repo: Path, python: str | None = None) -> InstallResult:
-    """Point this repository's own `core.hooksPath` at the tracked `.githooks/`.
+def uncommitted_hooks(repo: Path) -> list[str]:
+    """Seldon's hook files that are untracked or differ from HEAD, and whose bytes on disk are
+    seldon's exact text. A `.githooks/` file with other bytes is someone's work, never listed."""
+    repo = Path(repo)
+    scripts = seldon_hook_scripts()
+    out = _git(repo, "status", "--porcelain", "--untracked-files=all", "--", *scripts).stdout
+    dirty = {ln[3:].strip() for ln in out.splitlines() if ln.strip()}
+    return [rel for rel, text in scripts.items()
+            if rel in dirty and (repo / rel).is_file()
+            and (repo / rel).read_text(encoding="utf-8") == text]
 
-    Writes `.githooks/pre-commit` when it is absent (the caller commits it; it is tracked).
-    Refuses when a different file is there: someone's hook is never overwritten silently.
-    Records the interpreter in local config. Idempotent.
+
+def commit_hooks(repo: Path) -> tuple[list[str], Optional[str]]:
+    """Commit `uncommitted_hooks` alone, path-limited, through the hooks: `(paths, short sha)`,
+    or `([], None)` when there is nothing to commit.
 
     Raises:
-        HookError: Not a git repository, a different pre-commit already tracked, or a git
-            command failing.
+        HookError: The commit is refused or git fails. The paths are unstaged again, so the
+            index is as it was found; the files stay on disk.
+    """
+    repo = Path(repo)
+    paths = uncommitted_hooks(repo)
+    if not paths:
+        return [], None
+    _git(repo, "add", "--", *paths)
+    done = _git(repo, "commit", "-q", "-m", HOOKS_COMMIT_MESSAGE.format(paths=", ".join(paths)),
+                "--", *paths, check=False)
+    if done.returncode != 0:
+        _git(repo, "reset", "-q", "--", *paths, check=False)
+        raise HookError(f"the commit of {', '.join(paths)} was refused: "
+                        f"{(done.stderr or done.stdout).strip()}")
+    return paths, _git(repo, "rev-parse", "--short", "HEAD").stdout.strip()
+
+
+def install(repo: Path, python: str | None = None, commit: bool = True) -> InstallResult:
+    """Point this repository's own `core.hooksPath` at the tracked `.githooks/`.
+
+    Writes `.githooks/pre-commit` and `.githooks/commit-msg` when absent. Refuses when a
+    different file is there: someone's hook is never overwritten silently. Records the
+    interpreter in local config. With `commit` (the default) it then commits seldon's hook files
+    that are not committed, written now or left by an earlier install, alone and through the
+    hooks (DESK-004R, AD-038-R15). Idempotent.
+
+    Args:
+        commit: False only for `ensure_installed`, which runs outside the dispatcher's lease;
+            the lease holder's reconciler commits what it wrote.
+
+    Raises:
+        HookError: Not a git repository, a different hook already there, a git command
+            failing, or the commit of the hook files refused.
     """
     repo = toplevel(Path(repo))
     python = python or sys.executable
@@ -225,9 +287,12 @@ def install(repo: Path, python: str | None = None) -> InstallResult:
         _git(repo, "config", "--local", "core.hooksPath", HOOKS_DIR)
     if old_py != python:
         _git(repo, "config", "--local", PYTHON_KEY, python)
+    # After core.hooksPath is set, so the commit runs the hooks it commits.
+    committed, sha = commit_hooks(repo) if commit else ([], None)
     return InstallResult(repo=str(repo), old_hooks_path=old or None, hooks_path=HOOKS_DIR,
                          python=python, wrote_hook=wrote,
-                         changed=wrote or old != HOOKS_DIR or old_py != python)
+                         changed=wrote or old != HOOKS_DIR or old_py != python or bool(committed),
+                         committed=tuple(committed), commit=sha)
 
 
 def status(repo: Path) -> dict:
@@ -270,9 +335,11 @@ def status(repo: Path) -> dict:
 
 def ensure_installed(repo: Path) -> dict:
     """The dispatcher's launch-path call: install when the tracked hook is present but git is
-    not pointed at it. {ok, changed, error}. Never writes a tracked file: a checkout without
-    `.githooks/pre-commit` is reported, not repaired, because writing it would dirty the tree a
-    dispatched session must open clean."""
+    not pointed at it. {ok, changed, error}. Never writes `.githooks/pre-commit`: a checkout
+    without it is reported, not repaired, because writing it would dirty the tree a dispatched
+    session must open clean. It may write `.githooks/commit-msg` and does not commit it: this
+    runs before the lease is taken, so the lease holder's reconciler commits seldon's own hook
+    files (class `hooks`, AD-038-R15)."""
     try:
         repo = toplevel(Path(repo))
         if not hook_file(repo).is_file():
@@ -282,7 +349,7 @@ def ensure_installed(repo: Path) -> dict:
         st = status(repo)
         if st["installed"]:
             return {"ok": True, "changed": False, "error": None}
-        res = install(repo)
+        res = install(repo, commit=False)
         st = status(repo)
         return {"ok": st["installed"], "changed": res.changed,
                 "error": "; ".join(st["problems"]) or None}

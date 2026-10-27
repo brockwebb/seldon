@@ -98,10 +98,11 @@ def repo(tmp_path):
                           "id": "{repo}:{label}"}]}
     (proj / "seldon.yaml").write_text(yaml.safe_dump(config))
     res = H.install(proj, python=sys.executable)
-    assert res.wrote_hook
+    assert res.wrote_hook and res.commit        # the installer commits its hook files (DESK-004R)
+    hook_commit = _git(proj, "rev-parse", res.commit).stdout.strip()
     _git(proj, "add", "-A")
-    _git(proj, "commit", "-qm", "install the commit gate")
-    return {"dir": proj, "config": config, "sib_sha": sib_sha}
+    _git(proj, "commit", "-qm", "configure the decision register")
+    return {"dir": proj, "config": config, "sib_sha": sib_sha, "hook_commit": hook_commit}
 
 
 def _good(repo) -> str:
@@ -235,7 +236,7 @@ def test_a_healed_bypass_is_still_reported_as_a_warning(repo):
 
 
 def test_commits_before_the_hook_existed_are_not_audited(repo):
-    assert H.anchor(repo["dir"]) == _head(repo)
+    assert H.anchor(repo["dir"]) == repo["hook_commit"]
     # OLD.md was committed before the hook and is baseline; nothing is reported.
     assert H.bypassed(repo["dir"], repo["config"]) == []
 

@@ -22,7 +22,10 @@ class                     paths                                                 
 ``decision_register``     a NEW record under the register dir; the rendered REGISTER.md   a new record file; any render
 ``cadence``               ``seldon.yaml``                                                 only ``last_instance:`` lines
 ``task_files``            an untracked registered task file, its untracked addendum, or   registration output
-                          its untracked ``_OODA.md`` record (AD-038-R10)
+                          its untracked ``_OODA.md`` record (AD-038-R10); an untracked
+                          addendum is admitted whether or not its base is tracked
+``hooks``                 ``.githooks/pre-commit`` and ``.githooks/commit-msg``           bytes exactly seldon's text
+                          (AD-038-R15)
 ========================  ==============================================================  ==========================
 
 Anything else (a source file, a ledger edited in place, a deleted file, a hook refusal) is left for c7, which names
@@ -40,7 +43,7 @@ from pathlib import Path
 
 #: The classes, in the order their commits are made. The event store first: every other class's writer also appended
 #: to it, and a reader of `git log` finds each record before the files it records.
-CLASSES = ("event_store", "prior_art", "decision_register", "cadence", "task_files")
+CLASSES = ("event_store", "prior_art", "decision_register", "cadence", "task_files", "hooks")
 
 #: The one seldon.yaml line the cadence writes back (`seldon.core.cadence.write_last_instance`).
 _LAST_INSTANCE_RE = re.compile(r"^\s*last_instance\s*:")
@@ -187,6 +190,8 @@ def classify(project_dir: Path, config: dict, registered: set, entries: list | N
     reg_dir = gp["register_dir"].rstrip("/") + "/"
     classes = {c: {"paths": [], "writers": [], "rows": []} for c in CLASSES}
     unreconciled = []
+    from seldon.core.hooks import seldon_hook_scripts
+    hook_scripts = seldon_hook_scripts()
 
     def admit(cls, path, writers, rows=()):
         classes[cls]["paths"].append(path)
@@ -238,6 +243,15 @@ def classify(project_dir: Path, config: dict, registered: set, entries: list | N
         if e["tracked"] and path in registered:
             unreconciled.append({"path": path, "why": "a registered task file edited after registration"})
             continue
+        if path in hook_scripts:
+            # AD-038-R15: `ensure_installed` writes commit-msg before the lease and may not commit it; an older
+            # `seldon hooks install` wrote and left it. Seldon's exact text only: other bytes are someone's hook.
+            f = project_dir / path
+            if f.is_file() and f.read_text(encoding="utf-8", errors="replace") == hook_scripts[path]:
+                admit("hooks", path, ["seldon hooks install"])
+            else:
+                unreconciled.append({"path": path, "why": "a hook file that is not seldon's text"})
+            continue
         unreconciled.append({"path": path, "why": "not machine-written governed state"
                                                   + (" (untracked)" if not e["tracked"] else "")})
     return {"classes": {c: v for c, v in classes.items() if v["paths"]}, "unreconciled": unreconciled}
@@ -261,9 +275,11 @@ def message_for(cls: str, entry: dict) -> str:
     what = {"prior_art": f"{len(entry['rows'])} prior-art line(s)",
             "decision_register": f"{len(entry['paths'])} decision-register file(s)",
             "cadence": "the cadence's last_instance",
-            "task_files": f"{len(entry['paths'])} registered task file(s): {', '.join(entry['paths'])}"}[cls]
+            "task_files": f"{len(entry['paths'])} registered task file(s): {', '.join(entry['paths'])}",
+            "hooks": f"seldon's hook file(s): {', '.join(entry['paths'])}"}[cls]
+    rule = "AD-038-R15" if cls == "hooks" else "AD-038-R1"
     return (f"reconcile: {what} written by {', '.join(entry['writers']) or 'unknown'}; committed by the standing "
-            f"dispatcher ({cls}, AD-038-R1)")
+            f"dispatcher ({cls}, {rule})")
 
 
 def reconcile(project_dir: Path, config: dict, registered: set, classes=CLASSES, commit=None) -> dict:

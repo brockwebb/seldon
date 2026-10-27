@@ -202,9 +202,8 @@ def hooked(machine):
     (proj / "README.md").write_text("x\n")
     _git(proj, "add", "-A")
     _git(proj, "commit", "-qm", "init")
-    assert H.install(proj, python=sys.executable).wrote_hook
-    _git(proj, "add", "-A")
-    _git(proj, "commit", "-qm", "install the commit gate")
+    res = H.install(proj, python=sys.executable)
+    assert res.wrote_hook and res.commit        # the installer commits its hook files (DESK-004R)
     return machine
 
 
