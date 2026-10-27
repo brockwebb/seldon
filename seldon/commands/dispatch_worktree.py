@@ -516,7 +516,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "log_path": log_rel, "command": " ".join(shlex.quote(p) for p in cmd),
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
              "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
-             "touches": {"resources": conc["resources"], "paths": conc["paths"]}, "push_repos": push_repos,
+             "touches": {"resources": conc["resources"], "paths": conc["paths"]}, **({"push_repos": push_repos} if push_repos else {}),
              **S._model_fields(spec, refresh_note)})
     # Committed and pushed BEFORE the CLI cuts the worktree, so the task's branch starts from a
     # main that already carries its own claim.
@@ -689,8 +689,10 @@ def finish_session(project_dir, config, driver, database, domain_config, session
               "log_path": str(log_path.relative_to(project_dir)), "mode": "worktree",
               "worktree": extra["worktree"], "branch": branch, "base": extra["base"],
               "linked": extra.get("linked") or [],
-              "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate,
-              "push_repos": extra.get("push_repos") or []}
+              "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate}
+    # DISP-004R: written only for a task whose Repo line names other repositories, so every other record is unchanged.
+    if extra.get("push_repos"):
+        finish["push_repos"] = extra["push_repos"]
     click.echo(f"session exit={code} result_committed={committed} graph={graph_state} "
                f"model={receipt['served']} (requested {receipt['requested']}) "
                f"classifier_blocks={classifier['blocks']}")
@@ -1076,7 +1078,7 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     pushes = push_named_repos(project_dir, session_id, cfg, finish, name)
     done = {**finish, "ok": True, "outcome": "merged",
             "graph_state_observed": S._state_of(driver, database, task_id),
-            "merge": {k: v for k, v in merge.items() if k != "writes"}, "push_repos": pushes}
+            "merge": {k: v for k, v in merge.items() if k != "writes"}, **({"push_repos": pushes} if pushes else {})}
     S._emit(project_dir, session_id, D.EVENT_FINISHED, done)
     if merge["undeclared_writes"]:
         click.echo(f"undeclared writes by {task_id[:8]}: "
@@ -1142,8 +1144,9 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
     (DN-006 decision 4), its worktree left where it is. `merge_blocked` also writes an Issue
     naming the files and sets the task's `dispatch_merge` (decision 3)."""
     task_id = finish["task_id"]
-    record = {**finish, "ok": False, "outcome": outcome,
-              "push_repos": [held_cross_repo(e) for e in finish.get("push_repos") or []]}
+    record = {**finish, "ok": False, "outcome": outcome}
+    if finish.get("push_repos"):
+        record["push_repos"] = [held_cross_repo(e) for e in finish["push_repos"]]
     if merge is not None:
         record["merge"] = merge
     state = S._state_of(driver, database, task_id)

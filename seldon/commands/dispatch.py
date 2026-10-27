@@ -1290,7 +1290,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
            "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
-           "push_repos": push_repos,
+           **({"push_repos": push_repos} if push_repos else {}),
            **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note),
            # PRUNE-002 Part B: the instruction context this session receives, for `qc chart`'s toil reading.
