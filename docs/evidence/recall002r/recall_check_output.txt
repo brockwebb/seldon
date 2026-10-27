@@ -1,0 +1,33 @@
+=== squiddy  cc_tasks/2026-10-24_SQ-087_the_served_recall_indexes_rebuilt_under_the_current_index_rule.md
+Recall: 8 hit(s) from the history of squiddy, seldon, arnold:
+  - result  squiddy:2026-10-17_SQ-018R_cost_of_one_document_measured_and_p95_regression_RESULT  2026-10-17  SQ-018R RESULT: the manifest parse fixed (p95 67.3 s to 27.0 s); one document costs 30 s on arnold, 7 min on the libr...
+  - result  seldon:2026-09-12_ad030_governed_docs_ingest_RESULT  2026-09-12  RESULT: AD-030 governed documents ingest, Squiddy recipe plus Seldon import, with backfill
+  - result  seldon:2026-09-12_ad030_names_supersession_reingest_RESULT  2026-09-12  RESULT: AD-030 names, supersession syntax, incremental re-ingest, constraint backfill
+  - result  squiddy:2026-10-10_SQ-010_governed_admission_dn043_RESULT  2026-10-10  SQ-010 RESULT: governed admission in seconds (DN-043), the prior-art gate everywhere
+  - result  seldon:2026-10-17_DESK-002R_desktop_rulings_commit_with_their_register_records_resumed_RESULT  2026-10-17  RESULT: DESK-002R complete. All four Parts merged before their checks, every milestone passed, squiddy's live control...
+  - result  seldon:2026-10-07_SEL-004_worktree_per_task_dispatch_RESULT  2026-10-07  RESULT — SEL-004: worktree-per-task dispatch, independence declared by resource (AD-034)
+  - result  squiddy:2026-10-22_SQ-028R_one_text_of_record_per_document_claims_and_receipts_share_it_RESULT  2026-10-22  SQ-028R RESULT: one text of record per held document; claims and receipts share it, and item 40 proves it
+  - result  seldon:2026-10-17_RECALL-001_registration_retrieves_the_repos_own_history_RESULT  2026-10-17  RECALL-001 RESULT: registration recalls the repositories' own history, and the use of it is measured
+[16.8 s]
+=== arnold  cc_tasks/2026-10-22_workout-start-time.md
+Recall: 8 hit(s) from the history of arnold, seldon, squiddy:
+  - result  seldon:2026-09-02_track_cc_tasks_RESULT  2026-09-02  RESULT: Track `cc_tasks/` in the Seldon repo
+  - decision [accepted]  arnold:ADR-007  2026-01-23  ## Decision
+  - result  seldon:2026-10-09_PA-001_prior_art_receipts_gate_RESULT  2026-10-09  RESULT: PA-001, the prior-art receipts gate (AD-036), declared effort, hermetic tests, AD-035 records
+  - decision [accepted]  arnold:training-domain-vocabulary-B8  2026-06-19  The canonical terminology for the training data model defines: time-span base type as 'cycle' (backed by :Cycle with...
+  - result  seldon:2026-10-16_DESK-002_desktop_rulings_commit_with_their_register_records_RESULT  2026-10-16  RESULT: DESK-002 HALTED at Part B by a line stop; Parts A and B are built on an unmerged branch, C and D not started
+  - result  squiddy:2026-10-10_SQ-010_governed_admission_dn043_RESULT  2026-10-10  SQ-010 RESULT: governed admission in seconds (DN-043), the prior-art gate everywhere
+  - result  seldon:2026-10-17_DESK-003_secret_scan_runs_in_squiddys_venv_and_a_launch_failure_is_not_a_finding_RESULT  2026-10-17  DESK-003 RESULT
+  - decision [accepted]  arnold:2026-06-27_vocab-decision-block-cycle-reversal-R2  2026-06-27  The knowledge model shall use `:Cycle` as the base type for all training time-spans, with a `cycle_type` discriminato...
+[12.3 s]
+=== ai-readiness-kg  cc_tasks/2026-10-21_fcsm_concern_edges_and_sixteen_checks_one_pager.md
+Recall: 8 hit(s) from the history of blank:
+  - result  blank:2026-09-19_g4_locators_and_progress_drift_RESULT  2026-09-19  RESULT — G4's two sources get a locator, and `docs/progress/` is compared to the record it is a view of
+  - result  blank:2026-10-08_dcat_brief_pdfs_from_build_RESULT  2026-10-08  RESULT: the DCAT brief's build renders all three PDFs and writes the 8 October structure (base + ADDENDUM 01 + ADDEND...
+  - result  blank:2026-10-07_DCAT-005_brief_corrections_before_omb_RESULT  2026-10-07  RESULT: DCAT-005, four corrections to the DCAT-US 3.0 brief before OMB
+  - result  blank:2026-09-09_report_draft_RESULT  2026-09-09  RESULT — report-draft: the L0 product, first draft
+  - result  blank:2026-09-14_standing_guards_RESULT  2026-09-14  RESULT — two standing guards: nothing judged stays off the log, and the report says its snapshot is superseded
+  - result  blank:2026-09-10_report_pdf_RESULT  2026-09-10  RESULT — report PDF: the L0 report as a readable PDF, from the pipeline
+  - result  blank:2026-09-10_rejudge_2_3_4_RESULT  2026-09-10  RESULT — re-judge cycles 2, 3 and 4 under harness-v5; register; rebuild the L0 draft
+  - result  blank:2026-09-18_scoring_model_RESULT  2026-09-18  RESULT: the scoring model, a documented query that scores 13 of 16 bodies on 14 of 16 adopted harness legs and prints...
+[0.5 s]
