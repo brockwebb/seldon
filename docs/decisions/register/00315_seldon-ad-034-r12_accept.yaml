@@ -1,3 +1,4 @@
+seq: 315
 event: accept
 id: seldon:AD-034-R12
 date: '2026-10-27'
@@ -26,3 +27,5 @@ consumer:
 - tests/test_disp004r_cross_repo_push.py
 written_by: seldon decision 0.1.0
 provisional_id: 7edc8b0782d912dce5e18d8c7fde3c09988676960f755fe13a92a66550ce492b
+prev_hash: f766aa781e32dd90110b490e446bc16ac9584f77e9d1ca71dd2a422424bbaebd
+record_hash: 2a5fe9fd20db12b2d7616cd3eb7804d8cf77fdc86e24e48b6e366eb551bb20f5
