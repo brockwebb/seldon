@@ -752,3 +752,24 @@ def task_show(task_id):
             click.echo(f"    ← [{dtype}] {did}... ({dstate})")
     else:
         click.echo(f"\n  Depends on: none")
+
+
+@task_group.command("number")
+@click.argument("prefix")
+def task_number(prefix):
+    """Print the next unused task number for PREFIX (AD-038-R13).
+
+    Reads the graph and `cc_tasks/` in the primary checkout and every open worktree, so a number on an unmerged
+    branch is taken. Ask before writing a task file: `seldon cc register` refuses a number already registered to
+    another file (`number_taken`).
+    """
+    from seldon.core import numbering
+    project_dir, driver, database, _domain_config, _session_id = _open_project()
+    try:
+        out = numbering.allocate(project_dir, driver, database, prefix)
+    except numbering.NumberingError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    finally:
+        driver.close()
+    click.echo(numbering.render(out))

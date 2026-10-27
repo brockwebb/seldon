@@ -751,6 +751,30 @@ def _mcp_add_chain(task_ids: list[str], reason: str, project_dir: str, verb: str
 
 
 @_tool()
+def seldon_task_number(prefix: str, project_dir: str = ".") -> str:
+    """The next unused task number for a prefix (AD-038-R13): call it BEFORE writing a task file.
+
+    Reads the graph and `cc_tasks/` in the primary checkout and every open worktree. Name the file
+    `<date>_<number>_<slug>.md`; a re-filing of an open, withdrawn or superseded task keeps its number with an `R`
+    suffix (`SEL-010R`, `SEL-010R2`) instead. `seldon_cc_register` refuses a number another file holds
+    (`number_taken`), so two threads that asked at once learn it at registration.
+
+    Args:
+        prefix: The project's task prefix, e.g. `SEL`, `SQ`, `HB`.
+        project_dir: Path to project root
+    """
+    from seldon.core import numbering
+
+    config, driver, database, _domain_config, project_dir = _resolve_project(project_dir)
+    try:
+        return numbering.render(numbering.allocate(Path(project_dir), driver, database, prefix))
+    except numbering.NumberingError as exc:
+        return f"Error: {exc}"
+    finally:
+        driver.close()
+
+
+@_tool()
 def seldon_ooda_pending(project_dir: str = ".") -> str:
     """The Desktop OODA's worklist (AD-038-R10, criterion c18): every completed task whose open successor waits for
     its OODA record, with the RESULT to read, the successor file to amend, the record path and the grace left.

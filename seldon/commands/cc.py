@@ -1271,7 +1271,9 @@ def register_task_file(
         ValueError: Git cannot recover the file and ``allow_untracked`` is
             False, the task cites no design note while one is required, or the
             ``**After:**`` header does not parse or names a ref that does not
-            resolve to exactly one ResearchTask (``after_unresolved``). Every
+            resolve to exactly one ResearchTask (``after_unresolved``), or the
+            file's number is registered to another file (``number_taken``,
+            AD-038-R13). Every
             one of those refuses BEFORE the artifact is created, so a refusal
             writes nothing.
     """
@@ -1381,6 +1383,13 @@ def register_task_file(
     except recall_mod.RecallError as exc:
         raise ValueError(f"{exc} File: {rel_path}")
 
+    # AD-038-R13 (NUM-001R Part A): a number already registered to another file refuses, BEFORE anything is created;
+    # an R re-filing is let through over an open holder, which is named below for superseding once this id exists.
+    from seldon.core import numbering
+    number_refusal, refiled = numbering.registration_refusal(rel_path, numbering.graph_holders(driver, database))
+    if number_refusal:
+        raise ValueError(f"{number_refusal}. File: {rel_path}")
+
     existing_id = _find_existing(driver, database, rel_path)
     if existing_id:
         say(f"Warning: CC task already registered (id: {existing_id[:8]}...). "
@@ -1475,6 +1484,10 @@ def register_task_file(
     sequencing_warning = sequencing_lint(text, Path(rel_path).stem)
     if sequencing_warning:
         say(sequencing_warning)
+    for h in refiled:
+        say(f"  re-files {h.token} ({h.artifact_id[:8]}, {h.state}): supersede it now with "
+            f"`seldon task supersede {h.artifact_id[:8]} --superseded-by {artifact_id} --reason \"re-filed as "
+            f"{numbering.file_token(rel_path)}\"`")
     matches, written = constraining_rulings(
         project_dir=project_dir, config=config, driver=driver, database=database,
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
@@ -1509,7 +1522,8 @@ def register_task_file(
             "description": description, "existing": False, "rulings": matches,
             "edges_written": written, "warning": warning, "source_commit": source_commit,
             "after": predecessors, "after_edges": after_edges,
-            "sequencing_warning": sequencing_warning, "holds": holds, "record_commit": record_commit}
+            "sequencing_warning": sequencing_warning, "holds": holds, "record_commit": record_commit,
+            "refiles": [h.artifact_id for h in refiled]}
 
 
 @cc_group.command("register")
