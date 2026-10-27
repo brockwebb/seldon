@@ -1,3 +1,4 @@
+seq: 314
 event: accept
 id: seldon:AD-038-R15
 date: '2026-10-27'
@@ -36,3 +37,5 @@ consumer:
 - tests/test_desk004r_tool_commits_what_it_writes.py
 written_by: seldon decision 0.1.0
 provisional_id: dcbff1adbf5168eb2cef430769bc3a98f5b9f74632be91fe6816e01c7f6d430d
+prev_hash: 1fb3a0d7e55ca48f19b069cb4ee467121d642f6346900f35d0b46f08dee3f80e
+record_hash: f766aa781e32dd90110b490e446bc16ac9584f77e9d1ca71dd2a422424bbaebd

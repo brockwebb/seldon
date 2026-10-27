@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 168 records: accepted 145, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 169 records: accepted 146, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (145)
+## Accepted (146)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -290,6 +290,8 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 168 records: accept
   - source `docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md`:34-50; decided by cc:bacacc4c; consumer cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block.md, tests/test_num001r_task_numbers_allocated.py
 - **seldon:AD-038-R14** Task-file headers shall be read from the header block only (after the title, up to the first `##` heading or thematic break, fences excluded; header lines start with a bold label; fields in code spans are not read), and `static_checks` shall refuse `header_repeated:<name>` for any header it reads that the block carries twice, at registration and at the dispatcher.
   - source `docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md`:51-61; decided by cc:bacacc4c; consumer cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block.md, tests/test_num001r_headers_read_from_the_header_block.py
+- **seldon:AD-038-R15** `seldon hooks install` shall commit seldon's hook files that are untracked or differ from HEAD and carry exactly seldon's text, alone, path-limited and through the hooks, and raise with the index restored when the commit is refused; `ensure_installed`, which runs before the dispatcher's lease, shall not commit; the reconciler shall commit `.githooks/pre-commit` and `.githooks/commit-msg` carrying exactly seldon's text as class `hooks`, and leave any other bytes to c7.
+  - source `docs/design/AD-038_ADDENDUM_06_the_hooks_installer_commits_what_it_writes.md`:28-37; decided by cc:f7a1d2f0; consumer cc_tasks/2026-10-27_DESK-004R_every_file_the_machine_writes_is_committed_by_the_tool_that_wrote_it.md, tests/test_desk004r_tool_commits_what_it_writes.py
 - **seldon:AD-039-R1** ### AD-039-R1. The record directories are tracked; only blobs under them are ignored; handoffs are scanned. In every repository Seldon serves or scaffolds, `cc_tasks/` and `handoffs/` MUST be tracked. The only ignore rules that may match anything under them are `cc_tasks/*.json`, `cc_tasks/*.jsonl`, `handoffs/*.json` and `handoffs/*.jsonl` (data blobs, ignored by size). A handoff is committed only after `python -m squiddy.secret_scan` passes on it; the scan, never an ignore rule, is what keeps a secret out of a public repository. `seldon verify` refuses a repository where git would ignore `cc_ [...]
   - source `docs/design/AD-039_tracked_dirs.md`:9-16; decided by cc:729a80ba; consumer cc_tasks/2026-10-19_STD-001R_tracked_dirs_everywhere.md
 - **seldon:phase_c_retirement_list-R1** The Wintermute maintainer shall delete the LightRAG packages from the wintermute .venv and delete the rag_storage/ directory, while retaining any associated source notes for their research value.
