@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-038-R14
+date: '2026-10-27'
+decided_by: cc:bacacc4c
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md:51: AD-038-R14'
+reason: 'NUM-001R Part B; evidence: 2f5d4492 read network_kind=cadence from a Supersedes sentence; registration refused twice on 2026-09-22 for a prose After; over 1,623 task files the preamble rule changes 6 parsed outcomes, each a prose misread, where a contiguity rule would drop 106 Network headers; resolves 02bf065d item 1'
+kind: decision
+status: accepted
+statement: Task-file headers shall be read from the header block only (after the title, up to the first `##` heading or thematic break, fences excluded; header lines start with a bold label; fields in code spans are not read), and `static_checks` shall refuse `header_repeated:<name>` for any header it reads that the block carries twice, at registration and at the dispatcher.
+source:
+  path: docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md
+  lines:
+  - 51
+  - 61
+  sha256: 6797a5a0b9369ec3ac7fef55145b836168b4f393290bf4e2246939a855418579
+  text: |-
+    - **AD-038-R14. Headers are read from the header block only, and a header the block carries twice refuses.**
+      - The header block is the task file's preamble: the lines after the `# ` title up to the first `##` heading or
+        thematic break, with fenced code excluded (the whole file's start when there is no title).
+      - A header line starts, after optional indentation and a list bullet, with a bold label carrying a colon. A later
+        `**<Name>:**` field on such a line is read too, except inside a backtick code span. A header line with no value
+        takes the list or indented lines under it. A colon-less `**<Name>**` alone on its line is read the same way.
+      - Nothing outside the block, and no line that does not start with a label, is read as a header.
+      - The candidacy headers, After, Exclusive and Touches are all read this way (`_header_value`, `parse_headers`,
+        `parse_concurrency_headers`).
+      - `static_checks` refuses `header_repeated:<name>` for any header it reads that appears twice in the block,
+        naming the lines. Registration and the dispatcher refuse on the same code.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md
+  anchor: AD-038-R14
+consumer:
+- cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block.md
+- tests/test_num001r_headers_read_from_the_header_block.py
+written_by: seldon decision 0.1.0
+provisional_id: 990645f9a749a2c1b0080e6b1dbcb5c4fbc70efadaf3e93f97fb1c110d3304ad

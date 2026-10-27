@@ -21,9 +21,10 @@ the point of commit rather than at authoring.
 HB-01b to HB-01e, squiddy's SQ-021M and SQ-021M2 are siblings filed on purpose while the base was open). A trailing
 `R` or `R<n>` is a re-filing of the same identity (SEL-010R, SEL-010R2): allowed when every other holder of that
 identity is withdrawn, superseded or rejected, or still open and not running (proposed, accepted, blocked), because
-the re-filing is registered first and the holder superseded `--superseded-by` it afterwards: 4 of the 5 R re-filings
-in seldon's event log (DESK-002R, SEC-001R, DISP-001R, DISP-003R; STD-001R) were registered seconds before their
-holder was superseded, and `task supersede --superseded-by` needs the new id. A holder that is running or finished
+the re-filing is registered first and the holder superseded `--superseded-by` it afterwards: all five R re-filings
+over an open holder in seldon's event log (DESK-002R, SEC-001R, DISP-001R, STD-001R, DISP-003R) were registered 4 to
+34 seconds before their holder was superseded, because `task supersede --superseded-by` needs the new id. A holder
+that is running or finished
 (in_progress, completed, verified) refuses: that number names work that happened.
 
 A task with no file is a holder too, named by a leading `<TOKEN>:` or `<TOKEN> —` in its description (`NUM-001:

@@ -1,0 +1,45 @@
+event: accept
+id: seldon:AD-038-R13
+date: '2026-10-27'
+decided_by: cc:bacacc4c
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md:34: AD-038-R13'
+reason: 'NUM-001R Part A; evidence: two Desktop threads wrote squiddy SQ-019 on 2026-10-21 (a0e43099, 6b38bc3f), two SEL-007s the same week; all five open-holder R re-filings in seldon''s event log were registered before their holder was superseded; resolves ef0c9db0'
+kind: decision
+status: accepted
+statement: '`seldon task number <PREFIX>` and the `seldon_task_number` MCP tool shall print the next unused task number, read from the graph and every worktree''s cc_tasks/; `seldon cc register` shall refuse a file whose number another file holds in that repository''s graph (`number_taken`, naming each holder); an R re-filing shall be allowed over a withdrawn, superseded, rejected or still-open holder, naming the open holder to supersede, and refused over an in-progress, completed or verified one.'
+source:
+  path: docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md
+  lines:
+  - 34
+  - 50
+  sha256: 6797a5a0b9369ec3ac7fef55145b836168b4f393290bf4e2246939a855418579
+  text: |-
+    - **AD-038-R13. Task numbers are allocated by a command and unique per repository at registration.**
+      - `seldon task number <PREFIX>` and the `seldon_task_number` MCP tool print the next unused number: one more than
+        the highest number any holder carries under the prefix, at the widest width the prefix has used (three digits
+        for a new prefix).
+      - Holders are read from the graph and from `cc_tasks/` in the primary checkout and every open worktree. A graph
+        holder is a ResearchTask whose file name carries the number or, with no file, whose description leads with
+        `<TOKEN>:` or `<TOKEN> —`.
+      - A token is `<PREFIX>-<digits><suffix>` with an optional trailing `R` or `R<n>`. A letter suffix is a distinct
+        task (HB-01b, SQ-021M2). The `R` suffix is a re-filing of the same number (SEL-010R, SEL-010R2).
+      - `seldon cc register` refuses, before anything is created, a file whose number another file holds in that
+        repository's graph (`number_taken`, naming each holder).
+      - An R re-filing is allowed when every other holder of its number is withdrawn, superseded or rejected, or still
+        open and not running (proposed, accepted, blocked). Registration then names each open holder and the exact
+        `seldon task supersede <holder> --superseded-by <new id>` line. It is refused over a holder that is in progress,
+        completed or verified, and over a second file with the same R token.
+      - The allocator reserves nothing. Two threads that ask at once get the same answer; the second registration is
+        refused, and its author asks again.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md
+  anchor: AD-038-R13
+consumer:
+- cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block.md
+- tests/test_num001r_task_numbers_allocated.py
+written_by: seldon decision 0.1.0
+provisional_id: ec7d11215679f1f10a2e38eb8f112c2faf1aaeba743cc3e11e1a418a3652c88c
