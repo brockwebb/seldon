@@ -1,3 +1,4 @@
+seq: 313
 event: accept
 id: seldon:AD-038-R14
 date: '2026-10-27'
@@ -37,3 +38,5 @@ consumer:
 - tests/test_num001r_headers_read_from_the_header_block.py
 written_by: seldon decision 0.1.0
 provisional_id: 990645f9a749a2c1b0080e6b1dbcb5c4fbc70efadaf3e93f97fb1c110d3304ad
+prev_hash: 907832d7a43b178c11fc97ccce7d82b48caf052fa79b9cf51cf39b73c893f747
+record_hash: 1fb3a0d7e55ca48f19b069cb4ee467121d642f6346900f35d0b46f08dee3f80e

@@ -1,3 +1,4 @@
+seq: 312
 event: accept
 id: seldon:AD-038-R13
 date: '2026-10-27'
@@ -43,3 +44,5 @@ consumer:
 - tests/test_num001r_task_numbers_allocated.py
 written_by: seldon decision 0.1.0
 provisional_id: ec7d11215679f1f10a2e38eb8f112c2faf1aaeba743cc3e11e1a418a3652c88c
+prev_hash: 405a441266110cb96546b4ceb3c30d8bb1669661d27b1a6e2ea04fdd534674fb
+record_hash: 907832d7a43b178c11fc97ccce7d82b48caf052fa79b9cf51cf39b73c893f747
