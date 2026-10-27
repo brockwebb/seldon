@@ -1385,8 +1385,10 @@ def register_task_file(
 
     # AD-038-R13 (NUM-001R Part A): a number already registered to another file refuses, BEFORE anything is created;
     # an R re-filing is let through over an open holder, which is named below for superseding once this id exists.
+    # An unnumbered file (a cadence instance, `2026-09-10_scan_frame_v5.md`) holds nothing, so the graph is not read.
     from seldon.core import numbering
-    number_refusal, refiled = numbering.registration_refusal(rel_path, numbering.graph_holders(driver, database))
+    number_refusal, refiled = (numbering.registration_refusal(rel_path, numbering.graph_holders(driver, database))
+                               if numbering.file_token(rel_path) else (None, []))
     if number_refusal:
         raise ValueError(f"{number_refusal}. File: {rel_path}")
 
