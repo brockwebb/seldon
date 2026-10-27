@@ -47,9 +47,11 @@ def git(p: Path, *a, check=True) -> subprocess.CompletedProcess:
 def install_commit_gate(p: Path) -> None:
     """HOOK-001: a dispatched project carries the tracked commit gate, as every real one does;
     `seldon dispatch once` refuses a checkout without it. Called before the fixture's first
-    commit, so `.githooks/pre-commit` is tracked from the start."""
+    commit, so `.githooks/pre-commit` is tracked from the start. `commit=False`: the fixture's
+    `init` commit takes the hook files, which keeps the history the recorded serial transcript
+    pins (DESK-004R; install's own commit is tested in test_desk004r_*)."""
     from seldon.core.hooks import install
-    install(p, python=sys.executable)
+    install(p, python=sys.executable, commit=False)
 
 
 def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
