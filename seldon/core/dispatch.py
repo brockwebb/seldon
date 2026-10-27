@@ -37,6 +37,7 @@ import yaml
 
 from seldon import models
 from seldon.core import cadence as C
+from seldon.core import worktree as WT
 from seldon.core.moving import is_future
 
 #: DN-006 decision 3, as corrected by this build's ADDENDUM_01 to that note. The marker survey
@@ -755,6 +756,16 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.ooda_grace_s must be a number of seconds, 0 or more (0 never waits), got {grace!r}")
     block["ooda_grace_s"] = grace
+    # DISP-004R (AD-034-R12). Optional with defaults, so installing this build changes no config file.
+    root = block.get("cross_repo_root", CROSS_REPO_ROOT_DEFAULT)
+    if not isinstance(root, str) or not root.strip():
+        raise DispatchConfigError(
+            f"dispatch.cross_repo_root must be a directory path (relative to the project), got {root!r}")
+    block["cross_repo_root"] = root
+    xbranch = block.get("cross_repo_branch", CROSS_REPO_BRANCH_DEFAULT)
+    if not isinstance(xbranch, str) or not xbranch.strip():
+        raise DispatchConfigError(f"dispatch.cross_repo_branch must be a branch name, got {xbranch!r}")
+    block["cross_repo_branch"] = xbranch
     block["candidacy_headers"] = load_candidacy_headers(block.get("candidacy_headers"))
     block["allow"] = _load_allow(block.get("allow"))
     _load_parallel_config(block)
@@ -1417,6 +1428,133 @@ def push_if_ahead(project_dir: Path) -> dict:
         return {"pushed": False, "reason": "push_failed", "ahead": ahead,
                 "stderr": (done.stderr or done.stdout).strip()}
     return {"pushed": True, "reason": None, "ahead": ahead}
+
+
+# ------------------------------------------------------- a cross-repo task's other repositories (DISP-004R)
+
+#: The header that names the repositories a task works in, and its L4 clause (commit, merge, push) where they are.
+HEADER_REPO = "Repo"
+
+#: Where a bare repository name in the Repo line is looked for: `dispatch.cross_repo_root`, relative to the project.
+#: Every governed repository is a sibling checkout of seldon's (`seldon.yaml prior_art.internal_roots` reads them
+#: the same way), so the default is the project's parent directory.
+CROSS_REPO_ROOT_DEFAULT = ".."
+
+#: The branch a named repository must be on for its push (`dispatch.cross_repo_branch`). Sessions commit on a
+#: sibling's main by path (AD-036-R12); a sibling on another branch is someone's work in progress, never pushed.
+CROSS_REPO_BRANCH_DEFAULT = "main"
+
+#: The L4 clause: from `L4:` to the end of its sentence (a period followed by whitespace or the end of the value).
+_L4_RE = re.compile(r"\bL4\s*:(?P<clause>.*?)(?:\.(?=\s)|\.?$)", re.S)
+#: A clause segment that quantifies over every repository the line names ("in all three", "in every repo touched").
+_EVERY_RE = re.compile(r"\b(?:every|all|each|both)\b", re.I)
+_PUSH_RE = re.compile(r"\bpush", re.I)
+#: A bare word that may be a sibling checkout's directory name.
+_REPO_WORD_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*")
+#: An absolute path, as the Repo lines write cross-repo targets (`/Users/brock/GitHub/arnold`).
+_ABS_PATH_RE = re.compile(r"(?<![\w.])/[^\s`'\"(),;]+")
+
+
+def _is_checkout(path: Path) -> bool:
+    return (path / ".git").exists()
+
+
+def _named_repos(text: str, root: Path) -> list:
+    """The git checkouts `text` names, in order of first mention: absolute paths, and bare words that are the
+    directory name of a checkout under `root`. A word that names no checkout is prose and is ignored."""
+    hits = []
+    for m in _ABS_PATH_RE.finditer(text):
+        path = Path(m.group(0).rstrip(".:"))
+        if _is_checkout(path):
+            hits.append((m.start(), path.resolve()))
+    for m in _REPO_WORD_RE.finditer(text):
+        word = m.group(0).rstrip(".")
+        if word and _is_checkout(root / word):
+            hits.append((m.start(), (root / word).resolve()))
+    out = []
+    for _, path in sorted(hits, key=lambda h: h[0]):
+        if path not in out:
+            out.append(path)
+    return out
+
+
+def repo_push_targets(value: str | None, project_dir: Path, root: Path) -> list:
+    """The OTHER repositories whose main a task's `**Repo:**` line says to push (AD-034-R12), as resolved paths.
+
+    The line is prose (`seldon (primary); squiddy and ai-readiness-kg (...). L4: commit, merge, push in all three.`),
+    so the reading is deliberately narrow, and what it cannot read pushes nothing:
+
+    * only the `L4:` clause decides, up to the end of its sentence, and within it only the `;`-separated segments
+      that say `push` (`push in squiddy; the hazbrief graph release commits in hazbrief-mcp` pushes squiddy alone);
+    * a push segment that names repositories pushes those;
+    * a push segment that names none pushes every repository the line names up to the end of the L4 clause, and only
+      when it quantifies (`all`, `every`, `each`, `both`); a bare `L4: commit, merge, push.` is the primary's alone,
+      so a repository the line names as evidence ("read only") is never pushed by it, and neither is one named in
+      a sentence after the clause;
+    * "every repo touched" is read at the finish, where a named repository whose HEAD did not move is not pushed;
+    * the project itself is left out: its own main is pushed by the dispatcher as before.
+    """
+    if not value:
+        return []
+    m = _L4_RE.search(value)
+    if m is None:
+        return []
+    segments = [s for s in m.group("clause").split(";") if _PUSH_RE.search(s)]
+    named = []
+    for seg in segments:
+        named += _named_repos(seg, root)
+    if not named and any(_EVERY_RE.search(seg) for seg in segments):
+        named = _named_repos(value[:m.end()], root)
+    own = Path(project_dir).resolve()
+    out = []
+    for path in named:
+        if path != own and path not in out:
+            out.append(path)
+    return out
+
+
+def cross_repo_launch(project_dir: Path, cfg: dict, task_text: str) -> list:
+    """At launch: each repository the task's Repo line says to push, with its HEAD now, for the finish to compare.
+    `[{"repo": <path>, "head_at_launch": <sha or None>}]`; empty for a task that names no other repository."""
+    root = (Path(project_dir) / cfg["cross_repo_root"]).resolve()
+    return [{"repo": str(path), "head_at_launch": WT.rev(path, "HEAD")}
+            for path in repo_push_targets(_header_value(task_text, HEADER_REPO), project_dir, root)]
+
+
+#: A cross-repo push reading's `push` values that are not a success and not "nothing to do": each one alarms.
+CROSS_REPO_REFUSALS = ("missing", "read_error", "wrong_branch", "dirty_tree", "no_upstream", "push_failed")
+
+
+def push_cross_repo(entry: dict, branch: str) -> dict:
+    """At a merged finish: push one named repository's main when its HEAD moved since launch and its tree is clean.
+
+    Returns the entry with `head_at_finish` and `push`: `unmoved` (nothing this session did there), `pushed`,
+    `up_to_date`, or one of `CROSS_REPO_REFUSALS`. A dirty tree refuses the push, as c7 refuses a dispatch: what is
+    uncommitted there is someone's work in progress, and pushing past it would publish a main nobody has looked at
+    whole. Never raises (an offline machine is an ordinary state, as in `push_if_ahead`)."""
+    repo = Path(entry["repo"])
+    out = {"repo": entry["repo"], "head_at_launch": entry.get("head_at_launch")}
+    if not _is_checkout(repo):
+        return {**out, "head_at_finish": None, "push": "missing"}
+    head = WT.rev(repo, "HEAD")
+    out["head_at_finish"] = head
+    if head == entry.get("head_at_launch"):
+        return {**out, "push": "unmoved"}
+    state = tree_state(repo)
+    if state.get("read_error"):
+        return {**out, "push": "read_error", "error": state["read_error"]}
+    if state["branch"] != branch:
+        return {**out, "push": "wrong_branch", "branch": state["branch"]}
+    if state["dirty"]:
+        return {**out, "push": "dirty_tree", "dirty_paths": state["dirty_paths"][:10],
+                "dirty_count": state["dirty_count"]}
+    pushed = push_if_ahead(repo)
+    if pushed["pushed"]:
+        return {**out, "push": "pushed", "ahead": pushed["ahead"]}
+    res = {**out, "push": pushed["reason"], "ahead": pushed["ahead"]}
+    if pushed.get("stderr"):
+        res["stderr"] = pushed["stderr"][:500]
+    return res
 
 
 def lease_is_held(project_dir: Path, cfg: dict) -> bool:

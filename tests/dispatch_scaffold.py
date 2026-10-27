@@ -189,6 +189,14 @@ for rel, text in (spec.get("primary_append") or {{}}).items():
     from seldon.core.worktree import locked
     with locked(Path(os.environ["SELDON_PRIMARY_CHECKOUT"]) / rel) as fh:
         fh.write(text)
+for repo, files in (spec.get("other_commit") or {{}}).items():
+    # DISP-004R: a cross-repo session commits on another repository's main by path (AD-036-R12).
+    for rel, text in files.items():
+        (Path(repo) / rel).parent.mkdir(parents=True, exist_ok=True)
+        with open(Path(repo) / rel, "a") as fh:
+            fh.write(text)
+    subprocess.run(["git", "-C", repo, "add", "--", *files], check=True)
+    subprocess.run(["git", "-C", repo, "commit", "-q", "-m", f"{{stem}}: cross-repo", "--", *files], check=True)
 if spec.get("sleep"):
     time.sleep(spec["sleep"])
 if spec.get("append_event"):

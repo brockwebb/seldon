@@ -1277,6 +1277,9 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).
     child_session_id = str(uuid.uuid4())
+    # DISP-004R (AD-034-R12): the other repositories the Repo line says to push, with their HEADs before the session.
+    push_repos = D.cross_repo_launch(project_dir, cfg, (project_dir / rel).read_text(encoding="utf-8",
+                                                                                     errors="surrogateescape"))
     _emit(project_dir, session_id, D.EVENT_LAUNCHED,
           {"task_id": chosen["task_id"], "source_file": rel,
            "child_session_id": child_session_id,
@@ -1287,6 +1290,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "command": " ".join(shlex.quote(p) for p in cmd),
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
            "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
+           "push_repos": push_repos,
            **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note),
            # PRUNE-002 Part B: the instruction context this session receives, for `qc chart`'s toil reading.
@@ -1298,7 +1302,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # `worktree`, `branch` and `linked` are filled by `name_worktree` at the session's `init` record.
     extra = {"worktree_task": chosen["task_id"], "stem": stem, "source_file": rel, "worktree": None,
              "branch": None, "base": base, "child_session_id": child_session_id, "linked": [],
-             "model_spec": spec}
+             "model_spec": spec, "push_repos": push_repos}
     click.echo(f"launching {chosen['task_id'][:8]} {rel} in a worktree the CLI names -> {log_rel}")
 
     started = time.monotonic()

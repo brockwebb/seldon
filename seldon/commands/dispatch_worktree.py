@@ -69,7 +69,7 @@ WORKTREE_CLAUSE = (
 #: The per-worktree lease's persistent fields (`D.Lease.extra`): what a released or orphaned
 #: lease still has to say about which task, worktree and branch it guarded.
 LEASE_EXTRA_KEYS = ("worktree_task", "stem", "source_file", "worktree", "branch", "base",
-                    "child_session_id", "linked", "model_spec")
+                    "child_session_id", "linked", "model_spec", "push_repos")
 
 #: `dispatch_finished.outcome` values this module writes, beside the serial `ok` boolean.
 OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
@@ -80,6 +80,9 @@ OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
             # FRICTION-002 Part C: the session ended with its Stop gate not passed (the CLI's block cap or the token
             # ceiling ended it with a check failing, or it declared Parts and no gate ran).
             "stop_gate_unpassed")
+
+#: The notify outcome of a merged finish whose cross-repo push was refused somewhere (DISP-004R, AD-034-R12).
+CROSS_REPO_PUSH_REFUSED = "cross_repo_push_refused"
 
 #: The ResearchTask property that says what became of a worktree task's branch.
 MERGE_PROPERTY = "dispatch_merge"
@@ -502,6 +505,9 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir, tid), spec, worktree=True,
                         settings=S._session_settings(project_dir, cfg))
     conc = chosen["concurrency"]
+    # DISP-004R (AD-034-R12): the other repositories the Repo line says to push, with their HEADs before the session.
+    push_repos = D.cross_repo_launch(project_dir, cfg, (project_dir / rel).read_text(encoding="utf-8",
+                                                                                     errors="surrogateescape"))
     S._emit(project_dir, session_id, D.EVENT_LAUNCHED,
             {"task_id": tid, "source_file": rel, "child_session_id": child_session_id,
              "claimed_by": claimed["claimed_by"], "transitions": claimed["transitions"],
@@ -510,7 +516,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "log_path": log_rel, "command": " ".join(shlex.quote(p) for p in cmd),
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
              "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
-             "touches": {"resources": conc["resources"], "paths": conc["paths"]},
+             "touches": {"resources": conc["resources"], "paths": conc["paths"]}, "push_repos": push_repos,
              **S._model_fields(spec, refresh_note)})
     # Committed and pushed BEFORE the CLI cuts the worktree, so the task's branch starts from a
     # main that already carries its own claim.
@@ -519,7 +525,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     # `worktree`, `branch` and `linked` are filled by the supervisor at the session's `init` (`name_worktree`).
     extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": None,
              "branch": None, "base": base, "child_session_id": child_session_id,
-             "linked": [], "model_spec": spec}
+             "linked": [], "model_spec": spec, "push_repos": push_repos}
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
     lease_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "seldon", "dispatch", "supervise", tid,
@@ -683,7 +689,8 @@ def finish_session(project_dir, config, driver, database, domain_config, session
               "log_path": str(log_path.relative_to(project_dir)), "mode": "worktree",
               "worktree": extra["worktree"], "branch": branch, "base": extra["base"],
               "linked": extra.get("linked") or [],
-              "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate}
+              "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate,
+              "push_repos": extra.get("push_repos") or []}
     click.echo(f"session exit={code} result_committed={committed} graph={graph_state} "
                f"model={receipt['served']} (requested {receipt['requested']}) "
                f"classifier_blocks={classifier['blocks']}")
@@ -1064,9 +1071,12 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     if merge["discarded_ignored"]:
         click.echo(f"removing {extra['worktree']} discards gitignored: "
                    f"{', '.join(merge['discarded_ignored'][:10])}", err=True)
+    # DISP-004R (AD-034-R12): the other repositories the Repo line named are pushed with this one, and each reading
+    # goes on the finish record.
+    pushes = push_named_repos(project_dir, session_id, cfg, finish, name)
     done = {**finish, "ok": True, "outcome": "merged",
             "graph_state_observed": S._state_of(driver, database, task_id),
-            "merge": {k: v for k, v in merge.items() if k != "writes"}}
+            "merge": {k: v for k, v in merge.items() if k != "writes"}, "push_repos": pushes}
     S._emit(project_dir, session_id, D.EVENT_FINISHED, done)
     if merge["undeclared_writes"]:
         click.echo(f"undeclared writes by {task_id[:8]}: "
@@ -1080,13 +1090,60 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     S._record_and_push(project_dir, config, cfg)
 
 
+def push_named_repos(project_dir, session_id, cfg, finish: dict, name: str) -> list:
+    """Push main in each repository the task's Repo line named whose HEAD moved during the session (AD-034-R12).
+
+    Prior art: git-push(1) `--recurse-submodules=on-demand`, which pushes every submodule whose commits the
+    superproject's push needs and aborts when one cannot be pushed; here the other repositories are siblings named by
+    the task, not submodules, and a refusal there does not undo this repository's merge, which has already happened.
+    One line per repository; a refusal (`D.CROSS_REPO_REFUSALS`, a dirty tree among them) alarms through the notify
+    channel, once per finish, naming every refused repository.
+    """
+    out = []
+    for entry in finish.get("push_repos") or []:
+        res = D.push_cross_repo(entry, cfg["cross_repo_branch"])
+        out.append(res)
+        repo = Path(res["repo"]).name
+        if res["push"] == "pushed":
+            click.echo(f"push: {repo} pushed {res['ahead']} commit(s)")
+        elif res["push"] in D.CROSS_REPO_REFUSALS:
+            detail = (", ".join(res.get("dirty_paths") or []) or res.get("branch") or res.get("stderr")
+                      or res.get("error") or "")
+            click.echo(f"push REFUSED in {repo} ({res['push']}){': ' + detail if detail else ''}", err=True)
+        else:
+            click.echo(f"push: {repo} {res['push']}")
+    refused = [r for r in out if r["push"] in D.CROSS_REPO_REFUSALS]
+    if refused:
+        message = (f"cross-repo push refused for {name}: "
+                   + "; ".join(f"{Path(r['repo']).name} {r['push']}" for r in refused))
+        S._run_notifier(project_dir, session_id, cfg, {
+            "SELDON_NOTIFY_TASK_ID": str(finish["task_id"]), "SELDON_NOTIFY_TASK_NAME": str(name),
+            "SELDON_NOTIFY_OK": "false", "SELDON_NOTIFY_OUTCOME": CROSS_REPO_PUSH_REFUSED,
+            "SELDON_NOTIFY_MESSAGE": message, "SELDON_NOTIFY_RESULT_PATH": finish["result_path"],
+            "SELDON_NOTIFY_LOG_PATH": finish["log_path"],
+            "SELDON_NOTIFY_WALL_SECONDS": str(finish.get("wall_clock_s") or 0),
+        }, task_id=finish["task_id"], label=CROSS_REPO_PUSH_REFUSED)
+    return out
+
+
+def held_cross_repo(entry: dict) -> dict:
+    """An unmerged finish pushes nothing elsewhere (the same rule as its own repository's main), and says so with the
+    HEAD it would have pushed, so a reader sees a sibling left ahead of its origin."""
+    repo = Path(entry["repo"])
+    head = WT.rev(repo, "HEAD") if (repo / ".git").exists() else None
+    moved = head is not None and head != entry.get("head_at_launch")
+    return {"repo": entry["repo"], "head_at_launch": entry.get("head_at_launch"), "head_at_finish": head,
+            "push": "held_unmerged" if moved else "unmoved"}
+
+
 def _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
                      finish, name, outcome, merge=None) -> None:
     """Under the pass lease: a worktree task that will not merge. Blocked, never retried
     (DN-006 decision 4), its worktree left where it is. `merge_blocked` also writes an Issue
     naming the files and sets the task's `dispatch_merge` (decision 3)."""
     task_id = finish["task_id"]
-    record = {**finish, "ok": False, "outcome": outcome}
+    record = {**finish, "ok": False, "outcome": outcome,
+              "push_repos": [held_cross_repo(e) for e in finish.get("push_repos") or []]}
     if merge is not None:
         record["merge"] = merge
     state = S._state_of(driver, database, task_id)

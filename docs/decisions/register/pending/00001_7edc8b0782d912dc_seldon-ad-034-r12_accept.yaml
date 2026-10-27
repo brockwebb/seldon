@@ -1,0 +1,28 @@
+event: accept
+id: seldon:AD-034-R12
+date: '2026-10-27'
+decided_by: cc:2909ce0f
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_06_cross_repo_task_pushed_in_every_repo_it_names.md:41: AD-034-R12'
+reason: 'DISP-004R Part A; evidence: SQ-019 left ai-readiness-kg 04c26099 committed and not pushed, a seldon task left squiddy 805e333 the same way; the finish pushed only its own repository; supersedes task d091760b'
+kind: decision
+status: accepted
+statement: The dispatcher shall read, at launch, the other repositories a task's `**Repo:**` L4 clause says to push and record each one's HEAD; at a merged finish it shall push main in each of them whose HEAD moved during the session, whose branch is `dispatch.cross_repo_branch` and whose tree is clean, record each reading on `dispatch_finished.push_repos`, and alarm once through the notify channel naming every refused repository; an unmerged finish shall push nothing elsewhere and record `held_unmerged`.
+source:
+  path: docs/design/AD-034_ADDENDUM_06_cross_repo_task_pushed_in_every_repo_it_names.md
+  lines:
+  - 41
+  - 41
+  sha256: 79af13dd591901482d6e66c55b3b2a322db552e83d69d655e8be185a4d80701a
+  text: '- **AD-034-R12. At launch the dispatcher reads the task''s `**Repo:**` line for the other repositories its L4 clause says to push, and records each one''s HEAD on `dispatch_launched`. At a merged finish it pushes main in each of them whose HEAD moved during the session, whose current branch is `dispatch.cross_repo_branch` and whose tree is clean. It records each repository''s reading on `dispatch_finished.push_repos`. A refusal (a dirty tree, another branch, no upstream, a failed push, a missing checkout) raises one alarm through the notify channel, naming every refused repository. An unmerged finish pushes nothing elsewhere and records `held_unmerged` for each repository that moved.**'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_06_cross_repo_task_pushed_in_every_repo_it_names.md
+  anchor: AD-034-R12
+consumer:
+- cc_tasks/2026-10-27_DISP-004R_a_cross_repo_task_is_pushed_in_every_repository_it_names.md
+- tests/test_disp004r_cross_repo_push.py
+written_by: seldon decision 0.1.0
+provisional_id: 7edc8b0782d912dce5e18d8c7fde3c09988676960f755fe13a92a66550ce492b

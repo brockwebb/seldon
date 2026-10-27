@@ -216,6 +216,12 @@ dispatch:
   # Desktop writes left uncommitted stalled it 3, 36 and 14 hours), so it alarms on its first pass.
   stuck_after_passes_by_criterion:
     dirty_tree: 1
+  # DISP-004R (AD-034-R12): a task whose `**Repo:**` L4 clause names other repositories has their main pushed at its
+  # merged finish. A bare name in that line is a checkout under this directory (relative to the project); the
+  # governed repositories are seldon's siblings, as `prior_art.internal_roots` reads them. A repository not on
+  # `cross_repo_branch` is someone's work in progress and is never pushed.
+  cross_repo_root: ..
+  cross_repo_branch: main
   # FRICTION-002 (AD-034 ADDENDUM 01): every task runs in its own Claude Code worktree,
   # .claude/worktrees/<stem> on branch worktree-<stem>, at every max_parallel. The value below is
   # how many may run at once.
