@@ -80,17 +80,106 @@ MINIMUM_HEADERS = (HEADER_SPEND, HEADER_NETWORK)
 
 #: `**Spend:** zero model calls.` / `**Network:** none.` / `**Framework layer served (DN-005 §5
 #: rule 1):** §2.2 Tier M.` — the same bolded-header shape `seldon cc register` already parses.
-#: The header name may carry a parenthetical, which the third one does.
+#: The header name may carry a parenthetical, which the third one does. One field; where it may
+#: stand is the header block's business (:func:`header_block`, AD-038-R14).
 _HEADER_RE_CACHE: dict[str, re.Pattern] = {}
 
 
 def _header_re(name: str) -> re.Pattern:
     if name not in _HEADER_RE_CACHE:
         _HEADER_RE_CACHE[name] = re.compile(
-            r"\*\*" + re.escape(name) + r"(?:\s*\([^)]*\))?\s*:?\*\*\s*(?P<value>[^\n]*)"
-            r"|\*\*" + re.escape(name) + r"(?:\s*\([^)]*\))?\s*:(?P<v2>[^*\n]*)\*\*"
+            # The value starts at the closing `**`, not after its spaces: the reader matches on a line whose code
+            # spans are blanked, and a value that opens with one (`**After:** \`<stem>\``) must not be skipped.
+            r"\*\*" + re.escape(name) + r"(?:[ \t]*\([^)\n]*\))?[ \t]*:\*\*(?P<value>[^\n]*)"
+            r"|\*\*" + re.escape(name) + r"(?:[ \t]*\([^)\n]*\))?[ \t]*:(?P<v2>[^*\n]*)\*\*"
             r"(?P<rest>[^\n]*)")
     return _HEADER_RE_CACHE[name]
+
+
+#: AD-038-R14 (NUM-001R Part B): headers are read from the header block, never from prose. Before it the
+#: first match ANYWHERE in the file won, so a header quoted in prose was read as the header: 2f5d4492 recorded
+#: network_kind=cadence from a Supersedes sentence, and registration refused twice on 2026-09-22 for a prose
+#: `**After:**`. The block is the file's preamble: the lines after the `# ` title up to the first `##` heading or
+#: thematic break, fenced code excluded (RFC 5322 §2.1's header section, which ends where the body begins; the
+#: Pandoc and MultiMarkdown metadata blocks are the Markdown form). Not "the contiguous header lines": over the 1,623
+#: task files in ~/GitHub on 2026-10-27, authors separate header groups with blank lines and a sentence, so a
+#: contiguity rule would have dropped 106 real Network headers; the preamble rule changed 10 reads, every one a prose
+#: match or a legacy file.
+#:
+#: A header line STARTS with a bold label carrying a colon (`**Spend:** ...`, `- **Exclusive:** no`); a field later
+#: on such a line is read too (`**Spend:** zero model calls. **Network:** none.`, a shape 79 files use), except
+#: inside a backtick code span, which is how a header is quoted (`its \`**Network:**\` header opened with ...`).
+_HEADER_LINE_RE = re.compile(r"^[ \t]*(?:[-*+][ \t]+)?\*\*[A-Za-z][^*\n]*:")
+#: A colon-less label alone on its line, its value in the list under it (arnold KG-006's `**Spend**`); the reader
+#: before AD-038-R14 accepted it, so the block reader does too.
+_BARE_LABEL_RE = re.compile(r"^[ \t]*\*\*(?P<name>[A-Za-z][^*\n]*?)(?:[ \t]*\([^)\n]*\))?\*\*[ \t]*$")
+_BLOCK_END_RE = re.compile(r"^(?:#{2,}[ \t]|[ \t]*(?:-[ \t]*){3,}$|[ \t]*(?:\*[ \t]*){3,}$|[ \t]*(?:_[ \t]*){3,}$)")
+_FENCE_RE = re.compile(r"^[ \t]*(?:```|~~~)")
+#: A list item or indented line under a header whose own line carries no value (`**Spend:**` then `- est. 6M ...`).
+_CONTINUATION_RE = re.compile(r"^(?:[ \t]*(?:[-*+]|\d+[.)])[ \t]|[ \t]+\S)")
+_CODE_SPAN_RE = re.compile(r"`+[^`\n]*`+")
+#: The refusal code for a header the block carries twice.
+HEADER_REPEATED = "header_repeated"
+
+
+def header_block(text: str) -> list[tuple[int, str]]:
+    """The header block as `(1-based line number, line)` pairs: after the title, before the first section."""
+    lines = text.split("\n")
+    start = next((i + 1 for i, line in enumerate(lines) if line.startswith("# ")), 0)
+    out, fenced = [], False
+    for i in range(start, len(lines)):
+        line = lines[i]
+        if _FENCE_RE.match(line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        if _BLOCK_END_RE.match(line):
+            break
+        out.append((i + 1, line))
+    return out
+
+
+def header_hits(text: str, name: str) -> list[tuple[int, str]]:
+    """Every `**<name>:**` field in the header block, in order, as `(line number, raw value)`."""
+    block = header_block(text)
+    rx = _header_re(name)
+    hits = []
+    for k, (no, line) in enumerate(block):
+        bare = _BARE_LABEL_RE.match(line)
+        if bare and bare.group("name").strip() == name:
+            values = [""]
+        elif _HEADER_LINE_RE.match(line):
+            # Masked to the same length, so a match's offsets index the original line.
+            masked = _CODE_SPAN_RE.sub(lambda m: " " * len(m.group()), line)
+            values = [line[m.start("value"):m.end("value")].strip() if m.group("value") is not None
+                      else (line[m.start("v2"):m.end("v2")] + line[m.start("rest"):m.end("rest")]).strip()
+                      for m in rx.finditer(masked)]
+        else:
+            continue
+        for value in values:
+            if not value:
+                cont = []
+                for _no, nxt in block[k + 1:]:
+                    if not nxt.strip() or _HEADER_LINE_RE.match(nxt) or not _CONTINUATION_RE.match(nxt):
+                        break
+                    cont.append(nxt.strip())
+                value = " ".join(cont)
+            hits.append((no, value))
+    return hits
+
+
+def repeated_headers(text: str, names) -> list[dict]:
+    """`{code, message}` for each of `names` the header block carries more than once (AD-038-R14)."""
+    out = []
+    for name in dict.fromkeys(names):
+        hits = header_hits(text, name)
+        if len(hits) > 1:
+            out.append({"code": f"{HEADER_REPEATED}:{name}",
+                        "message": (f"`**{name}:**` appears {len(hits)} times in the header block (lines "
+                                    f"{', '.join(str(no) for no, _ in hits)}); the block carries each header once, "
+                                    f"so keep one")})
+    return out
 
 #: A framework-layer value that satisfies ADDENDUM_01: a DN-005 §2 layer reference, a capability
 #: tier, or the word `none` for a hygiene task.
@@ -250,23 +339,13 @@ _RESOURCE_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 _GLOB_CHARS = "*?["
 
 
-#: The concurrency headers must START a line (after optional indentation and a list bullet).
-#: Unlike the three required headers, these are read from every candidate in serial mode as
-#: well, and a task file that quotes the grammar in prose (the SEL-004 task does, inside a
-#: list item and backticks) would otherwise be read as a malformed declaration and refused.
-_CONC_HEADER_RE = {
-    name: re.compile(r"(?m)^[ \t]*(?:[-*][ \t]+)?\*\*" + re.escape(name)
-                     + r"[ \t]*:\*\*[ \t]*(?P<value>[^\n]*)$")
-    for name in CONCURRENCY_HEADERS}
-
-
+#: The concurrency headers are read from the header block like every other (AD-038-R14), which is what their own
+#: line anchor was for: they are read from every candidate in serial mode as well, and a task file that quotes the
+#: grammar in prose (the SEL-004 task does, inside a list item and backticks) would otherwise be read as a malformed
+#: declaration and refused.
 def parse_concurrency_headers(text: str) -> dict:
     """The two optional headers as raw values; `None` where absent."""
-    out = {}
-    for name, pattern in _CONC_HEADER_RE.items():
-        m = pattern.search(text)
-        out[name] = m.group("value").strip() if m else None
-    return out
+    return {name: _header_value(text, name) for name in CONCURRENCY_HEADERS}
 
 
 def _touch_item(item: str, resources: dict) -> tuple:
@@ -920,18 +999,20 @@ def resolve_standing_band(project_dir: Path, ref: str) -> int:
 # ------------------------------------------------------------------ the task file's headers
 
 def _header_value(text: str, name: str) -> str | None:
-    m = _header_re(name).search(text)
-    if not m:
-        return None
-    if m.group("value") is not None:
-        return m.group("value").strip()
-    return ((m.group("v2") or "") + (m.group("rest") or "")).strip()
+    """The header's value from the header block (AD-038-R14), the first where it repeats; None where absent.
+
+    A repeat is refused by :func:`static_checks` (`header_repeated`), so the first is only ever read on a file that
+    registration refused or that was registered before the rule.
+    """
+    hits = header_hits(text, name)
+    return hits[0][1] if hits else None
 
 
 def parse_headers(text: str, names=REQUIRED_HEADERS) -> dict:
     """The candidacy headers, as raw values. `None` where the header is absent.
 
-    Reads the same bolded-header lines `seldon cc register` already reads and adds nothing to
+    Reads the same bolded-header lines `seldon cc register` already reads, from the header block
+    only (:func:`header_block`, AD-038-R14), and adds nothing to
     the task file format — the opt-in is that a task file carries them, not that it adopts a
     new syntax (DN-006 decision 2). The three `REQUIRED_HEADERS` are always read, required or not,
     because c4, c5 and c9 record their values; `names` adds a project's own (AD-038-R11).
@@ -1084,8 +1165,12 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
         return {**out, "candidate": False, "reason": "source_file_missing", "message": msg,
                 "failures": [{"code": "source_file_missing", "message": msg}]}
     text = task_file.read_text(encoding="utf-8", errors="surrogateescape")
-    failures = []
     criteria_codes = set()
+    # AD-038-R14: every header these checks read is read from the header block, once. A header the block carries
+    # twice is refused rather than resolved by order: which one the author meant is not the reader's to guess.
+    read = ((tuple(cfg.get("candidacy_headers", REQUIRED_HEADERS)) + REQUIRED_HEADERS + CONCURRENCY_HEADERS
+             if cfg is not None else ()) + (HEADER_AFTER,))
+    failures = repeated_headers(text, read)
     if cfg is not None:
         required = cfg.get("candidacy_headers", REQUIRED_HEADERS)
         headers = parse_headers(text, required)

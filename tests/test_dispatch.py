@@ -779,7 +779,8 @@ def test_a_serial_task_carrying_a_malformed_concurrency_header_is_refused(projec
     a task that carries one has it checked in serial mode too, so a malformed declaration
     is found when it is written, not when the project opts in to parallel dispatch."""
     tf = _task_file(project, "bad")
-    tf.write_text(tf.read_text() + "**Exclusive:** perhaps\n", encoding="utf-8")
+    # In the header block (AD-038-R14): below the first section it is prose and is not read at all.
+    tf.write_text(tf.read_text().replace("\n## 1.", "**Exclusive:** perhaps\n\n## 1."), encoding="utf-8")
     good = _task_file(project, "good")
     _commit(project)
     row = _evaluate(project, tf)
