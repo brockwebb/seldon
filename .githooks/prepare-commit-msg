@@ -1,0 +1,14 @@
+#!/bin/sh
+# Seldon's commit gate where a rebase or cherry-pick commits (squiddy DN-052 R-237, SQ-096): git's
+# sequencer runs no pre-commit hook, so a conflict resolved during `git rebase --continue` is judged
+# here. It runs the checks of the staged bytes that a sequenced commit can break (the pass ledger).
+py="$(git config --get seldon.python)"
+if [ -n "$py" ] && [ -x "$py" ]; then
+  exec "$py" -m seldon hooks prepare-commit-msg "$@"
+fi
+if command -v seldon >/dev/null 2>&1; then
+  exec seldon hooks prepare-commit-msg "$@"
+fi
+echo "seldon commit gate: no interpreter: git config seldon.python is unset or not executable" >&2
+echo "and seldon is not on PATH. Run \`seldon hooks install\` in this repository." >&2
+exit 1
