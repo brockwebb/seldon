@@ -1,0 +1,12 @@
+2026-10-28T12:45:11 replay: 3 unit(s), 0 done, 0 tokens spent, model claude-opus-5-5
+2026-10-28T12:45:11 unit 1/3 bacacc4c -> f7a1d2f0 at 4635958a: start
+2026-10-28T12:46:05 unit 1/3 bacacc4c: ooda_ok, 42274 tokens, 54.6s; spent 42274
+2026-10-28T12:46:05 pilot: 42274 tokens and 54.6s per unit (measured); projected total 126822 tokens for 3 units, about 164s
+2026-10-28T12:46:05 unit 2/3 f7a1d2f0 -> 2909ce0f at cf8afdc9: start
+2026-10-28T12:47:05   unit 2/3 running 115s elapsed, session tokens 35963, spent before it 42274
+2026-10-28T12:47:33 unit 2/3 f7a1d2f0: ooda_amended, 38819 tokens, 88.1s; spent 81093
+2026-10-28T12:47:33 unit 3/3 2909ce0f -> ff3a4189 at 8bb4d2fb: start
+2026-10-28T12:48:33   unit 3/3 running 203s elapsed, session tokens 43687, spent before it 81093
+2026-10-28T12:49:33   unit 3/3 running 263s elapsed, session tokens 51162, spent before it 81093
+2026-10-28T12:49:59 unit 3/3 2909ce0f: ooda_amended, 52450 tokens, 145.4s; spent 133543
+2026-10-28T12:49:59 replay done: n=3 ['ooda_ok', 'ooda_amended', 'ooda_amended'], 133543 tokens

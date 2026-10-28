@@ -234,6 +234,19 @@ dispatch:
   # installed by symlink). `seldon go` reports `dispatch: on` only while it is loaded.
   launchd_label: com.brock.seldon-dispatch
   cadence: []
+  # AD-038-R16, R17 (SEL-014R): the OODA between chained tasks is a knowledge source each pass launches on a completed
+  # task with an open successor; c18 holds the successor only while that OODA is due or blocked.
+  # `ooda_grace_s` is the OODA session's wall-clock timeout (R17), not a gate. The SEL-014R model replay's longest run
+  # was 145 s (docs/evidence/sel014r/), so 1800 s bounds a hung session without cutting a slow honest one.
+  ooda_grace_s: 1800
+  ooda:
+    enabled: true
+    # One OODA per pass: a pass holds the lease while it runs, and a backlog drains at the poll interval.
+    max_per_pass: 1
+    # The task's cap, "0.3M per OODA run" (SEL-014R Spend). The replay measured 38,819 to 52,450 per run.
+    token_cap: 300000
+    # The model lock's role the session launches as; `primary` is what a task session gets.
+    model_role: primary
   # AD-037-R6's four stations (QC-002; seldon/core/stations.py). Every key is optional with the default and basis
   # in `STATIONS_DEFAULTS`; the ones whose basis is a ruling are written here so the number is beside its reason.
   stations:

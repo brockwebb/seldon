@@ -1,54 +1,60 @@
-# The Desktop OODA between chained tasks: what a project runs so c18 can release its chain
+# The OODA between chained tasks: what the machine reads, and the blocks a Desktop answers
 
-**Governing:** AD-038-R10 (`docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md`).
-**Built by:** SEL-010R2 (`cc_tasks/2026-10-26_SEL-010R2_dispatch_waits_for_the_desktop_ooda_between_chained_tasks.md`).
-**Code:** `seldon/core/dispatch.py` (`ooda_waits`), `seldon/commands/dispatch.py` (`dispatch ooda pending|record`),
-`seldon/mcp_server.py` (`seldon_ooda_pending`, `seldon_ooda_record`).
+**Governing:** AD-038-R10 (`docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md`), as
+amended by AD-038-R16 and R17 (`docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md`).
+**Built by:** SEL-010R2 (the gate and the Desktop record) and SEL-014R (the knowledge source).
+**Code:** `seldon/core/ooda.py`, `seldon/commands/dispatch_ooda.py` (the knowledge source), `seldon/core/dispatch.py`
+(`ooda_waits`, c18), `seldon/commands/dispatch.py` (`dispatch ooda pending|record`), `seldon/mcp_server.py`
+(`seldon_ooda_pending`, `seldon_ooda_record`).
 
-The dispatcher holds task N+1 after its `precedes` predecessor N completes (criterion c18), until an OODA record for N
-exists or the project's grace runs out. The dispatcher counts the record. Reading the RESULT is the Desktop's job.
-This document covers that half of the loop: who reads, when, what they write, and in what order.
+Since SEL-014R the OODA between task N and task N+1 is the machine's. With `dispatch.ooda.enabled`, each dispatcher
+pass runs a headless session on every completed task with an open successor and no OODA record (at most
+`dispatch.ooda.max_per_pass` per pass). The session reads N's RESULT and N+1's file, and the dispatcher records one
+of `ooda_ok`, `ooda_amended` (the addendum it wrote is committed first), `ooda_blocked` or `ooda_expired`. c18 holds
+N+1 only while that OODA is due or when it is `ooda_blocked` (R17). Nothing waits on a person except a block.
+
+A Desktop reads only blocks: an `ooda_blocked` record names a question no ruling answers and the design note that
+would answer it. This document covers that half.
 
 ## 1. Turn it on
 
-In the project's `seldon.yaml`, under `dispatch:`:
+In the project's `seldon.yaml`, under `dispatch:` (seldon's own block carries the reasons beside each value):
 
 ```yaml
-  # AD-038-R10 (c18): seconds a chained task waits for the Desktop OODA on its predecessor; 0 never.
-  ooda_grace_s: 3600
+  ooda_grace_s: 1800          # AD-038-R17: the OODA session's timeout, not a gate
+  ooda:
+    enabled: true
+    max_per_pass: 1
+    token_cap: 300000         # per OODA run
+    model_role: primary
 ```
 
-**Schedule the wake-up (section 2) before you raise the grace.** With a grace and no reader, every chain waits the
-full grace and gains nothing. That is why seldon's own block stays at 0. Choose a grace of at least twice the
-wake-up interval: a record then lands inside the grace even when a RESULT arrives just after a wake-up. That factor
-of two is a starting value, not a measurement. Revise it from the `released_by` counts on `dispatch_launched`. If
-`grace` keeps releasing tasks, the wake-up is too slow or not running.
+`ooda_grace_s` no longer releases a chain on a timer. With `enabled` false (the default) nothing waits at all. A
+project without a `dispatch:` block adopts the dispatcher first: `seldon dispatch adopt --project <dir>` (AD-038-R11).
 
-A project without a `dispatch:` block adopts the dispatcher first: `seldon dispatch adopt --project <dir>`
-(AD-038-R11). It writes `ooda_grace_s: 0`.
+## 2. Who answers a block, and when
 
-## 2. Who reads, and when
+`seldon dispatch ooda pending` (MCP `seldon_ooda_pending`) prints every block: the question, the note that would
+answer it, the RESULT and the successor it holds. "ooda: nothing pending" means nothing is blocked. A stuck alarm on
+`ooda_blocked` (`dispatch_stuck`, after `stuck_after_passes` passes) means a chain is waiting on a person.
 
-Pick one. Each is a Desktop process; the dispatcher does not care which one wrote the record.
+**A. A Claude Desktop thread (seldon-mcp).** When the thread opens: `seldon_ooda_pending(project_dir=<dir>)`, then
+section 3 for each block, then `seldon_ooda_record(task=<N>, note=<one line>)`.
 
-**A. A scheduled Claude Code session (unattended).** In the project's primary checkout, in a Claude Code window,
-paste this (30 minutes is the interval that pairs with the grace of 3600 above):
+**B. A scheduled Claude Code session.** In the project's primary checkout, in a Claude Code window:
 
 ```
-/loop 30m Run `seldon dispatch ooda pending`. If it prints "ooda: nothing pending", stop. Otherwise, for each predecessor it lists, follow docs/conventions/desktop_ooda.md section 3 in the seldon repository: read the RESULT, write any addendum for the successor first, then the _OODA.md record last.
+/loop 60m Run `seldon dispatch ooda pending`. If it prints "ooda: nothing pending", stop. Otherwise, for each block, follow docs/conventions/desktop_ooda.md section 3 in the seldon repository: answer the question in the note it names, amend, block or supersede the successor, then run `seldon dispatch ooda record <N>` last.
 ```
 
-**B. A Claude Desktop thread (seldon-mcp).** When the thread opens: call `seldon_ooda_pending(project_dir=<dir>)`, then
-follow section 3, writing the files with the Filesystem tools. `seldon_ooda_record(task=<N>, note=<one line>)` is the
-event form for an OODA that amends nothing.
+**C. The operator by hand.** The same, in a shell.
 
-**C. The operator by hand.** `seldon dispatch ooda pending` in a shell, then section 3. A stuck alarm on
-`ooda_pending` (`dispatch_stuck`, after `stuck_after_passes` passes) means a chain is waiting on this step.
-
-## 3. The OODA, per predecessor N that `ooda pending` lists
+## 3. Answering a block on predecessor N
 
 Order matters. A record releases N+1, so everything N+1 must see has to be on main first.
 
+0. **The question.** The block names it (`question:`) and the note that would answer it (`answer in:`). If it needs a
+   ruling, the ruling is written there first (a design note or addendum, with its register record).
 1. **Observe.** Read N's RESULT (`read:` in the listing) and any Issues it filed.
 2. **Orient.** For each premise and Part of N+1's task file (`amend:` in the listing), ask whether N's RESULT made it
    false or out of date.
@@ -86,6 +92,8 @@ the record together keeps the order above.
 
 ## 4. What the dispatcher records
 
-`dispatch_launched`'s criteria carry c18 for a chained task: each predecessor's `released_by` (`ooda_event`,
-`ooda_file` or `grace`), the completion time and its source, and the seconds elapsed. If the grace released a task,
-nobody read the RESULT before it launched. That is the measure to drive down.
+Every OODA run is one record in the ledger: `ooda_ok`, `ooda_amended` (with the addendum and its commit),
+`ooda_blocked` (with the question and the answering note) or `ooda_expired` (with why: a timeout, the token cap, a
+failed session, or a verdict the dispatcher could not check). Each carries the session's tokens and log.
+`dispatch_launched`'s c18 names, per predecessor, the record that released the successor (`released_by`). A
+`released_by: ooda_expired` means the machine tried and could not read the RESULT; that is the measure to drive down.
