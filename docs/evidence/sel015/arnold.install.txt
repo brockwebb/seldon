@@ -1,0 +1,43 @@
+$ git -C /Users/brock/GitHub/arnold rev-parse HEAD
+bd951d9b8bf526a33ffca932fb821448eb71d966
+[exit 0]
+$ seldon hooks install --repo /Users/brock/GitHub/arnold
+/Users/brock/GitHub/arnold: .gitattributes declares governed/ledger/events.jsonl merge=union; committed 6114fe8
+/Users/brock/GitHub/arnold: core.hooksPath .githooks -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/commit-msg, .githooks/prepare-commit-msg as c0e30c0
+[exit 0]
+$ git -C /Users/brock/GitHub/arnold log --stat --format=%H %s bd951d9b8bf526a33ffca932fb821448eb71d966..HEAD
+6114fe89226c455af64e3142bd6bee841769aeeb chore: declare append-only logs merge=union (AD-034 ADDENDUM 05, SEL-004 decision 4)
+
+ .gitattributes | 5 +++++
+ 1 file changed, 5 insertions(+)
+c0e30c0c57274e93d1f8bc42eb6d51052ba63517 chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)
+
+ .githooks/commit-msg         | 14 ++++++++++++++
+ .githooks/prepare-commit-msg | 14 ++++++++++++++
+ 2 files changed, 28 insertions(+)
+[exit 0]
+$ seldon hooks status --repo /Users/brock/GitHub/arnold
+{
+ "installed": true,
+ "problems": [],
+ "hooks_path": ".githooks",
+ "scope": "local",
+ "effective": ".githooks",
+ "python": "/opt/anaconda3/bin/python",
+ "drafts": true,
+ "sequenced": true
+}
+[exit 0]
+$ git -C /Users/brock/GitHub/arnold status --porcelain=v1 --untracked-files=all
+ M cc_tasks/2026-10-08_per-exercise-measurement-schema.md
+ M graphs/arnold-evidence/config.yaml
+[exit 0]
+$ git -C /Users/brock/GitHub/arnold rev-parse HEAD
+6114fe89226c455af64e3142bd6bee841769aeeb
+[exit 0]
+$ git -C /Users/brock/GitHub/arnold branch --show-current
+main
+[exit 0]
+$ git -C /Users/brock/GitHub/arnold config --show-origin --get-all core.hooksPath
+file:.git/config	.githooks
+[exit 0]

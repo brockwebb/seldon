@@ -1,0 +1,41 @@
+$ git -C /Users/brock/GitHub/hazbrief-mcp rev-parse HEAD
+e449e9eed1703160f7825d100b9d2eb26e6e7043
+[exit 0]
+$ seldon hooks install --repo /Users/brock/GitHub/hazbrief-mcp
+/Users/brock/GitHub/hazbrief-mcp: .gitattributes declares seldon_events.jsonl, state/prior_art_queries.jsonl merge=union; committed 6444fc3
+/Users/brock/GitHub/hazbrief-mcp: core.hooksPath .githooks -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/prepare-commit-msg as df0fc03
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp log --stat --format=%H %s e449e9eed1703160f7825d100b9d2eb26e6e7043..HEAD
+6444fc3f77b85da21e82e9b87a235e8d530ef1f5 chore: declare append-only logs merge=union (AD-034 ADDENDUM 05, SEL-004 decision 4)
+
+ .gitattributes | 6 ++++++
+ 1 file changed, 6 insertions(+)
+df0fc03f55f8d70f72c5347730a545f0bd8ab85f chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)
+
+ .githooks/prepare-commit-msg | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+[exit 0]
+$ seldon hooks status --repo /Users/brock/GitHub/hazbrief-mcp
+{
+ "installed": true,
+ "problems": [],
+ "hooks_path": ".githooks",
+ "scope": "local",
+ "effective": ".githooks",
+ "python": "/opt/anaconda3/bin/python",
+ "drafts": true,
+ "sequenced": true
+}
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp status --porcelain=v1 --untracked-files=all
+ M seldon_events.jsonl
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp rev-parse HEAD
+6444fc3f77b85da21e82e9b87a235e8d530ef1f5
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp branch --show-current
+main
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp config --show-origin --get-all core.hooksPath
+file:.git/config	.githooks
+[exit 0]

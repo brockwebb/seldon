@@ -1,0 +1,24 @@
+$ seldon hooks status --repo /Users/brock/GitHub/hazbrief-mcp
+{
+ "installed": true,
+ "problems": [],
+ "hooks_path": ".githooks",
+ "scope": "local",
+ "effective": ".githooks",
+ "python": "/opt/anaconda3/bin/python",
+ "drafts": true,
+ "sequenced": false
+}
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp status --porcelain=v1 --untracked-files=all
+ M seldon_events.jsonl
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp rev-parse HEAD
+e449e9eed1703160f7825d100b9d2eb26e6e7043
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp branch --show-current
+main
+[exit 0]
+$ git -C /Users/brock/GitHub/hazbrief-mcp config --show-origin --get-all core.hooksPath
+file:.git/config	.githooks
+[exit 0]

@@ -1,0 +1,36 @@
+$ git -C /Users/brock/GitHub/squiddy rev-parse HEAD
+ff64a7a4897fb4c240269fde0b4c8302d164a1c6
+[exit 0]
+$ seldon hooks install --repo /Users/brock/GitHub/squiddy
+/Users/brock/GitHub/squiddy: .gitattributes already declares every append-only log merge=union
+/Users/brock/GitHub/squiddy: core.hooksPath .githooks -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/prepare-commit-msg as 61e75db0
+[exit 0]
+$ git -C /Users/brock/GitHub/squiddy log --stat --format=%H %s ff64a7a4897fb4c240269fde0b4c8302d164a1c6..HEAD
+61e75db033999d64a0752ea8e86f6f0ba626cb6a chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)
+
+ .githooks/prepare-commit-msg | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+[exit 0]
+$ seldon hooks status --repo /Users/brock/GitHub/squiddy
+{
+ "installed": true,
+ "problems": [],
+ "hooks_path": ".githooks",
+ "scope": "local",
+ "effective": ".githooks",
+ "python": "/opt/anaconda3/bin/python",
+ "drafts": true,
+ "sequenced": true
+}
+[exit 0]
+$ git -C /Users/brock/GitHub/squiddy status --porcelain=v1 --untracked-files=all
+[exit 0]
+$ git -C /Users/brock/GitHub/squiddy rev-parse HEAD
+61e75db033999d64a0752ea8e86f6f0ba626cb6a
+[exit 0]
+$ git -C /Users/brock/GitHub/squiddy branch --show-current
+main
+[exit 0]
+$ git -C /Users/brock/GitHub/squiddy config --show-origin --get-all core.hooksPath
+file:.git/config	.githooks
+[exit 0]

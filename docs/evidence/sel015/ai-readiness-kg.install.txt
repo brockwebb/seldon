@@ -1,0 +1,38 @@
+$ git -C /Users/brock/GitHub/ai-readiness-kg rev-parse HEAD
+620b582d5c521e956b21c61e6b0fe888361926db
+[exit 0]
+$ seldon hooks install --repo /Users/brock/GitHub/ai-readiness-kg
+/Users/brock/GitHub/ai-readiness-kg: .gitattributes already declares every append-only log merge=union
+/Users/brock/GitHub/ai-readiness-kg: core.hooksPath .githooks -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/commit-msg, .githooks/prepare-commit-msg as 42de3f90
+[exit 0]
+$ git -C /Users/brock/GitHub/ai-readiness-kg log --stat --format=%H %s 620b582d5c521e956b21c61e6b0fe888361926db..HEAD
+42de3f90f850aa2b6c3bc35e632c1ab096c32040 chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)
+
+ .githooks/commit-msg         | 14 ++++++++++++++
+ .githooks/prepare-commit-msg | 14 ++++++++++++++
+ 2 files changed, 28 insertions(+)
+[exit 0]
+$ seldon hooks status --repo /Users/brock/GitHub/ai-readiness-kg
+{
+ "installed": true,
+ "problems": [],
+ "hooks_path": ".githooks",
+ "scope": "local",
+ "effective": ".githooks",
+ "python": "/opt/anaconda3/bin/python",
+ "drafts": true,
+ "sequenced": true
+}
+[exit 0]
+$ git -C /Users/brock/GitHub/ai-readiness-kg status --porcelain=v1 --untracked-files=all
+ M seldon_events.jsonl
+[exit 0]
+$ git -C /Users/brock/GitHub/ai-readiness-kg rev-parse HEAD
+42de3f90f850aa2b6c3bc35e632c1ab096c32040
+[exit 0]
+$ git -C /Users/brock/GitHub/ai-readiness-kg branch --show-current
+main
+[exit 0]
+$ git -C /Users/brock/GitHub/ai-readiness-kg config --show-origin --get-all core.hooksPath
+file:.git/config	.githooks
+[exit 0]
