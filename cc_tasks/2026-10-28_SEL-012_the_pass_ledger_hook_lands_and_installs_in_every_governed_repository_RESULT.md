@@ -151,6 +151,6 @@ during a rebase), recorded the pass again onto main's line 26, and ran `rebase -
 ## Session usage
 
 - Zero model calls, zero network.
-- Tokens: 127,991 at the Part A boundary (`seldon dispatch part-complete`), against an estimate of 0.4M and a stop
-  at 0.5M. Parts B and C are recorded at their own boundaries.
+- Tokens (`seldon dispatch part-complete`): 127,991 at the Part A boundary, and 135,002 at B and C (1,446 s since
+  launch). That is against an estimate of 0.4M and a stop at 0.5M.
 - Most of the wall clock was the full suite (19 min, detached, polled).
