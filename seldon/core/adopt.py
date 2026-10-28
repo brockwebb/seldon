@@ -150,7 +150,7 @@ _COMMENTS = {
     "launchd_label": "The launchd job; `seldon go` reports `dispatch: on` only while it is loaded.",
     "max_parallel": "One task at a time (AD-037-R9 holds every project at 1 until it opts in by a register record).",
     "candidacy_headers": "AD-038-R11: the headers a task file must carry; Spend and Network are the kit-wide minimum.",
-    "ooda_grace_s": "AD-038-R10 (c18): seconds a chained task waits for the Desktop OODA on its predecessor; 0 never.",
+    "ooda_grace_s": "AD-038-R17: the OODA knowledge source's session timeout in seconds (it holds nothing); 0 is off.",
     "gate_command": "The re-gate run in the task's worktree when main changed a file it changed (AD-034 decision 3).",
 }
 

@@ -219,6 +219,8 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         # AD-038-R1: the serial pass's reconcile, before the shared files and before the tree is read.
         done = S._reconcile(project_dir, config, cfg, driver, database)
         _commit_shared(project_dir, cfg)
+        # AD-038-R16 (SEL-014R): the serial pass's OODA knowledge source, at the same point.
+        S._ooda_fire(project_dir, config, cfg, driver, database, session_id)
     exclude = cfg["shared_paths"]
     tree = D.tree_state(project_dir, exclude)
     if cfg.get("cadence"):

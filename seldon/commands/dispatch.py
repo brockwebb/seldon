@@ -167,12 +167,24 @@ def _cross_waits(project_dir: Path, tasks: list) -> dict:
 
 
 def _ooda_waits(project_dir: Path, cfg: dict, tasks: list) -> dict:
-    """c18's input (AD-038-R10): each chained task's OODA gate, from one read of the ledger per pass. Nothing is read
-    when the project's grace is 0, so a project that has not opted in pays nothing for it."""
-    if not cfg.get("ooda_grace_s"):
+    """c18's input (AD-038-R17): each chained task's OODA gate, from one read of the ledger per pass. Nothing is read
+    when the project's knowledge source is off, so a project that has not opted in pays nothing for it."""
+    if not cfg["ooda"]["enabled"]:
         return {}
     from seldon.core.events import read_events
     return D.ooda_waits(project_dir, tasks, cfg, D.ooda_index(read_events(project_dir)), _utcnow())
+
+
+def _ooda_fire(project_dir, config, cfg, driver, database, session_id) -> list:
+    """AD-038-R16: run the OODAs due now (at most `dispatch.ooda.max_per_pass`) and commit their records. Callers hold
+    the pass lease with no session in flight. Nothing is read when the knowledge source is off."""
+    if not cfg["ooda"]["enabled"]:
+        return []
+    from seldon.commands import dispatch_ooda as DO
+    records = DO.fire(project_dir, config, cfg, session_id, _tasks(driver, database))
+    if records:
+        _record_own_lines(project_dir, config, cfg)
+    return records
 
 
 def _claim_in_flight(driver, database) -> dict | None:
@@ -733,15 +745,16 @@ def dispatch_adopt(project, standing_band_ref, branch, launchd_label, gate_comma
 
 @dispatch_group.group("ooda")
 def ooda_group():
-    """The Desktop OODA between chained tasks (AD-038-R10, criterion c18): what waits for it, and its record."""
+    """The OODA between chained tasks (AD-038-R16, R17, criterion c18): the blocks a person answers, and the record
+    that answers one."""
 
 
 @ooda_group.command("pending")
 @click.option("--json", "as_json", is_flag=True, help="print the rows as JSON")
 def ooda_pending(as_json):
-    """Every open task held, or about to be held, by c18: a `precedes` predecessor is completed and no OODA record for
-    it exists. Prints the RESULT to read, the successor to amend and the grace left. A Desktop wake-up reads this
-    first (docs/conventions/desktop_ooda.md); empty output means there is nothing to orient on."""
+    """Every open task an `ooda_blocked` record holds (AD-038-R17): the question, the note that would answer it, the
+    RESULT and the successor. The knowledge source (R16) reads every other RESULT; this is the only OODA a person
+    reads (docs/conventions/desktop_ooda.md). Empty output means nothing is blocked."""
     project_dir, config, driver, database, _dc, _sid = _open_project()
     try:
         cfg = D.load_dispatch_config(project_dir, config)
@@ -763,7 +776,7 @@ def ooda_pending(as_json):
 @click.option("--actor", default="desktop", show_default=True, help="who oriented: desktop, human or cc")
 def ooda_record(task, note, actor):
     """Record that the OODA on completed TASK is done: one `ooda_recorded` event, which releases every successor c18
-    holds on it. TASK is an id, a unique prefix or a task file stem. Refuses a task that is not completed or verified
+    holds on it, and answers an `ooda_blocked` record on it (AD-038-R17). TASK is an id, a unique prefix or a task file stem. Refuses a task that is not completed or verified
     (exit 1): there is no RESULT to have read."""
     project_dir, config, driver, database, _dc, session_id = _open_project()
     try:
@@ -1138,6 +1151,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # queue by itself, before the reconcile so its lines are committed in this pass.
         _auto_redrive(project_dir, driver, database, domain_config, session_id)
         done = _reconcile(project_dir, config, cfg, driver, database)
+        # AD-038-R16 (SEL-014R): the OODA knowledge source fires on the board's state, under this pass's lease and
+        # before candidacy, so no successor is evaluated ahead of its predecessor's OODA; its records and any
+        # addendum are committed before the tree is read.
+        _ooda_fire(project_dir, config, cfg, driver, database, session_id)
     tree = D.tree_state(project_dir)
     # Cadence BEFORE candidacy (DN-006 decision 8): a task this pass creates is a task this
     # pass may then launch, so the queue it evaluates is the queue as it stands after the
@@ -1450,17 +1467,20 @@ def _refusal_lines(rows: list, tree: dict) -> list:
             if reason == "disk_unmeasured":
                 out.append(f"      disk: the launch's footprint could not be measured: "
                            f"{r['criteria']['c12'].get('read_error')}")
-            if reason == "ooda_pending":
-                # AD-038-R10: which predecessor's RESULT waits to be read, and the line that releases it.
-                g = r["criteria"]["c18"]
-                for w in g["predecessors"]:
+            if reason in ("ooda_pending", "ooda_blocked"):
+                # AD-038-R17: which predecessor's OODA is due (the knowledge source runs on it) or blocked (its
+                # question, and the line that answers it).
+                for w in r["criteria"]["c18"]["predecessors"]:
                     if w["released_by"]:
                         continue
-                    left = (f"{max(0, g['grace_s'] - w['elapsed_s'])} s of {g['grace_s']} s grace left"
-                            if w["elapsed_s"] is not None else w.get("message", ""))
-                    out.append(f"      awaiting OODA on {(w['predecessor'] or '?')[:8]} {w['name'] or ''}: "
-                               f"{left}; commit {w['ooda_file']} or run "
-                               f"`seldon dispatch ooda record {(w['predecessor'] or '?')[:8]}`")
+                    who = f"{(w['predecessor'] or '?')[:8]} {w['name'] or ''}"
+                    if w.get("held") == "blocked":
+                        out.append(f"      OODA on {who} blocked: {w.get('question')} (answer in "
+                                   f"{w.get('answering_note')}); then `seldon dispatch ooda record "
+                                   f"{(w['predecessor'] or '?')[:8]}`")
+                    else:
+                        out.append(f"      OODA on {who} due: the knowledge source runs it at a pass "
+                                   f"(dispatch.ooda.max_per_pass per pass, oldest completion first)")
             if reason == "governing_unverified":
                 # DESK-001: the note and the command that clears the hold.
                 for u in r["criteria"]["c14"]["unverified"]:

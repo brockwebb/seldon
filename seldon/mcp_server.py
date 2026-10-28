@@ -776,10 +776,11 @@ def seldon_task_number(prefix: str, project_dir: str = ".") -> str:
 
 @_tool()
 def seldon_ooda_pending(project_dir: str = ".") -> str:
-    """The Desktop OODA's worklist (AD-038-R10, criterion c18): every completed task whose open successor waits for
-    its OODA record, with the RESULT to read, the successor file to amend, the record path and the grace left.
-    "ooda: nothing pending" when there is nothing to orient on. How to answer each row:
-    docs/conventions/desktop_ooda.md section 3 (seldon repository).
+    """The Desktop OODA's worklist (AD-038-R17, criterion c18): every open successor an `ooda_blocked` record holds,
+    with the question the OODA knowledge source could not answer, the design note that would answer it, the RESULT
+    and the successor. The knowledge source reads every other RESULT (AD-038-R16). "ooda: nothing pending" when
+    nothing is blocked. How to answer each row: docs/conventions/desktop_ooda.md section 3 (seldon repository), then
+    `seldon_ooda_record`.
 
     Args:
         project_dir: Path to the project root.

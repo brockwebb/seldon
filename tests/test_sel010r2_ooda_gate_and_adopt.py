@@ -5,8 +5,9 @@
 R11 (`docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md`).
 
 A. c18: a task whose `precedes` predecessor completed is eligible once an OODA record for the predecessor exists (an
-   `ooda_recorded` event, or a committed `<stem>_OODA.md`), or once `dispatch.ooda_grace_s` has passed since the
-   completion. 0 never waits, and c18 is then absent. Each fixture fails exactly c18 or passes it.
+   `ooda_recorded` event, or a committed `<stem>_OODA.md`). AD-038-R17 (SEL-014R) amended R10: the grace releases
+   nothing, c18 exists only while the OODA knowledge source is enabled, and only a due OODA or an `ooda_blocked`
+   record holds. Each fixture fails exactly c18 or passes it.
 B. `dispatch.candidacy_headers` (Spend and Network the minimum) and `seldon dispatch adopt`, against a project on disk
    and a kit on disk, so the real seldon.yaml is never read or written.
 """
@@ -33,7 +34,9 @@ PRED = "b" * 8 + "-pred"
 
 
 def _cfg(project, **over):
+    """The project's dispatch config with the OODA knowledge source on (AD-038-R17: c18 exists only then)."""
     cfg = D.load_dispatch_config(project)
+    cfg["ooda"] = {**cfg["ooda"], "enabled": True}
     cfg.update(over)
     return cfg
 
@@ -65,14 +68,16 @@ def _eval(project, row, cfg, events):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Part A: c18
+# Part A: c18, as AD-038-R17 (SEL-014R) rules it: the OODA is advisory, held only while due or blocked; the grace
+# is the knowledge source's session timeout and releases nothing (tests/test_sel014r_ooda_knowledge_source.py has
+# the knowledge source itself).
 # ══════════════════════════════════════════════════════════════════════════════
 
 def test_a_grace_of_zero_never_waits_and_c18_is_absent(project):
     """The default: installing this build changes no project's queue or criteria vector."""
     row = _chained(project)
-    cfg = _cfg(project)
-    assert cfg["ooda_grace_s"] == D.OODA_GRACE_S_DEFAULT == 0
+    cfg = D.load_dispatch_config(project)
+    assert cfg["ooda_grace_s"] == D.OODA_GRACE_S_DEFAULT == 0 and cfg["ooda"]["enabled"] is False
     out = _eval(project, row, cfg, [_completed_event(PRED, NOW)])
     assert "c18" not in out["criteria"] and out["eligible"]
 
@@ -84,7 +89,7 @@ def test_c18_holds_a_chained_task_until_the_ooda_on_its_completed_predecessor(pr
     assert out["failed"] == ["c18"]
     assert D.first_refusal_reason(out) == "ooda_pending"
     w = out["criteria"]["c18"]["predecessors"][0]
-    assert (w["released_by"], w["elapsed_s"], w["completed_at_source"]) == (None, 60, "ledger")
+    assert (w["released_by"], w["held"], w["record"]) == (None, "due", None)
     assert w["ooda_file"] == "cc_tasks/n0_OODA.md"
     assert "ooda_pending" in D.REFUSAL_REASONS
 
@@ -96,7 +101,7 @@ def test_an_ooda_recorded_event_releases_it_and_the_vector_records_why(project):
     assert out["eligible"], out["failed"]
     g = out["criteria"]["c18"]
     assert g["ok"] and g["predecessors"][0]["released_by"] == "ooda_event"
-    assert g["predecessors"][0]["ooda_event"]["note"] == "premise 2 was wrong"
+    assert g["predecessors"][0]["record"] == D.EVENT_OODA_RECORDED
 
 
 def test_the_ooda_file_releases_it_only_once_committed(project):
@@ -113,11 +118,12 @@ def test_the_ooda_file_releases_it_only_once_committed(project):
     assert out["eligible"] and out["criteria"]["c18"]["predecessors"][0]["released_by"] == "ooda_file"
 
 
-def test_the_grace_releases_it_without_a_record(project):
+def test_the_grace_releases_nothing(project):
+    """AD-038-R17 retires R10's timer: however long ago the predecessor completed, only a record releases."""
     row = _chained(project)
     cfg = _cfg(project, ooda_grace_s=600)
-    out = _eval(project, row, cfg, [_completed_event(PRED, NOW - timedelta(seconds=601))])
-    assert out["eligible"] and out["criteria"]["c18"]["predecessors"][0]["released_by"] == "grace"
+    out = _eval(project, row, cfg, [_completed_event(PRED, NOW - timedelta(days=3))])
+    assert out["failed"] == ["c18"] and out["criteria"]["c18"]["predecessors"][0]["held"] == "due"
 
 
 @pytest.mark.parametrize("state", ["superseded", "withdrawn"])
@@ -133,20 +139,10 @@ def test_a_verified_predecessor_holds_like_a_completed_one(project):
     assert out["failed"] == ["c18"]
 
 
-def test_with_no_ledger_completion_the_graphs_updated_at_bounds_the_grace(project):
+def test_with_no_ledger_completion_the_graphs_updated_at_is_reported(project):
     row = _chained(project, updated_at="2026-10-26T11:00:00Z")
     out = _eval(project, row, _cfg(project, ooda_grace_s=600), [])
-    w = out["criteria"]["c18"]["predecessors"][0]
-    assert (w["released_by"], w["completed_at_source"], w["elapsed_s"]) == ("grace", "graph_updated_at", 3600)
-
-
-def test_a_completion_time_nobody_recorded_fails_closed_until_a_record(project):
-    row = _chained(project)
-    cfg = _cfg(project, ooda_grace_s=600)
-    out = _eval(project, row, cfg, [])
-    w = out["criteria"]["c18"]["predecessors"][0]
-    assert out["failed"] == ["c18"] and w["elapsed_s"] is None and "unknown" in w["message"]
-    assert _eval(project, row, cfg, [_ooda_event(PRED)])["eligible"]
+    assert out["criteria"]["c18"]["predecessors"][0]["completed_at"] == "2026-10-26T11:00:00Z"
 
 
 def test_the_grace_runs_from_the_last_completion():
@@ -163,14 +159,13 @@ def test_a_grace_that_is_not_a_non_negative_number_refuses_at_load(project, bad)
         D.load_dispatch_config(project)
 
 
-def test_the_refusal_line_names_the_predecessor_and_the_command_that_releases_it(project):
+def test_the_refusal_line_names_the_predecessor_and_what_runs_it(project):
     from seldon.commands import dispatch as S
     row = _chained(project)
     out = _eval(project, row, _cfg(project, ooda_grace_s=3600), [_completed_event(PRED, NOW - timedelta(seconds=60))])
     lines = S._refusal_lines([out], D.tree_state(project))
     assert lines[0].split()[1] == "ooda_pending:"
-    assert "3540 s of 3600 s grace left" in lines[1]
-    assert "cc_tasks/n0_OODA.md" in lines[1] and f"seldon dispatch ooda record {PRED[:8]}" in lines[1]
+    assert f"OODA on {PRED[:8]} n0 due" in lines[1] and "knowledge source" in lines[1]
 
 
 def test_the_reconciler_commits_an_untracked_ooda_file_beside_a_registered_task(project):
@@ -413,9 +408,11 @@ def chain_project(tmp_path, monkeypatch, clean_test_db):
 
 
 @neo4j_tests
-def test_ooda_pending_lists_the_result_to_read_and_ooda_record_releases_it(neo4j_driver, chain_project):
+def test_ooda_pending_lists_only_blocks_and_ooda_record_answers_one(neo4j_driver, chain_project):
+    """AD-038-R17: `ooda pending` lists a successor an `ooda_blocked` record holds, with its question; a Desktop's
+    `ooda record` answers it. A predecessor whose OODA is merely due is the machine's, and is not listed."""
     from seldon.commands.dispatch import _tasks, dispatch_group
-    from seldon.core.events import read_events
+    from seldon.core.events import append_event, make_event, read_events
     from seldon.core.precedence import add_chain
     from seldon.domain.loader import load_domain_config
     from tests.test_sel008_cross_project_waits_and_block_reason import RESEARCH_YAML, _task
@@ -427,23 +424,27 @@ def test_ooda_pending_lists_the_result_to_read_and_ooda_record_releases_it(neo4j
     add_chain(chain_project, neo4j_driver, TEST_DATABASE, dc, [n0, n1], reason="chain")
 
     runner = CliRunner()
+    assert runner.invoke(dispatch_group, ["ooda", "pending"]).output.strip() == "ooda: nothing pending"
+    append_event(chain_project, make_event(event_type="ooda_blocked", actor="dispatcher", authority="accepted",
+                                           payload={"task_id": n0, "question": "which band?",
+                                                    "answering_note": "docs/design/AD-099.md"}))
     res = runner.invoke(dispatch_group, ["ooda", "pending", "--json"])
     assert res.exit_code == 0, res.output
     rows = json.loads(res.output)
     assert [(r["predecessor"], r["successor"]) for r in rows] == [(n0, n1)]
-    assert rows[0]["result"] == "cc_tasks/n0_RESULT.md" and rows[0]["ooda_file"] == "cc_tasks/n0_OODA.md"
-    assert 3500 < rows[0]["grace_left_s"] <= 3600
+    assert rows[0]["result"] == "cc_tasks/n0_RESULT.md" and rows[0]["question"] == "which band?"
 
-    # c18 holds n1 in a pass's evaluation now.
+    # c18 holds n1 in a pass's evaluation now, as a block.
     cfg = D.load_dispatch_config(chain_project)
+    cfg["ooda"] = {**cfg["ooda"], "enabled": True}
     tasks = _tasks(neo4j_driver, TEST_DATABASE)
     gate = D.ooda_waits(chain_project, tasks, cfg, D.ooda_index(read_events(chain_project)),
                         datetime.now(timezone.utc))
-    assert not gate[n1]["ok"]
+    assert not gate[n1]["ok"] and gate[n1]["predecessors"][0]["held"] == "blocked"
 
     refused = runner.invoke(dispatch_group, ["ooda", "record", n1[:8]])
     assert refused.exit_code == 1 and "proposed" in refused.output
-    res = runner.invoke(dispatch_group, ["ooda", "record", n0[:8], "--note", "premise 2 wrong; addendum filed"])
+    res = runner.invoke(dispatch_group, ["ooda", "record", n0[:8], "--note", "band ruled; addendum filed"])
     assert res.exit_code == 0, res.output
     ev = [e for e in read_events(chain_project) if e["event_type"] == D.EVENT_OODA_RECORDED]
     assert len(ev) == 1 and ev[0]["payload"]["task_id"] == n0 and ev[0]["actor"] == "desktop"
@@ -458,7 +459,7 @@ def test_the_desktop_mcp_tools_list_and_record_the_same(neo4j_driver, chain_proj
     """A Desktop thread has no shell: `seldon_ooda_pending` and `seldon_ooda_record` are its surface (in-process
     bodies, `__wrapped__`, as every MCP test calls them since AD-038-R3)."""
     from seldon import mcp_server as m
-    from seldon.core.events import read_events
+    from seldon.core.events import append_event, make_event, read_events
     from seldon.core.precedence import add_chain
     from seldon.domain.loader import load_domain_config
     from tests.test_sel008_cross_project_waits_and_block_reason import RESEARCH_YAML, _task
@@ -468,10 +469,13 @@ def test_the_desktop_mcp_tools_list_and_record_the_same(neo4j_driver, chain_proj
                source_file="cc_tasks/n0.md", name="n0")
     n1 = _task(chain_project, neo4j_driver, TEST_DATABASE, dc, "N+1", source_file="cc_tasks/n1.md", name="n1")
     add_chain(chain_project, neo4j_driver, TEST_DATABASE, dc, [n0, n1], reason="chain")
+    append_event(chain_project, make_event(event_type="ooda_blocked", actor="dispatcher", authority="accepted",
+                                           payload={"task_id": n0, "question": "which band?",
+                                                    "answering_note": "docs/design/AD-099.md"}))
 
     listed = m.seldon_ooda_pending.__wrapped__(project_dir=str(chain_project))
-    assert listed.startswith(f"{n0[:8]} n0 completed") and "read:    cc_tasks/n0_RESULT.md" in listed
-    assert f"seldon dispatch ooda record {n0[:8]}" in listed
+    assert listed.startswith(f"{n0[:8]} n0 blocked") and "question: which band?" in listed
+    assert "read:     cc_tasks/n0_RESULT.md" in listed and f"seldon dispatch ooda record {n0[:8]}" in listed
     assert m.seldon_ooda_record.__wrapped__(task=n1[:8], project_dir=str(chain_project)).startswith("Error:")
     out = m.seldon_ooda_record.__wrapped__(task=n0[:8], note="read, no change", project_dir=str(chain_project))
     assert out.startswith(f"OODA recorded: {n0[:8]}"), out

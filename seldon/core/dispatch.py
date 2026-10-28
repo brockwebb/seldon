@@ -667,9 +667,9 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    # SEL-008 (AD-038-R8, c17): a wait on a task in another project's graph that is not yet
                    # satisfied, and one whose other graph could not be read (not ready, never ready by default).
                    "waits_on_unsatisfied", "waits_on_unreachable",
-                   # SEL-010R2 (AD-038-R10, c18): a chained task whose completed predecessor has no OODA record yet
-                   # and whose grace has not run out.
-                   "ooda_pending",
+                   # SEL-010R2 (AD-038-R10, c18), as AD-038-R17 (SEL-014R) ruled it: a chained task whose completed
+                   # predecessor's OODA is still due, and one whose predecessor's latest OODA record is a block.
+                   "ooda_pending", "ooda_blocked",
                    # SEL-011 (AD-038-R12): a Spend header that names neither `zero` nor a token count. c4 used to
                    # report it as `above_band`, which sent its reader to the band for a header that does not parse.
                    "spend_unreadable")
@@ -780,13 +780,20 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.disk_need_factor must be a number of at least 1 (the launch's measured footprint is "
             f"multiplied by it), got {factor!r}")
     block["disk_need_factor"] = factor
-    # SEL-010R2 (AD-038-R10): c18's grace. Optional with a default of 0, which never waits, so installing this build
-    # changes no project's queue; a project opts in by naming how long a chain waits for its Desktop OODA.
+    # AD-038-R17 (SEL-014R): the OODA session's wall-clock timeout, no longer a gate. Optional with a default of 0;
+    # `dispatch.ooda` (the knowledge source, R16) is optional and off by default, so installing this build changes no
+    # project's queue, and an enabled one requires the timeout above 0.
     grace = block.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
     if isinstance(grace, bool) or not isinstance(grace, (int, float)) or grace < 0:
         raise DispatchConfigError(
-            f"dispatch.ooda_grace_s must be a number of seconds, 0 or more (0 never waits), got {grace!r}")
+            f"dispatch.ooda_grace_s must be a number of seconds, 0 or more (the OODA session's timeout, AD-038-R17), "
+            f"got {grace!r}")
     block["ooda_grace_s"] = grace
+    from seldon.core import ooda as O
+    try:
+        block["ooda"] = O.load_config(block)
+    except O.OodaConfigError as exc:
+        raise DispatchConfigError(str(exc)) from exc
     # DISP-004R (AD-034-R12). Optional with defaults, so installing this build changes no config file.
     root = block.get("cross_repo_root", CROSS_REPO_ROOT_DEFAULT)
     if not isinstance(root, str) or not root.strip():
@@ -2066,24 +2073,27 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
 
 # ------------------------------------------------------------- the OODA between chained tasks (c18)
 #
-# SEL-010R2 Part A (AD-038-R10). The dispatcher closes the latency between a clean gate and a launch; it did not close
-# the step between task N's RESULT and task N+1's launch, in which someone reads the RESULT, names the premises it
-# found wrong and amends N+1 (`docs/design/2026-09-15_standing_dispatcher.md`: "still a Desktop OODA and is not
-# automated here", DN-006 §4). c18 holds N+1 until that step has left a record, or until the project's grace runs out.
+# SEL-010R2 Part A (AD-038-R10) built c18 as a wait for a Desktop's reading of task N's RESULT, released by a record or
+# by the project's grace. SEL-014R (AD-038-R16, R17) moved the reading into the machine: a knowledge source the
+# dispatcher launches on every completed task with an open successor (`seldon.core.ooda`,
+# `seldon.commands.dispatch_ooda`), ending in one of four records. R17 makes the OODA advisory: c18 holds N+1 only
+# while N's OODA is due (the machine's own session, this pass or the next) or its latest record is `ooda_blocked`.
+# The grace no longer releases or holds anything; `ooda_grace_s` is the OODA session's timeout.
 #
-# Prior art: a manual-approval gate between pipeline stages that resumes on approval OR on a timeout. Argo Workflows'
-# `suspend` template with `duration` (resumes by `argo resume` or when the duration elapses); Jenkins Pipeline's
-# `input` step inside `timeout`; GitHub Actions environments' required reviewers and wait timer. Decided here: the
-# record releases the successor at once, the grace releases it without one, and a grace of 0 is no gate at all.
+# Prior art (R17): a manual-approval gate between pipeline stages that resumes on approval or on a timeout (Argo
+# `suspend` with `duration`, Jenkins `input` inside `timeout`, GitHub Actions required reviewers) was R10's model.
+# R17 departs from it: the stage's check is automated, and only a check that declares it cannot decide holds.
 
-#: `dispatch.ooda_grace_s` when absent: never wait (the pre-SEL-010R2 dispatcher, unchanged in every project).
+#: `dispatch.ooda_grace_s` when absent. Under AD-038-R17 it is the OODA session's timeout, required above 0 when
+#: `dispatch.ooda.enabled` is true (`ooda.load_config`); it holds and releases nothing.
 OODA_GRACE_S_DEFAULT = 0
 
-#: The event a Desktop OODA writes for task N (`seldon dispatch ooda record`), payload `{task_id, by, note}`.
+#: The event a Desktop OODA writes for task N (`seldon dispatch ooda record`), payload `{task_id, by, note}`. Under
+#: R17 it releases, and it is how a Desktop answers an `ooda_blocked` record.
 EVENT_OODA_RECORDED = "ooda_recorded"
 
-#: The file form of the record: `<N's stem>_OODA.md` beside N's task file (and its RESULT), committed. A file that is
-#: not tracked does not count: the successor's worktree is cut from main's HEAD and would not see it.
+#: The file form of a Desktop's record: `<N's stem>_OODA.md` beside N's task file, committed. A file that is not
+#: tracked does not count: the successor's worktree is cut from main's HEAD and would not see it.
 OODA_FILE_SUFFIX = "_OODA.md"
 
 #: The predecessor states that produce a RESULT to read. A superseded, withdrawn or rejected predecessor satisfies c2
@@ -2112,9 +2122,11 @@ def _parse_ts(value) -> datetime | None:
 
 
 def ooda_index(events: list) -> dict:
-    """c18's raw material from the ledger, read once per pass: `{recorded: {task_id: event}, completed_at:
-    {task_id: timestamp}}`. `completed_at` is the LAST move into `completed`, because a task redriven and completed
-    again has a newer RESULT, and the grace runs from the RESULT a reader would read."""
+    """c18's raw material from the ledger, read once per pass: `{recorded: {task_id: event}, latest: {task_id:
+    record}, completed_at: {task_id: timestamp}}`. `latest` is the newest of the four knowledge-source records and a
+    Desktop's `ooda_recorded` (`ooda.record_index`). `completed_at` is the LAST move into `completed`: a task redriven
+    and completed again has a newer RESULT, and its OODA reads that one."""
+    from seldon.core import ooda as O
     recorded, completed = {}, {}
     for e in events:
         kind, p = e.get("event_type"), e.get("payload") or {}
@@ -2123,20 +2135,30 @@ def ooda_index(events: list) -> dict:
         elif (kind == "artifact_state_changed" and p.get("to_state") == "completed"
               and p.get("artifact_id")):
             completed[p["artifact_id"]] = e.get("timestamp")
-    return {"recorded": recorded, "completed_at": completed}
+    return {"recorded": recorded, "latest": O.record_index(events), "completed_at": completed}
+
+
+def _ooda_file_state(project_dir: Path, source_file: str | None) -> tuple:
+    rel = ooda_file(source_file)
+    path = Path(project_dir) / rel if rel else None
+    exists = bool(path and path.is_file())
+    return rel, exists, bool(exists and is_tracked(project_dir, path))
 
 
 def ooda_waits(project_dir: Path, tasks: list, cfg: dict, index: dict, now: datetime) -> dict:
-    """c18 for every task it applies to: `{task_id: criterion}`. Empty when the grace is 0 (the project has not opted
-    in). A task applies when at least one `precedes` predecessor is `completed` or `verified`; its criterion is
-    present whether it passes or not, so `dispatch_launched` records which record, or the grace, released it.
+    """c18 (AD-038-R17) for every task it applies to: `{task_id: criterion}`. Empty when the knowledge source is off
+    (`dispatch.ooda.enabled` false): nothing then waits, whatever `ooda_grace_s` says. A task applies when at least one
+    `precedes` predecessor is `completed` or `verified`; its criterion is present whether it passes or not, so
+    `dispatch_launched` records which record released it.
 
-    Per predecessor: `released_by` is `ooda_event`, `ooda_file`, `grace` or None (still waiting). A predecessor whose
-    completion time is in neither the ledger nor the graph's `updated_at` cannot have its grace measured and waits
-    (fail closed, like c14 and c17); `seldon dispatch ooda record <N>` releases it."""
-    grace = cfg.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
-    if not grace:
+    Per predecessor, `released_by` is the latest record's kind (`ooda_ok`, `ooda_amended`, `ooda_expired`), or
+    `ooda_event` (a Desktop's record), or `ooda_file` (a committed `_OODA.md` with no record), or None: `held` then
+    says why, `due` (no record yet: the knowledge source runs on it this pass or the next) or `blocked` (the latest
+    record is `ooda_blocked`, with its question)."""
+    from seldon.core import ooda as O
+    if not (cfg.get("ooda") or {}).get("enabled"):
         return {}
+    latest = index.get("latest") or {}
     out = {}
     for t in tasks:
         preds = [p for p in (t.get("predecessors") or []) if p.get("state") in OODA_PREDECESSOR_STATES]
@@ -2145,57 +2167,45 @@ def ooda_waits(project_dir: Path, tasks: list, cfg: dict, index: dict, now: date
         rows = []
         for p in preds:
             pid = p.get("artifact_id")
-            rel = ooda_file(p.get("source_file"))
-            path = Path(project_dir) / rel if rel else None
-            exists = bool(path and path.is_file())
-            tracked = bool(exists and is_tracked(project_dir, path))
-            event = index["recorded"].get(pid)
-            done_at = index["completed_at"].get(pid)
-            source = "ledger" if done_at else None
-            if not done_at and p.get("updated_at"):
-                # An upper bound on the completion time: measured from it, the grace is never shorter than declared.
-                done_at, source = p["updated_at"], "graph_updated_at"
-            ts = _parse_ts(done_at)
-            elapsed = (now - ts).total_seconds() if ts else None
-            released = ("ooda_event" if event else "ooda_file" if tracked
-                        else "grace" if elapsed is not None and elapsed >= grace else None)
+            rel, exists, tracked = _ooda_file_state(project_dir, p.get("source_file"))
+            rec = latest.get(pid)
+            kind = rec["kind"] if rec else None
+            released = O.released_by(kind) if rec else ("ooda_file" if tracked else None)
             row = {"predecessor": pid, "name": p.get("name"), "state": p.get("state"),
+                   "record": kind, "record_at": rec["at"] if rec else None,
                    "ooda_file": rel, "ooda_file_exists": exists, "ooda_file_tracked": tracked,
-                   "ooda_event": event, "completed_at": str(done_at) if done_at else None,
-                   "completed_at_source": source,
-                   "elapsed_s": round(elapsed) if elapsed is not None else None,
+                   "completed_at": index["completed_at"].get(pid) or p.get("updated_at"),
                    "released_by": released}
-            if released is None and ts is None:
-                row["message"] = "completion time unknown; the grace cannot be measured"
+            if released is None:
+                row["held"] = "blocked" if kind == O.OODA_BLOCKED else "due"
+                if kind == O.OODA_BLOCKED:
+                    row["question"] = rec["payload"].get("question")
+                    row["answering_note"] = rec["payload"].get("answering_note")
             rows.append(row)
-        out[t.get("artifact_id")] = {"grace_s": grace, "predecessors": rows,
-                                     "ok": all(r["released_by"] for r in rows)}
+        out[t.get("artifact_id")] = {"predecessors": rows, "ok": all(r["released_by"] for r in rows)}
     return out
 
 
 def ooda_pending(project_dir: Path, tasks: list, cfg: dict, index: dict, now: datetime) -> list:
-    """`seldon dispatch ooda pending` / `seldon_ooda_pending`: one row per (completed predecessor without a record,
-    open successor), with the RESULT to read, the successor to amend, the record's path and the grace left.
-
-    Listed whatever the grace: with no grace a record is still what the chain's author wants written. An infinite
-    grace here releases only on a record, so every predecessor that lacks one is listed."""
-    grace = cfg.get("ooda_grace_s", OODA_GRACE_S_DEFAULT)
-    gates = ooda_waits(project_dir, tasks, {**cfg, "ooda_grace_s": float("inf")}, index, now)
+    """`seldon dispatch ooda pending` / `seldon_ooda_pending` (AD-038-R17): one row per (predecessor whose latest
+    record is `ooda_blocked`, open successor), with the question, the note that would answer it, the RESULT and the
+    successor. The only OODA a person reads; every other record is the machine's. Listed whether or not the
+    knowledge source is enabled now, because a block written while it was is still unanswered."""
+    from seldon.core import ooda as O
+    gates = ooda_waits(project_dir, tasks, {**cfg, "ooda": {**(cfg.get("ooda") or {}), "enabled": True}}, index, now)
     by_id = {t.get("artifact_id"): t for t in tasks}
     rows = []
     for tid, g in gates.items():
         for w in g["predecessors"]:
-            if w["released_by"]:
+            if w.get("held") != "blocked":
                 continue
             src = next((p.get("source_file") for p in by_id[tid].get("predecessors") or []
                         if p.get("artifact_id") == w["predecessor"]), None)
             rows.append({"predecessor": w["predecessor"], "predecessor_name": w["name"],
-                         "result": str(Path(src).with_name(Path(src).stem + "_RESULT.md")) if src else None,
-                         "ooda_file": w["ooda_file"], "successor": tid,
-                         "successor_file": by_id[tid].get("source_file"), "grace_s": grace,
-                         "grace_left_s": (max(0, grace - w["elapsed_s"])
-                                          if grace and w["elapsed_s"] is not None else None),
-                         "completed_at": w["completed_at"]})
+                         "result": O.result_path(src) if src else None,
+                         "successor": tid, "successor_file": by_id[tid].get("source_file"),
+                         "question": w.get("question"), "answering_note": w.get("answering_note"),
+                         "blocked_at": w["record_at"], "completed_at": w["completed_at"]})
     return rows
 
 
@@ -2205,13 +2215,13 @@ def ooda_pending_lines(rows: list) -> list:
         return ["ooda: nothing pending"]
     out = []
     for r in rows:
-        held = ("not held (dispatch.ooda_grace_s is 0)" if not r["grace_s"]
-                else f"held {r['grace_left_s']} s more" if r["grace_left_s"] is not None
-                else "held until a record (completion time unknown)")
-        out.append(f"{r['predecessor'][:8]} {r['predecessor_name'] or ''} completed {r['completed_at'] or '?'}")
-        out.append(f"  read:    {r['result']}")
-        out.append(f"  amend:   {r['successor_file']} ({r['successor'][:8]}), {held}")
-        out.append(f"  release: commit {r['ooda_file']}, or `seldon dispatch ooda record {r['predecessor'][:8]}`")
+        out.append(f"{r['predecessor'][:8]} {r['predecessor_name'] or ''} blocked {r['blocked_at'] or '?'}")
+        out.append(f"  question: {r['question']}")
+        out.append(f"  answer in: {r['answering_note']}")
+        out.append(f"  read:     {r['result']}")
+        out.append(f"  holds:    {r['successor_file']} ({r['successor'][:8]})")
+        out.append(f"  release:  amend, block or supersede the successor, then "
+                   f"`seldon dispatch ooda record {r['predecessor'][:8]}`")
     return out
 
 
@@ -2387,9 +2397,10 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     waits = (cross_waits or {}).get(task.get("artifact_id"))
     if waits:
         c["c17"] = {"waits_on": waits, "ok": False}
-    # SEL-010R2 (AD-038-R10): a chained task waits for the Desktop OODA on its completed predecessor, or the project's
-    # grace. The caller reads the ledger once per pass (`ooda_waits`); present only for a task with a completed
-    # predecessor in a project whose grace is above 0, so every other vector, and the serial transcript, are unchanged.
+    # SEL-010R2 (AD-038-R10) as AD-038-R17 rules it (SEL-014R): a chained task waits while the OODA on its completed
+    # predecessor is due or blocked. The caller reads the ledger once per pass (`ooda_waits`); present only for a task
+    # with a completed predecessor in a project whose knowledge source is enabled, so every other vector, and the
+    # serial transcript, are unchanged.
     gate = (ooda or {}).get(task.get("artifact_id"))
     if gate:
         c["c18"] = gate
@@ -2436,7 +2447,8 @@ def first_refusal_reason(row: dict) -> str | None:
                                               for w in c["c17"]["waits_on"])
                 else "waits_on_unsatisfied")
     if not c.get("c18", {}).get("ok", True):
-        return "ooda_pending"
+        return ("ooda_blocked" if any(w.get("held") == "blocked" for w in c["c18"]["predecessors"])
+                else "ooda_pending")
     return None
 
 
