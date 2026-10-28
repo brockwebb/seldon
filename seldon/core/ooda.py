@@ -371,9 +371,11 @@ def _toplevel(path: Path) -> Path | None:
 def stale_evidence_narrowing(project_dir: Path, task_text: str, command: str) -> dict | None:
     """R18's third rule for one false check: `{path, ancestor, command}` or None when it does not apply.
 
-    Applies to `test -e|-f|-d|-s <path>` and `ls <path>` whose path is absent and lies in a repository the task
-    names: this project's, or a sibling checkout whose name the task carries outside its premises (a `**Repo:**`
-    header, the body). A premise naming a repository is not the task naming it: that is the claim under test."""
+    Applies to `test -e|-f|-d|-s <path>` and `ls <path>` whose path is absent and lies in a SIBLING repository the
+    task names: a checkout other than this project's whose name the task carries outside its premises (a `**Repo:**`
+    header, the body). A premise naming a repository is not the task naming it: that is the claim under test. A path
+    in this project's own repository is never narrowed: a premise that is false here is AD-038-R5's case, and it
+    reaches its author (`tests/test_friction001_registration_premises.py`)."""
     project_dir = Path(project_dir).resolve()
     rel = _checked_path(command)
     if rel is None:
@@ -388,8 +390,7 @@ def stale_evidence_narrowing(project_dir: Path, task_text: str, command: str) ->
     top = _toplevel(ancestor)
     if top is None:
         return None
-    own = _toplevel(project_dir)
-    if top != own and top.name not in task_text:
+    if top == _toplevel(project_dir) or top.name not in task_text:
         return None
     if top != ancestor.resolve() and top not in ancestor.resolve().parents:
         return None

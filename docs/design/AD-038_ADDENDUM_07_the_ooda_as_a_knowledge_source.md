@@ -92,9 +92,10 @@ retry); `seldon/core/dispatch.py` (`ooda_waits`, `ooda_index`, `ooda_pending`, `
     redirect or a `$` expansion) and is not already `sh -c`: the command is wrapped as `sh -c '<command>'`, which is
     what its author meant (the runner execs argv, AD-038-R5).
   - `premise_false` on a `check:` of the form `test -e|-f|-d|-s <path>` or `ls <path>` whose path is absent and lies
-    in a repository the task file names (this project, or a sibling `../<repo>` that is a git checkout): the premise
-    is marked `[stale_evidence: <path> absent at registration <date>]` and its check narrowed to the nearest ancestor
-    directory of the path that exists in that repository.
+    in a sibling repository the task file names outside its premises (a git checkout other than this project's, named
+    in a header or the body): the premise is marked `[stale_evidence: <path> absent at registration <date>]` and its
+    check narrowed to the nearest ancestor directory of the path that exists in that repository. A path in this
+    project's own repository is never narrowed: a premise false here is AD-038-R5's case and reaches its author.
   A refusal with no mechanical cause, or with one whose rule does not apply to the line, is reported as today. A
   refusal after the retry is reported as today, with the retry named. Each retry is one `registration_retried`
   record: the rules applied, every line changed (before and after), the first refusal, the outcome and, when it
@@ -110,6 +111,9 @@ retry); `seldon/core/dispatch.py` (`ooda_waits`, `ooda_index`, `ooda_pending`, `
 - `test_an_amended_verdict_without_its_addendum_is_expired`: the dispatcher does not trust a verdict it cannot check.
 - `test_a_refusal_with_no_mechanical_cause_is_not_retried`: a premise that is simply false is refused once, as today.
 - `test_a_second_refusal_reaches_the_operator`: one retry, never two.
+- `test_a_missing_path_in_this_projects_own_repository_is_not_narrowed`, and R5's own
+  `tests/test_friction001_registration_premises.py::test_a_false_premise_refuses_registration_with_its_output`, which
+  the first form of R18 (that narrowed the project's own paths too) failed in SEL-014R's full suite.
 - `tests/test_dispatch_serial_transcript.py` is unchanged: its project does not enable the knowledge source.
 
 ## 4. What this does not change

@@ -5,16 +5,16 @@ decided_by: cc:fe704e5e
 operator_stated: false
 receipts:
 - 'docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md:85: AD-038-R18'
-reason: 'SEL-014R; evidence: the overnight 2026-10-27/28 chains (seldon NUM-001R to RECALL-002R, squiddy SQ-052R to SQ-096) ran with no OODA and no record, and three registrations on 2026-10-28 were refused for mechanical causes fixed by hand (SQ11 work order, handoffs/2026-10-28_desktop_sq11_the_factory_runs_without_the_desktop_work_order.md, items W1, W2, W4)'
+reason: 'SEL-014R; evidence: three registrations on 2026-10-28 were refused for mechanical causes fixed by hand (SQ11 work order, item 2); narrowed to sibling repositories after the full suite showed the project-own form turned AD-038-R5''s false premise into a vacuous check (tests/test_friction001_registration_premises.py)'
 kind: decision
 status: accepted
-statement: 'seldon cc register and seldon_cc_register shall retry a refused registration once after applying each applicable mechanical rule: number_taken renames the file to the allocator''s next number (title line too, git mv when tracked); a premise check using shell syntax not under sh -c is wrapped in sh -c; a test -e/-f/-d/-s or ls premise whose path is absent in a repository the task names is marked stale_evidence and narrowed to the nearest existing ancestor directory; any other refusal, or a second one, is reported as today; each retry is one registration_retried record with the rules, the changed lines, the first refusal, the outcome and the task id; no model call.'
+statement: 'seldon cc register and seldon_cc_register shall retry a refused registration once after applying each applicable mechanical rule: number_taken renames the file to the allocator''s next number (title line too, git mv when tracked); a premise check using shell syntax not under sh -c is wrapped in sh -c; a test -e/-f/-d/-s or ls premise whose path is absent in a sibling repository the task names outside its premises is marked stale_evidence and narrowed to the nearest existing ancestor directory, and a path in the project''s own repository is never narrowed (AD-038-R5''s refusal stands); any other refusal, or a second one, is reported as today; each retry is one registration_retried record with the rules, the changed lines, the first refusal, the outcome and the task id; no model call.'
 source:
   path: docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md
   lines:
   - 85
-  - 102
-  sha256: 53868f9613deadb0a85bf0d3694dd5e6a602be02eb8b6d80e27d7a4cab1ad2d2
+  - 103
+  sha256: 5edb85e4204fb463465f5af18f719ec09d7fa0bbe3c6eb90441603c36ff55367
   text: |-
     - **AD-038-R18. A registration refused for a mechanical cause is retried once under a named rule, and the retry is
       logged on the task.** `seldon cc register` and `seldon_cc_register` read a refusal, and for each mechanical cause
@@ -26,9 +26,10 @@ source:
         redirect or a `$` expansion) and is not already `sh -c`: the command is wrapped as `sh -c '<command>'`, which is
         what its author meant (the runner execs argv, AD-038-R5).
       - `premise_false` on a `check:` of the form `test -e|-f|-d|-s <path>` or `ls <path>` whose path is absent and lies
-        in a repository the task file names (this project, or a sibling `../<repo>` that is a git checkout): the premise
-        is marked `[stale_evidence: <path> absent at registration <date>]` and its check narrowed to the nearest ancestor
-        directory of the path that exists in that repository.
+        in a sibling repository the task file names outside its premises (a git checkout other than this project's, named
+        in a header or the body): the premise is marked `[stale_evidence: <path> absent at registration <date>]` and its
+        check narrowed to the nearest ancestor directory of the path that exists in that repository. A path in this
+        project's own repository is never narrowed: a premise false here is AD-038-R5's case and reaches its author.
       A refusal with no mechanical cause, or with one whose rule does not apply to the line, is reported as today. A
       refusal after the retry is reported as today, with the retry named. Each retry is one `registration_retried`
       record: the rules applied, every line changed (before and after), the first refusal, the outcome and, when it
@@ -42,4 +43,4 @@ rationale:
 consumer:
 - cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches.md
 written_by: seldon decision 0.1.0
-provisional_id: 81614dcea97dc70eaef2841deac3df96587a7e0cc9f955c55e1bfabf5f29100d
+provisional_id: 547d9467c90a657ad9db80ee35d3da701538dcd9b5f0e984ade562c07ce61034

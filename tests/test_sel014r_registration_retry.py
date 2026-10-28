@@ -100,6 +100,14 @@ def test_a_missing_path_in_a_repository_the_task_does_not_name_is_not_narrowed(t
     assert O.repair_premises(proj, text, _review(proj, text)["false"], TODAY) is None
 
 
+def test_a_missing_path_in_this_projects_own_repository_is_not_narrowed(tmp_path):
+    """Negative control: a premise false in the registering project is AD-038-R5's case and reaches its author
+    (tests/test_friction001_registration_premises.py); narrowing it would make it vacuous (`test -d .`)."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    text = "**Premises:**\n- premise: the module exists | check: `test -f seldon/core/reconcile.py`\n"
+    assert O.repair_premises(tmp_path, text, _review(tmp_path, text)["false"], TODAY) is None
+
+
 def test_a_premise_that_is_simply_false_has_no_rule(tmp_path):
     (tmp_path / "f.txt").write_text("nothing\n", encoding="utf-8")
     text = "**Premises:**\n- premise: f mentions band | check: grep -q band f.txt\n"
