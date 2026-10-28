@@ -40,6 +40,9 @@ from seldon.config import (
     ONTOLOGY_MASTER_DB,
 )
 from seldon.core import tracked_dirs as TD
+
+#: The pass-ledger check's report name (Check 19).
+PL_CHECK_NAME = "Pass ledger"
 from seldon.core.graph import get_stale_artifacts
 from seldon.core.staleness import (
     partition_stale,
@@ -440,6 +443,42 @@ def check_tracked_dirs(project_dir: Path, config: dict | None = None) -> CheckRe
                        summary=f"{' and '.join(d + '/' for d in TD.TRACKED_DIRS)} tracked (AD-039)")
 
 
+# ---------------------------------------------------------------------------
+# Check 19: the pass ledger has one sequencer, main (squiddy DN-052 R-237, SQ-096)
+# ---------------------------------------------------------------------------
+
+def check_pass_ledger(project_dir: Path, config: dict) -> CheckResult:
+    """Fail when the project's declared pass ledger has forked from main's (`pass_ledger_forked`).
+
+    Tier A: the branch's ledger is in the change in hand, and the fix (take main's ledger, record
+    the tip's pass again) is the branch author's. Not `--fix`able: which lines go is a choice about
+    the record. A project that declares no `pass_ledger:` passes. The rule is the project's own
+    check (`seldon.core.pass_ledger`); a check that cannot run fails.
+    """
+    from seldon.core import pass_ledger as PL
+
+    try:
+        decl = PL.declared(config)
+    except PL.PassLedgerError as exc:
+        return CheckResult(name=PL_CHECK_NAME, symbol="fail", summary=str(exc)[:300])
+    if decl is None:
+        return CheckResult(name=PL_CHECK_NAME, symbol="pass",
+                           summary="no pass_ledger declared; skipping (squiddy DN-052 R-237)")
+    try:
+        rc, out = PL.run(project_dir, decl)
+    except PL.PassLedgerError as exc:
+        return CheckResult(name=PL_CHECK_NAME, symbol="fail",
+                           summary=f"cannot be checked: {exc}"[:300])
+    lines = [ln for ln in out.splitlines() if ln.strip()]
+    if rc == 0:
+        return CheckResult(name=PL_CHECK_NAME, symbol="pass",
+                           summary=(lines[-1] if lines else f"{decl['path']}: not forked")[:300])
+    # exit 1 is also what an uncaught exception gives: the refusal is named only when the check names it
+    what = PL.FORKED if rc == 1 and PL.FORKED in out else f"check exited {rc}"
+    return CheckResult(name=PL_CHECK_NAME, symbol="fail", summary=f"{decl['path']}: {what}",
+                       details=lines[:10])
+
+
 def _fix_commit_hook(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon hooks install` (per-repository config only)."""
     result = subprocess.run([sys.executable, "-m", "seldon", "hooks", "install"],
@@ -506,6 +545,8 @@ TIER_A_CHECKS = frozenset({
     # AD-039: a `.gitignore` that ignores cc_tasks/ or handoffs/ is in the change in hand, zero
     # after STD-001R's sweep, and the fix is deleting the line the finding quotes.
     TD.CHECK_NAME,
+    # squiddy DN-052 R-237: a branch's forked pass ledger is in the change in hand.
+    PL_CHECK_NAME,
 })
 
 
@@ -2020,6 +2061,7 @@ def _run_all_checks(
         check_prior_art(project_dir, config),
         check_commit_hook(project_dir, config),
         check_tracked_dirs(project_dir, config),
+        check_pass_ledger(project_dir, config),
         check_replay(driver, database, project_dir, enabled=replay),
     ]
 

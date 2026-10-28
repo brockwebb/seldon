@@ -5,6 +5,7 @@
     seldon hooks status  [--repo PATH]   # installed here? what was it before?
     seldon hooks pre-commit              # run by .githooks/pre-commit; judges the staged files
     seldon hooks commit-msg MSGFILE      # run by .githooks/commit-msg; the prior-art half (DESK-001)
+    seldon hooks prepare-commit-msg ...  # run by .githooks/prepare-commit-msg; where a rebase commits (SQ-096)
 
 The mechanism and its reasons are in `seldon/core/hooks.py`.
 """
@@ -76,6 +77,28 @@ def hooks_status(repo):
         raise click.ClickException(str(exc))
     click.echo(json.dumps(st, indent=1))
     raise SystemExit(0 if st["installed"] else 1)
+
+
+@hooks_group.command("prepare-commit-msg")
+@click.argument("args", nargs=-1)
+def hooks_prepare_commit_msg(args):
+    """What .githooks/prepare-commit-msg runs (squiddy SQ-096). Exit 1 refuses the commit, including
+    one `git rebase --continue` or `git cherry-pick --continue` makes."""
+    try:
+        findings = H.prepare_commit_msg(Path.cwd())
+    except Exception as exc:                                        # noqa: BLE001
+        # As pre-commit: a gate that passes when it cannot read the index is no gate.
+        click.echo(f"seldon commit gate: could not judge this commit: {type(exc).__name__}: "
+                   f"{exc}", err=True)
+        click.echo(H.REFUSAL_FOOTER, err=True)
+        raise SystemExit(1)
+    if findings:
+        click.echo(f"seldon commit gate: {len(findings)} finding(s) in the staged files:",
+                   err=True)
+        for f in findings:
+            click.echo(f"  - {f}", err=True)
+        click.echo(H.REFUSAL_FOOTER, err=True)
+        raise SystemExit(1)
 
 
 @hooks_group.command("pre-commit")

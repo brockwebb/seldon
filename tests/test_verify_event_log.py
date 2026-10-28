@@ -207,11 +207,13 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     # 14 since AD-030-R24 added the binding-constraints check alongside the governed-documents one;
     # 15 since AD-033 added the decision-register check; 16 since AD-036-R4 added the prior-art one;
     # 17 since HOOK-001 added the commit-hook check; 18 since AD-039 (STD-001R) added the
-    # tracked-dirs check; 19 since AD-038-R9 (SEL-008) added the blocks-and-waits check.
+    # tracked-dirs check; 19 since AD-038-R9 (SEL-008) added the blocks-and-waits check; 20 since
+    # squiddy SQ-096 (DN-052 R-237) added the pass-ledger check.
     assert "Binding constraints" in names
     assert "Decision register" in names
     assert "Prior art" in names
     assert "Commit hook" in names
     assert "Tracked dirs" in names
     assert "Blocks and waits" in names
-    assert len(results) == 19
+    assert "Pass ledger" in names
+    assert len(results) == 20

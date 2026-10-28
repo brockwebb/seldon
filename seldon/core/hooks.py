@@ -37,6 +37,9 @@ index alone can decide:
 - `Decision register` (AD-033-R2, AD-036 section 6.1): no `ruling_label_unparsed` label in a
   staged note added after the register's baseline; every label it carries has a record in the
   staged register; and, when register files are staged, the staged register's chain verifies.
+- `Pass ledger` (squiddy DN-052 R-237, SQ-096): when seldon.yaml declares `pass_ledger:` and the
+  commit stages it, the staged ledger is main's lines followed by lines chained onto main's last
+  (`seldon.core.pass_ledger`; the rule is the project's own check).
 The graph-wide Tier A checks (file hashes, ontology, references, binding constraints,
 unregistered files, governed-doc ingest) are not properties of one staged file, need Neo4j or
 another repository's pipeline, and stay with `seldon verify --strict`.
@@ -84,6 +87,11 @@ HOOKS_DIR = ".githooks"
 PRE_COMMIT = "pre-commit"
 #: The second hook (DESK-001): the prior-art check, where the commit message is readable.
 COMMIT_MSG = "commit-msg"
+#: The third hook (squiddy SQ-096): the pass-ledger check where a rebase or cherry-pick commits. Their sequencer
+#: commits a resolved conflict without running pre-commit or commit-msg; it does run prepare-commit-msg, whose non-zero
+#: exit aborts the commit (githooks(5); measured on git 2.50.1, 2026-10-28: `rebase --continue` ran pre-rebase,
+#: prepare-commit-msg, post-commit and post-rewrite, and no pre-commit).
+PREPARE_COMMIT_MSG = "prepare-commit-msg"
 #: The subject-line token that declares a draft (AD-036 ADDENDUM 05). A protocol token, like a
 #: conventional-commits type, not a tunable: the hook, the commit tool, registration and the
 #: bypass audit must all read the same one.
@@ -134,6 +142,24 @@ exit 1
 """
 
 
+#: What `.githooks/prepare-commit-msg` contains (squiddy SQ-096). Same interpreter rule as the others.
+PREPARE_COMMIT_MSG_SCRIPT = """#!/bin/sh
+# Seldon's commit gate where a rebase or cherry-pick commits (squiddy DN-052 R-237, SQ-096): git's
+# sequencer runs no pre-commit hook, so a conflict resolved during `git rebase --continue` is judged
+# here. It runs the checks of the staged bytes that a sequenced commit can break (the pass ledger).
+py="$(git config --get seldon.python)"
+if [ -n "$py" ] && [ -x "$py" ]; then
+  exec "$py" -m seldon hooks prepare-commit-msg "$@"
+fi
+if command -v seldon >/dev/null 2>&1; then
+  exec seldon hooks prepare-commit-msg "$@"
+fi
+echo "seldon commit gate: no interpreter: git config seldon.python is unset or not executable" >&2
+echo "and seldon is not on PATH. Run \\`seldon hooks install\\` in this repository." >&2
+exit 1
+"""
+
+
 #: The commit `install` makes of the hook files it wrote or found uncommitted (DESK-004R, AD-038-R15).
 HOOKS_COMMIT_MESSAGE = ("chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)\n\n"
                         "Written by `seldon hooks install`: {paths}.\n")
@@ -142,7 +168,8 @@ HOOKS_COMMIT_MESSAGE = ("chore: commit seldon's tracked hooks (DESK-004R, AD-038
 def seldon_hook_scripts() -> dict:
     """{path relative to the top: seldon's exact text} for each tracked hook file seldon writes. What
     qualifies a dirty `.githooks/` file as seldon's own, for `install` and the reconciler alike."""
-    return {f"{HOOKS_DIR}/{PRE_COMMIT}": HOOK_SCRIPT, f"{HOOKS_DIR}/{COMMIT_MSG}": COMMIT_MSG_SCRIPT}
+    return {f"{HOOKS_DIR}/{PRE_COMMIT}": HOOK_SCRIPT, f"{HOOKS_DIR}/{COMMIT_MSG}": COMMIT_MSG_SCRIPT,
+            f"{HOOKS_DIR}/{PREPARE_COMMIT_MSG}": PREPARE_COMMIT_MSG_SCRIPT}
 
 
 def is_draft(message: str) -> bool:
@@ -194,6 +221,10 @@ def hook_file(repo: Path) -> Path:
 
 def commit_msg_file(repo: Path) -> Path:
     return Path(repo) / HOOKS_DIR / COMMIT_MSG
+
+
+def prepare_commit_msg_file(repo: Path) -> Path:
+    return Path(repo) / HOOKS_DIR / PREPARE_COMMIT_MSG
 
 
 def _write_hook(path: Path, script: str) -> bool:
@@ -281,6 +312,8 @@ def install(repo: Path, python: str | None = None, commit: bool = True) -> Insta
     wrote = _write_hook(hook_file(repo), HOOK_SCRIPT)
     # DESK-001: the commit-msg half, so a `draft:` commit of an unverified note is possible here.
     wrote = _write_hook(commit_msg_file(repo), COMMIT_MSG_SCRIPT) or wrote
+    # squiddy SQ-096: the pass-ledger check where git's sequencer commits (rebase, cherry-pick).
+    wrote = _write_hook(prepare_commit_msg_file(repo), PREPARE_COMMIT_MSG_SCRIPT) or wrote
     old = _git(repo, "config", "--local", "--get", "core.hooksPath", check=False).stdout.strip()
     old_py = _git(repo, "config", "--local", "--get", PYTHON_KEY, check=False).stdout.strip()
     if old != HOOKS_DIR:
@@ -330,7 +363,10 @@ def status(repo: Path) -> dict:
     # pre-commit, as before), but reported, so `install` is the visible fix.
     return {"installed": not problems, "problems": problems, "hooks_path": hp or None,
             "scope": scope or None, "effective": effective, "python": py or None,
-            "drafts": drafts_enabled(repo)}
+            "drafts": drafts_enabled(repo),
+            # squiddy SQ-096: like commit-msg, not a problem when absent (pre-commit still judges every
+            # `git commit`), but reported, so `install` is the visible fix for rebases.
+            "sequenced": prepare_commit_msg_file(repo).is_file()}
 
 
 def ensure_installed(repo: Path) -> dict:
@@ -733,6 +769,18 @@ def _staged_register_verify(repo: Path, s, idx: Index, reg_files: list[str]) -> 
         return dr.Register(s.repository, root, s.register_dir).verify()
 
 
+def pass_ledger_findings(repo: Path, config: dict, staged: list[str], idx: Index) -> list[str]:
+    """squiddy DN-052 R-237 (SQ-096): a commit that stages the declared pass ledger is refused when the staged ledger
+    has forked from main's (`pass_ledger_forked`). A rebase or merge whose conflict on the file was resolved to the
+    branch's side is the commit this catches. The rule is the project's own check (`seldon.core.pass_ledger`)."""
+    from seldon.core import pass_ledger as PL
+
+    try:
+        return PL.staged_findings(repo, config, staged, idx.blob)
+    except PL.PassLedgerError as exc:
+        return [f"seldon.yaml {PL.CONFIG_KEY}: {exc}"]
+
+
 def pre_commit(repo: Path) -> tuple[list[str], dict]:
     """Every finding that refuses this commit, and a summary of what was judged.
 
@@ -754,9 +802,27 @@ def pre_commit(repo: Path) -> tuple[list[str], dict]:
                 findings += prior_art_findings(repo, config, staged, idx)
             findings += decision_findings(repo, config, staged, idx)
             findings += label_taken_findings(repo, config, staged, idx)
-            summary["checked"] = [k for k in ("prior_art", "decisions") if config.get(k)]
+            findings += pass_ledger_findings(repo, config, staged, idx)
+            summary["checked"] = [k for k in ("prior_art", "decisions", "pass_ledger") if config.get(k)]
     summary["seconds"] = round(time.monotonic() - started, 3)
     return findings, summary
+
+
+def prepare_commit_msg(repo: Path) -> list[str]:
+    """What `.githooks/prepare-commit-msg` runs (squiddy SQ-096): the staged-bytes checks a commit made
+    by git's sequencer can break, which never reach pre-commit. Today that is the pass ledger alone.
+    For an ordinary `git commit` it repeats what pre-commit already passed, on the same index.
+
+    Raises:
+        HookError: When the index or the configuration cannot be read. The hook refuses then too.
+    """
+    repo = toplevel(Path(repo))
+    staged = staged_paths(repo)
+    if not staged:
+        return []
+    idx = Index(repo)
+    config = staged_config(repo, idx)
+    return pass_ledger_findings(repo, config, staged, idx) if config else []
 
 
 def merging(repo: Path) -> bool:

@@ -59,7 +59,8 @@ def test_a_fresh_install_leaves_the_tree_clean(scratch):
     res = H.install(scratch, python=sys.executable)
     assert res.wrote_hook
     assert _porcelain(scratch) == "", _porcelain(scratch)
-    assert sorted(res.committed) == [".githooks/commit-msg", ".githooks/pre-commit"]
+    # squiddy SQ-096 added the third, prepare-commit-msg (the pass-ledger check where a rebase commits)
+    assert sorted(res.committed) == [".githooks/commit-msg", ".githooks/pre-commit", ".githooks/prepare-commit-msg"]
     files = _git(scratch, "show", "--name-only", "--pretty=", "HEAD").stdout.split()
     assert sorted(files) == sorted(res.committed)            # the hook files alone
     assert res.commit == _git(scratch, "rev-parse", "--short", "HEAD").stdout.strip()
@@ -69,7 +70,8 @@ def test_a_fresh_install_leaves_the_tree_clean(scratch):
 def test_the_cli_install_leaves_the_tree_clean_and_names_the_commit(scratch):
     out = run_cli(scratch, hooks_group, ["install", "--repo", str(scratch)])
     assert out.exit_code == 0, out.output
-    assert "committed .githooks/pre-commit, .githooks/commit-msg as" in out.output, out.output
+    assert ("committed .githooks/pre-commit, .githooks/commit-msg, .githooks/prepare-commit-msg as"
+            in out.output), out.output
     assert "commit them" not in out.output
     assert _porcelain(scratch) == ""
 
@@ -127,7 +129,8 @@ def test_ensure_installed_does_not_commit_outside_the_lease(scratch):
     got = H.ensure_installed(scratch)
     assert got["ok"], got
     assert _git(scratch, "rev-parse", "HEAD").stdout == head
-    assert _porcelain(scratch).strip() == "?? .githooks/commit-msg"
+    assert sorted(_porcelain(scratch).strip().split("\n")) == ["?? .githooks/commit-msg",
+                                                               "?? .githooks/prepare-commit-msg"]
     out = R.reconcile(scratch, {"event_store": {"path": STORE}}, set())
     assert [c["class"] for c in out["commits"]] == ["hooks"] and out["commits"][0]["committed"], out
     assert "AD-038-R15" in out["commits"][0]["message"]
