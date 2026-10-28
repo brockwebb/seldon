@@ -1285,6 +1285,9 @@ def seldon_cc_complete(
         return refusal
 
     existing_id = _find_existing(driver, database, rel_path)
+    # SEL-013R (AD-036-R16): the CLI's gate, by the same function. A task that answers another repository's filing
+    # is not complete until its return is registered and committed there.
+    from seldon.core.returns import completion_refusal
     if existing_id:
         # State-aware duplicate guard
         from seldon.core.graph import get_artifact
@@ -1296,6 +1299,12 @@ def seldon_cc_complete(
             driver.close()
             return f"Warning: CC task already completed (id: {existing_id[:8]}...). No action taken."
 
+    return_refusal = completion_refusal(p, config, task_path, existing_id)
+    if return_refusal:
+        driver.close()
+        return f"Error: {return_refusal}\n  File: {rel_path}"
+
+    if existing_id:
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
         completed_at = datetime.now(timezone.utc).isoformat()

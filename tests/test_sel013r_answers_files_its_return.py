@@ -266,6 +266,20 @@ def test_fixture_an_answering_task_is_refused_then_returned_then_completed(
 
 
 @neo4j_tests
+def test_the_mcp_complete_refuses_and_then_completes_by_the_same_gate(
+        neo4j_driver, producer, consumer, domain_config):
+    from seldon.mcp_server import seldon_cc_complete
+    _file_filing(consumer, neo4j_driver, domain_config)
+    _task, out = _answering_task(producer, neo4j_driver, domain_config)
+    _result(producer)
+    rel = f"cc_tasks/{TASK_STEM}.md"
+    refused = seldon_cc_complete(filepath=rel, project_dir=str(producer))
+    assert refused.startswith("Error:") and RT.RETURN_UNFILED in refused
+    assert _invoke("return", rel).exit_code == 0
+    assert "state: completed" in seldon_cc_complete(filepath=rel, project_dir=str(producer))
+
+
+@neo4j_tests
 def test_re_running_cc_return_reports_the_return_and_writes_no_second(
         neo4j_driver, producer, consumer, domain_config):
     _file_filing(consumer, neo4j_driver, domain_config)
