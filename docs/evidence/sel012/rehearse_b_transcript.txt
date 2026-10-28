@@ -1,0 +1,33 @@
+== squiddy
+  (0, '')
+  install exit 0:
+    /private/tmp/sel012/rehearse/squiddy: .gitattributes already declares every append-only log merge=union
+    /private/tmp/sel012/rehearse/squiddy: core.hooksPath unset -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/prepare-commit-msg as 22b60bea
+  last commit: 22b60bea chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15) |  |  .githooks/prepare-commit-msg | 14 ++++++++++++++ |  1 file changed, 14 insertions(+)
+  status exit 0: { "installed": true, "problems": [], "hooks_path": ".githooks", "scope": "local", "effective": ".githooks", "python": "/opt/anaconda3/bin/python", "drafts": true, "sequenced": true }
+  porcelain after: ''
+== arnold
+  (0, '')
+  install exit 0:
+    /private/tmp/sel012/rehearse/arnold: .gitattributes declares governed/ledger/events.jsonl merge=union; committed d3b7568
+    /private/tmp/sel012/rehearse/arnold: core.hooksPath unset -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/commit-msg, .githooks/prepare-commit-msg as 41f0392
+  last commit: d3b7568 chore: declare append-only logs merge=union (AD-034 ADDENDUM 05, SEL-004 decision 4) |  |  .gitattributes | 5 +++++ |  1 file changed, 5 insertions(+)
+  status exit 0: { "installed": true, "problems": [], "hooks_path": ".githooks", "scope": "local", "effective": ".githooks", "python": "/opt/anaconda3/bin/python", "drafts": true, "sequenced": true }
+  porcelain after: ''
+== ai-readiness-kg
+  (0, '')
+  copied untracked .githooks/commit-msg from the primary
+  install exit 0:
+    /private/tmp/sel012/rehearse/ai-readiness-kg: .gitattributes already declares every append-only log merge=union
+    /private/tmp/sel012/rehearse/ai-readiness-kg: core.hooksPath unset -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/commit-msg, .githooks/prepare-commit-msg as 9ef652f7
+  last commit: 9ef652f7 chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15) |  |  .githooks/commit-msg         | 14 ++++++++++++++ |  .githooks/prepare-commit-msg | 14 ++++++++++++++ |  2 files changed, 28 insertions(+)
+  status exit 0: { "installed": true, "problems": [], "hooks_path": ".githooks", "scope": "local", "effective": ".githooks", "python": "/opt/anaconda3/bin/python", "drafts": true, "sequenced": true }
+  porcelain after: ''
+== hazbrief-mcp
+  (0, '')
+  install exit 0:
+    /private/tmp/sel012/rehearse/hazbrief-mcp: .gitattributes declares seldon_events.jsonl, state/prior_art_queries.jsonl merge=union; committed 37ce051
+    /private/tmp/sel012/rehearse/hazbrief-mcp: core.hooksPath unset -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/prepare-commit-msg as d3b160f
+  last commit: 37ce051 chore: declare append-only logs merge=union (AD-034 ADDENDUM 05, SEL-004 decision 4) |  |  .gitattributes | 6 ++++++ |  1 file changed, 6 insertions(+)
+  status exit 0: { "installed": true, "problems": [], "hooks_path": ".githooks", "scope": "local", "effective": ".githooks", "python": "/opt/anaconda3/bin/python", "drafts": true, "sequenced": true }
+  porcelain after: ''

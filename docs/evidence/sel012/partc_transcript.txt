@@ -1,0 +1,122 @@
+seldon under test: /Users/brock/GitHub/seldon/.claude/worktrees/flickering-prancing-stream @ a35c0c5
+$ git clone -q /Users/brock/GitHub/squiddy /tmp/sel012/partc/squiddy
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch log --oneline -1
+  ff64a7a4 record: dispatch_worktree_named, part_complete, stop_gate, dispatch_finished, artifact_updated, artifact_state_changed, worktree_kept, artifact_created, link_created af8cb46f, f08dd54d — 16 line(s) written by dispatcher, cc; reconciled by the standing dispatcher (event_store, AD-038-R1)
+  [exit 0]
+main's ledger: 25 line(s)
+$ /opt/anaconda3/bin/python -m seldon hooks install --repo /tmp/sel012/partc/squiddy
+  /private/tmp/sel012/partc/squiddy: .gitattributes already declares every append-only log merge=union
+  /private/tmp/sel012/partc/squiddy: core.hooksPath unset -> .githooks; seldon.python /opt/anaconda3/bin/python; committed .githooks/prepare-commit-msg as d3f3f639
+  [exit 0]
+$ /opt/anaconda3/bin/python -m seldon hooks status --repo /tmp/sel012/partc/squiddy
+  {
+   "installed": true,
+   "problems": [],
+   "hooks_path": ".githooks",
+   "scope": "local",
+   "effective": ".githooks",
+   "python": "/opt/anaconda3/bin/python",
+   "drafts": true,
+   "sequenced": true
+  }
+  [exit 0]
+
+## the branch records a pass chained onto main's last line
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch checkout -q -b sel012-fork
+  [exit 0]
+$ /opt/anaconda3/bin/python -c 
+import sys, datetime
+from pathlib import Path
+from squiddy import kitpass
+now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+ev = kitpass.record({"commit": sys.argv[1], "package_tree": "0" * 40, "seeds": [1], "runs": 1, "passed": True,
+                     "started_utc": now, "finished_utc": now, "note": "SEL-012 scratch, not a real pass"},
+                    Path("kit/ledger/passes.jsonl"))
+print("recorded", ev["etype"] if "etype" in ev else ev.get("type"), "for", sys.argv[1][:12])
+ d3f3f63960051b5d65fd5665ba8f70c1a2a97c3b
+  recorded kit_suite_pass for d3f3f6396005
+  [exit 0]
+  (branch line)
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch commit -qam scratch: a kit pass on the branch
+  [exit 0]
+
+## main moves on: another pass chained onto the same line
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch checkout -q main
+  [exit 0]
+$ /opt/anaconda3/bin/python -c 
+import sys, datetime
+from pathlib import Path
+from squiddy import kitpass
+now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+ev = kitpass.record({"commit": sys.argv[1], "package_tree": "0" * 40, "seeds": [1], "runs": 1, "passed": True,
+                     "started_utc": now, "finished_utc": now, "note": "SEL-012 scratch, not a real pass"},
+                    Path("kit/ledger/passes.jsonl"))
+print("recorded", ev["etype"] if "etype" in ev else ev.get("type"), "for", sys.argv[1][:12])
+ d3f3f63960051b5d65fd5665ba8f70c1a2a97c3b
+  recorded kit_suite_pass for d3f3f6396005
+  [exit 0]
+  (main line)
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch commit -qam scratch: a kit pass on main
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch update-ref refs/remotes/origin/main HEAD
+  [exit 0]
+
+## rebase the branch onto main; resolve the ledger conflict to the BRANCH's side (the SQ-021M2 mistake)
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch checkout -q sel012-fork
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch rebase main
+  Auto-merging kit/ledger/passes.jsonl
+  CONFLICT (content): Merge conflict in kit/ledger/passes.jsonl
+  Rebasing (1/1)
+  error: could not apply ec0ad95e... scratch: a kit pass on the branch
+  hint: Resolve all conflicts manually, mark them as resolved with
+  hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+  hint: You can instead skip this commit: run "git rebase --skip".
+  hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+  hint: Disable this message with "git config set advice.mergeConflict false"
+  Could not apply ec0ad95e... # scratch: a kit pass on the branch
+  [exit 1]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch checkout --theirs -- kit/ledger/passes.jsonl
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch add kit/ledger/passes.jsonl
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch rebase --continue
+  seldon commit gate: 1 finding(s) in the staged files:
+    - kit/ledger/passes.jsonl (staged): /var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/seldon-pass-ledger-9tmlqkxy/staged.jsonl against main: pass_ledger_forked: line 26 is kit_suite_pass for commit d3f3f6396005 (tree 000000000000, recorded 2026-10-28T13:48:47.660292+00:00, prev d54421a2b436); main's line 26 is kit_suite_pass for commit d3f3f6396005 (tree 000000000000, recorded 2026-10-28T13:48:53.649418+00:00, prev d54421a2b436). main's pass ledger has one sequencer, main (DN-052 R-237): a pass a branch recorded is never merged into it; take main's ledger in the conflict and record the merging tip's pass again on main's last line
+  Refused by the commit gate (AD-036-R4; HOOK-001). The staged files decide; fix them and stage again. `git commit --no-verify` bypasses the gate, and `seldon verify` reports a design note committed that way as hook_bypassed.
+  error: could not commit staged changes.
+  [exit 1]
+
+REFUSED at rebase --continue with pass_ledger_forked: True
+
+## the right resolution: take main's side and record the pass again
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch checkout HEAD -- kit/ledger/passes.jsonl
+  [exit 0]
+$ /opt/anaconda3/bin/python -c 
+import sys, datetime
+from pathlib import Path
+from squiddy import kitpass
+now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+ev = kitpass.record({"commit": sys.argv[1], "package_tree": "0" * 40, "seeds": [1], "runs": 1, "passed": True,
+                     "started_utc": now, "finished_utc": now, "note": "SEL-012 scratch, not a real pass"},
+                    Path("kit/ledger/passes.jsonl"))
+print("recorded", ev["etype"] if "etype" in ev else ev.get("type"), "for", sys.argv[1][:12])
+ 2f9dcd2248e464b162dae9e9edcff6b4ee42ded0
+  recorded kit_suite_pass for 2f9dcd2248e4
+  [exit 0]
+  (branch line recorded again onto main's last)
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch add kit/ledger/passes.jsonl
+  [exit 0]
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch rebase --continue
+  [detached HEAD f464f858] scratch: a kit pass on the branch
+   1 file changed, 1 insertion(+)
+  Successfully rebased and updated refs/heads/sel012-fork.
+  [exit 0]
+
+ACCEPTED after main's side plus the pass recorded again: True
+$ git -c user.email=sel012@scratch -c user.name=SEL-012 scratch log --oneline -3
+  f464f858 scratch: a kit pass on the branch
+  2f9dcd22 scratch: a kit pass on main
+  d3f3f639 chore: commit seldon's tracked hooks (DESK-004R, AD-038-R15)
+  [exit 0]
