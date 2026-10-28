@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 170 records: accepted 147, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 171 records: accepted 148, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (147)
+## Accepted (148)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -234,6 +234,8 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 170 records: accept
   - source `docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md`:26-30; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_self_citation.py
 - **seldon:AD-036-R15** A task's governing notes shall be the notes its **Governing:** header names, by path or identifier; a docs/design path elsewhere in the task is text and holds nothing.
   - source `docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md`:31-35; decided by cc:5e228d82; consumer cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md, tests/test_disp003_governing_header.py
+- **seldon:AD-036-R16** A task that answers a filing from another repository shall carry `**Answers:** <repo>:<ref>`, and registration shall refuse one that does not resolve to exactly one task in that repository's graph (`answers_unresolved`); `seldon cc complete` shall refuse the task (`return_unfiled`) until a return task naming it in its `**Returns:**` header is registered in the consumer's graph and committed in the consumer's repository; `seldon cc return` shall write that return from the RESULT's `For <repo>` section, numbered by the consumer's allocator, `After:` the consumer's latest open task, and register  [...]
+  - source `docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md`:53-62; decided by cc:9d4a865e; consumer cc_tasks/2026-10-28_SEL-013R_a_consumer_filings_answer_files_its_own_return.md, tests/test_sel013r_answers_files_its_return.py
 - **seldon:AD-037-R1** The dispatch system shall decide every acceptance criterion that a program can decide by running that program, never by a judge reading output; each acceptance criterion in a dispatched task shall be marked either `check: <command>` or `judgment: <why no program decides it>`, a reading judge shall see only the `judgment:` criteria, and a task with an unmarked criterion shall fail registration as `criterion_unmarked`, because self-preference persists on checkable rubrics.
   - source `docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md`:177-181; decided by desktop; review only: dispatch
 - **seldon:AD-037-R2** The reading judge for a generator's output shall be the next tier above the generator, run in a fresh context with no access to the generator's reasoning, self-assessment or chat; the `checker` role in `models/registry.yaml` maps haiku to sonnet, sonnet to opus and opus to fable, and is resolved through the lock (AD-035-R1), never typed. Because Fable has no higher tier, its judge shall be a fresh Fable context reading an authorship-obfuscated text (S2, a partial fix), which carries the catch rate measured in R3 while R1 carries the rest, since a same-family judge is not independent of family  [...]

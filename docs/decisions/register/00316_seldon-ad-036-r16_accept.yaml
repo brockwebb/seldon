@@ -1,3 +1,4 @@
+seq: 316
 event: accept
 id: seldon:AD-036-R16
 date: '2026-10-28'
@@ -35,3 +36,5 @@ consumer:
 - tests/test_sel013r_answers_files_its_return.py
 written_by: seldon decision 0.1.0
 provisional_id: 2a52bf4721a0360bbc7a5b1965e57c43c6bcaa74128137c5ee4d4f65b6d821d2
+prev_hash: 2a5fe9fd20db12b2d7616cd3eb7804d8cf77fdc86e24e48b6e366eb551bb20f5
+record_hash: 976ddebafa4e6d1231b477b1f038958abff1faeff247d5ebfb814c50cc997568
