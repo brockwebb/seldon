@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-038-R17
+date: '2026-10-28'
+decided_by: cc:fe704e5e
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md:71: AD-038-R17'
+reason: 'SEL-014R; evidence: the overnight 2026-10-27/28 chains (seldon NUM-001R to RECALL-002R, squiddy SQ-052R to SQ-096) ran with no OODA and no record, and three registrations on 2026-10-28 were refused for mechanical causes fixed by hand (SQ11 work order, handoffs/2026-10-28_desktop_sq11_the_factory_runs_without_the_desktop_work_order.md, items W1, W2, W4)'
+kind: decision
+status: accepted
+statement: 'The OODA is advisory: with dispatch.ooda.enabled, c18 shall fail for a chained task only while a completed or verified predecessor has no OODA record (ooda_pending) or its latest record is ooda_blocked (ooda_blocked); ooda_ok, ooda_amended, ooda_expired, an ooda_recorded event and a committed _OODA.md release, and a later ooda_recorded answers a block; ooda pending lists only blocks; with enabled false c18 is absent; dispatch.ooda_grace_s no longer releases or holds and is the OODA session''s timeout, required above 0 when enabled.'
+source:
+  path: docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md
+  lines:
+  - 71
+  - 84
+  sha256: 53868f9613deadb0a85bf0d3694dd5e6a602be02eb8b6d80e27d7a4cab1ad2d2
+  text: |-
+    - **AD-038-R17. The OODA is advisory: c18 holds a chained task only while its predecessor's OODA is due or blocked;
+      `ooda_grace_s` is retired as a gate and kept as the OODA session's timeout.**
+      W4 is ruled advisory. c18 is present for a task with a completed or verified predecessor whenever
+      `dispatch.ooda.enabled` is true, and fails (`ooda_pending`) for a predecessor that has no record yet, which is the
+      short wait for the machine's own session in this pass or the next (bounded by `max_per_pass` and the session's
+      timeout, never by a person), and (`ooda_blocked`) for a predecessor whose latest record is `ooda_blocked`. Every
+      other record releases: `ooda_ok`, `ooda_amended`, `ooda_expired`, a Desktop's `ooda_recorded` event and a committed
+      `<stem>_OODA.md` file. A block is answered by a later `ooda_recorded` event (`seldon dispatch ooda record <N>`,
+      MCP `seldon_ooda_record`) after the Desktop has amended, blocked or superseded the successor, as the convention's
+      section 3 orders. `seldon dispatch ooda pending` and `seldon_ooda_pending` list only blocks, each with its question
+      and the note that would answer it: the only OODA a person reads. With `enabled` false c18 is absent and nothing
+      waits, whatever `ooda_grace_s` says; R10's grace, which released a chain on a timer with nobody reading, no longer
+      releases or holds anything. `dispatch.ooda_grace_s` is the OODA session's wall-clock timeout, required above 0 when
+      `enabled` is true. `dispatch_launched` records c18's per-predecessor `released_by` as the record's kind.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md
+  anchor: AD-038-R17
+consumer:
+- cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches.md
+written_by: seldon decision 0.1.0
+provisional_id: 95bb19c817574a121f87a08ab14bbe9e410f519a303334d7a013aa98d26b9f73

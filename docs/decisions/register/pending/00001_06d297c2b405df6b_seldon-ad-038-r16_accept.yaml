@@ -1,0 +1,61 @@
+event: accept
+id: seldon:AD-038-R16
+date: '2026-10-28'
+decided_by: cc:fe704e5e
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md:37: AD-038-R16'
+reason: 'SEL-014R; evidence: the overnight 2026-10-27/28 chains (seldon NUM-001R to RECALL-002R, squiddy SQ-052R to SQ-096) ran with no OODA and no record, and three registrations on 2026-10-28 were refused for mechanical causes fixed by hand (SQ11 work order, handoffs/2026-10-28_desktop_sq11_the_factory_runs_without_the_desktop_work_order.md, items W1, W2, W4)'
+kind: decision
+status: accepted
+statement: With dispatch.ooda.enabled, every pass, after the reconcile and before candidacy, shall run the OODA on at most dispatch.ooda.max_per_pass completed or verified tasks that have a proposed or accepted precedes successor and no OODA record, oldest completion first, as one headless Claude Code session with --worktree on dispatch.ooda.model_role, given a dispatcher-composed brief (RESULT, successor file and addenda, the successor's check premises run against HEAD, Recall for the predecessor, governing notes), bounded by dispatch.ooda_grace_s seconds and dispatch.ooda.token_cap tokens; its last message carries one OODA-VERDICT line (ok, amended or blocked), and the dispatcher, not the session, records exactly one of ooda_ok, ooda_amended (after copying the named addendum from the worktree and committing it through the hooks), ooda_blocked (with the question and the answering note) or ooda_expired (timeout, token cap, non-zero exit, no model turn, no or unreadable verdict, or a missing or misnamed addendum), each with the session's tokens.
+source:
+  path: docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md
+  lines:
+  - 37
+  - 70
+  sha256: 53868f9613deadb0a85bf0d3694dd5e6a602be02eb8b6d80e27d7a4cab1ad2d2
+  text: |-
+    - **AD-038-R16. The OODA between chained tasks is a knowledge source the dispatcher launches, and it ends in exactly
+      one of four records.**
+      - *When it fires.* With `dispatch.ooda.enabled`, every pass, after the reconcile and before candidacy, finds each
+        completed or verified task with an open successor (a `precedes` successor in `proposed` or `accepted`) that has no
+        OODA record yet, and runs the OODA on at most `dispatch.ooda.max_per_pass` of them, oldest completion first. The
+        knowledge source fires on the board's state, not on a message: a pass that missed the completion, a holder that
+        died, or a project that has just enabled it, all find the same due work on the next pass. Disabled, nothing fires
+        and nothing waits (R17).
+      - *What it reads.* The dispatcher composes the brief, so the session spends its tokens on orienting, not on
+        finding files: the predecessor's RESULT path, the successor's task file and every addendum it already has, the
+        successor's `check:` premises run now against the primary's HEAD (station (a)'s runner, with each outcome and
+        output tail), the Recall hits for the predecessor's task text (RECALL-001's retrieval, the spreading-activation
+        step) and the governing notes the successor names. The session is told to run `seldon go --brief` first.
+      - *How it runs.* One headless Claude Code session, `claude -p` with `--worktree` (the CLI's hard isolation: no
+        write reaches the primary), on the model role `dispatch.ooda.model_role`, in a log under `dispatch.log_dir`. It
+        is bounded by `dispatch.ooda_grace_s` seconds of wall clock and `dispatch.ooda.token_cap` tokens (input plus
+        cache writes plus output, as `stations.session_tokens` counts them); the holder reaps a session past either.
+      - *What it returns.* Its last message carries one line `OODA-VERDICT: {json}`, with `verdict` one of `ok`,
+        `amended` or `blocked`. The dispatcher, not the session, writes the record to the primary's ledger:
+        `ooda_ok` (the RESULT changes nothing in the successor; the chain proceeds);
+        `ooda_amended` (the session wrote the successor's next addendum, `<successor stem>_ADDENDUM_<NN>_<slug>.md` at the
+        `NN` the brief names, in its worktree; the dispatcher copies it to the primary and commits it through the hooks,
+        path-scoped, **before** the record, so nothing can launch the successor without it; the chain proceeds);
+        `ooda_blocked` (a question no ruling answers; the record names the question and the note that would answer it;
+        the chain halts, R17);
+        `ooda_expired` (the session timed out, crossed its token cap, exited non-zero, never reached the model, or
+        returned no verdict, an unreadable one, or an addendum that is missing or misnamed; the reason is in the record;
+        the chain proceeds). Every record carries the session's tokens, its log and the successors it read, so a chain
+        that was checked is distinguishable from one that ran on the timer.
+      - *What an addendum may do.* The convention's limits hold (`docs/conventions/desktop_ooda.md` section 3): an
+        addendum amends what the successor does (a moved path, a premise the predecessor made true or false, a number, a
+        check that needs `sh -c`); it cannot supply a missing candidacy header (AD-038-R11). The session does not commit,
+        merge or push; its worktree is removed after the record, and kept, with the record saying so, only if the session
+        committed on its branch.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md
+  anchor: AD-038-R16
+consumer:
+- cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches.md
+written_by: seldon decision 0.1.0
+provisional_id: 06d297c2b405df6b444458c3f90ba432b0570b13176a131cb6cf89f75264480b
