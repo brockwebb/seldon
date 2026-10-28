@@ -51,10 +51,12 @@ import json, os, re, subprocess, sys
 args = sys.argv[1:]
 prompt = args[args.index("-p") + 1]
 if args[-1] == "--worktree":
-    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+    # As the CLI does: under the repository's MAIN working tree (a linked tree's common dir's parent), from HEAD.
+    common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                            capture_output=True, text=True).stdout.strip()
     name = "ooda-" + str(os.getpid())
-    wt = os.path.join(top, ".claude", "worktrees", name)
-    subprocess.run(["git", "-C", top, "worktree", "add", "-q", "-b", "worktree-" + name, wt, "HEAD"], check=True)
+    wt = os.path.join(os.path.dirname(common), ".claude", "worktrees", name)
+    subprocess.run(["git", "worktree", "add", "-q", "-b", "worktree-" + name, wt, "HEAD"], check=True)
     os.chdir(wt)
 print(json.dumps({{"type": "system", "subtype": "init", "cwd": os.path.realpath(os.getcwd())}}))
 print(json.dumps({{"type": "assistant", "message": {{"id": "m1", "role": "assistant", "content": [],

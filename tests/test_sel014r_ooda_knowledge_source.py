@@ -65,8 +65,10 @@ def _stub(project, verdict: dict | None, *, addendum: str | None = None, sleep: 
     (bin_ / "assistant.json").write_text(json.dumps(assistant) + "\n", encoding="utf-8")
     lines = ["#!/bin/sh",
              'for a in "$@"; do last="$a"; done',
-             'if [ "$last" = "--worktree" ]; then top="$(git rev-parse --show-toplevel)"; '
-             'git -C "$top" worktree add -q -b worktree-ooda-stub "$top/.claude/worktrees/ooda-stub" HEAD '
+             # As the CLI does: under the repository's MAIN working tree, from the current HEAD.
+             'if [ "$last" = "--worktree" ]; then '
+             'top="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"; '
+             'git worktree add -q -b worktree-ooda-stub "$top/.claude/worktrees/ooda-stub" HEAD '
              '|| exit 9; cd "$top/.claude/worktrees/ooda-stub" || exit 9; fi',
              'printf \'{"type":"system","subtype":"init","cwd":"%s"}\\n\' "$(pwd -P)"']
     if model_turn:
@@ -241,6 +243,31 @@ def test_an_amended_verdict_commits_the_addendum_before_the_record(project):
                          text=True).stdout
     assert "OODA knowledge source" in log and "AD-038-R16" in log
     assert _worktrees(project) == []
+
+
+def test_an_amended_verdict_is_found_when_the_project_is_a_linked_worktree(project, tmp_path):
+    """SEL-014R's replay: the CLI cuts its worktree under the repository's MAIN working tree, so a project run from a
+    linked worktree had its session's addendum looked for in the wrong place and recorded `addendum_missing`."""
+    _enable(project)
+    _chain(project)
+    linked = tmp_path / "linked"
+    subprocess.run(["git", "worktree", "add", "-q", "--detach", str(linked), "HEAD"], cwd=project, check=True)
+    _stub(linked, {"verdict": "amended", "note": "path moved", "addenda": [ADDENDUM]}, addendum=ADDENDUM)
+    config = yaml.safe_load((linked / "seldon.yaml").read_text())
+    cfg = D.load_dispatch_config(linked, config)
+    succ = {**_row_for(linked)}
+    [out] = DO.fire(linked, config, cfg, None, [succ])
+    assert out["kind"] == O.OODA_AMENDED, out["payload"]
+    assert D.is_tracked(linked, linked / ADDENDUM)
+    assert out["payload"]["session"]["kept"] is False
+    assert not [ln for ln in _worktrees(project) if "ooda-stub" in ln]
+
+
+def _row_for(root):
+    pred = {"artifact_id": PRED, "state": "completed", "name": "n0", "source_file": "cc_tasks/n0.md",
+            "updated_at": "2026-10-28T11:00:00Z"}
+    return {"artifact_id": SUCC, "name": "n1", "state": "proposed", "source_file": "cc_tasks/n1.md",
+            "created_at": "2026-10-28T10:00:00Z", "predecessors": [pred]}
 
 
 def test_an_amended_verdict_without_its_addendum_is_expired(project):

@@ -1,0 +1,10 @@
+2026-10-28T12:39:35 replay: 3 unit(s), 0 done, 0 tokens spent, model claude-opus-5-5
+2026-10-28T12:39:35 unit 1/3 bacacc4c -> f7a1d2f0 at 4635958a: start
+2026-10-28T12:40:18 unit 1/3 bacacc4c: ooda_ok, 41151 tokens, 43.6s; spent 41151
+2026-10-28T12:40:18 pilot: 41151 tokens and 43.6s per unit (measured); projected total 123453 tokens for 3 units, about 131s
+2026-10-28T12:40:18 unit 2/3 f7a1d2f0 -> 2909ce0f at cf8afdc9: start
+2026-10-28T12:41:14 unit 2/3 f7a1d2f0: ooda_ok, 34458 tokens, 55.6s; spent 75609
+2026-10-28T12:41:14 unit 3/3 2909ce0f -> ff3a4189 at 8bb4d2fb: start
+2026-10-28T12:42:14   unit 3/3 running 159s elapsed, session tokens 41949, spent before it 75609
+2026-10-28T12:42:45 unit 3/3 2909ce0f: ooda_expired (addendum_missing: cc_tasks/2026-10-27_RECALL-002R_recall_turned_on_in_squiddy_arnold_and_ai_readiness_kg_ADDENDUM_01_ai_readiness_kg_dirty_tree_and_unpushed_commits.md is not in the session's worktree None), 45700 tokens, 91.0s; spent 121309
+2026-10-28T12:42:45 replay done: n=3 ['ooda_ok', 'ooda_ok', 'ooda_expired'], 121309 tokens

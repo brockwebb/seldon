@@ -10,7 +10,7 @@ to `--token-cap` tokens each), so it is checkpointed (CLAUDE.md section 15):
 - **Unit of work:** one OODA run on one `precedes` edge of the overnight chain (NUM-001R -> DESK-004R -> DISP-004R ->
   RECALL-002R), in a detached worktree at the commit that brought the predecessor's RESULT to main, beside symlinks
   to the sibling repositories so Recall reads them.
-- **Key:** sha256 of (predecessor id, successor id, replay commit, model id, sha256 of `seldon/core/ooda.py`), so a
+- **Key:** sha256 of (predecessor id, successor id, replay commit, model id, sha256 of `seldon/core/ooda.py` and `seldon/commands/dispatch_ooda.py`), so a
   changed prompt or model is never served a stale row.
 - **Checkpoint:** one JSON line per finished unit, flushed and fsynced, in `--checkpoint`. Re-running the command is
   the resume: completed keys are skipped.
@@ -47,6 +47,8 @@ CHAIN = [
     ("2909ce0f-ec55-4da7-8f9b-f2f393933264", "2026-10-27_DISP-004R_a_cross_repo_task_is_pushed_in_every_repository_it_names"),
     ("ff3a4189-1943-4405-a30f-8d3344bb97ad", "2026-10-27_RECALL-002R_recall_turned_on_in_squiddy_arnold_and_ai_readiness_kg"),
 ]
+#: The code that composes the prompt and decides a run's record; a change to either is a new key.
+CODE = ("seldon/core/ooda.py", "seldon/commands/dispatch_ooda.py")
 #: The sibling repositories Recall and the premise checks read, linked beside the replay trees.
 SIBLINGS = ("squiddy", "arnold", "ai-readiness-kg", "icsp_notebook")
 
@@ -57,7 +59,7 @@ def _git(cwd: Path, *args: str) -> str:
 
 def units(model: str) -> list:
     """The three edges, each with its replay commit and key."""
-    code = hashlib.sha256((SELDON_REPO / "seldon/core/ooda.py").read_bytes()).hexdigest()
+    code = hashlib.sha256(b"".join((SELDON_REPO / f).read_bytes() for f in CODE)).hexdigest()
     out = []
     for (pid, pstem), (sid, sstem) in zip(CHAIN, CHAIN[1:]):
         sha = _git(SELDON_REPO, "log", "--diff-filter=A", "--format=%H", "-1", "HEAD", "--",

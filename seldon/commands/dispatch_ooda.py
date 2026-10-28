@@ -64,6 +64,15 @@ def _recall(project_dir: Path, config: dict):
     return hits
 
 
+def cli_worktree_root(project_dir: Path) -> Path:
+    """Where `claude --worktree` cuts its worktrees: `.claude/worktrees` under the repository's MAIN working tree,
+    which is the project for a dispatcher in the primary checkout and the common git dir's parent for one run from a
+    linked worktree (SEL-014R's replay found the second: a session's addendum was looked for under the linked tree)."""
+    common = WT.git(Path(project_dir), "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+    main = Path(common).parent if common else Path(project_dir)
+    return (main / D.CLI_WORKTREE_DIR).resolve()
+
+
 def _cleanup(project_dir: Path, wt: Path | None, base: str | None) -> dict:
     """Remove the session's worktree and branch when the session committed nothing on it; keep and say so otherwise."""
     if wt is None or not wt.is_dir():
@@ -125,7 +134,7 @@ def run_one(project_dir: Path, config: dict, cfg: dict, session_id, item: dict, 
     wall = round(time.monotonic() - started, 3)
     init = init_box.get("init") or W.cli_init(log_path, offset)
     wt = Path(init["cwd"]).resolve() if init and init.get("cwd") else None
-    if wt is not None and not str(wt).startswith(str((project_dir / D.CLI_WORKTREE_DIR).resolve())):
+    if wt is not None and (project_dir.resolve() == wt or not wt.is_relative_to(cli_worktree_root(project_dir))):
         wt = None
     toks = QS.session_tokens(log_path)
     session = {"log": str(log_path.relative_to(project_dir)), "child_session_id": child_session_id, "exit": code,
