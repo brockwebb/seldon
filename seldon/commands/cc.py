@@ -19,6 +19,7 @@ from seldon.core.events import make_event
 from seldon.core.dispatch import (
     AFTER_GRAMMAR,
     AFTER_UNRESOLVED as _D_AFTER_UNRESOLVED,
+    ANSWERS_UNRESOLVED as _D_ANSWERS_UNRESOLVED,
     HEADER_AFTER,
     after_ref_is_id,
     parse_after,
@@ -1122,6 +1123,15 @@ def cc_complete(filepath, note, allow_untracked):
             driver.close()
             raise SystemExit(1)
 
+        # SEL-013R (AD-036-R16): a task that answers a filing from another repository is not complete until its
+        # return task is registered and committed in that repository's cc_tasks/. Refused before anything is written.
+        from seldon.core import returns as returns_mod
+        return_refusal = returns_mod.completion_refusal(project_dir, config, task_path, existing_id)
+        if return_refusal:
+            click.echo(f"ERROR: {return_refusal}\n  File: {rel_path}", err=True)
+            driver.close()
+            raise SystemExit(1)
+
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
         click.echo(
@@ -1171,6 +1181,15 @@ def cc_complete(filepath, note, allow_untracked):
         finally:
             driver.close()
         return
+
+    # SEL-013R (AD-036-R16): an unregistered task has no id for a return to name, so one that answers a filing is
+    # refused here rather than recorded complete with no return.
+    from seldon.core import returns as returns_mod
+    return_refusal = returns_mod.completion_refusal(project_dir, config, task_path, None)
+    if return_refusal:
+        click.echo(f"ERROR: {return_refusal}\n  File: {rel_path}", err=True)
+        driver.close()
+        raise SystemExit(1)
 
     name = _name_from_filepath(rel_path)
     if note:
@@ -1410,6 +1429,11 @@ def register_task_file(
     # SEL-008: `<project>:<ref>` entries are waits on tasks in other projects' graphs, resolved there now and
     # recorded on the created task in its one `artifact_created` line.
     external_waits = read_after_waits(text, project_dir, config)
+    # SEL-013R (AD-036-R16): an `**Answers:**` header names a filing in another repository's graph, resolved there
+    # now (read, never written) and recorded on the created task; one that does not resolve refuses here, with
+    # nothing created, as an unresolvable After ref does.
+    from seldon.core import returns as returns_mod
+    answered = returns_mod.resolve_answers(text, project_dir, config)
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -1461,6 +1485,7 @@ def register_task_file(
             "hash_scope": HASH_SCOPE_SPEC,
             "source_commit": source_commit,
             **({"waits_on_external": external_waits} if external_waits else {}),
+            **({returns_mod.PROPERTY: answered.qualified} if answered else {}),
         },
         actor=actor,
         authority="accepted",
@@ -1483,6 +1508,9 @@ def register_task_file(
     if external_waits:
         from seldon.core.precedence import short
         say(f"  waits on (other projects): {', '.join(short(w) for w in external_waits)}")
+    if answered:
+        say(f"  answers: {answered.label} ({answered.artifact_id[:8]}); `seldon cc complete` refuses it until its "
+            f"return is filed there (`seldon cc return`, AD-036-R16)")
     sequencing_warning = sequencing_lint(text, Path(rel_path).stem)
     if sequencing_warning:
         say(sequencing_warning)
@@ -1622,6 +1650,10 @@ def cc_register(filepath, description, actor, allow_untracked, project):
             click.echo(f"ERROR: {exc}\n"
                        f"  Fix: name a registered task, or drop the **After:** header.",
                        err=True)
+        elif str(exc).startswith(_D_ANSWERS_UNRESOLVED):
+            click.echo(f"ERROR: {exc}\n"
+                       f"  Fix: name the filing as `<repo>:<task number>` of a task registered in that "
+                       f"repository's graph, or drop the **Answers:** header.", err=True)
         else:
             click.echo(
                 f"ERROR: {exc}\n"
@@ -1637,6 +1669,75 @@ def cc_register(filepath, description, actor, allow_untracked, project):
         click.echo(outcome["warning"], err=True)
     if outcome["existing"]:
         raise SystemExit(0)
+
+
+@cc_group.command("return")
+@click.argument("task")
+@click.option("--to", "to", default=None,
+              help="The consumer repository; must be the one the task's **Answers:** header names (default: it).")
+@click.option("--prefix", default=None,
+              help="The consumer's task prefix (default: the answered filing's own, e.g. HB for hazbrief-mcp:HB-37).")
+@click.option("--dry-run", is_flag=True, default=False, help="Print the return task; write and register nothing.")
+def cc_return(task, to, prefix, dry_run):
+    """File TASK's return task in the repository its **Answers:** header names (AD-036-R16).
+
+    TASK is the answering task's file (relative to the project root, or absolute) or its artifact id prefix. The
+    return is written from the RESULT's `## For <consumer>` section, numbered by that repository's allocator
+    (AD-038-R13), sequenced after its latest open task, and registered there, which commits it (AD-036-R12).
+    `seldon cc complete` refuses an answering task until this has run; re-running it reports the return it filed.
+    """
+    from seldon.core import returns as returns_mod
+    project_dir = Path.cwd()
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    try:
+        task_path = Path(task)
+        if not task_path.is_absolute():
+            task_path = project_dir / task_path
+        if task_path.is_file():
+            try:
+                rel = str(task_path.relative_to(project_dir))
+            except ValueError:
+                rel = str(task_path)
+            task_id = _find_existing(driver, database, rel)
+        else:
+            from seldon.core.artifacts import resolve_artifact_id
+            try:
+                task_id = resolve_artifact_id(driver, database, task)
+            except ValueError as exc:
+                click.echo(f"ERROR: {task} is neither a task file nor a task id: {exc}", err=True)
+                raise SystemExit(1)
+            with driver.session(database=database) as s:
+                row = s.run("MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t.source_file AS f",
+                            id=task_id).single()
+            if not row or not row["f"] or not (project_dir / row["f"]).is_file():
+                click.echo(f"ERROR: task {task_id[:8]} has no task file on disk to read its Answers header from",
+                           err=True)
+                raise SystemExit(1)
+            task_path = project_dir / row["f"]
+        if not task_id:
+            click.echo(f"ERROR: {task} is not registered; a return names its answering task by id, so register "
+                       f"it first (`seldon cc register {task}`)", err=True)
+            raise SystemExit(1)
+    finally:
+        driver.close()
+    try:
+        out = returns_mod.write_return(project_dir, config, task_path, task_id, to=to, prefix=prefix,
+                                       dry_run=dry_run, emit=lambda m: click.echo(f"  {m}" if m else m))
+    except returns_mod.ReturnError as exc:
+        click.echo(f"ERROR: {exc}", err=True)
+        raise SystemExit(1)
+    if out["status"] == "dry_run":
+        click.echo(f"would write {out['consumer']}/{out['rel_path']}:\n")
+        click.echo(out["text"])
+        return
+    verb = "already filed" if out["status"] == "existing" else "filed"
+    click.echo(f"return {verb}: {out['consumer']}/{out['rel_path']}"
+               + (f" (task {out['artifact_id'][:8]})" if out.get("artifact_id") else ""))
+    if out.get("problems"):
+        click.echo(f"ERROR: the return is not complete: {'; '.join(out['problems'])}", err=True)
+        raise SystemExit(1)
 
 
 @cc_group.command("constrain")

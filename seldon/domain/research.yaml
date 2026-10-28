@@ -262,6 +262,10 @@ artifact_types:
         # `system`: absent on every task that waits on nothing outside its own graph.
         category: system
         description: "Tasks in OTHER projects' graphs this task waits on, as `<project>:<artifact_id>` (`seldon task wait-on`, or a `<project>:<ref>` entry in the task file's `**After:**` header). Read, never written, in the other graph; satisfied when the target is completed or verified. See AD-038-R8."
+      answers_external:
+        # `system`: absent on every task that answers no filing from another repository.
+        category: system
+        description: "The filing in ANOTHER project's graph this task answers, as `<project>:<artifact_id>`, from the task file's `**Answers:**` header at registration. `seldon cc complete` refuses the task until its return task is registered and committed in that project's cc_tasks/ (`seldon cc return`). See AD-036-R16."
       dispatch_merge:
         category: system
         description: "What became of a worktree task's branch under the parallel dispatcher: merged (fast-forwarded onto main on green) or merge_blocked (a rebase conflict, a red re-gate or an invalid union file; the task is blocked and an Issue names the files). Absent on tasks run in place. See AD-034."

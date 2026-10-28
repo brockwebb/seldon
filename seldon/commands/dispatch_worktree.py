@@ -1048,6 +1048,14 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     """Under the pass lease, after the fast-forward: complete, record, push, remove."""
     task_id = finish["task_id"]
     state = S._state_of(driver, database, task_id)
+    # SEL-013R (AD-036-R16): a task that answers a consumer's filing completes only with its return filed there. The
+    # session should have run `seldon cc return`; when it did not, the merged RESULT is what the writer reads.
+    returned = file_return_at_merge(project_dir, config, finish)
+    if returned is not None:
+        merge = {**merge, "return": returned}
+        if returned.get("refusal"):
+            return _finish_merged_unreturned(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                             finish, name, merge, state, returned["refusal"])
     if state == "in_progress":
         update_artifact(project_dir=project_dir, driver=driver, database=database,
                         artifact_id=task_id,
@@ -1076,6 +1084,12 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     # DISP-004R (AD-034-R12): the other repositories the Repo line named are pushed with this one, and each reading
     # goes on the finish record.
     pushes = push_named_repos(project_dir, session_id, cfg, finish, name)
+    if returned and returned.get("consumer") and returned["consumer"] not in {p["repo"] for p in pushes}:
+        # AD-036-R16 with AD-034-R12: the return's commit is in the consumer's repository, so it is pushed with this
+        # one, by the same reading and the same refusals. No launch HEAD is known for a repository the Repo line did
+        # not name, so the push reads only "ahead of its upstream".
+        pushes = pushes + push_named_repos(project_dir, session_id, cfg, {
+            **finish, "push_repos": [{"repo": returned["consumer"], "head_at_launch": None}]}, name)
     done = {**finish, "ok": True, "outcome": "merged",
             "graph_state_observed": S._state_of(driver, database, task_id),
             "merge": {k: v for k, v in merge.items() if k != "writes"}, **({"push_repos": pushes} if pushes else {})}
@@ -1088,6 +1102,71 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
     S._notify(project_dir, session_id, cfg, done, name,
               outcome=BREAKER_MERGED if finish.get("breaker") else "merged")
     # FRICTION-002 Part B: the merged task's worktree is removed by the sweep, which keeps the branch.
+    sweep(project_dir, session_id)
+    S._record_and_push(project_dir, config, cfg)
+
+
+def file_return_at_merge(project_dir: Path, config: dict, finish: dict) -> dict | None:
+    """The merged task's return (AD-036-R16): None for a task with no `**Answers:**` header; otherwise
+    `{status, rel_path, consumer}` when it is filed (by the session, or here), or `{refusal}` when it cannot be.
+
+    Read from the primary checkout after the fast-forward, so the task file and its RESULT are what main holds. An
+    unreadable consumer (its graph down, its checkout gone) is a refusal carrying the error, as c17 reads an
+    unreadable cross-project wait as "not ready": the task is blocked with it, never completed on a guess.
+    """
+    try:
+        return _file_return_at_merge(project_dir, config, finish)
+    except Exception as exc:                                        # noqa: BLE001  (recorded as the block reason)
+        from seldon.core.returns import RETURN_UNFILED
+        return {"refusal": f"{RETURN_UNFILED}: the return could not be read or written "
+                           f"({type(exc).__name__}: {str(exc)[:300]})"}
+
+
+def _file_return_at_merge(project_dir: Path, config: dict, finish: dict) -> dict | None:
+    from seldon.core import returns as RT
+    task_path = project_dir / finish["source_file"]
+    if not task_path.is_file() or RT.answers_of(task_path.read_text(encoding="utf-8",
+                                                                    errors="replace"))["kind"] == "absent":
+        return None
+    if RT.completion_refusal(project_dir, config, task_path, finish["task_id"]) is None:
+        answered = RT.resolve_answers(task_path.read_text(encoding="utf-8", errors="replace"), project_dir, config)
+        return {"status": "filed_by_session", "consumer": str(answered.root)}
+    try:
+        out = RT.write_return(project_dir, config, task_path, finish["task_id"],
+                              result_path=project_dir / finish["result_path"], actor="cc")
+    except RT.ReturnError as exc:
+        return {"refusal": f"{RT.RETURN_UNFILED}: {exc}"}
+    refusal = RT.completion_refusal(project_dir, config, task_path, finish["task_id"])
+    result = {"status": out["status"], "rel_path": out["rel_path"], "consumer": out["consumer"],
+              "artifact_id": out.get("artifact_id")}
+    if refusal:
+        result["refusal"] = refusal
+    else:
+        click.echo(f"return filed for {finish['task_id'][:8]}: {out['consumer']}/{out['rel_path']}")
+    return result
+
+
+def _finish_merged_unreturned(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name,
+                              merge, state, refusal) -> None:
+    """Merged, but its return cannot be filed: the task is blocked with the refusal as its reason, never completed.
+
+    The merge stands (main holds it). What is missing is the consumer's half, and `completed` would tell the
+    consumer's dispatcher nothing; a blocked task with the reason is what the operator and `seldon go` read. The fix
+    is `seldon cc return <task>`, then `seldon cc complete <task>` (blocked walks to completed)."""
+    task_id = finish["task_id"]
+    update_artifact(project_dir=project_dir, driver=driver, database=database, artifact_id=task_id,
+                    properties={MERGE_PROPERTY: "merged"}, actor=S.ACTOR, authority="accepted",
+                    session_id=session_id)
+    S._block(project_dir, driver, database, domain_config, session_id, task_id, state, finish.get("exit_code"),
+             finish["log_path"], reason=f"dispatcher: merged, {refusal[:400]}")
+    done = {**finish, "ok": False, "outcome": "return_unfiled", "graph_state_observed": S._state_of(
+        driver, database, task_id), "merge": {k: v for k, v in merge.items() if k != "writes"}}
+    S._emit(project_dir, session_id, D.EVENT_FINISHED, done)
+    click.echo(f"MERGED {task_id[:8]} but its return is not filed, so it is blocked, not completed: {refusal}. Fix: "
+               f"`seldon cc return {finish['source_file']}`, then `seldon cc complete {finish['source_file']}`",
+               err=True)
+    S._notify(project_dir, session_id, cfg, {**done, "wall_clock_s": done.get("wall_clock_s") or 0}, name,
+              outcome="return_unfiled")
     sweep(project_dir, session_id)
     S._record_and_push(project_dir, config, cfg)
 

@@ -203,7 +203,8 @@ if spec.get("append_event"):
     from seldon.core.events import append_event, make_event
     append_event(cwd, make_event("note_recorded", "cc", "accepted", {{"stem": stem}}))
 if spec.get("result", True):
-    (cwd / "cc_tasks" / f"{{stem}}_RESULT.md").write_text("# RESULT\\n")
+    # SEL-013R: a spec may give the RESULT's text (a `## For <consumer>` section the finish's return writer reads).
+    (cwd / "cc_tasks" / f"{{stem}}_RESULT.md").write_text(spec.get("result_text", "# RESULT\\n"))
 if spec.get("complete"):
     from seldon.core.artifacts import walk_to_completed
     from seldon.domain.loader import load_domain_config

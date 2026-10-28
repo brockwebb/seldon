@@ -307,6 +307,37 @@ def after_ref_is_id(ref: str) -> bool:
     return bool(_AFTER_ID_RE.match(ref))
 
 
+#: SEL-013R (AD-036-R16): the OPTIONAL header of a task that answers a filing from another repository. Its one value
+#: names the filing, qualified by the repository it came from, and that repository is where the answer's return task
+#: is filed (`seldon.core.returns`). The grammar is read here, with the other static checks; whether the filing
+#: exists in that repository's graph is read by registration, which may open another graph.
+HEADER_ANSWERS = "Answers"
+ANSWERS_UNRESOLVED = "answers_unresolved"
+ANSWERS_GRAMMAR = ("`**Answers:** <repo>:<ref>`, one filing: the consumer repository's name (its directory, or "
+                   "seldon.yaml `tasks.projects`) and the filing's task number (`HB-37`), cc_tasks file stem or "
+                   "artifact id prefix")
+
+
+def parse_answers(value: str | None) -> dict:
+    """The Answers header against :data:`ANSWERS_GRAMMAR`: `{kind, project, ref, error}`.
+
+    `kind` is `absent` (no header), `ref` (parses) or None (does not, and `error` says why). One filing per task: a
+    task that answers two filings files two returns, and a list would leave which RESULT section feeds which return
+    to an ordering rule nobody can see.
+    """
+    if value is None:
+        return {"kind": "absent", "project": None, "ref": None, "error": None}
+    item = value.strip()
+    item = item[:-1] if item.endswith(".") else item
+    item = item.strip().strip("`").strip()
+    x = _AFTER_XREF_RE.match(item)
+    m = _AFTER_REF_RE.match(x.group("ref")) if x else None
+    if not x or not m:
+        return {"kind": None, "project": None, "ref": None,
+                "error": f"Answers header {value.strip()!r} is not one qualified ref; expected {ANSWERS_GRAMMAR}"}
+    return {"kind": "ref", "project": x.group("project"), "ref": m.group("stem"), "error": None}
+
+
 # ------------------------------------------------------- concurrency: Exclusive and Touches
 
 #: The two OPTIONAL concurrency headers (seldon `cc_tasks/2026-10-07_SEL-004_worktree_per_task
@@ -1180,7 +1211,7 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
     # AD-038-R14: every header these checks read is read from the header block, once. A header the block carries
     # twice is refused rather than resolved by order: which one the author meant is not the reader's to guess.
     read = ((tuple(cfg.get("candidacy_headers", REQUIRED_HEADERS)) + REQUIRED_HEADERS + CONCURRENCY_HEADERS
-             if cfg is not None else ()) + (HEADER_AFTER,))
+             if cfg is not None else ()) + (HEADER_AFTER, HEADER_ANSWERS))
     failures = repeated_headers(text, read)
     if cfg is not None:
         required = cfg.get("candidacy_headers", REQUIRED_HEADERS)
@@ -1238,6 +1269,9 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
     after = parse_after(_header_value(text, HEADER_AFTER))
     if after["kind"] is None:
         failures.append({"code": AFTER_UNRESOLVED, "message": after["error"]})
+    answers = parse_answers(_header_value(text, HEADER_ANSWERS))
+    if answers["kind"] is None:
+        failures.append({"code": ANSWERS_UNRESOLVED, "message": answers["error"]})
     out["failures"] = failures
     blocking = [f for f in failures if f["code"] not in criteria_codes]
     if blocking:
