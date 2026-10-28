@@ -1,3 +1,4 @@
+seq: 317
 event: accept
 id: seldon:AD-038-R16
 date: '2026-10-28'
@@ -59,3 +60,5 @@ consumer:
 - cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches.md
 written_by: seldon decision 0.1.0
 provisional_id: 06d297c2b405df6b444458c3f90ba432b0570b13176a131cb6cf89f75264480b
+prev_hash: 976ddebafa4e6d1231b477b1f038958abff1faeff247d5ebfb814c50cc997568
+record_hash: f32824e6a6ebf68e705192f2f36af970f3e5408259f6efed12cc69d513891782
