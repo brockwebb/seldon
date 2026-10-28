@@ -340,6 +340,8 @@ _SHELL_SYNTAX_RE = re.compile(r"&&|\|\||;|\||\$\(|`|>|<|\$[A-Za-z_{]")
 #: The path-existence forms the stale-evidence rule narrows. Anything else that names a missing path (a `grep` on
 #: it, a `cat`) is not mechanical: narrowing it would change what the premise claims.
 _PATH_TESTS = ("-e", "-f", "-d", "-s")
+#: A premise line (`stations._PREMISE_RE`'s lead), left out when asking whether the task names a repository.
+_PREMISE_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?premise:", re.IGNORECASE)
 
 
 def mechanical_code(refusal: str) -> str | None:
@@ -370,11 +372,13 @@ def stale_evidence_narrowing(project_dir: Path, task_text: str, command: str) ->
     """R18's third rule for one false check: `{path, ancestor, command}` or None when it does not apply.
 
     Applies to `test -e|-f|-d|-s <path>` and `ls <path>` whose path is absent and lies in a repository the task
-    names: this project's, or a sibling checkout `../<name>` whose name the task text carries."""
+    names: this project's, or a sibling checkout whose name the task carries outside its premises (a `**Repo:**`
+    header, the body). A premise naming a repository is not the task naming it: that is the claim under test."""
     project_dir = Path(project_dir).resolve()
     rel = _checked_path(command)
     if rel is None:
         return None
+    task_text = "\n".join(ln for ln in task_text.splitlines() if not _PREMISE_LINE_RE.match(ln))
     target = Path(os.path.normpath(project_dir / os.path.expanduser(rel)))
     if target.exists():
         return None

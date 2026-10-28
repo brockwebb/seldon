@@ -1236,6 +1236,49 @@ def cc_complete(filepath, note, allow_untracked):
         driver.close()
 
 
+def retry_mechanical_refusal(*, project_dir: Path, config: dict, driver, database: str, session_id: str | None,
+                             task_path: Path, refusal: str, register, actor: str) -> dict | None:
+    """AD-038-R18 (SEL-014R Part C): retry a registration refused for a mechanical cause, once, under its rule.
+
+    None when the refusal has no mechanical cause or no rule applies; the caller then reports the first refusal as
+    before. Otherwise the second registration's outcome, with `retried` (the `registration_retried` record), or the
+    second refusal raised as `ValueError` naming the retry. `register(path)` is the caller's own registration call, so
+    the CLI and the MCP tool each retry through exactly the gates they registered through. The record is appended to
+    the event store and committed the way a Desktop's journal line is (`commit_journal_append`)."""
+    from seldon.core import dispatch as _D
+    from seldon.core import numbering
+    from seldon.core import ooda as O
+    from seldon.core import stations
+    from seldon.core.events import append_event
+
+    try:
+        scfg = stations.load_stations_config((config or {}).get("dispatch") or {}, Path(project_dir))
+    except stations.StationsConfigError:
+        scfg = dict(stations.STATIONS_DEFAULTS)
+
+    def record(payload: dict) -> None:
+        append_event(project_dir, make_event(event_type=O.EVENT_REGISTRATION_RETRIED, actor=actor,
+                                             authority="accepted", payload=payload, session_id=session_id))
+        _D.commit_journal_append(project_dir, config, by="seldon cc register (AD-038-R18 retry)", actor=actor)
+
+    return O.retry_registration(
+        Path(project_dir), Path(task_path), refusal, register=register,
+        holders=lambda: numbering.graph_holders(driver, database),
+        allocate=lambda prefix: numbering.allocate(Path(project_dir), driver, database, prefix)["token"],
+        review=lambda pd, text: stations.review_premises(Path(pd), text, scfg), record=record)
+
+
+def retry_line(outcome: dict) -> str | None:
+    """The one line a retried registration prints (AD-038-R18), or None for one that was not retried."""
+    r = outcome.get("retried")
+    if not r:
+        return None
+    moved = f" as {r['file']}" if r["file"] != r["original_file"] else ""
+    return (f"Retried under AD-038-R18 ({', '.join(r['rules'])}) after `{r['first_refusal_code']}`; "
+            f"registered{moved}. Changes: "
+            + "; ".join(f"{c['before']} -> {c['after']}" for c in r["changes"]))
+
+
 def register_task_file(
     *,
     project_dir: Path,
@@ -1625,13 +1668,25 @@ def cc_register(filepath, description, actor, allow_untracked, project):
         driver.close()
         raise
 
-    try:
-        outcome = register_task_file(
+    def _register(path: Path) -> dict:
+        return register_task_file(
             project_dir=project_dir, config=config, driver=driver, database=database,
-            domain_config=domain_config, session_id=session_id, task_path=task_path,
+            domain_config=domain_config, session_id=session_id, task_path=path,
             description=description, actor=actor, allow_untracked=allow_untracked,
             emit=lambda msg: click.echo(msg, err=msg.startswith("Warning:")),
         )
+
+    try:
+        try:
+            outcome = _register(task_path)
+        except ValueError as first:
+            # AD-038-R18: a mechanical refusal is retried once under its rule; anything else is reported as before.
+            outcome = retry_mechanical_refusal(
+                project_dir=project_dir, config=config, driver=driver, database=database, session_id=session_id,
+                task_path=task_path, refusal=str(first), register=_register, actor=actor)
+            if outcome is None:
+                raise
+            click.echo(retry_line(outcome))
     except ValueError as exc:
         # AD-030-R9, the task half: a task that cites no decision is refused BEFORE it is
         # registered, so a refusal never leaves a task in the graph the check says should not

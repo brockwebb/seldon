@@ -1466,11 +1466,23 @@ def seldon_cc_register(
         if existing_id:
             return (f"Warning: CC task already registered (id: {existing_id[:8]}...). "
                     "No duplicate created.")
-        outcome = register_task_file(
-            project_dir=p, config=config, driver=driver, database=database,
-            domain_config=domain_config, session_id=None, task_path=task_path,
-            actor=MCP_ACTOR, allow_untracked=True,
-        )
+        def _register(path: Path) -> dict:
+            return register_task_file(
+                project_dir=p, config=config, driver=driver, database=database,
+                domain_config=domain_config, session_id=None, task_path=path,
+                actor=MCP_ACTOR, allow_untracked=True,
+            )
+
+        try:
+            outcome = _register(task_path)
+        except ValueError as first:
+            # AD-038-R18 (SEL-014R): a mechanical refusal is retried once under its rule, as `cc register` does.
+            from seldon.commands.cc import retry_mechanical_refusal
+            outcome = retry_mechanical_refusal(
+                project_dir=p, config=config, driver=driver, database=database, session_id=None,
+                task_path=task_path, refusal=str(first), register=_register, actor=MCP_ACTOR)
+            if outcome is None:
+                raise
     except ValueError as exc:
         # AD-030-R9, the task half: a task that cites no decision is refused before it is
         # registered. An `**After:**` refusal comes back the same way with its own fix line.
@@ -1513,6 +1525,9 @@ def seldon_cc_register(
                      f"({outcome['after_edges']} precedes edge(s) written)")
     if outcome["warning"]:
         lines.append(outcome["warning"])
+    from seldon.commands.cc import retry_line
+    if retry_line(outcome):
+        lines.append(retry_line(outcome))
     if outcome.get("sequencing_warning"):
         lines.append(outcome["sequencing_warning"])
     from seldon.core import governing_commit as gc
