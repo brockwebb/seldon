@@ -78,6 +78,27 @@ huddle (QC-002 Part A, the first one recorded).
   with its RESULT committed and its Stop gate passed is merged (`breaker_tripped_merged`), not stopped; launches
   carry `dispatch.allow`'s rules; and seldon itself is back on `bypassPermissions` by the kill rule (section 5).
 
+## A task that answers another repository's filing files its return (SEL-013R, AD-036-R16)
+
+- **The header.** A task that answers a filing from another repository carries `**Answers:** <repo>:<ref>`, where
+  the ref is the filing's task number (`hazbrief-mcp:HB-37`), stem or id prefix. Registration resolves it in that
+  repository's graph and refuses one that does not resolve (`answers_unresolved`).
+- **The RESULT's section.** The RESULT holds a `## For <repo>` section: optional header lines at its top
+  (`**Title:**`, `**Spend:**`, `**Network:**`, `**Parts:**`, or any candidacy header the consumer requires), then
+  what the consumer does with what landed, in steps. A section may not set `Status`, `Author`, `Returns`, `Answers`
+  or `After`: the writer sets those.
+- **The return.** Run `seldon cc return cc_tasks/<task>.md` from the session's worktree once the RESULT is written. It
+  writes the return task into the consumer's `cc_tasks/`, numbered by that repository's allocator, `After:` its
+  latest open task, and registers it there, which commits it (AD-036-R12). `seldon cc complete` refuses the answering
+  task (`return_unfiled`) until the return is registered and committed. When the session did not run it, the
+  dispatcher's merged finish does, from the merged RESULT, and pushes the consumer. A finish that cannot file the
+  return blocks the task with the reason instead of completing it.
+- **Retired:** a RESULT's "For <consumer>: paste these steps" section, which the operator carried to the consumer
+  by hand. The steps now go in the `## For <repo>` section, and the return task carries them. In a repository with
+  no dispatcher, or one that is off, the return is registered and waits for someone to launch it by hand. That is
+  the repository's own choice: hazbrief-mcp has no `dispatch:` block, so it holds a filed return until it is
+  launched.
+
 ## Where the dispatcher reads the records
 
 The lease holder (the pass that launched the session) inspects every `poll_interval_s` while it waits. launchd does

@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-036-R16
+date: '2026-10-28'
+decided_by: cc:9d4a865e
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md:53: AD-036-R16'
+reason: 'SEL-013R Part B; evidence: four hazbrief filings into squiddy returned through the operator''s clipboard (''For hazbrief: paste these steps''); HB-63, HB-64 and an ai-readiness-kg re-pin task were written by hand (squiddy SQ11 work order item W3)'
+kind: decision
+status: accepted
+statement: A task that answers a filing from another repository shall carry `**Answers:** <repo>:<ref>`, and registration shall refuse one that does not resolve to exactly one task in that repository's graph (`answers_unresolved`); `seldon cc complete` shall refuse the task (`return_unfiled`) until a return task naming it in its `**Returns:**` header is registered in the consumer's graph and committed in the consumer's repository; `seldon cc return` shall write that return from the RESULT's `For <repo>` section, numbered by the consumer's allocator, `After:` the consumer's latest open task, and register it there (AD-036-R12); the dispatcher's merged finish shall run the same writer when the session did not, push the consumer, and block rather than complete a task whose return cannot be filed.
+source:
+  path: docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md
+  lines:
+  - 53
+  - 62
+  sha256: 64f02960279a22273c689c2120a0279767bb36d5946b5b307010f83b29861fa9
+  text: |
+    - **AD-036-R16. A task that answers a filing from another repository carries `**Answers:** <repo>:<ref>`, and
+      registration refuses one that does not resolve to exactly one task in that repository's graph
+      (`answers_unresolved`). `seldon cc complete` refuses the task (`return_unfiled`) until a return task exists in
+      the consumer's `cc_tasks/`. The return names the answering task in its `**Returns:**` header, is registered in
+      the consumer's graph and is committed in the consumer's repository. `seldon cc return` writes the return from the
+      RESULT's `For <repo>` section, numbers it with the consumer's allocator, sets its `After:` to the consumer's latest
+      open task, and registers it there (AD-036-R12). The dispatcher's merged finish runs the same writer when the
+      session did not, and pushes the consumer. A finish that cannot file the return blocks the task with the refusal as
+      its reason and does not complete it. A RESULT's "for <consumer>: paste" section is retired.**
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md
+  anchor: AD-036-R16
+consumer:
+- cc_tasks/2026-10-28_SEL-013R_a_consumer_filings_answer_files_its_own_return.md
+- tests/test_sel013r_answers_files_its_return.py
+written_by: seldon decision 0.1.0
+provisional_id: 2a52bf4721a0360bbc7a5b1965e57c43c6bcaa74128137c5ee4d4f65b6d821d2
