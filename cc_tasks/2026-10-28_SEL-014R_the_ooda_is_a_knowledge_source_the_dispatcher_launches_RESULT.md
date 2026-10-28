@@ -181,5 +181,5 @@ than reuse stale rows.
 
 ## Tokens
 
-This session: SESSION_TOKENS at Part D (from `seldon dispatch part-complete`). OODA sessions: 254,852 (above). The
+This session: 408,257 at Part D (`seldon dispatch part-complete`; input + cache writes + output), against the 1.2M estimate and 1.5M stop. OODA sessions: 254,852 (above). The
 stand-in tests make no model calls.
