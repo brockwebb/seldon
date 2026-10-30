@@ -163,7 +163,7 @@ class StationsConfigError(ValueError):
 
 def load_stations_config(cfg: dict, project_dir: Path | None = None) -> dict:
     """`dispatch.stations` over `STATIONS_DEFAULTS`, validated. Unknown keys refuse: a misspelt ceiling would
-    otherwise be silently the default. A relative `interpreter` resolves against `project_dir` (`resolve_interpreter`);
+    otherwise be silently the default. A relative `interpreter` resolves against `project_dir`'s primary checkout (`resolve_interpreter`, SEL-018);
     `load_dispatch_config` passes it and writes the absolute path back, so every later load sees the resolved one."""
     block = (cfg or {}).get("stations") or {}
     if not isinstance(block, dict):
@@ -210,7 +210,9 @@ def resolve_interpreter(value, project_dir: Path | None) -> str | None:
         if project_dir is None:
             raise StationsConfigError(f"dispatch.stations.interpreter {value!r} is relative and no project directory "
                                       f"was given to resolve it against")
-        path = Path(project_dir).absolute() / path
+        # SEL-018: against the primary checkout, where the operator's venv is; a linked worktree has none.
+        from seldon.core import worktree as WT
+        path = WT.anchor(Path(project_dir)).absolute() / path
     if not path.exists():
         raise StationsConfigError(f"dispatch.stations.interpreter {value!r} does not exist (looked for {path})")
     if not path.is_file() or not os.access(path, os.X_OK):
@@ -1085,8 +1087,11 @@ def environment_repositories(project_dir: Path, config: dict, scfg: dict) -> dic
 
     `dispatch.stations.environment_ref` (`path#key`, a list of sibling repository names, e.g. squiddy's
     `squiddy/kit.yaml#environment_packages`) when set; otherwise `decisions.repositories` (seldon's squiddy and
-    arnold). A name resolves to the sibling directory of that name beside this project."""
-    project_dir = Path(project_dir).resolve()      # `Path('.').parent` is `.`: resolve before taking the parent
+    arnold). A name resolves to the sibling directory of that name beside this project's PRIMARY checkout, and the
+    ref's file against that checkout (SEL-018): from a linked worktree, the worktree's parent is `.claude/worktrees`."""
+    from seldon.core import worktree as WT
+    # `Path('.').parent` is `.`: resolve before taking the parent
+    project_dir = WT.anchor(Path(project_dir)).resolve()
     ref = scfg.get("environment_ref")
     if ref:
         path, _, key = str(ref).partition("#")
@@ -1105,9 +1110,10 @@ def environment_premise(project_dir: Path, config: dict, scfg: dict, lease_held:
     """The premise the dispatcher adds to every task (QC-002 Part B step 3, from SQ-015's kit pass): no other
     project's dispatcher holds its lease on a repository this task's environment names. `lease_held(repo)` returns
     the holding lease body or None."""
+    from seldon.core import worktree as WT
     held = {}
     for name, path in environment_repositories(project_dir, config, scfg).items():
-        if Path(path).resolve() == Path(project_dir).resolve():
+        if Path(path).resolve() == WT.anchor(Path(project_dir)).resolve():
             continue
         body = lease_held(Path(path))
         if body:

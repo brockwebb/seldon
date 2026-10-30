@@ -67,6 +67,23 @@ def primary_checkout(path: Path) -> Path:
     return common.parent
 
 
+def anchor(path: Path) -> Path:
+    """The directory a repository-relative path in `seldon.yaml` resolves against: the primary checkout.
+
+    From a linked worktree that is the primary (`primary_checkout`), because the operator wrote a path such as
+    `../squiddy/...` or `.seldon/DISPATCH_STOP` for the checkout they work in, and a gitignored or sibling target
+    exists only there (SEL-018; SEL-017 B and RECALL-002R are the same class). From the primary itself, `path`
+    is returned exactly as given, so nothing that ran there changes; outside a git work tree (a fixture, a bare
+    repository) `path` is its own anchor, as `cross_project._anchor` and `recall` already rule.
+    """
+    path = Path(path)
+    try:
+        primary = primary_checkout(path)
+    except WorktreeError:
+        return path
+    return path if primary.resolve() == path.resolve() else primary
+
+
 @contextmanager
 def locked(path: Path):
     """An exclusive `fcntl.flock` on the file itself, held for the body of the `with`.

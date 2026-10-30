@@ -101,7 +101,7 @@ def run_one(project_dir: Path, config: dict, cfg: dict, session_id, item: dict, 
     b = O.brief(project_dir, config, item, _review(cfg), _recall(project_dir, config))
     pred = b["predecessor"]
     stem = Path(pred["file"] or pred["task_id"]).stem
-    log_dir = project_dir / cfg["log_dir"]
+    log_dir = D.config_path(project_dir, cfg["log_dir"])
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{stem}{LOG_SUFFIX}"
     spec = models.launch_spec_for(ocfg["model_role"])
@@ -126,7 +126,7 @@ def run_one(project_dir: Path, config: dict, cfg: dict, session_id, item: dict, 
     def on_reap(reap, pid, sig):
         reaped.update({**reap, "pid": pid, "signal": sig})
 
-    click.echo(f"ooda: {pred['task_id'][:8]} {pred['file']} -> {log_path.relative_to(project_dir)}")
+    click.echo(f"ooda: {pred['task_id'][:8]} {pred['file']} -> {D.config_rel(project_dir, log_path)}")
     code = (runner or S._run)(cmd, project_dir, log_path, child_session_id,
                               extra_env=S._worktree_env(project_dir, spec, cfg), inspector=inspector,
                               inspect_every_s=float(ocfg["inspect_every_s"]), on_reap=on_reap,
@@ -137,7 +137,7 @@ def run_one(project_dir: Path, config: dict, cfg: dict, session_id, item: dict, 
     if wt is not None and (project_dir.resolve() == wt or not wt.is_relative_to(cli_worktree_root(project_dir))):
         wt = None
     toks = QS.session_tokens(log_path)
-    session = {"log": str(log_path.relative_to(project_dir)), "child_session_id": child_session_id, "exit": code,
+    session = {"log": D.config_rel(project_dir, log_path), "child_session_id": child_session_id, "exit": code,
                "seconds": wall, "tokens": toks.get("tokens"), "cache_read": toks.get("cache_read"),
                "model": spec["model"], "role": spec["role"], "timeout_s": timeout_s, "token_cap": cap}
 

@@ -234,7 +234,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     if tree["dirty"]:
         tree["unreconciled"] = [u for u in S._unreconciled(project_dir, config, driver, database, done)
                                 if u["path"] not in set(exclude)]
-    lease_body = D.read_lease(project_dir / cfg["lease_file"])
+    lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
     ids = [r["task_id"] for r in running]
     union = D.union_state(project_dir)
     tasks = S._tasks(driver, database)
@@ -390,8 +390,7 @@ def _reap_stale(project_dir, driver, database, domain_config, session_id, cfg,
                   "graph_state_observed": "in_progress", "ok": False, "outcome": outcome,
                   "log_path": log_rel, "mode": "worktree", "worktree": body.get("worktree"),
                   "branch": body.get("branch"),
-                  "lease_path": str(D.worktree_lease_path(project_dir, cfg, r["stem"])
-                                    .relative_to(project_dir)),
+                  "lease_path": D.config_rel(project_dir, D.worktree_lease_path(project_dir, cfg, r["stem"])),
                   "holder": body.get("holder") or body.get("last_holder"),
                   "orphaned_session_terminated": killed}
         S._emit(project_dir, session_id, D.EVENT_FINISHED, finish)
@@ -466,9 +465,9 @@ def _launch_worktree(project_dir, config, driver, database, domain_config, sessi
     """Claim, record, start its supervisor, which launches the CLI into a worktree the CLI names. Returns at once."""
     rel, tid = chosen["source_file"], chosen["task_id"]
     stem = Path(rel).stem
-    log_dir = project_dir / cfg["log_dir"]
+    log_dir = D.config_path(project_dir, cfg["log_dir"])
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_rel = str((log_dir / f"{stem}.log").relative_to(project_dir))
+    log_rel = D.config_rel(project_dir, log_dir / f"{stem}.log")
 
     claimed = S._claim(project_dir, driver, database, domain_config, session_id, chosen)
     if not claimed["ok"]:
@@ -603,7 +602,7 @@ def dispatch_supervise(task_id, extra_json):
 
 @contextmanager
 def _pass_lease(project_dir: Path, cfg: dict):
-    lease = D.acquire_waiting(project_dir / cfg["lease_file"], cfg["merge_lock_timeout_s"])
+    lease = D.acquire_waiting(D.config_path(project_dir, cfg["lease_file"]), cfg["merge_lock_timeout_s"])
     try:
         yield lease
     finally:
@@ -613,7 +612,7 @@ def _pass_lease(project_dir: Path, cfg: dict):
 def _supervise(project_dir, config, driver, database, domain_config, session_id, cfg,
                task_id, extra) -> None:
     stem, rel = extra["stem"], extra["source_file"]
-    log_path = project_dir / cfg["log_dir"] / f"{stem}.log"
+    log_path = D.config_path(project_dir, cfg["log_dir"]) / f"{stem}.log"
     headers = D.parse_headers((project_dir / rel).read_text(encoding="utf-8",
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
@@ -663,7 +662,7 @@ def finish_session(project_dir, config, driver, database, domain_config, session
         finish = {"task_id": task_id, "source_file": extra["source_file"],
                   "child_session_id": extra["child_session_id"], "exit_code": code, "wall_clock_s": wall,
                   "result_present": False, "result_path": f"cc_tasks/{extra['stem']}_RESULT.md",
-                  "graph_state_observed": "in_progress", "log_path": str(log_path.relative_to(project_dir)),
+                  "graph_state_observed": "in_progress", "log_path": D.config_rel(project_dir, log_path),
                   "mode": "worktree", "worktree": extra.get("worktree"), "branch": extra.get("branch"),
                   "base": extra.get("base"), "linked": extra.get("linked") or []}
         try:
@@ -692,7 +691,7 @@ def finish_session(project_dir, config, driver, database, domain_config, session
               "child_session_id": extra["child_session_id"],
               "exit_code": code, "wall_clock_s": wall, "result_present": committed,
               "result_path": result_rel, "graph_state_observed": graph_state,
-              "log_path": str(log_path.relative_to(project_dir)), "mode": "worktree",
+              "log_path": D.config_rel(project_dir, log_path), "mode": "worktree",
               "worktree": extra["worktree"], "branch": branch, "base": extra["base"],
               "linked": extra.get("linked") or [],
               "model_receipt": receipt, "classifier_blocks": classifier["blocks"], "stop_gate": gate}
@@ -823,7 +822,7 @@ def _task_name(driver, database, task_id):
 
 def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str) -> dict:
     """Run `dispatch.gate_command` in the worktree. `{ok, exit_code, log_path, timed_out}`."""
-    log = project_dir / cfg["log_dir"] / f"{stem}.gate.log"
+    log = D.config_path(project_dir, cfg["log_dir"]) / f"{stem}.gate.log"
     env = {**os.environ, WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
     with log.open("a", encoding="utf-8") as fh:
         fh.write(f"=== {S._now()} | gate | {cfg['gate_command']}\n")
@@ -839,7 +838,7 @@ def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str) -> dict:
             code, timed_out = proc.wait(), True
         fh.write(f"\nEXIT={code}\n")
     return {"ok": code == 0 and not timed_out, "exit_code": code, "timed_out": timed_out,
-            "log_path": str(log.relative_to(project_dir))}
+            "log_path": D.config_rel(project_dir, log)}
 
 
 def _spec_modified(driver, database, task_id: str, path: Path) -> bool:

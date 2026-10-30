@@ -221,7 +221,7 @@ def _survey(project_dir, config, driver, database):
     two can never disagree about what the criteria said."""
     cfg = D.load_dispatch_config(project_dir, config)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
-    lease_body = D.read_lease(project_dir / cfg["lease_file"])
+    lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
     if cfg["max_parallel"] > 1:
         # SEL-004: the parallel pass's own survey, plan included, so `status` shows why a
         # task waits beside the running ones exactly as the next pass would decide it.
@@ -464,7 +464,7 @@ def dispatch_status(as_json):
                "stuck_state_file": str(D.stuck_state_path(project_dir, cfg)),
                "stuck_due": _stuck_due(project_dir, cfg, rows, tree, claim),
                "stop_file": str(cfg["stop_file"]),
-               "stop_file_present": (project_dir / cfg["stop_file"]).exists(),
+               "stop_file_present": D.config_path(project_dir, cfg["stop_file"]).exists(),
                "standing_band": band, "standing_band_ref": cfg["standing_band_ref"],
                "permission_mode": cfg["permission_mode"],
                "lease": lease_body or None, "claim_in_flight": claim,
@@ -547,7 +547,7 @@ def dispatch_once(dry_run):
     project_dir, config, driver, database, domain_config, session_id = _open_project()
     try:
         cfg = D.load_dispatch_config(project_dir, config)
-        stop = project_dir / cfg["stop_file"]
+        stop = D.config_path(project_dir, cfg["stop_file"])
 
         # DD-007, BEFORE any claim and before the lease: an inherited API key means a
         # dispatched session would spend against a credential nobody declared. The refusal
@@ -583,7 +583,7 @@ def dispatch_once(dry_run):
             return
 
         try:
-            lease = D.Lease(project_dir / cfg["lease_file"]).__enter__()
+            lease = D.Lease(D.config_path(project_dir, cfg["lease_file"])).__enter__()
         except D.LeaseHeld as held:
             # ONE event per lease ACQUISITION, and never one per pass — the STOP file's
             # treatment three lines above, for the STOP file's reason. A held lease is a
@@ -861,7 +861,7 @@ DATABASE_UNAVAILABLE = (_DatabaseUnavailable, _ServiceUnavailable)
 
 
 def _outage_path(project_dir, cfg) -> Path:
-    return Path(project_dir) / Path(cfg["lease_file"]).parent / D.OUTAGE_STATE_FILE
+    return D.config_path(project_dir, cfg["lease_file"]).parent / D.OUTAGE_STATE_FILE
 
 
 def _database_unavailable(project_dir, session_id, cfg, exc, dry_run) -> None:
@@ -1166,7 +1166,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     if tree["dirty"]:
         # c7 names what the reconciler could not or may not commit, and why (FRICTION-001 Part A step 3).
         tree["unreconciled"] = _unreconciled(project_dir, config, driver, database, done)
-    lease_body = D.read_lease(project_dir / cfg["lease_file"])
+    lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
     holds = _premise_holds(project_dir, driver, database)
     launch_holds = _launch_holds(project_dir)
     union = D.union_state(project_dir)
@@ -1265,10 +1265,10 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     from seldon.commands import dispatch_worktree as W
     rel = chosen["source_file"]
     stem = Path(rel).stem
-    log_dir = project_dir / cfg["log_dir"]
+    log_dir = D.config_path(project_dir, cfg["log_dir"])
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{stem}.log"
-    log_rel = str(log_path.relative_to(project_dir))
+    log_rel = D.config_rel(project_dir, log_path)
     held = nullcontext
 
     # THE CLAIM, and it is the compare-and-set: a transition that fails launches nothing.
@@ -2109,7 +2109,7 @@ def lease_reap(task_stem):
     driver.close()
     cfg = D.load_dispatch_config(project_dir, config)
     path = (D.worktree_lease_path(project_dir, cfg, task_stem) if task_stem
-            else project_dir / cfg["lease_file"])
+            else D.config_path(project_dir, cfg["lease_file"]))
     out = D.reap_lease(path)
     click.echo(json.dumps(out, indent=1))
     if not out["reaped"] and out["reason"] == "holder_alive":
@@ -2122,7 +2122,7 @@ def lease_show():
     project_dir, config, driver, database, _dc, _sid = _open_project()
     driver.close()
     cfg = D.load_dispatch_config(project_dir, config)
-    click.echo(json.dumps(D.read_lease(project_dir / cfg["lease_file"]) or
+    click.echo(json.dumps(D.read_lease(D.config_path(project_dir, cfg["lease_file"])) or
                           {"lease": "free"}, indent=1))
 
 

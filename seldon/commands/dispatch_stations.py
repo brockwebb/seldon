@@ -60,7 +60,7 @@ def _scfg(cfg: dict) -> dict:
 
 
 def _lease_dir(project_dir: Path, cfg: dict) -> Path:
-    return (Path(project_dir) / cfg["lease_file"]).parent
+    return D.config_path(project_dir, cfg["lease_file"]).parent
 
 
 # ----------------------------------------------------------------------------------------- dispatcher side
@@ -151,7 +151,7 @@ def _sibling_lease(repo: Path) -> dict | None:
         return None
     if not D.lease_is_held(repo, cfg):
         return None
-    return D.read_lease(repo / cfg["lease_file"])
+    return D.read_lease(D.config_path(repo, cfg["lease_file"]))
 
 
 def premise_holds(events: list, issue_state) -> dict:
@@ -384,7 +384,7 @@ def inspect_command(task):
     if task:
         task_id = _session_task(project_dir, read_events(project_dir), task)["payload"]["task_id"]
     else:
-        task_id = (D.read_lease(project_dir / cfg["lease_file"]) or {}).get("task")
+        task_id = (D.read_lease(D.config_path(project_dir, cfg["lease_file"])) or {}).get("task")
         if not task_id:
             raise click.ClickException("no task in flight; name one")
     out = inspect_in_flight(project_dir, cfg, task_id, holder=False)

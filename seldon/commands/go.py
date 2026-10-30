@@ -847,12 +847,12 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
         cfg = D.load_dispatch_config(root, config)
 
         lines = ["## Dispatcher", ""]
-        stop = root / cfg["stop_file"]
+        stop = D.config_path(root, cfg["stop_file"])
         lines.append(
             f"**Enabled:** {cfg['enabled']}"
             + ("  **STOP FILE PRESENT**" if stop.exists() else "")
         )
-        lease = D.read_lease(root / cfg["lease_file"])
+        lease = D.read_lease(D.config_path(root, cfg["lease_file"]))
         if lease and lease.get("holder"):
             alive = isinstance(lease.get("pid"), int) and D.pid_alive(lease["pid"])
             lines.append(

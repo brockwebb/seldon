@@ -1043,13 +1043,19 @@ def _lease_defers(project_dir: Path, config: dict) -> bool:
     (`commit_leftovers`). A session the lease launched (`SELDON_SESSION_ID` is its child session) is not "another
     session": committing its own writes is its job."""
     from seldon.core import dispatch as D
+    from seldon.core import worktree as WT
+    # The lease guards the PRIMARY checkout's tree, where a pass commits. A linked worktree's tree is its own
+    # session's (AD-034), so nothing there is "beside" the lease. Explicit since SEL-018 resolves `lease_file` at the
+    # primary: before it, a worktree simply never found the lease file, which was this same answer by accident.
+    if WT.anchor(Path(project_dir)) != Path(project_dir):
+        return False
     try:
         cfg = D.load_dispatch_config(Path(project_dir), config)
     except (D.DispatchConfigError, OSError):
         return False
     if not D.lease_is_held(project_dir, cfg):
         return False
-    body = D.read_lease(Path(project_dir) / cfg["lease_file"]) or {}
+    body = D.read_lease(D.config_path(project_dir, cfg["lease_file"])) or {}
     sid = os.environ.get("SELDON_SESSION_ID")
     if not sid or not body.get("task"):
         return True

@@ -1010,7 +1010,7 @@ def dispatch_state(project_dir: Path, config: dict | None = None, loaded=None) -
         return {"on": False, "why": f"the dispatch block does not load: {exc}"}
     if not cfg["enabled"]:
         return {"on": False, "why": "dispatch.enabled is false"}
-    if (project_dir / cfg["stop_file"]).exists():
+    if config_path(project_dir, cfg["stop_file"]).exists():
         return {"on": False, "why": f"STOP file {cfg['stop_file']} present"}
     label = cfg.get("launchd_label")
     loaded = loaded or launchd_loaded
@@ -1018,6 +1018,25 @@ def dispatch_state(project_dir: Path, config: dict | None = None, loaded=None) -
         return {"on": False, "why": f"launchd job {label} is not loaded"}
     return {"on": True, "why": (f"enabled, launchd job {label} loaded" if label
                                  else "enabled (no launchd_label declared to confirm a job)")}
+
+
+def config_path(project_dir: Path, value) -> Path:
+    """A path read from the `dispatch:` block, as the file it names (SEL-018, AD-034).
+
+    A relative value is joined to the PRIMARY checkout (`worktree.anchor`), never to `project_dir` as given: the
+    operator wrote `standing_band_ref`, `stop_file`, `lease_file`, `lease_dir`, `log_dir` and `cross_repo_root` for the
+    checkout they work in, and from a linked worktree each names a sibling or gitignored file that exists only there
+    (hazbrief HB-73: `../squiddy/...` joined to a worktree). One STOP file, one lease and one log directory per
+    project is AD-034-R8's rule for a file that must be one file across worktrees. An absolute value is left alone.
+    """
+    p = Path(value)
+    return p if p.is_absolute() else WT.anchor(Path(project_dir)) / p
+
+
+def config_rel(project_dir: Path, path: Path) -> str:
+    """`path` (a `config_path` result) as recorded in an event or printed: relative to the primary checkout, which is
+    what a reader joins it back to (`part-complete` reads `<primary>/<log_path>`, AD-038-R4)."""
+    return str(Path(path).relative_to(WT.anchor(Path(project_dir))))
 
 
 def resolve_standing_band(project_dir: Path, ref: str) -> int:
@@ -1031,9 +1050,11 @@ def resolve_standing_band(project_dir: Path, ref: str) -> int:
         raise DispatchConfigError(
             f"standing_band_ref {ref!r} is not a reference: expected `<file>#<dotted.path>`")
     rel, dotted = ref.split("#", 1)
-    path = project_dir / rel
+    path = config_path(project_dir, rel)
     if not path.is_file():
-        raise DispatchConfigError(f"standing_band_ref {ref!r} names {rel}, which does not exist")
+        raise DispatchConfigError(
+            f"standing_band_ref {ref!r} names {rel}, which does not exist (looked for {path}, resolved against "
+            f"the primary checkout {WT.anchor(Path(project_dir))})")
     node: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
     for part in dotted.split("."):
         if not isinstance(node, dict) or part not in node:
@@ -1557,7 +1578,7 @@ def repo_push_targets(value: str | None, project_dir: Path, root: Path) -> list:
 def cross_repo_launch(project_dir: Path, cfg: dict, task_text: str) -> list:
     """At launch: each repository the task's Repo line says to push, with its HEAD now, for the finish to compare.
     `[{"repo": <path>, "head_at_launch": <sha or None>}]`; empty for a task that names no other repository."""
-    root = (Path(project_dir) / cfg["cross_repo_root"]).resolve()
+    root = config_path(project_dir, cfg["cross_repo_root"]).resolve()
     return [{"repo": str(path), "head_at_launch": WT.rev(path, "HEAD")}
             for path in repo_push_targets(_header_value(task_text, HEADER_REPO), project_dir, root)]
 
@@ -1604,7 +1625,7 @@ def lease_is_held(project_dir: Path, cfg: dict) -> bool:
     Read from the lease's RECORD plus PID liveness, never from age: the DD-022 orphan rule,
     which `reap_lease` already follows. A stale body naming a dead PID is not a held lease.
     """
-    body = read_lease(Path(project_dir) / cfg["lease_file"])
+    body = read_lease(config_path(project_dir, cfg["lease_file"]))
     if not body or body.get("holder") is None:
         return False
     pid = body.get("pid")
@@ -1667,7 +1688,7 @@ def stuck_state_path(project_dir: Path, cfg: dict) -> Path:
     override = os.environ.get(STUCK_STATE_ENV)
     if override:
         return Path(override).expanduser()
-    return Path(project_dir) / Path(cfg["lease_file"]).parent / STUCK_STATE_FILE
+    return config_path(project_dir, cfg["lease_file"]).parent / STUCK_STATE_FILE
 
 
 def read_stuck_state(project_dir: Path, cfg: dict) -> dict:
@@ -1699,7 +1720,7 @@ def last_pass_path(project_dir: Path, cfg: dict) -> Path:
     override = os.environ.get(LAST_PASS_ENV)
     if override:
         return Path(override).expanduser()
-    return Path(project_dir) / Path(cfg["lease_file"]).parent / LAST_PASS_FILE
+    return config_path(project_dir, cfg["lease_file"]).parent / LAST_PASS_FILE
 
 
 def write_last_pass(project_dir: Path, cfg: dict, body: dict) -> None:
@@ -1891,7 +1912,7 @@ def acquire_waiting(path: Path, timeout_s: float, poll_s: float = 0.5,
 
 def worktree_lease_path(project_dir: Path, cfg: dict, stem: str) -> Path:
     """`<lease_dir>/<stem>.lock`: one lease per worktree (SEL-004 decision 2)."""
-    return Path(project_dir) / cfg.get("lease_dir", ".seldon/leases") / f"{stem}.lock"
+    return config_path(project_dir, cfg.get("lease_dir", ".seldon/leases")) / f"{stem}.lock"
 
 
 def flock_held(path: Path) -> bool:
@@ -1928,11 +1949,11 @@ def worktree_holder_alive(path: Path, body: dict) -> bool:
 
 def worktree_leases(project_dir: Path, cfg: dict) -> list:
     """Every per-worktree lease body on disk, with its path, for `status`, `go` and reap."""
-    d = Path(project_dir) / cfg.get("lease_dir", ".seldon/leases")
+    d = config_path(project_dir, cfg.get("lease_dir", ".seldon/leases"))
     out = []
     for path in sorted(d.glob("*.lock")) if d.is_dir() else []:
         body = read_lease(path)
-        out.append({"path": str(path.relative_to(project_dir)), "stem": path.stem,
+        out.append({"path": str(path.relative_to(WT.anchor(Path(project_dir)))), "stem": path.stem,
                     "body": body, "held": body.get("holder") is not None,
                     "alive": worktree_holder_alive(path, body)})
     return out
@@ -2292,7 +2313,7 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
     headers = cand["headers"]
     sup = superseding_addendum(task_file)
     tokens = cand["tokens"]
-    stop = project_dir / cfg["stop_file"]
+    stop = config_path(project_dir, cfg["stop_file"])
 
     c = {}
     c["c1"] = {"state": task["state"], "source_file": source,
