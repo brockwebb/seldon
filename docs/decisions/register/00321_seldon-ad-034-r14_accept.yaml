@@ -1,3 +1,4 @@
+seq: 321
 event: accept
 id: seldon:AD-034-R14
 date: '2026-10-29'
@@ -28,3 +29,5 @@ consumer:
 - seldon/commands/dispatch_worktree.py
 written_by: seldon decision 0.1.0
 provisional_id: 49c503e4b43b639063021142dbb0f3fb6551706082dd2738eae5e95c6877f009
+prev_hash: 34633f197df6cd91b416161b034fddedef760d5c5063bac7aeee92afe8b7188f
+record_hash: 47054ecaf0e66162abb5ef656b7a34e20db40366df9b0aecadcfe8a8aec47127

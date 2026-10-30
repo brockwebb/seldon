@@ -1,3 +1,4 @@
+seq: 322
 event: accept
 id: seldon:AD-034-R15
 date: '2026-10-29'
@@ -28,3 +29,5 @@ consumer:
 - seldon/commands/dispatch_stations.py
 written_by: seldon decision 0.1.0
 provisional_id: ad1b764ace5a60c8fdfd66a8bfc9024c32bd4304af0aacfb6aaf30c6541c62ec
+prev_hash: 47054ecaf0e66162abb5ef656b7a34e20db40366df9b0aecadcfe8a8aec47127
+record_hash: 45ee77f393e8b2fcc4e62de62fe0a8642536c9253ba4b1d0bcaa4f7b0145075b
