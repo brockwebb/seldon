@@ -76,6 +76,11 @@ the bytes of instruction context the session receives (`seldon.core.instruction_
 machine's standards file and the test graph, so it is masked whole as `<READING>`. Re-recorded on the PRUNE-002
 code; the re-recording equals the pre-change fixture once exactly the two `"instruction_context": <READING>` keys
 are removed (string strip, `True`). Every other line is unchanged.
+
+**Erratum, SEL-017 (AD-034-R13, R14, 2026-10-29).** Each `dispatch_worktree_named` records `hooks_path`, the reading
+of pointing the worktree's own `core.hooksPath` at `.githooks` (two records), and the merged finish's `merge`
+records `linked_by_session` (one, empty). Re-recorded on the SEL-017 code; the re-recording equals the pre-change
+fixture once exactly those three keys are removed (regex strip, `True`). Every other line is unchanged.
 """
 from __future__ import annotations
 
