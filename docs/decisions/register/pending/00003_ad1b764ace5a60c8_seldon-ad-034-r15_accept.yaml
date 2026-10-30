@@ -1,0 +1,30 @@
+event: accept
+id: seldon:AD-034-R15
+date: '2026-10-29'
+decided_by: cc:dff55b9d
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md:88: AD-034-R15'
+reason: 'SEL-017 Part C; evidence: part-complete refused hazbrief tasks registered before AD-037-R6''s Parts gate; earned value 100% rule (PMI WBS practice standard)'
+kind: decision
+status: accepted
+statement: '`seldon dispatch part-complete` and the stations shall read a task with no `**Parts:**` header as one Part, `A 1.00`, with `parts_defaulted` on the `part_complete` and `milestone` records; a header that is present and does not parse shall keep its error; registration shall still refuse a new file without the header.'
+source:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  lines:
+  - 88
+  - 88
+  sha256: c93904de8adc47841a69308374832dfe40f0d699ac04537b05e3360abaa03cfd
+  text: '- **AD-034-R15. `seldon dispatch part-complete` and the stations shall read a task with no `**Parts:**` header as one Part, `A 1.00`, and mark `parts_defaulted` on the `part_complete` and `milestone` records. A header that is present and does not parse shall keep its error. Registration shall still refuse a new file without the header (SEL-011).**'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  anchor: AD-034-R15
+consumer:
+- cc_tasks/2026-10-29_SEL-017_a_linked_gitignored_directory_is_clean_the_worktree_hook_resolves_and_parts_defaults_to_one.md
+- tests/test_sel017_links_hook_parts.py
+- seldon/core/stations.py
+- seldon/commands/dispatch_stations.py
+written_by: seldon decision 0.1.0
+provisional_id: ad1b764ace5a60c8fdfd66a8bfc9024c32bd4304af0aacfb6aaf30c6541c62ec

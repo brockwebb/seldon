@@ -1,0 +1,30 @@
+event: accept
+id: seldon:AD-034-R13
+date: '2026-10-29'
+decided_by: cc:dff55b9d
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md:86: AD-034-R13'
+reason: 'SEL-017 Part A; evidence: hazbrief HB-64 (0448b253) and HB-72 (10aef6ce) merge_blocked uncommitted_changes on four session symlinks at trailing-slash-ignored paths; gitignore(5) dir patterns match only directories'
+kind: decision
+status: accepted
+statement: The merge round's dirt check and every caller of `dirty_paths` shall count clean an untracked symlink whose own path is ignored once its trailing slash is disregarded, or whose target is inside the primary checkout at a path the primary ignores, and a session-made directory holding nothing but such links; a merged finish shall record them as `merge.linked_by_session`; a symlink at a tracked path is a type change and shall still block.
+source:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  lines:
+  - 86
+  - 86
+  sha256: c93904de8adc47841a69308374832dfe40f0d699ac04537b05e3360abaa03cfd
+  text: '- **AD-034-R13. The merge round''s dirt check, and every other caller of `dirty_paths`, shall count as clean an untracked symlink whose own path is ignored when its trailing slash is disregarded, or whose target is inside the primary checkout at a path the primary ignores. A directory the session made counts as clean only when it holds nothing but such links. A merged finish shall record these links as `merge.linked_by_session`. A symlink at a tracked path is a type change and still blocks.**'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  anchor: AD-034-R13
+consumer:
+- cc_tasks/2026-10-29_SEL-017_a_linked_gitignored_directory_is_clean_the_worktree_hook_resolves_and_parts_defaults_to_one.md
+- tests/test_sel017_links_hook_parts.py
+- seldon/core/worktree.py
+- seldon/commands/dispatch_worktree.py
+written_by: seldon decision 0.1.0
+provisional_id: c2759db0f72ff6fb56924f7ad8d7841c8f718ad80cefe59694ebcfc37777b195

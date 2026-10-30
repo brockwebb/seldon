@@ -243,7 +243,8 @@ def part_complete_command(part, task):
     lp = launch["payload"]
     task_id = lp["task_id"]
     text = (project_dir / lp["source_file"]).read_text(encoding="utf-8", errors="surrogateescape")
-    parts = S.parse_parts(text)
+    # SEL-017 Part C (AD-034-R15): a task with no header is one Part, `A 1.00`, and the record says so.
+    parts = S.task_parts(text)
     shares = {p["name"]: p["share"] for p in parts["parts"]}
     if part not in shares:
         raise click.ClickException(f"Part {part!r} is not in the task's **Parts:** header "
@@ -254,10 +255,12 @@ def part_complete_command(part, task):
     _emit(project_dir, S.EVENT_PART_COMPLETE,
           {"task_id": task_id, "part": part, "planned_share": shares[part], "tokens": used.get("tokens"),
            "cache_read": used.get("cache_read"), "token_source": lp.get("log_path"), "wall_clock_s": wall,
-           "cwd": str(here["cwd"]), "branch": here["branch"]},
+           "cwd": str(here["cwd"]), "branch": here["branch"],
+           **({"parts_defaulted": True} if parts["defaulted"] else {})},
           actor=resolve_cli_actor())
     click.echo(f"part_complete {task_id[:8]} Part {part}: planned share {shares[part]}, tokens so far "
-               f"{used.get('tokens')}, wall {wall}s; checks run in {here['cwd']} ({here['branch']})")
+               f"{used.get('tokens')}, wall {wall}s; checks run in {here['cwd']} ({here['branch']})"
+               + ("; no **Parts:** header, read as A 1.00 (parts_defaulted)" if parts["defaulted"] else ""))
     _halt_if_stopped(project_dir, read_events(project_dir), task_id, launch["timestamp"], f"Part {part}")
 
 

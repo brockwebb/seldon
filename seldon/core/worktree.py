@@ -132,11 +132,106 @@ def link(primary: Path, worktree: Path, rels: list) -> list:
     return done
 
 
+def _porcelain(repo: Path, *flags: str) -> list:
+    """`git status --porcelain -z` as `[(XY, path)]`. `-z`, so a path is never quoted; a rename's or copy's second
+    record (its source) is consumed, not listed."""
+    recs = git(repo, "status", "--porcelain", "-z", *flags).stdout.split("\0")
+    out, i = [], 0
+    while i < len(recs):
+        rec = recs[i]
+        i += 1
+        if len(rec) < 4:
+            continue
+        out.append((rec[:2], rec[3:]))
+        if rec[0] in "RC":
+            i += 1
+    return out
+
+
+def _ignored_as_directory(repo: Path, rel: str) -> bool:
+    """Would `rel` be ignored were it a directory? git cannot be asked directly: `git check-ignore rel/` refuses a
+    symlink ("beyond a symbolic link"), and without the slash a symlink is a file, which a `dir/` pattern never
+    matches (gitignore(5): "If there is a separator at the end of the pattern then the pattern will only match
+    directories"). So git answers it about a scratch work tree holding `rel` as an empty directory and the only
+    `.gitignore` files that can bear on it, `rel`'s ancestors', with the repository's own git directory supplying
+    `info/exclude` and `core.excludesFile`. `--no-index`: the scratch tree has no index of its own to agree with."""
+    import shutil
+    import tempfile
+    repo = Path(repo)
+    gitdir = git(repo, "rev-parse", "--path-format=absolute", "--git-dir").stdout.strip()
+    scratch = Path(tempfile.mkdtemp(prefix="seldon-ignore-"))
+    try:
+        (scratch / rel).mkdir(parents=True)
+        parts = Path(rel).parts
+        for depth in range(len(parts)):
+            src = repo.joinpath(*parts[:depth], ".gitignore")
+            if src.is_file() and not src.is_symlink():
+                shutil.copyfile(src, scratch.joinpath(*parts[:depth], ".gitignore"))
+        r = subprocess.run(["git", f"--git-dir={gitdir}", f"--work-tree={scratch}", "check-ignore", "-q",
+                            "--no-index", "--", rel.rstrip("/") + "/"],
+                           cwd=scratch, capture_output=True, text=True,
+                           env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
+        return r.returncode == 0
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def _clean_link(repo: Path, rel: str, primary: Path | None) -> bool:
+    """SEL-017 Part A (AD-034-R13): an untracked symlink git would not report had it been the directory it points
+    to. Clean when its own path is ignored once the trailing slash of a `dir/` pattern is disregarded, or when its
+    target is inside the primary checkout at a path the primary ignores."""
+    path = Path(repo) / rel
+    if not path.is_symlink():
+        return False
+    if _ignored_as_directory(repo, rel):
+        return True
+    if primary is None:
+        return False
+    target = Path(os.path.realpath(path))
+    try:
+        trel = target.relative_to(Path(primary).resolve())
+    except ValueError:
+        return False
+    return bool(trel.parts) and is_ignored(primary, trel.as_posix())
+
+
+def session_links(repo: Path, exclude=()) -> list:
+    """The untracked paths of `repo` that are a session's own links to gitignored data, which `dirty_paths` counts
+    clean: each is a symlink `_clean_link` accepts. A collapsed untracked directory (`corpus/`, made by the session
+    to hold its link) is listed by the link paths inside it, and only when every untracked path inside it is such a
+    link. `exclude` (the dispatcher's configured `worktree_links`) is left out: those are recorded as `linked`."""
+    return _untracked_split(repo, exclude)[0]
+
+
+def _untracked_split(repo: Path, exclude=()) -> tuple:
+    """`(links, clean_entries)`: the session links under `repo`'s untracked entries, and the default-porcelain
+    untracked entries that consist of nothing else."""
+    entries = [p for xy, p in _porcelain(repo) if xy == "??" and p not in set(exclude)]
+    if not entries:
+        return [], set()
+    try:
+        primary = primary_checkout(repo)
+    except WorktreeError:
+        primary = None
+    every = [p for xy, p in _porcelain(repo, "--untracked-files=all") if xy == "??"]
+    verdict = {p: _clean_link(repo, p.rstrip("/"), primary) for p in every
+               if p not in set(exclude) and (Path(repo) / p.rstrip("/")).is_symlink()}
+    links, clean = [], set()
+    for entry in entries:
+        inside = [p for p in every if p == entry or (entry.endswith("/") and p.startswith(entry))]
+        if inside and all(verdict.get(p) for p in inside):
+            clean.add(entry)
+            links.extend(p.rstrip("/") for p in inside)
+    return sorted(set(links)), clean
+
+
 def dirty_paths(repo: Path, exclude=()) -> list:
-    """`git status --porcelain` paths, minus `exclude`. Not stripped: see `tree_state`."""
-    out = git(repo, "status", "--porcelain").stdout
-    paths = [ln[3:] for ln in out.split("\n") if ln.strip()]
-    return [p for p in paths if p not in set(exclude)]
+    """`git status --porcelain` paths, minus `exclude` and minus a session's own links to gitignored data
+    (`session_links`, SEL-017 Part A): a symlink at a path a `dir/` pattern ignores is clean exactly as the
+    directory would be. A symlink at a tracked path is a type change, never untracked, so it still counts. Not
+    stripped: see `tree_state`."""
+    _, clean = _untracked_split(repo, exclude)
+    return [p for _, p in _porcelain(repo) if p not in set(exclude) and p not in clean]
 
 
 def ignored_paths(repo: Path, exclude=()) -> list:

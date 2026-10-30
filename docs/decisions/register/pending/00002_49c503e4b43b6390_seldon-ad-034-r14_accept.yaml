@@ -1,0 +1,30 @@
+event: accept
+id: seldon:AD-034-R14
+date: '2026-10-29'
+decided_by: cc:dff55b9d
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md:87: AD-034-R14'
+reason: 'SEL-017 Part B; evidence: this worktree read core.hooksPath local /Users/brock/GitHub/seldon/.githooks (absolute, shared) on 2026-10-29 after SEL-012 set it relative on 2026-10-28; git-worktree(1) per-worktree config'
+kind: decision
+status: accepted
+statement: When the dispatcher names a worktree whose checkout carries `.githooks/pre-commit`, it shall turn on `extensions.worktreeConfig` and set that worktree's own `core.hooksPath` to the relative `.githooks`, never the primary's value, and record the reading on `dispatch_worktree_named.hooks_path`; it shall refuse, recorded, when the shared config sets `core.worktree` or `core.bare = true`.
+source:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  lines:
+  - 87
+  - 87
+  sha256: c93904de8adc47841a69308374832dfe40f0d699ac04537b05e3360abaa03cfd
+  text: '- **AD-034-R14. When the dispatcher names a worktree whose checkout carries `.githooks/pre-commit`, it shall turn on `extensions.worktreeConfig` and set that worktree''s own `core.hooksPath` to the relative `.githooks` (`git config --worktree`). It shall never write the primary''s value, and it shall record the reading on `dispatch_worktree_named.hooks_path`. The dispatcher shall refuse, and record the refusal, when the shared config sets `core.worktree` or `core.bare = true`.**'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md
+  anchor: AD-034-R14
+consumer:
+- cc_tasks/2026-10-29_SEL-017_a_linked_gitignored_directory_is_clean_the_worktree_hook_resolves_and_parts_defaults_to_one.md
+- tests/test_sel017_links_hook_parts.py
+- seldon/core/hooks.py
+- seldon/commands/dispatch_worktree.py
+written_by: seldon decision 0.1.0
+provisional_id: 49c503e4b43b639063021142dbb0f3fb6551706082dd2738eae5e95c6877f009

@@ -183,6 +183,10 @@ def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links:
         extra.update({"worktree": rel, "branch": branch, "base": WT.rev(wt, "HEAD") or extra.get("base"),
                       "linked": WT.link(project_dir, wt, links)})
         record.update({k: extra[k] for k in ("worktree", "branch", "base", "linked")})
+        # SEL-017 Part B (AD-034-R14): the worktree's own config points at its own `.githooks`, so HOOK-001's gate
+        # resolves there whatever the shared config's value is. A failure is recorded, never a launch refusal.
+        from seldon.core import hooks as H
+        record["hooks_path"] = H.point_worktree(wt)
     if emit:
         S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, record)
     else:
@@ -959,7 +963,10 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                                            "stderr": (ff.stderr or ff.stdout).strip()[-500:]})
                 continue
             merge = {"commit": tip, "attempts": attempt, "regated": regated, "gate": gate, "writes": writes,
-                     "undeclared_writes": _undeclared(project_dir, cfg, rel, writes)}
+                     "undeclared_writes": _undeclared(project_dir, cfg, rel, writes),
+                     # SEL-017 Part A (AD-034-R13): the links the session made itself, which the dirt check counted
+                     # clean as it counts the configured `linked`.
+                     "linked_by_session": WT.session_links(wt, exclude=linked)}
             numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch)
             if numbered:
                 merge["register_numbered"] = numbered
@@ -1542,7 +1549,7 @@ def task_checks(text: str) -> list:
     """Every `check:` command of every Part the task declares, in order: what its Stop gate runs once all its Parts
     are complete, which a regate requires (a kept task's RESULT says the work is done)."""
     from seldon.core import stations as Q
-    return [(part["name"], cmd) for part in Q.parse_parts(text)["parts"]
+    return [(part["name"], cmd) for part in Q.task_parts(text)["parts"]
             for cmd in Q.part_criteria(text, part["name"])["checks"]]
 
 

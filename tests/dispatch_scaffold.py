@@ -182,6 +182,10 @@ for rel, text in (spec.get("write") or {{}}).items():
     (cwd / rel).parent.mkdir(parents=True, exist_ok=True)
     with open(cwd / rel, "a") as fh:
         fh.write(text)
+for rel, target in (spec.get("symlink") or {{}}).items():
+    # SEL-017 Part A: a session links gitignored data from the primary checkout itself, as hazbrief's did.
+    (cwd / rel).parent.mkdir(parents=True, exist_ok=True)
+    (cwd / rel).symlink_to(Path(os.environ["SELDON_PRIMARY_CHECKOUT"]) / target)
 for rel, (old, new) in (spec.get("replace") or {{}}).items():
     path = cwd / rel
     path.write_text(path.read_text().replace(old, new))

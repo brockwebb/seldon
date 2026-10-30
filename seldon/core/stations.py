@@ -270,6 +270,25 @@ def parse_parts(text: str) -> dict:
     return {"declared": True, "parts": parts, "error": None}
 
 
+#: SEL-017 Part C (AD-034-R15): the one Part a task with no `**Parts:**` header is read as, by `part-complete` and
+#: the stations. The same default `returns.py` writes into a return's task file.
+DEFAULT_PARTS = ({"name": "A", "share": 1.0},)
+
+
+def task_parts(text: str) -> dict:
+    """`parse_parts` for the session side and the stations: a task with no header is one Part, `A 1.00`, with
+    `defaulted` True, so `part-complete` can run and CPI is computed over that one Part.
+
+    Only absence defaults. A header that is present and does not parse keeps its error: a wrong header is the
+    author's to fix, not one to guess at. Registration does not call this; it still refuses a new file without the
+    header (`parts_registration_refusal`, SEL-011), so the default reaches only tasks registered before that gate,
+    whose base file is immutable."""
+    parsed = parse_parts(text)
+    if parsed["declared"]:
+        return {**parsed, "defaulted": False}
+    return {"declared": False, "parts": [dict(p) for p in DEFAULT_PARTS], "error": None, "defaulted": True}
+
+
 def part_section(text: str, name: str) -> str | None:
     """The text of `## Part <name>: ...` up to the next heading of the same or a higher level."""
     for m in _PART_HEADING_RE.finditer(text):
@@ -924,7 +943,7 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
     task_file = Path(project_dir) / lp["source_file"]
     text = task_file.read_text(encoding="utf-8", errors="surrogateescape") if task_file.is_file() else ""
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
-    parts = parse_parts(text)
+    parts = task_parts(text)
     answered = {(e.get("payload") or {}).get("answers") for e in records}
     reserve = int((estimate or 0) * scfg["inspection_reserve_share"])
     judge = judge or (lambda: (_ for _ in ()).throw(RuntimeError("no checker wired")))
@@ -973,6 +992,8 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
                      "inspection": {"check_seconds": round(sum(r["seconds"] for r in results), 3),
                                     "model_tokens": plan["model_calls"], "reserve_tokens": reserve,
                                     "share_of_estimate": 0.0 if estimate else None}}
+        if parts["defaulted"]:
+            milestone["parts_defaulted"] = True
         emit(EVENT_MILESTONE, milestone)
         out["milestones"].append(milestone)
         for r in unrunnable:

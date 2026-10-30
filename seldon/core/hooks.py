@@ -369,6 +369,45 @@ def status(repo: Path) -> dict:
             "sequenced": prepare_commit_msg_file(repo).is_file()}
 
 
+def point_worktree(worktree: Path) -> dict:
+    """SEL-017 Part B (AD-034-R14): set a linked worktree's OWN `core.hooksPath` to the relative `.githooks`.
+    `{ok, changed, error}`; never raises.
+
+    A linked worktree reads the repository's shared config, so it inherits whatever the primary checkout's
+    `core.hooksPath` is at that moment; an absolute value (seen in seldon's and squiddy's, SEL-012's RESULT; written
+    by something outside seldon) resolves to the PRIMARY's `.githooks` and HOOK-001's relative path never resolves
+    in the worktree, so `seldon verify` there prints "not installed". git's per-worktree config is the mechanism for
+    exactly this (git-worktree(1), CONFIGURATION FILE; git-config(1) `--worktree`): with
+    `extensions.worktreeConfig` on, `config.worktree` is read after the shared config and wins, so the worktree
+    resolves `.githooks` against its own top whatever the shared value becomes. The primary's own value is not
+    touched.
+
+    Skipped (ok, unchanged) when the worktree carries no `.githooks/pre-commit`: pointing git at a directory with no
+    hook would only switch off whatever `.git/hooks` runs. Refused when the shared config sets `core.worktree` or
+    `core.bare = true`, which git-worktree(1) says must move to the main worktree's `config.worktree` before the
+    extension is turned on; that move is not this function's to make."""
+    try:
+        wt = toplevel(Path(worktree))
+        if not hook_file(wt).is_file():
+            return {"ok": True, "changed": False, "error": None}
+        have = _git(wt, "config", "--worktree", "--get", "core.hooksPath", check=False)
+        if _git(wt, "config", "--get", "extensions.worktreeConfig", check=False).stdout.strip() == "true" \
+                and have.stdout.strip() == HOOKS_DIR:
+            return {"ok": True, "changed": False, "error": None}
+        shared_wt = _git(wt, "config", "--local", "--get", "core.worktree", check=False).stdout.strip()
+        shared_bare = _git(wt, "config", "--local", "--bool", "--get", "core.bare", check=False).stdout.strip()
+        if shared_wt or shared_bare == "true":
+            return {"ok": False, "changed": False,
+                    "error": "the shared config sets core.worktree or core.bare = true; git-worktree(1) requires "
+                             "moving it to the main worktree's config.worktree before extensions.worktreeConfig"}
+        _git(wt, "config", "--local", "extensions.worktreeConfig", "true")
+        _git(wt, "config", "--worktree", "core.hooksPath", HOOKS_DIR)
+        st = status(wt)
+        return {"ok": st["installed"], "changed": True, "error": "; ".join(st["problems"]) or None}
+    except HookError as exc:
+        return {"ok": False, "changed": False, "error": str(exc)}
+
+
 def ensure_installed(repo: Path) -> dict:
     """The dispatcher's launch-path call: install when the tracked hook is present but git is
     not pointed at it. {ok, changed, error}. Never writes `.githooks/pre-commit`: a checkout
