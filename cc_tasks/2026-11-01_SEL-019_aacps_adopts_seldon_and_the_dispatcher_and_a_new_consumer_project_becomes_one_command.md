@@ -10,6 +10,7 @@
 **Network:** none beyond git push.
 **Framework layer served (DN-005 §5 rule 1):** none (machine infrastructure).
 **Exclusive:** no
+**Touches:** seldon/commands/, seldon/core/, tests/, docs/design/, CLAUDE.md
 **Parts:** A 0.85, B 0.15.
 **Premises:**
 - premise: the adopt command exists | check: grep -q "\"adopt\"" seldon/commands/dispatch.py
