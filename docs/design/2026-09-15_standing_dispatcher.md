@@ -101,6 +101,16 @@ records assertions, and "nothing to do" is not one; a five-minute poll that logg
 silence would bury every assertion in it. `status` writes nothing at all: looking is not an
 assertion.
 
+**Standing refusals ring once (SEL-022, 2026-11-01).** A refusal that lasts until someone acts is a standing
+condition: it writes at most one line when it begins and raises `dispatch_stuck` plus one `notify` run when its
+streak reaches `stuck_after_passes_by_criterion` (else `stuck_after_passes`), and re-arms only when it clears. The
+standing refusals are every per-task criterion in the stuck streak (`dirty_tree` and `api_key_present` alarm on
+their first pass), `database_unavailable` (once per outage, `dispatch_outage.json`), `api_key_present` (once per
+outage, `dispatch_api_key.json`, the variable's name and never its value, its lines committed where they are written
+by `commit_journal_append` so the outage leaves the tree clean), `lease_held` with a dead holder PID (once per
+acquisition, naming `seldon dispatch lease reap`), and the STOP file (once per appearance). `lease_held` with a live
+holder is a healthy long run: one `dispatch_refused` per acquisition and no alarm.
+
 ## The lease
 
 `fcntl.flock` on `<project>/.seldon/dispatch.lock`, holder `dispatcher:<host>:<pid>`. A second

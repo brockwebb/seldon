@@ -617,7 +617,14 @@ STUCK_AFTER_PASSES_DEFAULT = 3
 #: whole queue, not one task, and the three recorded stalls (2026-09-22, 3 hours; 2026-10-12, 36
 #: hours; 2026-10-14, 14 hours) were each a Desktop write nobody committed, found by reading the log.
 #: Fifteen minutes of grace bought nothing there: the condition never clears by itself.
-STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1}
+#: SEL-022: `api_key_present` alarms on its first pass for the same reason. It refuses every pass before the lease,
+#: and a key in `.env` never leaves by itself (hazbrief-mcp, 2026-10-31 07:42 to 2026-11-01 00:57, 17 hours, no alert).
+STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1, "api_key_present": 1}
+#: SEL-022: the per-criterion defaults that apply even under a project map that does not name them. `dispatch adopt`
+#: copied the kit's `{dirty_tree: 1}` map into every consumer (hazbrief-mcp, factory, aacps-ai-policy) before this key
+#: existed, so without this the consumer that motivated it would alarm after three passes, not one. Only the new key:
+#: a map that leaves out `dirty_tree` (an empty map, as several tests write) keeps the meaning it had.
+STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED = {"api_key_present": 1}
 #: The last pass's refusals, for `seldon go` (DESK-001 Part B step 5). Beside the streak file,
 #: under the gitignored lease directory: what the last pass saw is local state, not a record.
 LAST_PASS_FILE = "dispatch_last_pass.json"
@@ -677,6 +684,17 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
 OUTAGE_STATE_FILE = "dispatch_outage.json"
+#: SEL-022, the same file for DD-007: `{first_seen, passes, variable}` while an API-key variable is set, removed by the
+#: first pass without one. The variable's NAME only; its value is never read into any file, event or notification.
+API_KEY_STATE_FILE = "dispatch_api_key.json"
+#: SEL-022: the stuck-streak key of a refusal that belongs to the dispatcher and not to a task (a pre-lease refusal has
+#: chosen no task). Task streaks are keyed by artifact id, which never begins with this prefix.
+STANDING_KEY_PREFIX = "dispatcher:"
+
+
+def standing_key(reason: str) -> str:
+    """The stuck-streak key of a dispatcher-level standing refusal (SEL-022)."""
+    return f"{STANDING_KEY_PREFIX}{reason}"
 
 #: Points the stuck-streak file somewhere other than `<lease dir>/dispatch_stuck.json`. Unset in
 #: production. A test that runs a REAL pass sets it to its own copy, so passes in two tests (or a
@@ -772,7 +790,7 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.stuck_after_passes_by_criterion must map refusal reasons to positive whole "
             f"numbers of passes, got {by!r}")
-    block["stuck_after_passes_by_criterion"] = dict(by)
+    block["stuck_after_passes_by_criterion"] = {**STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED, **by}
     # SQ-010 ADDENDUM 02 D3.4. Optional with a default, so installing this build changes no config file.
     factor = block.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
     if isinstance(factor, bool) or not isinstance(factor, (int, float)) or factor < 1:

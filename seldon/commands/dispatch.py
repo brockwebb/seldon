@@ -376,9 +376,11 @@ def _record_own_lines(project_dir, config, cfg) -> dict:
 
     **Callers hold the lease.** A held lease is how a pass knows no dispatched session is
     working in the checkout; a `git commit` beside a working session is DD-019's class and an
-    `index.lock` collision besides. The three lines written WITHOUT the lease (`lease_held`,
-    `dispatch_observed_stop`, `api_key_present`) are therefore never committed where they are
-    written, and the next pass that holds the lease commits them first (`_pass`).
+    `index.lock` collision besides. The lines written WITHOUT the lease (`lease_held`,
+    `dispatch_observed_stop`, a dead holder's `dispatch_stuck`) are therefore never committed where they are
+    written, and the next pass that holds the lease commits them first (`_pass`). `api_key_present`'s once-per-outage
+    lines (SEL-022) are committed where they are written by `commit_journal_append`, which probes the lease and
+    defers to a live holder: an outage has no pass under the lease, so they would otherwise stay dirty for its length.
 
     **The actor allowlist is gone** (AD-038-R1, FRICTION-001 Part A). It admitted `dispatcher`
     and `desktop` lines and refused `cc`, `governed_sync` and every other writer, which turned the
@@ -552,12 +554,15 @@ def dispatch_once(dry_run):
         # DD-007, BEFORE any claim and before the lease: an inherited API key means a
         # dispatched session would spend against a credential nobody declared. The refusal
         # carries no task id because no task was chosen.
+        #
+        # SEL-022: a STANDING condition, so it is written once per outage and rings the stuck alarm once
+        # (`_api_key_present`); it used to append a refusal on every pass and reach no alarm at all.
         key = D.api_key_present()
         if key:
-            _emit(project_dir, session_id, D.EVENT_REFUSED,
-                  {"task_id": None, "reason": "api_key_present", "variable": key})
-            click.echo(f"refused: {key} is set; dispatch is Max OAuth only (DD-007)", err=True)
+            _api_key_present(project_dir, config, session_id, cfg, key, dry_run)
             return
+        if not dry_run:
+            _standing_cleared(project_dir, cfg, "api_key_present", _api_key_state_path(project_dir, cfg))
 
         if not cfg["enabled"] or stop.exists():
             # The kill switch, read on this pass and never cached. A STOP file gets its own
@@ -609,6 +614,11 @@ def dispatch_once(dry_run):
                        "acquired_at": held.body.get("acquired_at"),
                        "task_in_flight": held.body.get("task")})
             click.echo(f"lease held by {held.body.get('holder')}; exiting")
+            # SEL-022: a live holder is a healthy long run and is left alone; a DEAD holder whose flock is still
+            # held (an orphan inherited it) never clears by itself, so it joins the stuck streak and names the
+            # remedy. Nothing reaps automatically (DD-022: the operator reaps, PID-gated).
+            if not dry_run:
+                _lease_holder_streak(project_dir, session_id, cfg, held.body)
             # QC-002: a holder from before the stations does not inspect the session it waits on, so this pass
             # does, and reaps nothing (the session and the lease are the holder's, DN-006 decision 6).
             from seldon.commands import dispatch_stations as ST
@@ -621,6 +631,8 @@ def dispatch_once(dry_run):
                            f"{len(inspected.get('huddles') or [])} huddle(s)"
                            + (f" ({inspected['skipped']})" if inspected.get("skipped") else ""))
             return
+        if not dry_run:
+            _standing_cleared(project_dir, cfg, "lease_held")
         try:
             _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                   lease, dry_run)
@@ -917,6 +929,135 @@ def _database_back(project_dir, cfg) -> None:
         click.echo(f"database available again after {passes} refused pass(es)")
 
 
+def _api_key_state_path(project_dir, cfg) -> Path:
+    return D.config_path(project_dir, cfg["lease_file"]).parent / D.API_KEY_STATE_FILE
+
+
+def _api_key_present(project_dir, config, session_id, cfg, variable: str, dry_run: bool) -> None:
+    """SEL-022: DD-007's refusal as a standing condition, AD-038-R6's outage-once pattern (`_database_unavailable`).
+
+    hazbrief-mcp refused every pass on this from 2026-10-31 07:42 to 2026-11-01 00:57 and nothing reached the
+    operator: the refusal sat before the lease and outside the stuck streak, and it appended a `dispatch_refused` to
+    the tracked store on every pass. Now the FIRST pass of an outage writes one `dispatch_refused`; the streak (key
+    `dispatcher:api_key_present`, threshold `api_key_present: 1` by default) writes one `dispatch_stuck` and runs
+    `notify` once; later passes print a line and write nothing. The variable's name is recorded, never its value.
+
+    The lines are committed the way an MCP write commits its own (`commit_journal_append`): the lease is PROBED and
+    never taken, so this check stays before any lease and any claim, and a live holder defers the commit to the next
+    pass that holds the lease (AD-038-R1). Nothing on a dry run, which observes on another's behalf.
+    """
+    path = _api_key_state_path(project_dir, cfg)
+    state = _read_state(path)
+    new_outage = not state or state.get("variable") != variable
+    now = _now()
+    state = {"first_seen": now if new_outage else (state.get("first_seen") or now),
+             "passes": 1 if new_outage else int(state.get("passes", 0)) + 1, "variable": variable}
+    click.echo(f"refused: {variable} is set; dispatch is Max OAuth only (DD-007); pass {state['passes']} "
+               f"since {state['first_seen']}", err=True)
+    if dry_run:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    wrote = False
+    if new_outage:
+        _emit(project_dir, session_id, D.EVENT_REFUSED,
+              {"task_id": None, "reason": "api_key_present", "variable": variable,
+               "first_seen": state["first_seen"]})
+        wrote = True
+    remedy = f"remove {variable} from the dispatcher's environment and the project's .env (DD-007)"
+    wrote = _standing_streak(project_dir, session_id, cfg, "api_key_present", identity=variable,
+                             detail={"variable": variable}, remedy=remedy, now=now) or wrote
+    if not wrote:
+        return
+    committed = D.commit_journal_append(project_dir, config, by="seldon dispatch once (api_key_present)",
+                                        actor="dispatcher")
+    if committed.get("committed"):
+        click.echo(f"record: api_key_present -> {committed['commit']}")
+    else:
+        click.echo(f"record: api_key_present line(s) not committed here ({committed.get('reason')}); the next "
+                   f"pass that holds the lease commits them (AD-038-R1)")
+
+
+def _lease_holder_streak(project_dir, session_id, cfg, body: dict) -> None:
+    """SEL-022 Part A step 3: a held lease whose holder PID is dead counts in the stuck streak, once per acquisition;
+    a live holder clears it. `lease_held`'s own refusal is unchanged."""
+    pid = body.get("pid")
+    if not isinstance(pid, int) or D.pid_alive(pid):
+        _standing_cleared(project_dir, cfg, "lease_held")
+        return
+    _standing_streak(project_dir, session_id, cfg, "lease_held",
+                     identity=f"{body.get('holder')}@{body.get('acquired_at')}",
+                     detail={"holder": body.get("holder"), "pid": pid, "acquired_at": body.get("acquired_at")},
+                     remedy="the holder PID is dead and its lock is still held: run `seldon dispatch lease reap` "
+                            "and end the process that inherited the lock")
+
+
+def _standing_streak(project_dir, session_id, cfg, reason: str, identity: str, detail: dict, remedy: str,
+                     now: str | None = None) -> bool:
+    """Count one pass of a dispatcher-level standing refusal in the stuck streak; at its threshold write one
+    `dispatch_stuck` and run `notify` once (SEL-022). Returns whether a line was written.
+
+    The same `advance_stuck` the task streaks use, under the key `dispatcher:<reason>`. A changed `identity` (another
+    variable, another lease acquisition) starts a new streak. Task streaks in the same file are neither advanced nor
+    cleared: a pass refused before the lease has not observed the queue.
+    """
+    key = D.standing_key(reason)
+    state = D.read_stuck_state(project_dir, cfg)
+    prior = state.get(key) or {}
+    if prior.get("identity") != identity:
+        prior = {}
+    advanced, alarms = D.advance_stuck({key: prior} if prior else {}, {key: {"criterion": reason}},
+                                       lambda criterion: D.stuck_threshold(cfg, criterion), now or _now())
+    entry = {**advanced[key], "identity": identity}
+    state[key] = entry
+    D.write_stuck_state(project_dir, cfg, state)
+    if not alarms:
+        return False
+    payload = {"task_id": None, "name": "dispatcher", "criterion": reason, "passes": entry["passes"],
+               "threshold": D.stuck_threshold(cfg, reason), "first_seen": entry["first_seen"],
+               **detail, "remedy": remedy, "poll_interval_s": cfg.get("poll_interval_s")}
+    _emit(project_dir, session_id, D.EVENT_STUCK, payload)
+    message = f"stuck: {reason} for {entry['passes']} pass(es) since {entry['first_seen']}; {remedy}"
+    click.echo(f"STUCK: dispatcher refused as {reason} for {entry['passes']} consecutive passes since "
+               f"{entry['first_seen']}; {remedy}", err=True)
+    _run_notifier(project_dir, session_id, cfg, {
+        "SELDON_NOTIFY_TASK_ID": "", "SELDON_NOTIFY_TASK_NAME": "dispatcher",
+        "SELDON_NOTIFY_OK": "false", "SELDON_NOTIFY_OUTCOME": "stuck",
+        "SELDON_NOTIFY_CRITERION": reason, "SELDON_NOTIFY_PASSES": str(entry["passes"]),
+        "SELDON_NOTIFY_DIRTY_PATHS": "", "SELDON_NOTIFY_MESSAGE": message,
+        "SELDON_NOTIFY_RESULT_PATH": "", "SELDON_NOTIFY_LOG_PATH": "", "SELDON_NOTIFY_WALL_SECONDS": "0",
+    }, task_id="-", label="stuck")
+    return True
+
+
+def _standing_cleared(project_dir, cfg, reason: str, state_path: Path | None = None) -> None:
+    """The first pass without the condition ends it: its state file and its streak go, so the next one rings afresh."""
+    passes = None
+    if state_path is not None and state_path.is_file():
+        passes = _read_state(state_path).get("passes")
+        state_path.unlink()
+    key = D.standing_key(reason)
+    state = D.read_stuck_state(project_dir, cfg)
+    if key in state:
+        passes = passes if passes is not None else state[key].get("passes")
+        del state[key]
+        D.write_stuck_state(project_dir, cfg, state)
+    if passes is not None:
+        click.echo(f"{reason} cleared after {passes} refused pass(es)")
+
+
+def _read_state(path: Path) -> dict:
+    """A standing condition's state file, or {}. A corrupt file re-arms the alarm ("tell them again", never "stay
+    quiet"), as `_database_unavailable` and the streak file do."""
+    if not path.is_file():
+        return {}
+    try:
+        body = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
 def _last_payload(project_dir: Path, event_type: str, where=None) -> dict | None:
     """The payload of the most recent event of this type, or None.
 
@@ -1200,8 +1341,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # Nothing is lost. Every one of those reasons is a live property of a task file or of
         # the checkout, and `seldon dispatch status` computes all of them on demand with their
         # values. The refusals that DO reach the log are the ones that are occurrences rather
-        # than states: `lease_held`, `api_key_present` and `claim_failed`, each emitted at its
-        # own site above.
+        # than states: `lease_held` (once per acquisition) and `claim_failed`, each emitted at its
+        # own site above, and `api_key_present` (once per outage, SEL-022).
         click.echo(f"nothing eligible ({len(rows)} open, "
                    f"{sum(1 for r in rows if r['candidate'])} candidate(s))")
         _echo_refusals(rows, tree)
