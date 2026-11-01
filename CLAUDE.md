@@ -17,7 +17,8 @@ Orient with `seldon go`; it lists every command and MCP tool from the code. Ever
 **A new consumer project is one command (SEL-019).** `seldon project new <path> [--graph <name>] [--dispatch
 --enable]` runs init, hooks, environment, `dispatch adopt`, plist load and, with `--graph`, `squiddy init`. Never
 start a consumer repository's work before it has run there. The consumers made this way or by hand: squiddy,
-hazbrief-mcp, aacps-ai-policy.
+hazbrief-mcp, aacps-ai-policy, factory (SEL-020, the first made by the command alone). A consumer whose Desktop writes
+are not seldon's layout declares `desktop_commit.paths` in its `seldon.yaml` (factory does).
 
 **Filing into another repository (AD-036-R12).** Register a task file written into another repository's `cc_tasks/`
 in the same step: `seldon cc register --project <that repo> --allow-untracked <file>`, which commits it. An
