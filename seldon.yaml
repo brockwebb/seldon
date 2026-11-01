@@ -267,6 +267,8 @@ dispatch:
 # secret scanner over files under its roots before staging (FC-02, `.gitignore`: each handoff is
 # scanned before it is committed); exit 1 with the scanner's `scanned N file(s); exit 1` trailer
 # refuses as secret_found, any other non-zero (a scanner that did not run) as scan_failed (DESK-003).
+# A consumer whose Desktop writes are not this layout declares `paths:` instead of `roots:` (SEL-020): exact files
+# and `dir/` entries; every path it commits is then scanned, so `scan.command` is required with it.
 desktop_commit:
   roots:
     docs/design/: design

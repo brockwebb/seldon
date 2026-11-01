@@ -13,7 +13,8 @@ writer commits what it writes"; this is the commit path for the writer that had 
 
 **What it does.** Commits exactly the named paths, through the hooks (never `--no-verify`), with a
 message `desktop: <kind>: <basename>`. It refuses, before staging anything:
-  - a path outside the configured roots (`desktop_commit.roots`; default `DEFAULT_ROOTS`);
+  - a path outside the configured roots (`desktop_commit.roots`; default `DEFAULT_ROOTS`), or, in a project
+    that declares `desktop_commit.paths` (SEL-020), outside that list;
   - a path that escapes the project, does not exist, is gitignored, or has nothing to commit;
   - a file under a scanned root (`desktop_commit.scan`) the secret scanner flags (FC-02: each
     handoff is scanned before it is committed; seldon's `.gitignore`).
@@ -29,6 +30,16 @@ no record in the staged register, and a Desktop session writes that record itsel
 (`seldon_decision_accept`) while writing the note. So a register file is accepted in the SAME call as
 a design note one of whose labels it carries an event about, and `REGISTER.md` with such a file;
 alone, or beside a note that does not label it, each still refuses as `outside_roots` (Issue 5c689098).
+
+**A per-project allowlist (SEL-020).** A project whose Desktop writes are not seldon's layout (the
+factory repository: `decisions.md`, `friction-log.md`, `reviews/`) declares `desktop_commit.paths`, a
+list of exact files and of directories written with a trailing `/` (gitignore(5)'s own convention for
+"this names a directory"). Declared, it REPLACES the fixed roots; absent, nothing changes. Two rules keep
+the wider list from loosening the gate: every path such a call commits is secret-scanned (not only those
+under `scan.roots`), so the list is refused without `scan.command`; and the hooks and the register rule
+apply as before. `roots` and `paths` together are refused: one project has one allowlist. Directories
+named by a default root keep its kind in the message (`task`, `handoff`); any other directory is named by
+itself (`docs`), an exact file by `file`.
 
 **Drafts.** A gated design note with no passing prior-art verdict for its bytes is committed with
 `draft:` in the subject (`desktop: draft: design: <name>`), which the commit-msg hook admits
@@ -73,6 +84,9 @@ NO_PATHS = "no_paths"
 #: The kind a register file or REGISTER.md is named by in the commit message (DESK-002).
 REGISTER_KIND = "register"
 
+#: The kind an exact file of a declared `desktop_commit.paths` list is named by in the message (SEL-020).
+FILE_KIND = "file"
+
 #: The trailer `squiddy.secret_scan` prints as its last line (`scanned N file(s); exit 1`). Exit 1
 #: is a finding only with it: a scanner that never started (an import error, a missing module)
 #: also exits 1, and that is SCAN_FAILED, not SECRET_FOUND (DESK-003, Issue cf57b8e5).
@@ -88,6 +102,8 @@ class Settings:
     roots: dict                                   # {"docs/design/": "design", ...}
     scan_roots: list = field(default_factory=list)
     scan_command: list = field(default_factory=list)
+    files: dict = field(default_factory=dict)     # {"decisions.md": "file"}; declared `paths` only (SEL-020)
+    scan_all: bool = False                        # declared `paths`: every committed path is scanned
 
 
 def settings(project_dir: Path, config: dict) -> Settings:
@@ -95,11 +111,19 @@ def settings(project_dir: Path, config: dict) -> Settings:
     block = (config or {}).get("desktop_commit") or {}
     if not isinstance(block, dict):
         raise CommitConfigError("desktop_commit must be a mapping")
-    roots = block.get("roots", DEFAULT_ROOTS)
-    if not isinstance(roots, dict) or not roots or not all(
-            isinstance(k, str) and isinstance(v, str) and v for k, v in roots.items()):
-        raise CommitConfigError("desktop_commit.roots must map a directory to a kind name")
-    roots = {k.rstrip("/") + "/": v for k, v in roots.items()}
+    files: dict = {}
+    declared = "paths" in block
+    if declared:
+        if "roots" in block:
+            raise CommitConfigError("desktop_commit declares both `paths` and `roots`; one project has one "
+                                    "allowlist, so keep `paths` (SEL-020) or `roots`, not both")
+        roots, files = _declared_paths(project_dir, block["paths"])
+    else:
+        roots = block.get("roots", DEFAULT_ROOTS)
+        if not isinstance(roots, dict) or not roots or not all(
+                isinstance(k, str) and isinstance(v, str) and v for k, v in roots.items()):
+            raise CommitConfigError("desktop_commit.roots must map a directory to a kind name")
+        roots = {k.rstrip("/") + "/": v for k, v in roots.items()}
     scan = block.get("scan") or {}
     if not isinstance(scan, dict):
         raise CommitConfigError("desktop_commit.scan must be a mapping {roots, command}")
@@ -108,13 +132,40 @@ def settings(project_dir: Path, config: dict) -> Settings:
     if scan_roots and (not isinstance(command, list) or not command):
         raise CommitConfigError("desktop_commit.scan.command must be a non-empty list when "
                                 "scan.roots is set")
+    if declared and (not isinstance(command, list) or not command):
+        raise CommitConfigError("desktop_commit.paths needs desktop_commit.scan.command: every path a declared "
+                                "list commits is secret-scanned (FC-02), so the wider list never commits unscanned")
     # A relative program path is relative to the project (seldon.yaml's own convention for
     # sibling repositories, e.g. `../squiddy/...`); a bare name is looked up on PATH. Absolutized
     # lexically, never with resolve(): a venv's `bin/python` is a symlink, and following it lands
     # on the bare interpreter, which runs outside the venv (DESK-003).
     if command and ("/" in command[0]) and not Path(command[0]).is_absolute():
         command = [os.path.normpath(Path(project_dir) / command[0])] + list(command[1:])
-    return Settings(roots=roots, scan_roots=scan_roots, scan_command=[str(c) for c in command])
+    return Settings(roots=roots, scan_roots=scan_roots, scan_command=[str(c) for c in command],
+                    files=files, scan_all=declared)
+
+
+def _declared_paths(project_dir: Path, paths) -> tuple:
+    """`desktop_commit.paths` as `(directory roots {dir/: kind}, exact files {path: "file"})`. Each entry is a
+    project-relative path; a directory is written with a trailing `/`, and one written without it is refused
+    (it would match only a file of that name, so every write under it would refuse as outside_roots)."""
+    if not isinstance(paths, list) or not paths:
+        raise CommitConfigError("desktop_commit.paths must be a non-empty list of project-relative paths")
+    roots: dict = {}
+    files: dict = {}
+    for entry in paths:
+        if not isinstance(entry, str) or not entry.strip("/ "):
+            raise CommitConfigError(f"desktop_commit.paths entry {entry!r} is not a path")
+        if Path(entry).is_absolute() or ".." in Path(entry).parts:
+            raise CommitConfigError(f"desktop_commit.paths entry {entry!r} must be inside the project, "
+                                    f"relative to it")
+        if entry.endswith("/"):
+            roots[entry] = DEFAULT_ROOTS.get(entry, entry.rstrip("/"))
+        elif (Path(project_dir) / entry).is_dir():
+            raise CommitConfigError(f"desktop_commit.paths entry {entry!r} is a directory: write it {entry}/")
+        else:
+            files[entry] = FILE_KIND
+    return roots, files
 
 
 @dataclass
@@ -146,7 +197,10 @@ def _normalize(project_dir: Path, raw: str) -> Optional[str]:
 
 
 def kind_of(rel: str, s: Settings) -> Optional[str]:
-    """The kind name of the root `rel` is under, longest root first; None outside every root."""
+    """The kind name of the root `rel` is under (or of the declared file it is), longest root first; None
+    outside every root."""
+    if rel in s.files:
+        return s.files[rel]
     for root in sorted(s.roots, key=len, reverse=True):
         if rel.startswith(root):
             return s.roots[root]
@@ -175,7 +229,7 @@ def unverified_notes(project_dir: Path, config: dict, rels: list) -> list[dict]:
 
 
 def _scan(project_dir: Path, s: Settings, rels: list) -> Optional[Outcome]:
-    targets = [r for r in rels if any(r.startswith(root) for root in s.scan_roots)]
+    targets = [r for r in rels if s.scan_all or any(r.startswith(root) for root in s.scan_roots)]
     if not targets:
         return None
     try:
@@ -277,7 +331,7 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
         if kind_of(rel, s) is None and _register_path(project_dir, config, rel):
             register_rels.append(rel)      # judged below, against the notes of this call
         elif kind_of(rel, s) is None:
-            return _refuse(OUTSIDE_ROOTS, f"{rel} is under none of {', '.join(s.roots)}; this tool "
+            return _refuse(OUTSIDE_ROOTS, f"{rel} is under none of {', '.join([*s.files, *s.roots])}; this tool "
                                           f"commits only what a Desktop session writes", [rel])
         if not (project_dir / rel).is_file():
             return _refuse(NOT_FOUND, f"{rel} is not a file", [rel])

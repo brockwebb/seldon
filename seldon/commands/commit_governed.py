@@ -21,8 +21,8 @@ from seldon.core import desktop_commit as DC
               help="The project the paths belong to (default: the working directory).")
 @click.option("--json", "as_json", is_flag=True, help="Machine-readable outcome.")
 def commit_governed_command(paths, project, as_json):
-    """Commit exactly PATHS (under docs/design/, cc_tasks/, handoffs/, issues/, ontology/) through
-    the hooks, as `desktop: <kind>: <basename>`. A design note without a passing prior-art verdict
+    """Commit exactly PATHS (under docs/design/, cc_tasks/, handoffs/, issues/, ontology/, or the
+    project's declared `desktop_commit.paths`, SEL-020) through the hooks, as `desktop: <kind>: <basename>`. A design note without a passing prior-art verdict
     is committed as `draft:`. Exit 1 on any refusal; nothing stays staged."""
     project_dir = Path(project).expanduser().resolve() if project else Path.cwd()
     outcome = DC.commit_governed(project_dir, list(paths))

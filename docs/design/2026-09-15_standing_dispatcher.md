@@ -147,7 +147,9 @@ the hand steps.* Three projects were adopted by hand: squiddy, hazbrief-mcp (SEL
 sequence as one command:
 
 1. `git init -b main`, when the directory is not yet a repository.
-2. `seldon init`.
+2. `seldon init`, and `.seldon/` in the tracked `.gitignore` (SEL-020: an existing project may lack it, and
+   aacps carried it only in `.git/info/exclude`, which no worktree or clone inherits; without it the first
+   dispatcher pass dirties the tree).
 3. `seldon hooks install`, with the `merge=union` declaration.
 4. `seldon dispatch adopt --yes`, unchanged.
 5. The keys the hand adoptions added after `adopt`:
@@ -165,6 +167,12 @@ sequence as one command:
 Each step acts only where the project lacks what it produces, so a second run changes nothing and says so.
 The command registers nothing; it prints the `seldon cc register` line to run next. Its values come from the
 kit's `project_new:` block in seldon's `seldon.yaml`. The code is `seldon/core/project_new.py`.
+
+*Since SEL-020 (2026-11-01):* a project whose Desktop writes are not seldon's layout (factory: `decisions.md`,
+`friction-log.md`, `reviews/`) declares `desktop_commit.paths` in its `seldon.yaml`, a list of exact files and of
+directories written `dir/`. Declared, it replaces the governed commit's fixed roots; absent, nothing changes.
+Every path such a commit names is secret-scanned, so the list is refused without `desktop_commit.scan.command`.
+The rules are in `seldon/core/desktop_commit.py`.
 
 ## Tests
 

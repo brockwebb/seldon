@@ -12,8 +12,10 @@ from pathlib import Path
 import pytest
 
 from seldon.commands.dispatch import dispatch_group
+from seldon.core import desktop_commit as DC
 from seldon.core import project_new as PN
 from tests.dispatch_scaffold import run_cli
+from tests.test_hooks import repo  # noqa: F401  (fixture)
 from tests.test_sel019_project_new import _new, kit, launchctl  # noqa: F401  (fixtures)
 
 
@@ -78,3 +80,96 @@ def test_a_rule_only_in_info_exclude_is_not_enough(tmp_path):
     step = PN.ignore_step(d)
     assert step.status == "changed"
     assert ".seldon/" in (d / ".gitignore").read_text().splitlines()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Part B: `desktop_commit.paths`, a per-project allowlist for the governed commit
+# ══════════════════════════════════════════════════════════════════════════════
+# The fixture is DESK-001's: real git and the real hooks in a scratch repository.
+
+#: A scanner with squiddy.secret_scan's output contract (DESK-003): a hit line per flagged file, then the trailer.
+SCANNER = """#!/bin/sh
+hit=0
+for f in "$@"; do
+  if grep -q AKIA "$f"; then echo "$f:1 aws_key"; hit=1; fi
+done
+echo "scanned $# file(s); exit $hit"
+exit $hit
+"""
+
+
+def _scanner(tmp_path) -> str:
+    s = tmp_path / "scan.sh"
+    s.write_text(SCANNER)
+    s.chmod(0o755)
+    return str(s)
+
+
+def _declared(repo, tmp_path, paths=("friction-log.md", "docs/")) -> dict:
+    return dict(repo["config"], desktop_commit={"paths": list(paths),
+                                                "scan": {"roots": ["handoffs/"], "command": [_scanner(tmp_path)]}})
+
+
+def _files_in_head(repo) -> list:
+    return sorted(_git(repo["dir"], "show", "--name-only", "--pretty=", "HEAD").split())
+
+
+def test_a_project_without_the_key_refuses_readme_exactly_as_before(repo):
+    (repo["dir"] / "README.md").write_text("changed\n")
+    head = _git(repo["dir"], "rev-parse", "HEAD")
+    out = DC.commit_governed(repo["dir"], ["README.md"], repo["config"])
+    assert not out.committed and out.refusal == DC.OUTSIDE_ROOTS
+    assert out.detail == ("outside_roots: README.md is under none of docs/design/, cc_tasks/, handoffs/, issues/, "
+                          "ontology/; this tool commits only what a Desktop session writes")
+    assert _git(repo["dir"], "rev-parse", "HEAD") == head
+    assert _git(repo["dir"], "diff", "--cached", "--name-only") == ""
+    assert DC.settings(repo["dir"], repo["config"]).roots == DC.DEFAULT_ROOTS
+
+
+def test_declared_paths_commit_a_file_and_a_directory_and_refuse_the_rest(repo, tmp_path):
+    cfg = _declared(repo, tmp_path)
+    (repo["dir"] / "friction-log.md").write_text("# friction\n")
+    (repo["dir"] / "docs" / "x.md").write_text("# x\n")
+    (repo["dir"] / "scripts").mkdir()
+    (repo["dir"] / "scripts" / "x.sh").write_text("echo x\n")
+
+    out = DC.commit_governed(repo["dir"], ["friction-log.md", "docs/x.md"], cfg)
+    assert out.committed, out.detail
+    assert _files_in_head(repo) == ["docs/x.md", "friction-log.md"]
+    assert out.message == "desktop: file: friction-log.md; docs: x.md"
+
+    refused = DC.commit_governed(repo["dir"], ["scripts/x.sh"], cfg)
+    assert refused.refusal == DC.OUTSIDE_ROOTS and "scripts/x.sh" in refused.detail
+    assert _git(repo["dir"], "status", "--porcelain", "--", "scripts/x.sh").startswith("??")
+    # The declared list REPLACES the fixed set: cc_tasks/ is not in it.
+    (repo["dir"] / "cc_tasks").mkdir()
+    (repo["dir"] / "cc_tasks" / "t.md").write_text("# t\n")
+    assert DC.commit_governed(repo["dir"], ["cc_tasks/t.md"], cfg).refusal == DC.OUTSIDE_ROOTS
+
+
+def test_a_declared_path_holding_a_planted_secret_is_refused_by_the_scan(repo, tmp_path):
+    """The scan's own roots name handoffs/ only; with a declared list every path committed is scanned."""
+    cfg = _declared(repo, tmp_path)
+    (repo["dir"] / "docs" / "leak.md").write_text("key AKIAABCDEFGHIJKLMNOP\n")
+    head = _git(repo["dir"], "rev-parse", "HEAD")
+    out = DC.commit_governed(repo["dir"], ["docs/leak.md"], cfg)
+    assert out.refusal == DC.SECRET_FOUND and "aws_key" in out.detail
+    assert _git(repo["dir"], "rev-parse", "HEAD") == head
+    assert _git(repo["dir"], "status", "--porcelain", "--", "docs/leak.md").startswith("??")
+
+
+@pytest.mark.parametrize("bad", [[], ["/etc/x"], ["../x"], [""], "docs/", ["docs"], [3]])
+def test_a_malformed_declared_list_is_refused(repo, bad):
+    """`docs` names a directory: it is written `docs/`, gitignore's trailing-slash convention."""
+    with pytest.raises(DC.CommitConfigError):
+        DC.settings(repo["dir"], {"desktop_commit": {"paths": bad, "scan": {"command": ["x"]}}})
+
+
+def test_a_declared_list_needs_a_scan_and_excludes_roots(repo):
+    with pytest.raises(DC.CommitConfigError, match="scan"):
+        DC.settings(repo["dir"], {"desktop_commit": {"paths": ["docs/"]}})
+    with pytest.raises(DC.CommitConfigError, match="not both"):
+        DC.settings(repo["dir"], {"desktop_commit": {"paths": ["docs/"], "roots": {"docs/": "d"},
+                                                     "scan": {"command": ["x"]}}})
+    out = DC.commit_governed(repo["dir"], ["README.md"], {**repo["config"], "desktop_commit": {"paths": ["docs/"]}})
+    assert out.refusal == "config_invalid"

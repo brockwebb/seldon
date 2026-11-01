@@ -1389,8 +1389,9 @@ def seldon_commit_governed(
     in ONE call (DESK-002). A register path alone, or beside a note that does not label it, refuses.
 
     Refuses (nothing staged) a path outside docs/design/, cc_tasks/, handoffs/, issues/, ontology/
-    (save a register path as above); a missing, gitignored or unchanged file; a handoff the secret scan flags; and anything the
-    commit hooks refuse, with the hook's text verbatim.
+    (save a register path as above), or, in a project whose seldon.yaml declares `desktop_commit.paths`,
+    outside that list (SEL-020); a missing, gitignored or unchanged file; a handoff (with a declared list,
+    any path) the secret scan flags; and anything the commit hooks refuse, with the hook's text verbatim.
 
     Args:
         paths: Project-relative (or absolute) paths of the files to commit.
