@@ -37,6 +37,7 @@ import yaml
 
 from seldon import models
 from seldon.core import cadence as C
+from seldon.core import review_findings as RF
 from seldon.core import worktree as WT
 from seldon.core.moving import is_future
 
@@ -1257,7 +1258,7 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
     # AD-038-R14: every header these checks read is read from the header block, once. A header the block carries
     # twice is refused rather than resolved by order: which one the author meant is not the reader's to guess.
     read = ((tuple(cfg.get("candidacy_headers", REQUIRED_HEADERS)) + REQUIRED_HEADERS + CONCURRENCY_HEADERS
-             if cfg is not None else ()) + (HEADER_AFTER, HEADER_ANSWERS))
+             if cfg is not None else ()) + (HEADER_AFTER, HEADER_ANSWERS, RF.HEADER_FOUND_IN))
     failures = repeated_headers(text, read)
     if cfg is not None:
         required = cfg.get("candidacy_headers", REQUIRED_HEADERS)
@@ -1318,6 +1319,11 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
     answers = parse_answers(_header_value(text, HEADER_ANSWERS))
     if answers["kind"] is None:
         failures.append({"code": ANSWERS_UNRESOLVED, "message": answers["error"]})
+    # SEL-021 (factory F-011): the optional `**Found in:**` header names the review finding a task fixes. Its grammar
+    # is read here, with the other static checks, so registration and the dispatcher refuse the same file.
+    found_in = RF.parse_found_in_header(_header_value(text, RF.HEADER_FOUND_IN))
+    if found_in["kind"] is None:
+        failures.append({"code": RF.FOUND_IN_UNPARSABLE, "message": found_in["error"]})
     out["failures"] = failures
     blocking = [f for f in failures if f["code"] not in criteria_codes]
     if blocking:

@@ -22,6 +22,10 @@ artifact_types:
       description:
         category: documentation
         description: "What this script does (1-2 sentences)"
+      test_node:
+        # `system`: present only on a Script that stands for one test (SEL-021).
+        category: system
+        description: "The pytest node id (`<path>::<node id>`) this Script stands for, when it is the target of an Issue's `verified_by` (SEL-021). Such a Script carries no content_hash, so verify's drift check does not read it."
       inputs:
         category: documentation
         description: "Input data files or parameters"
@@ -266,6 +270,10 @@ artifact_types:
         # `system`: absent on every task that answers no filing from another repository.
         category: system
         description: "The filing in ANOTHER project's graph this task answers, as `<project>:<artifact_id>`, from the task file's `**Answers:**` header at registration. `seldon cc complete` refuses the task until its return task is registered and committed in that project's cc_tasks/ (`seldon cc return`). See AD-036-R16."
+      found_in:
+        # `system`: absent on every task that answers no review finding.
+        category: system
+        description: "The review finding this task fixes, as `<repo>:<path>#<finding id>`, from the task file's optional `**Found in:**` header at registration; an unparsable header refuses registration (SEL-021)."
       dispatch_merge:
         category: system
         description: "What became of a worktree task's branch under the parallel dispatcher: merged (fast-forwarded onto main on green) or merge_blocked (a rebase conflict, a red re-gate or an invalid union file; the task is blocked and an Issue names the files). Absent on tasks run in place. See AD-034."
@@ -621,7 +629,7 @@ artifact_types:
         description: "What the issue is — the problem statement"
       issue_type:
         required: true
-        description: "Category of problem. Values: factual_error, citation_gap, unsupported_claim, terminology_inconsistency, internal_contradiction, missing_content, stale_content, structural_flow, style_formatting, merge_blocked (a worktree task the dispatcher could not merge, AD-034)"
+        description: "Category of problem. Values: factual_error, citation_gap, unsupported_claim, terminology_inconsistency, internal_contradiction, missing_content, stale_content, structural_flow, style_formatting, merge_blocked (a worktree task the dispatcher could not merge, AD-034), review_finding (a finding of a code or design review, SEL-021 / factory F-010)"
       importance:
         required: true
         description: "Eisenhower importance axis (intrinsic, rarely changes). Values: high, medium, low"
@@ -630,13 +638,29 @@ artifact_types:
         description: "Eisenhower urgency axis (contextual, changes with workflow). Values: high, medium, low"
       detection_method:
         required: true
-        description: "How the issue was found. Values: automated_check, audit, incidental, build_failure"
+        description: "How the issue was found. Values: automated_check, audit, incidental, build_failure, review (SEL-021)"
       target:
         required: true
-        description: "What needs to change to resolve it. Values: content, citation, terminology, data, structure"
+        description: "What needs to change to resolve it. Values: content, citation, terminology, data, structure, code (SEL-021)"
       resolution_notes:
         category: documentation
         description: "What was done to resolve the issue — captured at resolution time"
+      # SEL-021 (factory F-010, F-011): a review finding's provenance and outcome. `system`, not
+      # `documentation`: absent on every Issue that is not a review finding, so counting them as
+      # documentation gaps would manufacture one per Issue. All optional: every Issue written before
+      # SEL-021 loads unchanged.
+      found_in:
+        category: system
+        description: "Where the finding was raised, as `<repo>:<path>#<finding id>` (e.g. `factory:reviews/squiddy_code_review_max_findings.md#3`). Required on a review_finding Issue at creation (SEL-021)."
+      severity:
+        category: system
+        description: "The finding's severity as the review states it, free text (SEL-021)."
+      disposition:
+        category: system
+        description: "What became of a review finding. Values: fixed, rejected, duplicate, wont_fix. Anything but fixed carries disposition_evidence (SEL-021)."
+      disposition_evidence:
+        category: system
+        description: "Why a finding was not fixed, and where that is recorded (a RESULT section, a decision id, a review reply) (SEL-021)."
 
   ArchitecturalDecision:
     properties:
@@ -996,6 +1020,18 @@ relationship_types:
   remediated_by:
     from_types: [Issue]
     to_types: [PaperSection, ResearchTask, ArchitecturalDecision, DesignNote, Figure, Table, Script]
+
+  verified_by:
+    # SEL-021 (factory F-010): a review finding -> the test that shows its fix holds. The Script stands
+    # for one test node (`test_node`: `<path>::<node id>`); `seldon issue orphans` requires one on a fixed finding.
+    from_types: [Issue]
+    to_types: [Script]
+
+  changes:
+    # SEL-021 (factory F-010): a review finding -> a decision its outcome altered, a register record
+    # (`Decision`) or, in a repository without a register, an ArchitecturalDecision.
+    from_types: [Issue]
+    to_types: [Decision, ArchitecturalDecision]
 
   informs:
     from_types: [DesignNote]

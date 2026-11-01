@@ -1046,26 +1046,44 @@ def seldon_issue_create(
     importance: str = "medium",
     urgency: str = "medium",
     project_dir: str = ".",
+    found_in: str = "",
+    severity: str = "",
+    disposition: str = "",
+    disposition_evidence: str = "",
+    remediated_by: list[str] | None = None,
+    verified_by: list[str] | None = None,
+    changes: list[str] | None = None,
 ) -> str:
-    """Create an Issue artifact for a research production quality problem.
+    """Create an Issue artifact: a research production quality problem, or a review finding.
 
-    Issues track problems found in research outputs: factual errors, citation
-    gaps, unsupported claims, terminology inconsistencies, stale content, etc.
-    Issues are NOT for software bugs or feature requests — use CC tasks for those.
+    Issues track problems found in research outputs (factual errors, citation gaps, unsupported claims,
+    terminology inconsistencies, stale content) and, since SEL-021 (factory F-010), findings of a code or
+    design review: `issue_type="review_finding"`, `detection_method="review"`, with `found_in`. A finding is
+    filed in the repository where it is fixed, traced to its fix task, its test and any decision it changes.
+    Other software bugs and feature requests are CC tasks, not Issues.
 
     Args:
         name: Short identifier for the issue
         description: The problem statement — what's wrong
         issue_type: Category of problem. Values: factual_error, citation_gap,
             unsupported_claim, terminology_inconsistency, internal_contradiction,
-            missing_content, stale_content, structural_flow, style_formatting
-        detection_method: How found. Values: automated_check, audit, incidental, build_failure
-        target: What needs to change. Values: content, citation, terminology, data, structure
+            missing_content, stale_content, structural_flow, style_formatting, review_finding
+        detection_method: How found. Values: automated_check, audit, incidental, build_failure, review
+        target: What needs to change. Values: content, citation, terminology, data, structure, code
         importance: Eisenhower importance (high, medium, low)
         urgency: Eisenhower urgency (high, medium, low)
         project_dir: Path to project root
+        found_in: Where a review finding was raised, `<repo>:<path>#<finding id>`
+            (e.g. `factory:reviews/squiddy_code_review_max_findings.md#3`). Required for review_finding.
+        severity: The finding's severity as the review states it (free text)
+        disposition: fixed, rejected, duplicate or wont_fix; anything but fixed needs disposition_evidence
+        disposition_evidence: Why it was not fixed, and where that is recorded
+        remediated_by: ResearchTasks that fix it (id, prefix or task name)
+        verified_by: Tests that show the fix holds, each `<path>::<node id>` relative to the project root
+        changes: Decisions its outcome altered (register id `<repo>:<id>`, or an ArchitecturalDecision name)
     """
-    from seldon.core.artifacts import create_artifact
+    from seldon.core import review_findings as RF
+    from seldon.core.artifacts import commit_writes, plan_artifact
     from seldon.core.issue_utils import validate_issue_enum, eisenhower_quadrant
 
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
@@ -1077,14 +1095,16 @@ def seldon_issue_create(
         validate_issue_enum("target", target)
         validate_issue_enum("importance", importance)
         validate_issue_enum("urgency", urgency)
+        review = RF.review_properties(issue_type=issue_type, found_in=found_in, severity=severity,
+                                      disposition=disposition, disposition_evidence=disposition_evidence)
     except ValueError as exc:
         driver.close()
         return f"Error: {exc}"
 
     try:
-        artifact_id = create_artifact(
-            project_dir=p, driver=driver, database=database,
-            domain_config=domain_config, artifact_type="Issue",
+        # The Issue and its trace links go down in one ledger append, every link resolved first (SEL-007).
+        artifact_id, creation = plan_artifact(
+            project_dir=p, domain_config=domain_config, artifact_type="Issue",
             properties={
                 "name": name,
                 "description": description,
@@ -1093,17 +1113,48 @@ def seldon_issue_create(
                 "target": target,
                 "importance": importance,
                 "urgency": urgency,
+                **review,
             },
             actor="desktop", authority="accepted",
         )
+        try:
+            trace_writes, trace_labels = RF.plan_trace_writes(
+                project_dir=p, driver=driver, database=database, domain_config=domain_config,
+                issue_id=artifact_id, remediated_by=list(remediated_by or []),
+                verified_by=list(verified_by or []), changes=list(changes or []), actor="desktop")
+        except ValueError as exc:
+            return f"Error: {exc} Nothing was written."
+        commit_writes(p, driver, database, [creation, *trace_writes])
         quadrant = eisenhower_quadrant(importance, urgency)
         return (
             f"Created Issue: {artifact_id[:8]}...\n"
             f"  name: {name}\n"
             f"  type: {issue_type} / detected: {detection_method} / target: {target}\n"
             f"  priority: {importance}/{urgency} ({quadrant})\n"
-            f"  state: open"
+            + "".join(f"  {k}: {v}\n" for k, v in review.items())
+            + (f"  links: {', '.join(trace_labels)}\n" if trace_labels else "")
+            + "  state: open"
         )
+    finally:
+        driver.close()
+
+
+@_tool()
+def seldon_issue_orphans(project_dir: str = ".") -> str:
+    """List review findings that are traced to neither a finished fix with a test nor an evidenced disposition.
+
+    A `review_finding` Issue passes when it is REMEDIATED_BY a completed (or verified) ResearchTask AND has a
+    VERIFIED_BY test, or when its disposition is not `fixed` and its disposition_evidence is not empty
+    (SEL-021, factory F-010). The last line is `orphans: <n>`; the CLI `seldon issue orphans` exits 1 when n > 0.
+
+    Args:
+        project_dir: Path to project root
+    """
+    from seldon.core import review_findings as RF
+
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    try:
+        return RF.format_orphans(RF.orphans(driver, database))
     finally:
         driver.close()
 
@@ -1116,8 +1167,15 @@ def seldon_issue_update(
     state: str = "",
     importance: str = "",
     urgency: str = "",
+    found_in: str = "",
+    severity: str = "",
+    disposition: str = "",
+    disposition_evidence: str = "",
+    remediated_by: list[str] | None = None,
+    verified_by: list[str] | None = None,
+    changes: list[str] | None = None,
 ) -> str:
-    """Update an Issue's state or priority dimensions.
+    """Update an Issue's state or priority dimensions, or a review finding's disposition and trace (SEL-021).
 
     Args:
         issue_id: Artifact ID (full UUID or prefix)
@@ -1125,7 +1183,16 @@ def seldon_issue_update(
         state: New state if changing (open, in_progress, resolved, wont_fix, blocked, verified)
         importance: New importance if changing (high, medium, low)
         urgency: New urgency if changing (high, medium, low)
+        found_in: Where a review finding was raised, `<repo>:<path>#<finding id>`
+        severity: The finding's severity as the review states it
+        disposition: fixed, rejected, duplicate or wont_fix; anything but fixed needs disposition_evidence
+            (given now or already on the Issue)
+        disposition_evidence: Why it was not fixed, and where that is recorded
+        remediated_by: ResearchTasks that fix it (id, prefix or task name), linked REMEDIATED_BY
+        verified_by: Tests that show the fix holds, `<path>::<node id>`, linked VERIFIED_BY
+        changes: Decisions its outcome altered (register id `<repo>:<id>`, or an AD name), linked CHANGES
     """
+    from seldon.core import review_findings as RF
     from seldon.core.artifacts import commit_writes, plan_state_change, plan_update_artifact
     from seldon.core.graph import get_artifact
     from seldon.core.issue_utils import validate_issue_enum
@@ -1166,6 +1233,14 @@ def seldon_issue_update(
             if urgency:
                 validate_issue_enum("urgency", urgency)
                 props_to_update["urgency"] = urgency
+            if any((found_in, severity, disposition, disposition_evidence)):
+                props_to_update.update(RF.review_properties(
+                    issue_type=node.get("issue_type"), found_in=found_in, severity=severity,
+                    disposition=disposition, disposition_evidence=disposition_evidence, existing=node))
+            trace_writes, trace_labels = RF.plan_trace_writes(
+                project_dir=p, driver=driver, database=database, domain_config=domain_config,
+                issue_id=full_id, remediated_by=list(remediated_by or []),
+                verified_by=list(verified_by or []), changes=list(changes or []), actor="desktop")
 
             if props_to_update:
                 writes.append(plan_update_artifact(
@@ -1174,13 +1249,17 @@ def seldon_issue_update(
                     actor="desktop", authority="accepted",
                 ))
                 result_parts.extend(f"{k}: {v}" for k, v in props_to_update.items())
+            writes.extend(trace_writes)
+            if trace_labels:
+                result_parts.append(f"links: {', '.join(trace_labels)}")
         except (ValueError, InvalidStateTransition) as exc:
             return f"Error: {exc} Nothing was written."
 
-        commit_writes(p, driver, database, writes)
-
         if not result_parts:
-            return "No changes specified (provide state, importance, or urgency)."
+            return ("No changes specified (provide state, importance, urgency, or a review-finding field: "
+                    "found_in, severity, disposition, disposition_evidence, remediated_by, verified_by, changes).")
+
+        commit_writes(p, driver, database, writes)
 
         return f"Updated {full_id[:8]}...:\n" + "\n".join(f"  {p}" for p in result_parts)
     finally:

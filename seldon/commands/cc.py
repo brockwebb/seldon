@@ -1477,6 +1477,12 @@ def register_task_file(
     # nothing created, as an unresolvable After ref does.
     from seldon.core import returns as returns_mod
     answered = returns_mod.resolve_answers(text, project_dir, config)
+    # SEL-021 (factory F-011): the optional `**Found in:**` header names the review finding this task fixes. Its
+    # grammar was checked by `registration_static_refusal` above (`found_in_unparsable` refuses there, quoting the
+    # grammar, before anything is created); the parsed value is recorded on the created task.
+    from seldon.core import review_findings as RF
+    from seldon.core.dispatch import _header_value
+    found_in = RF.parse_found_in_header(_header_value(text, RF.HEADER_FOUND_IN))
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -1529,6 +1535,7 @@ def register_task_file(
             "source_commit": source_commit,
             **({"waits_on_external": external_waits} if external_waits else {}),
             **({returns_mod.PROPERTY: answered.qualified} if answered else {}),
+            **({"found_in": found_in["found_in"]} if found_in["found_in"] else {}),
         },
         actor=actor,
         authority="accepted",

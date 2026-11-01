@@ -11,11 +11,18 @@ ISSUE_ENUMS = {
         "style_formatting",
         # AD-034: a worktree task the parallel dispatcher could not merge onto main.
         "merge_blocked",
+        # SEL-021 (factory F-010): a finding of a code or design review, traced to its fix, test and decision.
+        "review_finding",
     ],
     "importance": ["high", "medium", "low"],
     "urgency": ["high", "medium", "low"],
-    "detection_method": ["automated_check", "audit", "incidental", "build_failure"],
-    "target": ["content", "citation", "terminology", "data", "structure"],
+    "detection_method": ["automated_check", "audit", "incidental", "build_failure",
+                         # SEL-021: found by a review (a reviewer's report, a review harness run).
+                         "review"],
+    # `code` (SEL-021): a review finding's fix is usually a code change, which none of the document targets name.
+    "target": ["content", "citation", "terminology", "data", "structure", "code"],
+    # SEL-021: what became of a review finding. Anything but `fixed` carries `disposition_evidence`.
+    "disposition": ["fixed", "rejected", "duplicate", "wont_fix"],
 }
 
 

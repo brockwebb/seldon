@@ -16,6 +16,7 @@ from seldon.core.graph import get_artifact, find_any_artifact_by_name
 from seldon.core.issue_utils import (
     ISSUE_ENUMS, eisenhower_quadrant, validate_issue_enum,
 )
+from seldon.core import review_findings as RF
 from seldon.domain.loader import load_domain_config, validate_relationship
 
 
@@ -39,8 +40,34 @@ def _resolve_artifact(driver, database, identifier: str) -> dict | None:
 
 @click.group("issue")
 def issue_group():
-    """Manage Issue artifacts — track document quality problems."""
+    """Manage Issue artifacts — document quality problems and review findings (SEL-021)."""
     pass
+
+
+# SEL-021 (factory F-010): the review-finding options `create` and `update` share. The links resolve and validate
+# before the first append, and go down in the same append as the Issue (or its update).
+_REVIEW_OPTIONS = (
+    click.option("--found-in", default=None,
+                 help=f"Where the finding was raised: {RF.FOUND_IN_GRAMMAR}. Required with --type {RF.ISSUE_TYPE}"),
+    click.option("--severity", default=None, help="The finding's severity as the review states it"),
+    click.option("--disposition", default=None,
+                 help="What became of the finding: " + ", ".join(ISSUE_ENUMS["disposition"])
+                      + "; anything but fixed needs --disposition-evidence"),
+    click.option("--disposition-evidence", default=None,
+                 help="Why it was not fixed, and where that is recorded"),
+    click.option("--remediated-by", multiple=True,
+                 help="The ResearchTask that fixes it (id, prefix or task name); repeatable"),
+    click.option("--verified-by", multiple=True,
+                 help=f"The test that shows the fix holds, {RF.TEST_REF_GRAMMAR}; repeatable"),
+    click.option("--changes", multiple=True,
+                 help="A decision its outcome altered (register id `<repo>:<id>`, or an AD name); repeatable"),
+)
+
+
+def _review_options(fn):
+    for option in reversed(_REVIEW_OPTIONS):
+        fn = option(fn)
+    return fn
 
 
 @issue_group.command("create")
@@ -53,14 +80,18 @@ def issue_group():
 @click.option("--affects", default=None, help="Comma-separated artifact IDs/names this issue affects")
 @click.option("--name", default=None,
               help="A short name, which `seldon go` and the graph print beside the id")
-def issue_create(description, issue_type, importance, urgency, detection, target, affects, name):
-    """Create a new Issue."""
+@_review_options
+def issue_create(description, issue_type, importance, urgency, detection, target, affects, name,
+                 found_in, severity, disposition, disposition_evidence, remediated_by, verified_by, changes):
+    """Create a new Issue. A review finding is one (`--type review_finding --found-in ...`, factory F-010)."""
     try:
         validate_issue_enum("issue_type", issue_type)
         validate_issue_enum("importance", importance)
         validate_issue_enum("urgency", urgency)
         validate_issue_enum("detection_method", detection)
         validate_issue_enum("target", target)
+        review = RF.review_properties(issue_type=issue_type, found_in=found_in, severity=severity,
+                                      disposition=disposition, disposition_evidence=disposition_evidence)
     except ValueError as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -108,10 +139,15 @@ def issue_create(description, issue_type, importance, urgency, detection, target
                 "urgency": urgency,
                 "detection_method": detection,
                 "target": target,
+                **review,
             },
             actor=actor, authority="accepted",
             session_id=session_id,
         )
+        trace_writes, trace_labels = RF.plan_trace_writes(
+            project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+            issue_id=issue_id, remediated_by=list(remediated_by), verified_by=list(verified_by),
+            changes=list(changes), actor=actor, session_id=session_id)
 
         writes = [creation]
         links_created = []
@@ -125,6 +161,8 @@ def issue_create(description, issue_type, importance, urgency, detection, target
                 session_id=session_id,
             ))
             links_created.append(f"AFFECTS {target_node.get('name', target_node['artifact_id'][:8])}")
+        writes.extend(trace_writes)
+        links_created.extend(trace_labels)
         commit_writes(project_dir, driver, database, writes)
 
         quadrant = eisenhower_quadrant(importance, urgency)
@@ -136,6 +174,8 @@ def issue_create(description, issue_type, importance, urgency, detection, target
         click.echo(f"  quadrant: {quadrant} (importance={importance}, urgency={urgency})")
         click.echo(f"  detection: {detection}")
         click.echo(f"  target: {target}")
+        for key, value in review.items():
+            click.echo(f"  {key}: {value}")
         click.echo(f"  state: open")
         if links_created:
             click.echo(f"  links: {', '.join(links_created)}")
@@ -236,11 +276,18 @@ def issue_list(open_only, state, importance, urgency, issue_type, as_json):
 @click.option("--description", default=None,
               help="Replace the description (a job recording a recurrence on the Issue it "
                    "opened, rather than opening another)")
-def issue_update(issue_id, state, urgency, resolution_notes, description):
-    """Update an Issue — transition state, change urgency, or restate the description."""
-    if state is None and urgency is None and resolution_notes is None and description is None:
-        click.echo("Error: provide --state, --urgency, --resolution-notes or --description",
-                   err=True)
+@_review_options
+def issue_update(issue_id, state, urgency, resolution_notes, description,
+                 found_in, severity, disposition, disposition_evidence, remediated_by, verified_by, changes):
+    """Update an Issue — transition state, change urgency, restate the description, or record a review
+    finding's disposition and its trace links (SEL-021)."""
+    review_given = any(v is not None for v in (found_in, severity, disposition, disposition_evidence))
+    links_given = bool(remediated_by or verified_by or changes)
+    if (state is None and urgency is None and resolution_notes is None and description is None
+            and not review_given and not links_given):
+        click.echo("Error: provide --state, --urgency, --resolution-notes, --description or a review-finding "
+                   "option (--found-in, --severity, --disposition, --disposition-evidence, --remediated-by, "
+                   "--verified-by, --changes)", err=True)
         raise SystemExit(1)
 
     config = load_project_config()
@@ -274,6 +321,14 @@ def issue_update(issue_id, state, urgency, resolution_notes, description):
             props["resolution_notes"] = resolution_notes
         if description:
             props["description"] = description
+        if review_given:
+            props.update(RF.review_properties(
+                issue_type=node.get("issue_type"), found_in=found_in, severity=severity,
+                disposition=disposition, disposition_evidence=disposition_evidence, existing=node))
+        trace_writes, trace_labels = RF.plan_trace_writes(
+            project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+            issue_id=node["artifact_id"], remediated_by=list(remediated_by), verified_by=list(verified_by),
+            changes=list(changes), actor=actor, session_id=session_id)
         if props:
             writes.append(plan_update_artifact(
                 project_dir=project_dir, driver=driver, database=database,
@@ -290,6 +345,7 @@ def issue_update(issue_id, state, urgency, resolution_notes, description):
                 actor=actor, authority="accepted",
                 session_id=session_id,
             ))
+        writes.extend(trace_writes)
 
         commit_writes(project_dir, driver, database, writes)
 
@@ -304,6 +360,11 @@ def issue_update(issue_id, state, urgency, resolution_notes, description):
             click.echo(f"  resolution_notes: {resolution_notes}")
         if description:
             click.echo(f"  description: {description}")
+        for key in ("found_in", "severity", "disposition", "disposition_evidence"):
+            if key in props:
+                click.echo(f"  {key}: {props[key]}")
+        if trace_labels:
+            click.echo(f"  links: {', '.join(trace_labels)}")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -355,6 +416,13 @@ def issue_show(issue_id):
         ).data()
         resolved_by = [dict(r["t"]) for r in resolved_by_records]
 
+        # SEL-021: a review finding's trace, by relationship.
+        trace = session.run(
+            "MATCH (i:Artifact:Issue {artifact_id: $id})-[r:REMEDIATED_BY|VERIFIED_BY|CHANGES]->(t:Artifact) "
+            "RETURN type(r) AS rel, t ORDER BY rel",
+            id=issue_id,
+        ).data()
+
     driver.close()
 
     imp = node.get("importance", "?")
@@ -373,6 +441,9 @@ def issue_show(issue_id):
     click.echo(f"  created_at:       {node.get('created_at', '?')}")
     if node.get("resolution_notes"):
         click.echo(f"  resolution_notes: {node['resolution_notes']}")
+    for key in ("found_in", "severity", "disposition", "disposition_evidence"):
+        if node.get(key):
+            click.echo(f"  {key + ':':<18}{node[key]}")
 
     if affects:
         click.echo(f"\n  Affects ({len(affects)}):")
@@ -398,6 +469,37 @@ def issue_show(issue_id):
         for rb in resolved_by:
             rbtype = rb.get("artifact_type", "?")
             click.echo(f"    → [{rbtype}] {rb.get('artifact_id', '?')[:8]}... {rb.get('description', '')[:40]}")
+
+    if trace:
+        click.echo(f"\n  Trace ({len(trace)}):")
+        for row in trace:
+            t = dict(row["t"])
+            label = t.get("test_node") or t.get("name") or t.get("artifact_id", "?")[:8]
+            click.echo(f"    → {row['rel']} [{t.get('artifact_type', '?')}] {label} ({t.get('state', '?')})")
+
+
+@issue_group.command("orphans")
+@click.option("--json", "as_json", is_flag=True, help="machine-readable: a JSON list of the orphans")
+def issue_orphans(as_json):
+    """List review findings with neither a finished fix and a test nor an evidenced disposition (SEL-021).
+
+    A `review_finding` Issue passes when it is REMEDIATED_BY a completed (or verified) ResearchTask AND has a
+    VERIFIED_BY test, or when its disposition is not `fixed` and its disposition_evidence is not empty. Exits 1
+    when any finding is listed, 0 when none is.
+    """
+    config = load_project_config()
+    driver = get_neo4j_driver(config)
+    try:
+        rows = RF.orphans(driver, config["neo4j"]["database"])
+    finally:
+        driver.close()
+    if as_json:
+        import json
+        click.echo(json.dumps(rows, default=str))
+    else:
+        click.echo(RF.format_orphans(rows))
+    if rows:
+        raise SystemExit(1)
 
 
 @issue_group.command("summary")
