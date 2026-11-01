@@ -23,3 +23,7 @@ are not seldon's layout declares `desktop_commit.paths` in its `seldon.yaml` (fa
 **Filing into another repository (AD-036-R12).** Register a task file written into another repository's `cc_tasks/`
 in the same step: `seldon cc register --project <that repo> --allow-untracked <file>`, which commits it. An
 unregistered filing dirties that tree, and its dispatcher then refuses every task.
+
+**Review findings are Issues (SEL-021, factory F-010).** File each one as `--type review_finding` with `found_in`
+in the graph of the repository that fixes it. Trace it to its fix, its test and any decision it changes, and check
+with `seldon issue orphans`. See `docs/conventions/review_findings.md`.
