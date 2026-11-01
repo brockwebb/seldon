@@ -258,8 +258,11 @@ def initialize_project(
 
     # 5. .gitignore: credentials out, records in (AD-039). The stanza tracks cc_tasks/ and
     #    handoffs/ and ignores only data blobs under them; existing lines are kept, and one that
-    #    still ignores either directory is reported, not rewritten.
-    gitignore_added = tracked_dirs.ensure_stanza(project_dir / ".gitignore", extra_lines=(".env",))
+    #    still ignores either directory is reported, not rewritten. `.seldon/` (step 3's session
+    #    state) is ignored here too, or the first dispatcher pass dirties the tree (SEL-020).
+    from seldon.core.project_new import SESSION_STATE_LINE
+    gitignore_added = tracked_dirs.ensure_stanza(project_dir / ".gitignore",
+                                                 extra_lines=(".env", SESSION_STATE_LINE))
     try:
         gitignore_findings = tracked_dirs.ignored(project_dir)
     except tracked_dirs.TrackedDirsError:

@@ -79,6 +79,10 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
                                force=force_init, database=database)
             steps.append(PN.Step("init", "changed", f"seldon init {project_name or project_dir.name}"))
 
+        # 1b. `.seldon/` in the tracked .gitignore (SEL-020): an existing project may lack it, or carry it only in
+        #     .git/info/exclude, which no worktree or clone inherits.
+        steps.append(PN.ignore_step(project_dir))
+
         # 2. `seldon hooks install` (core.hooksPath, the recorded interpreter, the union declaration)
         st = H.status(project_dir)
         res = H.install(project_dir)

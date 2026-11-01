@@ -164,6 +164,41 @@ def commit_paths(project_dir: Path, paths: list, message: str) -> str | None:
     return _git(project_dir, "rev-parse", "--short", "HEAD").stdout.strip()
 
 
+# ───────────────────────────────────────────────────────────────── the session-state ignore line
+
+#: Seldon's per-machine session state (`seldon init` step 3 makes the directory; the dispatcher's lease, leases
+#: directory and stuck streak, the hooks' and the MCP's runtime files live under it). Never a record.
+SESSION_STATE_LINE = ".seldon/"
+SESSION_STATE_COMMENT = ("# Seldon's per-machine session state (lease, stuck streak, runtime logs); never a record "
+                         "(SEL-020).")
+
+
+def _tracked_ignore_rule(project_dir: Path, probe: str) -> bool:
+    """Whether a `.gitignore` inside the repository ignores `probe`. `.git/info/exclude` and the global excludes
+    file do not count: no clone or dispatched worktree inherits them from the record (aacps carried `.seldon/` in
+    its `info/exclude`, SEL-020)."""
+    out = subprocess.run(["git", "check-ignore", "-v", "--no-index", probe], cwd=project_dir,
+                         capture_output=True, text=True)
+    if out.returncode != 0:
+        return False
+    source = out.stdout.split(":", 1)[0]
+    return not os.path.isabs(source) and Path(source).name == ".gitignore"
+
+
+def ignore_step(project_dir: Path) -> Step:
+    """`.seldon/` ignored by the project's own `.gitignore`, appended when absent (SEL-020 Part A). Without it, the
+    first dispatcher pass leaves `.seldon/` files untracked, and a dirty tree holds every task (c7)."""
+    probe = SESSION_STATE_LINE + "x"
+    if _tracked_ignore_rule(project_dir, probe):
+        return Step("ignore", "ok", f"{SESSION_STATE_LINE} ignored")
+    gi = project_dir / ".gitignore"
+    old = gi.read_text(encoding="utf-8") if gi.is_file() else ""
+    sep = "" if not old or old.endswith("\n") else "\n"
+    gi.write_text(old + sep + ("\n" if old else "") + SESSION_STATE_COMMENT + "\n" + SESSION_STATE_LINE + "\n",
+                  encoding="utf-8")
+    return Step("ignore", "changed", f".gitignore + {SESSION_STATE_LINE}", [".gitignore"])
+
+
 # ───────────────────────────────────────────────────────────────── seldon.yaml additions
 
 def _load(project_dir: Path) -> tuple:
