@@ -31,3 +31,4 @@ include = ["seldon*"]
 
 [tool.setuptools.package-data]
 "seldon.domain" = ["*.yaml"]
+"seldon.templates" = ["*.yaml", "graph_spec/*.yaml"]

@@ -30,6 +30,7 @@ from seldon.commands.hooks import hooks_group
 from seldon.commands.commit_governed import commit_governed_command
 from seldon.commands.mcp_call import mcp_call_command
 from seldon.commands.prune import prune_group
+from seldon.commands.project import project_group
 
 
 @click.group()
@@ -70,3 +71,4 @@ main.add_command(commit_governed_command, name="commit-governed")
 main.add_command(qc_group, name="qc")
 main.add_command(mcp_call_command, name="mcp-call")
 main.add_command(prune_group, name="prune")
+main.add_command(project_group, name="project")

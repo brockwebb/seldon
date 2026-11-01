@@ -144,13 +144,36 @@ def init_command(
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
 
+    initialize_project(Path.cwd(), project_name, template_name, template, force)
+
+
+def initialize_project(
+    project_dir: Path,
+    project_name: str,
+    template_name: str,
+    template: Dict[str, Any],
+    force: bool = False,
+    database: str | None = None,
+) -> None:
+    """Write seldon.yaml, the event log, `.seldon/`, `.env` and the .gitignore stanza in
+    `project_dir`, then create and seed its Neo4j database. The body of `seldon init`, callable so
+    `seldon project new` (SEL-019) composes it rather than re-implementing it.
+
+    Args:
+        database: the Neo4j database name; `seldon-<slug>` when None (the name `seldon init`
+            has always written).
+
+    Raises:
+        SystemExit: seldon.yaml already present, no ontology tree, or a non-empty database
+            without `force`; each is reported on stderr first.
+    """
     from dotenv import load_dotenv
     from neo4j import GraphDatabase
 
-    project_dir = Path.cwd()
+    project_dir = Path(project_dir)
     load_dotenv(project_dir / ".env", override=False)
     slug = slugify(project_name)
-    database = f"seldon-{slug}"
+    database = database or f"seldon-{slug}"
     events_path = "seldon_events.jsonl"
     # Resolved once: the same URI is written into seldon.yaml and connected to,
     # so a project can never be configured for one server and initialised against

@@ -141,6 +141,31 @@ also writes the wrapper's log caps, the ignore lines, and a plist under `scripts
 this repository's wrapper for that project. It then prints the commit, `seldon hooks install` and
 `launchctl` lines to run. `--dry-run` writes nothing.
 
+*Since SEL-019 (2026-11-01): `seldon project new <path> [--graph <name>] [--dispatch [--enable]]` replaces
+the hand steps.* Three projects were adopted by hand: squiddy, hazbrief-mcp (SEL-016) and aacps-ai-policy
+(AP-02, aacps commit 8869c47). After `adopt`, each one typed the same lines, and `project new` runs that
+sequence as one command:
+
+1. `git init -b main`, when the directory is not yet a repository.
+2. `seldon init`.
+3. `seldon hooks install`, with the `merge=union` declaration.
+4. `seldon dispatch adopt --yes`, unchanged.
+5. The keys the hand adoptions added after `adopt`:
+   - `environment.packages`;
+   - `dispatch.stations.environment_ref`;
+   - the FC-02 `desktop_commit.scan`;
+   - `dispatch.stations.interpreter`, optionally, and only after the interpreter has imported seldon
+     (AD-037-R15).
+6. `squiddy init graphs/<name>` from `graph.yaml`. When the spec is absent, a skeleton is written whose
+   scope the operator fills.
+7. One commit, through the hooks, of exactly the paths it wrote.
+8. The plist symlinked into `~/Library/LaunchAgents` and bootstrapped.
+9. With `--enable`, `dispatch.enabled: true`.
+
+Each step acts only where the project lacks what it produces, so a second run changes nothing and says so.
+The command registers nothing; it prints the `seldon cc register` line to run next. Its values come from the
+kit's `project_new:` block in seldon's `seldon.yaml`. The code is `seldon/core/project_new.py`.
+
 ## Tests
 
 `tests/test_dispatch.py` (57): configuration and reference resolution, candidacy and each

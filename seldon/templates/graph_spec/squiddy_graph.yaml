@@ -1,0 +1,27 @@
+# graphs/{graph}/graph.yaml: THE ONE FILE (squiddy K-001) for this graph. Every other artifact in this
+# directory is generated from it by `squiddy init graphs/{graph} --spec graphs/{graph}/graph.yaml`.
+#
+# Written as a SKELETON by `seldon project new --graph {graph}` (seldon SEL-019). The three blank fields
+# below are required and are the operator's to write: `squiddy init` refuses until they are filled, and
+# `seldon project new` reports that refusal and runs it again on its next run. The scope is the
+# collection the operator wants, in the operator's words (squiddy DN-028 R-129); it is never guessed.
+#
+# Everything not written here has a default in squiddy's init_defaults.yaml. The consumer specs to read
+# before filling this one: ../hazbrief-mcp/graphs/hazbrief-corpus/graph.yaml and
+# ../aacps-ai-policy/graphs/aacps-policy-dm/graph.yaml.
+spec_version: 1
+name: {name}
+# Required: a short noun phrase, e.g. "the AACPS Policy DM corpus graph".
+title:
+# Required: one paragraph, what the graph holds.
+description:
+scope:
+  # Required: the collection, in the operator's words. `anchors` and `exclusions` only if the operator has them.
+  topic:
+store: ledger
+serve:
+  backend: export
+# Classes from squiddy's base schema, each with its parent, in declaration order. Work is one admitted
+# source document; add the rest the scope needs.
+classes:
+  - Work: Node
