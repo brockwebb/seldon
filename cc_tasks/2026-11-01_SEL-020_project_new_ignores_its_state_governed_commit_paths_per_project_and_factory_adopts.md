@@ -10,7 +10,7 @@
 **Network:** none beyond git push.
 **Framework layer served (DN-005 §5 rule 1):** none (machine infrastructure).
 **Exclusive:** no
-**Touches:** seldon/commands/, seldon/core/, seldon/mcp/, tests/, docs/design/, CLAUDE.md, /Users/brock/GitHub/factory
+**Touches:** seldon/commands/, seldon/core/, seldon/mcp/, tests/, docs/design/, CLAUDE.md
 **Parts:** A 0.2, B 0.4, C 0.25, D 0.15.
 **Premises:**
 - premise: `project new` exists | check: test -f seldon/core/project_new.py
