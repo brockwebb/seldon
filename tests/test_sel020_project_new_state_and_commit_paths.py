@@ -6,6 +6,7 @@ test database), the real hooks, the real adopt, then one real `seldon dispatch o
 """
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -80,6 +81,28 @@ def test_a_rule_only_in_info_exclude_is_not_enough(tmp_path):
     step = PN.ignore_step(d)
     assert step.status == "changed"
     assert ".seldon/" in (d / ".gitignore").read_text().splitlines()
+
+
+def test_the_copied_scan_program_keeps_the_venvs_symlink(tmp_path, kit):
+    """Found adopting factory (SEL-020 Part C): `project new` re-rooted the kit's `../squiddy/.venv/bin/python` with
+    `resolve()`, which follows the venv's symlink to the bare CPython (DESK-003's failure: that interpreter runs
+    outside the venv and cannot import the scanner). The re-rooting must be lexical."""
+    real = tmp_path / "cpython" / "bin" / "python3"
+    real.parent.mkdir(parents=True)
+    real.write_text("#!/bin/sh\n")
+    link = tmp_path / "scanner" / ".venv" / "bin" / "python"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(real)
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    (proj / "seldon.yaml").write_text("project:\n  name: proj\n")
+    cfg = PN.project_new_config(kit)
+    text, added = PN.environment_text(proj, cfg, kit, dispatch=False, interpreter=None)
+    import yaml
+    command = yaml.safe_load(text)["desktop_commit"]["scan"]["command"]
+    assert "desktop_commit.scan" in added
+    assert command[0] == "../scanner/.venv/bin/python", command
+    assert Path(os.path.normpath(proj / command[0])) == link
 
 
 # ══════════════════════════════════════════════════════════════════════════════

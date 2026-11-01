@@ -249,7 +249,10 @@ def environment_text(project_dir: Path, cfg: dict, kit_dir: Path, dispatch: bool
     if scan and not ((config.get("desktop_commit") or {}).get("scan")):
         command = [str(c) for c in scan.get("command") or []]
         if command and "/" in command[0] and not os.path.isabs(command[0]):
-            command[0] = os.path.relpath((Path(kit_dir) / command[0]).resolve(), project_dir.resolve())
+            # Lexically, never resolve() on the program: a venv's `bin/python` is a symlink to a bare CPython that
+            # runs outside the venv and cannot import the scanner (DESK-003; found again adopting factory, SEL-020).
+            command[0] = os.path.relpath(os.path.normpath(Path(kit_dir).resolve() / command[0]),
+                                         project_dir.resolve())
         text = A.insert_into_block(text, ("desktop_commit", "scan"),
                                    _block_lines({"roots": list(scan.get("roots") or []), "command": command},
                                                 "    ", {"roots": SCAN_COMMENT}))
