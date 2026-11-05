@@ -1,0 +1,18 @@
+# Consumer filing from squiddy: removing a merged worktree discards gitignored outputs the primary does not hold, and the record that names them cannot tell a loss from a copy
+
+**Repo:** seldon. **Date:** 2026-11-04. **Authored by:** squiddy task SQ-109's Claude Code session (squiddy `cc_tasks/2026-11-04_SQ-109_ai_readiness_kg_filing_worktree_admissions_absent_from_the_primary_measured_owned_and_returned.md`), filed into seldon's queue under AD-036-R12 as a report of what two consumers experienced. No candidacy headers, not a dispatcher candidate; it will not register until SEL-023 lands. This filing proposes no fix; the seldon thread decides what, if anything, changes.
+**Evidence:** squiddy SQ-109 RESULT Part A row (2) (`cc_tasks/2026-11-04_SQ-109_..._RESULT.md`); ai-readiness-kg `cc_tasks/2026-11-03_rematerialize_worktree_admissions_in_primary_RESULT.md` §3 and Issue `2b5a296d`; ai-readiness-kg `seldon_events.jsonl`, the `dispatch_finished` records of tasks 829a5010 (2026-11-02T17:15:34Z) and 5ae6744f (2026-11-03T06:28:53Z); seldon `seldon/core/worktree.py` `remove` and `ignored_paths`, `seldon/commands/dispatch_worktree.py` (the `discarded_ignored` block before the sweep), `seldon/core/dispatch.py` `PARALLEL_DEFAULTS["worktree_links"]`.
+
+## What the consumers observed
+
+1. **Four admitted documents lost their bytes at merge.** ai-readiness-kg tasks 829a5010 and 5ae6744f admitted four documents in dispatched worktrees. Their manifest entries and events were tracked and merged. Their corpus files (`corpus/crosswalk/`) and docling renders (`state/docling_md/`) were gitignored and were deleted when the sweep removed each worktree. The primary checkout held none of the four. One (ISO 15939) cannot be re-fetched (HTTP 403), so its entry is `included, verified` with no bytes anywhere.
+
+2. **The finish record named the directory, among about sixty others.** Each `dispatch_finished` record's `merge.discarded_ignored` lists `corpus/crosswalk/` and `corpus/measurement_theory/` among roughly sixty ignored paths: `__pycache__/` directories, logs, and the whole seeded corpus. The consumer copies about 970 MB of gitignored corpus into each worktree so its gate can run (its `airkg-worktree-gate-seeding` practice). Every ignored path that is only a copy of the primary's appears in the same list as the four files the primary never had. Both tasks merged green. The line on stderr ("removing ... discards gitignored: ...") shows the first ten paths.
+
+3. **Reproduced on a scratch repository, without the dispatcher.** squiddy SQ-109 admitted one document through the kit's own path in a git worktree, committed with `git add -A`, merged, and ran `git worktree remove` with no `--force`. It exited 0 and deleted the ignored outputs: the parse and resolve caches, the admission state and, under a consumer's ignore rules, the PDF itself. The merged manifest still said `acquisition_status: acquired`. git counts ignored files as clean, so even the unforced removal does not refuse.
+
+4. **The mechanism that would have kept them exists and was not configured.** `dispatch.worktree_links` symlinks named gitignored paths from the primary into each worktree. Its default is `[".env"]`, and ai-readiness-kg declares none. A session writing into a linked directory writes into the primary.
+
+## What the consumer wants to know back
+
+Whether the dispatcher should treat "an ignored path the worktree holds and the primary does not" as something other than debris, whether by naming it apart, refusing the removal, or copying it back, and whether `worktree_links` is the route the seldon thread intends for a consumer's gitignored outputs. squiddy has told ai-readiness-kg to use `worktree_links` in the meantime (its return AR-001).
