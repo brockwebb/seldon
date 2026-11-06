@@ -1,3 +1,4 @@
+seq: 325
 event: accept
 id: seldon:AD-038-R19
 date: '2026-11-06'
@@ -30,3 +31,5 @@ consumer:
 - cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
 written_by: seldon decision 0.1.0
 provisional_id: 179381e7d6d767ece2b63f6dcfa4fd2c4a3f3a8fc7db806b3924c81a321a15f0
+prev_hash: 07da1429d2163775c02360b621c432c9f8be1bbd4ebb0ca7956f80c44f1e75ad
+record_hash: 833c54275f80b7c74d015b3227654631c2bb249d57e91c3812d5f00ffb373dd7
