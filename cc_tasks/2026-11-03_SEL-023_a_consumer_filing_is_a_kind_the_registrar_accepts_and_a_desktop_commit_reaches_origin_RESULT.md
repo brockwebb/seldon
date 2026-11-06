@@ -121,8 +121,39 @@ What squiddy does, in this order:
 
 ## 5. The return
 
-(filled in below once `seldon cc return` has run)
+- The squiddy filing is registered in seldon as **647df468** (`task_kind: filing`, `filed_by: squiddy`). Its event
+  line was committed by its registration (`9c2ec2c`).
+- `python -m seldon cc return <SEL-023 task file> --answers seldon:647df468` (this branch's code) wrote
+  `squiddy/cc_tasks/2026-11-06_SQ-123_sel_023_answered_the_consumer_filing_of_2026_11_03_confirm_the_two_haz.md`. It
+  was registered in squiddy's graph as **da244cbe** and committed on squiddy main by its registration, through
+  squiddy's hooks: `343e8a8e` (the file) and `f9955059` (its event lines). squiddy's tree is clean afterwards. Its
+  `**Returns:**` header names `seldon:841bd7c7-…` (SEL-023). It is not pushed from this session; squiddy's dispatcher
+  pushes it on its next pass (that repository's idle pass already pushes).
+- The return closed the filing: 647df468 `proposed -> completed`. The lines were committed here as `c2c220f`.
+- **A defect found by the dry run and fixed here.** The allocator offered **SQ-121**, which squiddy's graph already
+  holds as an idea (`f5977b0f`, "SQ-121 (idea, no file yet): ..."). `numbering._DESC_RE` required the colon directly
+  after the token, so that holder was invisible to the allocator and to `number_taken`. The regex now admits one
+  parenthetical before the colon (`b5a6947`, test `test_a_numbered_idea_with_a_parenthetical_holds_its_number`). The
+  fix only makes the allocator see more holders, never fewer. Re-run, the allocator gave SQ-123 (after SQ-122, also
+  an idea).
+- SEL-023's file carries no `**Answers:**` header, so `seldon cc complete` and the dispatcher's merge-time writer
+  apply no return gate to it. The return was filed by this session, which is why `--answers` exists.
 
 ## 6. Verification
 
-(filled in below once the suites have run)
+- `tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py`: 40 passed (36 plus the 4 parametrized cases of the
+  numbering fix).
+- Related subset (every `test_dispatch*`, SEL-013R, DESK-00x, go, MCP-001, MCP tools, PRUNE-002, SEL-011, NUM-001R,
+  SEL-021, SEL-022, cc register, FRICTION-001/002, SEL-018), run before the numbering fix: **579 passed, 1 skipped,
+  EXIT=0** (12 min 46 s, `-n 6`). The serial transcript test is among them and passes unchanged.
+- NUM-001R after the numbering fix: 39 passed.
+- Full suite on the branch's final code (`python -m dotenv -f .env run -- python -m pytest -n 6 tests/`):
+  **3207 passed, 7 skipped, 2 failed** (23 min 13 s). Neither failure is this task's:
+  - `test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index`:
+    `release_unavailable ... no commit of squiddy/graphs/library/exports/EXPORT_VERSIONS.md carries 7b72aaa89fe005d3`,
+    the library-index drift known on main (Issue dbe38fac). This branch touches neither the test nor `prior_art.py`.
+  - `test_dispatch_parallel::test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge`: a timing
+    assertion under `-n 6`, known to flake; **passed alone** (1 passed, 36 s).
+- `seldon dispatch part-complete` ran for A to E, with no stop. Tokens at E: 333,927, against the 0.8M stop.
+- Live: the squiddy filing registered as a filing, its return filed and registered in squiddy, the filing closed
+  (§5).
