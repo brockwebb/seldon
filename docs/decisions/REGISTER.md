@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 185 records: accepted 162, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 187 records: accepted 164, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (162)
+## Accepted (164)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -324,6 +324,10 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 185 records: accept
   - source `docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md`:56-65; decided by cc:841bd7c7; consumer cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
 - **seldon:AD-038-R21** Every dispatcher pass shall end by pushing what the branch is ahead by unless it already tried at the same HEAD, whatever it found; a pass that finds the lease held shall push before it exits; a serial holder shall push on each inspection tick while its session runs; a failed push is retried by the next pass; a STOP file, dispatch disabled, an inherited API key and a missing commit gate still end the pass before the push.
   - source `docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md`:66-71; decided by cc:841bd7c7; consumer cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+- **seldon:AD-038-R22** The dispatch wrapper shall rotate its log to logs/dispatch/<base>.<UTC stamp>.log, keeping the .log suffix last, and its retention shall delete only that name and the pre-SEL-025 name; seldon's .gitignore shall ignore logs/** so no log the machine writes under logs/ makes the tree dirty.
+  - source `docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md`:41-43; decided by cc:915acf48; consumer cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md
+- **seldon:AD-038-R23** The dispatcher's pass shall commit an untracked cc_tasks/<name>.md whose header block declares Kind filing or whose Status names a consumer filing, with any untracked addendum to it, as its own path-limited commit through the hooks with the subject `dispatcher: filing: <basename>`, and print filing_committed; any other untracked path under a governed directory remains dirt that refuses on c7 and is named.
+  - source `docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md`:44-48; decided by cc:915acf48; consumer cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md
 - **seldon:AD-039-R1** ### AD-039-R1. The record directories are tracked; only blobs under them are ignored; handoffs are scanned. In every repository Seldon serves or scaffolds, `cc_tasks/` and `handoffs/` MUST be tracked. The only ignore rules that may match anything under them are `cc_tasks/*.json`, `cc_tasks/*.jsonl`, `handoffs/*.json` and `handoffs/*.jsonl` (data blobs, ignored by size). A handoff is committed only after `python -m squiddy.secret_scan` passes on it; the scan, never an ignore rule, is what keeps a secret out of a public repository. `seldon verify` refuses a repository where git would ignore `cc_ [...]
   - source `docs/design/AD-039_tracked_dirs.md`:9-16; decided by cc:729a80ba; consumer cc_tasks/2026-10-19_STD-001R_tracked_dirs_everywhere.md
 - **seldon:phase_c_retirement_list-R1** The Wintermute maintainer shall delete the LightRAG packages from the wintermute .venv and delete the rag_storage/ directory, while retaining any associated source notes for their research value.

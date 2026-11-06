@@ -1,3 +1,4 @@
+seq: 331
 event: accept
 id: seldon:AD-038-R22
 date: '2026-11-06'
@@ -28,3 +29,5 @@ consumer:
 - cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md
 written_by: seldon decision 0.1.0
 provisional_id: 831f09e243c1b5cb916c0965e2d7bf30335276cc164f5d8d4b6f4f436dc584de
+prev_hash: 14f6f42ca168eb97af2ecfb812975405362cd5c39056687638aabf8d8dfc3799
+record_hash: aeb1c21e0c35314512419fbd2c5e107f3951c621c385b94804217d28520fb790
