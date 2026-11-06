@@ -376,7 +376,16 @@ def task_list(state, open_only, show_all, stale_claims):
 
 @task_group.command("update")
 @click.argument("task_id")
-@click.option("--state", required=True, help="New state to transition to")
+@click.option("--state", default=None, help="New state to transition to")
+@click.option(
+    "--kind", "kind", type=click.Choice(["task", "filing"]), default=None,
+    help="Retag what the task is (SEL-023, AD-036-R17): `filing` is a consumer's report, never a dispatcher "
+         "candidate, closed by its return or by withdraw. For a filing registered before `**Kind:** filing` existed.",
+)
+@click.option(
+    "--dispatch", "dispatch_mode", type=click.Choice(["dispatcher", "hand"]), default=None,
+    help="Who launches it (SEL-023, AD-038-R19): `hand` is never launched by the dispatcher.",
+)
 @click.option(
     "--reason", default=None,
     help="Why the task ended or is blocked. Required for --state withdrawn, --state "
@@ -392,7 +401,7 @@ def task_list(state, open_only, show_all, stale_claims):
     help=f"Agent identifier recorded on the accepted → in_progress transition "
          f"(default: '{CLI_ACTOR}').",
 )
-def task_update(task_id, state, reason, superseded_by, claimed_by):
+def task_update(task_id, state, reason, superseded_by, claimed_by, kind, dispatch_mode):
     """Transition a ResearchTask to a new state.
 
     `withdrawn` and `superseded` require `--reason`; the reason is stored as
@@ -401,11 +410,18 @@ def task_update(task_id, state, reason, superseded_by, claimed_by):
     `blocked` (AD-038-R7). The `accepted → in_progress` transition records
     `claimed_by` and `claimed_at`.
     """
+    if state is None and kind is None and dispatch_mode is None:
+        click.echo("Error: name --state, --kind or --dispatch", err=True)
+        raise SystemExit(2)
     project_dir, driver, database, domain_config, session_id = _open_project()
     blocking = state == BLOCKED_STATE
     try:
         full_id, node = _load_task(driver, database, task_id)
         old_state = node["state"]
+        if kind is not None or dispatch_mode is not None:
+            _retag(project_dir, driver, database, session_id, full_id, kind, dispatch_mode)
+            if state is None:
+                return
 
         if blocking and old_state == BLOCKED_STATE and not (claimed_by or superseded_by):
             # Already blocked: the reason is replaced, nothing else moves (AD-038-R7).
@@ -435,6 +451,22 @@ def task_update(task_id, state, reason, superseded_by, claimed_by):
         raise SystemExit(1)
     finally:
         driver.close()
+
+
+def _retag(project_dir, driver, database, session_id, full_id, kind, dispatch_mode) -> None:
+    """SEL-023: set `task_kind` and/or `dispatch_mode` in one `artifact_updated` line. `task` and `dispatcher` are the
+    defaults, so choosing one clears the property rather than storing the default (a reader treats absent as it)."""
+    from seldon.core.artifacts import update_artifact
+    props = {}
+    if kind is not None:
+        props["task_kind"] = "filing" if kind == "filing" else None
+    if dispatch_mode is not None:
+        props["dispatch_mode"] = "hand" if dispatch_mode == "hand" else None
+    update_artifact(project_dir=project_dir, driver=driver, database=database, artifact_id=full_id,
+                    properties=props, actor=CLI_ACTOR, authority="accepted", session_id=session_id)
+    click.echo(f"Updated Task: {full_id[:8]}...")
+    for k, v in props.items():
+        click.echo(f"  {k}: {v if v is not None else '(default)'}")
 
 
 @task_group.command("close")

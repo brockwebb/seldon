@@ -177,6 +177,8 @@ class Outcome:
     drafts: list = field(default_factory=list)      # [{"note", "why"}]
     refusal: Optional[str] = None                   # reason token
     detail: str = ""                                # human text; the hook's verbatim on HOOK_REFUSED
+    registered: list = field(default_factory=list)  # [{"path", "artifact_id"}], SEL-023 Part C (AD-038-R20)
+    unregistered: list = field(default_factory=list)  # [{"path", "refusal"}]: committed, registration refused
 
     def as_dict(self) -> dict:
         return dict(self.__dict__)
@@ -302,13 +304,61 @@ def _unstage(project_dir: Path, rels: list) -> None:
         D.git(project_dir, "rm", "--cached", "-q", "--ignore-unmatch", "--", *rels)
 
 
-def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = None) -> Outcome:
+#: A cc_tasks file that is a task's base file: not an addendum, a RESULT, a SUBRESULT or an OODA record, each of
+#: which belongs to a registered task and is never registered on its own.
+_BASE_TASK_RE = re.compile(r"^cc_tasks/(?!.*_ADDENDUM)(?!.*_(?:SUB)?RESULT)(?!.*\.ooda)[^/]+\.md$")
+
+
+def is_base_task_file(rel: str) -> bool:
+    return bool(_BASE_TASK_RE.match(rel))
+
+
+def register_committed_tasks(project_dir: Path, config: dict, rels: list, actor: str) -> tuple:
+    """SEL-023 Part C (AD-038-R20): register each committed base task file no task holds yet.
+
+    Called after the commit, so a refusal leaves a committed, unregistered file (a clean tree, nothing dispatchable)
+    rather than an untracked one that stalls the queue on c7, which is what a refusal before the commit did
+    (DESK-001). Returns `(registered, unregistered)`; a registration that cannot run at all (the graph down) is one
+    `unregistered` row per file carrying the error, never an exception that would hide the commit that landed.
+    """
+    rels = [r for r in rels if is_base_task_file(r)]
+    if not rels:
+        return [], []
+    registered, unregistered = [], []
+    try:
+        from seldon.commands.cc import _find_existing, _get_domain_config, register_task_file
+        from seldon.config import get_neo4j_driver
+        driver = get_neo4j_driver(config)
+    except Exception as exc:                                        # noqa: BLE001 -- reported per file, below
+        return [], [{"path": r, "refusal": f"the graph cannot be opened ({type(exc).__name__}: {exc})"} for r in rels]
+    database = config["neo4j"]["database"]
+    try:
+        for rel in rels:
+            try:
+                if _find_existing(driver, database, rel):
+                    continue
+                out = register_task_file(project_dir=project_dir, config=config, driver=driver, database=database,
+                                         domain_config=_get_domain_config(config), session_id=None,
+                                         task_path=project_dir / rel, actor=actor)
+                registered.append({"path": rel, "artifact_id": out["artifact_id"]})
+            except (ValueError, FileNotFoundError) as exc:
+                unregistered.append({"path": rel, "refusal": str(exc)})
+    finally:
+        driver.close()
+    return registered, unregistered
+
+
+def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = None,
+                    register_tasks: bool = False, actor: str = "desktop") -> Outcome:
     """Commit exactly `paths` through the hooks. See the module docstring for every refusal.
 
     Args:
         project_dir: The project (repository top level) the paths belong to.
         paths: Project-relative or absolute paths of files under the configured roots.
         config: Parsed seldon.yaml; read from `project_dir` when None.
+        register_tasks: After the commit, register each committed base task file under cc_tasks/ that is not yet
+            registered (SEL-023 Part C, AD-038-R20), as `actor`. The MCP tool and the CLI pass True.
+        actor: Recorded as the registration's created_by.
 
     Returns:
         An `Outcome`. `sha` is the full commit sha when `committed`.
@@ -359,7 +409,10 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
                        message=message,
                        detail=f"{HOOK_REFUSED}: {out.get('reason')}: {out.get('stderr', '')}".rstrip())
     sha = D.git(project_dir, "rev-parse", "HEAD").stdout.strip()
-    return Outcome(committed=True, sha=sha, message=message, paths=rels, drafts=drafts)
+    registered, unregistered = (register_committed_tasks(project_dir, config, rels, actor) if register_tasks
+                                else ([], []))
+    return Outcome(committed=True, sha=sha, message=message, paths=rels, drafts=drafts, registered=registered,
+                   unregistered=unregistered)
 
 
 def render(outcome: Outcome) -> str:
@@ -370,4 +423,9 @@ def render(outcome: Outcome) -> str:
     for d in outcome.drafts:
         lines.append(f"  draft: {d['note']}: {d['why']}. A task governed by it is held at "
                      f"registration and dispatch until it passes (AD-036 ADDENDUM 05).")
+    for r in outcome.registered:
+        lines.append(f"  registered: {r['path']} (task {r['artifact_id'][:8]}; AD-038-R20)")
+    for r in outcome.unregistered:
+        lines.append(f"  NOT registered: {r['path']}: {r['refusal']} (the file is committed, so the tree is clean; "
+                     f"fix it with a new task file, or `seldon_cc_register` once the cause is gone)")
     return "\n".join(lines)

@@ -83,17 +83,25 @@ class ReturnError(RuntimeError):
 
 @dataclass
 class Answered:
-    """What a task's `Answers:` header names, resolved."""
+    """What a task's `Answers:` header names, resolved.
+
+    `project` and `root` are the CONSUMER, where the return is filed. For a filing in another repository's graph
+    (AD-036-R16) that is also where the filing is registered. For a filing registered in the producer's OWN graph
+    (AD-036-R17 and R18: a `**Kind:** filing` file a consumer filed into the producer's cc_tasks/), `local` is True,
+    `graph` names the producer, and the consumer is the filing's `**Filed by:**` (or `--to`).
+    """
 
     project: str
     ref: str
     root: Path
     artifact_id: str
     source_file: Optional[str]
+    local: bool = False
+    graph: Optional[str] = None
 
     @property
     def qualified(self) -> str:
-        return f"{self.project}:{self.artifact_id}"
+        return f"{self.graph or self.project}:{self.artifact_id}"
 
     @property
     def token(self) -> Optional[str]:
@@ -103,6 +111,9 @@ class Answered:
 
     @property
     def label(self) -> str:
+        if self.local:
+            # A filing in the producer's own graph carries no consumer number: name it where it is registered.
+            return f"{self.graph}:{self.artifact_id[:8]} (filed by {self.project})"
         return f"{self.project}:{self.token or self.artifact_id[:8]}"
 
 
@@ -129,22 +140,41 @@ def producer_name(project_dir: Path) -> str:
     return _anchor(Path(project_dir)).name
 
 
-def resolve_answers(text: str, project_dir: Path, config: Optional[dict]) -> Optional[Answered]:
-    """The filing the task's Answers header names, resolved in the consumer's graph (read, never written).
+def resolve_answers(text: str, project_dir: Path, config: Optional[dict], *, value: Optional[str] = None,
+                    to: Optional[str] = None) -> Optional[Answered]:
+    """The filing the task's Answers header names, resolved (read, never written).
 
     A task number (`HB-37`) resolves to the one ResearchTask holding it, an exact token first (`HB-37R` names the
     re-filing), else its identity; anything else resolves as an After ref does (a cc_tasks stem or an id prefix).
 
+    AD-036-R18 (SEL-023): when `<repo>` is this repository itself, the ref names a filing a consumer filed INTO this
+    repository (`**Kind:** filing`, AD-036-R17), registered in this graph. The return then goes to the filing's
+    `**Filed by:**` repository, or to `to` when it names none.
+
+    Args:
+        value: The Answers value to resolve instead of the file's header (`seldon cc return --answers`), for an
+            answering task written before its filing could be registered. A file whose header names another filing
+            is refused rather than overridden.
+        to: The consumer, for a filing in this graph that names no `**Filed by:**`.
+
     Returns:
-        None when the task carries no Answers header.
+        None when the task carries no Answers header and no `value` is given.
 
     Raises:
         ValueError: carrying `answers_unresolved`, when the header does not parse, the repository is not a Seldon
-            project, or the ref names no task or more than one.
+            project, the ref names no task or more than one, or names a task in this graph that is not a filing or
+            has no consumer to return to.
     """
     from seldon.core import cross_project as X
 
     parsed = answers_of(text)
+    if value is not None:
+        given = parse_answers(value)
+        if parsed["kind"] == "ref" and given["kind"] == "ref" and (given["project"], given["ref"]) != (
+                parsed["project"], parsed["ref"]):
+            raise ValueError(f"{ANSWERS_UNRESOLVED}: --answers {value!r} differs from the task file's own "
+                             f"`**Answers:** {parsed['project']}:{parsed['ref']}`; the file's header stands")
+        parsed = given
     if parsed["kind"] == "absent":
         return None
     if parsed["kind"] is None:
@@ -155,32 +185,56 @@ def resolve_answers(text: str, project_dir: Path, config: Optional[dict]) -> Opt
     except ValueError as exc:
         raise ValueError(f"{ANSWERS_UNRESOLVED}: Answers {project}:{ref}: {exc}") from exc
     try:
-        aid, src = _resolve_in(driver, database, ref)
+        aid, src, kind, filed_by = _resolve_in(driver, database, ref)
     except ValueError as exc:
         raise ValueError(f"{ANSWERS_UNRESOLVED}: Answers {project}:{ref}: {exc} (in {root}). "
                          f"Grammar: {ANSWERS_GRAMMAR}.") from exc
     finally:
         driver.close()
-    return Answered(project=project, ref=ref, root=root, artifact_id=aid, source_file=src)
+    if Path(root).resolve() != X._anchor(Path(project_dir)).resolve():
+        return Answered(project=project, ref=ref, root=root, artifact_id=aid, source_file=src)
+    # AD-036-R18: a filing registered in this repository's own graph. Its consumer is where the return goes.
+    from seldon.core.dispatch import KIND_FILING
+    if kind != KIND_FILING:
+        raise ValueError(f"{ANSWERS_UNRESOLVED}: Answers {project}:{ref} names {aid[:8]}, a task in this repository's "
+                         f"own graph that is not a filing (`**Kind:** filing`, AD-036-R17); a task answers a filing, "
+                         f"never another task of its own repository")
+    consumer = to or filed_by
+    if not consumer:
+        raise ValueError(f"{ANSWERS_UNRESOLVED}: the filing {aid[:8]} names no `**Filed by:**` repository, so its "
+                         f"return has no address; pass --to <consumer>")
+    if filed_by and to and to != filed_by:
+        raise ValueError(f"{ANSWERS_UNRESOLVED}: --to {to} is not the repository the filing {aid[:8]} was filed by "
+                         f"({filed_by})")
+    try:
+        consumer_root = X.project_root(consumer, project_dir, config)
+    except ValueError as exc:
+        raise ValueError(f"{ANSWERS_UNRESOLVED}: the filing {aid[:8]}'s consumer {consumer}: {exc}") from exc
+    return Answered(project=consumer, ref=ref, root=consumer_root, artifact_id=aid, source_file=src, local=True,
+                    graph=project)
 
 
 def _resolve_in(driver, database: str, ref: str) -> tuple:
     from seldon.commands.cc import resolve_after_refs
     from seldon.core import numbering as N
 
+    aid = None
     if _TOKEN_REF_RE.match(ref):
         holders = N.graph_holders(driver, database)
         exact = [h for h in holders if str(h.token) == ref]
         same = exact or [h for h in holders if h.token.identity == ref]
         if len(same) == 1:
-            return same[0].artifact_id, same[0].source_file
+            aid = same[0].artifact_id
         if len(same) > 1:
             raise ValueError(f"task number {ref} is held by {len(same)} tasks: "
                              f"{'; '.join(h.describe() for h in same)}; name one by its id prefix")
-    (aid,) = resolve_after_refs(driver, database, [ref])
+    if aid is None:
+        (aid,) = resolve_after_refs(driver, database, [ref])
+    # SEL-023: the kind and the consumer are read with the file, for AD-036-R18's filing in this repository's graph.
     with driver.session(database=database) as s:
-        row = s.run("MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t.source_file AS f", id=aid).single()
-    return aid, (row["f"] if row else None)
+        row = s.run("MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t.source_file AS f, t.task_kind AS k, "
+                    "t.filed_by AS b", id=aid).single()
+    return aid, (row["f"] if row else None), (row["k"] if row else None), (row["b"] if row else None)
 
 
 # ---------------------------------------------------------------- finding a return
@@ -339,9 +393,13 @@ def latest_open(driver, database: str) -> Optional[str]:
     return Path(row["f"]).stem if row else None
 
 
-def _prefix_for(answered: Answered, prefix: Optional[str]) -> str:
+def _prefix_for(answered: Answered, prefix: Optional[str], driver=None, database: Optional[str] = None) -> str:
     if prefix:
         return prefix.strip().upper()
+    if answered.local:
+        # AD-036-R18: a filing in the producer's graph carries the producer's naming, never the consumer's, so the
+        # consumer's own prefix is read from its graph: the one most of its numbered tasks carry.
+        return _consumer_prefix(answered, driver, database)
     from seldon.core.numbering import file_token
     tok = file_token(answered.source_file) if answered.source_file else None
     if tok is None and _TOKEN_REF_RE.match(answered.ref):
@@ -350,6 +408,41 @@ def _prefix_for(answered: Answered, prefix: Optional[str]) -> str:
         raise ReturnError(f"{answered.label} carries no task number, so the consumer's prefix is unknown; pass "
                           f"--prefix (the prefix {answered.project}'s task files use)")
     return tok.prefix
+
+
+def _consumer_prefix(answered: Answered, driver, database: Optional[str]) -> str:
+    from collections import Counter
+
+    from seldon.core.numbering import graph_holders
+    counts = Counter(h.token.prefix for h in graph_holders(driver, database)) if driver is not None else Counter()
+    if not counts:
+        raise ReturnError(f"{answered.project}'s graph holds no numbered task to read its prefix from; pass --prefix")
+    return sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+
+
+def close_filing(project_dir: Path, config: Optional[dict], answered: Answered, rel_path: str,
+                 actor: str = "cc") -> Optional[str]:
+    """AD-036-R17: a filing in this repository's graph closes when its return is filed. Returns the state it walked
+    from, or None when it was already terminal (a re-run, or a withdrawn filing)."""
+    from seldon.commands.cc import _get_domain_config
+    from seldon.config import get_neo4j_driver
+    from seldon.core.artifacts import terminal_states, walk_to_completed
+
+    driver = get_neo4j_driver(config)
+    database = config["neo4j"]["database"]
+    domain_config = _get_domain_config(config)
+    try:
+        with driver.session(database=database) as s:
+            row = s.run("MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t.state AS st",
+                        id=answered.artifact_id).single()
+        state = row["st"] if row else None
+        if state is None or state in terminal_states(domain_config, "ResearchTask"):
+            return None
+        walk_to_completed(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+                          artifact_id=answered.artifact_id, current_state=state, actor=actor, session_id=None)
+        return state
+    finally:
+        driver.close()
 
 
 def render(*, token: str, title: str, producer: str, task_id: str, task_token: Optional[str], task_rel: str,
@@ -378,7 +471,8 @@ def render(*, token: str, title: str, producer: str, task_id: str, task_token: O
 
 def write_return(project_dir: Path, config: Optional[dict], task_path: Path, task_id: str, *,
                  to: Optional[str] = None, prefix: Optional[str] = None, dry_run: bool = False,
-                 result_path: Optional[Path] = None, actor: str = "cc", emit=None) -> dict:
+                 result_path: Optional[Path] = None, actor: str = "cc", emit=None,
+                 answers: Optional[str] = None) -> dict:
     """Write and register the return of the task at `task_path` (registered as `task_id`) in its consumer.
 
     The file is written into the consumer's primary checkout and registered there by `register_task_file`, which
@@ -392,6 +486,10 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
         ReturnError: no Answers header, `to` names another repository, no RESULT or no `For <consumer>` section in
             it, a section that sets a header the writer owns, or a registration the consumer refused (the file is
             removed again, so a refusal leaves the consumer's tree as it was).
+
+    `answers` stands in for a task file with no Answers header (`seldon cc return --answers`, SEL-023). When the
+    answered filing is registered in THIS repository's graph (AD-036-R18), it is walked to `completed` once its
+    return is registered (AD-036-R17: a filing closes with its return).
     """
     from seldon.commands.cc import _get_domain_config, register_task_file
     from seldon.config import get_neo4j_driver, load_project_config
@@ -402,7 +500,7 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
     task_path = Path(task_path)
     text = task_path.read_text(encoding="utf-8", errors="replace")
     try:
-        answered = resolve_answers(text, project_dir, config)
+        answered = resolve_answers(text, project_dir, config, value=answers, to=to)
     except ValueError as exc:
         raise ReturnError(str(exc)) from exc
     if answered is None:
@@ -413,8 +511,13 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
     producer = producer_name(project_dir)
     existing = find_return(answered.root, producer, task_id)
     if existing is not None:
-        return {"status": "existing", "rel_path": existing.rel_path, "consumer": str(answered.root),
-                "artifact_id": existing.registered, "problems": existing.problems, "token": None, "text": None}
+        out = {"status": "existing", "rel_path": existing.rel_path, "consumer": str(answered.root),
+               "artifact_id": existing.registered, "problems": existing.problems, "token": None, "text": None}
+        if answered.local and not existing.problems and not dry_run:
+            # A re-run after a return whose filing was not closed (the close failed, or predates AD-036-R17).
+            out["filing_closed"] = close_filing(project_dir, config, answered, existing.rel_path, actor=actor) \
+                is not None
+        return out
 
     task_rel = _rel(project_dir, task_path)
     result_path = result_path or task_path.with_name(f"{task_path.stem}_RESULT.md")
@@ -447,7 +550,7 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
     driver = get_neo4j_driver(ccfg)
     database = ccfg["neo4j"]["database"]
     try:
-        alloc = N.allocate(answered.root, driver, database, _prefix_for(answered, prefix))
+        alloc = N.allocate(answered.root, driver, database, _prefix_for(answered, prefix, driver, database))
         token = alloc["token"]
         after = latest_open(driver, database)
         date = datetime.now(timezone.utc).date().isoformat()
@@ -463,20 +566,34 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
         path = answered.root / rel
         if path.exists():
             raise ReturnError(f"{path} already exists and does not return this task; nothing was written")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(body, encoding="utf-8")
+        # AD-038-R20: the write and the registration (which commits it) hold the consumer's filing lock, so the
+        # consumer's dispatcher never reads its tree with the return on disk and unregistered.
+        from seldon.core import filing as F
         try:
-            reg = register_task_file(project_dir=answered.root, config=ccfg, driver=driver, database=database,
-                                     domain_config=_get_domain_config(ccfg), session_id=None, task_path=path,
-                                     actor=actor, allow_untracked=True, emit=say)
-        except (ValueError, FileNotFoundError) as exc:
-            # Refused before anything was created there (every registration refusal is), so the file goes too:
-            # a refused return left on disk would dirty the consumer's tree and its dispatcher would refuse c7.
-            path.unlink(missing_ok=True)
-            raise ReturnError(f"{answered.project} refused the return {rel}: {exc}") from exc
+            with F.filing_lock(answered.root, ccfg, holder=f"seldon cc return {rel}"):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(body, encoding="utf-8")
+                try:
+                    reg = register_task_file(project_dir=answered.root, config=ccfg, driver=driver,
+                                             database=database, domain_config=_get_domain_config(ccfg),
+                                             session_id=None, task_path=path, actor=actor, allow_untracked=True,
+                                             emit=say)
+                except (ValueError, FileNotFoundError) as exc:
+                    # Refused before anything was created there (every registration refusal is), so the file goes
+                    # too: a refused return left on disk would dirty the consumer's tree and its dispatcher would
+                    # refuse c7.
+                    path.unlink(missing_ok=True)
+                    raise ReturnError(f"{answered.project} refused the return {rel}: {exc}") from exc
+        except F.FilingError as exc:
+            raise ReturnError(f"the return {rel} was not written: {exc}") from exc
     finally:
         driver.close()
     found = find_return(answered.root, producer, task_id)
     out.update(status="written", artifact_id=reg["artifact_id"],
                problems=found.problems if found else [f"{rel} was written but is not found as a return"])
+    if answered.local and found and not found.problems:
+        walked = close_filing(project_dir, config, answered, rel, actor=actor)
+        out["filing_closed"] = walked is not None
+        say(f"filing {answered.artifact_id[:8]} closed by its return ({walked} -> completed; AD-036-R17)" if walked
+            else f"filing {answered.artifact_id[:8]} was already closed")
     return out

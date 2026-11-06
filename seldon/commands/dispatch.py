@@ -35,6 +35,7 @@ import subprocess
 import sys
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -143,6 +144,9 @@ def _tasks(driver, database, include_future: bool = False) -> list:
          "RETURN t.artifact_id AS artifact_id, t.name AS name, t.state AS state, "
          "       t.source_file AS source_file, t.created_at AS created_at, "
          "       t.description AS description, t.waits_on_external AS waits_on_external, "
+         # SEL-023 (AD-036-R17, AD-038-R19): what the task is and who launches it, read before its file.
+         "       t.task_kind AS task_kind, t.dispatch_mode AS dispatch_mode, "
+         "       t.dispatch_launcher AS dispatch_launcher, "
          "       collect({artifact_id: p.artifact_id, state: p.state, name: p.name, "
          "                source_file: p.source_file, updated_at: p.updated_at}) AS predecessors "
          "ORDER BY t.created_at")
@@ -421,6 +425,7 @@ def _push(project_dir, cfg) -> dict:
     the lease retries it because the branch is still ahead, and git records the beginning."""
     if D.tree_state(project_dir)["branch"] != cfg["branch"]:
         return {"pushed": False, "reason": "wrong_branch"}
+    _PUSH_TRIED_AT[str(project_dir)] = _head(project_dir)
     out = D.push_if_ahead(project_dir)
     if out["pushed"]:
         click.echo(f"push: pushed {out['ahead']} commit(s)")
@@ -435,6 +440,80 @@ def _push(project_dir, cfg) -> dict:
 def _record_and_push(project_dir, config, cfg) -> None:
     _record_own_lines(project_dir, config, cfg)
     _push(project_dir, cfg)
+
+
+@contextmanager
+def _filing_guard(project_dir, config, dry_run):
+    """AD-038-R20: hold the project's filing lock while the pass reads the tree (reconcile, cadence, c7, candidacy).
+
+    Yields None on a dry run (it observes; it commits and launches nothing), `{"skipped": <line>}` when the lock is
+    still held past `filings.lock_wait_s` (a filer is mid-write; the next pass runs), else `{"release": fn}`. The pass
+    calls `release` once it has evaluated the queue, before it launches, so a filer never waits on a session.
+    """
+    if dry_run:
+        yield None
+        return
+    from seldon.core import filing as F
+    held = F.filing_lock(project_dir, config, holder="seldon dispatch once (the pass reads the tree)")
+    try:
+        held.__enter__()
+    except F.FilingError as exc:
+        yield {"skipped": f"filing lock: {exc}; this pass evaluated nothing (AD-038-R20)"}
+        return
+    state = {"released": False}
+
+    def release() -> None:
+        if not state["released"]:
+            state["released"] = True
+            held.__exit__(None, None, None)
+    try:
+        yield {"release": release}
+    finally:
+        release()
+
+
+def _release_filing(filing) -> None:
+    if filing and filing.get("release"):
+        filing["release"]()
+
+
+#: SEL-023 Part D (AD-038-R21): the HEAD each project's push was last tried at, IN THIS PASS. Reset when a pass begins
+#: (`_push_reset`), so the next pass retries a failed push as decision 2 requires; read by `_push_unless_tried` so
+#: the push every pass now ends with does not repeat one this pass already made (or print its outcome twice).
+_PUSH_TRIED_AT: dict = {}
+
+
+def _head(project_dir) -> str | None:
+    r = D.git(project_dir, "rev-parse", "HEAD")
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def _push_reset(project_dir) -> None:
+    _PUSH_TRIED_AT.pop(str(project_dir), None)
+
+
+def _pushing(inspector, project_dir, cfg):
+    """AD-038-R21: the holder's inspection tick, then a push. launchd starts no pass while the holder's job instance
+    runs its session, so this tick is the only pass that runs; without the push a Desktop commit made during an
+    hour's session would wait the hour."""
+    def tick() -> dict:
+        out = inspector()
+        _push_unless_tried(project_dir, cfg)
+        return out
+    return tick
+
+
+def _push_unless_tried(project_dir, cfg) -> dict | None:
+    """AD-038-R21: push what the branch is ahead by unless this pass already tried at this HEAD.
+
+    Every pass ends with this, whatever it found (a claim in flight, the graph down, nothing eligible), and so does
+    a pass that finds the lease held, and so does each of the holder's inspection ticks while a session runs: a
+    Desktop commit then reaches origin within one poll interval in any repository with a dispatcher, rather than
+    at whatever merge happens next (squiddy's filing, observation 6). `git push` touches no working tree and takes
+    no index lock, so it is safe beside a session working in its own worktree."""
+    if _PUSH_TRIED_AT.get(str(project_dir)) == _head(project_dir):
+        return None
+    return _push(project_dir, cfg)
 
 
 @click.group("dispatch")
@@ -619,6 +698,9 @@ def dispatch_once(dry_run):
             # remedy. Nothing reaps automatically (DD-022: the operator reaps, PID-gated).
             if not dry_run:
                 _lease_holder_streak(project_dir, session_id, cfg, held.body)
+                # AD-038-R21: a holder may run a session for an hour; what a Desktop committed meanwhile is pushed now.
+                _push_reset(project_dir)
+                _push_unless_tried(project_dir, cfg)
             # QC-002: a holder from before the stations does not inspect the session it waits on, so this pass
             # does, and reaps nothing (the session and the lease are the holder's, DN-006 decision 6).
             from seldon.commands import dispatch_stations as ST
@@ -633,15 +715,25 @@ def dispatch_once(dry_run):
             return
         if not dry_run:
             _standing_cleared(project_dir, cfg, "lease_held")
+        _push_reset(project_dir)
         try:
-            _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
-                  lease, dry_run)
+            # AD-038-R20: the pass reads the tree only while it holds the filing lock, so it never sees a task file
+            # between its write and its registration; it releases the lock before it launches anything.
+            with _filing_guard(project_dir, config, dry_run) as filing:
+                if filing is not None and filing.get("skipped"):
+                    click.echo(filing["skipped"])
+                else:
+                    _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
+                          lease, dry_run, filing=filing)
         except DATABASE_UNAVAILABLE as exc:
             _database_unavailable(project_dir, session_id, cfg, exc, dry_run)
         else:
             if not dry_run:
                 _database_back(project_dir, cfg)
         finally:
+            # AD-038-R21: every pass ends by pushing what the branch is ahead by, whatever it found.
+            if not dry_run:
+                _push_unless_tried(project_dir, cfg)
             lease.__exit__(None, None, None)
     finally:
         driver.close()
@@ -1254,7 +1346,7 @@ def _create_instance(project_dir, config, driver, database, domain_config, sessi
 
 
 def _pass(project_dir, config, driver, database, domain_config, session_id, cfg, lease,
-          dry_run):
+          dry_run, filing=None):
     if cfg["max_parallel"] > 1 and not qc.parallel_opted_in(project_dir, config):
         # AD-037-R9: parallel dispatch stays at 1 until R6's stations and the disk preflight are live; a project
         # opts in only by an accepted record anchored at AD-037-R9 naming it. The dispatcher refuses the pass (no
@@ -1271,7 +1363,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # recorded transcript of the pre-SEL-004 dispatcher.
         from seldon.commands import dispatch_worktree as W
         return W.pass_parallel(project_dir, config, driver, database, domain_config,
-                               session_id, cfg, lease, dry_run)
+                               session_id, cfg, lease, dry_run, filing=filing)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     claim = _claim_in_flight(driver, database)
     # AD-038-R1: reconcile FIRST, before anything reads the tree. Every dirty path of machine-written
@@ -1321,6 +1413,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # refused for hours is heard about whether or not some OTHER task launched this pass.
     _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
     _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
+    # AD-038-R20: the queue is evaluated; a filer may write now. Nothing below reads the tree for candidacy.
+    _release_filing(filing)
 
     eligible = [r for r in rows if r["eligible"]]
     if not eligible:
@@ -1470,7 +1564,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
                 extra_env=_worktree_env(project_dir, spec, cfg),
-                inspector=ST.holder_inspector(project_dir, cfg, chosen["task_id"]),
+                inspector=_pushing(ST.holder_inspector(project_dir, cfg, chosen["task_id"]), project_dir, cfg),
                 inspect_every_s=cfg["poll_interval_s"],
                 on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig),
                 on_init=lambda init: W.name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"]))

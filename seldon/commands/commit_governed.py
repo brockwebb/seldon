@@ -25,7 +25,8 @@ def commit_governed_command(paths, project, as_json):
     project's declared `desktop_commit.paths`, SEL-020) through the hooks, as `desktop: <kind>: <basename>`. A design note without a passing prior-art verdict
     is committed as `draft:`. Exit 1 on any refusal; nothing stays staged."""
     project_dir = Path(project).expanduser().resolve() if project else Path.cwd()
-    outcome = DC.commit_governed(project_dir, list(paths))
+    # SEL-023 Part C (AD-038-R20): an unregistered cc_tasks/ task file is registered in the same call.
+    outcome = DC.commit_governed(project_dir, list(paths), register_tasks=True)
     if as_json:
         click.echo(json.dumps(outcome.as_dict(), indent=1))
     else:

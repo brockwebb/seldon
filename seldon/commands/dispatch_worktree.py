@@ -201,7 +201,7 @@ NAMED_PENDING = "_worktree_named_pending"
 # =============================================================================== the pass
 
 def pass_parallel(project_dir, config, driver, database, domain_config, session_id, cfg,
-                  lease, dry_run):
+                  lease, dry_run, filing=None):
     """One pass under `max_parallel > 1`: reap, record, plan, launch. Holds the pass lease.
 
     The order is the serial pass's (own lines, registrations, cadence, then candidacy) with
@@ -244,6 +244,8 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                               running=ids, union=union, cross_waits=cross, ooda=ooda) for t in tasks])
     S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
+    # AD-038-R20: the queue is evaluated; a filer may write now, before any launch.
+    S._release_filing(filing)
 
     ready = [r for r in rows if r["eligible"]]
     plan = D.plan_launches(

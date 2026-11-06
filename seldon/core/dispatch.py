@@ -339,6 +339,78 @@ def parse_answers(value: str | None) -> dict:
     return {"kind": "ref", "project": x.group("project"), "ref": m.group("stem"), "error": None}
 
 
+# ------------------------------------------------------- SEL-023: what a file is, and who launches it
+
+#: SEL-023 Part A (AD-036-R17): the OPTIONAL header that says what a cc_tasks file is. `task` (the default, and what
+#: every file without the header is) is a dispatchable task held to the candidacy headers. `filing` is a consumer's
+#: report filed into this repository under AD-036-R12: it registers WITHOUT candidacy headers, is never a candidate,
+#: and closes when the return that answers it is filed (`seldon cc return`) or when it is withdrawn. Before it, a
+#: filing that followed R12 could not register under AD-038-R11 (ai-readiness-kg AR-7 into squiddy, 2026-11-03).
+HEADER_KIND = "Kind"
+KIND_TASK = "task"
+KIND_FILING = "filing"
+KIND_UNPARSABLE = "kind_unparsable"
+KIND_GRAMMAR = ("`**Kind:** task` (the default) or `**Kind:** filing` (a consumer's report: registers without "
+                "candidacy headers and is never a candidate, AD-036-R17)")
+#: The not-a-candidate reason a filing is listed under, by the pass and `seldon dispatch status`.
+FILING_REASON = "filing"
+FILING_MESSAGE = ("a consumer filing (`**Kind:** filing`, AD-036-R17): a report, never a candidate; it closes when "
+                  "the task that answers it files its return (`seldon cc return`) or by `seldon task withdraw`")
+#: The OPTIONAL header of a filing naming the consumer repository that filed it, which is where its return goes.
+HEADER_FILED_BY = "Filed by"
+
+#: SEL-023 Part B (AD-038-R19): the OPTIONAL header that says who launches a task. `dispatcher` (the default) lets the
+#: standing dispatcher launch it; `hand` means a person or a session launches it, never the dispatcher. squiddy
+#: SQ-050RM was registered as hand-dispatched (it fast-forwards main, SEL-004 decision 3) and the dispatcher launched
+#: it before its `blocked` state landed; the protection was luck (SQ11 work order addendum 01, W7).
+HEADER_DISPATCH = "Dispatch"
+DISPATCH_DISPATCHER = "dispatcher"
+DISPATCH_HAND = "hand"
+DISPATCH_UNPARSABLE = "dispatch_unparsable"
+DISPATCH_HAND_REASON = "dispatch_hand"
+DISPATCH_GRAMMAR = ("`**Dispatch:** dispatcher` (the default) or `**Dispatch:** hand`, optionally followed by who "
+                    "launches it, e.g. `**Dispatch:** hand (the operator, from the primary checkout)` (AD-038-R19)")
+_WORD_HEAD_RE = re.compile(r"^[\s`*_]*(?P<word>[A-Za-z]+)\b(?P<rest>.*)$", re.S)
+
+
+def parse_kind(value: str | None) -> dict:
+    """The Kind header against :data:`KIND_GRAMMAR`: `{kind, error}`; `kind` is `task`, `filing`, or None."""
+    if value is None:
+        return {"kind": KIND_TASK, "error": None}
+    m = _WORD_HEAD_RE.match(value)
+    word = m.group("word").lower() if m else None
+    if word not in (KIND_TASK, KIND_FILING):
+        return {"kind": None, "error": f"Kind header {value.strip()!r} is not a kind; expected {KIND_GRAMMAR}"}
+    return {"kind": word, "error": None}
+
+
+def parse_dispatch(value: str | None) -> dict:
+    """The Dispatch header against :data:`DISPATCH_GRAMMAR`: `{mode, launcher, error}`.
+
+    `launcher` is the prose after `hand` (who launches it), stripped of brackets and punctuation, or None.
+    """
+    if value is None:
+        return {"mode": DISPATCH_DISPATCHER, "launcher": None, "error": None}
+    m = _WORD_HEAD_RE.match(value)
+    word = m.group("word").lower() if m else None
+    if word not in (DISPATCH_DISPATCHER, DISPATCH_HAND):
+        return {"mode": None, "launcher": None,
+                "error": f"Dispatch header {value.strip()!r} names no launcher; expected {DISPATCH_GRAMMAR}"}
+    rest = m.group("rest").strip().strip("`*_").strip(" .;:,-—–").strip("()").strip()
+    return {"mode": word, "launcher": rest or None, "error": None}
+
+
+def kind_of_text(text: str) -> str | None:
+    """`task`, `filing`, or None when the header does not parse."""
+    return parse_kind(_header_value(text, HEADER_KIND))["kind"]
+
+
+def hand_message(launcher: str | None) -> str:
+    """The reason line's text for a hand-dispatched task: who launches it."""
+    who = f"by {launcher}" if launcher else "by hand, by whoever registered it"
+    return f"`**Dispatch:** hand`: launched {who}, never by the dispatcher (AD-038-R19)"
+
+
 # ------------------------------------------------------- concurrency: Exclusive and Touches
 
 #: The two OPTIONAL concurrency headers (seldon `cc_tasks/2026-10-07_SEL-004_worktree_per_task
@@ -1254,12 +1326,27 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
         return {**out, "candidate": False, "reason": "source_file_missing", "message": msg,
                 "failures": [{"code": "source_file_missing", "message": msg}]}
     text = task_file.read_text(encoding="utf-8", errors="surrogateescape")
+    out["kind"], out["dispatch"] = KIND_TASK, parse_dispatch(None)
+    # SEL-023 Part A (AD-036-R17): a filing is a report, not a task. It is never a candidate, and no other header it
+    # sets is read (ignored, not refused): a report of an experience has no Spend, Parts or Model to check.
+    kind = parse_kind(_header_value(text, HEADER_KIND))
+    if kind["kind"] == KIND_FILING:
+        failures = repeated_headers(text, (HEADER_KIND,))
+        return {**out, "kind": KIND_FILING, "candidate": False, "reason": FILING_REASON, "message": FILING_MESSAGE,
+                "failures": failures}
     criteria_codes = set()
     # AD-038-R14: every header these checks read is read from the header block, once. A header the block carries
     # twice is refused rather than resolved by order: which one the author meant is not the reader's to guess.
     read = ((tuple(cfg.get("candidacy_headers", REQUIRED_HEADERS)) + REQUIRED_HEADERS + CONCURRENCY_HEADERS
-             if cfg is not None else ()) + (HEADER_AFTER, HEADER_ANSWERS, RF.HEADER_FOUND_IN))
+             if cfg is not None else ()) + (HEADER_AFTER, HEADER_ANSWERS, RF.HEADER_FOUND_IN, HEADER_KIND,
+                                            HEADER_DISPATCH))
     failures = repeated_headers(text, read)
+    if kind["kind"] is None:
+        failures.append({"code": KIND_UNPARSABLE, "message": kind["error"]})
+    # SEL-023 Part B (AD-038-R19): who launches it. A hand task registers, and is never the dispatcher's candidate.
+    out["dispatch"] = parse_dispatch(_header_value(text, HEADER_DISPATCH))
+    if out["dispatch"]["error"]:
+        failures.append({"code": DISPATCH_UNPARSABLE, "message": out["dispatch"]["error"]})
     if cfg is not None:
         required = cfg.get("candidacy_headers", REQUIRED_HEADERS)
         headers = parse_headers(text, required)
@@ -1328,6 +1415,8 @@ def static_checks(task_file: Path, cfg: dict | None, project_dir: Path | None = 
     blocking = [f for f in failures if f["code"] not in criteria_codes]
     if blocking:
         out.update(candidate=False, reason=blocking[0]["code"], message=blocking[0]["message"])
+    elif out["dispatch"]["mode"] == DISPATCH_HAND:
+        out.update(candidate=False, reason=DISPATCH_HAND_REASON, message=hand_message(out["dispatch"]["launcher"]))
     return out
 
 
@@ -2314,6 +2403,15 @@ def evaluate(project_dir: Path, task: dict, cfg: dict, band: int, tree: dict,
         # TRIAGE-001 Part B: a parked idea (rule 4's `FUTURE` prefix) is never a candidate, even
         # with a task file. `_tasks` already leaves these out of a pass; this holds for any caller.
         cand = {"candidate": False, "reason": "future", "message": None, "headers": {}}
+    elif task.get("task_kind") == KIND_FILING:
+        # SEL-023 (AD-036-R17): the graph's kind is read first, so a filing registered before the header existed and
+        # retagged with `seldon task update --kind filing` lists as a filing, not as `no_source_file` or `no_header`.
+        cand = {"candidate": False, "reason": FILING_REASON, "message": FILING_MESSAGE, "headers": {}}
+    elif task.get("dispatch_mode") == DISPATCH_HAND:
+        # AD-038-R19: recorded at registration (or by `task update --dispatch hand`), so a hand task stays the
+        # operator's even if its file is later unreadable.
+        launcher = task.get("dispatch_launcher")
+        cand = {"candidate": False, "reason": DISPATCH_HAND_REASON, "message": hand_message(launcher), "headers": {}}
     else:
         # SEL-011 (AD-038-R12): the static checks are the ones `seldon cc register` refuses on, by the same function.
         cand = (static_checks(task_file, cfg, project_dir) if task_file

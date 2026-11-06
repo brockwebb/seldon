@@ -280,6 +280,20 @@ desktop_commit:
     roots: [handoffs/]
     command: [../squiddy/.venv/bin/python, -m, squiddy.secret_scan]
 
+# SEL-023 (AD-036-R17, AD-038-R20): `seldon cc file` / `seldon_cc_file` write, commit and register a task file while
+# holding `lock_file`; the dispatcher's pass holds it while it reads the tree, so neither sees the other's half-state.
+# Each side waits up to `lock_wait_s` (NO MEASURED BASIS beyond: a registration and a pass's tree-reading half each
+# take seconds; two minutes is far past both and short of the 5-minute poll). `fix_headings` are the case-insensitive
+# patterns a `**Kind:** filing`'s headings and line-leading bold labels may not match (`filing_designs_fix`: a
+# consumer reports, the producer designs the fix). These are the code defaults, written out so they can be tuned here.
+filings:
+  lock_file: .seldon/filing.lock
+  lock_wait_s: 120
+  fix_headings:
+    - '\b(?:proposed|suggested|candidate|recommended|possible)\s+(?:fix|fixes|solution|solutions|design|designs|change|changes|remedy|remedies|implementation)\b'
+    - '^(?:the\s+)?(?:fix|fixes)\b'
+    - '^(?:how\s+to\s+fix|remedy|remedies|patch|implementation\s+plan)\b'
+
 mcp:
   # AD-038-R3, extended to every tool by MCP-001 (AD-038 ADDENDUM 01): each seldon-mcp tool runs
   # `python -P -m seldon mcp-call <tool>` in a fresh process on the checkout's current code. A call that

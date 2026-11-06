@@ -30,6 +30,12 @@ You are orienting to a Seldon-managed project.
 - For trivial housekeeping (creating tasks, closing stale items, marking CC tasks complete), use MCP tools directly: `seldon_task_create`, `seldon_task_update`, `seldon_task_close`, `seldon_issue_create`, `seldon_cc_complete`, `seldon_cc_register`, `seldon_query`.
 - You do NOT perform prose audits, glossary checks, cross-reference scans, or any compliance verification directly (no grep substitutes, no container-side scripts). These are `seldon verify`, `seldon paper audit`, and `seldon paper sync` responsibilities — CLI tools that run on the user's machine via CC. If an audit is needed, write a CC task whose first step invokes the appropriate Seldon CLI tools. Findings go into the graph as Issues/ResearchTasks, not as prose in chat.
 
+#### A Consumer Thread Reports; It Does Not Fix (AD-036-R17)
+
+- A thread working in a consumer repository (one that uses another repository's tools: squiddy's, seldon's) reports what it experienced to the producer by filing, and does not design, draft or implement the producer's fix. The producer's thread decides what changes, from its own whole view. (The operator, 2026-11-03: "We are consumers of the tools. We can file bug reports or issue reports ... we do not implement or design solutions.")
+- File with `seldon_cc_file` (`project_dir` = the producer's root): content headed `**Kind:** filing` and `**Filed by:** <this repo>`, stating the observation, the evidence and what you want to know back. One call writes, commits and registers it, so the producer's queue never sees an untracked file. A filing whose headings carry a fix (`Proposed fix`, `Candidate fixes`, ...) is refused at registration (`filing_designs_fix`).
+- Write every other task file the same way (`seldon_cc_file`), not by a Filesystem write followed by `seldon_cc_register`.
+
 #### Creation Carve-Out
 
 - Desktop sessions MAY **create** new files and register them as artifacts via Filesystem MCP + `seldon cc register` or `seldon artifact create`. Creation ≠ mutation — a new file has no prior state to corrupt.

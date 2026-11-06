@@ -274,6 +274,20 @@ artifact_types:
         # `system`: absent on every task that answers no review finding.
         category: system
         description: "The review finding this task fixes, as `<repo>:<path>#<finding id>`, from the task file's optional `**Found in:**` header at registration; an unparsable header refuses registration (SEL-021)."
+      task_kind:
+        # `system`: absent on every ordinary task (absent reads as `task`).
+        category: system
+        description: "`filing` for the ConsumerFiling kind of ResearchTask: a consumer's report filed into this repository (AD-036-R12), registered without candidacy headers from a `**Kind:** filing` header or retagged by `seldon task update --kind filing`. Never a dispatcher candidate (listed as `filing`); closed by the return of the task that answers it (`seldon cc return`) or by `seldon task withdraw`. See AD-036-R17."
+      filed_by:
+        category: system
+        description: "The consumer repository a filing came from, from its `**Filed by:**` header; where the return of the task that answers it is filed. See AD-036-R17 and R18."
+      dispatch_mode:
+        # `system`: absent on every task the dispatcher may launch.
+        category: system
+        description: "`hand` when the task file's `**Dispatch:** hand` header (or `seldon task update --dispatch hand`) says a person or a session launches it; the dispatcher never does (`dispatch_hand`). See AD-038-R19."
+      dispatch_launcher:
+        category: system
+        description: "Who launches a hand-dispatched task, from the prose after `hand` in its `**Dispatch:**` header; printed on the dispatcher's reason line. See AD-038-R19."
       dispatch_merge:
         category: system
         description: "What became of a worktree task's branch under the parallel dispatcher: merged (fast-forwarded onto main on green) or merge_blocked (a rebase conflict, a red re-gate or an invalid union file; the task is blocked and an Issue names the files). Absent on tasks run in place. See AD-034."

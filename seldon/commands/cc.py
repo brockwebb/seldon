@@ -1359,7 +1359,17 @@ def register_task_file(
             f"{_UNTRACKED_REMEDIES.get(status, '')}"
         )
 
-    refusal = enforce_design_reference(task_path, config, actor)
+    # SEL-023 Part A (AD-036-R17): a `**Kind:** filing` file is a consumer's report. It registers without candidacy
+    # headers and without the gates a task to be executed owes (a design-note reference, acceptance criteria,
+    # premises, a governing note's verdict, recall, constraining rulings): a report of an experience implements no
+    # decision. What it may not carry is the producer's fix (`filing_designs_fix`, the consumer rule).
+    from seldon.core import filing as filing_mod
+    is_filing = _D.kind_of_text(task_path.read_text(encoding="utf-8", errors="surrogateescape")) == _D.KIND_FILING
+    if is_filing:
+        fix_refusal = filing_mod.designs_fix_refusal(task_path, config)
+        if fix_refusal:
+            raise ValueError(f"{fix_refusal} File: {rel_path}")
+    refusal = None if is_filing else enforce_design_reference(task_path, config, actor)
     if refusal and not refusal.startswith("WARNING"):
         raise ValueError(f"{refusal} File: {rel_path}")
     warning = refusal if refusal else None
@@ -1384,7 +1394,7 @@ def register_task_file(
     # ("commit what registration verified") such a note refuses rather than staying untracked.
     from seldon.core import governing_commit as gc
     task_text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
-    pending = gc.pending_notes(task_text, project_dir, config)
+    pending = [] if is_filing else gc.pending_notes(task_text, project_dir, config)
     plan = None
     if pending and not _find_existing(driver, database, rel_path):
         named = ", ".join(x for pn in pending for x in pn.paths)
@@ -1417,7 +1427,7 @@ def register_task_file(
     # that cannot be evaluated still refuses: nothing is known, so nothing is committed.
     from seldon.core import prior_art
     try:
-        holds = prior_art.registration_holds(task_path, project_dir, config)
+        holds = [] if is_filing else prior_art.registration_holds(task_path, project_dir, config)
     except prior_art.PriorArtError as exc:
         raise ValueError(f"{PRIOR_ART_REFUSAL}: the gate cannot be evaluated ({exc}) File: {rel_path}")
 
@@ -1425,7 +1435,7 @@ def register_task_file(
     # program decides it>`, BEFORE anything is created. Tasks registered before QC-001's merge are baseline
     # (`qc.criteria_baseline` in seldon.yaml).
     from seldon.core import criteria
-    criteria_refusal = criteria.registration_refusal(task_path, project_dir, config)
+    criteria_refusal = None if is_filing else criteria.registration_refusal(task_path, project_dir, config)
     if criteria_refusal:
         raise ValueError(f"{criteria_refusal} File: {rel_path}")
 
@@ -1434,7 +1444,7 @@ def register_task_file(
     from seldon.core import stations
     # AD-038-R5 (FRICTION-001 Part E): the task's `check:` premises run now, BEFORE anything is created, so a
     # false one reaches its author in the same turn rather than at the dispatcher a day later (SQ-016).
-    premise_refusal = stations.premises_registration_refusal(task_path, project_dir, config)
+    premise_refusal = None if is_filing else stations.premises_registration_refusal(task_path, project_dir, config)
     if premise_refusal:
         raise ValueError(f"{premise_refusal} File: {rel_path}")
 
@@ -1468,21 +1478,29 @@ def register_task_file(
     # refusal that writes nothing, the same standing `network_undeclared` has at the
     # dispatcher (decision 3).
     text = task_path.read_text(encoding="utf-8", errors="surrogateescape")
-    predecessors = read_after(text, driver, database)
-    # SEL-008: `<project>:<ref>` entries are waits on tasks in other projects' graphs, resolved there now and
-    # recorded on the created task in its one `artifact_created` line.
-    external_waits = read_after_waits(text, project_dir, config)
-    # SEL-013R (AD-036-R16): an `**Answers:**` header names a filing in another repository's graph, resolved there
-    # now (read, never written) and recorded on the created task; one that does not resolve refuses here, with
-    # nothing created, as an unresolvable After ref does.
     from seldon.core import returns as returns_mod
-    answered = returns_mod.resolve_answers(text, project_dir, config)
-    # SEL-021 (factory F-011): the optional `**Found in:**` header names the review finding this task fixes. Its
-    # grammar was checked by `registration_static_refusal` above (`found_in_unparsable` refuses there, quoting the
-    # grammar, before anything is created); the parsed value is recorded on the created task.
     from seldon.core import review_findings as RF
     from seldon.core.dispatch import _header_value
-    found_in = RF.parse_found_in_header(_header_value(text, RF.HEADER_FOUND_IN))
+    if is_filing:
+        # AD-036-R17: no other header a filing sets is read, so none of them can refuse it or wait it on anything.
+        predecessors, external_waits, answered = [], [], None
+        found_in = {"found_in": None}
+    else:
+        predecessors = read_after(text, driver, database)
+        # SEL-008: `<project>:<ref>` entries are waits on tasks in other projects' graphs, resolved there now and
+        # recorded on the created task in its one `artifact_created` line.
+        external_waits = read_after_waits(text, project_dir, config)
+        # SEL-013R (AD-036-R16): an `**Answers:**` header names a filing in another repository's graph, resolved
+        # there now (read, never written) and recorded on the created task; one that does not resolve refuses here,
+        # with nothing created, as an unresolvable After ref does.
+        answered = returns_mod.resolve_answers(text, project_dir, config)
+        # SEL-021 (factory F-011): the optional `**Found in:**` header names the review finding this task fixes. Its
+        # grammar was checked by `registration_static_refusal` above (`found_in_unparsable` refuses there, quoting
+        # the grammar, before anything is created); the parsed value is recorded on the created task.
+        found_in = RF.parse_found_in_header(_header_value(text, RF.HEADER_FOUND_IN))
+    # SEL-023: what the file is, who filed it, who launches it; recorded on the created task so the dispatcher reads
+    # them from the graph (a retag needs no file edit).
+    kind_props = filing_mod.registration_properties(text)
 
     name = _name_from_filepath(rel_path)
     if description is None:
@@ -1536,6 +1554,7 @@ def register_task_file(
             **({"waits_on_external": external_waits} if external_waits else {}),
             **({returns_mod.PROPERTY: answered.qualified} if answered else {}),
             **({"found_in": found_in["found_in"]} if found_in["found_in"] else {}),
+            **kind_props,
         },
         actor=actor,
         authority="accepted",
@@ -1561,23 +1580,32 @@ def register_task_file(
     if answered:
         say(f"  answers: {answered.label} ({answered.artifact_id[:8]}); `seldon cc complete` refuses it until its "
             f"return is filed there (`seldon cc return`, AD-036-R16)")
-    sequencing_warning = sequencing_lint(text, Path(rel_path).stem)
+    if is_filing:
+        say(f"  kind: filing{' (filed by ' + kind_props['filed_by'] + ')' if kind_props.get('filed_by') else ''}; "
+            f"never a candidate, closed by its return (`seldon cc return`) or `seldon task withdraw` (AD-036-R17)")
+    elif kind_props.get("dispatch_mode") == _D.DISPATCH_HAND:
+        say(f"  dispatch: hand; {_D.hand_message(kind_props.get('dispatch_launcher'))}")
+    sequencing_warning = None if is_filing else sequencing_lint(text, Path(rel_path).stem)
     if sequencing_warning:
         say(sequencing_warning)
     for h in refiled:
         say(f"  re-files {h.token} ({h.artifact_id[:8]}, {h.state}): supersede it now with "
             f"`seldon task supersede {h.artifact_id[:8]} --superseded-by {artifact_id} --reason \"re-filed as "
             f"{numbering.file_token(rel_path)}\"`")
-    matches, written = constraining_rulings(
+    # A filing is a report: no ruling constrains how it is executed, because it is never executed.
+    matches, written = ([], 0) if is_filing else constraining_rulings(
         project_dir=project_dir, config=config, driver=driver, database=database,
         domain_config=domain_config, task_path=task_path, task_id=artifact_id,
         session_id=session_id,
     )
     # RECALL-001 Part A: the repositories' own history for this task, recorded (`recall_listed`) so the
-    # dispatcher can put it ahead of CLAUDE.md in the launch prompt, and so the chart can count it.
+    # dispatcher can put it ahead of CLAUDE.md in the launch prompt, and so the chart can count it. A filing launches
+    # no session, so it has no prompt to put recall in.
     recall_text = ("Recall: not configured (seldon.yaml has no `recall:` block; RECALL-001)"
                    if not recall_on else None)
-    if recall_on:
+    if is_filing:
+        recall_text = "Recall: not listed (a filing launches no session; AD-036-R17)"
+    elif recall_on:
         found = recall_mod.recall(project_dir, config, text, task_stem=Path(rel_path).stem, task_id=artifact_id)
         recall_mod.record_listed(project_dir, found, task_id=artifact_id, source_file=rel_path, actor=actor,
                                  session_id=session_id)
@@ -1733,6 +1761,42 @@ def cc_register(filepath, description, actor, allow_untracked, project):
         raise SystemExit(0)
 
 
+@cc_group.command("file")
+@click.option("--project", "project", default=None,
+              help="The repository whose cc_tasks/ the file goes into (default: the working directory).")
+@click.option("--content-file", "content_file", required=True, type=click.Path(exists=True, dir_okay=False),
+              help="A file holding the task file's text (a draft anywhere outside the project's cc_tasks/).")
+@click.option("--name", default=None,
+              help="The file name in cc_tasks/ (default: `<today>_<slug of the # title line>.md`).")
+@click.option("--actor", default="cc", show_default=True,
+              help="Recorded as created_by; every actor but `cc` owes a design-note reference (AD-030-R11).")
+def cc_file(project, content_file, name, actor):
+    """Write a task file into a repository's cc_tasks/, commit it and register it, in one call (AD-038-R20).
+
+    The write, the commit (through the hooks) and the registration hold the project's filing lock, which the
+    dispatcher's pass takes before it reads the tree, so no pass sees an untracked task file. A refused registration
+    deletes the file again. A consumer's report carries `**Kind:** filing` and registers without candidacy headers
+    (AD-036-R17).
+    """
+    from seldon.core import filing as F
+    project_dir = Path(project).expanduser().resolve() if project else Path.cwd()
+    content = Path(content_file).read_text(encoding="utf-8")
+    try:
+        out = F.file_task(project_dir, content, name=name, actor=actor,
+                          session_id=get_current_session(project_dir),
+                          emit=lambda msg: click.echo(msg, err=msg.startswith("Warning:")))
+    except F.FilingError as exc:
+        click.echo(f"ERROR: {exc}", err=True)
+        raise SystemExit(1)
+    if out.get("existing"):
+        click.echo(f"already registered: {out['rel_path']} ({out['artifact_id'][:8]})")
+    rl = retry_line(out)
+    if rl:
+        click.echo(rl)
+    click.echo(f"filed: {project_dir.name}/{out['rel_path']} (task {out['artifact_id'][:8]}"
+               + (f", commit {out['source_commit'][:12]}" if out.get("source_commit") else "") + ")")
+
+
 @cc_group.command("return")
 @click.argument("task")
 @click.option("--to", "to", default=None,
@@ -1740,7 +1804,12 @@ def cc_register(filepath, description, actor, allow_untracked, project):
 @click.option("--prefix", default=None,
               help="The consumer's task prefix (default: the answered filing's own, e.g. HB for hazbrief-mcp:HB-37).")
 @click.option("--dry-run", is_flag=True, default=False, help="Print the return task; write and register nothing.")
-def cc_return(task, to, prefix, dry_run):
+@click.option("--answers", "answers", default=None, metavar="<repo>:<ref>",
+              help="The filing TASK answers, for a task file written with no **Answers:** header (one filed before "
+                   "its filing could be registered, SEL-023). A header naming another filing is refused, not "
+                   "overridden. `<repo>` may be this repository, for a **Kind:** filing registered here "
+                   "(AD-036-R18).")
+def cc_return(task, to, prefix, dry_run, answers):
     """File TASK's return task in the repository its **Answers:** header names (AD-036-R16).
 
     TASK is the answering task's file (relative to the project root, or absolute) or its artifact id prefix. The
@@ -1786,7 +1855,8 @@ def cc_return(task, to, prefix, dry_run):
         driver.close()
     try:
         out = returns_mod.write_return(project_dir, config, task_path, task_id, to=to, prefix=prefix,
-                                       dry_run=dry_run, emit=lambda m: click.echo(f"  {m}" if m else m))
+                                       dry_run=dry_run, emit=lambda m: click.echo(f"  {m}" if m else m),
+                                       answers=answers)
     except returns_mod.ReturnError as exc:
         click.echo(f"ERROR: {exc}", err=True)
         raise SystemExit(1)

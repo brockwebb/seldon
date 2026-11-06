@@ -1477,12 +1477,15 @@ def seldon_commit_governed(
         project_dir: Path to project root.
 
     Returns:
-        "committed <sha> <message>" plus a line per draft note, or "REFUSED <reason>: <detail>".
+        "committed <sha> <message>" plus a line per draft note and per task file registered (or refused
+        registration: the file stays committed), or "REFUSED <reason>: <detail>".
     """
     from seldon.core import desktop_commit as DC
 
     try:
-        outcome = DC.commit_governed(Path(_project_path(project_dir)), list(paths or []))
+        # SEL-023 Part C (AD-038-R20): a cc_tasks/ task file not yet registered is registered in this same call.
+        outcome = DC.commit_governed(Path(_project_path(project_dir)), list(paths or []), register_tasks=True,
+                                     actor=MCP_ACTOR)
     except Exception as exc:                                        # noqa: BLE001
         return f"Error: {type(exc).__name__}: {exc}"
     return DC.render(outcome)
@@ -1576,6 +1579,11 @@ def seldon_cc_register(
             return (f"Error: {exc}\n"
                     f"  Fix: name a registered task, or drop the **After:** header.\n"
                     f"  {gc.DIRTY_LINE}")
+        from seldon.core.filing import FILING_DESIGNS_FIX
+        if str(exc).startswith(FILING_DESIGNS_FIX):
+            return (f"Error: {exc}\n"
+                    f"  Fix: report the observation and drop the fix; the producer designs it (AD-036-R17).\n"
+                    f"  {gc.DIRTY_LINE}")
         return (
             f"Error: {exc}\n"
             f"  Fix: cite the AD or DN this task implements in the task file's header.\n"
@@ -1616,6 +1624,45 @@ def seldon_cc_register(
     lines.extend(["", render_rulings(outcome["rulings"], outcome["edges_written"])])
     if outcome.get("recall"):
         lines.extend(["", outcome["recall"]])
+    return "\n".join(lines)
+
+
+@_tool()
+def seldon_cc_file(
+    content: str,
+    project_dir: str = ".",
+    filename: str = "",
+) -> str:
+    """Write a task file into a repository's cc_tasks/, commit it and register it, in ONE call (AD-038-R20).
+
+    Use this instead of a Filesystem write followed by `seldon_cc_register`: between those two calls the file is
+    untracked, and the standing dispatcher refuses every task in that repository on c7 for as long as it stays so
+    (squiddy, 2026-10-30 twice and 2026-11-03). Here the write, the commit (through the hooks) and the registration
+    hold the project's filing lock, which the dispatcher's pass takes before it reads the tree. A refused
+    registration deletes the file again, so a refusal leaves the tree as it was.
+
+    A consumer's report into a producer carries `**Kind:** filing` (and `**Filed by:** <your repo>`): it registers
+    without candidacy headers and is never a candidate (AD-036-R17). It reports what you experienced; a filing whose
+    headings carry the producer's fix is refused (`filing_designs_fix`).
+
+    Args:
+        content: The task file's full text, starting with its `# <title>` line.
+        project_dir: The repository to file into (another repository's root for a filing).
+        filename: `YYYY-MM-DD_<slug>.md`; default: today's date and a slug of the title line.
+    """
+    from seldon.commands.cc import retry_line
+    from seldon.core import filing as F
+    try:
+        out = F.file_task(Path(_project_path(project_dir)), content, name=filename or None, actor=MCP_ACTOR)
+    except F.FilingError as exc:
+        return f"Error: {exc}"
+    lines = [f"Filed: {out['rel_path']}", f"  id: {out['artifact_id'][:8]}...", "  state: proposed"]
+    if out.get("source_commit"):
+        lines.append(f"  source_commit: {out['source_commit']}")
+    if retry_line(out):
+        lines.append(retry_line(out))
+    if out.get("recall"):
+        lines.extend(["", out["recall"]])
     return "\n".join(lines)
 
 
