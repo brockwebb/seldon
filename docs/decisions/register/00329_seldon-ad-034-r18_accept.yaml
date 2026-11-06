@@ -1,3 +1,4 @@
+seq: 329
 event: accept
 id: seldon:AD-034-R18
 date: '2026-11-06'
@@ -43,3 +44,5 @@ consumer:
 - tests/test_sel024_gate_record.py
 written_by: seldon decision 0.1.0
 provisional_id: d5a90bcc09aa3c8614c8cf320a78276a0aa71a308ae90d7a80ea964c5fcf1d63
+prev_hash: a066e852d8100f0f032ff111ffcff7a404653bdd02696ce3714ed65383609914
+record_hash: 21c43c05573c2eb8a7b02090fe7aba742ddf34d5d883c8d251f4c5b1c1669bd7
