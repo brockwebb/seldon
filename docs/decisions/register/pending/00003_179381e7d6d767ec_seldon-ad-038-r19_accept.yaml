@@ -1,0 +1,32 @@
+event: accept
+id: seldon:AD-038-R19
+date: '2026-11-06'
+decided_by: cc:841bd7c7
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md:51: AD-038-R19'
+reason: 'SEL-023 Part B; evidence: squiddy SQ-050RM e1df72ef launched by the dispatcher before its blocked state landed (SQ11 work order addendum 01, W7)'
+kind: decision
+status: accepted
+statement: A task file headed **Dispatch:** hand shall register, record dispatch_mode hand and its launcher, and never be launched by the dispatcher (not a candidate, reason dispatch_hand, read from the graph before the file, with a line naming who launches it); dispatcher is the default and any other value is refused as dispatch_unparsable; seldon task update --dispatch sets it on a registered task.
+source:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  lines:
+  - 51
+  - 55
+  sha256: aceb0a201f7b37ab36569963fbec62506ee9be5fadcff5708428cd975998d293
+  text: |-
+    - **AD-038-R19. A task file headed `**Dispatch:** hand` is never launched by the dispatcher.** Registration accepts
+      it and records `dispatch_mode: hand` and, from the prose after `hand`, `dispatch_launcher`. The dispatcher lists it
+      as not a candidate under its own reason, `dispatch_hand`, read from the graph before the file, with a reason line
+      naming who launches it. `**Dispatch:** dispatcher` is the default; any other value is refused
+      (`dispatch_unparsable`). `seldon task update --dispatch hand|dispatcher` sets it on a registered task.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  anchor: AD-038-R19
+consumer:
+- cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+written_by: seldon decision 0.1.0
+provisional_id: 179381e7d6d767ece2b63f6dcfa4fd2c4a3f3a8fc7db806b3924c81a321a15f0

@@ -1,0 +1,33 @@
+event: accept
+id: seldon:AD-038-R21
+date: '2026-11-06'
+decided_by: cc:841bd7c7
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md:66: AD-038-R21'
+reason: 'SEL-023 Part D; evidence: seldon log 2026-11-03, 428a4c89 pushed at the 13:11:50Z idle pass, while lease-held, claim-in-flight and graph-down passes and a serial holder''s session pushed nothing (the filing''s ADDENDUM 01, observation 6)'
+kind: decision
+status: accepted
+statement: Every dispatcher pass shall end by pushing what the branch is ahead by unless it already tried at the same HEAD, whatever it found; a pass that finds the lease held shall push before it exits; a serial holder shall push on each inspection tick while its session runs; a failed push is retried by the next pass; a STOP file, dispatch disabled, an inherited API key and a missing commit gate still end the pass before the push.
+source:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  lines:
+  - 66
+  - 71
+  sha256: aceb0a201f7b37ab36569963fbec62506ee9be5fadcff5708428cd975998d293
+  text: |-
+    - **AD-038-R21. Every pass ends by pushing what the branch is ahead by.** Whatever the pass found (nothing eligible,
+      a claim in flight, the graph down, the filing lock held), it pushes once unless it already tried at the same HEAD;
+      a pass that finds the lease held pushes before it exits; and a serial holder pushes on each inspection tick while
+      its session runs. The pass prints `push:` as before. A failed push is retried by the next pass, which begins with no
+      memory of the last one's attempt. A STOP file, `dispatch.enabled: false`, an inherited API key and a missing commit
+      gate still end the pass before anything, the push included: each is the operator's or the gate's stop.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  anchor: AD-038-R21
+consumer:
+- cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+written_by: seldon decision 0.1.0
+provisional_id: f290e5a9e0bc2baae3bea7a8980a43e864788d514732d7b3e0e2469078cc3032

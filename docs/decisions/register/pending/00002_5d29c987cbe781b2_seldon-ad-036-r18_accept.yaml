@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-036-R18
+date: '2026-11-06'
+decided_by: cc:841bd7c7
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md:66: AD-036-R18'
+reason: 'SEL-023 Part E; evidence: the squiddy filing is registered only in the producer''s graph and SEL-023 names it in prose, so R16''s return had no address'
+kind: decision
+status: accepted
+statement: An **Answers:** header naming the answering repository itself shall resolve the ref in its own graph, refuse a ref that is not a filing or a filing with no consumer (Filed by, or --to), number the return by the consumer's most common prefix unless --prefix names one, and walk the filing to completed once the return is registered and committed in the consumer; seldon cc return --answers shall supply the value for an answering task whose file carries no header, and refuse one that differs from the file's header.
+source:
+  path: docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md
+  lines:
+  - 66
+  - 74
+  sha256: 91b2a8f1f3fe8a161945a649a711af89d551f8c3c94d0a48eacb13a2e498485d
+  text: |-
+    - **AD-036-R18. An `**Answers:**` header may name a filing registered in the answering repository's own graph; the
+      return then goes to the filing's `**Filed by:**` repository and closes the filing.** `<repo>` in
+      `**Answers:** <repo>:<ref>` naming this repository resolves the ref here, and refuses (`answers_unresolved`) a ref
+      that is not a filing or a filing with no consumer (`**Filed by:**`, or `seldon cc return --to`). The return is
+      numbered by the consumer's allocator under the prefix most of the consumer's numbered tasks carry, unless
+      `--prefix` names one. Once the return is registered and committed in the consumer, the filing is walked to
+      `completed`. `seldon cc return --answers <repo>:<ref>` supplies the value for an answering task whose file carries
+      no header (one written before its filing could be registered); a header naming another filing is refused, not
+      overridden.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md
+  anchor: AD-036-R18
+consumer:
+- cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+written_by: seldon decision 0.1.0
+provisional_id: 5d29c987cbe781b229f4eae82ee360a6383096b469d4a45b0d6fec86b482fb4e

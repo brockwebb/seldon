@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-036-R17
+date: '2026-11-06'
+decided_by: cc:841bd7c7
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md:54: AD-036-R17'
+reason: 'SEL-023 Part A and E; evidence: squiddy filing of 2026-11-03 observations 1, 2 and 4 (AR-7 refused no_header under R11; 6ffde0f7 and 18001e38 unroutable; Issue 2b5a296d drafted a producer fix; the operator''s statement quoted verbatim in the filing)'
+kind: decision
+status: accepted
+statement: A cc_tasks file headed **Kind:** filing shall register without candidacy headers or the gates a task to be executed owes, record task_kind filing and filed_by, never be a dispatcher candidate (reason filing, read from the graph before the file, so seldon task update --kind filing retags an older filing), close when its return is filed or by withdraw, and be refused at registration when its headings or line-leading labels carry a fix for the producer (filing_designs_fix, patterns in filings.fix_headings); what seldon go sends a Desktop shall say a consumer thread reports what it experienced and does not design, draft or implement the producer's fix.
+source:
+  path: docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md
+  lines:
+  - 54
+  - 65
+  sha256: 91b2a8f1f3fe8a161945a649a711af89d551f8c3c94d0a48eacb13a2e498485d
+  text: |-
+    - **AD-036-R17. A task file headed `**Kind:** filing` is a consumer filing: it registers without candidacy headers,
+      is never a dispatcher candidate, and closes with its return; a consumer reports and does not fix.** Registration
+      records `task_kind: filing` (and `filed_by` from `**Filed by:** <repo>`), applies none of the gates a task to be
+      executed owes (the candidacy headers, a design-note reference, acceptance criteria, premises, a governing note's
+      verdict, recall, constraining rulings), and ignores any other header the filing sets. It refuses a filing whose
+      headings or line-leading bold labels carry a fix for the producer (`filing_designs_fix`; the patterns are
+      `filings.fix_headings` in seldon.yaml). The dispatcher and `seldon dispatch status` list a filing under its own
+      reason, `filing`, read from the graph before the file, so a filing registered before this ruling is retagged by
+      `seldon task update --kind filing`. A filing closes when the task answering it files its return (R18) or by
+      `seldon task withdraw`. `**Kind:** task` is the default. What `seldon go` sends a Desktop says: a thread working in
+      a consumer repository reports what it experienced to the producer by filing, and does not design, draft or
+      implement the producer's fix.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md
+  anchor: AD-036-R17
+consumer:
+- cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+written_by: seldon decision 0.1.0
+provisional_id: d240d6db77f188f912f9cd863bd1484608471f5527bbf0e05e6b8bf433528382

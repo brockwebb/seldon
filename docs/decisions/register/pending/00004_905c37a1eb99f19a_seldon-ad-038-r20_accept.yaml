@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R20
+date: '2026-11-06'
+decided_by: cc:841bd7c7
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md:56: AD-038-R20'
+reason: 'SEL-023 Part C; evidence: squiddy c7 refusals between a Desktop write and its register, 2026-10-30 twice and 2026-11-03 (W8; the filing, observation 3)'
+kind: decision
+status: accepted
+statement: seldon cc file and seldon_cc_file shall write a task file into a repository's cc_tasks/, refuse an existing path, and commit and register it through register_task_file, all under the project's filing lock (filings.lock_file), deleting the file on refusal; the dispatcher's pass shall take that lock before it reads the tree and release it before any launch, evaluating nothing when it cannot take it; seldon cc return shall write under the consumer's lock; seldon_commit_governed and seldon commit-governed shall register an unregistered base task file under cc_tasks/ in the same call after the commit, reporting a refused registration with the file left committed.
+source:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  lines:
+  - 56
+  - 65
+  sha256: aceb0a201f7b37ab36569963fbec62506ee9be5fadcff5708428cd975998d293
+  text: |-
+    - **AD-038-R20. A task file is written, committed and registered in one call, under the project's filing lock, and
+      the pass reads the tree only while it holds that lock.** `seldon cc file --project <repo> --content-file <path>`
+      and the MCP tool `seldon_cc_file` write the file into the repository's `cc_tasks/`, refuse an existing path, and
+      register it through `register_task_file` (which commits it through the hooks, with AD-038-R18's retry), holding
+      `filings.lock_file` throughout; a refusal deletes the file. The dispatcher's pass takes the same lock (waiting up
+      to `filings.lock_wait_s`) before its sweep, reconcile, cadence and candidacy, and releases it before any launch; a
+      pass that cannot take it evaluates nothing and says so. `seldon cc return` writes and registers under the
+      consumer's lock. `seldon_commit_governed` and `seldon commit-governed`, given a base task file under `cc_tasks/`
+      that no task holds, register it in the same call after the commit; a refused registration leaves the file
+      committed (a clean tree) and is reported.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md
+  anchor: AD-038-R20
+consumer:
+- cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md
+written_by: seldon decision 0.1.0
+provisional_id: 905c37a1eb99f19a9bde2950b6dbfb4273eca95c49cdbf45eb1f434ee13426f1
