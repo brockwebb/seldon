@@ -56,7 +56,10 @@ _PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*$")
 #: `<PREFIX>-<digits><suffix><R re-filing>`; the suffix is lazy so a trailing `R<n>` is read as the re-filing marker.
 _TOKEN = r"(?P<prefix>[A-Z][A-Z0-9]*)-(?P<digits>\d+)(?P<suffix>[A-Za-z0-9]*?)(?P<refile>R\d*)?"
 _FILE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}_" + _TOKEN + r"(?=_|\.md$)")
-_DESC_RE = re.compile(r"^\s*" + _TOKEN + r"\s*(?::|—|–|--)")
+#: SEL-023: an optional parenthetical between the token and its colon (`SQ-121 (idea, no file yet): ...`, squiddy's
+#: idea form) still claims the number. Without it the allocator handed SQ-121 out a second time on 2026-11-06 (the
+#: dry run of SEL-023's return), because the holder was invisible to it and to registration's `number_taken`.
+_DESC_RE = re.compile(r"^\s*" + _TOKEN + r"\s*(?:\([^)\n]*\)\s*)?(?::|—|–|--)")
 
 
 class NumberingError(RuntimeError):

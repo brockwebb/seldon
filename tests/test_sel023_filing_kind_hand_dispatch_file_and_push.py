@@ -140,6 +140,17 @@ def test_the_fix_heading_patterns_are_configured_not_hardcoded(tmp_path):
     assert F.designs_fix_refusal(f, {"filings": {"fix_headings": ["^workaround"]}})
 
 
+@pytest.mark.parametrize("desc, token", [("SQ-121 (idea, no file yet): a gate-killed release", "SQ-121"),
+                                          ("SQ-121: plain", "SQ-121"), ("SEL-024 — a dash", "SEL-024"),
+                                          ("SQ-121 is mentioned in prose", None)])
+def test_a_numbered_idea_with_a_parenthetical_holds_its_number(desc, token):
+    """Found by this task's own return: squiddy's idea `SQ-121 (idea, no file yet): ...` was invisible to the
+    allocator, which offered SQ-121 again (dry run, 2026-11-06)."""
+    from seldon.core.numbering import description_token
+    got = description_token(desc)
+    assert (str(got) if got else None) == token
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Part B: who launches it (no Neo4j)
 # ══════════════════════════════════════════════════════════════════════════════

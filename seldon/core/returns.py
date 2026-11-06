@@ -113,7 +113,7 @@ class Answered:
     def label(self) -> str:
         if self.local:
             # A filing in the producer's own graph carries no consumer number: name it where it is registered.
-            return f"{self.graph}:{self.artifact_id[:8]} (filed by {self.project})"
+            return f"{self.graph}:{self.token or self.artifact_id[:8]}"
         return f"{self.project}:{self.token or self.artifact_id[:8]}"
 
 
