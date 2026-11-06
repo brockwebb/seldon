@@ -2,6 +2,8 @@
 
 **Repo:** seldon. **Date:** 2026-11-03. **Authored by:** the squiddy Desktop thread (SQ-12), filed into seldon's queue under AD-036-R12 as a report of what the consumer experienced. No candidacy headers, not a dispatcher candidate. This filing proposes no fix; the seldon thread decides what, if anything, changes.
 **Evidence:** squiddy `cc_tasks/2026-11-03_consumer_filing_from_ai_readiness_kg_documents_admitted_in_a_dispatched_worktree_are_not_in_the_primary_after_merge.md` (commit c09884157ba1); squiddy `handoffs/2026-10-31_sq11_close_dn052_to_dn054_sq052r_through_sq102_landed_sq103_queued_aacps_is_the_stability_test.md` (lessons paragraph); squiddy open tasks `6ffde0f7` and `18001e38`; seldon `docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md`; the operator's 2026-11-03 statement quoted in observation 4.
+**Kind:** filing
+**Filed by:** squiddy
 
 ## What the consumer observed
 
