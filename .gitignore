@@ -13,6 +13,10 @@ cc_tasks/*.jsonl
 handoffs/*.json
 handoffs/*.jsonl
 tmp/
+# SEL-025 (AD-038-R22): every log the machine writes is runtime state, never tracked. The dispatch wrapper's rotation
+# once wrote `logs/seldon_dispatch.log.<stamp>`, which `*.log` below does not match, and the untracked file refused
+# the queue on c7 for three days (2026-11-04 to 2026-11-06). Dispatched sessions' logs are under logs/dispatch/.
+logs/**
 # Logs from scripts/test_db_concurrency_check.sh
 _conc/
 .worktrees/

@@ -1,0 +1,30 @@
+event: accept
+id: seldon:AD-038-R22
+date: '2026-11-06'
+decided_by: cc:915acf48
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md:41: AD-038-R22'
+reason: 'SEL-025 Part A; evidence: logs/seldon_dispatch.log.20261104T021957Z untracked refused c7 2026-11-04 02:19Z to 2026-11-06 12:55Z (task file, The condition, item 1)'
+kind: decision
+status: accepted
+statement: The dispatch wrapper shall rotate its log to logs/dispatch/<base>.<UTC stamp>.log, keeping the .log suffix last, and its retention shall delete only that name and the pre-SEL-025 name; seldon's .gitignore shall ignore logs/** so no log the machine writes under logs/ makes the tree dirty.
+source:
+  path: docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md
+  lines:
+  - 41
+  - 43
+  sha256: 7828f3c840eea1a40f61585361f3abbfeda1989a9ced6e625164bb876f61beb3
+  text: |-
+    - **AD-038-R22. The dispatch wrapper's rotated log keeps `.log` last and is ignored.** The wrapper rotates its log
+      to `logs/dispatch/<base>.<UTC stamp>.log` and its retention deletes only that name (and the old name, until it ages
+      out). seldon's `.gitignore` ignores `logs/**`: no log the machine writes under `logs/` can make the tree dirty.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md
+  anchor: AD-038-R22
+consumer:
+- cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md
+written_by: seldon decision 0.1.0
+provisional_id: 831f09e243c1b5cb916c0965e2d7bf30335276cc164f5d8d4b6f4f436dc584de

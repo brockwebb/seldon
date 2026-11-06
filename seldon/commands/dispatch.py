@@ -310,7 +310,11 @@ def _reconcile(project_dir, config, cfg, driver, database) -> dict:
         click.echo(f"reconcile: NOT run: {exc}", err=True)
         return {"commits": [], "unreconciled": [], "skipped": "git_failed"}
     for c in out["commits"]:
-        if c.get("committed"):
+        if c.get("committed") and c["class"] == "filing":
+            # AD-038-R23 (SEL-025): named on the pass line as its own outcome, so the log shows which report the
+            # pass took in rather than one more `record:` line.
+            click.echo(f"filing_committed: {', '.join(c['paths'])} -> {c['commit']} ({c['message']})")
+        elif c.get("committed"):
             click.echo(f"record: {c['message']} -> {c['commit']}")
         else:
             click.echo(f"record: {', '.join(c['paths'])} NOT committed ({c['class']}, {c.get('reason')}): "

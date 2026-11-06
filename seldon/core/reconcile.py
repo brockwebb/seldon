@@ -24,12 +24,16 @@ class                     paths                                                 
 ``task_files``            an untracked registered task file, its untracked addendum, or   registration output
                           its untracked ``_OODA.md`` record (AD-038-R10); an untracked
                           addendum is admitted whether or not its base is tracked
+``filing``                an untracked ``cc_tasks/<name>.md`` whose header block says     the file is untracked
+                          ``**Kind:** filing`` or whose ``**Status:**`` names a consumer
+                          filing, and an untracked addendum to such a file (AD-038-R23)
 ``hooks``                 ``.githooks/pre-commit`` and ``.githooks/commit-msg``           bytes exactly seldon's text
                           (AD-038-R15)
 ========================  ==============================================================  ==========================
 
 Anything else (a source file, a ledger edited in place, a deleted file, a hook refusal) is left for c7, which names
-the path and the reason. One commit per class, path-scoped, hooks on (R11's gate is kept).
+the path and the reason. One commit per class, path-scoped, hooks on (R11's gate is kept). The ``filing`` class is
+the exception: one commit per filing, subject ``dispatcher: filing: <basename>``, so `git log` names each report.
 
 The caller holds the lease and has no claim in flight: a `git commit` beside a working dispatched session is DD-019's
 class and an `index.lock` collision besides. This module checks neither; `seldon.commands.dispatch._reconcile` does.
@@ -43,7 +47,13 @@ from pathlib import Path
 
 #: The classes, in the order their commits are made. The event store first: every other class's writer also appended
 #: to it, and a reader of `git log` finds each record before the files it records.
-CLASSES = ("event_store", "prior_art", "decision_register", "cadence", "task_files", "hooks")
+CLASSES = ("event_store", "prior_art", "decision_register", "cadence", "task_files", "filing", "hooks")
+
+#: SEL-025 (AD-038-R23): the directory a consumer files into (AD-036-R12), and the Status words a filing written
+#: before `**Kind:** filing` existed (SEL-023 A) carries. factory's FAC-03 filing, `**Status:** proposed (consumer
+#: filing; no dispatch headers. ...)`, sat untracked in seldon's cc_tasks/ and refused the queue that would fix it.
+FILING_DIR = "cc_tasks"
+_FILING_STATUS_RE = re.compile(r"\bconsumer\s+filing\b", re.IGNORECASE)
 
 #: The one seldon.yaml line the cadence writes back (`seldon.core.cadence.write_last_instance`).
 _LAST_INSTANCE_RE = re.compile(r"^\s*last_instance\s*:")
@@ -168,6 +178,30 @@ def governed_paths(project_dir: Path, config: dict) -> dict:
     return out
 
 
+def is_filing_text(text: str) -> bool:
+    """Does a cc_tasks file's header block declare it a consumer filing: `**Kind:** filing` (SEL-023 A, AD-036-R17),
+    or a `**Status:**` naming a consumer filing (the form filings took before the Kind header)? The header block only
+    (AD-038-R14), so a task that mentions a consumer filing in its body is not one."""
+    from seldon.core import dispatch as D
+    if D.kind_of_text(text) == D.KIND_FILING:
+        return True
+    return any(_FILING_STATUS_RE.search(value) for _no, value in D.header_hits(text, "Status"))
+
+
+def filing_path(project_dir: Path, rel: str) -> bool:
+    """Is `rel` a filing in the project's task directory, or an addendum to one (AD-038-R23)? Directly under
+    :data:`FILING_DIR` and `.md` only: a filing is one file in that directory, never something nested or elsewhere.
+    An addendum's own header need not repeat the kind: it is the filing's if its base file, tracked or not, is one."""
+    parts = rel.split("/")
+    if len(parts) != 2 or parts[0] != FILING_DIR or not parts[1].endswith(".md"):
+        return False
+    m = _ADDENDUM_RE.match(rel)
+    target = Path(project_dir) / (f"{m.group('stem')}.md" if m else rel)
+    if not target.is_file():
+        return False
+    return is_filing_text(target.read_text(encoding="utf-8", errors="replace"))
+
+
 def classify(project_dir: Path, config: dict, registered: set, entries: list | None = None) -> dict:
     """Sort every dirty path into a class, or into `unreconciled` with the reason.
 
@@ -243,6 +277,12 @@ def classify(project_dir: Path, config: dict, registered: set, entries: list | N
         if e["tracked"] and path in registered:
             unreconciled.append({"path": path, "why": "a registered task file edited after registration"})
             continue
+        if not e["tracked"] and filing_path(project_dir, path):
+            # AD-038-R23 (SEL-025): a consumer's report, written by a dispatched session of another repository under
+            # AD-036-R12 and not registered. It is the machine's own write; held as dirt, it refused the queue that
+            # would answer it. Committed, it is a tracked file that registration (SEL-023 A) can take as a filing.
+            admit("filing", path, ["consumer filing"])
+            continue
         if path in hook_scripts:
             # AD-038-R15: `ensure_installed` writes commit-msg before the lease and may not commit it; an older
             # `seldon hooks install` wrote and left it. Seldon's exact text only: other bytes are someone's hook.
@@ -269,7 +309,10 @@ def _event_store_message(rows: list, writers: list) -> str:
 
 
 def message_for(cls: str, entry: dict) -> str:
-    """One commit subject per class, naming the class and the writers found (FRICTION-001 Part A step 1)."""
+    """One commit subject per class, naming the class and the writers found (FRICTION-001 Part A step 1). A filing's
+    entry is one filing (:func:`reconcile` commits each alone): `dispatcher: filing: <basename>` (AD-038-R23)."""
+    if cls == "filing":
+        return f"dispatcher: filing: {Path(entry['paths'][0]).name}"
     if cls == "event_store":
         return _event_store_message(entry["rows"], entry["writers"])
     what = {"prior_art": f"{len(entry['rows'])} prior-art line(s)",
@@ -305,12 +348,29 @@ def reconcile(project_dir: Path, config: dict, registered: set, classes=CLASSES,
     for cls in CLASSES:
         if cls not in classes or cls not in found["classes"]:
             continue
-        entry = found["classes"][cls]
-        outcome = commit(project_dir, entry["paths"], message_for(cls, entry))
-        commits.append({"class": cls, "paths": entry["paths"], "writers": entry["writers"],
-                        "message": message_for(cls, entry), **outcome})
-        if not outcome.get("committed"):
-            stderr = (outcome.get("stderr") or "").strip().splitlines()
-            why = f"commit refused ({outcome.get('reason')})" + (f": {stderr[-1][:200]}" if stderr else "")
-            unreconciled.extend({"path": p, "why": why} for p in entry["paths"])
+        whole = found["classes"][cls]
+        # A filing is committed alone, so each report is one commit a reader finds by name (AD-038-R23); an addendum
+        # that arrived with its base rides in the base's commit.
+        for entry in (_filing_groups(whole) if cls == "filing" else [whole]):
+            message = message_for(cls, entry)
+            outcome = commit(project_dir, entry["paths"], message)
+            commits.append({"class": cls, "paths": entry["paths"], "writers": entry["writers"],
+                            "message": message, **outcome})
+            if not outcome.get("committed"):
+                stderr = (outcome.get("stderr") or "").strip().splitlines()
+                why = f"commit refused ({outcome.get('reason')})" + (f": {stderr[-1][:200]}" if stderr else "")
+                unreconciled.extend({"path": p, "why": why} for p in entry["paths"])
     return {"commits": commits, "unreconciled": unreconciled}
+
+
+def _filing_groups(entry: dict) -> list:
+    """The filing class as one entry per filing: a base file with its new addenda, or an addendum to a filing that is
+    already tracked, alone. The base path is first, so the subject names the filing."""
+    paths = sorted(entry["paths"])
+    groups: dict = {}
+    for p in paths:
+        m = _ADDENDUM_RE.match(p)
+        base = f"{m.group('stem')}.md" if m else p
+        groups.setdefault(base if base in paths else p, []).append(p)
+    return [{"paths": sorted(g, key=lambda p, k=k: (p != k, p)), "writers": entry["writers"], "rows": []}
+            for k, g in groups.items()]

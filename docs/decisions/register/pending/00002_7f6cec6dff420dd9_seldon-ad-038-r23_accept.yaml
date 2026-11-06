@@ -1,0 +1,32 @@
+event: accept
+id: seldon:AD-038-R23
+date: '2026-11-06'
+decided_by: cc:915acf48
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md:44: AD-038-R23'
+reason: 'SEL-025 Part B; evidence: cc_tasks/2026-11-02_FAC-03_filing_result_filename_convention_mismatch.md untracked and unregistered refused c7 for the same three days (task file, The condition, item 2)'
+kind: decision
+status: accepted
+statement: 'The dispatcher''s pass shall commit an untracked cc_tasks/<name>.md whose header block declares Kind filing or whose Status names a consumer filing, with any untracked addendum to it, as its own path-limited commit through the hooks with the subject `dispatcher: filing: <basename>`, and print filing_committed; any other untracked path under a governed directory remains dirt that refuses on c7 and is named.'
+source:
+  path: docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md
+  lines:
+  - 44
+  - 48
+  sha256: 7828f3c840eea1a40f61585361f3abbfeda1989a9ced6e625164bb876f61beb3
+  text: |-
+    - **AD-038-R23. The pass commits a consumer filing it finds untracked.** An untracked `cc_tasks/<name>.md` whose header
+      block declares `**Kind:** filing`, or whose `**Status:**` names a consumer filing, and an untracked addendum to such
+      a file, are the reconciler's `filing` class. Each filing is committed alone, path-limited, through the hooks, as
+      `dispatcher: filing: <basename>`, and the pass prints `filing_committed:` with the path and commit. Any other
+      untracked path under a governed directory is still dirt, refuses on c7 and is named on the pass line.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md
+  anchor: AD-038-R23
+consumer:
+- cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md
+written_by: seldon decision 0.1.0
+provisional_id: 7f6cec6dff420dd92aa92145ba6f60d579434cb90607b0aa569a6d07c781cc05

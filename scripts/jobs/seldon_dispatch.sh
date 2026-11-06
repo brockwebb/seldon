@@ -17,6 +17,8 @@ REPO="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
 LOG="${SELDON_DISPATCH_LOG:-$REPO/logs/seldon_dispatch.log}"
 LOG_DIR="$(dirname "$LOG")"
 mkdir -p "$LOG_DIR"
+# A test can run the wrapper without a pass (SEL-025's rotation fixture); launchd sets no such variable.
+SELDON_BIN="${SELDON_DISPATCH_BIN:-/opt/anaconda3/bin/seldon}"
 
 # DD-007: subscription OAuth only; the dispatcher refuses a pass when either is set.
 unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
@@ -70,14 +72,24 @@ fi
 read -r MAX_LINE MAX_RUN RETAIN_DAYS <<< "$caps"
 
 # Rotate before the run, so a pass can never be truncated mid-write.
+# SEL-025 (AD-038-R22): the rotated name keeps `.log` LAST and lives under `logs/dispatch/`. The old name,
+# `<log>.<stamp>`, matched no ignore rule (`*.log` needs the suffix last), so each rotation left an untracked file
+# that refused the whole queue on c7: three days, 2026-11-04 02:19Z to 2026-11-06 12:55Z. `.gitignore` also ignores
+# `logs/**`, so either half alone keeps the tree clean.
+ROT_DIR="$LOG_DIR/dispatch"
+ROT_BASE="$(basename "$LOG" .log)"
 if [ -f "$LOG" ] && [ "$(/usr/bin/stat -f%z "$LOG")" -gt "$MAX_RUN" ]; then
-  mv "$LOG" "$LOG.$(date -u +%Y%m%dT%H%M%SZ)"
+  mkdir -p "$ROT_DIR"
+  mv "$LOG" "$ROT_DIR/$ROT_BASE.$(date -u +%Y%m%dT%H%M%SZ).log"
 fi
-/usr/bin/find "$LOG_DIR" -name "$(basename "$LOG").*" -mtime "+$RETAIN_DAYS" -delete 2>/dev/null
+# Retention matches the rotation's own name only: `logs/dispatch/` also holds each dispatched session's log, which
+# this job does not own. The second `find` expires rotations made under the old name before SEL-025.
+/usr/bin/find "$ROT_DIR" -maxdepth 1 -name "$ROT_BASE.*.log" -mtime "+$RETAIN_DAYS" -delete 2>/dev/null
+/usr/bin/find "$LOG_DIR" -maxdepth 1 -name "$(basename "$LOG").*" -mtime "+$RETAIN_DAYS" -delete 2>/dev/null
 
 {
   echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) | seldon-dispatch fire"
-  cd "$REPO" && /opt/anaconda3/bin/seldon dispatch once 2>&1 | /usr/bin/cut -c "1-$MAX_LINE"
+  cd "$REPO" && "$SELDON_BIN" dispatch once 2>&1 | /usr/bin/cut -c "1-$MAX_LINE"
   rc=${PIPESTATUS[0]}
   echo "=== rc=$rc"
   exit $rc
