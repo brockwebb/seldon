@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-034-R17
+date: '2026-11-06'
+decided_by: cc:0d115437
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md:71: AD-034-R17'
+reason: 'SEL-024 Part B; evidence: SQ-101''s RESULT classed 17 failures worktree-environmental and ran no lint, ruff not installed (W6)'
+kind: decision
+status: accepted
+statement: A declared gate that could not run (a requires tool absent from its PATH, the shell's 126 or 127, a usage error, python's No module named for its module, or a declared unrunnable_exits code) shall be `gate_unrunnable`, blocking the task merge_blocked, opening a huddle with reason gate_unrunnable naming the tools, command and tip, restoring the ledger as the branch had it and committing no record; a session's classification of its own failures as environmental shall never be read.
+source:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  lines:
+  - 71
+  - 76
+  sha256: c92fdbca4db77e07df2bd4912e0237f9fb4a3376bb044cf233327c3fcc681ca6
+  text: |-
+    - **AD-034-R17. A gate that could not run is `gate_unrunnable`: a block, a huddle naming what it lacked, and no
+      record.** A declared `requires` tool not on the gate's PATH, the shell's 126 or 127, a usage error, python's `No
+      module named` for the command's module, or a declared `unrunnable_exits` code is no reading. The round blocks the
+      task `merge_blocked` with reason `gate_unrunnable`, opens a `huddle` (`reason: gate_unrunnable`, `tools`, `command`,
+      `tip`) that stays open until one names its gate, restores the ledger as the branch had it and commits nothing. A
+      session's classification of its own failures as environmental is never read.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  anchor: AD-034-R17
+consumer:
+- cc_tasks/2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges.md
+- seldon/core/gate_record.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel024_gate_record.py
+written_by: seldon decision 0.1.0
+provisional_id: 1c4fdd151c84df0f930296bf27ddaf9d11f886944c89b189cbe46ea15be7ff91

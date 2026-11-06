@@ -1,0 +1,45 @@
+event: accept
+id: seldon:AD-034-R18
+date: '2026-11-06'
+decided_by: cc:0d115437
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md:77: AD-034-R18'
+reason: 'SEL-024 ADDENDUM 01 section 1; evidence: re-merge and regate run inside the AD-038-R20 filing-lock window, and squiddy''s kit pass is about 108 minutes against a 120 s filer wait'
+kind: decision
+status: accepted
+statement: The declared gate command shall never run while the pass holds the project's filing lock; the pass's re-merge and regate shall read the ledger only and, for an uncovered tip with no record of that tree, leave the task as it was and write gate_record_pending; after _release_filing and before any launch the pass shall run the command for each pending task still blocked with its worktree on disk, rebased onto main, unless its tree is covered or already recorded, and the next pass merges on the record; a tree whose record ran and did not pass shall go to the round, which blocks it naming the record; the post-session round and seldon dispatch regate, holding no filing lock, run the command themselves.
+source:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  lines:
+  - 77
+  - 91
+  sha256: c92fdbca4db77e07df2bd4912e0237f9fb4a3376bb044cf233327c3fcc681ca6
+  text: |-
+    - **AD-034-R18. The gate command never runs while the pass holds the project's filing lock.** The re-merge and the
+      regate, which a pass runs under the lock, read the ledger only (a file read). An uncovered tip is not handed to the
+      round: the task is left as it was and `gate_record_pending` is written. After `_release_filing`, before any launch,
+      the pass's record step runs the command for each pending task still blocked with its worktree on disk (rebased onto
+      main), unless that tree is covered or already recorded, and commits its `gate_recorded` lines; the next pass merges
+      on the record. A tree whose record already ran and did not pass is handed to the round, which blocks it
+      `pass_unrecorded` or `gate_unrunnable`, naming the record. The post-session round and `seldon dispatch regate`,
+      which hold no filing lock, run the command themselves. **Choice and reason (ADDENDUM 01 section 1 offered three):**
+      the third, "the locked paths leave the record to a path outside the lock", because the other two move work the lock
+      protects. Running the gate before the merge round on the post-session path does not reach the re-merge and regate,
+      whose sessions never reached the round. Releasing the lock around the gate would mean re-acquiring it before the
+      fast-forward and the reconcile, and a re-acquire that times out leaves a task walked to `in_progress` with no finish
+      and a pass that no longer holds the lock its reconcile and candidacy assume. The cost of the choice is one pass of
+      latency on a deferred task (five minutes at seldon's and squiddy's `poll_interval_s`) against a gate of up to two
+      hours.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  anchor: AD-034-R18
+consumer:
+- cc_tasks/2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges_ADDENDUM_01_the_gate_command_runs_outside_the_filing_lock_and_the_return_is_filed_not_returned.md
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- tests/test_sel024_gate_record.py
+written_by: seldon decision 0.1.0
+provisional_id: 588f04599244b77d39bb6e2fdc6c6aae3d6208dfe12d71dfdacc0ad46c3833a2

@@ -196,6 +196,9 @@ dispatch:
   gate_command: >-
     python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
     -p no:cacheprovider
+  # SEL-024 (AD-034-R16 to R18): the pass record the merge round requires for the tip it merges. seldon keeps no pass
+  # ledger (its gate is `gate_command` above, re-run on overlap), so it declares none; squiddy declares its kit ledger.
+  gate_record: none
   stop_file: .seldon/DISPATCH_STOP
   # One instance, by flock, with an identified holder; reaped only by the operator, never by age.
   lease_file: .seldon/dispatch.lock

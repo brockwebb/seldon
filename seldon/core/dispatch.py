@@ -836,6 +836,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.notify must be a non-empty shell command string, got {notify!r}")
     block["notify"] = notify
+    # SEL-024 (AD-034-R16): the project's declared pass record, validated at load so a malformed one refuses here and
+    # not at the first merge. Absent or `none` is None: the merge round asks for no record.
+    from seldon.core import gate_record as GR
+    try:
+        block[GR.CONFIG_KEY] = GR.parse(block.get(GR.CONFIG_KEY))
+    except GR.GateRecordError as exc:
+        raise DispatchConfigError(str(exc)) from exc
     # SEL-005: the launchd job that runs this project's passes. Optional; when given, `seldon go`
     # reports `dispatch: on` only while that job is loaded, because a config that says enabled with
     # no job running launches nothing and a Desktop session that believed otherwise would wait.

@@ -354,6 +354,19 @@ def _breaker_and_stale(project_dir, config, driver, database, domain_config, ses
             click.echo(f"{step}: NOT done: {type(exc).__name__}: {exc}", err=True)
 
 
+def _record_pending(project_dir, config, driver, database, session_id, cfg) -> None:
+    """AD-034-R18 (SEL-024): after the filing lock is released and before any launch, run the declared gate command
+    for each kept worktree the locked re-merge or regate left `gate_record_pending`; the next pass merges on the
+    record. Reported, not raised, as `_breaker_and_stale` is."""
+    from seldon.commands import dispatch_worktree as W
+    try:
+        if W.record_pending(project_dir, config, driver, database, session_id, cfg):
+            # Its `gate_recorded` lines are committed now, as a finish's are, so the launch below starts clean.
+            _record_own_lines(project_dir, config, cfg)
+    except Exception as exc:                                            # noqa: BLE001
+        click.echo(f"gate record: NOT done: {type(exc).__name__}: {exc}", err=True)
+
+
 def _auto_redrive(project_dir, driver, database, domain_config, session_id) -> list:
     """Redrive the blocked tasks whose stop was the dispatcher's own defect (AD-038-R2;
     `seldon.core.redrive.AUTO_REDRIVE_REASONS`). Each is printed; a failure is reported, not raised, since
@@ -925,8 +938,9 @@ def dispatch_regate(task):
             raise click.ClickException(f"no ResearchTask matches {task!r}")
         try:
             with W._pass_lease(project_dir, cfg):
+                # AD-034-R18: no filing lock is held here, so the merge round may run the declared gate command.
                 out = W.regate(project_dir, config, driver, database, domain_config, session_id, cfg,
-                               task_id=task_id)
+                               task_id=task_id, run_record=True)
                 _record_and_push(project_dir, config, cfg)
         except W.RegateRefused as exc:
             raise click.ClickException(f"regate refused: {exc}")
@@ -1415,6 +1429,9 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now. Nothing below reads the tree for candidacy.
     _release_filing(filing)
+    if claim is None and not dry_run:
+        # AD-034-R18: a declared gate command runs only here, outside the filing lock.
+        _record_pending(project_dir, config, driver, database, session_id, cfg)
 
     eligible = [r for r in rows if r["eligible"]]
     if not eligible:

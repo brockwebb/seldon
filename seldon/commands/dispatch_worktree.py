@@ -47,6 +47,7 @@ import click
 import seldon
 from seldon.commands import dispatch as S
 from seldon.core import dispatch as D
+from seldon.core import gate_record as GR
 from seldon.core import worktree as WT
 from seldon.core.artifacts import create_artifact, create_link, update_artifact, walk_to_completed
 
@@ -246,6 +247,9 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now, before any launch.
     S._release_filing(filing)
+    if inplace_claim is None and not dry_run:
+        # AD-034-R18: a declared gate command runs only here, outside the filing lock.
+        S._record_pending(project_dir, config, driver, database, session_id, cfg)
 
     ready = [r for r in rows if r["eligible"]]
     plan = D.plan_launches(
@@ -857,7 +861,7 @@ def _spec_modified(driver, database, task_id: str, path: Path) -> bool:
 
 
 def _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish,
-           name, extra, lease_cm=None) -> None:
+           name, extra, lease_cm=None, run_record: bool = True) -> None:
     """Decision 3: rebase onto main, re-gate if main changed the write set, check the union
     files, then fast-forward under the pass lease if main has not moved. Never resolves.
 
@@ -867,6 +871,11 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
     blocked on. A move made only of housekeeping commits, which the sweep under the lease
     itself makes whenever a ledger or the store has new lines, is rebased over inside the
     lease: it cannot conflict and is excluded from the re-gate, so it never costs a round.
+
+    SEL-024 (AD-034-R16, R17): with `dispatch.gate_record` declared, the tip merges only when the project's ledger
+    carries a pass for its tree. The round runs the declared command in the worktree when it does not, outside the
+    pass lease, and commits the line on the branch; `run_record=False` (a caller holding the project's filing lock,
+    AD-034-R18) reads the ledger and never runs the command.
     """
     lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
     stem, branch, rel = extra["stem"], extra["branch"], extra["source_file"]
@@ -928,6 +937,15 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             return blocked("union_invalid", sorted(bad), union=bad)
         if _spec_modified(driver, database, finish["task_id"], wt / rel):
             return blocked("spec_modified", [rel])
+        gr = cfg.get(GR.CONFIG_KEY)
+        record = None
+        if gr:
+            got = _ensure_record(project_dir, cfg, wt, tip, gr, finish["task_id"], session_id, linked, run_record)
+            if not got["ok"]:
+                return blocked(got["reason"], got["files"], attempt=attempt, **got["detail"])
+            tip, record = got["tip"], got["record"]
+            if record.get("ledger_commit"):
+                writes = sorted(set(writes) | {gr["ledger"]})
         with lease_cm():
             # What a pass would commit first, committed first here: a line a Desktop tool
             # appended while a pass held the lease would otherwise make the fast-forward
@@ -949,6 +967,12 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 bad = union_bad(tip, main_sha, writes)
                 if bad:
                     return unmerged("union_invalid", sorted(bad), union=bad)
+                if gr:
+                    # A file read under the lease: housekeeping is outside the tree identity, so a record made before
+                    # this rebase still covers the tip; anything else is a tree nobody recorded.
+                    cov = GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))
+                    if not cov["covered"]:
+                        return unmerged(GR.PASS_UNRECORDED, [gr["ledger"]], record=cov, attempt=attempt)
             # LOOP-001 Part B: the rebased branch's register, its pending records included, verifies before main
             # takes it, so the numbering after the fast-forward cannot refuse (two branches creating one id).
             reg_bad = _register_findings(wt, config)
@@ -968,6 +992,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                      # SEL-017 Part A (AD-034-R13): the links the session made itself, which the dirt check counted
                      # clean as it counts the configured `linked`.
                      "linked_by_session": WT.session_links(wt, exclude=linked)}
+            if record is not None:
+                merge["gate_record"] = record
             numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch)
             if numbered:
                 merge["register_numbered"] = numbered
@@ -976,6 +1002,160 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             return
     reason, files, detail = last
     return blocked(reason, files, **detail)
+
+
+# ====================================================== the declared pass record (SEL-024, AD-034 ADDENDUM 08)
+
+def _housekeeping(wt: Path, cfg: dict):
+    """The merge round's housekeeping, as `GR.coverage` asks for it: of `paths`, the `merge=union` files and the
+    `shared_paths`, which a round rebases over without a re-gate."""
+    shared = set(cfg.get("shared_paths") or [])
+    return lambda paths: set(WT.union_files(wt, paths)) | (set(paths) & shared)
+
+
+def _tree_of(wt: Path, rev: str) -> str:
+    return WT.git(wt, "rev-parse", f"{rev}^{{tree}}").stdout.strip()
+
+
+def last_recorded(project_dir: Path, task_id: str, tree: str) -> dict | None:
+    """The newest `gate_recorded` this task's worktree wrote for `tree`, or None."""
+    from seldon.core.events import read_events
+    hit = None
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == GR.EVENT_RECORDED and p.get("task_id") == task_id and p.get("tree") == tree:
+            hit = p
+    return hit
+
+
+def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id) -> dict:
+    """Run the declared gate command in the worktree and commit the line it appended (AD-034-R16).
+
+    Never under the filing lock (AD-034-R18): its callers are the post-session merge round, `seldon dispatch regate`
+    and the pass's record step, each after `_release_filing`. A gate that could not run (AD-034-R17) commits nothing,
+    restores the ledger as the branch had it, and opens a huddle naming what it lacked. Writes `gate_recorded` and
+    returns its payload.
+    """
+    from seldon.core import stations as Q
+    scfg = Q.load_stations_config(cfg, project_dir)
+    env = {**os.environ, WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
+    click.echo(f"gate record: running `{gr['command']}` in {wt.name} for {tip[:12]} (AD-034-R16)")
+    row = GR.run(wt, gr, interpreter=scfg.get("interpreter"), env=env)
+    payload = {"task_id": task_id, "worktree": D.config_rel(project_dir, wt), "tip": tip, "tree": _tree_of(wt, tip),
+               "ledger": gr["ledger"], "gate": GR.summary(row), "outcome": row["outcome"]}
+    if row["outcome"] == "unrunnable":
+        # No reading: whatever the command wrote is not a record (AD-034-R17).
+        WT.git(wt, "checkout", "-q", "HEAD", "--", gr["ledger"])
+        payload["ledger_commit"] = None
+    else:
+        c = GR.commit_ledger(wt, gr, tip, row["outcome"])
+        payload["ledger_commit"] = c["commit"]
+        if c["stderr"]:
+            payload["commit_error"] = c["stderr"]
+    S._emit(project_dir, session_id, GR.EVENT_RECORDED, payload)
+    if row["outcome"] == "unrunnable":
+        missing = row.get("missing") or []
+        S._emit(project_dir, session_id, Q.EVENT_HUDDLE, Q.huddle_payload(
+            task_id, reading=f"{GR.GATE_UNRUNNABLE}: `{gr['command']}` lacks {', '.join(missing) or 'a tool'}: "
+                             f"{(row.get('tail') or '')[-300:]}",
+            opened_by="dispatcher (merge round)", cause=f"absent from the gate's environment: {', '.join(missing)}",
+            gate=None, reason=GR.GATE_UNRUNNABLE, tools=missing, command=gr["command"], tip=tip))
+        click.echo(f"gate record: {GR.GATE_UNRUNNABLE} for {tip[:12]}: lacks {', '.join(missing)}; huddle opened",
+                   err=True)
+    else:
+        click.echo(f"gate record: {row['outcome']} for {tip[:12]} (exit {row.get('exit')}), ledger commit "
+                   f"{(payload['ledger_commit'] or 'none')[:12]}")
+    return payload
+
+
+def _refusal(reason: str, gr: dict, **detail) -> dict:
+    return {"ok": False, "reason": reason, "files": [gr["ledger"]], "detail": detail}
+
+
+def _ensure_record(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id,
+                   linked: list, run_record: bool) -> dict:
+    """The merge round's record step: `{ok, tip, record}` with the tip to merge, or `{ok: False, reason, files,
+    detail}`, the block. Reads the ledger first; runs the command only when `run_record` and no line covers the tip."""
+    hk = _housekeeping(wt, cfg)
+    cov = GR.coverage(wt, tip, gr, hk)
+    if cov["covered"]:
+        return {"ok": True, "tip": tip, "record": {"coverage": cov, "ran": False}}
+    if not run_record:
+        last = last_recorded(project_dir, task_id, _tree_of(wt, tip))
+        if last and last["outcome"] == "unrunnable":
+            return _refusal(GR.GATE_UNRUNNABLE, gr, record=cov, gate=last["gate"])
+        return _refusal(GR.PASS_UNRECORDED, gr, record=cov, gate=(last or {}).get("gate"),
+                        deferred=None if last else "filing_lock")
+    rec = record_pass(project_dir, cfg, wt, tip, gr, task_id, session_id)
+    if rec["outcome"] == "unrunnable":
+        return _refusal(GR.GATE_UNRUNNABLE, gr, record=cov, gate=rec["gate"])
+    dirt = WT.dirty_paths(wt, exclude=linked)
+    if dirt:
+        # The command wrote something besides its ledger line: nothing merges on a tree nobody committed.
+        return {"ok": False, "reason": "uncommitted_changes", "files": dirt, "detail": {"gate": rec["gate"]}}
+    new_tip = WT.rev(wt, "HEAD")
+    after = GR.coverage(wt, new_tip, gr, hk)
+    if not after["covered"]:
+        return _refusal(GR.PASS_UNRECORDED, gr, record=after, gate=rec["gate"],
+                        commit_error=rec.get("commit_error"))
+    return {"ok": True, "tip": new_tip, "record": {"coverage": after, "ran": True, "gate": rec["gate"],
+                                                   "ledger_commit": rec["ledger_commit"]}}
+
+
+def record_ready_under_lock(project_dir: Path, cfg: dict, wt: Path, task_id: str, session_id, by: str) -> bool:
+    """AD-034-R18: may a caller holding the filing lock (the pass's re-merge and regate) hand this worktree to the
+    merge round now? True with no `gate_record`, when the ledger covers the tip rebased onto main, or when this
+    tree's record already ran (the round then blocks on it, naming it). Otherwise writes `gate_record_pending` for the
+    pass's record step, which runs the command after the lock is released, and returns False: the task is left as
+    it is, and the next pass merges it on the record."""
+    gr = cfg.get(GR.CONFIG_KEY)
+    if not gr:
+        return True
+    main_sha = WT.rev(project_dir, cfg["branch"])
+    if WT.git(wt, "merge-base", "HEAD", main_sha).stdout.strip() != main_sha \
+            and not WT.rebase(wt, main_sha)["ok"]:
+        return True                        # the round blocks it `rebase_conflict`, as it always has
+    tip = WT.rev(wt, "HEAD")
+    if GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))["covered"]:
+        return True
+    tree = _tree_of(wt, tip)
+    if last_recorded(project_dir, task_id, tree):
+        return True
+    S._emit(project_dir, session_id, GR.EVENT_PENDING, {"task_id": task_id, "worktree": D.config_rel(project_dir, wt),
+                                                        "tip": tip, "tree": tree, "by": by})
+    click.echo(f"{by}: {task_id[:8]} has no pass record for {tip[:12]}; the pass records it after the filing lock "
+               f"is released and merges it on the next pass (AD-034-R18)")
+    return False
+
+
+def record_pending(project_dir: Path, config: dict, driver, database: str, session_id, cfg: dict) -> list:
+    """AD-034-R18, the pass's record step, after `_release_filing` and before any launch: for each task a locked path
+    left `gate_record_pending`, still blocked with its worktree on disk, rebase onto main and run the declared command
+    unless the tree is already covered or already recorded. Returns the `gate_recorded` payloads."""
+    from seldon.core.events import read_events
+    gr = cfg.get(GR.CONFIG_KEY)
+    if not gr:
+        return []
+    pending = {}
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == GR.EVENT_PENDING and p.get("task_id"):
+            pending[p["task_id"]] = p
+    out = []
+    for task_id, p in pending.items():
+        wt = Path(project_dir) / p["worktree"]
+        if not wt.exists() or S._state_of(driver, database, task_id) != "blocked":
+            continue
+        main_sha = WT.rev(project_dir, cfg["branch"])
+        if WT.git(wt, "merge-base", "HEAD", main_sha).stdout.strip() != main_sha \
+                and not WT.rebase(wt, main_sha)["ok"]:
+            continue
+        tip = WT.rev(wt, "HEAD")
+        if GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))["covered"] \
+                or last_recorded(project_dir, task_id, _tree_of(wt, tip)):
+            continue
+        out.append(record_pass(project_dir, cfg, wt, tip, gr, task_id, session_id))
+    return out
 
 
 #: LOOP-001 Part B: what the merge step records when it numbers a merged branch's pending register records.
@@ -1498,6 +1678,9 @@ def remerge_breaker_green(project_dir, config, driver, database, domain_config, 
         reasons = [(e.get("payload") or {}).get("reason") for e in events
                    if e.get("event_type") == S.QS.EVENT_CLASSIFIER_BLOCK
                    and (e.get("payload") or {}).get("child_session_id") == fin.get("child_session_id")]
+        # AD-034-R18: this runs under the pass's filing lock, so the declared gate command is never run here.
+        if not record_ready_under_lock(project_dir, cfg, wt, task_id, session_id, by="remerge"):
+            continue
         S.transition_task(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
                           artifact_id=task_id, current_state="blocked", new_state="in_progress", actor=S.ACTOR,
                           authority="accepted", session_id=session_id)
@@ -1508,7 +1691,7 @@ def remerge_breaker_green(project_dir, config, driver, database, domain_config, 
         click.echo(f"remerge: {task_id[:8]} blocked by the classifier breaker with green work; merging "
                    f"{fin['branch']} (AD-034 ADDENDUM 02)")
         _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name, extra,
-               lease_cm=nullcontext)
+               lease_cm=nullcontext, run_record=False)
         tried.append(task_id)
     return tried
 
@@ -1590,7 +1773,7 @@ def _regate_unchanged(project_dir: Path, cfg: dict, wt: Path, last: dict | None,
 
 
 def regate(project_dir, config, driver, database, domain_config, session_id, cfg, task_id: str | None = None,
-           run=None) -> list:
+           run=None, run_record: bool = False) -> list:
     """Re-gate kept work in place: DISP-003R Part C, AD-034 ADDENDUM 03 (AD-034-R10).
 
     For each `regate_candidates` task (or only `task_id`, which must be one, else `RegateRefused`): rebase the kept
@@ -1600,6 +1783,9 @@ def regate(project_dir, config, driver, database, domain_config, session_id, cfg
     `merge_blocked` Issue. On fail the task stays blocked with the failing checks quoted, and the pass does not run
     the same reading again (`_regate_unchanged`); an explicit `task_id` always runs. Called with the pass lease held
     and no session in flight. Returns the `dispatch_regated` payloads.
+
+    `run_record` (AD-034-R18): the pass calls this under its filing lock and passes False, so a project's declared
+    gate command is left to the pass's record step; `seldon dispatch regate`, which holds no filing lock, passes True.
     """
     from seldon.core.events import read_events
     project_dir = Path(project_dir)
@@ -1647,6 +1833,8 @@ def regate(project_dir, config, driver, database, domain_config, session_id, cfg
                        + ("; ".join(f"`{f['command']}` {f['outcome']} exit {f['exit']}" for f in record["failed"])
                           or ", ".join(record.get("files") or []) or "-"), err=True)
             continue
+        if not run_record and not record_ready_under_lock(project_dir, cfg, wt, tid, session_id, by="regate"):
+            continue
         S.transition_task(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
                           artifact_id=tid, current_state="blocked", new_state="in_progress", actor=S.ACTOR,
                           authority="accepted", session_id=session_id)
@@ -1658,5 +1846,5 @@ def regate(project_dir, config, driver, database, domain_config, session_id, cfg
         click.echo(f"regate: {tid[:8]} blocked stop_gate_unpassed; its {len(record['checks'])} check(s) pass in "
                    f"{fin['worktree']}; merging {branch} (AD-034 ADDENDUM 03)")
         _merge(project_dir, config, driver, database, domain_config, session_id, cfg, finish, name, extra,
-               lease_cm=nullcontext)
+               lease_cm=nullcontext, run_record=run_record)
     return out

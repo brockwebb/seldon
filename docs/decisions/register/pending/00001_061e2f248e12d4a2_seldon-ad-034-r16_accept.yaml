@@ -1,0 +1,43 @@
+event: accept
+id: seldon:AD-034-R16
+date: '2026-11-06'
+decided_by: cc:0d115437
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md:58: AD-034-R16'
+reason: 'SEL-024 Part A; evidence: squiddy merges with no kit pass record between bc345c09 and d31501c7, and SQ-101 at 67cde2da (W6)'
+kind: decision
+status: accepted
+statement: When a project declares dispatch.gate_record (its record command, tracked JSONL ledger, commit_field, pass_field and timeout_s, optionally requires, unrunnable_exits and tree_paths; `none` declares no ledger and an absent key keeps today's round), the merge round shall merge a tip only when the ledger the tip carries holds a pass whose named commit differs from the tip, under tree_paths or the whole tree, only in the ledger and the round's housekeeping, the newest covering line deciding; with none it shall run the command in the worktree under the declared interpreter outside the pass lease, commit the appended line on the branch and check again, and block merge_blocked `pass_unrecorded` naming the ledger when still uncovered, re-checking under the lease after any housekeeping rebase and recording gate_record on the merge and gate_recorded per run.
+source:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  lines:
+  - 58
+  - 70
+  sha256: c92fdbca4db77e07df2bd4912e0237f9fb4a3376bb044cf233327c3fcc681ca6
+  text: |-
+    - **AD-034-R16. When a project declares `dispatch.gate_record`, the merge round merges a tip only when the ledger the
+      tip carries holds a pass covering the tip's tree.** The declaration names the command that records a pass, the
+      tracked JSONL ledger it appends to, the field of a line naming the commit (`commit_field`) and the field that is
+      `true` on a pass (`pass_field`), the command's `timeout_s`, and optionally `requires`, `unrunnable_exits` and
+      `tree_paths`; `gate_record: none` declares no ledger, and an absent key keeps today's round. A line covers the tip
+      when the commit it names differs from the tip, under `tree_paths` (absent: the whole tree), only in the ledger and
+      in the round's housekeeping (`merge=union` files and `shared_paths`); the newest covering line decides. With no
+      covering pass the round runs the command in the worktree, under the declared interpreter (AD-037-R15), outside the
+      pass lease, commits the line it appended on the branch (`gate_record: ...`), and checks again; still uncovered, it
+      blocks the task `merge_blocked` with reason `pass_unrecorded`, naming the ledger, and the redrive that answers any
+      merge block applies. The check is repeated under the lease after any housekeeping rebase. The merge record carries
+      `gate_record` (the coverage, whether the command ran, its reading and the ledger commit), and every run writes
+      `gate_recorded`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
+  anchor: AD-034-R16
+consumer:
+- cc_tasks/2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges.md
+- seldon/core/gate_record.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel024_gate_record.py
+written_by: seldon decision 0.1.0
+provisional_id: 061e2f248e12d4a2540975ea6b6a5b633faebc501db5a79f1eba2406c38567bf
