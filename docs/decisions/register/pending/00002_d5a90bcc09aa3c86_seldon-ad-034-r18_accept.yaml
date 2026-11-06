@@ -4,7 +4,7 @@ date: '2026-11-06'
 decided_by: cc:0d115437
 operator_stated: false
 receipts:
-- 'docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md:77: AD-034-R18'
+- 'docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md:80: AD-034-R18'
 reason: 'SEL-024 ADDENDUM 01 section 1; evidence: re-merge and regate run inside the AD-038-R20 filing-lock window, and squiddy''s kit pass is about 108 minutes against a 120 s filer wait'
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: The declared gate command shall never run while the pass holds the pr
 source:
   path: docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md
   lines:
-  - 77
-  - 91
-  sha256: c92fdbca4db77e07df2bd4912e0237f9fb4a3376bb044cf233327c3fcc681ca6
+  - 80
+  - 94
+  sha256: 5bd5eefba2226aeeebf79f2649ca1b9d9651a4fe1199704b4a1e5fc53c6b1f31
   text: |-
     - **AD-034-R18. The gate command never runs while the pass holds the project's filing lock.** The re-merge and the
       regate, which a pass runs under the lock, read the ledger only (a file read). An uncovered tip is not handed to the
@@ -42,4 +42,4 @@ consumer:
 - seldon/commands/dispatch.py
 - tests/test_sel024_gate_record.py
 written_by: seldon decision 0.1.0
-provisional_id: 588f04599244b77d39bb6e2fdc6c6aae3d6208dfe12d71dfdacc0ad46c3833a2
+provisional_id: d5a90bcc09aa3c8614c8cf320a78276a0aa71a308ae90d7a80ea964c5fcf1d63

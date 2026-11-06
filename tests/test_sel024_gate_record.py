@@ -92,6 +92,7 @@ def test_absent_or_none_asks_for_no_record():
     ({**_decl("x"), "requires": "ruff"}, "requires"),
     ({**_decl("x"), "unrunnable_exits": [0]}, "unrunnable_exits"),
     ({**_decl("x"), "colour": "red"}, "unknown"),
+    ({**_decl("x"), "branch_line": "merge"}, "branch_line"),
 ])
 def test_a_malformed_declaration_refuses_at_load(tmp_path, bad, match):
     with pytest.raises(GR.GateRecordError, match=match):
@@ -283,6 +284,26 @@ def test_fixture_a_tip_with_a_record_merges(tmp_path, neo4j_driver, dc):
         LEDGER, "seldon_events.jsonl"]
     (got,) = _payloads(p, GR.EVENT_RECORDED)
     assert got["outcome"] == "pass" and got["ledger_commit"] == rec["ledger_commit"]
+
+
+@pytest.mark.usefixtures("neo4j_available")
+def test_fixture_branch_line_discard_merges_the_recorded_commit_and_no_line(tmp_path, neo4j_driver, dc):
+    """squiddy R-237 item 1: a branch's line certifies the branch's tree and is never merged into main's ledger."""
+    p = make_project(tmp_path, dispatch_extra={"gate_record": _decl(_recorder(tmp_path, "--outcome", "pass"),
+                                                                    branch_line="discard")})
+    tid = _session(p, neo4j_driver, dc, "sel024_discard")
+    out = _once(p)
+    fin = _payloads(p, D.EVENT_FINISHED)[-1]
+    assert fin["outcome"] == "merged", (fin, out)
+    rec = fin["merge"]["gate_record"]
+    assert rec["ran"] is True and rec["ledger_commit"] is None, rec
+    # the merged tip is the commit judged, or that commit rebased in the lease over housekeeping only (the event store)
+    judged = rec["coverage"]["recorded"]
+    assert set(git(p, "diff", "--name-only", judged, fin["merge"]["commit"]).stdout.split()) <= {"seldon_events.jsonl"}
+    assert git(p, "show", f"main:{LEDGER}", check=False).returncode != 0, "no branch line reached main"
+    (got,) = _payloads(p, GR.EVENT_RECORDED)
+    assert got["lines"] == [[judged, True]] and got["tip"] == judged, got
+    assert _state(neo4j_driver, tid) == "completed"
 
 
 @pytest.mark.usefixtures("neo4j_available")

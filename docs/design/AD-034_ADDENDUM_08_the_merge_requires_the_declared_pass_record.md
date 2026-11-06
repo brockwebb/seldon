@@ -58,12 +58,15 @@ These sources are cited by their published names and were not fetched (Network: 
 - **AD-034-R16. When a project declares `dispatch.gate_record`, the merge round merges a tip only when the ledger the
   tip carries holds a pass covering the tip's tree.** The declaration names the command that records a pass, the
   tracked JSONL ledger it appends to, the field of a line naming the commit (`commit_field`) and the field that is
-  `true` on a pass (`pass_field`), the command's `timeout_s`, and optionally `requires`, `unrunnable_exits` and
-  `tree_paths`; `gate_record: none` declares no ledger, and an absent key keeps today's round. A line covers the tip
-  when the commit it names differs from the tip, under `tree_paths` (absent: the whole tree), only in the ledger and
-  in the round's housekeeping (`merge=union` files and `shared_paths`); the newest covering line decides. With no
-  covering pass the round runs the command in the worktree, under the declared interpreter (AD-037-R15), outside the
-  pass lease, commits the line it appended on the branch (`gate_record: ...`), and checks again; still uncovered, it
+  `true` on a pass (`pass_field`), the command's `timeout_s`, and optionally `requires`, `unrunnable_exits`,
+  `tree_paths` and `branch_line`; `gate_record: none` declares no ledger, and an absent key keeps today's round. A
+  line covers the tip when the commit it names differs from the tip, under `tree_paths` (absent: the whole tree), only
+  in the ledger and in the round's housekeeping (`merge=union` files and `shared_paths`); the newest covering line
+  decides. With no covering pass the round runs the command in the worktree, under the declared interpreter
+  (AD-037-R15), outside the pass lease, and either commits the line it appended on the branch (`branch_line: commit`,
+  the default) or reads it into its `gate_recorded` event, which coverage then reads too, and restores the ledger
+  (`branch_line: discard`, for a project whose rule keeps a branch's line out of main's ledger, as squiddy's DN-052
+  R-237 item 1 does); it then checks again; still uncovered, it
   blocks the task `merge_blocked` with reason `pass_unrecorded`, naming the ledger, and the redrive that answers any
   merge block applies. The check is repeated under the lease after any housekeeping rebase. The merge record carries
   `gate_record` (the coverage, whether the command ran, its reading and the ledger commit), and every run writes

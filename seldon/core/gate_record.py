@@ -18,8 +18,18 @@ said, so the rule held only when a session chose to honour it.
         requires: [ruff]                             # tools that must resolve on the command's PATH
         unrunnable_exits: [4, 5]                     # the command's own "I could not judge" exits
         tree_paths: [squiddy/]                       # what a pass covers; absent, the whole tree
+        branch_line: discard                         # commit (default): the line merges with the branch;
+                                                     # discard: read it, keep it in `gate_recorded`, merge none
 
-or `gate_record: none` where the project keeps no ledger. Absent, the merge round is today's.
+or `gate_record: none` where the project keeps no ledger. Absent, the merge round is today's. The example values are
+illustrative; a project's own are in its seldon.yaml.
+
+**Where the line goes.** By default the round commits the line the command appended on the branch, so it reaches main
+with the fast-forward. squiddy's DN-052 R-237 item 1 says a branch's line "certifies the branch's tree for the
+branch's own use and is never merged into main's ledger; the tip that merges is re-recorded on main". A project with
+that rule declares `branch_line: discard`: the round reads the line, keeps the reading in its own `gate_recorded`
+event (which coverage then reads alongside the ledger), restores the ledger as the branch had it, and merges the
+recorded commit itself, so the tip is the exact commit the command judged.
 
 **What "a record for the exact tip" means.** A line covers the tip when the commit it names has the tip's tree, apart
 from the ledger itself and the housekeeping the merge round already rebases over without a round (the `merge=union`
@@ -61,7 +71,12 @@ GATE_UNRUNNABLE = "gate_unrunnable"
 EVENT_PENDING = "gate_record_pending"
 EVENT_RECORDED = "gate_recorded"
 
-_KEYS = {"command", "ledger", "commit_field", "pass_field", "timeout_s", "requires", "unrunnable_exits", "tree_paths"}
+_KEYS = {"command", "ledger", "commit_field", "pass_field", "timeout_s", "requires", "unrunnable_exits", "tree_paths",
+         "branch_line"}
+#: What the round does with the line the command appended on the branch (AD-034-R16): commit it on the branch, so it
+#: reaches main with the merge, or discard it after reading it (squiddy R-237 item 1: a branch's line "is never merged
+#: into main's ledger"), keeping the reading in seldon's `gate_recorded`.
+BRANCH_LINE = ("commit", "discard")
 _REQUIRED = ("command", "ledger", "commit_field", "pass_field", "timeout_s")
 #: python's own message when `-m <module>` names a module it cannot import: the interpreter has no such install.
 _NO_MODULE_RE = re.compile(r"^\S*python[\d.]*: No module named (\S+)", re.MULTILINE)
@@ -107,9 +122,13 @@ def parse(value) -> Optional[dict]:
                                               and ".." not in x.split("/") for x in paths):
         raise GateRecordError(f"dispatch.{CONFIG_KEY}.tree_paths must be a list of repository-relative paths, got "
                               f"{paths!r}")
+    branch_line = value.get("branch_line", BRANCH_LINE[0])
+    if branch_line not in BRANCH_LINE:
+        raise GateRecordError(f"dispatch.{CONFIG_KEY}.branch_line must be one of {list(BRANCH_LINE)}, got "
+                              f"{branch_line!r}")
     return {"command": value["command"], "ledger": ledger, "commit_field": value["commit_field"],
             "pass_field": value["pass_field"], "timeout_s": t, "requires": list(requires),
-            "unrunnable_exits": list(exits), "tree_paths": list(paths)}
+            "unrunnable_exits": list(exits), "tree_paths": list(paths), "branch_line": branch_line}
 
 
 # ------------------------------------------------------------------------------------------------- the ledger read
@@ -131,8 +150,25 @@ def ledger_lines(repo: Path, rev: str, decl: dict) -> list:
     r = subprocess.run(["git", "-C", str(repo), "show", f"{rev}:{decl['ledger']}"], capture_output=True)
     if r.returncode != 0:
         return []
+    return parse_lines(r.stdout.decode("utf-8", "replace"), decl)
+
+
+def appended_lines(wt: Path, decl: dict) -> list:
+    """The lines the working copy of the ledger holds beyond HEAD's: what the command just appended."""
+    f = Path(wt) / decl["ledger"]
+    if not f.is_file():
+        return []
+    r = subprocess.run(["git", "-C", str(wt), "show", f"HEAD:{decl['ledger']}"], capture_output=True)
+    before = len([ln for ln in r.stdout.decode("utf-8", "replace").splitlines() if ln.strip()]) \
+        if r.returncode == 0 else 0
+    now = [ln for ln in f.read_text(encoding="utf-8", errors="replace").splitlines() if ln.strip()]
+    return parse_lines("\n".join(now[before:]), decl)
+
+
+def parse_lines(text: str, decl: dict) -> list:
+    """`[(commit, passed)]` for each parseable JSONL line of `text` naming a commit."""
     out = []
-    for raw in r.stdout.decode("utf-8", "replace").splitlines():
+    for raw in text.splitlines():
         if not raw.strip():
             continue
         try:
@@ -156,14 +192,15 @@ def tree_differences(repo: Path, recorded: str, tip: str, paths: Optional[list] 
     return [ln for ln in r.stdout.splitlines() if ln.strip()]
 
 
-def coverage(repo: Path, tip: str, decl: dict, housekeeping) -> dict:
+def coverage(repo: Path, tip: str, decl: dict, housekeeping, read: tuple | list = ()) -> dict:
     """Does the ledger at `tip` carry a pass for `tip`'s tree? `housekeeping(paths) -> set` names the paths among
-    `paths` the merge round treats as housekeeping (`merge=union` files and `shared_paths`).
+    `paths` the merge round treats as housekeeping (`merge=union` files and `shared_paths`). `read` is lines the round
+    read from the command and did not commit (`branch_line: discard`), newer than any the ledger holds.
 
     `{covered, tip, recorded, reason}`: `recorded` is the commit of the line that decided, `reason` is None when
     covered, `no_line` when no line covers the tip's tree, `recorded_fail` when the newest such line is not a pass.
     """
-    lines = ledger_lines(repo, tip, decl)
+    lines = ledger_lines(repo, tip, decl) + [tuple(x) for x in read]
     for commit, passed in reversed(lines):
         diff = tree_differences(repo, commit, tip, decl.get("tree_paths"))
         if diff is None:

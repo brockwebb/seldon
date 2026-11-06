@@ -970,7 +970,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 if gr:
                     # A file read under the lease: housekeeping is outside the tree identity, so a record made before
                     # this rebase still covers the tip; anything else is a tree nobody recorded.
-                    cov = GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))
+                    cov = _coverage(project_dir, cfg, wt, tip, gr, finish["task_id"])
                     if not cov["covered"]:
                         return unmerged(GR.PASS_UNRECORDED, [gr["ledger"]], record=cov, attempt=attempt)
             # LOOP-001 Part B: the rebased branch's register, its pending records included, verifies before main
@@ -1017,6 +1017,32 @@ def _tree_of(wt: Path, rev: str) -> str:
     return WT.git(wt, "rev-parse", f"{rev}^{{tree}}").stdout.strip()
 
 
+def _read_lines(project_dir: Path, task_id: str, gr: dict) -> list:
+    """`branch_line: discard`: the lines this task's gate runs appended and the round read and did not commit, from
+    their `gate_recorded` events, oldest first. Under `commit` the ledger alone is the record, so none."""
+    if gr.get("branch_line") != "discard":
+        return []
+    from seldon.core.events import read_events
+    out = []
+    for e in read_events(project_dir):
+        p = e.get("payload") or {}
+        if e.get("event_type") == GR.EVENT_RECORDED and p.get("task_id") == task_id:
+            out.extend(tuple(x) for x in p.get("lines") or [])
+    return out
+
+
+def _coverage(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str) -> dict:
+    return GR.coverage(wt, tip, gr, _housekeeping(wt, cfg), read=_read_lines(project_dir, task_id, gr))
+
+
+def _restore_ledger(wt: Path, gr: dict) -> None:
+    """The ledger as the branch has it: HEAD's version, or no file when HEAD has none."""
+    if WT.git(wt, "cat-file", "-e", f"HEAD:{gr['ledger']}").returncode == 0:
+        WT.git(wt, "checkout", "-q", "HEAD", "--", gr["ledger"])
+    else:
+        (wt / gr["ledger"]).unlink(missing_ok=True)
+
+
 def last_recorded(project_dir: Path, task_id: str, tree: str) -> dict | None:
     """The newest `gate_recorded` this task's worktree wrote for `tree`, or None."""
     from seldon.core.events import read_events
@@ -1029,12 +1055,13 @@ def last_recorded(project_dir: Path, task_id: str, tree: str) -> dict | None:
 
 
 def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id) -> dict:
-    """Run the declared gate command in the worktree and commit the line it appended (AD-034-R16).
+    """Run the declared gate command in the worktree and commit the line it appended (AD-034-R16), or, under
+    `branch_line: discard`, read it into the event and restore the ledger.
 
     Never under the filing lock (AD-034-R18): its callers are the post-session merge round, `seldon dispatch regate`
     and the pass's record step, each after `_release_filing`. A gate that could not run (AD-034-R17) commits nothing,
-    restores the ledger as the branch had it, and opens a huddle naming what it lacked. Writes `gate_recorded` and
-    returns its payload.
+    restores the ledger as the branch had it, and opens a huddle naming what it lacked. Writes `gate_recorded` (with
+    the appended `lines`) and returns its payload.
     """
     from seldon.core import stations as Q
     scfg = Q.load_stations_config(cfg, project_dir)
@@ -1045,9 +1072,15 @@ def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task
                "ledger": gr["ledger"], "gate": GR.summary(row), "outcome": row["outcome"]}
     if row["outcome"] == "unrunnable":
         # No reading: whatever the command wrote is not a record (AD-034-R17).
-        WT.git(wt, "checkout", "-q", "HEAD", "--", gr["ledger"])
+        _restore_ledger(wt, gr)
+        payload["ledger_commit"], payload["lines"] = None, []
+    elif gr["branch_line"] == "discard":
+        # squiddy R-237 item 1: the branch's line never reaches main's ledger; the reading is kept here.
+        payload["lines"] = [list(x) for x in GR.appended_lines(wt, gr)]
+        _restore_ledger(wt, gr)
         payload["ledger_commit"] = None
     else:
+        payload["lines"] = [list(x) for x in GR.appended_lines(wt, gr)]
         c = GR.commit_ledger(wt, gr, tip, row["outcome"])
         payload["ledger_commit"] = c["commit"]
         if c["stderr"]:
@@ -1076,8 +1109,7 @@ def _ensure_record(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, t
                    linked: list, run_record: bool) -> dict:
     """The merge round's record step: `{ok, tip, record}` with the tip to merge, or `{ok: False, reason, files,
     detail}`, the block. Reads the ledger first; runs the command only when `run_record` and no line covers the tip."""
-    hk = _housekeeping(wt, cfg)
-    cov = GR.coverage(wt, tip, gr, hk)
+    cov = _coverage(project_dir, cfg, wt, tip, gr, task_id)
     if cov["covered"]:
         return {"ok": True, "tip": tip, "record": {"coverage": cov, "ran": False}}
     if not run_record:
@@ -1094,7 +1126,7 @@ def _ensure_record(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, t
         # The command wrote something besides its ledger line: nothing merges on a tree nobody committed.
         return {"ok": False, "reason": "uncommitted_changes", "files": dirt, "detail": {"gate": rec["gate"]}}
     new_tip = WT.rev(wt, "HEAD")
-    after = GR.coverage(wt, new_tip, gr, hk)
+    after = _coverage(project_dir, cfg, wt, new_tip, gr, task_id)
     if not after["covered"]:
         return _refusal(GR.PASS_UNRECORDED, gr, record=after, gate=rec["gate"],
                         commit_error=rec.get("commit_error"))
@@ -1116,7 +1148,7 @@ def record_ready_under_lock(project_dir: Path, cfg: dict, wt: Path, task_id: str
             and not WT.rebase(wt, main_sha)["ok"]:
         return True                        # the round blocks it `rebase_conflict`, as it always has
     tip = WT.rev(wt, "HEAD")
-    if GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))["covered"]:
+    if _coverage(project_dir, cfg, wt, tip, gr, task_id)["covered"]:
         return True
     tree = _tree_of(wt, tip)
     if last_recorded(project_dir, task_id, tree):
@@ -1151,7 +1183,7 @@ def record_pending(project_dir: Path, config: dict, driver, database: str, sessi
                 and not WT.rebase(wt, main_sha)["ok"]:
             continue
         tip = WT.rev(wt, "HEAD")
-        if GR.coverage(wt, tip, gr, _housekeeping(wt, cfg))["covered"] \
+        if _coverage(project_dir, cfg, wt, tip, gr, task_id)["covered"] \
                 or last_recorded(project_dir, task_id, _tree_of(wt, tip)):
             continue
         out.append(record_pass(project_dir, cfg, wt, tip, gr, task_id, session_id))
