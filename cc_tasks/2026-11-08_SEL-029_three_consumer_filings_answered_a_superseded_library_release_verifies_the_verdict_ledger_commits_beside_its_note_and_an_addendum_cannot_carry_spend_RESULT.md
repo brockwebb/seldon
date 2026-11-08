@@ -177,7 +177,17 @@ SEL-028's two hypotheses. It is a third case: squiddy served an index bound to a
 
 ## Returns
 
-RETURN_LINE
+I ran `seldon cc return <this task> --answers seldon:SEL-028` after a `--dry-run`. It wrote
+`hazbrief-mcp/cc_tasks/2026-11-08_HB-138_sel_029_answered_sel_026_sel_027_and_sel_028_re_verify_dn_019_commit_v.md`
+from the `## For hazbrief-mcp` section below and registered it there as task `da4c3253`. hazbrief-mcp commits
+`3f8e20ac` and `4e23b49a` record it. The return names the Part and the tests for each of the three filings.
+
+The returns machinery keys a return by the answering task, so one task files one return. The two later runs
+(`--answers seldon:SEL-026`, then `seldon:SEL-027`) found HB-138 ("return already filed") and closed each filing
+against it. `seldon task show` now reads `completed` for SEL-026 `9f0c7e1b`, SEL-027 `6e5d0d94` and SEL-028
+`771032cd`. The closing events are in this branch's `seldon_events.jsonl`.
+
+The task's step 1 also asked for a filing into squiddy: `c923eb5a`, squiddy commit `ee7ae97e`, above.
 
 ## For hazbrief-mcp
 
