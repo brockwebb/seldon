@@ -171,6 +171,43 @@ def header_hits(text: str, name: str) -> list[tuple[int, str]]:
     return hits
 
 
+#: AD-038-R24 (SEL-029 Part C, answering SEL-027): the candidacy headers a task ADDENDUM may not carry. AD-038-R11
+#: reads them from the task file only (the registered hash is the base file's), so a `**Spend:**` raised in an addendum
+#: was never read: HB-115's ceiling stayed at 1.2 x the base line and the andon halted the run at 942k. Refused where an
+#: addendum enters the machine (`seldon_commit_governed` and `seldon_cc_register`), with the rule and the remedy.
+ADDENDUM_FORBIDDEN_HEADERS = (HEADER_SPEND, HEADER_NETWORK, HEADER_LAYER, "Exclusive")
+#: The refusal code an addendum carrying one of them gets.
+ADDENDUM_CARRIES_HEADER = "addendum_carries_header"
+#: A task addendum's name, the `_ADDENDUM_` pattern of DN-006 decision 3 (`<stem>_ADDENDUM_<NN>_<slug>.md`).
+_ADDENDUM_NAME_RE = re.compile(r"_ADDENDUM[_-]?[^/]*\.md$")
+
+
+def is_addendum_name(name: str) -> bool:
+    return bool(_ADDENDUM_NAME_RE.search(name))
+
+
+def addendum_header_refusal(text: str, names=ADDENDUM_FORBIDDEN_HEADERS) -> str | None:
+    """`addendum_carries_header: <header>; ...` for the first of `names` an addendum's text carries anywhere outside
+    fenced code and code spans (a header quoted in backticks is prose about it), else None (AD-038-R24).
+
+    Anywhere, not the header block only: an addendum has no candidacy block of its own, and a raise written under a
+    section heading is the case that misled the consumer. The one line says the rule and the remedy.
+    """
+    fenced = False
+    for line in text.split("\n"):
+        if _FENCE_RE.match(line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        masked = _CODE_SPAN_RE.sub(lambda m: " " * len(m.group()), line)
+        for name in names:
+            if _header_re(name).search(masked):
+                return (f"{ADDENDUM_CARRIES_HEADER}: **{name}:**; headers are read from the task file only "
+                        f"(AD-038-R11); to change one, re-file the task with an R suffix")
+    return None
+
+
 def repeated_headers(text: str, names) -> list[dict]:
     """`{code, message}` for each of `names` the header block carries more than once (AD-038-R14)."""
     out = []

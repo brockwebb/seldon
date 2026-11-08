@@ -1467,6 +1467,12 @@ def seldon_commit_governed(
     name the note, the `docs/decisions/register/*.yaml` file(s) and `docs/decisions/REGISTER.md`
     in ONE call (DESK-002). A register path alone, or beside a note that does not label it, refuses.
 
+    A verified note commits with the verdict ledger `seldon_prior_art_verify` appended to (the path the commit gate's
+    refusal names, e.g. `state/prior_art_verdicts.jsonl`): name the note (or addendum) and the ledger in ONE call
+    (SEL-029, AD-036-R20). The ledger alone, or beside files it holds no verdict for, refuses. A cc_tasks/ addendum
+    carrying `**Spend:**`, `**Network:**`, `**Framework layer served:**` or `**Exclusive:**` refuses
+    `addendum_carries_header`: those headers are read from the task file only, so re-file the task (AD-038-R24).
+
     Refuses (nothing staged) a path outside docs/design/, cc_tasks/, handoffs/, issues/, ontology/
     (save a register path as above), or, in a project whose seldon.yaml declares `desktop_commit.paths`,
     outside that list (SEL-020); a missing, gitignored or unchanged file; a handoff (with a declared list,
@@ -1579,6 +1585,10 @@ def seldon_cc_register(
             return (f"Error: {exc}\n"
                     f"  Fix: name a registered task, or drop the **After:** header.\n"
                     f"  {gc.DIRTY_LINE}")
+        from seldon.core.dispatch import ADDENDUM_CARRIES_HEADER
+        if str(exc).startswith(ADDENDUM_CARRIES_HEADER):
+            # AD-038-R24: the refusal is the rule and the remedy in one line.
+            return f"Error: {exc}\n  {gc.DIRTY_LINE}"
         from seldon.core.filing import FILING_DESIGNS_FIX
         if str(exc).startswith(FILING_DESIGNS_FIX):
             return (f"Error: {exc}\n"

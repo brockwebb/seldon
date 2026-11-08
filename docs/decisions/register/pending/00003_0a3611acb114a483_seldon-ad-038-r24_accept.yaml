@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-038-R24
+date: '2026-11-08'
+decided_by: cc:c09de1a7
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_10_an_addendum_cannot_carry_a_candidacy_header.md:40: AD-038-R24'
+reason: 'SEL-029 Part C, answering SEL-027 (6e5d0d94): HB-115''s addendum raised its Spend, the dispatcher read the base line (AD-038-R11) and the andon halted the run at 942,515 tokens'
+kind: decision
+status: accepted
+statement: A task addendum that carries a candidacy header shall be refused at seldon_commit_governed and at seldon_cc_register, with the rule and the remedy in one line.
+source:
+  path: docs/design/AD-038_ADDENDUM_10_an_addendum_cannot_carry_a_candidacy_header.md
+  lines:
+  - 40
+  - 45
+  sha256: 0b287e1b1b4e083d846e6f267a6ec8ea771132f066397afc1f57268ee5edee84
+  text: |-
+    - **AD-038-R24. A task addendum that carries a candidacy header is refused at `seldon_commit_governed` and at `seldon_cc_register`, the rule and the remedy in one line.**
+      A `cc_tasks/` file named `*_ADDENDUM*.md` carrying `**Spend:**`, `**Network:**`, `**Framework layer served:**` or
+      `**Exclusive:**` anywhere outside fenced code and code spans refuses
+      `addendum_carries_header: **<header>:**; headers are read from the task file only (AD-038-R11); to change one,
+      re-file the task with an R suffix`. Nothing is staged or registered. An addendum without one commits and registers
+      as before; a header quoted in backticks is prose.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_10_an_addendum_cannot_carry_a_candidacy_header.md
+  anchor: AD-038-R24
+consumer:
+- cc_tasks/2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend.md
+- tests/test_sel029_ledger_and_addendum_commit.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 0a3611acb114a483522bafbba507bee9ed264c6b7a9dd785e0fd42e4cd66d1ce

@@ -19,6 +19,7 @@ from seldon.core.events import make_event
 from seldon.core.dispatch import (
     AFTER_GRAMMAR,
     AFTER_UNRESOLVED as _D_AFTER_UNRESOLVED,
+    ADDENDUM_CARRIES_HEADER as _D_ADDENDUM_CARRIES_HEADER,
     ANSWERS_UNRESOLVED as _D_ANSWERS_UNRESOLVED,
     HEADER_AFTER,
     after_ref_is_id,
@@ -1351,6 +1352,13 @@ def register_task_file(
     except ValueError:
         rel_path = str(task_path)
 
+    # SEL-029 Part C (AD-038-R24): an addendum carrying a candidacy header is refused before anything is written; the
+    # dispatcher reads those headers from the task file only (AD-038-R11), so the addendum's value would be ignored.
+    if _D.is_addendum_name(task_path.name):
+        header_refusal = _D.addendum_header_refusal(task_path.read_text(encoding="utf-8", errors="surrogateescape"))
+        if header_refusal:
+            raise ValueError(f"{header_refusal}. File: {rel_path}")
+
     status = _git_tracking_status(project_dir, task_path)
     if status != GIT_TRACKED and not allow_untracked:
         raise ValueError(
@@ -1740,6 +1748,9 @@ def cc_register(filepath, description, actor, allow_untracked, project):
             click.echo(f"ERROR: {exc}\n"
                        f"  Fix: name a registered task, or drop the **After:** header.",
                        err=True)
+        elif str(exc).startswith(_D_ADDENDUM_CARRIES_HEADER):
+            # AD-038-R24: the refusal is the rule and the remedy in one line; the design-note fix below would mislead.
+            click.echo(f"ERROR: {exc}", err=True)
         elif str(exc).startswith(_D_ANSWERS_UNRESOLVED):
             click.echo(f"ERROR: {exc}\n"
                        f"  Fix: name the filing as `<repo>:<task number>` of a task registered in that "

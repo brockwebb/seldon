@@ -31,6 +31,17 @@ no record in the staged register, and a Desktop session writes that record itsel
 a design note one of whose labels it carries an event about, and `REGISTER.md` with such a file;
 alone, or beside a note that does not label it, each still refuses as `outside_roots` (Issue 5c689098).
 
+**The verdict ledger commits with its note, and only with it (SEL-029 Part B, AD-036-R20).** The same shape for the
+prior-art verdict ledger (`prior_art.verdict_ledger`: the governed ledger, or `gate.verdict_ledger_without_governed`).
+The commit gate (AD-036-R4) reads a note's verdict from the STAGED ledger and tells the caller to stage it, so a
+verified note was uncommittable through this tool (SEL-026, hazbrief-mcp DN-022). The ledger is accepted in a call
+naming a design note or addendum whose current bytes have a verdict in it; alone, or beside files it holds no verdict
+for, it refuses as `outside_roots`. It is not named in the message (`desktop: design: <basename>`).
+
+**A task addendum carries no candidacy header (SEL-029 Part C, AD-038-R24).** A `cc_tasks/*_ADDENDUM_*.md` carrying
+`**Spend:**`, `**Network:**`, `**Framework layer served:**` or `**Exclusive:**` refuses as `addendum_carries_header`:
+the dispatcher reads those from the task file only (AD-038-R11), so the addendum's value would be silently ignored.
+
 **A per-project allowlist (SEL-020).** A project whose Desktop writes are not seldon's layout (the
 factory repository: `decisions.md`, `friction-log.md`, `reviews/`) declares `desktop_commit.paths`, a
 list of exact files and of directories written with a trailing `/` (gitignore(5)'s own convention for
@@ -281,6 +292,60 @@ def _register_refusal(project_dir: Path, config: dict, rels: list, register_rels
     return None
 
 
+def _ledger_rel(project_dir: Path, config: dict) -> Optional[str]:
+    """The project-relative path of this project's prior-art verdict ledger (`prior_art.verdict_ledger`), or None
+    when the project has no prior-art gate or the ledger lies outside it. A `prior_art:` block that does not parse
+    gives None here: the ledger then refuses as `outside_roots`, as it did before SEL-029, and the commit hook names
+    the configuration error itself."""
+    from seldon.core import prior_art as pa
+
+    if not isinstance((config or {}).get("prior_art"), dict):
+        return None
+    try:
+        ledger = pa.verdict_ledger(project_dir, config)
+    except pa.PriorArtError:
+        return None
+    return _normalize(project_dir, str(ledger))
+
+
+def _ledger_refusal(project_dir: Path, config: dict, rels: list, ledger_rel: str) -> Optional[Outcome]:
+    """None when a design note or addendum in this call has a verdict for its current bytes in the ledger being
+    committed (SEL-029 Part B, AD-036-R20); else `outside_roots`, saying why. Mirrors DESK-002's register exception:
+    the ledger is the proof the commit gate (AD-036-R4) reads from the index, so it commits with the note it proves,
+    and never alone."""
+    from seldon.core import prior_art as pa
+
+    def refuse(why: str) -> Outcome:
+        return _refuse(OUTSIDE_ROOTS, f"{ledger_rel}: {why}; the verdict ledger commits through this tool only beside "
+                                      f"a design note or addendum it holds a verdict for, in the same call (SEL-029, "
+                                      f"AD-036-R20)", [ledger_rel])
+    try:
+        have = pa.verdicts_from_lines((project_dir / ledger_rel).read_text(encoding="utf-8").splitlines(), ledger_rel)
+    except (OSError, UnicodeDecodeError, pa.PriorArtError) as exc:
+        return refuse(f"it cannot be read ({exc})")
+    addenda = {(a.get("path"), a.get("sha256")) for by_sha in have.values() for v in by_sha.values()
+               for a in (v.get("addenda") or []) if isinstance(a, dict)}
+    others = [r for r in rels if r != ledger_rel]
+    for rel in others:
+        sha = pa._sha((project_dir / rel).read_bytes())
+        if sha in (have.get(rel) or {}) or (rel, sha) in addenda:
+            return None
+    return refuse("it holds no verdict for the current bytes of " + (", ".join(others) if others else
+                                                                      "any file in this call (it was named alone)"))
+
+
+def _addendum_refusal(project_dir: Path, s: Settings, rels: list) -> Optional[Outcome]:
+    """`addendum_carries_header` for the first task addendum in the call that carries a candidacy header
+    (SEL-029 Part C, AD-038-R24)."""
+    for rel in rels:
+        if kind_of(rel, s) == DEFAULT_ROOTS["cc_tasks/"] and D.is_addendum_name(rel):
+            why = D.addendum_header_refusal((project_dir / rel).read_text(encoding="utf-8", errors="surrogateescape"))
+            if why:
+                return Outcome(committed=False, refusal=D.ADDENDUM_CARRIES_HEADER, detail=f"{why}: {rel}",
+                               paths=[rel])
+    return None
+
+
 def _register_path(project_dir: Path, config: dict, rel: str) -> bool:
     """`rel` is a file of this project's register, or its rendered REGISTER.md."""
     from seldon.core import decisions as dr
@@ -373,13 +438,16 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
         return _refuse("config_invalid", str(exc))
     if not paths:
         return _refuse(NO_PATHS, "name at least one path")
-    rels, register_rels = [], []
+    rels, register_rels, ledger_rels = [], [], []
+    ledger = _ledger_rel(project_dir, config)
     for raw in paths:
         rel = _normalize(project_dir, str(raw))
         if rel is None:
             return _refuse(OUTSIDE_PROJECT, f"{raw} is not inside {project_dir}", [raw])
         if kind_of(rel, s) is None and _register_path(project_dir, config, rel):
             register_rels.append(rel)      # judged below, against the notes of this call
+        elif kind_of(rel, s) is None and rel == ledger:
+            ledger_rels.append(rel)        # judged below, against the notes of this call (SEL-029 Part B)
         elif kind_of(rel, s) is None:
             return _refuse(OUTSIDE_ROOTS, f"{rel} is under none of {', '.join([*s.files, *s.roots])}; this tool "
                                           f"commits only what a Desktop session writes", [rel])
@@ -393,15 +461,23 @@ def commit_governed(project_dir: Path, paths: list, config: Optional[dict] = Non
             return _refuse(UNCHANGED, f"{rel} has nothing to commit (git holds these bytes)", [rel])
         rels.append(rel)
     rels = list(dict.fromkeys(rels))
+    refused = _addendum_refusal(project_dir, s, rels)
+    if refused is not None:
+        return refused
     if register_rels:
         refused = _register_refusal(project_dir, config, rels, register_rels)
+        if refused is not None:
+            return refused
+    if ledger_rels:
+        refused = _ledger_refusal(project_dir, config, rels, ledger_rels[0])
         if refused is not None:
             return refused
     scanned = _scan(project_dir, s, rels)
     if scanned is not None:
         return scanned
     drafts = unverified_notes(project_dir, config, rels)
-    message = message_for(rels, s, draft=bool(drafts))
+    # The ledger travels with its note but is not named in the message: `desktop: design: <basename>` (SEL-029 B).
+    message = message_for([r for r in rels if r not in ledger_rels], s, draft=bool(drafts))
     out = D.commit_paths(project_dir, rels, message)
     if not out.get("committed"):
         _unstage(project_dir, rels)
