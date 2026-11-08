@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-036-R20
+date: '2026-11-08'
+decided_by: cc:c09de1a7
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md:76: AD-036-R20'
+reason: 'SEL-029 Part B, answering SEL-026 (9f0c7e1b): the gate told hazbrief-mcp to stage the ledger with DN-022 and seldon_commit_governed refused the ledger as outside_roots'
+kind: decision
+status: accepted
+statement: The verdict ledger shall commit through the Desktop commit tool beside a design note or addendum whose current bytes have a verdict in it, and the gate shall not read a verdict from an unstaged ledger.
+source:
+  path: docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md
+  lines:
+  - 76
+  - 80
+  sha256: b1f77e8aba63388f2e591d59ba252d9d8587d9967537efe5094cd37d9ae9ebc0
+  text: |-
+    - **AD-036-R20. The verdict ledger commits through the Desktop commit tool beside a design note or addendum whose current bytes have a verdict in it, and the gate does not read a verdict from an unstaged ledger.**
+      `seldon_commit_governed` and `seldon commit-governed` accept `prior_art.verdict_ledger` (the governed ledger, or
+      `gate.verdict_ledger_without_governed`) in such a call; alone, or beside files it holds no verdict for, it refuses
+      `outside_roots`. The message stays `desktop: design: <basename>`. AD-036-R4's gate keeps reading the staged ledger
+      only: a verdict read from disk would admit a commit that does not hold its own proof, and the tool now stages it.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md
+  anchor: AD-036-R20
+consumer:
+- cc_tasks/2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend.md
+- tests/test_sel029_ledger_and_addendum_commit.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 3892873822590e68da5c9a6116c0f1fc4b6fd72c0a70a317aa978d6f15b11fc6

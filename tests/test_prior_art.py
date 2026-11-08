@@ -95,6 +95,10 @@ class StubLibrary:
         raise pa.PriorArtError(f"{pa.RELEASE_UNAVAILABLE}: release {release} is not on disk: "
                                f"looked for /nonexistent/{release}")
 
+    def resolve_superseded(self, rows, exclude_sha256=None):
+        # This stub's library carries no release to resolve a superseded receipt against (AD-036-R19).
+        return {"missing": [], "served": None, "unchecked": []}
+
 
 def _settings(proj):
     return pa.settings(proj["dir"], proj["config"])

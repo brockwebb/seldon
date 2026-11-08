@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-036-R19
+date: '2026-11-08'
+decided_by: cc:c09de1a7
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md:70: AD-036-R19'
+reason: 'SEL-029 Part A, answering SEL-028 (771032cd): hazbrief-mcp DN-019''s receipt against release 7b72aaa89fe005d3, which squiddy''s register never carried (SQ-114R served it unsealed), failed release_unavailable although all 45 of its rows are in the current release'
+kind: decision
+status: accepted
+statement: A library receipt whose named release cannot be rebuilt shall pass as pass (superseded) when a release the library still carries holds every row it lists, and the verdict shall name that release.
+source:
+  path: docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md
+  lines:
+  - 70
+  - 75
+  sha256: b1f77e8aba63388f2e591d59ba252d9d8587d9967537efe5094cd37d9ae9ebc0
+  text: |-
+    - **AD-036-R19. A library receipt whose named release cannot be rebuilt passes as `pass (superseded)` when a release the library still carries holds every row it lists, and the verdict names that release.**
+      Resolution runs only after `search_release` fails, against the served release first and then up to
+      `prior_art.library.superseded_releases` register releases (default 3), newest first; row ids are compared whole.
+      The receipt in the note is not rewritten; the verdict's receipt carries `verified_against: {release, sha256}`. When
+      no carried release holds the rows it stays `release_unavailable`, and the detail names the rows the current release
+      lacks. A receipt that found nothing (`rows none`) is never resolved this way.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md
+  anchor: AD-036-R19
+consumer:
+- cc_tasks/2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend.md
+- tests/test_sel029_superseded_release.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9943b2b9cc0e89bf32fc97ea5c169ea5c687412ea7a47428f3eb3647c071fb36

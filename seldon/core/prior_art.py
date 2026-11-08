@@ -80,8 +80,16 @@ MALFORMED = "malformed"
 #: verification (its base or any addendum). The internal arm leaves that note out of its own search (a note is not
 #: prior art for itself), so such a receipt can never be returned; it neither passes nor fails the note.
 SELF_CITATION = "self_citation"
+#: AD-036-R19 (SEL-029 Part A, SEL-028): a library receipt whose named release cannot be rebuilt, every one of whose
+#: rows a release the library still carries contains (the served one first). The receipt is not rewritten in the note;
+#: its verdict line names the release it was verified against (`Receipt.verified_against`), and the ledger carries it.
+SUPERSEDED = "pass (superseded)"
 #: Statuses that do not fail a note.
-NOT_FAILING = (PASS, SELF_CITATION)
+NOT_FAILING = (PASS, SELF_CITATION, SUPERSEDED)
+#: How many register releases besides the served one a superseded receipt is resolved against, newest first, when
+#: `prior_art.library.superseded_releases` is not set. Each costs one pass over the library's corpus checkpoint
+#: (0.6 GB on 2026-11-08), so the default is bounded; 0 means the served release only.
+SUPERSEDED_RELEASES_DEFAULT = 3
 
 #: The governed-ledger event type a verdict is written as.
 VERDICT_EVENT = "prior_art_verdict"
@@ -131,6 +139,8 @@ class Settings:
     b: float
     library_graph: Path
     library_k: int
+    #: Register releases besides the served one a superseded receipt is checked against (`SUPERSEDED`).
+    library_superseded_releases: int
     design_dir: str
     baseline: Path
     exempt_globs: tuple
@@ -299,6 +309,8 @@ def settings(project_dir: Path, config: dict) -> Settings:
                     max_file_bytes=int(internal["max_file_bytes"]),
                     k1=float(internal["bm25"]["k1"]), b=float(internal["bm25"]["b"]),
                     library_graph=at(corpus_dir, library["graph"]), library_k=int(library["k"]),
+                    library_superseded_releases=int(library.get("superseded_releases",
+                                                                SUPERSEDED_RELEASES_DEFAULT)),
                     design_dir=str(gate["design_dir"]), baseline=at(project_dir, gate["baseline"]),
                     exempt_globs=tuple(gate["exempt_globs"]),
                     verdict_ledger_without_governed=at(project_dir,
@@ -633,6 +645,8 @@ class Library:
         #: The one rebuilt older release held open: `(sha256, index, info, TemporaryDirectory)`. One at a time,
         #: because each holds a dense matrix the size of the served one; `_verify_library` orders its work by release.
         self._rebuilt = None
+        #: Row-id sets of carried releases, read for `resolve_superseded`: "served" and each register `sha16`.
+        self._carried: dict = {}
 
     @staticmethod
     def _offline() -> None:
@@ -759,6 +773,93 @@ class Library:
             self._rebuilt[3].cleanup()
             self._rebuilt = None
 
+    def served_rows(self) -> dict:
+        """The served release and every row id its index holds: `{release, sha256, rows}` (AD-036-R19).
+
+        Read from the served index's manifest and database (`squiddy.index.Index.open`'s own files), and refused when
+        the database does not hash to its manifest, as `Index.open` refuses it. Cached for this Library.
+
+        Raises:
+            PriorArtError: when there is no served index to read.
+        """
+        if "served" not in self._carried:
+            graph = self.graph()                      # first: it names a missing squiddy as a PriorArtError
+            from squiddy import index as ix
+            try:
+                cfg = ix.load_config(graph)
+            except ix.NotApplicable as exc:
+                raise PriorArtError(f"the library declares no index ({exc})") from exc
+            wd = Path(ix.work_dir(graph, cfg))
+            mp = wd / ix.INDEX_MANIFEST
+            if not mp.is_file():
+                raise PriorArtError(f"no served index manifest at {mp}")
+            man = json.loads(mp.read_text(encoding="utf-8"))
+            db = wd / man["db"]["file"]
+            if not db.is_file() or _sha_file(db) != man["db"]["sha256"]:
+                raise PriorArtError(f"the served index database {db} is missing or does not hash to {mp}")
+            rel = man.get("release") or {}
+            self._carried["served"] = {"release": Path(str(rel.get("export"))).name, "sha256": rel.get("sha256"),
+                                       "rows": _db_row_ids(db)}
+        return self._carried["served"]
+
+    def register_releases(self) -> list[dict]:
+        """The releases the library's export register carries, newest first: `[{release, sha16}]` (AD-036-R19)."""
+        return register_rows(self.exports_dir() / EXPORT_REGISTER)[::-1]
+
+    def release_rows(self, release: str, sha16: str) -> dict:
+        """`{release, sha256, rows}` of a register release: its export on disk must hash to a digest starting with
+        the register's `sha16`; its rows are rebuilt from the library's checkpoints (`release_row_ids`). Cached.
+
+        Raises:
+            PriorArtError: when the export is absent, hashes otherwise, or its rows cannot be rebuilt.
+        """
+        if sha16 not in self._carried:
+            path = self.export_path(release)
+            if not path.is_file():
+                raise PriorArtError(f"export {path} is not on disk")
+            sha = self._digest(path)
+            if not sha.startswith(sha16):
+                raise PriorArtError(f"export {path} hashes to sha256:{sha[:16]}, not the register's {sha16}")
+            self._carried[sha16] = {"release": release, "sha256": sha,
+                                    "rows": release_row_ids(self.graph(), sha)}
+        return self._carried[sha16]
+
+    def resolve_superseded(self, rows: list, exclude_sha256: str | None = None) -> dict:
+        """Resolve a receipt whose release cannot be rebuilt against the releases the library still carries
+        (AD-036-R19): the served release first, then up to `library_superseded_releases` register releases, newest
+        first.
+
+        Returns:
+            `{"against": {release, sha256}}` for the first release holding every row in `rows`; otherwise
+            `{"missing": [rows the served release lacks], "served": name or None, "unchecked": [why]}`.
+        """
+        unchecked = []
+        try:
+            served = self.served_rows()
+        except PriorArtError as exc:
+            served, missing = None, list(rows)
+            unchecked.append(f"the served release: {exc}")
+        else:
+            missing = [x for x in rows if x not in served["rows"]]
+            if not missing:
+                return {"against": {"release": served["release"], "sha256": served["sha256"]}}
+        try:
+            others = [r for r in self.register_releases()
+                      if not (served and str(served["sha256"]).startswith(r["sha16"]))
+                      and not (exclude_sha256 and exclude_sha256.startswith(r["sha16"]))]
+        except PriorArtError as exc:
+            others = []
+            unchecked.append(f"the register: {exc}")
+        for r in others[:max(0, self.s.library_superseded_releases)]:
+            try:
+                got = self.release_rows(r["release"], r["sha16"])
+            except PriorArtError as exc:
+                unchecked.append(f"{r['release']}: {exc}")
+                continue
+            if all(x in got["rows"] for x in rows):
+                return {"against": {"release": got["release"], "sha256": got["sha256"]}}
+        return {"missing": missing, "served": served["release"] if served else None, "unchecked": unchecked}
+
     @staticmethod
     def receipt(result: dict) -> str:
         rows = ", ".join(result["rows"]) or "none"
@@ -815,6 +916,81 @@ def rebuild_release(graph, sha256: str, work: Path) -> dict:
     """
     from squiddy import index as ix
     unavailable = f"{RELEASE_UNAVAILABLE}: release sha256:{sha256[:12]}... cannot be rebuilt"
+    inputs = _release_rows(graph, sha256, unavailable)
+    commit, cfg, manifest, stage, wd, rows = (inputs[k] for k in ("commit", "cfg", "manifest", "stage", "wd", "rows"))
+    db = Path(work) / "corpus.db"
+    built = ix.build_db(rows, db)
+    del rows, inputs
+    enc, dense = cfg["encoder"], cfg["dense"]
+    text_sha = {e["id"]: (e["text_sha256"] if ix.acquired(e) else None) for e in manifest if ix.indexed(e, stage)}
+    ddir = wd / DENSE_DIR
+    log = ddir / ix.SHARD_LOG
+    if not log.is_file():
+        raise PriorArtError(f"{unavailable}: no dense shard log at {log}")
+    keyed = {(ev["entry"], ev["key"]): ev for ev in ix.read_jsonl(log) if ev.get("event") == "keyed"}
+    shards = []
+    for entry, erows in sorted(ix.unit_rows(db).items()):
+        key = ix.unit_key(entry, text_sha.get(entry), erows, enc, dense["pad_to"])
+        rec = keyed.get((entry, key))
+        if rec is None:
+            raise PriorArtError(f"{unavailable}: entry {entry} has no dense shard keyed {key[:12]} in {log}")
+        p = ddir / rec["npy"]
+        if not p.is_file() or _sha_file(p) != rec["npy_sha256"]:
+            raise PriorArtError(f"{unavailable}: dense shard {p} is missing or does not hash to its keyed line")
+        want = [row for _rid, row, _t in erows]
+        if json.loads((ddir / rec["ids"]).read_text(encoding="utf-8")) != want:
+            raise PriorArtError(f"{unavailable}: dense shard {p}: its row ids are not the release's rows for {entry}")
+        shards.append({**rec, "row_ids": want})
+    return {"commit": commit, "db": str(db), "dense_dir": str(ddir), "shards": shards, "rows": built["rows"],
+            "row_fingerprint": ix.row_fingerprint(db), "shard_set_sha256": ix.shard_set_sha256(shards),
+            "cfg": cfg, "release_sha256": sha256}
+
+
+def release_row_ids(graph, sha256: str) -> frozenset:
+    """Every row id of the release whose export hashes to `sha256`: steps 1 and 2 of `rebuild_release` (the manifest at
+    the release's commit, the rows from the corpus checkpoint), with no database and no vectors. What a superseded
+    receipt's rows are checked against for a register release that is not the served one (AD-036-R19).
+
+    Raises:
+        PriorArtError: naming what is missing, as `rebuild_release` does.
+    """
+    unavailable = f"release sha256:{sha256[:12]}... rows cannot be read"
+    return frozenset(r["row_id"] for r in _release_rows(graph, sha256, unavailable)["rows"])
+
+
+def _db_row_ids(db: Path) -> frozenset:
+    """Every row id of a built index database (`squiddy.index.build_db`'s `rows` table)."""
+    import sqlite3
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        return frozenset(r for (r,) in con.execute("SELECT row_id FROM rows"))
+    finally:
+        con.close()
+
+
+#: One row of the export register as the kit writes it (`squiddy.registers`): `| **<version>** | `<export file>` |
+#: <date> | `<first 16 hex of sha256>` | ...`.
+_REGISTER_ROW_RE = re.compile(r"^\|\s*\*\*([^*|]+)\*\*\s*\|\s*`([^`]+)`\s*\|[^|]*\|\s*`([0-9a-f]{16})`\s*\|")
+
+
+def register_rows(register: Path) -> list[dict]:
+    """`[{version, release, sha16}]` for each row of the export register, in file order (oldest first).
+
+    Raises:
+        PriorArtError: when the register cannot be read.
+    """
+    try:
+        text = Path(register).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise PriorArtError(f"the export register {register} cannot be read: {exc}") from exc
+    return [{"version": m.group(1).strip(), "release": m.group(2), "sha16": m.group(3)}
+            for m in map(_REGISTER_ROW_RE.match, text.splitlines()) if m]
+
+
+def _release_rows(graph, sha256: str, unavailable: str) -> dict:
+    """Steps 1 and 2 of `rebuild_release`: `{commit, cfg, manifest, stage, wd, rows}`, `rows` the checkpointed row
+    dicts of the release whose export hashes to `sha256`. `unavailable` prefixes every refusal."""
+    from squiddy import index as ix
     try:
         cfg = ix.load_config(graph)
     except ix.NotApplicable as exc:
@@ -852,32 +1028,7 @@ def rebuild_release(graph, sha256: str, work: Path) -> dict:
         rows = list(ix.iter_rows(wd / CORPUS_ROWS, manifest, ix.meta_renderer(cfg), stage, None))
     except SystemExit as exc:          # the kit's refusal: a unit of that release has no checkpointed rows
         raise PriorArtError(f"{unavailable}: {exc}") from exc
-    db = Path(work) / "corpus.db"
-    built = ix.build_db(rows, db)
-    del rows
-    enc, dense = cfg["encoder"], cfg["dense"]
-    text_sha = {e["id"]: (e["text_sha256"] if ix.acquired(e) else None) for e in manifest if ix.indexed(e, stage)}
-    ddir = wd / DENSE_DIR
-    log = ddir / ix.SHARD_LOG
-    if not log.is_file():
-        raise PriorArtError(f"{unavailable}: no dense shard log at {log}")
-    keyed = {(ev["entry"], ev["key"]): ev for ev in ix.read_jsonl(log) if ev.get("event") == "keyed"}
-    shards = []
-    for entry, erows in sorted(ix.unit_rows(db).items()):
-        key = ix.unit_key(entry, text_sha.get(entry), erows, enc, dense["pad_to"])
-        rec = keyed.get((entry, key))
-        if rec is None:
-            raise PriorArtError(f"{unavailable}: entry {entry} has no dense shard keyed {key[:12]} in {log}")
-        p = ddir / rec["npy"]
-        if not p.is_file() or _sha_file(p) != rec["npy_sha256"]:
-            raise PriorArtError(f"{unavailable}: dense shard {p} is missing or does not hash to its keyed line")
-        want = [row for _rid, row, _t in erows]
-        if json.loads((ddir / rec["ids"]).read_text(encoding="utf-8")) != want:
-            raise PriorArtError(f"{unavailable}: dense shard {p}: its row ids are not the release's rows for {entry}")
-        shards.append({**rec, "row_ids": want})
-    return {"commit": commit, "db": str(db), "dense_dir": str(ddir), "shards": shards, "rows": built["rows"],
-            "row_fingerprint": ix.row_fingerprint(db), "shard_set_sha256": ix.shard_set_sha256(shards),
-            "cfg": cfg, "release_sha256": sha256}
+    return {"commit": commit, "cfg": cfg, "manifest": manifest, "stage": stage, "wd": Path(wd), "rows": rows}
 
 
 def open_rebuilt(info: dict, query_encoder) -> object:
@@ -1177,6 +1328,9 @@ class Receipt:
     error: str | None = None                      # set when malformed
     status: str | None = None
     detail: str | None = None
+    #: A superseded receipt's resolution (`SUPERSEDED`): `{release, sha256}` of the carried release whose rows it
+    #: was verified against. The ledger carries it; the note is never rewritten (AD-036-R19).
+    verified_against: dict | None = None
 
     @property
     def empty(self) -> bool:
@@ -1430,12 +1584,41 @@ def _verify_library(receipts: list, s: Settings, library: Library) -> None:
             res = library.search_release(query, release, sha)
         except PriorArtError as exc:
             for r, served_error in items:
-                r.status = RELEASE_UNAVAILABLE
-                r.detail = str(exc) + (f" (and the served search failed: {served_error})" if served_error else "")
+                _resolve_superseded(r, str(exc), served_error, library)
             continue
         logged(res)
         for r, _e in items:
             judge(r, res)
+
+
+def _resolve_superseded(r: Receipt, why: str, served_error: str | None, library: Library) -> None:
+    """A library receipt whose release cannot be rebuilt (`why`), resolved before it fails (AD-036-R19, SEL-028).
+
+    It is `pass (superseded)` when a release the library still carries holds every row it lists (`resolve_superseded`:
+    the served release, then the register's newest), matched on the full row id: squiddy's index rule (`sq028r-index/3`)
+    builds a row id as `<doc id>#<pointer into the document's text>` (or `#meta`), with nothing in it that names a
+    release, so an equal id in another release names the same passage. Otherwise it stays `release_unavailable`, and the
+    detail adds the rows the current release lacks. A receipt listing no rows (`rows none`) records a search that found
+    nothing in a release nobody can re-run, so it is never resolved this way."""
+    tail = f" (and the served search failed: {served_error})" if served_error else ""
+    if r.rows:
+        got = library.resolve_superseded(r.rows, exclude_sha256=r.sha256)
+        if "against" in got:
+            r.status, r.verified_against = SUPERSEDED, got["against"]
+            r.detail = (f"{len(r.rows)} row(s) all in release {got['against']['release']} "
+                        f"(sha256:{str(got['against']['sha256'])[:12]}...), which supersedes the named release; "
+                        f"the named release: {why}")
+            return
+        r.status = RELEASE_UNAVAILABLE
+        if got.get("served") is not None and got["missing"]:
+            shown = ", ".join(got["missing"][:5]) + (f" and {len(got['missing']) - 5} more"
+                                                      if len(got["missing"]) > 5 else "")
+            why += f"; rows missing from the current release {got['served']}: {shown}"
+        if got["unchecked"]:
+            why += "; not checked: " + "; ".join(got["unchecked"][:3])
+        r.detail = why + tail
+        return
+    r.status, r.detail = RELEASE_UNAVAILABLE, why + tail
 
 
 def _verify_internal(receipts: list, s: Settings, internal: Internal, exclude: frozenset = frozenset()) -> None:

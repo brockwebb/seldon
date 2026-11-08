@@ -122,6 +122,10 @@ prior_art:
     # Documents returned per library query; a receipt's rows must be among them. The served
     # verb's default is 10; 20 matches the internal arm's top 20.
     k: 20
+    # AD-036-R19 (SEL-029): a receipt whose release cannot be rebuilt passes `pass (superseded)` when a carried
+    # release holds all its rows: the served release first, then this many register releases, newest first. Each
+    # costs one pass over the library's corpus checkpoint (0.6 GB on 2026-11-08); 0 = the served release only.
+    superseded_releases: 3
   gate:
     # AD-036-R4: design notes under this directory need a passing verdict to be committed or to
     # govern a registered task. Addenda and errata complete or correct a note and are verified
