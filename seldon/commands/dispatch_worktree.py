@@ -1668,9 +1668,10 @@ def reconcile_kept_events(project_dir: Path, config: dict, driver, database: str
     stem = Path(finish.get("source_file") or finish.get("worktree") or task_id).stem
     evidence = K.write_evidence(project_dir, stem, parts["discarded"])
     logged = K.log_state(read_events(project_dir))
-    ids = set().union(*(K.touched(ev) for _, ev in parts["discarded"] if ev is not None)) | set(parts["created"])
-    live = _live_nodes(driver, database, ids)
+    ids = set().union(*(K.touched(ev) for _, ev in parts["discarded"] + parts["carried"] if ev is not None))
+    live = _live_nodes(driver, database, ids | set(parts["created"]))
     plan = K.plan_compensations(parts["discarded"], logged, live)
+    plan["unlinks"] += K.bridging_links(parts["carried"], parts["created"], live)
     done, unreconciled = [], list(plan["unreconciled"])
 
     def attempt(kind, row, fn, sink=done):

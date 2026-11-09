@@ -16,7 +16,7 @@ import pytest
 from seldon.commands import dispatch_worktree as W
 from seldon.core import kept_events as K
 from seldon.core import worktree as WT
-from seldon.core.artifacts import create_artifact, transition_state, transition_task
+from seldon.core.artifacts import create_artifact, create_link, transition_state, transition_task
 from seldon.core.events import read_events
 from seldon.domain.loader import load_domain_config
 from tests.dispatch_scaffold import RESEARCH_YAML, git, make_project
@@ -48,7 +48,7 @@ def _live(driver, aid):
     return dict(r) if r else None
 
 
-def _setup(tmp_path, driver, dc, task_state):
+def _setup(tmp_path, driver, dc, task_state, links=False):
     """Main: a task and a pre-existing open Issue E, committed. A kept tree whose session created Issue I (linked to
     E) and resolved E, all written to the tree's store and the live graph. The task then ends in `task_state`."""
     p = make_project(tmp_path)
@@ -67,6 +67,12 @@ def _setup(tmp_path, driver, dc, task_state):
     transition_state(project_dir=wt, driver=driver, database=DB, domain_config=dc, artifact_id=e,
                      artifact_type="Issue", current_state="open", new_state="resolved", actor="cc",
                      authority="accepted", session_id=SESSION)
+    if links:
+        # HB-140's shape: a link from an older Issue to the task (aebfcc88) and one joining created work to older work.
+        for frm in (e, i):
+            create_link(project_dir=wt, driver=driver, database=DB, domain_config=dc, from_id=frm, to_id=tid,
+                        from_type="Issue", to_type="ResearchTask", rel_type="remediated_by", actor="cc",
+                        authority="accepted", session_id=SESSION)
     git(wt, "commit", "-q", "-m", "session work", "--", STORE)
     if task_state == "withdrawn":
         transition_task(project_dir=p, driver=driver, database=DB, domain_config=dc, artifact_id=tid,
@@ -160,3 +166,22 @@ def test_a_reconciled_branch_still_merges_its_copies_dropped(tmp_path, neo4j_dri
     # Fast-forward main to the branch: one line per id, readable.
     git(p, "merge", "--ff-only", "-q", BRANCH)
     assert len({x["event_id"] for x in read_events(p)}) == len(read_events(p))
+
+
+def _links(driver, frm, to):
+    with driver.session(database=DB) as s:
+        return s.run("MATCH (:Artifact {artifact_id: $f})-[r]->(:Artifact {artifact_id: $t}) RETURN count(r) AS n",
+                     f=frm, t=to).single()["n"]
+
+
+def test_the_sessions_links_to_older_artifacts_are_removed_on_record(tmp_path, neo4j_driver, clean_test_db, dc):
+    """A link between two older artifacts is discarded and compensated; a link joining created work to an older
+    artifact is carried (the log names it) and removed. Both are gone live, and the log says the same."""
+    p, tid, e, i, finish = _setup(tmp_path, neo4j_driver, dc, "withdrawn", links=True)
+    assert _links(neo4j_driver, e, tid) == 1 and _links(neo4j_driver, i, tid) == 1
+    rec = W.reconcile_kept_events(p, _config(), neo4j_driver, DB, dc, None, finish, "session_failed")
+    assert sorted(c["kind"] for c in rec["compensations"]) == ["transition", "unlink", "unlink"]
+    assert rec["count"] == 2 and len(rec["carried_ids"]) == 2 and rec["unreconciled"] == []
+    assert _links(neo4j_driver, e, tid) == 0 and _links(neo4j_driver, i, tid) == 0
+    logged = K.log_state(read_events(p))
+    assert not (logged.get(e) or {}).get("links") and not (logged.get(i) or {}).get("links")

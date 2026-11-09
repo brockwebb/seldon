@@ -238,7 +238,8 @@ def plan_compensations(discarded: list, logged: dict, live: dict) -> dict:
             continue
         props.setdefault(aid, {"artifact_id": aid, "properties": {}, "event_ids": []})
         props[aid]["properties"][k] = (was.get("props") or {}).get(k)
-        props[aid]["event_ids"].append(eid)
+        if eid not in props[aid]["event_ids"]:
+            props[aid]["event_ids"].append(eid)
     plan["updates"] = list(props.values())
     for key, (t, eid) in links.items():
         frm, rel, to = key
@@ -251,6 +252,24 @@ def plan_compensations(discarded: list, logged: dict, live: dict) -> dict:
             plan["unreconciled"].append({**row, "why": "the session removed a link main's log holds; re-creating it "
                                                         "needs its endpoint types and properties, left to the operator"})
     return plan
+
+
+def bridging_links(carried: list, created: list, live: dict) -> list:
+    """The carried `link_created` lines that join a created artifact to an OLDER one and still stand in the live graph:
+    carried so the log names the link, then removed, so the older artifact keeps no edge to unwanted work (HB-140's
+    `8b992307 -verified_by-> <a test that never reached main>`)."""
+    made = set(created)
+    out = []
+    for _, ev in carried:
+        p = (ev or {}).get("payload") or {}
+        if (ev or {}).get("event_type") != "link_created" or not p.get("from_id"):
+            continue
+        if {p["from_id"], p.get("to_id")} <= made:
+            continue
+        key = (p["from_id"], str(p.get("rel_type") or "").upper(), p.get("to_id"))
+        if key in ((live.get(p["from_id"]) or {}).get("links") or set()):
+            out.append({"event_id": ev.get("event_id"), "from_id": key[0], "rel_type": key[1], "to_id": key[2]})
+    return out
 
 
 def reconciled_ids(project_dir: Path, store_rel: str, task_id: str) -> set:
