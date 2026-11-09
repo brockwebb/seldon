@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-036-R22
+date: '2026-11-09'
+decided_by: cc:91998dc1
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md:55: AD-036-R22'
+reason: 'SEL-036 Part E (1): 72 governed Citations were strings resolved to nothing; the bridge points each at the seldon-biblio entry its text names, as squiddy biblio''s ExternalReference does (DI-046)'
+kind: decision
+status: accepted
+statement: A governed Citation shall resolve to each bibliographic entry its text names through a resolves_to link to an ExternalReference named by graph and entry id, carrying the entry's identifier and title and none of its content.
+source:
+  path: docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md
+  lines:
+  - 55
+  - 60
+  sha256: e8ed08f702a6d347223498f0b9b0848f721b580b62b1a28d5b249cd2d6cf8a6d
+  text: |-
+    - **AD-036-R22. A governed Citation resolves to the bibliographic entry its text names as a pointer: an `ExternalReference` artifact named `<graph>:<entry id>`, reached by a `resolves_to` link, carrying the entry's identifier and title and none of its content.**
+      The pairs come from the map the resolver used (`graphs/seldon-biblio/intake/seeds.yaml`, `governed:`), made by
+      reading each Citation's text; nothing is inferred. One Citation may resolve to several entries (a reference list on
+      one line). The writer is `seldon.core.biblio_bridge.bridge`, idempotent, through the event store. `resolves_to` and
+      `ExternalReference` were ADDED to the research domain because no relationship had `Citation` as its source and none
+      reached outside the graph.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md
+  anchor: AD-036-R22
+consumer:
+- cc_tasks/2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_with_its_metadata_and_text.md
+- tests/test_sel036_biblio_bridge.py
+- seldon/core/biblio_bridge.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: f4ec4b38de69c3face5aab208e501c4e26f9967a35dfc9e1062dcb1ec2a0cc03

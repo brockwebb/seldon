@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-036-R21
+date: '2026-11-09'
+decided_by: cc:91998dc1
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md:48: AD-036-R21'
+reason: 'SEL-036 Part E: the library arm held no requirements-engineering work (SEL-033''s receipts); seldon-biblio is a second graph, and a receipt must name one release, so each graph is searched and receipted separately'
+kind: decision
+status: accepted
+statement: The prior-art library arm shall search every graph prior_art.library.graph lists, each separately, and each library receipt shall name the graph its rows came from; a receipt naming no graph shall be verified in the first graph listed.
+source:
+  path: docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md
+  lines:
+  - 48
+  - 54
+  sha256: e8ed08f702a6d347223498f0b9b0848f721b580b62b1a28d5b249cd2d6cf8a6d
+  text: |-
+    - **AD-036-R21. The library arm searches every graph `prior_art.library.graph` lists, each separately, and a library receipt names the graph its rows came from.**
+      `library.graph` is one graph directory or a list of them; each is named by its directory's name, and two with one
+      name are refused. `search --library` prints one receipt per graph that answered, each with `graph <name> |`; a
+      graph that cannot answer (no served index yet) is reported beside the others and fails nothing. Verification sends
+      each receipt to the graph it names; a receipt naming none goes to the first graph listed, which stays squiddy's
+      library, so every receipt written before R21 verifies unchanged. A receipt naming a graph the list does not hold is
+      `release_unavailable`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md
+  anchor: AD-036-R21
+consumer:
+- cc_tasks/2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_with_its_metadata_and_text.md
+- tests/test_sel036_library_graphs.py
+- seldon/core/prior_art.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 55125c3fe8d4b8c7a99fbdc9738bfc200de8fd8e69846c288b00241f10aa8cee
