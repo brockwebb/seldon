@@ -1,3 +1,4 @@
+seq: 338
 event: accept
 id: seldon:AD-013-R3
 date: '2026-11-09'
@@ -28,3 +29,5 @@ consumer:
 - tests/test_sel033_requirements.py
 written_by: seldon decision 0.1.0
 provisional_id: a44d77f16ab6e514345aeccb74a4f178e589dde6b286255653a36b4e858ac46e
+prev_hash: e77b2bbeaafbd8ca01e41d5409c5eba9c6c5d98df2e08db718969fd66594d0d6
+record_hash: 01b118b74d632e24cee9a77f4f93ac983624e220345c9b9b4720fb20f2cd7b22

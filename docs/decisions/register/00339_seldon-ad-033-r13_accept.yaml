@@ -1,3 +1,4 @@
+seq: 339
 event: accept
 id: seldon:AD-033-R13
 date: '2026-11-09'
@@ -35,3 +36,5 @@ consumer:
 - tests/test_sel033_register_warning.py
 written_by: seldon decision 0.1.0
 provisional_id: af9443d6854833188921ca9f6b96df49bd8253dd8f7ea7da1b1a8342ffab1da3
+prev_hash: 01b118b74d632e24cee9a77f4f93ac983624e220345c9b9b4720fb20f2cd7b22
+record_hash: c1faaeeacd605b3e4658d6682d37ad72951e5a225b0236c7e7916ebfc891e9de

@@ -2,9 +2,9 @@
 
 # Decision register: seldon
 
-Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 190 records: accepted 167, deprecated 1, proposed 21, superseded 1.
+Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 194 records: accepted 171, deprecated 1, proposed 21, superseded 1.
 
-## Accepted (167)
+## Accepted (171)
 
 - **seldon:AD-011** Paper manuscripts shall cite Seldon Result artifacts by reference (e.g., {{result:NAME:FIELD}}) rather than by literal value, with no manual numbers registry or manual figure/table map maintained; the graph shall serve as the registry. The build step shall resolve all references against the graph, substitute current verified values, validate consistency, and fail loudly on mismatches. The build step shall fail with a clear error if a referenced result does not exist in the graph, if a referenced result is in a stale state, if a referenced result is in a proposed (not yet verified) state, or if [...]
   - source `docs/design/AD-011_database_driven_paper_assembly.md`:9-47; decided by desktop; review only: none
@@ -12,6 +12,12 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 190 records: accept
   - source `docs/design/AD-012_paper_as_graph_assembly.md`:10-18; decided by desktop; review only: none
 - **seldon:AD-013** Seldon shall track documentation completeness as a measurable property of each artifact in the graph, and shall treat documentation files as projections of graph properties regenerated on demand rather than as hand-maintained source-of-truth files.
   - source `docs/design/AD-013_documentation_as_traceability.md`:10-20; decided by desktop; consumer tests/test_decision_register.py, tests/test_docs.py, tests/test_governed.py, seldon/core/governed.py
+- **seldon:AD-013-R1** A requirement shall be a graph artifact, an SRS_Requirement with requirement_id, description, set_by, document, section and a state on the domain machine; it is derived_from its source, verified_by a test Script and the target of satisfies; it reaches verified only with at least one verified_by edge.
+  - source `docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`:123-134; decided by cc:0a8a6776; consumer cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md, seldon/core/requirements.py, seldon/commands/req.py, seldon/domain/research.yaml, tests/test_sel033_requirements.py
+- **seldon:AD-013-R2** A requirements table and an RTM shall be projections of the graph, rendered by seldon docs generate requirements and rtm into the blocks between seldon:projection markers of the files docs.projections declares, stamped with the graph revision and committed path-scoped through the hooks; a markdown requirements table is a load source for seldon req import, idempotent on the id, never the truth.
+  - source `docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`:136-139; decided by cc:0a8a6776; consumer cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md, seldon/core/requirements.py, seldon/commands/docs.py, tests/test_sel033_requirements.py
+- **seldon:AD-013-R3** seldon docs check and seldon verify shall report every requirement with no verified_by edge and every projection whose file differs from a fresh render, as an advisory finding naming the command that clears it.
+  - source `docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`:141-141; decided by cc:0a8a6776; consumer cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md, seldon/commands/verify.py, seldon/commands/docs.py, tests/test_sel033_requirements.py
 - **seldon:AD-014** Role definitions, retrieval profiles, and workflow compositions shall be stored as graph artifacts with provenance, state, and documentation properties, making them queryable, versionable, and projectable, while CLAUDE.md shall remain a thin boot loader that directs the user to the seldon CLI's 'seldon go' command, with all substantive role prompts, retrieval queries, and workflow templates stored in the graph and projected into whatever format the consuming system needs, such as CC task specs, MCP responses, or generated docs.
   - source `docs/design/AD-014_agent_roles_as_graph_artifacts.md`:10-18; decided by desktop; consumer tests/test_agent_roles.py
 - **seldon:AD-016** The paper QC system shall classify rules into three semantically distinct tiers — Critical, Substantive, and Administrative — each with different build behavior, replacing the previous two-file Tier 2 / Tier 3 classification. The paper QC system shall define all rules in a single per-project paper_qc_config.yaml file, with no global defaults. The paper QC system shall enforce Administrative tier rules using explicit budgets rather than binary bans.
@@ -149,6 +155,8 @@ Baseline DB-1 at `a6422a0e7cfa3184ab870557c46d99d8962f9669`. 190 records: accept
   - source `docs/design/AD-033_decision_register.md`:187-199; decided by operator; operator-stated; consumer tests/test_decision_register.py, seldon/core/decisions.py
 - **seldon:AD-033-R12** A record written in a linked git worktree shall be written under pending/ with a provisional content-hash id and no seq; the dispatcher's merge step on the primary checkout shall number every pending record in written order, render REGISTER.md, commit and record register_numbered with the mapping; a record whose provisional id the chain already holds shall never be numbered again.
   - source `docs/design/AD-033_ADDENDUM_01_register_numbers_at_merge.md`:20-28; decided by cc:486adda5; consumer cc_tasks/2026-10-20_LOOP-001_stop_hook_no_progress_rule.md, tests/test_loop001_register_seq.py, seldon/core/decisions.py
+- **seldon:AD-033-R13** A Seldon-managed project with no decisions block shall be reported by seldon init, seldon go and seldon verify as having no decision register, and seldon project new shall declare one by default.
+  - source `docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`:143-147; decided by cc:0a8a6776; consumer cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md, seldon/commands/verify.py, seldon/commands/go.py, seldon/commands/init.py, seldon/core/project_new.py, tests/test_sel033_register_warning.py
 - **seldon:AD-034-R1** Independence is declared per task, by resource, and the scheduler never infers it.
   - source `docs/design/AD-034_worktree_per_task_dispatch.md`:29-29; decided by cc:aa428cde; consumer seldon/core/dispatch.py, tests/test_dispatch_concurrency.py
 - **seldon:AD-034-R2** The planner launches a non-exclusive task only when its Touches is disjoint from everything running or waiting ahead of it.
