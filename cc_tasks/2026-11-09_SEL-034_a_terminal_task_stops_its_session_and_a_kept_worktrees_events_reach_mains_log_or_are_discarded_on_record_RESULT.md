@@ -112,8 +112,10 @@ working session.
 
 ## Part D: the return
 
-`seldon cc return --to hazbrief-mcp --answers seldon:SEL-030` files hazbrief's return from the section below (run
-after a `--dry-run`; the filed task is named in the dispatcher's merge record and in hazbrief's log).
+`seldon cc return --to hazbrief-mcp --answers seldon:SEL-030` filed hazbrief's return from the section below, after a
+`--dry-run`: hazbrief-mcp **HB-148** (task `24491e99`,
+`cc_tasks/2026-11-09_HB-148_a_task_that_goes_terminal_stops_its_running_session_at_the_next_tool_b.md`, registered and
+committed there). seldon's filing SEL-030 (`d875558c`) is `completed` against it (AD-036-R17).
 
 ## For hazbrief-mcp
 
