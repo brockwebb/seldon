@@ -117,6 +117,66 @@ class TestInit:
         assert NOTICE in result.output
 
 
+class TestARegisterDeclaredOnABranchIsNumberedAtItsMerge:
+    """Found running SEL-033 Part D: hazbrief-mcp's HB-144 declared the project's first `decisions:` block and wrote
+    337 pending records on its branch; the merge fast-forwarded and numbered none, because the merge step read the
+    config loaded before the fast-forward, which has no register (`number_merged_register` returned None at
+    `s is None`). SEL-031's "register after the fact" route ends here, so it is fixed here: the merge reads the
+    merged seldon.yaml, and the pre-merge verification reads the branch's."""
+
+    def _repo(self, tmp_path):
+        from tests.test_loop001_register_seq import NOTE, NOTE_TEXT, _git
+        root = tmp_path / "proj"
+        (root / "docs" / "design").mkdir(parents=True)
+        (root / NOTE).write_text(NOTE_TEXT, encoding="utf-8")
+        (root / "seldon.yaml").write_text(yaml.safe_dump({
+            "project": {"name": "proj", "domain": "research"}, "event_store": {"path": "seldon_events.jsonl"}}))
+        (root / ".gitignore").write_text("seldon_events.jsonl\ndocs/decisions/.register.lock\n", encoding="utf-8")
+        _git(tmp_path, "init", "-q", "-b", "main", str(root))
+        _git(root, "config", "user.email", "t@example.org")
+        _git(root, "config", "user.name", "t")
+        _git(root, "config", "core.hooksPath", "/dev/null")
+        _git(root, "add", "-A")
+        _git(root, "commit", "-q", "-m", "base: no register")
+        wt = tmp_path / "wt-a"
+        _git(root, "worktree", "add", "-q", "-b", "a", str(wt))
+        cfg = yaml.safe_load((wt / "seldon.yaml").read_text())
+        cfg["decisions"] = {"repository": "proj", "design_notes": [
+            {"glob": "docs/design/*.md", "pattern": r"^(?:#+\s*|\s*[-*]\s*\*\*|\*\*)(R-\d{1,3})\b",
+             "id": "{repo}:{label}"}]}
+        (wt / "seldon.yaml").write_text(yaml.safe_dump(cfg))
+        return root, wt, _git
+
+    def test_the_first_register_a_branch_declares_is_numbered_when_it_merges(self, tmp_path):
+        from seldon.commands import dispatch_worktree as W
+        from tests.test_loop001_register_seq import _accept
+        root, wt, git = self._repo(tmp_path)
+        before = yaml.safe_load((root / "seldon.yaml").read_text())   # what the dispatcher loaded for the pass
+        assert "decisions" not in before
+        [path] = _accept(wt, "R-1", 3, "The kit never stores content.")
+        assert path.parent.name == dr.PENDING_DIR
+        git(wt, "add", "-A")
+        git(wt, "commit", "-q", "-m", "a: declare the register, R-1")
+
+        assert W._register_findings(wt, before) == [], "the branch's register is verified with the branch's config"
+        git(root, "merge", "--ff-only", "-q", "a")
+        out = W.number_merged_register(root, before, "sess-1", "task-a", "a")
+
+        assert out is not None, "the merge numbered nothing: it read the pre-merge config"
+        assert [(m["id"], m["seq"]) for m in out["mapping"]] == [("proj:R-1", 1)]
+        assert dr.Register("proj", root).pending_files() == []
+        assert git(root, "status", "--porcelain").stdout.strip() == ""
+
+    def test_a_branch_whose_register_does_not_verify_is_still_refused(self, tmp_path):
+        from seldon.commands import dispatch_worktree as W
+        from tests.test_loop001_register_seq import _accept
+        root, wt, git = self._repo(tmp_path)
+        before = yaml.safe_load((root / "seldon.yaml").read_text())
+        [path] = _accept(wt, "R-1", 3, "The kit never stores content.")
+        path.write_text(path.read_text().replace("never stores", "always stores"))   # a hand edit
+        assert W._register_findings(wt, before) != []
+
+
 class TestProjectNew:
     def test_project_new_declares_the_register_by_default(self, tmp_path):
         d = tmp_path / "hb-probe"

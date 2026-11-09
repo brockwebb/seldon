@@ -1194,10 +1194,25 @@ def record_pending(project_dir: Path, config: dict, driver, database: str, sessi
 EVENT_REGISTER_NUMBERED = "register_numbered"
 
 
+def _config_at(root: Path, fallback: dict) -> dict:
+    """The seldon.yaml in `root` as it stands now, or `fallback` when it is absent or does not parse.
+
+    SEL-033: the pass loads its config before the merge, so a branch that DECLARES the project's first `decisions:`
+    block (hazbrief-mcp HB-144: 337 pending records) was verified and numbered against a config with no register,
+    and nothing was numbered. The register steps read the tree they act on."""
+    import yaml
+    try:
+        data = yaml.safe_load((Path(root) / "seldon.yaml").read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return fallback
+    return data if isinstance(data, dict) else fallback
+
+
 def _register_findings(wt: Path, config: dict) -> list:
-    """The decision register's findings in the worktree's tree (chain and pending), or [] with no register."""
+    """The decision register's findings in the worktree's tree (chain and pending), or [] with no register. The
+    branch's own seldon.yaml decides whether there is a register (SEL-033)."""
     from seldon.core import decisions as dr
-    s = dr.settings(wt, config)
+    s = dr.settings(wt, _config_at(wt, config))
     if s is None:
         return []
     return dr.Register(s.repository, Path(wt), s.register_dir).verify()
@@ -1212,6 +1227,8 @@ def number_merged_register(project_dir: Path, config: dict, session_id, task_id:
     A numbering that fails after the merge is recorded on the same event with its `error` and printed; the merge
     stands (main already holds it), and the pending files stay for `seldon decision number` to retry."""
     from seldon.core import decisions as dr
+    # The merged seldon.yaml, not the pass's: the branch may be the one that declared the register (SEL-033).
+    config = _config_at(project_dir, config)
     s = dr.settings(project_dir, config)
     if s is None or not dr.Register(s.repository, Path(project_dir), s.register_dir).pending_files():
         return None
