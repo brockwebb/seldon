@@ -1,0 +1,14 @@
+{
+ "citations_mapped": 71,
+ "citations_missing": [],
+ "database": "seldon-seldon-self",
+ "dry_run": false,
+ "entries_missing": [],
+ "links_created": 110,
+ "links_existing": 0,
+ "naming_no_work": [
+  "docs_design_ad_033_decision_register@ad_033_r3_the_record_required_fields_id_repository_qualified_the_repository_s_na"
+ ],
+ "references_created": 76,
+ "references_existing": 34
+}

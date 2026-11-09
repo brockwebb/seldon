@@ -1,0 +1,114 @@
+{
+ "resolves_to_edges": 110,
+ "citations_without": [
+  "docs_design_ad_033_decision_register@ad_033_r3_the_record_required_fields_id_repository_qualified_the_repository_s_na"
+ ],
+ "works": {
+  "docs/design/AD-029_task_precedence.md": [
+   {
+    "name": "seldon-biblio:kahn1962topological",
+    "identifier": "doi:10.1145/368996.369025",
+    "title": "Topological sorting of large networks"
+   },
+   {
+    "name": "seldon-biblio:kelley1959critical",
+    "identifier": "doi:10.1145/1460299.1460318",
+    "title": "Critical-path planning and scheduling"
+   },
+   {
+    "name": "seldon-biblio:pmi_pmbok",
+    "identifier": "standard:ANSI/PMI 99-001",
+    "title": "A Guide to the Project Management Body of Knowledge (PMBOK Guide)"
+   }
+  ],
+  "docs/design/AD-030_governed_documents_as_graph_content.md": [
+   {
+    "name": "seldon-biblio:clark2014micropublications",
+    "identifier": "doi:10.1186/2041-1480-5-28",
+    "title": "Micropublications: a semantic model for claims, evidence, arguments and annotations in biomedical communications"
+   },
+   {
+    "name": "seldon-biblio:clelandhuang2014traceability",
+    "identifier": "doi:10.1145/2593882.2593891",
+    "title": "Software traceability: trends and future directions"
+   },
+   {
+    "name": "seldon-biblio:gotel1994traceability",
+    "identifier": "doi:10.1109/icre.1994.292398",
+    "title": "An analysis of the requirements traceability problem"
+   },
+   {
+    "name": "seldon-biblio:groth2010nanopublication",
+    "identifier": "doi:10.3233/isu-2010-0613",
+    "title": "The anatomy of a nanopublication"
+   },
+   {
+    "name": "seldon-biblio:shotton2010cito",
+    "identifier": "doi:10.1186/2041-1480-1-s1-s6",
+    "title": "CiTO, the Citation Typing Ontology"
+   }
+  ],
+  "docs/design/AD-033_decision_register.md": [
+   {
+    "name": "seldon-biblio:antoniol2002traceability",
+    "identifier": "doi:10.1109/tse.2002.1041053",
+    "title": "Recovering traceability links between code and documentation"
+   },
+   {
+    "name": "seldon-biblio:clelandhuang2012traceability",
+    "identifier": "doi:10.1007/978-1-4471-2239-5",
+    "title": "Software and Systems Traceability"
+   },
+   {
+    "name": "seldon-biblio:cohen1960kappa",
+    "identifier": "doi:10.1177/001316446002000104",
+    "title": "A Coefficient of Agreement for Nominal Scales"
+   },
+   {
+    "name": "seldon-biblio:fuchss2025lissa",
+    "identifier": "doi:10.1109/icse55347.2025.00186",
+    "title": "LiSSA: Toward Generic Traceability Link Recovery Through Retrieval-Augmented Generation"
+   },
+   {
+    "name": "seldon-biblio:gwet2008ac1",
+    "identifier": "doi:10.1348/000711006x126600",
+    "title": "Computing inter\u2010rater reliability and its variance in the presence of high agreement"
+   },
+   {
+    "name": "seldon-biblio:jansen2005decisions",
+    "identifier": "doi:10.1109/wicsa.2005.61",
+    "title": "Software Architecture as a Set of Architectural Design Decisions"
+   },
+   {
+    "name": "seldon-biblio:kruchten2004ontology",
+    "identifier": "openalex:W16155167",
+    "title": "An Ontology of Architectural Design Decisions in Software-Intensive Systems"
+   },
+   {
+    "name": "seldon-biblio:lee1997rationale",
+    "identifier": "doi:10.1109/64.592267",
+    "title": "Design rationale systems: understanding the issues"
+   },
+   {
+    "name": "seldon-biblio:li2024selfroute",
+    "identifier": "doi:10.18653/v1/2024.emnlp-industry.66",
+    "title": "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach"
+   },
+   {
+    "name": "seldon-biblio:liu2024lostmiddle",
+    "identifier": "doi:10.1162/tacl_a_00638",
+    "title": "Lost in the Middle: How Language Models Use Long Contexts"
+   },
+   {
+    "name": "seldon-biblio:mavin2009ears",
+    "identifier": "doi:10.1109/re.2009.9",
+    "title": "Easy Approach to Requirements Syntax (EARS)"
+   },
+   {
+    "name": "seldon-biblio:zhao2024expel",
+    "identifier": "doi:10.1609/aaai.v38i17.29936",
+    "title": "ExpeL: LLM Agents Are Experiential Learners"
+   }
+  ]
+ }
+}
