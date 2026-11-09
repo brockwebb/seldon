@@ -1,0 +1,38 @@
+event: accept
+id: seldon:AD-013-R1
+date: '2026-11-09'
+decided_by: cc:0a8a6776
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:123: AD-013-R1'
+reason: SEL-033 Part A; answers hazbrief-mcp SEL-031 and SEL-032 (AD-013 ADDENDUM 01)
+kind: decision
+status: accepted
+statement: A requirement shall be a graph artifact, an SRS_Requirement with requirement_id, description, set_by, document, section and a state on the domain machine; it is derived_from its source, verified_by a test Script and the target of satisfies; it reaches verified only with at least one verified_by edge.
+source:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  lines:
+  - 123
+  - 129
+  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  text: |-
+    - **AD-013-R1. A requirement is a graph artifact: an `SRS_Requirement` with `requirement_id` (unique in the project), `description` (the statement), `set_by` (its source, verbatim), `document` and `section` (the projection and the heading it belongs to), and its state on the domain's machine; it is `derived_from` its source (a Document, DesignNote, ResearchTask, Decision, ArchitecturalDecision or a parent requirement), `verified_by` a test `Script`, and `satisfies` points at it from the ResearchTask, Script, Result or PaperSection that meets it; a requirement reaches `verified` only with at least one `verified_by` edge.**
+      A project's status words map to states through `seldon.yaml` `requirements.status_map`; a status the map does not
+      name leaves the requirement where it is and is listed. The verbatim columns of a load source (`verified_by_text`,
+      `validated_by`, `satisfied_by_text`, `status_text`) are kept on the node, so a projection reproduces the source's
+      wording while the edges carry the trace. The task text asked for `satisfies` from the note the `Set by` column
+      names; a note does not satisfy a requirement, it is its source, so that column becomes `derived_from` (29148's
+      source attribute, SysML's derive), and `satisfies` comes from a task the status names.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  anchor: AD-013-R1
+consumer:
+- cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md
+- seldon/core/requirements.py
+- seldon/commands/req.py
+- seldon/domain/research.yaml
+- tests/test_sel033_requirements.py
+written_by: seldon decision 0.1.0
+provisional_id: 4679fc249f27e3c779c1429e3cf350875227bd92e5879640e517c3f9c70c473f

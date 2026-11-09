@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-013-R2
+date: '2026-11-09'
+decided_by: cc:0a8a6776
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:131: AD-013-R2'
+reason: SEL-033 Part A; answers hazbrief-mcp SEL-031 and SEL-032 (AD-013 ADDENDUM 01)
+kind: decision
+status: accepted
+statement: A requirements table and an RTM shall be projections of the graph, rendered by seldon docs generate requirements and rtm into the blocks between seldon:projection markers of the files docs.projections declares, stamped with the graph revision and committed path-scoped through the hooks; a markdown requirements table is a load source for seldon req import, idempotent on the id, never the truth.
+source:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  lines:
+  - 131
+  - 134
+  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  text: |-
+    - **AD-013-R2. A requirements table and a requirements traceability matrix are projections of the graph: `seldon docs generate requirements` and `seldon docs generate rtm` render the projections `seldon.yaml` `docs.projections` declares, replacing only the blocks between `seldon:projection` markers, stamp each file with the graph revision (the sha256 of what it renders), and commit the files they changed, path-scoped, through the hooks; a markdown requirements table is a load source for `seldon req import`, idempotent on the id, and never the truth.**
+      A counts block renders the counts sentence from the graph, so a sentence kept identical by hand in several files
+      (HB-134R2's ratchet) is retired. `seldon req import --mark` puts the markers around the tables it loaded, once.
+      `seldon req add` creates or updates one requirement.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  anchor: AD-013-R2
+consumer:
+- cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md
+- seldon/core/requirements.py
+- seldon/commands/docs.py
+- tests/test_sel033_requirements.py
+written_by: seldon decision 0.1.0
+provisional_id: 8adfb907258adaf21732a192462981bbd4c2b515d3b3eb5cc30fa7c00fb491d4

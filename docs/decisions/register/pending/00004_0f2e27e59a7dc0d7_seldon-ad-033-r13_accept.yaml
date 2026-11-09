@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-033-R13
+date: '2026-11-09'
+decided_by: cc:0a8a6776
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:138: AD-033-R13'
+reason: SEL-033 Part A; answers hazbrief-mcp SEL-031 and SEL-032 (AD-013 ADDENDUM 01)
+kind: decision
+status: accepted
+statement: A Seldon-managed project with no decisions block shall be reported by seldon init, seldon go and seldon verify as having no decision register, and seldon project new shall declare one by default.
+source:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  lines:
+  - 138
+  - 142
+  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  text: |-
+    - **AD-033-R13. A Seldon-managed project with no `decisions:` block is told so: `seldon init`, `seldon go` and `seldon verify` report "no decision register declared (AD-033); rulings made in this project have no record", and `seldon project new` declares one by default (`decisions.repository: <the directory's name>`).**
+      AD-033-R1 already makes the register every task-registering repository's; what was missing was a reader. `verify`
+      warns and does not fail: declaring the register is the project's own one-block act, and a Tier A failure would hold
+      every task in a project that has not yet made it. A project declares its register itself; this ruling does not
+      write one into an existing project.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
+  anchor: AD-033-R13
+consumer:
+- cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/init.py
+- seldon/core/project_new.py
+- tests/test_sel033_register_warning.py
+written_by: seldon decision 0.1.0
+provisional_id: 0f2e27e59a7dc0d75f7deab1bc3a84cb062a74384868e41336e7465fbddd841f
