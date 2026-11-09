@@ -122,7 +122,8 @@ def test_the_issue_enums_admit_a_review_finding():
 
 def test_the_domain_declares_the_trace_edges_and_optional_properties(domain_config):
     rels = domain_config.relationship_types
-    assert rels["verified_by"].from_types == ["Issue"] and rels["verified_by"].to_types == ["Script"]
+    # SEL-033 (AD-013-R1) widened the origin to SRS_Requirement; an Issue still verifies only against a Script.
+    assert rels["verified_by"].from_types == ["Issue", "SRS_Requirement"] and rels["verified_by"].to_types == ["Script"]
     assert rels["changes"].from_types == ["Issue"]
     assert set(rels["changes"].to_types) == {"Decision", "ArchitecturalDecision"}
     assert "ResearchTask" in rels["remediated_by"].to_types

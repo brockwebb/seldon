@@ -4,7 +4,7 @@ date: '2026-11-09'
 decided_by: cc:0a8a6776
 operator_stated: false
 receipts:
-- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:136: AD-013-R3'
+- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:141: AD-013-R3'
 reason: SEL-033 Part A; answers hazbrief-mcp SEL-031 and SEL-032 (AD-013 ADDENDUM 01)
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: seldon docs check and seldon verify shall report every requirement wi
 source:
   path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
   lines:
-  - 136
-  - 136
-  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  - 141
+  - 141
+  sha256: ea5d03a16db8c7b992b4d7e97a32b16566689b6b61ab6e02c1f7446edcea8cdc
   text: '- **AD-013-R3. `seldon docs check` and `seldon verify` report every requirement with no `verified_by` edge and every projection whose file differs from a fresh render (the graph moved, or the file was edited by hand); the finding is advisory, as a stale Result is, and names the command that clears it.**'
 scope:
 - seldon
@@ -27,4 +27,4 @@ consumer:
 - seldon/commands/docs.py
 - tests/test_sel033_requirements.py
 written_by: seldon decision 0.1.0
-provisional_id: a19595078e0e1daecbd394e5e87b3794ea4ed01a068a0aa1ec5e2d65e65ffcc8
+provisional_id: a44d77f16ab6e514345aeccb74a4f178e589dde6b286255653a36b4e858ac46e

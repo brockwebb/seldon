@@ -120,13 +120,18 @@ register beyond AD-033-R1.
 
 ## 3. Rulings
 
-- **AD-013-R1. A requirement is a graph artifact: an `SRS_Requirement` with `requirement_id` (unique in the project), `description` (the statement), `set_by` (its source, verbatim), `document` and `section` (the projection and the heading it belongs to), and its state on the domain's machine; it is `derived_from` its source (a Document, DesignNote, ResearchTask, Decision, ArchitecturalDecision or a parent requirement), `verified_by` a test `Script`, and `satisfies` points at it from the ResearchTask, Script, Result or PaperSection that meets it; a requirement reaches `verified` only with at least one `verified_by` edge.**
+- **AD-013-R1. A requirement is a graph artifact: an `SRS_Requirement` with `requirement_id` (unique in the project), `description` (the statement), `set_by` (its source, verbatim), `document` and `section` (the projection and the heading it belongs to), and its state on the domain's machine; it is `derived_from` its source (a DesignNote, ResearchTask, register record, ArchitecturalDecision or a parent requirement), `verified_by` a test `Script`, and `satisfies` points at it from the ResearchTask, Script, Result or PaperSection that meets it; a requirement reaches `verified` only with at least one `verified_by` edge.**
   A project's status words map to states through `seldon.yaml` `requirements.status_map`; a status the map does not
   name leaves the requirement where it is and is listed. The verbatim columns of a load source (`verified_by_text`,
   `validated_by`, `satisfied_by_text`, `status_text`) are kept on the node, so a projection reproduces the source's
   wording while the edges carry the trace. The task text asked for `satisfies` from the note the `Set by` column
   names; a note does not satisfy a requirement, it is its source, so that column becomes `derived_from` (29148's
-  source attribute, SysML's derive), and `satisfies` comes from a task the status names.
+  source attribute, SysML's derive), and `satisfies` comes from a task the status names. A governed `Document` is
+  not a source target: the domain's endpoint sets are independent, so admitting it would also admit
+  `DataFile -> Document`, which AD-030 section 4's closed edge set refuses; a source that is only a Document is
+  listed as unresolved. A `Decision` column of register ids (hazbrief-mcp HB-144) is a source too: each id that
+  names a projected record is a `derived_from` edge, so the graph answers which requirements a decision
+  constrains.
 
 - **AD-013-R2. A requirements table and a requirements traceability matrix are projections of the graph: `seldon docs generate requirements` and `seldon docs generate rtm` render the projections `seldon.yaml` `docs.projections` declares, replacing only the blocks between `seldon:projection` markers, stamp each file with the graph revision (the sha256 of what it renders), and commit the files they changed, path-scoped, through the hooks; a markdown requirements table is a load source for `seldon req import`, idempotent on the id, and never the truth.**
   A counts block renders the counts sentence from the graph, so a sentence kept identical by hand in several files

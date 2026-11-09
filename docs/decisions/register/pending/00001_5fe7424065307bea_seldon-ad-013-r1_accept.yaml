@@ -13,16 +13,21 @@ source:
   path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
   lines:
   - 123
-  - 129
-  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  - 134
+  sha256: ea5d03a16db8c7b992b4d7e97a32b16566689b6b61ab6e02c1f7446edcea8cdc
   text: |-
-    - **AD-013-R1. A requirement is a graph artifact: an `SRS_Requirement` with `requirement_id` (unique in the project), `description` (the statement), `set_by` (its source, verbatim), `document` and `section` (the projection and the heading it belongs to), and its state on the domain's machine; it is `derived_from` its source (a Document, DesignNote, ResearchTask, Decision, ArchitecturalDecision or a parent requirement), `verified_by` a test `Script`, and `satisfies` points at it from the ResearchTask, Script, Result or PaperSection that meets it; a requirement reaches `verified` only with at least one `verified_by` edge.**
+    - **AD-013-R1. A requirement is a graph artifact: an `SRS_Requirement` with `requirement_id` (unique in the project), `description` (the statement), `set_by` (its source, verbatim), `document` and `section` (the projection and the heading it belongs to), and its state on the domain's machine; it is `derived_from` its source (a DesignNote, ResearchTask, register record, ArchitecturalDecision or a parent requirement), `verified_by` a test `Script`, and `satisfies` points at it from the ResearchTask, Script, Result or PaperSection that meets it; a requirement reaches `verified` only with at least one `verified_by` edge.**
       A project's status words map to states through `seldon.yaml` `requirements.status_map`; a status the map does not
       name leaves the requirement where it is and is listed. The verbatim columns of a load source (`verified_by_text`,
       `validated_by`, `satisfied_by_text`, `status_text`) are kept on the node, so a projection reproduces the source's
       wording while the edges carry the trace. The task text asked for `satisfies` from the note the `Set by` column
       names; a note does not satisfy a requirement, it is its source, so that column becomes `derived_from` (29148's
-      source attribute, SysML's derive), and `satisfies` comes from a task the status names.
+      source attribute, SysML's derive), and `satisfies` comes from a task the status names. A governed `Document` is
+      not a source target: the domain's endpoint sets are independent, so admitting it would also admit
+      `DataFile -> Document`, which AD-030 section 4's closed edge set refuses; a source that is only a Document is
+      listed as unresolved. A `Decision` column of register ids (hazbrief-mcp HB-144) is a source too: each id that
+      names a projected record is a `derived_from` edge, so the graph answers which requirements a decision
+      constrains.
 scope:
 - seldon
 rationale:
@@ -35,4 +40,4 @@ consumer:
 - seldon/domain/research.yaml
 - tests/test_sel033_requirements.py
 written_by: seldon decision 0.1.0
-provisional_id: 4679fc249f27e3c779c1429e3cf350875227bd92e5879640e517c3f9c70c473f
+provisional_id: 5fe7424065307bea1edb5fbd95a466e91f41362774c55b8bd22d1c5ec11a0f2c

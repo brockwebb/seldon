@@ -4,7 +4,7 @@ date: '2026-11-09'
 decided_by: cc:0a8a6776
 operator_stated: false
 receipts:
-- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:131: AD-013-R2'
+- 'docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md:136: AD-013-R2'
 reason: SEL-033 Part A; answers hazbrief-mcp SEL-031 and SEL-032 (AD-013 ADDENDUM 01)
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: A requirements table and an RTM shall be projections of the graph, re
 source:
   path: docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md
   lines:
-  - 131
-  - 134
-  sha256: e9e17708e413f516dcc7c8989d8e04f2c8d9f66aa75d6ba1339ad38c5e12c400
+  - 136
+  - 139
+  sha256: ea5d03a16db8c7b992b4d7e97a32b16566689b6b61ab6e02c1f7446edcea8cdc
   text: |-
     - **AD-013-R2. A requirements table and a requirements traceability matrix are projections of the graph: `seldon docs generate requirements` and `seldon docs generate rtm` render the projections `seldon.yaml` `docs.projections` declares, replacing only the blocks between `seldon:projection` markers, stamp each file with the graph revision (the sha256 of what it renders), and commit the files they changed, path-scoped, through the hooks; a markdown requirements table is a load source for `seldon req import`, idempotent on the id, and never the truth.**
       A counts block renders the counts sentence from the graph, so a sentence kept identical by hand in several files
@@ -31,4 +31,4 @@ consumer:
 - seldon/commands/docs.py
 - tests/test_sel033_requirements.py
 written_by: seldon decision 0.1.0
-provisional_id: 8adfb907258adaf21732a192462981bbd4c2b515d3b3eb5cc30fa7c00fb491d4
+provisional_id: 6f32224c483ac99d29bf78569b88e9d85ef3b2cc48fa47047fc770b0076a7cf6

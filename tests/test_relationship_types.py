@@ -11,7 +11,9 @@ Covers the edge types extended or introduced by AD-028 (Lane B of the
     cites          DesignNote | ArchitecturalDecision  ->  Citation | Result | Passage
                    (the two origins added by
                    cc_tasks/2026-09-28_designnote_cites_citation.md; AD-030-R7)
-    derived_from   Result | DataFile  ->  LabNotebookEntry | Citation | Result | DesignNote
+    derived_from   Result | DataFile | SRS_Requirement  ->  LabNotebookEntry | Citation | Result | DesignNote
+                   (SRS_Requirement, and its targets SRS_Requirement | ResearchTask | Decision |
+                   ArchitecturalDecision, added by SEL-033, AD-013-R1)
                    (DataFile and DesignNote added by
                    cc_tasks/2026-10-13_designnote_cites_citation_ADDENDUM_01_slosh_pipe.md:
                    a config registry derives from the notes that justify its entries)
@@ -115,6 +117,12 @@ ACCEPTED = [
     ("derived_from", "Result", "DesignNote"),
     ("derived_from", "Result", "Result"),
     ("derived_from", "Result", "Citation"),
+    # SEL-033 (AD-013-R1): a requirement derives from its source note, task, register record or decision, or a
+    # parent requirement (29148's source, SysML's derive).
+    ("derived_from", "SRS_Requirement", "DesignNote"),
+    ("derived_from", "SRS_Requirement", "ResearchTask"),
+    ("derived_from", "SRS_Requirement", "Decision"),
+    ("derived_from", "SRS_Requirement", "SRS_Requirement"),
 ]
 
 # (rel_type, from_type, to_type, expected_error_fragment) triples that must be
@@ -232,8 +240,10 @@ def _make(project_dir, driver, domain_config, artifact_type):
      {"PaperSection", "Figure", "Document", "Section", "Ruling", "DesignNote",
       "ArchitecturalDecision"},
      {"Result", "Citation", "Passage"}),
-    ("derived_from", {"Result", "DataFile"},
-     {"LabNotebookEntry", "Citation", "Result", "DesignNote"}),
+    # SRS_Requirement origin and its source targets added by SEL-033 (AD-013-R1); Document stays out.
+    ("derived_from", {"Result", "DataFile", "SRS_Requirement"},
+     {"LabNotebookEntry", "Citation", "Result", "DesignNote", "SRS_Requirement", "ResearchTask", "Decision",
+      "ArchitecturalDecision"}),
 ])
 def test_domain_config_declares_endpoints(domain_config, rel_type, from_types, to_types):
     """The domain config — not the ontology master DB — carries the endpoints."""

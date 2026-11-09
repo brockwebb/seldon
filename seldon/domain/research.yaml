@@ -983,10 +983,11 @@ relationship_types:
     # section 4 closes the edge set on governed-document nodes.
     #
     # SRS_Requirement origin added (SEL-033, AD-013-R1): a requirement derives from its source (29148's source
-    # attribute, SysML's derive): the note, task, register record or decision that set it, or a parent requirement.
-    # Document as a TARGET is a requirement's source note; the origin rule above is unchanged.
+    # attribute, SysML's derive): the design note, task, register record or decision that set it, or a parent
+    # requirement. Document stays out as a target too: the domain's endpoint sets are independent, so admitting it
+    # for a requirement would admit DataFile -> Document, which AD-030 section 4's closed edge set refuses.
     from_types: [Result, DataFile, SRS_Requirement]
-    to_types: [LabNotebookEntry, Citation, Result, DesignNote, SRS_Requirement, Document, ResearchTask, Decision,
+    to_types: [LabNotebookEntry, Citation, Result, DesignNote, SRS_Requirement, ResearchTask, Decision,
                ArchitecturalDecision]
   includes_role:
     from_types: [Workflow]

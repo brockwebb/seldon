@@ -395,13 +395,14 @@ def find_requirement(session, rid: str) -> Optional[dict]:
 
 def resolve_key(session, key: str, keymap: Dict[str, str]) -> Optional[dict]:
     """The artifact a `Set by` or status key names: through the source's key map to a file (a task's source_file, a
-    Document's or DesignNote's path), else a task whose name starts with the key, a register record, an
-    ArchitecturalDecision, or a requirement (a parent). None when nothing or more than one artifact matches."""
+    DesignNote's path), else a task whose name starts with the key, a register record, an ArchitecturalDecision, or a
+    requirement (a parent). None when nothing or more than one artifact matches. A governed Document is never a
+    target: AD-030 section 4 closes its edge set, so a requirement whose source is one lists it as unresolved."""
     path = keymap.get(key)
     if path:
         rows = _rows(session,
                      "MATCH (a:Artifact) WHERE (a:ResearchTask AND a.source_file = $p) "
-                     "OR ((a:Document OR a:DesignNote) AND a.path = $p) "
+                     "OR (a:DesignNote AND a.path = $p) "
                      "RETURN DISTINCT a.artifact_id AS id, a.artifact_type AS type", p=path)
         if len(rows) == 1:
             return rows[0]

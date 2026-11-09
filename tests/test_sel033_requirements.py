@@ -121,7 +121,9 @@ def _task(project_dir, driver, dc):
 
 def _note(project_dir, driver, dc):
     return create_artifact(project_dir=project_dir, driver=driver, database=NEO4J_DB, domain_config=dc,
-                           artifact_type="Document", properties={"name": "DN-019", "path": "docs/design/DN-019.md", "content_hash": "0" * 64},
+                           artifact_type="DesignNote",
+                           properties={"name": "DN-019", "title": "DN-019", "path": "docs/design/DN-019.md",
+                                       "description": "the view", "note_type": "design"},
                            actor="human", authority="accepted")
 
 

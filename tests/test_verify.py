@@ -272,6 +272,9 @@ def _mock_config_and_driver(neo4j_driver):
         {
             "project": {"name": "test-project", "domain": "research"},
             "neo4j": {"uri": "bolt://localhost:7687", "database": NEO4J_DB},
+            # A clean project declares its decision register: since AD-033-R13 (SEL-033) a project without one
+            # warns, and a warning exits 1. The register itself is empty.
+            "decisions": {"repository": "test-project"},
         },
         neo4j_driver,
     )
