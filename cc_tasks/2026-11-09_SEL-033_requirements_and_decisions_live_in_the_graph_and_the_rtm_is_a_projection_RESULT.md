@@ -129,7 +129,7 @@ after HB-144 merged (see Outcome). hazbrief commits, all through its hooks, path
 
 ## Part F: the return
 
-`seldon cc return --to hazbrief-mcp --answers seldon:<SEL-031>` files hazbrief's return from the `## For hazbrief-mcp` section below; one return answers both filings (SEL-029: one return per answering task, and SEL-032 is closed against it).
+`seldon cc return --to hazbrief-mcp --answers seldon:<SEL-031>` files hazbrief's return from the `## For hazbrief-mcp` section below; one return answers both filings (SEL-029: one return per answering task). Filed: hazbrief-mcp **HB-146** (task `1daf117b`, `cc_tasks/2026-11-09_HB-146_requirements_and_decisions_live_in_the_graph_the_rtm_and_the_requireme.md`, registered and committed there, `0db744ef`/`4f4b732b`); seldon's filings SEL-031 (`bd76c760`) and SEL-032 (`e3e93788`) are `completed` against it (AD-036-R17).
 
 ## Tests
 
@@ -139,9 +139,19 @@ after HB-144 merged (see Outcome). hazbrief commits, all through its hooks, path
   projection (byte-identical tables with prose kept and a commit, a graph change and a hand edit each reported, an
   unmarked file refused, an absent RTM rendered whole from edges, an unplaced requirement appended, the CLI with
   `--check`); the checks (`verify`, `docs check --json` and `--strict`, one append per load).
-- `tests/test_sel033_register_warning.py` (11): verify, go, init and project new.
+- `tests/test_sel033_register_warning.py` (13): verify, go, init, project new, and a register a branch declares is numbered at its merge.
 - Changed: `tests/test_go.py` (the new `decision_register` key), `tests/test_verify_event_log.py` (21 checks).
-- Full suite: SUITE_LINE
+- Full suite on the final code (`-n 6`, 24 min): **3307 passed, 3 failed, 7 skipped**. The three are known and not
+  this task's: `test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index` (library
+  index drift, fails on main), and two timing tests under load (avg 12-17) that pass alone, re-run here: 
+  `test_dispatch_parallel::test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge` and
+  `test_sel024_gate_record::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing`
+  (2 passed). An earlier full run caught five of mine, all fixed before this one: the `Document` target (AD-030
+  section 4, see Outcome), the SEL-021 and relationship-type fixtures for the widened edges, `test_verify`'s clean
+  project (it now declares an empty register, since a project without one warns and a warning exits 1), and
+  `test_dispatch_first_article` (a timing flake; passes alone).
+- Also added after that run: `TestARegisterDeclaredOnABranchIsNumberedAtItsMerge` (2 tests, written first and seen
+  failing on the old `number_merged_register`).
 
 ## Findings about hazbrief's files (a difference is a finding about the files, not the graph)
 
