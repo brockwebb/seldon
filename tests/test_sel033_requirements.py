@@ -235,6 +235,33 @@ class TestImport:
         assert [e["t"] for e in _edges(neo4j_driver, "VR-003")] == ["DERIVED_FROM"], "HB-900 is VR-003's source"
         assert _node(neo4j_driver, "VR-004")["state"] == "rejected"
 
+    def test_a_decision_column_links_each_projected_record(self, req_project, neo4j_driver, domain_config):
+        """hazbrief-mcp HB-144 adds a `Decision` column of register ids to its RTM: each id that names a projected
+        `Decision` is a `derived_from` edge, so the graph answers "which requirements does decision Y constrain"
+        (SEL-032); an id with no projected record is listed."""
+        create_artifact(project_dir=req_project, driver=neo4j_driver, database=NEO4J_DB, domain_config=domain_config,
+                        artifact_type="Decision", properties={"name": "HBD-002", "decision_id": "hb:HBD-002",
+                                                              "home_repository": "hb"},
+                        actor="human", authority="accepted")
+        (req_project / "docs" / "RTM.md").write_text(
+            "## DN-001 section 3\n\n| ID | Decision | Requirement | Satisfied by | Checked by | State |\n"
+            "|---|---|---|---|---|---|\n"
+            "| S3-1 | HBD-002, HBD-404 | Four classes | `packs/x.json` | `tests/test_map.py` `test_first` | met |\n")
+        plan, _ = _import(req_project, neo4j_driver, domain_config, rel="docs/RTM.md")
+        assert [u for u in plan.unresolved if "decision" in u] == [
+            "docs/RTM.md:5 S3-1: decision 'HBD-404' names no projected register record (run `seldon decision "
+            "project`)"]
+        n = _node(neo4j_driver, "S3-1")
+        assert n["decision_text"] == "HBD-002, HBD-404" and n["satisfied_by_text"] == "`packs/x.json`"
+        assert {"t": "DERIVED_FROM", "o": "HBD-002"} in _edges(neo4j_driver, "S3-1")
+        assert {"t": "VERIFIED_BY", "o": "tests/test_map.py::test_first"} in _edges(neo4j_driver, "S3-1")
+        cols = [{"header": h, "source": s} for h, s in (("ID", "requirement_id"), ("Decision", "decision_text"),
+                ("Requirement", "description"), ("Satisfied by", "satisfied_by_text"),
+                ("Checked by", "verified_by_text"), ("State", "status_text"))]
+        nodes = RQ.load_requirements(neo4j_driver, NEO4J_DB)
+        assert RQ.render_table(nodes, cols, RQ.settings({})).splitlines()[2] == (
+            "| S3-1 | HBD-002, HBD-404 | Four classes | `packs/x.json` | `tests/test_map.py` `test_first` | met |")
+
     def test_a_source_with_no_artifact_is_listed_per_row(self, req_project, neo4j_driver, domain_config):
         plan, _ = _import(req_project, neo4j_driver, domain_config)
         listed = [u.split(": ", 1)[0].split()[-1] + " " + u.split("set_by ")[1].split()[0] for u in plan.unresolved]

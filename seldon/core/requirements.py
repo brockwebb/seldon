@@ -59,6 +59,8 @@ DEFAULT_COLUMNS: Dict[str, List[str]] = {
     "validated_by": ["Validated by"],
     "satisfied_by": ["Satisfied by"],
     "status": ["Status", "State"],
+    # hazbrief-mcp HB-144: the register records that state a row's ruling (`HBD-002, HBD-006`).
+    "decision": ["Decision"],
 }
 
 #: The node property each optional column is kept in, verbatim (AD-013-R1: the edges carry the trace, the verbatim
@@ -70,6 +72,7 @@ COLUMN_PROPERTY = {
     "validated_by": "validated_by",
     "satisfied_by": "satisfied_by_text",
     "status": "status_text",
+    "decision": "decision_text",
 }
 
 #: The columns a projection renders when its `docs.projections` entry names none. A source is a node property, or one
@@ -366,6 +369,11 @@ def set_by_keys(cell: str) -> List[str]:
     return out
 
 
+def decision_keys(cell: str) -> List[str]:
+    """The record ids a `Decision` cell lists (`HBD-001, HBD-006`; a `—` or blank lists none)."""
+    return [k.strip("` ") for k in re.split(r"[;,]", cell or "") if k.strip("` ") not in ("", "—", "-")]
+
+
 def natural_key(rid: str) -> list:
     return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", rid)]
 
@@ -480,6 +488,7 @@ class Spec:
     test_refs: List[str]
     set_by_keys: List[str]
     satisfier_keys: List[str]
+    decision_keys: List[str]
     where: str                           # for messages: `<file>:<line>` or `req add`
 
 
@@ -502,7 +511,7 @@ def spec_from_row(row: Row, src: Source, project_dir: Path, s: Settings, documen
     where = f"{src.path}:{row.line}"
     return (Spec(requirement_id=row.requirement_id, properties=props, status_text=status,
                  test_refs=refs, set_by_keys=set_by_keys(f.get("set_by", "")), satisfier_keys=satisfiers,
-                 where=where),
+                 decision_keys=decision_keys(f.get("decision", "")), where=where),
             [f"{where} {row.requirement_id}: verified_by {m!r} names no file in the project" for m in missing])
 
 
@@ -532,6 +541,13 @@ def plan_specs(project_dir: Path, driver, database: str, domain_config, specs: L
                 hit = resolve_key(session, k, keymap)
                 if hit is None:
                     plan.unresolved.append(f"{sp.where} {sp.requirement_id}: set_by {k!r} names no single artifact")
+                elif hit["id"] not in [x["id"] for x in sources]:
+                    sources.append(hit)
+            for k in sp.decision_keys:
+                hit = resolve_key(session, k, keymap)
+                if hit is None or hit["type"] not in ("Decision", "ArchitecturalDecision"):
+                    plan.unresolved.append(f"{sp.where} {sp.requirement_id}: decision {k!r} names no projected "
+                                           f"register record (run `seldon decision project`)")
                 elif hit["id"] not in [x["id"] for x in sources]:
                     sources.append(hit)
             satisfiers = []
@@ -704,7 +720,8 @@ def add_one(project_dir: Path, driver, database: str, domain_config, config: dic
         if value is not None:
             props[prop] = value
     if existing is not None:
-        for prop in ("description", "set_by", "validated_by", "status_text", "section", "document"):
+        for prop in ("description", "set_by", "validated_by", "status_text", "section", "document",
+                     "decision_text", "satisfied_by_text"):
             if prop not in props and existing.get(prop) is not None:
                 props[prop] = existing[prop]
     refs: List[str] = []
@@ -725,7 +742,8 @@ def add_one(project_dir: Path, driver, database: str, domain_config, config: dic
     satisfiers = (_KEY_RE.findall((props.get("status_text") or "")[len(word):])
                   if word and s.status_map.get(word) in ("implemented", "verified") else [])
     sp = Spec(requirement_id=rid, properties=props, status_text=props.get("status_text"), test_refs=refs,
-              set_by_keys=keys, satisfier_keys=satisfiers, where="req add")
+              set_by_keys=keys, satisfier_keys=satisfiers, decision_keys=decision_keys(props.get("decision_text", "")),
+              where="req add")
     plan = plan_specs(project_dir, driver, database, domain_config, [sp], s, {})
     if not dry_run:
         apply(project_dir, driver, database, plan)

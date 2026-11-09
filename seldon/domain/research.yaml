@@ -577,6 +577,9 @@ artifact_types:
       status_text:
         category: trace
         description: "The load source's status cell, verbatim; `requirements.status_map` maps its first word to the state"
+      decision_text:
+        category: trace
+        description: "The load source's decision cell, verbatim (register record ids, hazbrief-mcp HB-144); each id that names a projected Decision is a `derived_from` edge"
 
   AgentRole:
     properties:
