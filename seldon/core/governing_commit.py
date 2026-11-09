@@ -219,7 +219,7 @@ def verify(project_dir: Path, config: dict, pending: list[Pending], library=None
     s = pa.settings(project_dir, config)
     base = pa.baseline(s)
     internal = pa.Internal(s)
-    library = library or pa.Library(s)
+    library = library or pa.Libraries(s)
     done, refusals = [], []
     for pn in pending:
         if not pa.is_gated(s, pn.note) or pn.note in base:

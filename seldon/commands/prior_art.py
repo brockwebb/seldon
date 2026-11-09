@@ -70,16 +70,36 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
                          "hits": len(res["hits"]),
                          "top": [f"{h.root}:{h.cite()}" for h in res["hits"][:n]]})
     elif arm == "library":
-        tool = pa.Library(s)
-        res = tool.search(query)
-        out = {"arm": arm, "query": query, "receipts": [tool.receipt(res)],
-               "release": res["release"], "sha256": res["sha256"], "total_hits": len(res["rows"]),
-               "top": [{"doc_id": h["doc_id"], "rows": [r["receipt"]["row_id"] for r in h["rows"]],
-                        "text": h["rows"][0]["text"][:200] if h["rows"] else ""}
-                       for h in res["hits"]]}
-        pa.log_query(s, {"arm": "library", "purpose": "search", "query": query,
-                         "release": res["release"], "sha256": res["sha256"],
-                         "rows": len(res["rows"])})
+        # AD-036-R21 (SEL-036): every graph `prior_art.library.graph` lists, one receipt per graph that answered.
+        tool = pa.Libraries(s)
+        try:
+            results = tool.search(query)
+        finally:
+            tool.close()
+        answered = [r for r in results if not r.get("error")]
+        if not answered:
+            raise pa.PriorArtError("no library graph answered: "
+                                   + "; ".join(f"{r['graph']}: {r['error']}" for r in results))
+        graphs = []
+        for res in results:
+            if res.get("error"):
+                graphs.append({"graph": res["graph"], "error": res["error"]})
+                pa.log_query(s, {"arm": "library", "purpose": "search", "query": query, "graph": res["graph"],
+                                 "error": res["error"][:300]})
+                continue
+            graphs.append({"graph": res["graph"], "release": res["release"], "sha256": res["sha256"],
+                           "total_hits": len(res["rows"]), "receipt": pa.Library.receipt(res),
+                           "top": [{"doc_id": h["doc_id"], "rows": [r["receipt"]["row_id"] for r in h["rows"]],
+                                    "text": h["rows"][0]["text"][:200] if h["rows"] else ""}
+                                   for h in res["hits"]]})
+            pa.log_query(s, {"arm": "library", "purpose": "search", "query": query, "graph": res["graph"],
+                             "release": res["release"], "sha256": res["sha256"], "rows": len(res["rows"])})
+        first = answered[0]
+        # `release`, `sha256`, `total_hits` and `top` stay the FIRST answering graph's, as every caller before R21 read
+        # them; `graphs` carries each graph's, and `receipts` one line per answering graph.
+        out = {"arm": arm, "query": query, "receipts": [g["receipt"] for g in graphs if "receipt" in g],
+               "release": first["release"], "sha256": first["sha256"], "total_hits": len(first["rows"]),
+               "top": next(g["top"] for g in graphs if "receipt" in g), "graphs": graphs}
     else:
         raise pa.PriorArtError(f"unknown arm {arm!r}")
     out["seconds"] = round(time.monotonic() - started, 3)
@@ -158,9 +178,14 @@ def search_command(query, arm, roots, top, note, project, as_json):
         for h in out["top"]:
             click.echo(f"  {h['score']:>8.3f}  {h['root']}:{h['cite']}  (lines {h['lines']})")
     else:
-        click.echo(f"  release {out['release']} sha256:{str(out['sha256'])[:12]}...")
-        for h in out["top"]:
-            click.echo(f"  {h['doc_id']}  {h['text'][:120]!r}")
+        for g in out.get("graphs") or [{"graph": "library", **out}]:
+            if g.get("error"):
+                click.echo(f"  graph {g['graph']}: unavailable: {g['error']}")
+                continue
+            click.echo(f"  graph {g['graph']}: release {g['release']} sha256:{str(g['sha256'])[:12]}..., "
+                       f"{g['total_hits']} row(s)")
+            for h in g["top"]:
+                click.echo(f"    {h['doc_id']}  {h['text'][:120]!r}")
     click.echo("\nReceipts:")
     for r in out["receipts"]:
         click.echo(r)

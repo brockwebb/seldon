@@ -99,7 +99,11 @@ _SUB_RE = re.compile(r"^###\s+(External|Internal)\b", re.IGNORECASE)
 _RECEIPT_START_RE = re.compile(r"^\s*[-*]\s+(library|internal|web)\s+receipt:\s*(.*)$",
                                re.IGNORECASE)
 _LOOSE_RECEIPT_RE = re.compile(r"^\s*[-*]\s+.*\breceipt\s*:", re.IGNORECASE)
-_LIB_RE = re.compile(r'^query "([^"]+)" \| release (\S+) sha256:([0-9a-f]{64}) \| rows (.+)$')
+#: AD-036-R21 (SEL-036): `| graph <name> |` names the library graph a receipt's rows came from. Optional: a receipt
+#: without it names the FIRST graph `prior_art.library.graph` lists, which is the only graph every receipt written
+#: before R21 could name (squiddy's library), so each of them verifies as it did.
+_LIB_RE = re.compile(r'^query "([^"]+)" \| (?:graph ([A-Za-z0-9_.\-]+) \| )?release (\S+) sha256:([0-9a-f]{64}) '
+                     r'\| rows (.+)$')
 _INT_RE = re.compile(r'^query "([^"]+)" \| repo ([A-Za-z0-9_.\-]+)@((?:tree:)?[0-9a-f]{40,64}) '
                      r'\| hits (.+)$')
 _WEB_RE = re.compile(r"^url (https?://\S+) \| retrieved (\d{4}-\d{2}-\d{2})$")
@@ -149,6 +153,10 @@ class Settings:
     #: The seldon.yaml whose block was used, when the project's block is a `ref`; None when the
     #: project defines the block itself.
     defined_in: Optional[Path] = None
+    #: AD-036-R21 (SEL-036): every library graph, `((name, path), ...)` in the order `library.graph` lists them; the
+    #: first is `library_graph`. A graph's name is its directory's name, unique across the list. Empty only for a
+    #: Settings built by hand (tests), which then means `library_graph` alone.
+    library_graphs: tuple = ()
 
 
 _REQUIRED = ("log", "internal_roots", "internal", "library", "gate")
@@ -303,12 +311,13 @@ def settings(project_dir: Path, config: dict) -> Settings:
     names = [r.name for r in roots]
     if len(set(names)) != len(names):
         raise PriorArtError(f"prior_art.internal_roots names are not unique: {names}")
+    graphs = library_graphs_of(library["graph"], lambda p: at(corpus_dir, p), where)
 
     return Settings(project_dir=project_dir, log=at(project_dir, block["log"]), roots=tuple(roots),
                     suffixes=tuple(internal["suffixes"]), top_n=int(internal["top_n"]),
                     max_file_bytes=int(internal["max_file_bytes"]),
                     k1=float(internal["bm25"]["k1"]), b=float(internal["bm25"]["b"]),
-                    library_graph=at(corpus_dir, library["graph"]), library_k=int(library["k"]),
+                    library_graph=graphs[0][1], library_graphs=graphs, library_k=int(library["k"]),
                     library_superseded_releases=int(library.get("superseded_releases",
                                                                 SUPERSEDED_RELEASES_DEFAULT)),
                     design_dir=str(gate["design_dir"]), baseline=at(project_dir, gate["baseline"]),
@@ -316,6 +325,20 @@ def settings(project_dir: Path, config: dict) -> Settings:
                     verdict_ledger_without_governed=at(project_dir,
                                                        gate["verdict_ledger_without_governed"]),
                     defined_in=defined_in)
+
+
+def library_graphs_of(value, resolve, where: str = "seldon.yaml prior_art") -> tuple:
+    """`library.graph` as `((name, path), ...)`: one path, or a list of them searched together (AD-036-R21). A graph's
+    name is its directory's name (`library`, `seldon-biblio`); a receipt names it, so two graphs may not share one."""
+    paths = [value] if isinstance(value, str) else value
+    if not isinstance(paths, list) or not paths or not all(isinstance(p, str) and p.strip() for p in paths):
+        raise PriorArtError(f"{where}.library.graph is a graph directory or a non-empty list of them; got {value!r}")
+    out = tuple((Path(resolve(p)).name, Path(resolve(p))) for p in paths)
+    names = [n for n, _p in out]
+    if len(set(names)) != len(names):
+        raise PriorArtError(f"{where}.library.graph names two graphs with one directory name: {names}; a receipt "
+                            f"names its graph by that name (AD-036-R21)")
+    return out
 
 
 def _glob_re(pattern: str) -> re.Pattern:
@@ -636,8 +659,11 @@ class Library:
     """The library arm: squiddy's served `search` verb, in-process (AD-036-R3), and any older release a receipt names,
     rebuilt from the library's own checkpoints (AD-036 ADDENDUM 06)."""
 
-    def __init__(self, s: Settings):
+    def __init__(self, s: Settings, graph: Path | None = None, name: str | None = None):
         self.s = s
+        #: The graph this arm searches (AD-036-R21): one of `s.library_graphs`; the first when not named.
+        self.path = Path(graph) if graph is not None else s.library_graph
+        self.name = name or self.path.name
         self._verbs = None
         self._graph = None
         self._qenc = None
@@ -666,10 +692,10 @@ class Library:
             except ImportError as exc:
                 raise PriorArtError(f"the library arm needs squiddy installed in this interpreter "
                                     f"(pip install -e <squiddy> --no-deps): {exc}") from exc
-            if not self.s.library_graph.is_dir():
+            if not self.path.is_dir():
                 raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library graph "
-                                    f"{self.s.library_graph} does not exist")
-            self._graph = load_graph(str(self.s.library_graph))
+                                    f"{self.path} does not exist")
+            self._graph = load_graph(str(self.path))
         return self._graph
 
     def verbs(self):
@@ -697,11 +723,16 @@ class Library:
         """The served release's top-k: the receipt `search --library` prints, and verification's current-release
         path."""
         terms_of(query)
-        res = self.verbs().search(query, k=k or self.s.library_k)
+        try:
+            res = self.verbs().search(query, k=k or self.s.library_k)
+        except SystemExit as exc:
+            # squiddy's verbs stop with SystemExit on a graph with no served export (a fresh graph, or a checkout the
+            # release was not cut in); that is this graph being unavailable, not the process ending.
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library graph {self.name} has no served index: {exc}") from exc
         if res.get("error"):
             raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library search failed: {res['error']}")
         rel = (res.get("index") or {}).get("release") or {}
-        return {"query": query, "release": Path(str(rel.get("export"))).name,
+        return {"query": query, "graph": self.name, "release": Path(str(rel.get("export"))).name,
                 "sha256": rel.get("sha256"), "rows": self._rows(res["hits"]), "hits": res["hits"],
                 "index": "served"}
 
@@ -743,7 +774,8 @@ class Library:
                                 f"sha256:{sha256[:12]}... the receipt names")
         idx, info = self._release_index(release, sha256, path)
         res = idx.search(query, k or self.s.library_k)
-        return {"query": query, "release": release, "sha256": sha256, "rows": self._rows(res["hits"]),
+        return {"query": query, "graph": self.name, "release": release, "sha256": sha256,
+                "rows": self._rows(res["hits"]),
                 "hits": res["hits"], "index": "rebuilt", "export_path": str(path),
                 "commit": info.get("commit"), "index_rows": info.get("rows")}
 
@@ -862,9 +894,51 @@ class Library:
 
     @staticmethod
     def receipt(result: dict) -> str:
+        """The receipt line, naming the graph its rows came from when the result says (AD-036-R21)."""
         rows = ", ".join(result["rows"]) or "none"
-        return (f'- library receipt: query "{result["query"]}" | release {result["release"]} '
+        graph = f'graph {result["graph"]} | ' if result.get("graph") else ""
+        return (f'- library receipt: query "{result["query"]}" | {graph}release {result["release"]} '
                 f'sha256:{result["sha256"]} | rows {rows}')
+
+
+class Libraries:
+    """Every library graph `prior_art.library.graph` lists, searched together (AD-036-R21, SEL-036).
+
+    Each graph is its own `Library` (its own served index, release and register), so a result, a receipt and a
+    verification each belong to ONE graph: rows from two graphs are never one receipt, because no single release holds
+    them. `search` asks every graph and returns one result per graph; a graph that cannot answer (no served index yet,
+    a missing directory) is reported beside the others with its reason and never fails the search of the rest.
+    Verification routes each receipt to the graph it names (`for_graph`), the first when it names none."""
+
+    def __init__(self, s: Settings):
+        self.s = s
+        graphs = s.library_graphs or ((s.library_graph.name, s.library_graph),)
+        # The first graph is `Library(s)`'s own default (`s.library_graph`), so it is built exactly as every caller
+        # before R21 built the arm: one argument. Tests that stand in for the arm by replacing `Library` keep working.
+        self.libs = {name: (Library(s) if i == 0 else Library(s, path, name))
+                     for i, (name, path) in enumerate(graphs)}
+        self.default = next(iter(self.libs))
+
+    def for_graph(self, name: str | None) -> Library:
+        lib = self.libs.get(name or self.default)
+        if lib is None:
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: the receipt names library graph {name!r}, which "
+                                f"prior_art.library.graph does not list ({sorted(self.libs)})")
+        return lib
+
+    def search(self, query: str, k: int | None = None) -> list[dict]:
+        """One result per graph, in the listed order: the Library result, or `{graph, query, error}`."""
+        out = []
+        for name, lib in self.libs.items():
+            try:
+                out.append(lib.search(query, k))
+            except PriorArtError as exc:
+                out.append({"graph": name, "query": query, "error": str(exc)})
+        return out
+
+    def close(self) -> None:
+        for lib in self.libs.values():
+            lib.close()
 
 
 def _sha_file(path: Path) -> str:
@@ -1317,6 +1391,8 @@ class Receipt:
     source: str              # the file it was read from (note or addendum)
     raw: str
     query: str | None = None
+    #: The library graph the receipt names (AD-036-R21); None names the first graph listed.
+    graph: str | None = None
     release: str | None = None
     sha256: str | None = None
     rows: list = field(default_factory=list)
@@ -1355,9 +1431,10 @@ def _parse_receipt(section: str, kind: str, body: str, line: int, source: str, r
     if r.kind == "library":
         m = _LIB_RE.match(body)
         if not m:
-            r.error = 'expected: query "<q>" | release <file> sha256:<64 hex> | rows <id>, ... or none'
+            r.error = ('expected: query "<q>" | [graph <name> | ]release <file> sha256:<64 hex> | rows <id>, ... '
+                       'or none')
             return r
-        r.query, r.release, r.sha256, rows = m.groups()
+        r.query, r.graph, r.release, r.sha256, rows = m.groups()
         if rows.strip() != "none":
             r.rows = [x.strip() for x in rows.split(",") if x.strip()]
             if not r.rows or any(not _ROW_RE.match(x) for x in r.rows):
@@ -1474,14 +1551,14 @@ def _rel(s: Settings, p: Path) -> str:
 
 
 def verify_note(note: Path, s: Settings, internal: Internal | None = None,
-                library: Library | None = None, include_addenda: bool = True) -> Verdict:
+                library: "Libraries | Library | None" = None, include_addenda: bool = True) -> Verdict:
     """Re-run every receipt in a note (and its addenda) and judge the section (AD-036-R1, R2)."""
     note = Path(note).resolve()
     if not note.is_file():
         raise PriorArtError(f"no such note: {note}")
     internal = internal or Internal(s)
     owned = library is None
-    library = library or Library(s)
+    library = library or Libraries(s)
     files = [note] + (addenda_of(note) if include_addenda else [])
     parsed = [parse_note(f, _rel(s, f)) for f in files]
     problems = []
@@ -1541,8 +1618,30 @@ def verify_note(note: Path, s: Settings, internal: Internal | None = None,
                    receipts=receipts)
 
 
-def _verify_library(receipts: list, s: Settings, library: Library) -> None:
-    """Each library receipt re-run against the release it NAMES (AD-036-R2, R3; ADDENDUM 06).
+def _verify_library(receipts: list, s: Settings, library) -> None:
+    """Each library receipt re-run in the GRAPH it names (AD-036-R21), against the release it names.
+
+    `library` is a `Libraries` (every listed graph; a receipt that names none goes to the first) or a single
+    `Library`-like object, which then answers every receipt, as before R21. A receipt naming a graph the list does
+    not hold is `release_unavailable`, naming the graph."""
+    if not hasattr(library, "for_graph"):
+        _verify_library_one(receipts, s, library)
+        return
+    groups: dict = {}
+    for r in receipts:
+        groups.setdefault(r.graph or library.default, []).append(r)
+    for name, rs in groups.items():
+        try:
+            lib = library.for_graph(name)
+        except PriorArtError as exc:
+            for r in rs:
+                r.status, r.detail = RELEASE_UNAVAILABLE, str(exc)
+            continue
+        _verify_library_one(rs, s, lib)
+
+
+def _verify_library_one(receipts: list, s: Settings, library: Library) -> None:
+    """Each library receipt re-run against the release it NAMES (AD-036-R2, R3; ADDENDUM 06), in one graph.
 
     A receipt naming the served release is judged on the served search, as before. Any other receipt is re-run with
     `library.search_release`, which rebuilds the named release when its export is on disk with the named digest and
@@ -1558,7 +1657,8 @@ def _verify_library(receipts: list, s: Settings, library: Library) -> None:
             r.status, r.detail = PASS, f"{len(r.rows)} row(s) returned"
 
     def logged(res: dict) -> None:
-        log_query(s, {"arm": "library", "purpose": "verify", "query": res["query"], "release": res["release"],
+        log_query(s, {"arm": "library", "purpose": "verify", "query": res["query"],
+                      **({"graph": res["graph"]} if res.get("graph") else {}), "release": res["release"],
                       "sha256": res["sha256"], "rows": len(res["rows"]), "index": res.get("index", "served"),
                       **{k: res[k] for k in ("export_path", "commit") if res.get(k)}})
 

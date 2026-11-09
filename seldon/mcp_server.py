@@ -2353,11 +2353,18 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
             out.append(f"## {a}: error\n{exc}")
             continue
         lines = [f"## {a}: {r['total_hits']} hit(s) in {r['seconds']} s"]
-        for h in r["top"]:
-            if a == "internal":
+        if a == "internal":
+            for h in r["top"]:
                 lines.append(f"- {h['root']}:{h['cite']} (lines {h['lines']}, score {h['score']})")
-            else:
-                lines.append(f"- {h['doc_id']}: {h['text'][:160]!r}")
+        else:
+            # AD-036-R21: one block per library graph, each with its own release
+            for g in r.get("graphs") or [{"graph": "library", **r}]:
+                if g.get("error"):
+                    lines.append(f"### graph {g['graph']}: unavailable: {g['error']}")
+                    continue
+                lines.append(f"### graph {g['graph']}: {g['total_hits']} row(s)")
+                for h in g["top"]:
+                    lines.append(f"- {h['doc_id']}: {h['text'][:160]!r}")
         lines.append("Receipts:")
         lines.extend(r["receipts"])
         lines.extend(_prior_art_commit_line(r))

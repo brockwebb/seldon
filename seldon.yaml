@@ -117,8 +117,14 @@ prior_art:
     # print-out and R5's top 20; verification is by membership.
     bm25: {k1: 1.2, b: 0.75}
   library:
-    # The squiddy library graph whose built index `search` serves (DN-025 R-110).
-    graph: ../squiddy/graphs/library
+    # The graphs whose built indexes `search` serves (DN-025 R-110), searched together, each receipted on its own
+    # (AD-036-R21): squiddy's library (the works cited in the operator's Claude conversations) FIRST, because a receipt
+    # naming no graph is verified in the first one listed and every receipt before R21 named none; then Seldon's
+    # bibliographic graph (SEL-036: the works, standards and software Seldon's notes and tasks cite). A graph with no
+    # served release in this checkout is reported unavailable beside the others and fails no search.
+    graph:
+      - ../squiddy/graphs/library
+      - graphs/seldon-biblio
     # Documents returned per library query; a receipt's rows must be among them. The served
     # verb's default is 10; 20 matches the internal arm's top 20.
     k: 20

@@ -608,6 +608,28 @@ artifact_types:
         category: documentation
         description: "Explicit boundaries"
 
+  ExternalReference:
+    # AD-036-R22 (SEL-036): a POINTER to one entry of another graph, never a copy of it (squiddy biblio's class of the
+    # same name, DI-046: "the pointer a citation makes outside the graph"; OD-4 section 3.3: bridges hold identifiers
+    # and mappings, no content). A governed Citation `resolves_to` the entry its citing text names, so the governed
+    # graph answers which works a ruling rests on. The entry's metadata, licence and text stay in that graph.
+    properties:
+      name:
+        required: true
+        description: "`<graph>:<entry id>`, e.g. `seldon-biblio:gotel1994traceability`; unique, the lookup key."
+      graph:
+        required: true
+        description: "The graph holding the entry, by its directory name under graphs/ (e.g. `seldon-biblio`)."
+      entry_id:
+        required: true
+        description: "The entry's manifest id in that graph."
+      identifier:
+        category: system
+        description: "The entry's persistent identifier when it has one (`doi:...`, `openalex:W...`, `arxiv:...`, a standard's number, `repo:<owner>/<name>`), copied at bridge time so a reader can follow it without the other graph; the entry stays the authority."
+      title:
+        category: system
+        description: "The entry's title at bridge time, for display only."
+
   Workflow:
     properties:
       name:
@@ -1212,6 +1234,22 @@ relationship_types:
         required: false
         description: "How many times the source text names it."
 
+  resolves_to:
+    # AD-036-R22 (SEL-036): a governed Citation and the bibliographic entry its citing text names. ADDED because no
+    # relationship fit: none has Citation as its source (`cites` and `derived_from` have it as their target), and
+    # none reaches outside this graph. One Citation may name several works (a reference list on one line), so
+    # many_to_many. Written by `seldon.core.biblio_bridge` from the seed map the resolver used, never inferred.
+    from_types: [Citation]
+    to_types: [ExternalReference]
+    cardinality: many_to_many
+    properties:
+      method:
+        required: false
+        description: "How the pair was made (`seed_map` for SEL-036's hand-made map)."
+      resolved_by:
+        required: false
+        description: "The authority that confirmed the entry (openalex, crossref, doi, semanticscholar, page), or none."
+
   # AD-033-R3: the register's relations, Kruchten's (2004) cut to the ones the probe needed.
   amends:
     from_types: [Decision]
@@ -1306,6 +1344,11 @@ state_machines:
     proposed: [verified]
     verified: [stale]
     stale: [verified]
+
+  ExternalReference:
+    # AD-036-R22: a pointer is recorded, and retired when its entry leaves the other graph.
+    recorded: [retired]
+    retired: []
 
   # AD-030. A governed document's structure is derived from a file, so its states
   # track the file rather than a review process: `admitted` is the working state,
