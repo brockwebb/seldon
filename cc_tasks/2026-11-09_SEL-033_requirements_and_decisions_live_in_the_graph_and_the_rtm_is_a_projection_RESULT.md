@@ -43,7 +43,7 @@ set. Document is out; the note, its pending record and the tests changed togethe
   and typed relations; a document is a hierarchy over objects), SysML v2 (satisfy, verify, derive), IBM DOORS (a module
   is a view, the document is generated), Gotel and Finkelstein 1994 (source traceability fails when the source is not a
   link), Cleland-Huang et al. (hand-kept trace links decay), Cog (generated regions in hand-written files). Five
-  internal and two library searches, receipts in the note. The library's one relevant row is the operator's own ANTS
+  internal and six library searches; the note carries the internal receipts and two library receipts (the other four library queries returned only model-training rows). The library's one relevant row is the operator's own ANTS
   repository (`brockwebb/ai-native-traceability-system`, the `export_rtm` the task names).
 - Rulings, register records pending (numbered at merge, AD-033-R12): **AD-013-R1** (a requirement is a graph
   artifact; `derived_from` its source, `verified_by` a test, `satisfies` from what meets it; `verified` needs a test),
