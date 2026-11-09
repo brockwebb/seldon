@@ -1,0 +1,47 @@
+{
+ "tool": "squiddy init",
+ "spec": "graph.yaml",
+ "spec_sha256": "8593298b3e7b1a84f978d0fdb5e86d9f88594461b0841e600a24612d4bfee8a7",
+ "base_schema_sha256": "53ed585f57aae21706a8295862219654991c5105f3e3b1e8736bca0ef7b07d34",
+ "defaults_sha256": "1f615958bbe20dfc49cf4dcc08cd9a7b59c4c8939e14fb7e1ea1f83e082e7bc0",
+ "emitter_template_sha256": "9b84e1388d6e6d0b2513b40f0e884991b7e4603bcd77cd1208b9fbf669c04437",
+ "graph": "seldon_biblio",
+ "store": "ledger",
+ "serve_backend": "export",
+ "schema_epoch": "0.1.0+de21b9c7ec65",
+ "generated": {
+  "schema": "de21b9c7ec65bbf79e998ec2cdc1a6a4c579ecfc8bf6e61beed99d0cb1f64c2c",
+  "config.yaml": "6e5d03620fe6e5334a60342e6f937ed4bd8bce997d1ae1742bd04243570680c1",
+  "env_example": "a244464e8908c8641aca8fd9e6bbf5f22ca4615cf14cb5958ffda7f552cf8c9d",
+  "generated_module": "82b14a6a96625537d3af51fc640029516b418c198a7618b852a1dbfab20f6e02",
+  "generated_json_schema": "4dce240ce1aba5d7234f884bed0d686815f34a76f74efe90ddd4690ade281d9e",
+  "ledger_index": "f4f32b9f0244e7c28ada6b3cc5cd0aabc12cc23bd6ba44c1ac06a1ac022cf2d1"
+ },
+ "generated_body": {
+  "schema": "f0100c6dea9f8383e52f2647492a65e90ddefd163cc0344a13736cadb26f7b84",
+  "config.yaml": "759b1f360374175247edbb72bd4e631554777a9be8016f1100ac1eac7f2da277",
+  "env_example": "7e220abebf2f1611ce2395be59ab953e22152ded922dc7cfa2518d58a484745c",
+  "generated_module": "82b14a6a96625537d3af51fc640029516b418c198a7618b852a1dbfab20f6e02"
+ },
+ "seeded": {
+  "manifest": "a30a2307666131293353013952a73fc40d46b62f5979543835f743b287862d34",
+  "emitter": "9b84e1388d6e6d0b2513b40f0e884991b7e4603bcd77cd1208b9fbf669c04437",
+  "factory_control": "8e9388369df456ea03779e1f5dbbcbf8e39beb25730cf5cb1d2bcf5e102cecc3",
+  "events": "67f5ee0d95fcbc0ac1e5857bc83b3627244845dd8a8541458916936166cb8d83"
+ },
+ "artifacts": {
+  "schema": "schema/seldon_biblio.yaml",
+  "config.yaml": "config.yaml",
+  "manifest": "corpus/manifest.yaml",
+  "env_example": ".env.example",
+  "spec": "graph.yaml",
+  "emitter": "emit.py",
+  "conformance": "conformance.yaml",
+  "factory_control": "factory/control.yaml",
+  "gitignore": ".gitignore",
+  "generated_module": "schema/generated/seldon_biblio_pydantic.py",
+  "generated_json_schema": "schema/generated/seldon_biblio.schema.json",
+  "ledger_index": "ledger/index.json",
+  "events": "ledger/open.jsonl"
+ }
+}

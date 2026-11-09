@@ -1,0 +1,7 @@
+# seldon_biblio/corpus/manifest.yaml: the inventory control system for this graph (R-08).
+# One entry per document ever considered. Nothing enters the graph except through it,
+# and manifest-vs-graph disagreement is a gate failure (CLAUDE.md).
+# Written empty by `squiddy init`; the catalog stage appends to it.
+schema:
+  profile: squiddy-manifest
+documents: []

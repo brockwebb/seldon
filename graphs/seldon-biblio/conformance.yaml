@@ -1,0 +1,70 @@
+# conformance.yaml: this graph's configuration of the kit's conformance gates (squiddy/conformance.py;
+# X-001, DN-018 R-83). SEEDED by `squiddy init`, once, and then the graph's own: edit a block when the
+# graph gains what the gate checks (a resolver, an extraction daemon, raters). A block marked
+# `not_applicable` says why; a block that is absent fails its gate, so no gate is silently skipped.
+
+# item 1: resolution records (corpus/resolved/*.json, written by squiddy.acquire) against the manifest.
+resolution_fields:
+  record_to_manifest:
+    resolved_title: title_authority
+  record_bookkeeping:
+    id: the manifest id the record is for
+    kind: the entry kind, already on the manifest
+    halts: why an acquisition stopped; the acquisition report, not an entry fact
+    decisions: the resolver's per-source decisions (DI-168's trail)
+    retrieved_date: projected through fields.retrieved_date
+    resolved_by: which rule keyed it (DI-168); recorded in fields.verification_method
+    title_similarity: the title gate's measurement, recorded in fields.verification_method
+    title_gate_applies: whether the title gate ran; recorded in fields.verification_method
+    text: the acquired text's own record, projected through fields.sha256 and local_path
+    http: the transport trail of the fetches
+    resolved: each source's raw answer; the evidence the fields were elected from
+  not_emitted: {}
+
+# item 2: declare each edge class the schema says is one per pair (see graphs/library/conformance.yaml).
+pair_edges: []
+
+# item 3: records from the extraction daemon; declare the block when the graph runs one.
+records_ingested:
+  not_applicable: true
+  why: "no extraction daemon in this graph yet"
+
+# item 5
+control_records:
+  since_evidence_dir: "20260927"
+  glob: "*/**/*control*.json"
+
+# item 6: the daemon's gate blocks; declare when the graph has extract/control.yaml.
+bars:
+  not_applicable: true
+  why: "no extraction daemon control file yet"
+
+# item 7
+agreement:
+  since_evidence_dir: "20260921"
+
+# item 9
+raters:
+  rows: rater_rows.jsonl
+  items: control_items.jsonl
+  plant_kind: plant
+  plant_field: decontextualized
+  plant_caught_value: false
+  plant_floor: 0.9
+  void_record: VOID.json
+
+# item 14
+control_read_times:
+  not_applicable: true
+  why: "no extraction daemon control file yet"
+
+# item 19 (verb_reads_match_schema; X-001 ADDENDUM 07, DN-024 R-108): every hop a served verb makes
+# (squiddy.serve.VERB_READS) against this graph's schema headers and release. A MISDIRECTED read (the
+# schema or the data puts the hop's anchor on the other end) fails in every mode. An UNBUILT layer (the
+# verb's edge is not in this schema, or the release holds none of it yet) is reported, not failed, while
+# `unbuilt_layers: report`: a new graph releases before its layers exist. Switch to `error` once they do,
+# and list here, one site and one reason each, the layers this graph will never have (see
+# graphs/library/conformance.yaml, graphs/biblio/conformance.yaml).
+verb_edge_reads:
+  unbuilt_layers: report
+  allow: []

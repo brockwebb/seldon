@@ -1,0 +1,321 @@
+# squiddy-generated: LinkML schema | spec sha256 8593298b3e7b1a84f978d0fdb5e86d9f88594461b0841e600a24612d4bfee8a7
+# Do not edit. Edit the spec and re-run `squiddy init`; `squiddy init --check` reports drift.
+id: https://github.com/brockwebb/squiddy/graphs/seldon_biblio/schema
+name: seldon_biblio
+title: Seldon's bibliographic graph
+description: >-
+  The works, standards and software Seldon's design notes and tasks rest on, each resolved to its
+  identifier (DOI, OpenAlex id, ISBN, standard number, or repository and release) with its
+  citation metadata, its licence, the governed notes and tasks that cite it, and its text where
+  the licence allows; a source no host would serve to a script is recorded with its access posture
+  and marked for manual acquisition.
+version: 0.1.0
+license: MIT
+
+prefixes:
+  seldonbib: https://github.com/brockwebb/squiddy/graphs/seldon_biblio/
+  squiddy: https://github.com/brockwebb/squiddy/schema/core/
+  linkml: https://w3id.org/linkml/
+  cito: http://purl.org/spar/cito/
+  fabio: http://purl.org/spar/fabio/
+  prov: http://www.w3.org/ns/prov#
+default_prefix: seldonbib
+default_range: string
+
+imports:
+  - linkml:types
+  # `init` rewrites this line for the graph it is writing: relative when the graph lives
+  # inside the kit checkout (what graphs/biblio and graphs/library carry), absolute
+  # otherwise, because a checkout-relative import cannot resolve from a graph that lives
+  # anywhere else (K-001 Part B finding).
+  - /Users/brock/GitHub/squiddy/squiddy/schema/core
+
+enums:
+  CitoIntent:
+    description: >-
+      CiTO citation intents, the subset a bibliographic evidence graph needs (Peroni and Shotton
+      2012, peroni2012fabio). The default is the weakest claim.
+    permissible_values:
+      citesForInformation:
+        meaning: cito:citesForInformation
+      citesAsAuthority:
+        meaning: cito:citesAsAuthority
+      citesAsEvidence:
+        meaning: cito:citesAsEvidence
+      usesMethodIn:
+        meaning: cito:usesMethodIn
+      supports:
+        meaning: cito:supports
+      disagreesWith:
+        meaning: cito:disagreesWith
+      extends:
+        meaning: cito:extends
+        description: Fillable by extraction (S-007); no deterministic source sets it.
+
+  DecisionDisposition:
+    description: >-
+      What a repository did with a decision it inherited (S-008 Part B). Read from the register's
+      own tag column; absent where the register states none, and that absence is the signal that
+      the decision is this repository's own rather than one it took over.
+    permissible_values:
+      inherit: {description: the kit implements the decision as stated}
+      adapt: {description: "the decision is right and its store-specific expression moves into configuration"}
+      does_not_apply: {description: "it belongs to a graph or to Seldon and the kit must not carry it"}
+
+  DecisionKind:
+    permissible_values:
+      R:
+        description: a numbered ruling in one of this repository's design notes (DN-001 to DN-003)
+      T:
+        description: a TEVV requirement in DN-003 R-17
+      AD:
+        description: an architectural decision in Seldon's own register
+      DI:
+        description: a row of docs/DECISIONS_INHERITED.md
+      OD:
+        description: an open decision in docs/KIT_BOUNDARY.md or its memo
+      CK:
+        description: a candidate verdict in docs/CANDIDATE_KITS.md
+      CLAUDE:
+        description: an invariant stated in CLAUDE.md
+      TASK:
+        description: a task file's own standards list
+
+  ExpressionRelation:
+    permissible_values:
+      is_preprint_of: {}
+      is_version_of: {}
+
+  DocKind:
+    description: >-
+      The sort of record an internal document is (S-008 Part A, fixed by the task). Decided by the
+      path and the file name under the ordered rules in `engine.repodocs.doc_kind_rules`.
+    permissible_values:
+      decision_record: {}
+      handoff: {}
+      lab_note: {}
+      delivery_report: {}
+      design_note: {}
+      cc_task: {}
+      other: {}
+
+slots:
+  text:
+    description: The located text, verbatim from the parsed intermediate.
+
+classes:
+  # ---- node classes ----
+  Work:
+    is_a: Node
+    description: A published or preprinted scholarly work; identity is DOI plus OpenAlex work id.
+    slots: [title, source_url, cited_in, local_path, sha256, disposition]
+    slot_usage:
+      title: {required: true}
+      cited_in: {multivalued: true}
+    attributes:
+      doi:
+      openalex_id:
+      arxiv_id:
+      year:
+        range: integer
+      publication_date:
+      venue:
+      work_type:
+      oa_status:
+      oa_url:
+      licence:
+      abstract:
+      authors_raw:
+        multivalued: true
+        description: The author strings as the resolver returned them, kept for the pilot's gold.
+      references_total:
+        range: integer
+        description: References in the resolver's reference list (Crossref).
+      references_keyed:
+        range: integer
+        description: >-
+          Of those, references that carry a DOI and so became a Cites edge. The difference is the
+          logged abstention for references the graph cannot key (DI-046).
+      # ---- S-008 Part A: a repository's own document, admitted as a Work of this work_type ----
+      doc_kind:
+        range: DocKind
+        description: >-
+          What sort of record this is, for an internal document (S-008 Part A). Absent on a
+          published work, and that absence is the signal that it came from a publisher.
+      repo:
+        description: The repository the document lives in, as the catalog's source names it.
+      commit:
+        description: That repository's HEAD when the document was cataloged.
+      file_type:
+        description: The file extension, without the dot.
+      first_heading:
+        description: The document's first heading, which is also its title when it has one.
+      doc_date:
+        description: >-
+          The date in the file name or the YAML frontmatter, never the file's mtime: a date
+          invented from the disk orders the record by when it was last touched.
+      headings:
+        multivalued: true
+        description: >-
+          Every heading, in reading order. This is what the mention layer scans for an internal
+          document (Part E). The body prose is never stored: the graph holds the path, the hashes
+          and the headings, and the file is the text.
+
+  Person:
+    is_a: Node
+    description: >-
+      A person named as an author. The key is local and readable (OD-4 §3.1); ORCID is a declared
+      authority id carried as a property and used as the exactMatch key.
+    attributes:
+      name:
+        required: true
+      name_normalized:
+      orcid:
+      openalex_author_id:
+
+  Organization:
+    is_a: Node
+    description: An institution an author is affiliated with; ROR is the declared authority id.
+    attributes:
+      name:
+        required: true
+      ror:
+      openalex_institution_id:
+      country_code:
+
+  Standard:
+    is_a: Node
+    description: >-
+      A specification with no DOI; identity is its canonical URL plus its version date. A
+      specification that also publishes a vocabulary file carries what was imported from it
+      (S-008 Part D): the prefix, the namespace IRI, the hash of the file that was read and how
+      many terms it yielded, so a vocabulary that changes under the graph is a changed hash and
+      not a silent drift.
+    slots: [title, source_url, cited_in, verification_status, disposition, local_path, sha256]
+    slot_usage:
+      title: {required: true}
+      cited_in: {multivalued: true}
+    attributes:
+      version:
+      version_date:
+      publisher:
+      vocab_prefix:
+      vocab_iri:
+      vocab_term_count:
+        range: integer
+      vocab_retrieved_date:
+
+  Software:
+    is_a: Node
+    description: A named implementation cited as prior art; identity is its repository plus a release.
+    slots: [title, source_url, cited_in, verification_status, disposition]
+    slot_usage:
+      title: {required: true}
+      cited_in: {multivalued: true}
+    attributes:
+      repository:
+      licence:
+      version:
+      version_date:
+      last_push:
+
+  Decision:
+    is_a: Node
+    description: >-
+      A recorded decision of this repository (a DI row, an OD memo, a candidate verdict, a numbered
+      ruling in a design note, a TEVV requirement, a Seldon AD) as a node, so the graph can answer
+      "what does this decision cite" and "what did we decide about this". S-008 Part B fills the
+      register, the statement and the disposition on the nodes the `cited_in` layer had already
+      minted; nothing is re-minted (the task's rule for the OD-4 nodes).
+    slots: [title]
+    attributes:
+      decision_kind:
+        range: DecisionKind
+      source_document:
+      register:
+        deprecated: >-
+          Renamed to `decision_register` on 2026-09-13 (S-008 Part B) and DECLARED FOR REPLAY ONLY.
+          No live node carries it: the 148 nodes that did were retracted and asserted again under
+          the new name in one run. The slot stays because the projection validates EVERY event in
+          the ledger against the current classes, so a slot a past event used can never be removed
+          from the schema, only retired. That is what an append-only record costs and it is cheaper
+          than the alternative (DN-003 R-19; DI-013: append, never rewrite).
+        description: Retired. Use `decision_register`.
+      decision_register:
+        description: >-
+          The register the decision was read from (DECISIONS_INHERITED, DN-001, SELDON_AD). Named
+          `decision_register` and not `register`, which shadows a base-class attribute of the
+          generated Pydantic class and makes the framework warn on every run; the projection's
+          reserved-name rule refuses `label` and `key` for the harder version of the same problem.
+      disposition:
+        range: DecisionDisposition
+      statement:
+        description: >-
+          The decision in its own words: the register row's statement column, or the first
+          paragraph under a numbered ruling's heading. What the mention layer scans (Part E).
+
+  ExternalReference:
+    is_a: Node
+    description: >-
+      A citation target outside the graph, keyed by DOI or URL (`id` is `doi:<doi>`), so a pointer
+      outside is a node with a key and never a bare string (fss-policy-kg practice, DI-046). No
+      slot may be named `key` or `label`: the projection reserves both (squiddy.project).
+    attributes:
+      ref_kind:
+      doi:
+
+  # ---- edge classes ----
+  AuthoredBy:
+    is_a: Edge
+    description: (Work)-[:AUTHORED_BY]->(Person), from the resolver's authorship record.
+    attributes:
+      author_position:
+        range: integer
+      raw_name:
+
+  AffiliatedWith:
+    is_a: Edge
+    description: (Person)-[:AFFILIATED_WITH]->(Organization), as declared on a work's authorship.
+    attributes:
+      as_of_work:
+
+  SupportsDecision:
+    is_a: Edge
+    description: (Work | Standard | Software)-[:SUPPORTS_DECISION]->(Decision), from `cited_in`.
+    attributes:
+      cited_in_text:
+
+  Cites:
+    is_a: Edge
+    description: >-
+      (Work)-[:CITES]->(Work | ExternalReference), from a public reference list; typed with a CiTO
+      intent, default citesForInformation.
+    attributes:
+      cito_intent:
+        range: CitoIntent
+        ifabsent: string(citesForInformation)
+      raw_reference:
+
+  ExpressionOf:
+    is_a: Edge
+    description: >-
+      (Work | ExternalReference)-[:EXPRESSION_OF]->(Work | ExternalReference): a preprint is an
+      expression of the version of record (OD-4 A5; FRBR, DI-152), from Crossref relations and
+      DataCite related identifiers. An end outside the graph is an ExternalReference keyed by DOI.
+    attributes:
+      relation:
+        range: ExpressionRelation
+
+  # ---- the container the export validates ----
+  Seldon_biblioGraph:
+    tree_root: true
+    description: The graph as two lists, the shape of the node-link export.
+    attributes:
+      nodes:
+        range: Node
+        multivalued: true
+        inlined_as_list: true
+      edges:
+        range: Edge
+        multivalued: true
+        inlined_as_list: true

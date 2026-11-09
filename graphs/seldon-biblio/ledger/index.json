@@ -1,0 +1,8 @@
+{
+ "layout": "squiddy-segmented-ledger/1",
+ "graph": "seldon_biblio",
+ "schema_file": "../schema/seldon_biblio.yaml",
+ "segment_max_bytes": 40000000,
+ "open": "open.jsonl",
+ "segments": []
+}

@@ -1,0 +1,51 @@
+# >>> squiddy-generated graph ignore rules (DN-056 R-250) >>>
+# The kit's ignore rules for one graph (SQ-111, DN-056 R-250): the kit repository's `graphs/*/` block, scoped to this
+# directory, so the kit and every consumer agree. TRACKED: the manifest, candidates, allow-list and abstentions, the
+# ledger, the spec and configs, the factory's controls, incidents, questions and intake lists, the export index. NOT
+# TRACKED: bytes and regenerable state. A pattern that may name a symlink has NO trailing slash: `texts/` matches only a
+# directory, so a link named `texts` was committed with its absolute target (SQ-109 row 5).
+corpus/*
+!corpus/manifest.yaml
+!corpus/candidates/
+!corpus/manifest_property_allowlist.yaml
+!corpus/identifier_abstentions.jsonl
+ledger/*.bak-*
+ledger/snapshots
+exports/*.json
+exports/*.jsonl
+evidence/*/*.rows.jsonl
+evidence/*/wordlists
+work
+work_*.log
+texts
+pilot/work
+extract/records
+extract/raw
+extract/meter.jsonl
+extract/daemon.log
+extract/daemon.pid
+extract/control.json
+extract/state.json
+extract/daemon.lock
+extract/ingested.json
+extract/pilot_gate.json
+extract/ingest_gate.json
+extract/checkpoints
+extract/protocol_gate
+extract/protocol_gate_*.json
+factory/*
+!factory/control.yaml
+!factory/incidents/
+!factory/questions_operator.md
+!factory/intake/
+STOP
+# A hand-dropped file's bytes never enter a repository (R-212's inbox; DN-034 R-158: a held text leaves the machine
+# only under a licence the graph allows). The directory is kept by its `.gitkeep`. A file a worktree's removal deletes
+# is now a named refusal before the next write (R-249); an inbox declared under the archive root (`dir: archive:inbox`)
+# survives every checkout.
+intake/inbox/*
+!intake/inbox/.gitkeep
+.env
+.env.*
+!.env.example
+# <<< squiddy-generated graph ignore rules <<<

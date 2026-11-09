@@ -1,0 +1,293 @@
+# squiddy-generated: graph config | spec sha256 8593298b3e7b1a84f978d0fdb5e86d9f88594461b0841e600a24612d4bfee8a7
+# Do not edit. Edit the spec and re-run `squiddy init`; `squiddy init --check` reports drift.
+#
+# Rendered by `squiddy init` from graph.yaml. Every value here is either a choice in
+# that spec or a default in squiddy/init_defaults.yaml, which carries the comment that
+# records where each number came from. `engine.gates` is absent on purpose: Part A of
+# K-001 measured it as the one config block no kit module reads.
+#
+# TWO TOP-LEVEL BLOCKS (S-001 finding 3): `engine:` is what the kit reads and every key
+# in it is a kit contract; `domain:` is this graph's vocabulary and the kit reads nothing
+# from it except by a key the graph's own emitter names. `identity:` is required of every
+# graph by docs/OD-4_identity_spine.md section 5.
+
+engine:
+  ledger:
+    segment_max_bytes: 40000000
+  paths:
+    manifest: corpus/manifest.yaml
+    events: ledger/open.jsonl
+    corpus_dir: corpus
+    parsed_dir: corpus/parsed
+    resolved_dir: corpus/resolved
+    exports_dir: exports
+    evidence_dir: evidence
+    acquisition_state: corpus/acquisition_state.json
+    allowlist: corpus/manifest_property_allowlist.yaml
+  parse:
+    table_linearisation: rows
+    markdown_suffixes:
+    - .md
+    - .markdown
+    - .mdown
+    - .txt
+  manifest:
+    profile: squiddy-manifest
+    stages:
+    - cataloged
+    - acquired
+    - admitting
+    - in_graph
+    - assess_queue
+    dispositions:
+    - active
+    - metadata_only
+    - reference
+    - excluded:out_of_scope
+    - excluded:deferred
+    - excluded:document_removed
+    in_graph_stage: in_graph
+    admitting_stage: admitting
+    retire_removed_max_fraction: 0.1
+  acquire:
+    timeout_seconds: 60
+    max_retries: 4
+    retry_backoff_seconds: 3
+    inter_request_delay_seconds: 0.4
+    min_valid_bytes: 10000
+    min_text_chars: 1200
+    max_bytes: 104857600
+    host_delay_seconds:
+      export.arxiv.org: 3.0
+      arxiv.org: 3.0
+    title_match_floor: 0.6
+    resolvers:
+      work:
+      - crossref
+      - openalex
+      standard:
+      - url
+      software:
+      - github
+    user_agent: squiddy/0.1 (https://github.com/brockwebb/squiddy; graph seldon_biblio)
+  assess:
+    criterion: cited_by_recorded_decision
+    cited_in_field: cited_in
+    prose_extensions:
+    - md
+    - txt
+    min_local_text_chars: 40
+  write:
+    schema_version: '1'
+    shared_classes:
+    - Person
+    - Organization
+    - Decision
+    - ExternalReference
+    primary_class_by_kind:
+      work: Work
+      standard: Standard
+      software: Software
+    identifier_keys: []
+  export:
+    kgx:
+      knowledge_level: knowledge_assertion
+      agent_type: automated_agent
+      category_map:
+        Work: biolink:Publication
+        Person: biolink:Person
+        Organization: biolink:Organization
+        Standard: biolink:InformationContentEntity
+        Software: biolink:InformationContentEntity
+        Decision: biolink:InformationContentEntity
+        ExternalReference: biolink:InformationContentEntity
+      predicate_map:
+        AuthoredBy: biolink:author
+        Cites: biolink:cites
+      primary_knowledge_source: infores:squiddy-seldon_biblio
+    artifact_stem: seldon_biblio_graph
+  gates:
+    schema_closed: true
+    dangling:
+      legs:
+      - edge_endpoints
+      - superseded_by
+  preview:
+    pause: false
+  serve:
+    registry: ../registry
+    currency_edges:
+    - ExpressionOf
+    text_fields:
+      Work:
+      - title
+      - abstract
+      - venue
+      Person:
+      - name
+      Organization:
+      - name
+      Standard:
+      - title
+      Software:
+      - title
+      Decision:
+      - title
+    resemblance:
+      shingle_words: 3
+      collapse_at: 0.9
+    backend: export
+  extract:
+    enabled: false
+    client: claude_cli_max_oauth
+    roles:
+      extractor: extractor
+      rater: rater
+      adjudicator: adjudicator
+    concurrency: 8
+    max_concurrency: 16
+    min_concurrency: 1
+    width:
+      step: 4
+      min_gain: 0.1
+      sample_calls: 64
+    bulk:
+      release_every: 10
+      progress_seconds: 60
+    rate:
+      release_every: 10
+      progress_seconds: 60
+      pilot_calls: 20
+    rate_limit_backoff_seconds: 60
+    retries: 2
+    retry_backoff_seconds: 5
+    timeout_seconds: 300
+    max_turns: 4
+    cost_ledger: cost_ledger.jsonl
+    segments:
+      max_chars: 5000
+      min_chars:
+        text: 150
+        table: 150
+        list: 0
+    pilot:
+      grounding_rate_min: 0.98
+      protocol_failure_rate_max: 0.02
+      rater_agreement_min: 0.85
+      rater_alpha: 0.1
+      rater_beta: 0.1
+      piloted_binaries: extract/piloted_binaries.jsonl
+      equivalence_tolerance:
+        per_unit:
+          claims_returned:
+            abs: 2
+            rel: 0.005
+          ungrounded:
+            abs: 3
+            rel: 0.005
+          protocol_failures:
+            abs: 3
+            rel: 0.005
+        total:
+          grounding_rate: 0.005
+          protocol_failure_rate: 0.005
+      equivalence_progress_seconds: 60
+  lessons:
+    id_prefix: lesson
+    doc_kind: lab_note
+    filename_pattern: ^\d{4}-\d{2}-\d{2}_[A-Za-z0-9][A-Za-z0-9_-]*\.md$
+    required:
+    - source_conversation
+    - project
+    - kind
+    - stated_by
+    kinds:
+    - decision
+    - defect
+    - result
+    - citation
+    stated_by:
+    - operator
+    - assistant
+    dir: lessons
+    cataloged_by: squiddy init (seldon_biblio)
+  graph:
+    name: seldon_biblio
+    prefix: seldonbib
+    schema: schema/seldon_biblio.yaml
+    generated_module: schema/generated/seldon_biblio_pydantic.py
+    generated_json_schema: schema/generated/seldon_biblio.schema.json
+    emitter: emit.py
+  projection:
+    backends:
+    - name: networkx
+      enabled: true
+  policy:
+    provenance: own_record_or_public
+    allowed_provenance_flags:
+    - public
+    - public_metadata_only
+    - local_authored
+  intake:
+  - source: candidates
+    files:
+    - corpus/candidates/*.yaml
+    content_fields:
+    - sha256
+    - access
+    - acquisition
+    - doi
+    - openalex_id
+  - source: inbox
+    dir: intake/inbox
+  visibility: public
+  archive:
+    root: ~/kg-archive/seldon-biblio
+  emit:
+  - metadata_document:
+      fields:
+        common:
+        - id
+        - kind
+        - title
+        - source_url
+        - disposition
+        - cited_in
+        work:
+        - title_authority
+        - authors
+        - year
+        - venue
+        - publisher
+        - doi
+        - openalex_id
+        - isbn
+        - arxiv_id
+        - edition
+        - standard_number
+        - repository
+        - version
+        - licence
+        - access
+        - acquisition
+        - entry_kind
+        - abstract
+        - resolved_by
+        - raw_sha256
+      citation_lines: false
+identity:
+  prefix: seldonbib
+  registers_slice: true
+  consumes_bridges: true
+  currency_sweep: weekly
+domain:
+  decision_id_patterns:
+  - pattern: \bAD-\d{3}-R\d+\b
+    kind: R
+    source_document: docs/design/
+  - pattern: \bAD-\d{3}\b(?!-R)
+    kind: AD
+    source_document: docs/design/
+  - pattern: \bSEL-\d{3}\b
+    kind: TASK
+    source_document: cc_tasks/

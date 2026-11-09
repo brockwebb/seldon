@@ -1,0 +1,134 @@
+# factory/control.yaml: the factory's control plane (F-001 B.1; DN-026 R-117), seeded by `squiddy init`.
+#
+# RE-READ BEFORE EVERY ITEM OF EVERY UNIT. Every key is REQUIRED: an absent key is FATAL before the
+# first item, because each one is a number or a switch the factory would otherwise have to invent
+# (the extraction daemon's rule, HV-008, one level up). The graph owns this file after `init`.
+#
+# THE NUMBERS ARE THE KIT'S ONE MEASURED REFERENCE: graphs/library's, as F-001 wrote them on 2026-09-29
+# from the extraction daemon's control file, the acquire stage's config and L-001's admin layer. Each
+# names its source. A new graph keeps them until its own pilot measures its own (constitution 15.4).
+# `blocks.extract` names the extraction daemon's control file, where X-001 item 18's ceiling and
+# override live; the factory reads it and never writes it.
+
+valves:                              # open | closed. A closed valve is a recorded skip, and so is every
+                                     # node that requires its output (Snakemake's data-dependent checkpoint).
+  extract: closed                    # DN-025 R-112: closed by default. It opens only when this is open AND
+                                     # `--extract` is passed AND item 18 admits it; Q005_demand_gate_T_survives
+                                     # is 0 on library (Q-005, 2026-09-29), so item 18 refuses past the pilot there.
+  admin: open                        # L-001's OpenAlex layer: zero model calls, free HTTP under its own bounds
+  index: open                        # S-016's index unit operation (DN-025 R-110), resumable per chunk
+  concepts: closed                   # M-002 (DN-030 R-138): the concept layer (vocabularies from the held bytes,
+                                     # HV-006's mention scan); zero calls, CPU only. Closed on a served graph: its
+                                     # layer is built; a rebuild opens it
+  test.generate: closed              # a model call; a graph opens it when it declares a `test:` block
+  test.judge: closed                 # the judge is a paid model call; opened by the operator for a round
+  publish: closed                    # touchpoint 2 (DN-026 R-121): the publication decision is the operator's
+  preview.pause: closed              # closed in `squiddy build` (R-121); the interactive pause is `squiddy admit`'s
+  maintenance.admit_one: closed      # R-115's maintenance units; each is its own task under R-105
+  maintenance.currency: closed
+  maintenance.supersede: closed
+  maintenance.reextract: closed
+  maintenance.refute: closed
+  maintenance.admin: closed          # M-06 (M-002, DN-030 R-138): the administrative layer of Works that lack it
+  maintenance.repair: closed         # M-07 (M-002, DN-030 R-140): the currency repair unit
+  maintenance.authority: closed      # M-08 (M-002, DN-030 R-139): an identifier-cataloged title bound to its agency
+  maintenance.texts: closed          # M-09 (ACQ-001, DN-032 R-148): the texts an admit expected and the graph lacks
+  rate: closed                       # F-31 (SQ-049R, DN-050 R-231 (a)): every claim of the served release rated under
+                                     # the declared rubric; paid model calls (rater, adjudicator), opened by the operator
+
+blocks:
+  extract: extract/control.yaml      # the extract node's block, relative to the graph root
+
+buckets:
+  model:
+    tokens_per_hour: 13000000        # extract/control.yaml rate.tokens_per_hour (operator, 2026-09-25 ~21:05Z)
+    ceiling_tokens: 1000000          # judge_run.yaml rounds.q005.tokens_ceiling: the last paid round's bound
+    chars_per_token: 4               # extract/control.yaml estimate.chars_per_token: the bucket's pre-call estimate
+    rate_limit_halving_hours: 1.0    # extract/control.yaml retry.rate_limit_halving_hours
+  http:
+    # X-002 (DN-031 R-142): `default` PACES a host with no entry of its own; it OPENS none. The allowlisting forwarder
+    # a node with `http` buckets runs behind passes only the hosts named here, and refuses and logs every other
+    # (factory/egress.jsonl). Name each host the graph's resolvers, currency sweep and repair unit ask.
+    default:                         # a host with no entry of its own gets its own bucket at these numbers
+      requests_per_second: 2.5       # 1 / engine.acquire.inter_request_delay_seconds (0.4)
+      ceiling_requests: 5000         # engine.admin_layer.requests_max, the bound L-001 ran under; HV-001's
+                                     # harvest resumed in 489 requests over 1,424 entries (acquire.json)
+      rate_limit_halving_hours: 0.0125   # 45 s: engine.acquire's own backoff span, 3 s doubled over 4 retries
+    api.openalex.org:
+      requests_per_second: 5         # 1 / engine.admin_layer.min_interval_seconds (0.2)
+      ceiling_requests: 5000         # engine.admin_layer.requests_max
+      rate_limit_halving_hours: 0.0125   # 45 s: engine.admin_layer retry_backoff_seconds 3 doubled over 4 retries
+    export.arxiv.org:
+      requests_per_second: 0.3333    # 1 / engine.acquire.host_delay_seconds (3.0)
+      ceiling_requests: 5000         # the default's bound
+      rate_limit_halving_hours: 0.0125   # the default's window (45 s)
+    arxiv.org:
+      requests_per_second: 0.3333    # 1 / engine.acquire.host_delay_seconds (3.0)
+      ceiling_requests: 5000         # the default's bound
+      rate_limit_halving_hours: 0.0125   # the default's window (45 s)
+    # SEL-036: the rest of the task's Network allowlist (its header), each at the default's numbers. NOT named, so the
+    # forwarder refuses and logs them: api.github.com (the software resolver's REST host) and api.datacite.org (an
+    # arXiv DOI's registration agency). Neither is on SEL-036's Network line; the catalog carries what github.com's
+    # own pages and arXiv's export API state for those entries (scripts/sel036/resolve.py).
+    api.crossref.org: {requests_per_second: 2.5, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    doi.org: {requests_per_second: 2.5, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    api.semanticscholar.org: {requests_per_second: 0.3333, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    github.com: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    raw.githubusercontent.com: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    pypi.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    doorstop-dev.github.io: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    strictdoc.readthedocs.io: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    sphinx-needs.readthedocs.io: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    cog.readthedocs.io: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    nedbatchelder.com: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    www.incose.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    www.omg.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    www.iso.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    standards.ieee.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    ieeexplore.ieee.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    dl.acm.org: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    link.springer.com: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    danieleades.github.io: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+    argondigital.com: {requests_per_second: 1.0, ceiling_requests: 5000, rate_limit_halving_hours: 0.0125}
+  cpu:
+    ceiling_hours: 18                # extract/control.yaml index.dense.wall_seconds_max (64,800 s)
+
+in_flight:                           # items in flight per looping unit
+  acquire: 1                         # tools/acquire_batch ran one entry at a time over one polite client
+  admin: 1                           # openalex_admin runs one Work at a time (min_interval_seconds)
+  parse: 1                           # index.build_corpus_rows is one sequential pass
+  questions: 1                       # one generation call
+  test: 1                            # the judge runner: "One call is in flight at a time" (Q-003 ADDENDUM 07)
+  routes: 1                          # ACQ-001 F-19: one entry's routes at a time over one polite client (acquire's rule)
+  seeds: 1                           # SEED-001 F-20: one seed's MeSH lookup at a time over one polite client
+  seed_select: 1                     # SEED-001 F-21: one selection call at a time (the question generator's rule)
+  seed_search: 1                     # SEED-001 F-22: one descriptor's E-utilities search at a time (NCBI's keyless rate)
+  seed_propose: 1                    # SQ-001 F-23: one label-proposal call at a time (the selection's rule, R-160)
+  seed_relookup: 1                   # SQ-001 F-24: one seed's proposed labels looked up at a time (F-20's rule)
+  seed_reselect: 1                   # SQ-001 F-25: one reselection call at a time (F-21's rule)
+  seed_context: 1                    # SQ-001 F-26: one context phrase resolved at a time (F-20's rule)
+  shelf_screen: 1                    # SQ-001 F-27: one file's screen call at a time (the question generator's rule)
+  headings: 1                        # SQ-005 F-28: one Work's PubMed records at a time (NCBI's keyless rate)
+
+progress:
+  every_seconds: 60                  # constitution section 15.3: at least every 60 seconds
+  every_units: 25                    # tools/acquire_batch --progress-every default
+  eta_window: 10                     # extract/control.yaml estimate.correction_window: the rate over the last N
+
+pilot:
+  units: 20                          # constitution section 15.4's default; the daemon's gate.pilot_papers
+
+retry:
+  attempts: 3                        # extract/control.yaml retry.attempts; engine.admin_layer.max_attempts_per_unit
+  backoff_seconds: 30                # extract/control.yaml retry.backoff_seconds
+
+# A graph that runs the downstream test declares a `test:` block with every key of squiddy.downstream.TEST_KEYS
+# (the arms it compares are its own to name, so the template declares none). Among them, from DN-028 R-131:
+#   from_log_share: 0.5              # at maintenance, half the question set is drawn from the query log
+
+serve:
+  log_queries: true                  # DN-028 R-131: the served surface logs every query it answers to
+                                     # factory/queries.jsonl (local, gitignored); the maintenance test draws from it
+
+pause: false
+pause_reason: null

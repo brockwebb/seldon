@@ -1,0 +1,78 @@
+# graphs/seldon-biblio/graph.yaml: THE ONE FILE (squiddy K-001) for Seldon's bibliographic graph.
+#
+# SEL-036 Part A (cc_tasks/2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_
+# with_its_metadata_and_text.md). Modelled on ../../../squiddy/graphs/biblio/graph.yaml, the kit's first consumer and
+# the same question one repository over ("which works, standards and software a decision rests on"): its node
+# classes (Work, Standard, Software, Person, Organization, Decision, ExternalReference) and the edges the seeded
+# emitter writes between them. Not taken from biblio: its claim, concept and vocabulary layers (Claim, Ruling,
+# Concept, Atom, Mapping), because extraction stays closed here until a task opens it with a downstream test (squiddy
+# CONOPS R-106), and its hand-made config (this graph is rendered by `squiddy init`). The emit block is
+# ../../../factory/graphs/factory-kg/graph.yaml's (FAC-01, the same job for the factory's notes), widened by the
+# bibliographic fields a prior-art search must find a metadata-only standard by.
+#
+# The scope wording is the task file's, written by the coordinator for the operator (squiddy DN-028 R-129).
+spec_version: 1
+name: seldon_biblio
+prefix: seldonbib
+title: Seldon's bibliographic graph
+description: >-
+  The works, standards and software Seldon's design notes and tasks rest on, each resolved to its identifier
+  (DOI, OpenAlex id, ISBN, standard number, or repository and release) with its citation metadata, its licence, the
+  governed notes and tasks that cite it, and its text where the licence allows; a source no host would serve to a
+  script is recorded with its access posture and marked for manual acquisition.
+scope:
+  topic: >-
+    the works, standards and software Seldon's design notes and tasks rest on, each resolved to its identifier, so a
+    ruling's prior art is a link and not a name
+version: 0.1.0
+license: MIT
+store: ledger
+# The task's policy (SEL-036 Part A): an entry is either this repository's own record or public. A paywalled
+# standard is a metadata-only entry (`access: purchase`), never declined.
+policy: own_record_or_public
+visibility: public
+serve:
+  backend: export
+# SQ-111 (squiddy DN-056 R-246, R-247): the held bytes live outside every checkout. A dispatched task runs in a git
+# worktree whose gitignored directories are discarded with it (factory FAC-01 RESULT, "After the merge"), and git is
+# not a file archive (the operator's standing rule). `~` is expanded where it is read, so the spec names no machine.
+# Not under ~/Documents: squiddy DN-056 section 0 measured 97 percent of the files there evicted by iCloud.
+archive:
+  root: ~/kg-archive/seldon-biblio
+intake:
+  # SEL-036 Part B: the catalog, generated from the resolution checkpoint by scripts/sel036/build_candidates.py.
+  # content_fields: a unit whose resolution or held bytes moved is re-admitted as a revision (squiddy SQ-023, R-213).
+  - {source: candidates, files: ["corpus/candidates/*.yaml"], content_fields: [sha256, access, acquisition, doi, openalex_id]}
+  # squiddy DN-049 R-212: the operator's hand drop. A file the Desktop thread fetches through the operator's browser
+  # lands here and is a `manual` candidate whose provenance stub is filled before it is admitted.
+  - {source: inbox, dir: intake/inbox}
+classes:
+  # ---- node classes (biblio's) ----
+  - Work: Node                       # a published or preprinted work; also a documentation page or grey literature
+  - Person: Node
+  - Organization: Node
+  - Standard: Node                   # a specification with no DOI: its number, edition and publisher
+  - Software: Node                   # a tool cited as prior art: its repository and release
+  - Decision: Node                   # a ruling or task that cites an entry (the `cited_in` field)
+  - ExternalReference: Node          # a pointer outside the graph (DI-046)
+  # ---- edge classes (the ones the seeded emitter writes) ----
+  - AuthoredBy: Edge                 # (Work)-[:AUTHORED_BY]->(Person)
+  - AffiliatedWith: Edge             # (Person)-[:AFFILIATED_WITH]->(Organization)
+  - SupportsDecision: Edge           # (Work | Standard | Software)-[:SUPPORTS_DECISION]->(Decision)
+  - Cites: Edge
+  - ExpressionOf: Edge
+domain:
+  decision_id_patterns:              # how `cited_in` text names a decision (squiddy templates/emit.py decision_ids)
+    - {pattern: "\\bAD-\\d{3}-R\\d+\\b", kind: R, source_document: docs/design/}
+    - {pattern: "\\bAD-\\d{3}\\b(?!-R)", kind: AD, source_document: docs/design/}
+    - {pattern: "\\bSEL-\\d{3}\\b", kind: TASK, source_document: cc_tasks/}
+emit:
+  - metadata_document:
+      fields:
+        common: [id, kind, title, source_url, disposition, cited_in]
+        work: [title_authority, authors, year, venue, publisher, doi, openalex_id, isbn, arxiv_id, edition,
+               standard_number, repository, version, licence, access, acquisition, entry_kind, abstract,
+               resolved_by, raw_sha256]
+      citation_lines: false
+parse:
+  markdown_suffixes: [".md", ".markdown", ".mdown", ".txt"]
