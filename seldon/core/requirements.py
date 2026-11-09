@@ -808,9 +808,8 @@ def cell_value(node: dict, source: str, s: Settings) -> str:
     return str(v)
 
 
-def render_table(nodes: List[dict], columns: List[Dict[str, str]], s: Settings,
-                 headers: Optional[List[str]] = None) -> str:
-    heads = headers or [c["header"] for c in columns]
+def render_table(nodes: List[dict], columns: List[Dict[str, str]], s: Settings) -> str:
+    heads = [c["header"] for c in columns]
     lines = ["| " + " | ".join(heads) + " |", "|" + "|".join("---" for _ in heads) + "|"]
     for n in nodes:
         lines.append("| " + " | ".join(_cell(cell_value(n, c["source"], s)) for c in columns) + " |")
@@ -856,6 +855,30 @@ def _quote(v: str) -> str:
 
 def start_marker(attrs: Dict[str, str]) -> str:
     return "<!-- seldon:projection " + " ".join(f"{k}={_quote(v)}" for k, v in attrs.items()) + " -->"
+
+
+def block_columns(rel: str, section: Optional[str], headers: Optional[str],
+                  columns: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """The columns a table block renders: the projection's columns, or, when the block's start marker names
+    `headers="A|B|C"` (written by `req import --mark` from the source table), those labels in that order, each
+    mapped to the projection column of the same header (case-insensitive). One file's tables may differ in
+    columns (hazbrief-mcp's RTM: a `Decision` column on the design-note tables only, HB-144).
+
+    Raises:
+        RequirementsError: a label the projection declares no column for.
+    """
+    if not headers:
+        return columns
+    by_label = {c["header"].strip().lower(): c for c in columns}
+    out = []
+    for label in headers.split("|"):
+        col = by_label.get(label.strip().lower())
+        if col is None:
+            raise RequirementsError(f"{rel}: block {section!r} has a column {label!r} the projection declares no "
+                                    f"source for; add `{{header: {label}, source: <property or @computed>}}` to its "
+                                    f"docs.projections columns")
+        out.append({"header": label, "source": col["source"]})
+    return out
 
 
 @dataclass
@@ -923,11 +946,7 @@ def render_projection(project_dir: Path, proj: Dict[str, Any], nodes: List[dict]
             rows = [n for n in pool if (n.get("section") or None) == (section or None)]
             if doc == rel:
                 shown.update(n["requirement_id"] for n in rows)
-            heads = attrs["headers"].split("|") if attrs.get("headers") else None
-            if heads is not None and len(heads) != len(columns):
-                raise RequirementsError(f"{rel}: block {section!r} names {len(heads)} headers for "
-                                        f"{len(columns)} columns")
-            body = render_table(rows, columns, s, heads)
+            body = render_table(rows, block_columns(rel, section, attrs.get("headers"), columns), s)
         bodies.append(body)
         return body
 
@@ -1002,7 +1021,7 @@ def write_and_commit(project_dir: Path, rendered: List[Rendered], commit: bool =
     return out
 
 
-def mark_source(project_dir: Path, src: Source, columns_count: Optional[int] = None) -> bool:
+def mark_source(project_dir: Path, src: Source) -> bool:
     """`seldon req import --mark`: wrap each requirements table of the source in projection markers, once.
 
     The start marker carries the table's section and its own header labels, so the first render reproduces the

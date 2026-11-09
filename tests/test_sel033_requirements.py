@@ -190,6 +190,17 @@ class TestReaders:
         out = RQ.render_table(nodes, [{"header": "A", "source": "a"}, {"header": "B", "source": "b"}], s)
         assert out.splitlines()[2] == "| x \\| y | `p\\|q` |"
 
+    def test_a_block_selects_its_columns_by_header_label(self):
+        """One RTM file whose tables differ in columns (HB-144's Decision column on the design-note tables only):
+        the start marker's `headers` pick the projection's columns by label, in the table's order."""
+        cols = [{"header": "ID", "source": "requirement_id"}, {"header": "Decision", "source": "decision_text"},
+                {"header": "Requirement", "source": "description"}, {"header": "Criterion", "source": "description"}]
+        got = RQ.block_columns("RTM.md", "GSA", "ID|Criterion", cols)
+        assert got == [{"header": "ID", "source": "requirement_id"}, {"header": "Criterion", "source": "description"}]
+        assert RQ.block_columns("RTM.md", "x", None, cols) == cols
+        with pytest.raises(RQ.RequirementsError, match="'Owner' the projection declares no source"):
+            RQ.block_columns("RTM.md", "x", "ID|Owner", cols)
+
     def test_settings_refuse_an_unknown_key(self):
         with pytest.raises(RQ.RequirementsError, match="unknown key"):
             RQ.settings({"requirements": {"status_mapp": {}}})
