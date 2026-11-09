@@ -1,0 +1,59 @@
+{
+ "by_access": {
+  "open": 71,
+  "purchase": 5,
+  "restricted_or_unknown": 30
+ },
+ "by_disposition": {
+  "active": 69,
+  "metadata_only": 37
+ },
+ "by_entry_kind": {
+  "documentation": 17,
+  "grey": 8,
+  "software": 10,
+  "standard": 19,
+  "work": 52
+ },
+ "by_resolved_by": {
+  "None": 35,
+  "crossref": 3,
+  "openalex": 51,
+  "page": 16,
+  "semanticscholar": 1
+ },
+ "by_verification_status": {
+  "declared": 19,
+  "fetched": 16,
+  "resolved": 71
+ },
+ "checkpoint_rows": 494,
+ "declined": [],
+ "entries": 106,
+ "governed_artifacts": 72,
+ "governed_artifacts_naming_no_work": [
+  "docs_design_ad_033_decision_register@ad_033_r3_the_record_required_fields_id_repository_qualified_the_repository_s_na"
+ ],
+ "manual_acquisition": [
+  "anthropic2026seeing",
+  "cfr21_11_10e",
+  "doc_ibm_doors_1",
+  "gao_02_195",
+  "krakovna2020specgaming",
+  "nasa_oig_ig_12_012",
+  "nasa_swe_072",
+  "ndsa_levels_v2",
+  "niosh_hierarchy_of_controls",
+  "nist_sp800_53r5",
+  "nygard2011adr",
+  "oais_iso14721",
+  "premis_3_0",
+  "randomlabs2026slate",
+  "rfc8493",
+  "rfc9162",
+  "slsa_v1_0",
+  "w3c_prov_o",
+  "who_trs1033_annex4"
+ ],
+ "seeds": 89
+}

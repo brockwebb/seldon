@@ -1,0 +1,509 @@
+# graphs/seldon-biblio/intake/seeds.yaml: SEL-036 Part B's SEED SET, hand-written, the input of
+# scripts/sel036/resolve.py. NOT a candidates file (graph.yaml's `intake:` reads corpus/candidates/ and the inbox,
+# never this file): every value below is what the CITING TEXT says, and the resolver's answer, with the authority
+# that gave it, is what reaches the catalog (scripts/sel036/build_candidates.py).
+#
+# Three sources, as the task names them:
+#   1. the 72 governed `Citation` artifacts of seldon-seldon-self (2026-11-09), deduplicated to works; the map from
+#      each artifact to its works is `governed:` at the end of this file;
+#   2. AD-013 ADDENDUM 01 section 2;
+#   3. SEL-035's list (cc_tasks/2026-11-09_SEL-035_*.md "Prior art") and the three this task adds to it.
+#
+# Fields: `id` (the manifest id), `kind` (work | standard | software | grey; grey is cataloged as squiddy kind `work`
+# with `entry_kind: grey`), `title`, `authors`, `year`, and any identifier THE CITING TEXT states or the task names
+# (`doi`, `arxiv`, `isbn`, `standard_number`, `repo`, `url`). An identifier given here is a QUERY: the resolver asks
+# the authority for it and checks the answer's title against `title`. `texts` are documentation pages to snapshot.
+# `cited_in` names the decisions and tasks that cite the entry (AD-NNN, SEL-NNN, or a note path).
+seeds:
+  # ---------------------------------------------------------------- AD-013 ADDENDUM 01 section 2 and SEL-035
+  - {id: iso29148_2018, kind: standard, title: "ISO/IEC/IEEE 29148:2018 Systems and software engineering, Life cycle processes, Requirements engineering",
+     standard_number: "ISO/IEC/IEEE 29148:2018", publisher: ISO/IEC/IEEE, year: 2018, url: "https://www.iso.org/standard/72089.html",
+     cited_in: [AD-013, SEL-035]}
+  - {id: iso15288_2023, kind: standard, title: "ISO/IEC/IEEE 15288:2023 Systems and software engineering, System life cycle processes",
+     standard_number: "ISO/IEC/IEEE 15288:2023", publisher: ISO/IEC/IEEE, year: 2023, url: "https://www.iso.org/standard/81702.html",
+     cited_in: [SEL-035]}
+  - {id: omg_reqif_1_2, kind: standard, title: "Requirements Interchange Format (ReqIF), Version 1.2", standard_number: "OMG formal/16-07-01",
+     publisher: Object Management Group, year: 2016, url: "https://www.omg.org/spec/ReqIF/1.2/", texts: ["https://www.omg.org/spec/ReqIF/1.2/PDF"], cited_in: [AD-013]}
+  - {id: omg_sysml_v2, kind: standard, title: "OMG Systems Modeling Language (SysML), Version 2.0", standard_number: "OMG SysML 2.0",
+     publisher: Object Management Group, year: 2023, edition: "2023 Beta specification, as cited", url: "https://www.omg.org/spec/SysML/2.0/",
+     texts: ["https://www.omg.org/spec/SysML/2.0/Language/PDF"], cited_in: [AD-013, AD-030]}
+  - {id: omg_kerml, kind: standard, title: "Kernel Modeling Language (KerML), Version 1.0", standard_number: "OMG KerML 1.0",
+     publisher: Object Management Group, year: 2023, edition: "2023 Beta specification, as cited", url: "https://www.omg.org/spec/KerML/1.0/",
+     texts: ["https://www.omg.org/spec/KerML/1.0/PDF"], cited_in: [AD-030]}
+  - {id: ibm_doors, kind: software, title: "IBM Engineering Requirements Management DOORS (formal module documentation)", publisher: IBM,
+     url: "https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors",
+     texts: ["https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors"], cited_in: [AD-013]}
+  - {id: gotel1994traceability, kind: work, title: "An analysis of the requirements traceability problem", authors: [Gotel, Finkelstein],
+     year: 1994, venue: "ICRE 1994", doi: 10.1109/ICRE.1994.292398, cited_in: [AD-013, AD-030]}
+  - {id: clelandhuang2012traceability, kind: work, title: "Software and Systems Traceability", authors: [Cleland-Huang, Gotel, Zisman],
+     year: 2012, publisher: Springer, doi: 10.1007/978-1-4471-2239-5, cited_in: [AD-013, AD-033]}
+  - {id: clelandhuang2014traceability, kind: work, title: "Software traceability: trends and future directions",
+     authors: [Cleland-Huang, Gotel, Huffman Hayes, Mäder, Zisman], year: 2014, venue: "FOSE 2014", doi: 10.1145/2593882.2593891,
+     cited_in: [AD-013, AD-030]}
+  - {id: sw_cog, kind: software, title: "Cog: generate code with inlined Python", authors: [Batchelder], repo: nedbat/cog, pypi: cogapp,
+     url: "https://github.com/nedbat/cog", texts: ["https://cog.readthedocs.io/en/latest/running.html", "https://raw.githubusercontent.com/nedbat/cog/HEAD/README.rst"],
+     cited_in: [AD-013, SEL-035]}
+  - {id: sw_doorstop, kind: software, title: "Doorstop: requirements management using version control", repo: doorstop-dev/doorstop, pypi: doorstop,
+     url: "https://github.com/doorstop-dev/doorstop", texts: ["https://doorstop-dev.github.io/doorstop/", "https://raw.githubusercontent.com/doorstop-dev/doorstop/HEAD/README.md"],
+     cited_in: [SEL-035]}
+  - {id: browning2014doorstop, kind: work, title: "Doorstop: Text-Based Requirements Management Using Version Control", authors: [Browning, Adams],
+     year: 2014, venue: "Journal of Software Engineering and Applications", cited_in: [SEL-035]}
+  - {id: sw_openfasttrace, kind: software, title: "OpenFastTrace: requirement tracing suite", repo: itsallcode/openfasttrace,
+     url: "https://github.com/itsallcode/openfasttrace", texts_moved: {"https://github.com/itsallcode/openfasttrace/blob/main/doc/user_guide.md": "404 at HEAD on 2026-11-09 (evidence/sel036/units.jsonl); the repository index doc/index.md links doc/user_guide/user_guide.md"},
+     texts: ["https://raw.githubusercontent.com/itsallcode/openfasttrace/HEAD/doc/user_guide/user_guide.md", "https://raw.githubusercontent.com/itsallcode/openfasttrace/HEAD/README.md"],
+     cited_in: [SEL-035]}
+  - {id: sw_strictdoc, kind: software, title: "StrictDoc: software for technical documentation and requirements management", repo: strictdoc-project/strictdoc, pypi: strictdoc,
+     url: "https://github.com/strictdoc-project/strictdoc", texts: ["https://strictdoc.readthedocs.io/en/stable/"], cited_in: [SEL-035]}
+  - {id: sw_sphinx_needs, kind: software, title: "Sphinx-Needs: requirements and traceability in Sphinx", repo: useblocks/sphinx-needs, pypi: sphinx-needs,
+     url: "https://github.com/useblocks/sphinx-needs", texts: ["https://sphinx-needs.readthedocs.io/en/latest/directives/needtable.html", "https://sphinx-needs.readthedocs.io/en/latest/dynamic_functions.html"],
+     cited_in: [SEL-035]}
+  - {id: sw_requiem, kind: software, title: "Requiem: requirements management with suspect-link fingerprints", repo: danieleades/requiem,
+     url: "https://github.com/danieleades/requiem", texts: ["https://danieleades.github.io/requiem/"], cited_in: [SEL-035]}
+  - {id: scukanec2010verification, kind: work, title: "A Day in the Life of a Verification Requirement", authors: [Scukanec, van Gaasbeek],
+     year: 2010, venue: "INCOSE International Symposium 2010", cited_in: [SEL-035]}
+  - {id: argondigital_verification_methods, kind: grey, title: "Use of multiple verification methods", authors: [ArgonDigital],
+     url: "https://argondigital.com/blog/product-management/use-of-multiple-verification-methods/", texts: ["https://argondigital.com/blog/product-management/use-of-multiple-verification-methods/"],
+     cited_in: [SEL-035]}
+  # ---------------------------------------------------------------- the governed Citation artifacts
+  # QC-001 RESULT; AD-033 F (R-52)
+  - {id: cohen1960kappa, kind: work, title: "A Coefficient of Agreement for Nominal Scales", authors: [Cohen], year: 1960,
+     venue: "Educational and Psychological Measurement", cited_in: [QC-001, AD-033]}
+  - {id: newcombe1998proportion, kind: work, title: "Two-sided confidence intervals for the single proportion: comparison of seven methods",
+     authors: [Newcombe], year: 1998, venue: "Statistics in Medicine", cited_in: [QC-001]}
+  - {id: gwet2008ac1, kind: work, title: "Computing inter-rater reliability and its variance in the presence of high agreement",
+     authors: [Gwet], year: 2008, venue: "British Journal of Mathematical and Statistical Psychology", cited_in: [AD-033]}
+  # AD-020
+  - {id: bloom1956taxonomy, kind: work, title: "Taxonomy of Educational Objectives", authors: [Bloom], year: 1956, cited_in: [AD-020]}
+  - {id: kahneman2011thinking, kind: work, title: "Thinking, Fast and Slow", authors: [Kahneman], year: 2011, cited_in: [AD-020]}
+  - {id: keller1987arcs, kind: work, title: "Development and use of the ARCS model of instructional design", authors: [Keller], year: 1987,
+     venue: "Journal of Instructional Development", cited_in: [AD-020]}
+  - {id: mayer2009multimedia, kind: work, title: "Multimedia Learning", authors: [Mayer], year: 2009, cited_in: [AD-020]}
+  - {id: sweller1988cognitive, kind: work, title: "Cognitive load during problem solving: Effects on learning", authors: [Sweller], year: 1988,
+     venue: "Cognitive Science", cited_in: [AD-020]}
+  # AD-029
+  - {id: kahn1962topological, kind: work, title: "Topological sorting of large networks", authors: [Kahn], year: 1962,
+     venue: "Communications of the ACM", cited_in: [AD-029]}
+  - {id: kelley1959critical, kind: work, title: "Critical-path planning and scheduling", authors: [Kelley, Walker], year: 1959,
+     venue: "Eastern Joint IRE-AIEE-ACM Computer Conference", cited_in: [AD-029]}
+  - {id: pmi_pmbok, kind: standard, title: "A Guide to the Project Management Body of Knowledge (PMBOK Guide)", publisher: Project Management Institute,
+     standard_number: "ANSI/PMI 99-001", url: "https://www.pmi.org/standards/pmbok", cited_in: [AD-029]}
+  # AD-030 and its findings
+  - {id: clark2014micropublications, kind: work, title: "Micropublications: a semantic model for claims, evidence, arguments and annotations in biomedical communications",
+     authors: [Clark, Ciccarese, Goble], year: 2014, venue: "Journal of Biomedical Semantics", cited_in: [AD-030]}
+  - {id: groth2010nanopublication, kind: work, title: "The anatomy of a nanopublication", authors: [Groth, Gibson, Velterop], year: 2010,
+     venue: "Information Services and Use", cited_in: [AD-030]}
+  - {id: shotton2010cito, kind: work, title: "CiTO, the Citation Typing Ontology", authors: [Shotton], year: 2010,
+     venue: "Journal of Biomedical Semantics", cited_in: [AD-030]}
+  - {id: kleppmann2017ddia, kind: work, title: "Designing Data-Intensive Applications", authors: [Kleppmann], year: 2017, publisher: "O'Reilly Media",
+     isbn: "9781449373320", cited_in: [AD-030]}
+  # AD-031, AD-033
+  - {id: antoniol2002traceability, kind: work, title: "Recovering traceability links between code and documentation",
+     authors: [Antoniol, Canfora, Casazza, De Lucia, Merlo], year: 2002, venue: "IEEE Transactions on Software Engineering", cited_in: [AD-031, AD-033]}
+  - {id: jansen2005decisions, kind: work, title: "Software Architecture as a Set of Architectural Design Decisions", authors: [Jansen, Bosch], year: 2005,
+     venue: "WICSA 2005", doi: 10.1109/WICSA.2005.61, cited_in: [AD-033]}
+  - {id: lee1997rationale, kind: work, title: "Design rationale systems: understanding the issues", authors: [Lee], year: 1997, venue: "IEEE Expert",
+     cited_in: [AD-032, AD-033]}
+  - {id: kruchten2004ontology, kind: work, title: "An Ontology of Architectural Design Decisions in Software-Intensive Systems", authors: [Kruchten], year: 2004,
+     venue: "2nd Groningen Workshop on Software Variability", cited_in: [AD-032, AD-033]}
+  - {id: mavin2009ears, kind: work, title: "Easy Approach to Requirements Syntax (EARS)", authors: [Mavin, Wilkinson, Harwood, Novak], year: 2009,
+     venue: "RE 2009", cited_in: [AD-032, AD-033]}
+  - {id: fuchss2025lissa, kind: work, title: "LiSSA: Toward Generic Traceability Link Recovery through Retrieval-Augmented Generation", year: 2025,
+     venue: "ICSE 2025", cited_in: [AD-033]}
+  - {id: li2024selfroute, kind: work, title: "Retrieval Augmented Generation or Long-Context LLMs? A Comprehensive Study and Hybrid Approach",
+     authors: [Li], year: 2024, venue: "EMNLP 2024 Industry Track", arxiv: "2407.16833", cited_in: [AD-033]}
+  - {id: liu2024lostmiddle, kind: work, title: "Lost in the Middle: How Language Models Use Long Contexts", authors: [Liu], year: 2024,
+     venue: "Transactions of the Association for Computational Linguistics", cited_in: [AD-033]}
+  - {id: zhao2024expel, kind: work, title: "ExpeL: LLM Agents Are Experiential Learners", authors: [Zhao], year: 2024, venue: "AAAI 2024",
+     arxiv: "2308.10144", cited_in: [AD-032, AD-033]}
+  # AD-032 (factory control design): the named works, and the two reference lists
+  - {id: amodei2016concrete, kind: work, title: "Concrete Problems in AI Safety", authors: [Amodei], year: 2016, arxiv: "1606.06565", cited_in: [AD-032]}
+  - {id: erman1980hearsay, kind: work, title: "The Hearsay-II Speech-Understanding System: Integrating Knowledge to Resolve Uncertainty",
+     authors: [Erman, Hayes-Roth, Lesser, Reddy], year: 1980, venue: "ACM Computing Surveys", doi: 10.1145/356810.356816, cited_in: [AD-032]}
+  - {id: krakovna2020specgaming, kind: grey, title: "Specification gaming: the flip side of AI ingenuity", authors: [Krakovna], year: 2020,
+     publisher: DeepMind, url: "https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/",
+     cited_in: [AD-032]}
+  - {id: lehman2020creativity, kind: work, title: "The Surprising Creativity of Digital Evolution", authors: [Lehman], year: 2020,
+     venue: "Artificial Life", doi: 10.1162/artl_a_00319, cited_in: [AD-032]}
+  - {id: nist_sp800_53r5, kind: standard, title: "NIST SP 800-53 Rev. 5, Security and Privacy Controls for Information Systems and Organizations (AU family)",
+     standard_number: "NIST SP 800-53 Rev. 5", publisher: NIST, year: 2020, doi: 10.6028/NIST.SP.800-53r5, cited_in: [AD-032]}
+  - {id: cfr21_11_10e, kind: standard, title: "21 CFR 11.10(e), Electronic records; controls for closed systems (audit trails)",
+     standard_number: "21 CFR 11.10(e)", publisher: US FDA, url: "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11/subpart-B/section-11.10",
+     cited_in: [AD-032]}
+  - {id: who_trs1033_annex4, kind: standard, title: "WHO TRS 1033 Annex 4: Guideline on data integrity (ALCOA+)", standard_number: "WHO TRS 1033 Annex 4",
+     publisher: World Health Organization, year: 2021, cited_in: [AD-032]}
+  - {id: w3c_prov_o, kind: standard, title: "PROV-O: The PROV Ontology", standard_number: "W3C Recommendation 2013-04-30", publisher: W3C, year: 2013,
+     url: "https://www.w3.org/TR/prov-o/", cited_in: [AD-032]}
+  - {id: slsa_v1_0, kind: standard, title: "SLSA specification v1.0", standard_number: "SLSA v1.0", publisher: OpenSSF, year: 2023,
+     url: "https://slsa.dev/spec/v1.0/", cited_in: [AD-032]}
+  - {id: torresarias2019intoto, kind: work, title: "in-toto: Providing farm-to-table guarantees for bits and bytes", authors: [Torres-Arias], year: 2019,
+     venue: "USENIX Security 2019", cited_in: [AD-032]}
+  - {id: crosby2009tamper, kind: work, title: "Efficient Data Structures for Tamper-Evident Logging", authors: [Crosby, Wallach], year: 2009,
+     venue: "USENIX Security 2009", cited_in: [AD-032]}
+  - {id: rfc9162, kind: standard, title: "RFC 9162: Certificate Transparency Version 2.0", standard_number: "RFC 9162", publisher: IETF, year: 2021,
+     doi: 10.17487/RFC9162, cited_in: [AD-032]}
+  - {id: rfc8493, kind: standard, title: "RFC 8493: The BagIt File Packaging Format (V1.0)", standard_number: "RFC 8493", publisher: IETF, year: 2018,
+     doi: 10.17487/RFC8493, cited_in: [AD-032]}
+  - {id: premis_3_0, kind: standard, title: "PREMIS Data Dictionary for Preservation Metadata, Version 3.0", standard_number: "PREMIS 3.0",
+     publisher: Library of Congress, year: 2015, url: "https://www.loc.gov/standards/premis/v3/", cited_in: [AD-032]}
+  - {id: oais_iso14721, kind: standard, title: "Reference Model for an Open Archival Information System (OAIS)", standard_number: "CCSDS 650.0-M-2 (identical to ISO 14721:2012)",
+     publisher: CCSDS, year: 2012, url: "https://public.ccsds.org/Pubs/650x0m2.pdf", cited_in: [AD-032]}
+  - {id: ndsa_levels_v2, kind: standard, title: "Levels of Digital Preservation, Version 2.0", standard_number: "NDSA Levels v2.0",
+     publisher: National Digital Stewardship Alliance, year: 2019, cited_in: [AD-032]}
+  - {id: sw_openlineage, kind: software, title: "OpenLineage: an open standard for lineage metadata collection", repo: OpenLineage/OpenLineage, pypi: openlineage-python,
+     url: "https://github.com/OpenLineage/OpenLineage", cited_in: [AD-032]}
+  - {id: weber2001lessons, kind: work, title: "Intelligent lessons learned systems", authors: [Weber, Aha, Becerra-Fernandez], year: 2001,
+     venue: "Expert Systems with Applications", cited_in: [AD-032]}
+  - {id: gao_02_195, kind: grey, title: "NASA: Better Mechanisms Needed for Sharing Lessons Learned (GAO-02-195)", authors: [U.S. General Accounting Office],
+     year: 2002, standard_number: "GAO-02-195", url: "https://www.gao.gov/products/gao-02-195", cited_in: [AD-032]}
+  - {id: nasa_oig_ig_12_012, kind: grey, title: "NASA's Management of the Lessons Learned Information System (IG-12-012)", authors: [NASA Office of Inspector General],
+     year: 2012, standard_number: "IG-12-012", url: "https://oig.nasa.gov/docs/IG-12-012.pdf", cited_in: [AD-032]}
+  - {id: nygard2011adr, kind: grey, title: "Documenting Architecture Decisions", authors: [Nygard], year: 2011,
+     url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions", cited_in: [AD-032]}
+  - {id: sw_madr, kind: software, title: "MADR: Markdown Architectural Decision Records", repo: adr/madr, edition: "4.0", url: "https://github.com/adr/madr",
+     texts: ["https://raw.githubusercontent.com/adr/madr/HEAD/README.md"], cited_in: [AD-032]}
+  - {id: niosh_hierarchy_of_controls, kind: grey, title: "Hierarchy of Controls", authors: [NIOSH], url: "https://www.cdc.gov/niosh/hierarchy-of-controls/",
+     cited_in: [AD-032]}
+  - {id: rtca_do178c, kind: standard, title: "DO-178C, Software Considerations in Airborne Systems and Equipment Certification", standard_number: "RTCA DO-178C",
+     publisher: RTCA, year: 2011, cited_in: [AD-032]}
+  - {id: nasa_swe_072, kind: standard, title: "NASA NPR 7150.2, Software Engineering Requirements: SWE-072 (bidirectional traceability)",
+     standard_number: "NPR 7150.2 SWE-072", publisher: NASA, cited_in: [AD-032]}
+  # AD-035 erratum, AD-036
+  - {id: arxiv_2406_14325, kind: work, title: "arXiv:2406.14325", arxiv: "2406.14325", cited_in: [AD-035, AD-036]}
+  - {id: han2017checklists, kind: work, title: "A checklist is associated with increased quality of reporting preclinical biomedical research: A systematic review",
+     authors: [Han], year: 2017, venue: "PLoS ONE", doi: 10.1371/journal.pone.0183591, cited_in: [AD-035, AD-036]}
+  - {id: chen2023chatgpt, kind: work, title: "How is ChatGPT's behavior changing over time?", authors: [Chen, Zaharia, Zou], year: 2023,
+     arxiv: "2307.09009", cited_in: [AD-036]}
+  - {id: rethlefsen2021prismas, kind: work, title: "PRISMA-S: an extension to the PRISMA Statement for Reporting Literature Searches in Systematic Reviews",
+     authors: [Rethlefsen], year: 2021, venue: "Systematic Reviews", cited_in: [AD-036]}
+  # AD-037
+  - {id: zhuge2024agentjudge, kind: work, title: "Agent-as-a-Judge: Evaluate Agents with Agents", authors: [Zhuge], year: 2024, arxiv: "2410.10934",
+     cited_in: [AD-037]}
+  - {id: sae_as9102b, kind: standard, title: "AS9102B, Aerospace First Article Inspection Requirement", standard_number: "SAE AS9102B", publisher: SAE International,
+     doi: 10.4271/AS9102B, cited_in: [AD-037]}
+  - {id: aaai_v40i44_41105, kind: work, title: "doi:10.1609/aaai.v40i44.41105", doi: 10.1609/aaai.v40i44.41105, year: 2026, cited_in: [AD-037]}
+  # docs/design/agent_tool_design_lessons.md
+  - {id: anthropic2026seeing, kind: grey, title: "Lessons from Building Claude Code: Seeing Like an Agent", authors: [Anthropic], year: 2026,
+     publisher_host: www.anthropic.com, cited_in: ["docs/design/agent_tool_design_lessons.md"]}
+  # docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+  - {id: adler2021incremental, kind: work, title: "Incremental Multi-source Entity Resolution for Knowledge Graph Completion", authors: [Adler], year: 2021,
+     cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  - {id: li2024kgllm, kind: work, title: "Knowledge Graph Large Language Model (KG-LLM) for Link Prediction", authors: [Li], year: 2024, arxiv: "2403.07311",
+     cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  - {id: qian2019systemer, kind: work, title: "SystemER: A Human-in-the-loop System for Explainable Entity Resolution", authors: [Qian], year: 2019,
+     venue: "Proceedings of the VLDB Endowment", cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  - {id: pershina2014graph, kind: work, title: "Graph-Based Approaches to Resolve Entity Ambiguity", authors: [Pershina], year: 2014,
+     cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  - {id: xiang2025splite, kind: work, title: "SplitE: Enhancing Knowledge Graph Embedding Precision with Entity Split and Contextualization", authors: [Xiang],
+     year: 2025, venue: "ACM Transactions on Recommender Systems", cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  - {id: arxiv_2104_03986, kind: work, title: "Deep Indexed Active Learning for Matching Heterogeneous Entity Representations", arxiv: "2104.03986",
+     cited_in: ["docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md"]}
+  # docs/design/seldon_architectural_decisions.md
+  - {id: xiong2026alma, kind: work, title: "Learning to Continually Learn via Meta-learning Agentic Memory Designs", authors: [Xiong, Hu, Clune], year: 2026,
+     arxiv: "2602.07755", cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: ilyas2022saga, kind: work, title: "Saga: A Platform for Continuous Construction and Serving of Knowledge at Scale", authors: [Ilyas], year: 2022,
+     venue: "SIGMOD 2022", doi: 10.1145/3514221.3526052, arxiv: "2204.07309", cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: ilyas2023growing, kind: work, title: "Growing and Serving Large Open-domain Knowledge Graphs", authors: [Ilyas], year: 2023, venue: "SIGMOD 2023",
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: sw_autoresearch, kind: software, title: "autoresearch", authors: [Karpathy], year: 2026, repo: karpathy/autoresearch,
+     url: "https://github.com/karpathy/autoresearch", texts: ["https://raw.githubusercontent.com/karpathy/autoresearch/HEAD/README.md"],
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: liang2026skillnet, kind: work, title: "SkillNet: Create, Evaluate, and Connect AI Skills", authors: [Liang], year: 2026, arxiv: "2603.04448",
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: randomlabs2026slate, kind: grey, title: "Slate technical report", authors: [Random Labs], year: 2026, url: "https://randomlabs.ai/blog/slate",
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: yu2026multiagentmemory, kind: work, title: "Multi-Agent Memory from a Computer Architecture Perspective", authors: [Yu], year: 2026, arxiv: "2603.10062",
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+  - {id: zhang2026rlm, kind: work, title: "Recursive Language Models", authors: [Zhang, Khattab], year: 2026, arxiv: "2512.24601",
+     cited_in: ["docs/design/seldon_architectural_decisions.md"]}
+
+# Each governed Citation artifact (its `name`, the key seldon governed sync gives it) and the seeds it names. An
+# artifact the AD-030 parser cut from a line that names no work (a ruling's own text) maps to [] with the reason.
+governed:
+  "cc_tasks_2026_10_11_qc_001_ad037_receipts_records_judge_calibration_mechanism_filing_result@cohen_s_1960":
+    source_document: cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing_RESULT.md
+    raw_sha256_16: dcd3f990c7bb5163
+    seeds: ["cohen1960kappa"]
+  "cc_tasks_2026_10_11_qc_001_ad037_receipts_records_judge_calibration_mechanism_filing_result@newcombe_s_1998":
+    source_document: cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing_RESULT.md
+    raw_sha256_16: 12f2387211b0317d
+    seeds: ["newcombe1998proportion"]
+  "docs_design_ad_020_iterative_content_review_pipeline@bloom_b_s_1956_taxonomy_of_educational_objectives":
+    source_document: docs/design/AD-020_iterative_content_review_pipeline.md
+    raw_sha256_16: 084c3fa42ec998f1
+    seeds: ["bloom1956taxonomy"]
+  "docs_design_ad_020_iterative_content_review_pipeline@kahneman_d_2011_thinking_fast_and_slow":
+    source_document: docs/design/AD-020_iterative_content_review_pipeline.md
+    raw_sha256_16: 954de804e4881407
+    seeds: ["kahneman2011thinking"]
+  "docs_design_ad_020_iterative_content_review_pipeline@keller_j_m_1987_arcs_model_of_motivational_design":
+    source_document: docs/design/AD-020_iterative_content_review_pipeline.md
+    raw_sha256_16: 87483807cf5dfc38
+    seeds: ["keller1987arcs"]
+  "docs_design_ad_020_iterative_content_review_pipeline@mayer_r_e_2009_multimedia_learning":
+    source_document: docs/design/AD-020_iterative_content_review_pipeline.md
+    raw_sha256_16: 9afb40d27eca0c81
+    seeds: ["mayer2009multimedia"]
+  "docs_design_ad_020_iterative_content_review_pipeline@sweller_j_1988_cognitive_load_during_problem_solving":
+    source_document: docs/design/AD-020_iterative_content_review_pipeline.md
+    raw_sha256_16: a9368555d2af50dc
+    seeds: ["sweller1988cognitive"]
+  "docs_design_ad_029_task_precedence@kahn_1962":
+    source_document: docs/design/AD-029_task_precedence.md
+    raw_sha256_16: 491842742de16415
+    seeds: ["kahn1962topological"]
+  "docs_design_ad_029_task_precedence@kahn_1962_topological_sorting_is_the_acyclicity_check_and_the_ordering_used_to_r":
+    source_document: docs/design/AD-029_task_precedence.md
+    raw_sha256_16: f44f32bac7d53bf5
+    seeds: ["kahn1962topological"]
+  "docs_design_ad_029_task_precedence@kelley_walker_1959":
+    source_document: docs/design/AD-029_task_precedence.md
+    raw_sha256_16: cdadf3d32a891ddb
+    seeds: ["kelley1959critical"]
+  "docs_design_ad_029_task_precedence@kelley_walker_1959_the_critical_path_method_and_the_precedence_diagramming_metho":
+    source_document: docs/design/AD-029_task_precedence.md
+    raw_sha256_16: 833798a4e0a9d9f1
+    seeds: ["kelley1959critical", "pmi_pmbok"]
+  "docs_design_ad_030_governed_documents_as_graph_content@clark_t_ciccarese_p_goble_c_2014_micropublications_a_semantic_model_for_claims_e":
+    source_document: docs/design/AD-030_governed_documents_as_graph_content.md
+    raw_sha256_16: 11b21cbfaed056cf
+    seeds: ["clark2014micropublications"]
+  "docs_design_ad_030_governed_documents_as_graph_content@cleland_huang_j_gotel_o_huffman_hayes_j_mader_p_zisman_a_2014_software_traceabil":
+    source_document: docs/design/AD-030_governed_documents_as_graph_content.md
+    raw_sha256_16: 11f32b1afda394ee
+    seeds: ["clelandhuang2014traceability"]
+  "docs_design_ad_030_governed_documents_as_graph_content@gotel_o_and_finkelstein_a_1994_an_analysis_of_the_requirements_traceability_prob":
+    source_document: docs/design/AD-030_governed_documents_as_graph_content.md
+    raw_sha256_16: 9cbe29a4f67e5617
+    seeds: ["gotel1994traceability"]
+  "docs_design_ad_030_governed_documents_as_graph_content@groth_p_gibson_a_velterop_j_2010_the_anatomy_of_a_nanopublication_information_se":
+    source_document: docs/design/AD-030_governed_documents_as_graph_content.md
+    raw_sha256_16: 3eaad6528190e7bd
+    seeds: ["groth2010nanopublication"]
+  "docs_design_ad_030_governed_documents_as_graph_content@shotton_d_2010_cito_the_citation_typing_ontology_j_biomedical_semantics_uses_met":
+    source_document: docs/design/AD-030_governed_documents_as_graph_content.md
+    raw_sha256_16: 6683d878bfc229af
+    seeds: ["shotton2010cito"]
+  "docs_design_ad_030_implementation_findings_001@cleland_huang_j_gotel_o_huffman_hayes_j_mader_p_zisman_a_2014_software_traceabil":
+    source_document: docs/design/AD-030_implementation_findings_001.md
+    raw_sha256_16: 9d9f0e33bf4b56d0
+    seeds: ["clelandhuang2014traceability"]
+  "docs_design_ad_030_implementation_findings_001@groth_p_gibson_a_velterop_j_2010_the_anatomy_of_a_nanopublication_information_se":
+    source_document: docs/design/AD-030_implementation_findings_001.md
+    raw_sha256_16: 821be77aa58e96ea
+    seeds: ["groth2010nanopublication"]
+  "docs_design_ad_030_implementation_findings_001@group_2023":
+    source_document: docs/design/AD-030_implementation_findings_001.md
+    raw_sha256_16: 8a6a14c57c1df685
+    seeds: ["omg_sysml_v2"]
+  "docs_design_ad_030_implementation_findings_001@object_management_group_2023_omg_systems_modeling_language_sysml_v2_beta_specifi":
+    source_document: docs/design/AD-030_implementation_findings_001.md
+    raw_sha256_16: 566715c735349cbb
+    seeds: ["omg_sysml_v2"]
+  "docs_design_ad_030_implementation_findings_001@shotton_d_2010_cito_the_citation_typing_ontology_j_biomedical_semantics_1_s6_use":
+    source_document: docs/design/AD-030_implementation_findings_001.md
+    raw_sha256_16: 3d0fa6a5f89f5911
+    seeds: ["shotton2010cito"]
+  "docs_design_ad_030_implementation_findings_002@cleland_huang_j_gotel_o_huffman_hayes_j_mader_p_zisman_a_2014_software_traceabil":
+    source_document: docs/design/AD-030_implementation_findings_002.md
+    raw_sha256_16: 1d9f4d976109e652
+    seeds: ["clelandhuang2014traceability"]
+  "docs_design_ad_030_implementation_findings_002@groth_p_gibson_a_velterop_j_2010_the_anatomy_of_a_nanopublication_information_se":
+    source_document: docs/design/AD-030_implementation_findings_002.md
+    raw_sha256_16: 2a4d079c5cfe131f
+    seeds: ["groth2010nanopublication"]
+  "docs_design_ad_030_implementation_findings_002@group_2023":
+    source_document: docs/design/AD-030_implementation_findings_002.md
+    raw_sha256_16: 8a6a14c57c1df685
+    seeds: ["omg_sysml_v2"]
+  "docs_design_ad_030_implementation_findings_002@kleppmann_m_2017_designing_data_intensive_applications_o_reilly_ch_11_log_based_":
+    source_document: docs/design/AD-030_implementation_findings_002.md
+    raw_sha256_16: a991e73b3655606b
+    seeds: ["kleppmann2017ddia"]
+  "docs_design_ad_030_implementation_findings_002@object_management_group_2023_omg_systems_modeling_language_sysml_v2_beta_specifi":
+    source_document: docs/design/AD-030_implementation_findings_002.md
+    raw_sha256_16: b8876cfe59a80e4f
+    seeds: ["omg_sysml_v2", "omg_kerml"]
+  "docs_design_ad_031_rulings_reach_the_task_by_retrieval@antoniol_et_al_2002_ieee_tse_the_founding_work":
+    source_document: docs/design/AD-031_rulings_reach_the_task_by_retrieval.md
+    raw_sha256_16: 6908945b26e12043
+    seeds: ["antoniol2002traceability"]
+  "docs_design_ad_032_factory_control_design@amodei_d_et_al_2016_concrete_problems_in_ai_safety_https_arxiv_org_abs_1606_0656":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: d1446d676352f887
+    seeds: ["amodei2016concrete"]
+  "docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: c6b94caedd015fa5
+    seeds: ["nist_sp800_53r5", "cfr21_11_10e", "who_trs1033_annex4", "w3c_prov_o", "slsa_v1_0", "torresarias2019intoto", "crosby2009tamper", "rfc9162", "rfc8493", "premis_3_0", "oais_iso14721", "ndsa_levels_v2", "sw_openlineage"]
+  "docs_design_ad_032_factory_control_design@decisions_and_lessons_weber_aha_and_becerra_fernandez_2001_gao_02_195_2002_nasa_":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: db43a766c39bd8a6
+    seeds: ["weber2001lessons", "gao_02_195", "nasa_oig_ig_12_012", "lee1997rationale", "nygard2011adr", "sw_madr", "kruchten2004ontology", "mavin2009ears", "niosh_hierarchy_of_controls", "rtca_do178c", "nasa_swe_072", "zhao2024expel"]
+  "docs_design_ad_032_factory_control_design@erman_l_d_hayes_roth_f_lesser_v_r_and_reddy_d_r_1980_the_hearsay_ii_speech_under":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: 7870807becf58066
+    seeds: ["erman1980hearsay"]
+  "docs_design_ad_032_factory_control_design@krakovna_v_et_al_2020_specification_gaming_the_flip_side_of_ai_ingenuity_deepmin":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: 70cde8d8d82f8d9d
+    seeds: ["krakovna2020specgaming"]
+  "docs_design_ad_032_factory_control_design@lehman_j_et_al_2020_the_surprising_creativity_of_digital_evolution_artificial_li":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: 25049add6a614d35
+    seeds: ["lehman2020creativity"]
+  "docs_design_ad_032_factory_control_design@rationale_c5_the_schema_follows_a_81_nygard_2011_madr_4_0_kruchten_2004_mavin_et":
+    source_document: docs/design/AD-032_factory_control_design.md
+    raw_sha256_16: 563cb91721be6443
+    seeds: ["nygard2011adr", "sw_madr", "kruchten2004ontology", "mavin2009ears"]
+  "docs_design_ad_033_decision_register@ad_033_r3_the_record_required_fields_id_repository_qualified_the_repository_s_na":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: 993868c6bcf42653
+    seeds: []   # the AD-030 parser cut this artifact from a ruling's own text; it names no work
+  "docs_design_ad_033_decision_register@decisions_as_first_class_records_jansen_and_bosch_2005_wicsa_doi_10_1109_wicsa_2":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: eb036c78682ea9ab
+    seeds: ["jansen2005decisions", "lee1997rationale", "kruchten2004ontology"]
+  "docs_design_ad_033_decision_register@f_full_register_one_validator_call_per_task_with_the_whole_active_register_in_it":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: 37d60c1fec343da6
+    seeds: ["liu2024lostmiddle", "cohen1960kappa", "gwet2008ac1"]
+  "docs_design_ad_033_decision_register@kruchten_s_2004":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: 749b241816c8874f
+    seeds: ["kruchten2004ontology"]
+  "docs_design_ad_033_decision_register@statements_mavin_et_al_2009_ears_five_sentence_templates_ubiquitous_event_driven":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: fbfca309b8b7f468
+    seeds: ["mavin2009ears"]
+  "docs_design_ad_033_decision_register@traceability_recovery_antoniol_et_al_2002_cleland_huang_gotel_and_zisman_2012_li":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: d82c772e1096bd8c
+    seeds: ["antoniol2002traceability", "clelandhuang2012traceability", "fuchss2025lissa"]
+  "docs_design_ad_033_decision_register@whole_register_or_retrieval_li_et_al_2024_emnlp_arxiv_2407_16833_long_context_pr":
+    source_document: docs/design/AD-033_decision_register.md
+    raw_sha256_16: 3b1c0df94fff3a9d
+    seeds: ["li2024selfroute", "liu2024lostmiddle", "zhao2024expel"]
+  "docs_design_ad_035_erratum_01_prior_art_overstated@arxiv_2406_14325_lesson_2026_04_13_arxiv_2406_14325_p_16_and_p_21_citing_han_et_":
+    source_document: docs/design/AD-035_erratum_01_prior_art_overstated.md
+    raw_sha256_16: e08813cdea18d107
+    seeds: ["arxiv_2406_14325", "han2017checklists"]
+  "docs_design_ad_036_prior_art_receipts_gate@ad_036_r6_what_the_gate_does_not_check_stated_so_nobody_relies_on_it_it_proves_a":
+    source_document: docs/design/AD-036_prior_art_receipts_gate.md
+    raw_sha256_16: 2486f960ec59b682
+    seeds: ["han2017checklists"]
+  "docs_design_ad_036_prior_art_receipts_gate@chen_et_al_2023_above_anything_that_changes_the_instrument_is_part_of_its_identi":
+    source_document: docs/design/AD-036_prior_art_receipts_gate.md
+    raw_sha256_16: 1e8340bd507e9125
+    seeds: ["chen2023chatgpt"]
+  "docs_design_ad_036_prior_art_receipts_gate@lesson_2026_04_13_arxiv_2406_14325_row_p16_104_1865_2521_citing_han_et_al_2017_p":
+    source_document: docs/design/AD-036_prior_art_receipts_gate.md
+    raw_sha256_16: 94a9fd73fdc804a1
+    seeds: ["arxiv_2406_14325", "han2017checklists"]
+  "docs_design_ad_036_prior_art_receipts_gate@the_prisma_s_extension_itself_rethlefsen_et_al_2021_systematic_reviews_10_39_is_":
+    source_document: docs/design/AD-036_prior_art_receipts_gate.md
+    raw_sha256_16: eda11e21b90a60d6
+    seeds: ["rethlefsen2021prismas"]
+  "docs_design_ad_037_in_process_quality_control_for_dispatched_sessions@a_judge_with_tools_beats_a_reading_judge_s8_zhuge_et_al_arxiv_2410_10934_an_agen":
+    source_document: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+    raw_sha256_16: e0479f756d8ab214
+    seeds: ["zhuge2024agentjudge"]
+  "docs_design_ad_037_in_process_quality_control_for_dispatched_sessions@first_article_inspection_sae_as9102b_doi_10_4271_as9102b_the_first_part_off_a_ne":
+    source_document: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+    raw_sha256_16: 9c30a4f6914c520c
+    seeds: ["sae_as9102b"]
+  "docs_design_ad_037_in_process_quality_control_for_dispatched_sessions@web_receipt_url_https_doi_org_10_1609_aaai_v40i44_41105_retrieved_2026_10_11":
+    source_document: docs/design/AD-037_in_process_quality_control_for_dispatched_sessions.md
+    raw_sha256_16: 18aed1cacca713bb
+    seeds: ["aaai_v40i44_41105"]
+  "docs_design_agent_tool_design_lessons@anthropic_lessons_from_building_claude_code_seeing_like_an_agent_2026":
+    source_document: docs/design/agent_tool_design_lessons.md
+    raw_sha256_16: c2b7dbdf5810b7ae
+    seeds: ["anthropic2026seeing"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@1_adler_et_al_2021_incremental_multi_source_entity_resolution_for_knowledge_grap":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: 1bf9d74a7fc723b3
+    seeds: ["adler2021incremental"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@2_li_et_al_2024_knowledge_graph_large_language_model_kg_llm_for_link_prediction_":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: 9b4076dc39ca96de
+    seeds: ["li2024kgllm"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@3_qian_et_al_2019_systemer_a_human_in_the_loop_system_for_explainable_entity_res":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: fec499c03385c2e8
+    seeds: ["qian2019systemer"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@4_pershina_et_al_2014_graph_based_approaches_to_resolve_entity_ambiguity_nyu_pro":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: 945b2bcab153461f
+    seeds: ["pershina2014graph"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@5_xiang_et_al_2025_splite_enhancing_knowledge_graph_embedding_precision_with_ent":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: bf25a588cac9da2f
+    seeds: ["xiang2025splite"]
+  "docs_design_evolution_burst_2026_04_cc5_sleep_function_architecture@6_ebraheem_et_al_2016_2021_deep_indexed_active_learning_for_matching_heterogeneo":
+    source_document: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md
+    raw_sha256_16: 2acaeb59bab12b85
+    seeds: ["arxiv_2104_03986"]
+  "docs_design_seldon_architectural_decisions@alma_xiong_et_al_2026_demonstrated_that_standardizing_the_update_retrieve_interf":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 717d3a7abf794b86
+    seeds: ["xiong2026alma"]
+  "docs_design_seldon_architectural_decisions@apple_s_saga_kg_platform_ilyas_et_al_sigmod_2022_production_system_at_billions_o":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 788b8ffa47086216
+    seeds: ["ilyas2022saga"]
+  "docs_design_seldon_architectural_decisions@ilyas_i_f_et_al_2022_saga_a_platform_for_continuous_construction_and_serving_of_":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: be0ed0a8c52ff369
+    seeds: ["ilyas2022saga"]
+  "docs_design_seldon_architectural_decisions@karpathy_a_2026_autoresearch_software_github_https_github_com_karpathy_autoresea":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 218d7e1551683857
+    seeds: ["sw_autoresearch"]
+  "docs_design_seldon_architectural_decisions@liang_y_et_al_2026_skillnet_create_evaluate_and_connect_ai_skills_preprint_arxiv":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 1d2b9363fe6f976e
+    seeds: ["liang2026skillnet"]
+  "docs_design_seldon_architectural_decisions@prior_art_liang_et_al_2026_skillnet_create_evaluate_and_connect_ai_skills_arxiv_":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: f123614d1be57950
+    seeds: ["liang2026skillnet"]
+  "docs_design_seldon_architectural_decisions@random_labs_2026_slate_technical_report_https_randomlabs_ai_blog_slate":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 205da2617cd5ac17
+    seeds: ["randomlabs2026slate"]
+  "docs_design_seldon_architectural_decisions@ref_ilyas_i_f_et_al_2022_arxiv_2204_07309_sigmod_2022_follow_up_growing_and_serv":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 7f2febdd5141fe41
+    seeds: ["ilyas2022saga", "ilyas2023growing"]
+  "docs_design_seldon_architectural_decisions@ref_karpathy_a_2026_autoresearch_software_github_https_github_com_karpathy_autor":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: a6dbea9c69151efc
+    seeds: ["sw_autoresearch"]
+  "docs_design_seldon_architectural_decisions@ref_yu_z_et_al_2026_arxiv_2603_10062_sigarch_blog_https_www_sigarch_org_multi_ag":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 581bbb63e6534e30
+    seeds: ["yu2026multiagentmemory"]
+  "docs_design_seldon_architectural_decisions@ref_zhang_a_khattab_o_2026_arxiv_2512_24601_blog_https_alexzhang13_github_io_blo":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 08d5a5f83ef3d4b0
+    seeds: ["zhang2026rlm"]
+  "docs_design_seldon_architectural_decisions@update_2026_03_14_yu_et_al_2026_frame_this_as_a_memory_consistency_problem_causa":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: a3ec80cc8f509204
+    seeds: ["yu2026multiagentmemory"]
+  "docs_design_seldon_architectural_decisions@xiong_y_hu_s_clune_j_2026_learning_to_continually_learn_via_meta_learning_agenti":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 14936490a03d41a6
+    seeds: ["xiong2026alma"]
+  "docs_design_seldon_architectural_decisions@yu_et_al_2026_ucsd_frame_multi_agent_memory_as_a_computer_architecture_problem_s":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: f614ccc6a6b79943
+    seeds: ["yu2026multiagentmemory"]
+  "docs_design_seldon_architectural_decisions@yu_z_et_al_2026_multi_agent_memory_from_a_computer_architecture_perspective_prep":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: 807c71885e12f480
+    seeds: ["yu2026multiagentmemory"]
+  "docs_design_seldon_architectural_decisions@zhang_a_khattab_o_2026_recursive_language_models_preprint_arxiv_2512_24601":
+    source_document: docs/design/seldon_architectural_decisions.md
+    raw_sha256_16: d05a582d41eea7cb
+    seeds: ["zhang2026rlm"]

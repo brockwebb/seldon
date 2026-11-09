@@ -1,0 +1,42 @@
+# scripts/sel036/sel036.yaml: every tunable of SEL-036's resolver and fetcher (scripts/sel036/resolve.py).
+# ~/GitHub/CLAUDE.md section 2: no threshold, path, host or ceiling lives in the code.
+seeds: graphs/seldon-biblio/intake/seeds.yaml
+checkpoint: graphs/seldon-biblio/evidence/sel036/units.jsonl     # one fsynced line per finished unit (section 15.1)
+log: graphs/seldon-biblio/evidence/sel036/progress.txt            # progress lines, as on stdout (15.3)
+# Held bytes: under the graph's declared archive root (graph.yaml `archive.root`, squiddy DN-056 R-246), read from
+# the spec so the two never disagree. Raw captures and their text derivatives:
+archive_raw_dir: docs/raw
+archive_text_dir: docs/text
+# No contact address is sent anywhere (factory FAC-01 RESULT, "The operator's email went to external hosts").
+user_agent: "seldon-biblio/0.1 (SEL-036; https://github.com/brockwebb/seldon)"
+timeout_seconds: 30
+max_redirects: 5
+retries: 3                          # on 429 and 5xx only; a 403 is an answer (a posture), not a transient
+retry_backoff_seconds: 4            # doubled per retry
+# Seconds between two requests to one host. Semantic Scholar's unauthenticated pool is shared and throttles hard;
+# arXiv asks for 3 s (its API terms).
+host_delay_seconds: {default: 0.5, api.semanticscholar.org: 3.5, export.arxiv.org: 3.0, arxiv.org: 3.0}
+# The task's Network line (SEL-036 header). A URL, or a redirect hop, to any other host is never requested: it is
+# recorded `off_allowlist` with the host.
+allowlist: [api.openalex.org, api.crossref.org, doi.org, export.arxiv.org, arxiv.org, api.semanticscholar.org,
+            github.com, raw.githubusercontent.com, pypi.org, doorstop-dev.github.io, strictdoc.readthedocs.io,
+            sphinx-needs.readthedocs.io, cog.readthedocs.io, nedbatchelder.com, www.incose.org, www.omg.org,
+            www.iso.org, standards.ieee.org, ieeexplore.ieee.org, dl.acm.org, link.springer.com,
+            danieleades.github.io, argondigital.com]
+# The authorities, in the task's order (Part B). The first that CONFIRMS a seed ends its chain.
+authorities: [openalex, crossref, doi, semanticscholar, page]
+# Confirmation (pre-registered here before the first run): the answer's title against the seed's, by squiddy's
+# resolver-title measure (`squiddy.acquire.title_similarity`, token containment) at the graph's own floor
+# (graphs/seldon-biblio/config.yaml engine.acquire.title_match_floor, 0.6), and the years within this many.
+title_floor: 0.6
+year_tolerance: 1
+search_rows: 5                      # candidates read from one title search
+# A fetched page under this many characters of visible text, with script tags, is a JavaScript shell, not the
+# document (squiddy acquire's "failure that looks like success"; its min_text_chars for a PDF is 1200).
+min_page_text_chars: 400
+evidence_first_bytes: 200           # the response bytes a refusal's evidence keeps
+# Section 15.4 and 15.5.
+pilot_units: 6
+progress_seconds: 30
+ceiling_requests: 1500
+ceiling_wall_seconds: 3600
