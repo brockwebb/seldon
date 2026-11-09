@@ -362,3 +362,8 @@ def initialize_project(
         click.echo("  .gitignore: already ignores .env and carries the AD-039 stanza")
     for f in gitignore_findings:
         click.echo(f"  WARNING: {tracked_dirs.describe(f)}", err=True)
+    # AD-033-R13 (SEL-033): init writes no register (its template has none), and says so. `seldon project new`
+    # declares one after this step.
+    from seldon.core import decisions as dr
+    if dr.register_notice(config) is not None:
+        click.echo(f"  WARNING: {dr.NO_REGISTER_NOTICE}; {dr.NO_REGISTER_REMEDY}", err=True)

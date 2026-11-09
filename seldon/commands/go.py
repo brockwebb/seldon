@@ -611,6 +611,21 @@ def _get_project_state_section(project_dir: str) -> str:
         return "## Project State\n\n*Seldon graph not available. Project may not be initialized.*"
 
 
+def _get_register_notice(project_dir: str) -> Optional[str]:
+    """AD-033-R13 (SEL-033): the `## Decision register` section when the project declares no `decisions:` block,
+    else None. hazbrief-mcp's `seldon go` reported its state on every session for twenty days and never this.
+    Never raises: `seldon go` renders with no seldon.yaml."""
+    from seldon.core import decisions as dr
+    try:
+        config = load_project_config(project_dir)
+    except FileNotFoundError:
+        return None
+    notice = dr.register_notice(config)
+    if notice is None:
+        return None
+    return f"## Decision register\n\n**⚠ {notice}.** To fix: {dr.NO_REGISTER_REMEDY}."
+
+
 GATE_PROFILES: dict[str, dict] = {
     "academic_paper": {
         "gates": ["content_audit", "practitioner_stress_test", "bloom_depth_check", "secondary_sweep", "cascade_results", "review_synthesis"],
@@ -1081,6 +1096,11 @@ def assemble_go_context(
     # Section 5 — Project State
     sections.append(_get_project_state_section(project_dir))
 
+    # Section 5.1 — a missing decision register (AD-033-R13), only when there is none
+    register = _get_register_notice(project_dir)
+    if register is not None:
+        sections.append(register)
+
     # Section 5.5 — Audit Pipeline
     pipeline = _get_pipeline_section(project_dir)
     if pipeline is not None:
@@ -1171,6 +1191,7 @@ def assemble_go_context_as_dict(
         "latest_handoff": latest_handoff,
         "r9_notice": _get_r9_notice(project_dir),
         "project_state": project_state,
+        "decision_register": _get_register_notice(project_dir),
         "audit_pipeline": _get_pipeline_section(project_dir),
         "dispatch": _get_dispatch_section(project_dir),
         "dispatch_state": _dispatch_state(project_dir),

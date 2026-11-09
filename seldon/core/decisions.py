@@ -825,6 +825,19 @@ def apply(recs: dict[str, Record], ev: dict) -> None:
 # Configuration and the universe of registers a repository can name
 # ---------------------------------------------------------------------------
 
+#: AD-033-R13 (SEL-033): what `seldon init`, `seldon go` and `seldon verify` say of a project with no
+#: `decisions:` block. hazbrief-mcp ran twenty days, 143 tasks and seventeen design notes with none, and
+#: nothing said so (its filing SEL-031).
+NO_REGISTER_NOTICE = "no decision register declared (AD-033); rulings made in this project have no record"
+NO_REGISTER_REMEDY = ("declare one in seldon.yaml: `decisions:` with `repository: <this repository's name>`; "
+                      "then record rulings with `seldon decision propose|accept --from <record.yaml>`")
+
+
+def register_notice(config: dict) -> Optional[str]:
+    """The AD-033-R13 notice when `config` declares no `decisions:` block, else None."""
+    return None if (config or {}).get("decisions") else NO_REGISTER_NOTICE
+
+
 @dataclass
 class Settings:
     repository: str

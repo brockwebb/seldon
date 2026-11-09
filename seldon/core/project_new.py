@@ -278,6 +278,32 @@ def environment_text(project_dir: Path, cfg: dict, kit_dir: Path, dispatch: bool
     return text, added
 
 
+DECISIONS_COMMENT = (
+    "AD-033: the decision register. Records are YAML files under docs/decisions/register/, one per record event,\n"
+    "written only by `seldon decision`; docs/decisions/REGISTER.md is rendered. Declared by `seldon project new`\n"
+    "(AD-033-R13, SEL-033): a project with none has no record of its rulings, and `seldon go` and `seldon verify`\n"
+    "say so.")
+
+
+def decisions_text(project_dir: Path) -> tuple:
+    """The `seldon.yaml` text with a `decisions:` block (`repository: <the directory's name>`) when it has none
+    (AD-033-R13). Returns `(new_text or None, repository or None)`."""
+    text, config = _load(project_dir)
+    if config.get("decisions"):
+        return None, None
+    if "decisions" in config:
+        raise ProjectNewError("seldon.yaml has an empty `decisions:` key; give it `repository: <name>` or remove it")
+    name = Path(project_dir).resolve().name
+    block = "\n".join(f"# {c}" for c in DECISIONS_COMMENT.splitlines()) + "\n" + "\n".join(
+        _block_lines({"decisions": {"repository": name}}, "", {}))
+    new = text.rstrip("\n") + "\n" + block + "\n"
+    try:
+        yaml.safe_load(new)
+    except yaml.YAMLError as exc:
+        raise ProjectNewError(f"the seldon.yaml `project new` would write does not parse; nothing written: {exc}")
+    return new, name
+
+
 def check_interpreter(interpreter: str) -> None:
     """AD-037-R15: a declared interpreter must import seldon, or every check's `seldon` fails under it (SEL-016
     left hazbrief's undeclared for exactly this reason)."""

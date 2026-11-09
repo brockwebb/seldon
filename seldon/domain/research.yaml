@@ -544,13 +544,39 @@ artifact_types:
         description: "The statement's first line, for listings."
 
   SRS_Requirement:
+    # AD-013-R1 (SEL-033, AD-013 ADDENDUM 01): a requirement is graph content. Its trace is in the edges
+    # (`derived_from` its source, `verified_by` a test Script, `satisfies` from what meets it); the `trace`
+    # properties keep a load source's cells verbatim so a projection (`seldon docs generate requirements|rtm`)
+    # reproduces its wording. `trace` is neither documentation nor system: `seldon docs check` does not count it,
+    # because the edges are what is counted (AD-013-R3).
     properties:
       requirement_id:
         required: true
-        description: "Formal requirement identifier (e.g., FR-001)"
+        description: "Formal requirement identifier (e.g., FR-001); unique in the project"
       description:
         required: true
-        description: "What the requirement specifies"
+        description: "What the requirement specifies: the statement, one testable sentence (ISO/IEC/IEEE 29148)"
+      set_by:
+        category: documentation
+        description: "The governing text that set it (29148's source), verbatim, e.g. `DN-019 §3 row 2`; resolved to a `derived_from` edge where its key names an artifact"
+      document:
+        category: trace
+        description: "The projection file the requirement is an object of (a DOORS module, a ReqIF specification), relative to the project root"
+      section:
+        category: trace
+        description: "The heading the requirement sits under in its document; a projection groups by it"
+      verified_by_text:
+        category: trace
+        description: "The load source's verification cell, verbatim; the `verified_by` edges are the trace"
+      validated_by:
+        category: trace
+        description: "The review finding or operator answer that confirmed or changed it, verbatim"
+      satisfied_by_text:
+        category: trace
+        description: "The load source's satisfied-by cell, verbatim"
+      status_text:
+        category: trace
+        description: "The load source's status cell, verbatim; `requirements.status_map` maps its first word to the state"
 
   AgentRole:
     properties:
@@ -952,8 +978,13 @@ relationship_types:
     # registry derives from the notes whose decisions justify its entries (PROV-O
     # wasDerivedFrom, Entity -> Entity). Document is deliberately not an origin: AD-030
     # section 4 closes the edge set on governed-document nodes.
-    from_types: [Result, DataFile]
-    to_types: [LabNotebookEntry, Citation, Result, DesignNote]
+    #
+    # SRS_Requirement origin added (SEL-033, AD-013-R1): a requirement derives from its source (29148's source
+    # attribute, SysML's derive): the note, task, register record or decision that set it, or a parent requirement.
+    # Document as a TARGET is a requirement's source note; the origin rule above is unchanged.
+    from_types: [Result, DataFile, SRS_Requirement]
+    to_types: [LabNotebookEntry, Citation, Result, DesignNote, SRS_Requirement, Document, ResearchTask, Decision,
+               ArchitecturalDecision]
   includes_role:
     from_types: [Workflow]
     to_types: [AgentRole]
@@ -1038,7 +1069,9 @@ relationship_types:
   verified_by:
     # SEL-021 (factory F-010): a review finding -> the test that shows its fix holds. The Script stands
     # for one test node (`test_node`: `<path>::<node id>`); `seldon issue orphans` requires one on a fixed finding.
-    from_types: [Issue]
+    # SRS_Requirement origin added (SEL-033, AD-013-R1): a requirement -> the test that verifies it (SysML verify);
+    # a requirement reaches `verified` only with one, and `seldon verify` counts those without (AD-013-R3).
+    from_types: [Issue, SRS_Requirement]
     to_types: [Script]
 
   changes:
@@ -1315,11 +1348,13 @@ state_machines:
     finalized: []
 
   SRS_Requirement:
+    # `rejected` from accepted and stale added (SEL-033): a later governing text withdraws a requirement that was
+    # accepted (hazbrief-mcp's `withdrawn` rows); a verified or implemented one reaches it through stale.
     proposed: [accepted, rejected]
-    accepted: [implemented, stale]
-    implemented: [verified]
+    accepted: [implemented, stale, rejected]
+    implemented: [verified, stale]
     verified: [stale]
-    stale: [accepted]
+    stale: [accepted, rejected]
     rejected: []
 
   PipelineRun:

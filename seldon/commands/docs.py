@@ -116,6 +116,35 @@ def run_docs_check(
     return result
 
 
+def requirement_findings(project_dir: Path, driver, database: str, config: dict) -> Dict:
+    """AD-013-R3: the requirements with no `verified_by` edge (rejected ones excepted) and the declared projections
+    that differ from a fresh render. `{"total", "unverified": [ids], "projections": [findings]}`."""
+    from seldon.core import requirements as RQ
+
+    try:
+        projections = RQ.stale_projections(project_dir, driver, database, config)
+    except RQ.RequirementsError as exc:
+        projections = [str(exc)]
+    return {"total": RQ.count(driver, database),
+            "unverified": [r["id"] for r in RQ.unverified(driver, database)],
+            "projections": projections}
+
+
+def _print_requirements(req: Dict) -> None:
+    if not req or not (req.get("total") or req.get("projections")):
+        return
+    click.echo(f"REQUIREMENTS (AD-013-R3): {req['total']} in the graph")
+    if req["unverified"]:
+        ids = req["unverified"]
+        click.echo(f"  ⚠ {len(ids)} with no verified_by test: {', '.join(ids[:20])}"
+                   + (" ..." if len(ids) > 20 else "") + "  (seldon req add <id> --verified-by <path::node>)")
+    for f in req["projections"]:
+        click.echo(f"  ⚠ {f}")
+    if not req["unverified"] and not req["projections"]:
+        click.echo("  ✓ every requirement has a verifying test; every projection is current")
+    click.echo("")
+
+
 @click.group("docs")
 def docs_group():
     """Documentation completeness checking and generation."""
@@ -139,12 +168,17 @@ def docs_check(artifact_type, strict, threshold, output_json):
 
     try:
         data = run_docs_check(driver, config["neo4j"]["database"], domain_config, artifact_type)
+        if artifact_type in (None, "SRS_Requirement"):
+            data["requirements"] = requirement_findings(Path.cwd(), driver, config["neo4j"]["database"], config)
     finally:
         driver.close()
 
     if output_json:
         click.echo(json.dumps(data, indent=2))
         return
+
+    req = data.get("requirements") or {}
+    req_gaps = bool(req.get("unverified") or req.get("projections"))
 
     total = data["total_artifacts"]
     fully = data["fully_documented"]
@@ -155,6 +189,9 @@ def docs_check(artifact_type, strict, threshold, output_json):
 
     if total == 0:
         click.echo("No artifacts found.")
+        _print_requirements(req)
+        if strict and req_gaps:
+            raise SystemExit(1)
         return
 
     click.echo("\nDOCUMENTATION COMPLETENESS")
@@ -187,8 +224,9 @@ def docs_check(artifact_type, strict, threshold, output_json):
                     missing_str = ", ".join(item["missing"])
                     click.echo(f"  ⚠ {atype}/{item['name']} — missing: {missing_str}")
     click.echo("")
+    _print_requirements(req)
 
-    if strict and has_gaps:
+    if strict and (has_gaps or req_gaps):
         raise SystemExit(1)
     if threshold is not None and pct < threshold:
         raise SystemExit(1)
@@ -363,12 +401,52 @@ def _generate_docs(driver, database: str, domain_config, output_dir: Path) -> Li
 
 
 @docs_group.command("generate")
+@click.argument("view", required=False, type=click.Choice(["requirements", "rtm"]))
 @click.option("--output-dir", "output_dir", default="docs",
-              help="Output directory for generated files (default: docs/).")
-def docs_generate(output_dir):
-    """Generate reference documentation from the graph into a docs/ directory."""
+              help="Output directory for the reference files (no VIEW; default: docs/).")
+@click.option("--no-commit", is_flag=True, default=False,
+              help="VIEW: write the projections, do not commit them.")
+@click.option("--check", "check_only", is_flag=True, default=False,
+              help="VIEW: write nothing; exit 1 when a projection differs from a fresh render.")
+def docs_generate(view, output_dir, no_commit, check_only):
+    """Generate documentation from the graph.
+
+    With no VIEW: the reference files (scripts, data, results, experiments, reproduction) into --output-dir.
+    With VIEW `requirements` or `rtm`: render every projection of that kind seldon.yaml `docs.projections` declares,
+    into the blocks between its seldon:projection markers, and commit the files that changed (AD-013-R2).
+    """
     config = load_project_config()
     driver = get_neo4j_driver(config)
+    if view:
+        from seldon.core import requirements as RQ
+        project_dir = Path.cwd()
+        try:
+            rendered = RQ.render_all(project_dir, driver, config["neo4j"]["database"], config, kind=view)
+        except RQ.RequirementsError as exc:
+            click.echo(f"REFUSED: {exc}", err=True)
+            raise SystemExit(1)
+        finally:
+            driver.close()
+        for r in rendered:
+            state = "differs" if r.changed else "current"
+            click.echo(f"  {r.path}: graph revision {r.revision} ({state})"
+                       + (f"; {len(r.unplaced)} requirement(s) appended in new blocks" if r.unplaced else ""))
+        if check_only:
+            if any(r.changed for r in rendered):
+                raise SystemExit(1)
+            return
+        out = RQ.write_and_commit(project_dir, rendered, commit=not no_commit)
+        if out.get("committed"):
+            click.echo(f"committed {out['commit']}: {', '.join(out['written'])}")
+        elif out["written"]:
+            click.echo(f"wrote {', '.join(out['written'])}; not committed ({out.get('reason')}"
+                       + (f": {out.get('stderr')}" if out.get("stderr") else "") + ")")
+            if out.get("reason") not in ("no_commit",):
+                raise SystemExit(1)
+        else:
+            click.echo("every projection is current; nothing written")
+        return
+
     domain_config = _get_domain_config(config)
     out_path = Path(output_dir)
 

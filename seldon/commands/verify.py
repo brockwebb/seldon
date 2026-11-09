@@ -210,8 +210,10 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
     rationale, a hand-edited REGISTER.md, a stale projection, or a task bound to a record that
     does not bind (AD-033-R2, R4, R7).
 
-    A project with no `decisions:` block in seldon.yaml passes and says so: the register is per
-    repository, and only squiddy, seldon and arnold keep one (AD-033-R1).
+    A project with no `decisions:` block in seldon.yaml WARNS (AD-033-R13, SEL-033): AD-033-R1 makes the
+    register every task-registering repository's, and hazbrief-mcp ran twenty days with none and nothing
+    said so. A warning, not a failure: declaring the register is the project's own one-block act, and a
+    Tier A failure would hold every task of a project that has not made it yet.
 
     Returns:
         A CheckResult named "Decision register". Fixable when every finding is one the projection
@@ -225,8 +227,8 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
     except dr.RegisterError as exc:
         return CheckResult(name="Decision register", symbol="fail", summary=str(exc))
     if s is None:
-        return CheckResult(name="Decision register", symbol="pass",
-                           summary="No decision register in this project — skipping (AD-033-R1)")
+        return CheckResult(name="Decision register", symbol="warn", summary=dr.NO_REGISTER_NOTICE,
+                           details=[dr.NO_REGISTER_REMEDY])
     try:
         findings = dr.check(project_dir, config)
     except (dr.RegisterError, dr.BrokenRegister) as exc:
@@ -266,6 +268,41 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
     return CheckResult(name="Decision register", symbol="fail",
                        summary=f"{len(findings)} register finding(s)", details=findings[:25],
                        fixable=fixable_only)
+
+
+# ---------------------------------------------------------------------------
+# Check 15b: requirements (AD-013-R3, SEL-033)
+# ---------------------------------------------------------------------------
+
+def check_requirements(driver, database: str, project_dir: Path, config: dict) -> CheckResult:
+    """Warn on a requirement with no `verified_by` test (rejected ones excepted) and on a declared projection that
+    differs from a fresh render (AD-013-R3).
+
+    Advisory, as a stale Result is: an unverified requirement is a property of the project's history, not of the
+    change in hand, so it is not Tier A. A project with no requirement and no projection passes.
+    """
+    from seldon.core import requirements as RQ
+
+    try:
+        total = RQ.count(driver, database)
+        missing = RQ.unverified(driver, database)
+        stale = RQ.stale_projections(project_dir, driver, database, config)
+    except RQ.RequirementsError as exc:
+        return CheckResult(name="Requirements", symbol="warn", summary=str(exc)[:300])
+    if total == 0 and not stale:
+        return CheckResult(name="Requirements", symbol="pass", summary="No requirements in the graph")
+    details = []
+    if missing:
+        details.append(f"{len(missing)} with no verified_by test (first: "
+                       f"{', '.join(r['id'] for r in missing[:10])}); `seldon req add <id> --verified-by "
+                       f"<path::node>`")
+    details.extend(stale)
+    if not details:
+        return CheckResult(name="Requirements", symbol="pass",
+                           summary=f"{total} requirement(s), each verified by a test; projections current")
+    return CheckResult(name="Requirements", symbol="warn",
+                       summary=f"{total} requirement(s): {len(missing)} unverified, {len(stale)} projection "
+                               f"finding(s)", details=details[:25])
 
 
 # ---------------------------------------------------------------------------
@@ -2058,6 +2095,7 @@ def _run_all_checks(
         check_governed(driver, database, project_dir, config),
         check_binding_constraints(driver, database, project_dir, config),
         check_decisions(driver, database, project_dir, config),
+        check_requirements(driver, database, project_dir, config),
         check_prior_art(project_dir, config),
         check_commit_hook(project_dir, config),
         check_tracked_dirs(project_dir, config),

@@ -120,6 +120,14 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
             steps.append(PN.Step("environment", "changed", f"seldon.yaml + {', '.join(added)}", ["seldon.yaml"]))
         else:
             steps.append(PN.Step("environment", "ok", "environment, secret scan and stations present"))
+        # 4b. the decision register (AD-033-R13, SEL-033): declared by default, so a project's rulings have a record
+        dec_text, repo = PN.decisions_text(project_dir)
+        if dec_text is not None:
+            (project_dir / "seldon.yaml").write_text(dec_text, encoding="utf-8")
+            steps.append(PN.Step("decisions", "changed", f"seldon.yaml + decisions.repository {repo}",
+                                 ["seldon.yaml"]))
+        else:
+            steps.append(PN.Step("decisions", "ok", "decision register declared"))
         absent = PN.missing_siblings(project_dir, cfg["environment_packages"])
         if absent:
             steps.append(PN.Step("environment", "refused",

@@ -123,6 +123,8 @@ def test_go_json_output_has_expected_keys(tmp_path):
         # reported at the next orient, so the key is part of the contract.
         "r9_notice",
         "project_state",
+        # AD-033-R13 (SEL-033): the missing-register notice, None for a project that declares one.
+        "decision_register",
         "audit_pipeline",
         # The standing dispatcher's state (DN-006 decision 5 of the cadence task). Present for
         # every project and None for one with no `dispatch:` block — a key that appeared only
