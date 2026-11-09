@@ -764,6 +764,90 @@ def pending_stop(records: list) -> dict | None:
     return None
 
 
+# ------------------------------------------------------------------ a terminal task stops its session (SEL-034 A)
+
+#: SEL-034 Part A (AD-037-R16): the ResearchTask states in which a running session's work is no longer wanted. A task
+#: moved to one of them by another hand while its session runs has its session refused at the next tool boundary.
+#: hazbrief HB-140 was withdrawn five minutes after launch and its session ran on for ninety (SEL-030).
+TERMINAL_TASK_STATES = ("withdrawn", "superseded", "rejected", "verified")
+#: The reason a terminal task's hard stop and its `andon_halted` carry.
+STOP_REASON_TASK_TERMINAL = "task_terminal"
+EVENT_STATE_CHANGED = "artifact_state_changed"
+
+
+def _state_change(event: dict) -> tuple:
+    """`(artifact_id, from_state, to_state)` of an `artifact_state_changed` line, current or legacy (flat) shape."""
+    p = event.get("payload") or {}
+    return (p.get("artifact_id") or event.get("artifact_id"), p.get("from_state") or event.get("from_state"),
+            p.get("to_state") or event.get("to_state"))
+
+
+def terminal_transition(events: list, task_id: str, own_session: str | None) -> dict | None:
+    """The task's newest state change when it moved the task into `TERMINAL_TASK_STATES` by another hand, else None.
+
+    Another hand is any writer but the session itself: the session's own events carry its `SELDON_SESSION_ID` as
+    their `session_id` (`seldon.config.get_current_session`), so a session that withdraws its own task (its premise
+    turned out false) is not halted by its own act. The event log is read, not the graph: the graph is its projection
+    (AD-038-R1), and every terminal transition (CLI, MCP, the dispatcher) appends its line before it projects."""
+    last = None
+    for e in events:
+        if e.get("event_type") == EVENT_STATE_CHANGED and _state_change(e)[0] == task_id:
+            last = e
+    if last is None:
+        return None
+    _, before, state = _state_change(last)
+    if state not in TERMINAL_TASK_STATES or (own_session and last.get("session_id") == own_session):
+        return None
+    return {"state": state, "from_state": before, "actor": last.get("actor"), "event_id": last.get("event_id"),
+            "session_id": last.get("session_id"), "at": _ts(last)}
+
+
+def terminal_stop_due(events: list, task_id: str) -> dict | None:
+    """The hard `session_stop` payload to write for a running session whose task went terminal, or None.
+
+    Due when the task's newest launch has no `dispatch_finished` after it (the session is still the dispatcher's),
+    the task is terminal by a hand other than that session's, and no `task_terminal` stop was written since the
+    launch. `seldon task withdraw|supersede` (via `artifacts.transition_task`) write it at once, the signal; the
+    holder's inspection writes it when a transition came another way. Its reap is the backstop to the tool gate."""
+    launch = last_launch(events, task_id)
+    if launch is None:
+        return None
+    since, lp = _ts(launch), launch.get("payload") or {}
+    for e in events:
+        p = e.get("payload") or {}
+        if p.get("task_id") != task_id or _ts(e) < since:
+            continue
+        if e.get("event_type") == "dispatch_finished":
+            return None
+        if e.get("event_type") == EVENT_SESSION_STOP and p.get("reason") == STOP_REASON_TASK_TERMINAL:
+            return None
+    term = terminal_transition(events, task_id, lp.get("child_session_id"))
+    if term is None:
+        return None
+    return {"task_id": task_id, "station": "dispatcher", "kind": "hard", "reason": STOP_REASON_TASK_TERMINAL,
+            "by": term["actor"] or "unknown", "reading": term}
+
+
+def signal_terminal(project_dir: Path, task_id: str, actor: str) -> dict | None:
+    """Write the `task_terminal` hard stop now, when one is due (`terminal_stop_due`). Returns the event or None.
+
+    Called after a ResearchTask moves into a terminal state from `in_progress`. Never raises on its bookkeeping: the
+    transition already landed, and the holder's inspection writes the same stop if this could not."""
+    from seldon.core.events import append_event, make_event, read_events
+    try:
+        payload = terminal_stop_due(read_events(project_dir), task_id)
+        if payload is None:
+            return None
+        ev = make_event(event_type=EVENT_SESSION_STOP, actor=actor, authority="accepted", payload=payload)
+        append_event(project_dir, ev)
+        return ev
+    except (OSError, ValueError) as exc:
+        import logging
+        logging.getLogger(__name__).warning("task_terminal stop for %s not written: %s; the holder's inspection "
+                                            "writes it", task_id[:8], exc)
+        return None
+
+
 def open_huddles(events: list) -> list:
     """Huddles with no `huddle_closed` and a reading, cause or gate still missing (FC-29: a huddle names all
     three). Each row is the huddle's payload plus its timestamp."""
@@ -1055,6 +1139,12 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
         d = disk()
         if not d.get("ok", True):
             stop("dispatcher", "hard", "disk_ceiling", reading=d)
+    # SEL-034 Part A (AD-037-R16): a task moved to a terminal state by another hand while its session runs. The
+    # transition's own signal usually wrote this stop already; this covers one that came another way.
+    term = terminal_stop_due(events, task_id)
+    if term is not None:
+        emit(EVENT_SESSION_STOP, term)
+        out["stops"].append(term)
 
     # (d) the reap: a hard stop with no `andon_halted` within the reap interval, of a session whose log has not
     # grown for that interval either (DISP-001R Part B step 3). A session writing to its log is alive and is given
@@ -1070,7 +1160,9 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
             if age < wait_s:
                 continue
             growth = log_growth_s(log, now)
-            if growth is not None and growth < wait_s:
+            # SEL-034 (AD-037-R16): a terminal task's session is not given more time for writing to its log. Its
+            # work is unwanted, and HB-140's log grew the whole ninety minutes it ran on after its withdrawal.
+            if growth is not None and growth < wait_s and p.get("reason") != STOP_REASON_TASK_TERMINAL:
                 out["reap_deferred"] = {"stop_event_id": e["event_id"], "age_s": round(age, 1), "wait_s": wait_s,
                                         "last_log_growth_s": round(growth, 1)}
                 break

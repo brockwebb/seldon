@@ -427,6 +427,11 @@ def stop_gate_command(project):
     launch = _hook_launch(project_dir, events)
     if launch is None:
         return
+    lp = launch["payload"]
+    if S.terminal_transition(events, lp["task_id"], lp.get("child_session_id")) is not None:
+        # SEL-034 Part A: the task ended under the session, so no check is run and nothing holds the session; the
+        # finish keeps the worktree unmerged whatever a gate would say.
+        return
     cwd = Path(hook.get("cwd") or os.getcwd())
     tree = _session_tree(cwd)
     cfg = D.load_dispatch_config(project_dir)
@@ -454,23 +459,80 @@ TOOL_GATE_EVENTS = (D.EVENT_LAUNCHED, S.EVENT_SESSION_STOP, S.EVENT_ANDON_HALTED
 
 
 def _tool_gate_events(project_dir: Path) -> list:
+    return _tool_gate_read(project_dir)[0]
+
+
+def _tool_gate_read(project_dir: Path) -> tuple:
+    """`(events, state_lines)`: the gate's event types parsed, and every `artifact_state_changed` line left as text
+    (SEL-034 Part A), so only the lines naming the session's task are parsed once the launch says which task it is.
+    One read of the store per tool call, as before; no graph connection in the hook."""
     from seldon.core.events import _events_path
 
     path = _events_path(project_dir)
     if not path.is_file():
-        return []
+        return [], []
     marks = tuple(f'"{t}"' for t in TOOL_GATE_EVENTS)
-    out = []
+    state_mark = f'"{S.EVENT_STATE_CHANGED}"'
+    out, states = [], []
     with path.open("r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            if any(m in line for m in marks):
+            if state_mark in line:
+                states.append(line)
+            elif any(m in line for m in marks):
                 try:
                     e = json.loads(line)
                 except json.JSONDecodeError:
                     continue
                 if e.get("event_type") in TOOL_GATE_EVENTS:
                     out.append(e)
+    return out, states
+
+
+def _task_state_events(lines: list, task_id: str) -> list:
+    out = []
+    for line in lines:
+        if task_id in line:
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
     return out
+
+
+def _deny(reason: str, end: bool = False) -> None:
+    body = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                   "permissionDecisionReason": reason}}
+    if end:
+        # Claude Code's common hook output: `continue: false` ends the session after this hook (SEL-034 Part A).
+        body.update({"continue": False, "stopReason": reason})
+    click.echo(json.dumps(body))
+
+
+def _terminal_gate(project_dir: Path, hook: dict, launch: dict, events: list, state_lines: list) -> bool:
+    """SEL-034 Part A (AD-037-R16): refuse the call and end the session when its task went terminal by another hand.
+    Records `andon_halted` (reason `task_terminal`) once per launch, answering the `task_terminal` stop if one is
+    written. Every later call of the same session is refused too: nothing the session does now is wanted."""
+    lp = launch["payload"]
+    task_id = lp["task_id"]
+    term = S.terminal_transition(_task_state_events(state_lines, task_id), task_id, lp.get("child_session_id"))
+    if term is None:
+        return False
+    records = S.task_records(events, task_id, S._ts(launch))
+    halted = [e for e in records if e.get("event_type") == S.EVENT_ANDON_HALTED
+              and (e.get("payload") or {}).get("stop_reason") == S.STOP_REASON_TASK_TERMINAL]
+    if not halted:
+        stop = next((e for e in records if e.get("event_type") == S.EVENT_SESSION_STOP
+                     and (e.get("payload") or {}).get("reason") == S.STOP_REASON_TASK_TERMINAL), None)
+        _emit(project_dir, S.EVENT_ANDON_HALTED,
+              {"task_id": task_id, "stop_event_id": stop["event_id"] if stop else None, "at": "tool boundary",
+               "tool_name": hook.get("tool_name"), "stop_reason": S.STOP_REASON_TASK_TERMINAL, "stop_kind": "hard",
+               "task_state": term["state"], "by": term["actor"], "transition_event_id": term["event_id"]},
+              actor=resolve_cli_actor())
+    _deny(f"HALT: task {task_id[:8]} is {term['state']} (set by {term['actor']} at {term['at']}, event "
+          f"{(term['event_id'] or '')[:8]}). Its work is no longer wanted: this tool call and every later one is "
+          f"refused, `andon_halted` is recorded with reason task_terminal, and the session ends now. Nothing on this "
+          f"branch will be merged.", end=True)
+    return True
 
 
 @dispatch_group.command("tool-gate", hidden=True)
@@ -485,9 +547,11 @@ def tool_gate_command(project):
     Every other call, and every call of a session the dispatcher did not launch, proceeds untouched."""
     hook = _hook_input()
     project_dir = Path(project).resolve()
-    events = _tool_gate_events(project_dir)
+    events, state_lines = _tool_gate_read(project_dir)
     launch = _hook_launch(project_dir, events)
     if launch is None:
+        return
+    if _terminal_gate(project_dir, hook, launch, events, state_lines):
         return
     task_id = launch["payload"]["task_id"]
     stop = S.pending_hard_stop(S.task_records(events, task_id, S._ts(launch)))
@@ -502,8 +566,7 @@ def tool_gate_command(project):
               f"({p.get('reason')}; reading {json.dumps(p.get('reading'), default=str)[:400]}). This tool call is "
               f"refused and `andon_halted` is recorded. Write the RESULT with what stands, commit it on this "
               f"branch, and end the session.")
-    click.echo(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                                                  "permissionDecisionReason": reason}}))
+    _deny(reason)
 
 
 @dispatch_group.command("classifier-denied", hidden=True)

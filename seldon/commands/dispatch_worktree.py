@@ -48,6 +48,7 @@ import seldon
 from seldon.commands import dispatch as S
 from seldon.core import dispatch as D
 from seldon.core import gate_record as GR
+from seldon.core import kept_events as KE
 from seldon.core import worktree as WT
 from seldon.core.artifacts import create_artifact, create_link, update_artifact, walk_to_completed
 
@@ -402,6 +403,10 @@ def _reap_stale(project_dir, driver, database, domain_config, session_id, cfg,
         S._emit(project_dir, session_id, D.EVENT_FINISHED, finish)
         S._block(project_dir, driver, database, domain_config, session_id, r["task_id"],
                  "in_progress", None, log_rel, reason=S.block_reason(outcome, None, log_rel))
+        # SEL-034 Part B: a holder that died leaves a kept tree like any unmerged finish.
+        from seldon.config import load_project_config
+        _reconcile_at_finish(project_dir, load_project_config(project_dir), driver, database, domain_config,
+                             session_id, finish, outcome)
         click.echo(f"STALE: {r['task_id'][:8]} {r['stem']}: supervisor {finish['holder']} is "
                    f"gone ({outcome}); blocked; worktree {body.get('worktree')} and lease kept "
                    f"(`seldon dispatch lease reap --task {r['stem']}`)", err=True)
@@ -727,6 +732,13 @@ def finish_session(project_dir, config, driver, database, domain_config, session
                 _finish_unmerged(project_dir, config, driver, database, domain_config,
                                  session_id, cfg, finish, name, "classifier_breaker")
             return
+        if graph_state in S.QS.TERMINAL_TASK_STATES:
+            # SEL-034 Part A: the task ended under its session (HB-140, SEL-030). Nothing merges whatever its gate
+            # said; the kept tree's events are discarded on record by the unmerged finish (Part B).
+            with lease_cm():
+                _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                 {**finish, "task_terminal": graph_state}, name, "session_failed")
+            return
         if not gate["passed"]:
             # Part C: a session the CLI let end with a declared Part's check failing (its block cap, or the token
             # ceiling) is not merged; the work stays on its branch with the failing commands named.
@@ -793,6 +805,7 @@ def _finish_launch_failed(project_dir, config, driver, database, domain_config, 
         R.redrive(project_dir, driver, database, domain_config, task_id, actor=S.ACTOR, session_id=session_id)
     after = S._state_of(driver, database, task_id)
     _record_kept(project_dir, session_id, finish, "launch_failed", line)
+    _reconcile_at_finish(project_dir, config, driver, database, domain_config, session_id, finish, "launch_failed")
     click.echo(f"finished {task_id[:8]} launch_failed exit={finish.get('exit_code')} -> {after}"
                f"{' (repeat, not notified)' if repeat else ''}: {line}", err=True)
     if not repeat:
@@ -810,6 +823,8 @@ def _finish_unreadable(project_dir, config, driver, database, domain_config, ses
              finish.get("exit_code"), finish["log_path"],
              reason=S.block_reason("database_unavailable", finish.get("exit_code"), finish["log_path"]))
     _record_kept(project_dir, session_id, finish, "database_unavailable", "database_unavailable")
+    _reconcile_at_finish(project_dir, config, driver, database, domain_config, session_id, finish,
+                         "database_unavailable")
     click.echo(f"finished {finish['task_id'][:8]} database_unavailable -> blocked; worktree "
                f"{finish['worktree']} kept", err=True)
     S._notify(project_dir, session_id, cfg, {**record, "wall_clock_s": record["wall_clock_s"] or 0}, name,
@@ -903,6 +918,20 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                              "duplicate_ids": check["duplicates"]}
         return bad
 
+    reconciled = KE.reconciled_ids(project_dir, S._store_rel(config), finish["task_id"])
+
+    def dedupe():
+        """SEL-034 Part B: the branch's copies of lines already reconciled into main are dropped (committed on the
+        branch) before the union check reads the tip. Returns the new tip, or None when nothing was dropped."""
+        if not reconciled:
+            return None
+        out = KE.drop_reconciled(wt, S._store_rel(config), reconciled, name)
+        if out["dropped"]:
+            S._emit(project_dir, session_id, "kept_events_deduped",
+                    {"task_id": finish["task_id"], "event_ids": out["dropped"], "commit": out["commit"],
+                     "stderr": out["stderr"] or None})
+        return out["commit"]
+
     for attempt in range(1, cfg["merge_attempts"] + 1):
         # Every round, not once: a gate that rewrote a tracked file would otherwise surface
         # as a rebase failure with no file named.
@@ -931,7 +960,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 regated, gate = True, _gate(project_dir, cfg, wt, stem)
                 if not gate["ok"]:
                     return blocked("regate_red", overlap, gate=gate, attempt=attempt)
-        tip = WT.rev(wt, "HEAD")
+        tip = dedupe() or WT.rev(wt, "HEAD")
         bad = union_bad(tip, main_sha, writes)
         if bad:
             return blocked("union_invalid", sorted(bad), union=bad)
@@ -963,7 +992,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 if not rb["ok"]:
                     return unmerged("rebase_conflict", rb["conflicts"],
                                     stderr=rb["stderr"][-500:], attempt=attempt)
-                tip, main_sha = WT.rev(wt, "HEAD"), now
+                tip, main_sha = dedupe() or WT.rev(wt, "HEAD"), now
                 bad = union_bad(tip, main_sha, writes)
                 if bad:
                     return unmerged("union_invalid", sorted(bad), union=bad)
@@ -1481,6 +1510,7 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
     if outcome == "stop_gate_unpassed":
         reason = f"stop_gate_unpassed: {(finish.get('stop_gate') or {}).get('why')}"
     _record_kept(project_dir, session_id, finish, outcome, reason)
+    _reconcile_at_finish(project_dir, config, driver, database, domain_config, session_id, finish, outcome)
     after = S._state_of(driver, database, task_id)
     if state == "in_progress" and after != "blocked":
         click.echo(f"BLOCK FAILED for {task_id[:8]}: the task is still {after}; the next "
@@ -1557,6 +1587,164 @@ def _result_reason(project_dir: Path, branch: str, result_rel: str) -> str | Non
         if s and not s.startswith("#"):
             return s[:RESULT_REASON_CHARS]
     return None
+
+
+#: Who the reconcile's compensating writes and closures are by.
+RECONCILE_ACTOR = "dispatcher"
+
+
+def _live_nodes(driver, database: str, ids: set) -> dict:
+    """`{id: {"state", "type", "props", "links"}}` as the live graph holds each artifact now; an absent id is left out.
+    `links` are the node's outgoing `(from, REL, to)` edges to other artifacts, as `kept_events.log_state` keys them."""
+    out = {}
+    with driver.session(database=database) as s:
+        for aid in sorted(ids):
+            r = s.run("MATCH (a:Artifact {artifact_id: $id}) "
+                      "OPTIONAL MATCH (a)-[r]->(b:Artifact) "
+                      "RETURN properties(a) AS props, labels(a) AS labels, "
+                      "collect([type(r), b.artifact_id]) AS links", id=aid).single()
+            if r is None or r["props"] is None:
+                continue
+            props = dict(r["props"])
+            out[aid] = {"state": props.get("state"),
+                        "type": next((x for x in r["labels"] if x != "Artifact"), None),
+                        "props": props,
+                        "links": {(aid, t, b) for t, b in r["links"] if t and b}}
+    return out
+
+
+def _close_created_issue(project_dir, driver, database, domain_config, session_id, aid: str, node: dict,
+                         note: str) -> dict:
+    """A created Issue the discard closes: walked to `open` if it must be, then to `wont_fix` with `note`."""
+    from seldon.core.artifacts import transition_state
+    from seldon.core.kept_events import ISSUE_TO_OPEN
+    state, walked = node.get("state"), []
+    update_artifact(project_dir=project_dir, driver=driver, database=database, artifact_id=aid,
+                    properties={"resolution_notes": note}, actor=RECONCILE_ACTOR, authority="accepted",
+                    session_id=session_id)
+    for nxt in ISSUE_TO_OPEN.get(state, []) + ["wont_fix"]:
+        transition_state(project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+                         artifact_id=aid, artifact_type="Issue", current_state=state, new_state=nxt,
+                         actor=RECONCILE_ACTOR, authority="accepted", session_id=session_id)
+        walked.append(f"{state} -> {nxt}")
+        state = nxt
+    return {"artifact_id": aid, "path": walked}
+
+
+def reconcile_kept_events(project_dir: Path, config: dict, driver, database: str, domain_config, session_id,
+                          finish: dict, outcome: str) -> dict | None:
+    """SEL-034 Part B (AD-038-R25): the kept session's event lines main's store lacks reach it, or are discarded on
+    record (`seldon.core.kept_events` states the rule and its prior art). Returns the record written, or None when the
+    kept store holds nothing main lacks.
+
+    Called at every kept finish, under the pass lease, before the finish's own record commit; and by
+    `seldon dispatch reconcile-kept` for a tree kept before this build. Idempotent: a line main now holds, or one an
+    earlier discard named, is not taken again."""
+    from seldon.core import kept_events as K
+    from seldon.core.artifacts import remove_link, transition_state
+    from seldon.core.events import read_events
+
+    task_id = finish["task_id"]
+    store = S._store_rel(config)
+    lines = K.worktree_lines(project_dir, finish.get("worktree"), finish.get("branch"), store)
+    missing = K.missing_from_main(project_dir, lines, store)
+    if not missing:
+        return None
+    state = S._state_of(driver, database, task_id)
+    base = {"task_id": task_id, "worktree": finish.get("worktree"), "branch": finish.get("branch"),
+            "outcome": outcome, "task_state": state}
+    malformed = [raw[:200] for raw, ev in missing if ev is None]
+    if state not in K.DISCARD_STATES:
+        K.append_raw(project_dir, store, [raw for raw, ev in missing if ev is not None])
+        record = {**base, "count": len(missing) - len(malformed),
+                  "event_ids": [ev.get("event_id") for _, ev in missing if ev is not None and ev.get("event_id")],
+                  "store": store, "malformed": malformed}
+        S._emit(project_dir, session_id, K.EVENT_RECONCILED, record)
+        click.echo(f"reconcile: {record['count']} event line(s) of kept {finish.get('worktree')} union-merged into "
+                   f"{store} ({outcome}; task {state})")
+        return record
+    parts = K.split(missing)
+    K.append_raw(project_dir, store, [raw for raw, _ in parts["carried"]])
+    stem = Path(finish.get("source_file") or finish.get("worktree") or task_id).stem
+    evidence = K.write_evidence(project_dir, stem, parts["discarded"])
+    logged = K.log_state(read_events(project_dir))
+    ids = set().union(*(K.touched(ev) for _, ev in parts["discarded"] if ev is not None)) | set(parts["created"])
+    live = _live_nodes(driver, database, ids)
+    plan = K.plan_compensations(parts["discarded"], logged, live)
+    done, unreconciled = [], list(plan["unreconciled"])
+
+    def attempt(kind, row, fn, sink=done):
+        try:
+            fn()
+            sink.append({"kind": kind, **row})
+        except Exception as exc:                                    # noqa: BLE001 - recorded on the event, not lost
+            unreconciled.append({**row, "kind": kind, "why": f"{type(exc).__name__}: {str(exc)[:300]}"})
+
+    for row in plan["transitions"]:
+        attempt("transition", row, lambda r=row: transition_state(
+            project_dir=project_dir, driver=driver, database=database, domain_config=domain_config,
+            artifact_id=r["artifact_id"], artifact_type=r["artifact_type"], current_state=r["from_state"],
+            new_state=r["to_state"], actor=RECONCILE_ACTOR, authority="accepted", session_id=session_id))
+    for row in plan["updates"]:
+        attempt("update", row, lambda r=row: update_artifact(
+            project_dir=project_dir, driver=driver, database=database, artifact_id=r["artifact_id"],
+            properties=r["properties"], actor=RECONCILE_ACTOR, authority="accepted", session_id=session_id))
+    for row in plan["unlinks"]:
+        attempt("unlink", row, lambda r=row: remove_link(
+            project_dir=project_dir, driver=driver, database=database, from_id=r["from_id"], to_id=r["to_id"],
+            rel_type=r["rel_type"], actor=RECONCILE_ACTOR, authority="accepted", session_id=session_id))
+    name = _task_name(driver, database, task_id) or stem
+    note = (f"{K.PREMISE_FALSE}: created by the dispatched session of task {name} ({task_id[:8]}), which was "
+            f"{state} while the session ran; its work is not wanted, so this Issue is closed (SEL-034, AD-038-R25).")
+    closed = []
+    for aid in parts["created"]:
+        node = live.get(aid)
+        if not node or node.get("type") != "Issue" or node.get("state") in K.ISSUE_CLOSED_STATES:
+            continue
+        attempt("close_issue", {"artifact_id": aid},
+                lambda a=aid, n=node: closed.append(_close_created_issue(
+                    project_dir, driver, database, domain_config, session_id, a, n, note)), sink=[])
+    committed = commit_paths_on_main(project_dir, [evidence],
+                                     f"evidence: {len(parts['discarded'])} event line(s) of {name} discarded "
+                                     f"({state}; SEL-034, AD-038-R25)\n\nThe kept worktree {finish.get('worktree')} "
+                                     f"wrote them while its task was {state}; `events_discarded` names them.")
+    record = {**base, "count": len(parts["discarded"]),
+              "event_ids": [(ev or {}).get("event_id") for _, ev in parts["discarded"]],
+              "evidence": evidence, "evidence_commit": committed.get("commit"),
+              "carried_ids": [ev.get("event_id") for _, ev in parts["carried"]],
+              "created": parts["created"], "issues_closed": closed, "compensations": done,
+              "unreconciled": unreconciled, "malformed": malformed}
+    S._emit(project_dir, session_id, K.EVENT_DISCARDED, record)
+    click.echo(f"reconcile: {record['count']} event line(s) of kept {finish.get('worktree')} discarded to {evidence} "
+               f"(task {state}); {len(record['carried_ids'])} carried, {len(done)} compensation(s), "
+               f"{len(closed)} Issue(s) closed, {len(unreconciled)} unreconciled", err=bool(unreconciled))
+    return record
+
+
+def commit_paths_on_main(project_dir: Path, paths: list, message: str) -> dict:
+    """Commit `paths` alone on the primary checkout through its hooks. `{committed, commit}` or `{committed: False,
+    reason, stderr}`, shown on stderr: an uncommitted evidence file is c7 dirt the next pass names, never silent."""
+    added = WT.git(project_dir, "add", "--", *paths)
+    done = added if added.returncode != 0 else WT.git(project_dir, "commit", "-q", "-m", message, "--", *paths)
+    if done.returncode != 0:
+        err = (done.stderr or done.stdout).strip()
+        click.echo(f"evidence: {', '.join(paths)} NOT committed: {err[-300:]}", err=True)
+        return {"committed": False, "commit": None, "reason": "git_failed", "stderr": err[-500:]}
+    return {"committed": True, "commit": WT.rev(project_dir, "HEAD")}
+
+
+def _reconcile_at_finish(project_dir, config, driver, database, domain_config, session_id, finish, outcome) -> None:
+    """The kept finish's call: a reconcile that cannot run is recorded and shown, never allowed to undo the finish."""
+    if driver is None:
+        return
+    try:
+        reconcile_kept_events(project_dir, config, driver, database, domain_config, session_id, finish, outcome)
+    except Exception as exc:                                        # noqa: BLE001 - recorded, the finish stands
+        S._emit(project_dir, session_id, "kept_events_unreconciled",
+                {"task_id": finish["task_id"], "worktree": finish.get("worktree"), "outcome": outcome,
+                 "error": f"{type(exc).__name__}: {str(exc)[:300]}"})
+        click.echo(f"reconcile: kept {finish.get('worktree')} NOT reconciled: {exc}; "
+                   f"`seldon dispatch reconcile-kept {finish['task_id'][:8]}` retries", err=True)
 
 
 def _record_kept(project_dir: Path, session_id, finish: dict, outcome: str, reason: str) -> None:

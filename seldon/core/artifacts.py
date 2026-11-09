@@ -916,6 +916,12 @@ def transition_task(
         block_reason=block_reason,
     )
     commit_writes(project_dir, driver, database, writes)
+    if current_state == "in_progress":
+        # SEL-034 Part A (AD-037-R16): a task ended while its dispatched session runs signals the dispatcher with a
+        # `task_terminal` hard stop, which the session's tool gate delivers and the holder reaps if it is not.
+        from seldon.core import stations
+        if new_state in stations.TERMINAL_TASK_STATES:
+            stations.signal_terminal(Path(project_dir), artifact_id, actor)
     return warnings
 
 

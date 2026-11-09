@@ -961,6 +961,65 @@ def dispatch_regate(task):
     click.echo(f"regated {task_id[:8]}: {len(rec['checks'])} check(s) pass; handed to the merge path")
 
 
+@dispatch_group.command("reconcile-kept")
+@click.argument("task")
+@click.option("--dry-run", is_flag=True, help="Report what main's store lacks and which branch applies; write nothing.")
+def dispatch_reconcile_kept(task, dry_run):
+    """Reconcile a kept worktree's events with main's store (SEL-034 Part B, AD-038-R25).
+
+    TASK is an artifact id, a unique id prefix, or the task file's stem. Reads the task's newest `worktree_kept`
+    record, takes the lines its tree's `seldon_events.jsonl` (on disk, and on its branch) holds that main's store
+    lacks, and union-merges them into main's store, or, when the task is withdrawn, superseded or rejected, writes
+    them to `docs/evidence/<task stem>/discarded_events.jsonl`, compensates their effects in the live graph and closes
+    the Issues the session created. Every kept finish runs the same step; this is for a tree kept before it existed,
+    or one whose reconcile failed (`kept_events_unreconciled`). Takes the pass lease.
+    """
+    from seldon.commands import dispatch_worktree as W
+    from seldon.core import kept_events as K
+    from seldon.core.events import read_events
+    project_dir, config, driver, database, domain_config, session_id = _open_project()
+    cfg = D.load_dispatch_config(project_dir)
+    try:
+        task_id = _resolve_task(driver, database, task)
+        if task_id is None:
+            raise click.ClickException(f"no ResearchTask matches {task!r}")
+        kept = [e["payload"] for e in read_events(project_dir)
+                if e.get("event_type") == D.EVENT_WORKTREE_KEPT and (e.get("payload") or {}).get("task_id") == task_id]
+        if not kept:
+            raise click.ClickException(f"{task_id[:8]} has no `worktree_kept` record: nothing was kept")
+        k = kept[-1]
+        launch = next((e["payload"] for e in reversed(read_events(project_dir))
+                       if e.get("event_type") == D.EVENT_LAUNCHED and (e.get("payload") or {}).get("task_id") == task_id),
+                      {})
+        finish = {"task_id": task_id, "worktree": k.get("worktree"), "branch": k.get("branch"),
+                  "source_file": launch.get("source_file")}
+        if dry_run:
+            store = _store_rel(config)
+            missing = K.missing_from_main(project_dir, K.worktree_lines(project_dir, k.get("worktree"),
+                                                                        k.get("branch"), store), store)
+            state = _state_of(driver, database, task_id)
+            click.echo(json.dumps({"task_id": task_id, "task_state": state, "worktree": k.get("worktree"),
+                                   "branch": k.get("branch"),
+                                   "branch_taken": "discard" if state in K.DISCARD_STATES else "union",
+                                   "missing": [((ev or {}).get("event_id"), (ev or {}).get("event_type"))
+                                               for _, ev in missing]}, indent=1))
+            return
+        try:
+            with W._pass_lease(project_dir, cfg):
+                out = W.reconcile_kept_events(project_dir, config, driver, database, domain_config, session_id,
+                                              finish, k.get("outcome") or "kept")
+                _record_and_push(project_dir, config, cfg)
+        except D.LeaseHeld as held:
+            raise click.ClickException(f"the pass lease is held by {held.body.get('holder')}; run again when it is "
+                                       f"free")
+    finally:
+        driver.close()
+    if out is None:
+        click.echo(f"{task_id[:8]}: the kept store holds nothing main's store lacks")
+    else:
+        click.echo(json.dumps(out, indent=1, default=str))
+
+
 def _resolve_task(driver, database, ref: str) -> str | None:
     """A full id, a unique prefix, or a task file stem (`cc_tasks/<stem>.md`)."""
     q = ("MATCH (t:ResearchTask) WHERE t.artifact_id STARTS WITH $ref "
