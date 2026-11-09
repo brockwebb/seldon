@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-037-R16
+date: '2026-11-09'
+decided_by: cc:e6a20ced
+operator_stated: false
+reason: 'SEL-034 Part A, answering SEL-030: hazbrief HB-140 was withdrawn five minutes after launch and its session ran on for ninety minutes, with live network calls'
+kind: decision
+status: accepted
+statement: A task moved to a terminal state by another hand while its session runs shall stop that session at its next tool boundary.
+source:
+  path: docs/design/AD-037_ADDENDUM_04_a_terminal_task_stops_its_session.md
+  lines:
+  - 38
+  - 45
+  sha256: 0ce2116ec744be80a6288d6f43d93dcdb1e1af5dcad8c245769bd890d53d2d19
+  text: |-
+    - **AD-037-R16. A task moved to a terminal state by another hand while its session runs stops that session at its next tool boundary.**
+      The tool gate reads the task's newest state change from the primary's event store at every call; when it moved the
+      task to `withdrawn`, `superseded`, `rejected` or `verified` and was written by any session but the running one, the
+      call and every later call are refused with the state and the actor, `andon_halted` is recorded once with
+      `stop_reason: task_terminal`, and the hook ends the session. A transition from `in_progress` to such a state writes
+      a hard `session_stop` with reason `task_terminal` (the signal), the holder's inspection writes it for a transition
+      that came another way, and its reap is not deferred by a growing log. The Stop gate runs no check for such a task,
+      and its finish is `session_failed`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_04_a_terminal_task_stops_its_session.md
+  anchor: AD-037-R16
+consumer:
+- cc_tasks/2026-11-09_SEL-034_a_terminal_task_stops_its_session_and_a_kept_worktrees_events_reach_mains_log_or_are_discarded_on_record.md
+- tests/test_sel034_terminal_task_stops_session.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 00f5ddab5f08968595a3fcefb8a4804a02e194c0fa46d07d13f7102ad4f18452
