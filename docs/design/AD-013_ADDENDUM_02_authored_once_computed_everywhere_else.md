@@ -141,9 +141,11 @@ chemistry fingerprints and agent tool calls, and are not cited.
 
 - **AD-013-R4. Every cell of a projection that is not an authored field is computed at render: Status is the state's label (the projection's `state_labels`, else `requirements.state_labels`, else the state's name) followed by `: ` and the note when there is one; Verified-by lists the `verified_by` targets; Satisfied-by the `satisfies` sources; Derived-from the `derived_from` targets; Decision the `derived_from` targets that are register records; and a column whose source is none of these and no authored field is refused when the projection is read.**
   One refinement, from evidence item 4: a note that opens with a word `requirements.status_map` maps to the
-  requirement's current state is rendered without the label, because the word is the project's finer name for that
-  state (`changed`, `partial`, `not met`); when the state moves, the word no longer maps to it and the label is
-  prefixed, so a stale qualifier shows rather than hides. A requirement with no `verified_by` edge renders the
+  requirement's current state, the word ending the note or followed by `:`, `;`, `,`, `.` or ` (`, is rendered
+  without the label, because the word is the project's finer name for that state (`changed`, `partial`, `not met`);
+  when the state moves, the word no longer maps to it and the label is prefixed, so a stale qualifier shows rather
+  than hides. The delimiter keeps prose that merely starts with such a word (`satisfied by: ...`) from being read as
+  one (SEL-035 Part F found 13 rows that lost their label without it). A requirement with no `verified_by` edge renders the
   projection's `none_text` when its method is test, and `<method>: <none_text>` otherwise. `{status:<word>}` in a
   counts template counts the rendered Status cells that open with the word.
 

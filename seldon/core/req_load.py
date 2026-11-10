@@ -187,7 +187,20 @@ def test_refs(cell: str, project_dir: Path) -> Tuple[List[str], List[str]]:
 
 def named_refs(cell: str) -> List[str]:
     """Every pytest node id a verification cell names, in order, whether or not its file exists."""
+    return _scan_refs(cell)[0]
+
+
+def _only_test_refs(cell: str) -> bool:
+    """Whether the cell names at least one test and every token of it is part of a test reference (no harness, no
+    prose, and no bare test name with no file before it: SEL-035 Part F, hazbrief's E-D2 to E-D6)."""
+    refs, leftover = _scan_refs(cell)
+    return bool(refs) and not leftover
+
+
+def _scan_refs(cell: str) -> Tuple[List[str], List[str]]:
+    """The node ids a cell names (three forms, see :func:`test_refs`) and the tokens no reference consumed."""
     out: List[str] = []
+    leftover: List[str] = []
 
     def add(ref: str) -> None:
         if ref not in out:
@@ -206,16 +219,11 @@ def named_refs(cell: str) -> List[str]:
         elif current_file and _TEST_NAME_RE.match(tok):
             add(f"{current_file}::{tok}")
             file_used = True
+        else:
+            leftover.append(tok)
     if current_file and not file_used:
         add(current_file)
-    return out
-
-
-def _only_test_refs(cell: str) -> bool:
-    """Whether every token of a verification cell is part of a test reference (no harness, no prose)."""
-    toks = [t.strip("`").strip() for t in _TOKEN_RE.findall(cell or "")]
-    return bool(toks) and all(_TEST_NODE_RE.fullmatch(t) or _PY_PATH_RE.match(t) or _TEST_NAME_RE.match(t)
-                              for t in toks)
+    return out, leftover
 
 
 def set_by_keys(cell: str) -> List[str]:

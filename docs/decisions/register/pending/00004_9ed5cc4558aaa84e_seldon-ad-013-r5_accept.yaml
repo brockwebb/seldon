@@ -4,7 +4,7 @@ date: '2026-11-09'
 decided_by: cc:086d89ff
 operator_stated: false
 receipts:
-- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:155: AD-013-R5'
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:157: AD-013-R5'
 reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: A test shall declare the requirements it verifies with the pytest mar
 source:
   path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
   lines:
-  - 155
-  - 159
-  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  - 157
+  - 161
+  sha256: 91b134d94eda8f2e1e295a26b325517bd20f7374f81aabeda6a14b0e0eff2582
   text: |-
     - **AD-013-R5. A test declares what it verifies: `@pytest.mark.verifies("VR-012", ...)` on a test function or class; `seldon req trace` reads the project's test files with the standard library's `ast` (no import, no collection), makes a `verified_by` edge marked `declared_by: marker` from each named requirement to the SEL-021 test `Script` of the marked node, removes a marker edge whose marker is gone and the imported test edges of a requirement a marker now names, and lists a marker that names no requirement and a file that does not parse; `seldon verify` reports the trace's plan; and no new text grammar for test references is added.**
       `seldon verify` is the commit gate and reads; it does not write (as `check_prior_art` reads verdicts it does not
@@ -33,4 +33,4 @@ consumer:
 - seldon/commands/verify.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: 2db1311ccd13d6c58d85abc90632ccfa614134b51b667faeb680086c6cc71f01
+provisional_id: 9ed5cc4558aaa84e6a78e496b4bfb97a2ed0b7db4dfe4693b5033935ae3e45ae

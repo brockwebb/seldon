@@ -4,7 +4,7 @@ date: '2026-11-09'
 decided_by: cc:086d89ff
 operator_stated: false
 receipts:
-- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:161: AD-013-R6'
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:163: AD-013-R6'
 reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: Seldon verify and seldon docs check shall count requirements with no 
 source:
   path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
   lines:
-  - 161
-  - 165
-  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  - 163
+  - 167
+  sha256: 91b134d94eda8f2e1e295a26b325517bd20f7374f81aabeda6a14b0e0eff2582
   text: |-
     - **AD-013-R6. Verification counts follow the method: `seldon verify` and `seldon docs check` report the requirements whose method is test and that have no test separately from those whose method is inspection, analysis or demonstration and that have no evidence, and such a requirement reaches `verified` on a `verified_by` edge to the Result or Issue that records its evidence.**
       The task said "Document, Result or Issue". A governed `Document` is left out, as AD-013-R1 left it out of the
@@ -34,4 +34,4 @@ consumer:
 - seldon/commands/docs.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: ed86778ccbde7e7c424f1d143433a635d7a8963ef6aa48e69f581b887904da51
+provisional_id: b751010d9bb8e6e43be3f34d1614167c93813e4a2eca52b1ab8a974d0c0daae6

@@ -13,14 +13,16 @@ source:
   path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
   lines:
   - 142
-  - 148
-  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  - 150
+  sha256: 91b134d94eda8f2e1e295a26b325517bd20f7374f81aabeda6a14b0e0eff2582
   text: |-
     - **AD-013-R4. Every cell of a projection that is not an authored field is computed at render: Status is the state's label (the projection's `state_labels`, else `requirements.state_labels`, else the state's name) followed by `: ` and the note when there is one; Verified-by lists the `verified_by` targets; Satisfied-by the `satisfies` sources; Derived-from the `derived_from` targets; Decision the `derived_from` targets that are register records; and a column whose source is none of these and no authored field is refused when the projection is read.**
       One refinement, from evidence item 4: a note that opens with a word `requirements.status_map` maps to the
-      requirement's current state is rendered without the label, because the word is the project's finer name for that
-      state (`changed`, `partial`, `not met`); when the state moves, the word no longer maps to it and the label is
-      prefixed, so a stale qualifier shows rather than hides. A requirement with no `verified_by` edge renders the
+      requirement's current state, the word ending the note or followed by `:`, `;`, `,`, `.` or ` (`, is rendered
+      without the label, because the word is the project's finer name for that state (`changed`, `partial`, `not met`);
+      when the state moves, the word no longer maps to it and the label is prefixed, so a stale qualifier shows rather
+      than hides. The delimiter keeps prose that merely starts with such a word (`satisfied by: ...`) from being read as
+      one (SEL-035 Part F found 13 rows that lost their label without it). A requirement with no `verified_by` edge renders the
       projection's `none_text` when its method is test, and `<method>: <none_text>` otherwise. `{status:<word>}` in a
       counts template counts the rendered Status cells that open with the word.
 scope:
@@ -34,4 +36,4 @@ consumer:
 - seldon/core/requirements.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: 2bb4762d49cb9b3c4457a1857f3ebe6634c39b8f5989663c8ae94550617e7910
+provisional_id: e6b524e53b9d67b07012a76f2275d0a5fbfeb6712d0721dd8ed814e8df448a96

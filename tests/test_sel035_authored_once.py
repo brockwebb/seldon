@@ -132,6 +132,15 @@ class TestComputedCells:
         assert RQ.status_cell({**changed, "state": "accepted"}, labels, STATUS_MAP) == \
             "open: changed: HB-140R reworded it"
 
+    def test_prose_that_starts_with_a_status_word_is_not_a_qualifier(self):
+        """SEL-035 Part F: 13 hazbrief RTM rows (`met`, dropped as the label) kept `satisfied by: ...` in the note,
+        and the render read `satisfied` as a qualifier and dropped the label: the word `met` was lost."""
+        labels = _settings().labels(RTM)
+        node = {"state": "verified", "note": "satisfied by: tool names; pack text"}
+        assert RQ.status_cell(node, labels, STATUS_MAP) == "met: satisfied by: tool names; pack text"
+        assert RQ.status_cell({"state": "accepted", "note": "partial (HB-95): four rule sets"}, labels,
+                              STATUS_MAP) == "partial (HB-95): four rule sets"
+
     def test_verified_by_is_the_edges_or_the_none_text_by_method(self):
         v = RQ.View.of(_settings(), None)
         assert RQ.cell_value({"_tests": ["tests/b.py::t", "tests/a.py::t"]}, "@verified_by", v) == \
@@ -177,6 +186,13 @@ class TestPlaceCells:
         assert self.place({"verified_by": cell}, tests={"tests/test_a.py::test_x", "tests/test_a.py::test_y"}) \
             == (None, None, [])
         assert self.place({"verified_by": "none yet"}) == (None, None, [])
+
+    def test_bare_test_names_with_no_file_are_kept(self):
+        """SEL-035 Part F: hazbrief's E-D2 to E-D6 name tests with no file; no node id can be formed, so no edge
+        carries them, and the cell was dropped as if one did."""
+        cell = "`test_a_narrated_value_is_never_a_record`; `test_a_value_with_no_record`"
+        note, method, listed = self.place({"verified_by": cell})
+        assert note == f"verified by: {cell}" and method is None and listed
 
     def test_a_method_is_set_and_its_words_kept(self):
         assert self.place({"verified_by": "inspection only; no test asserts it"}) == \

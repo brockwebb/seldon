@@ -455,15 +455,18 @@ def load_requirements(driver, database: str) -> List[dict]:
 
 def status_cell(node: dict, labels: Dict[str, str], status_map: Dict[str, str]) -> str:
     """AD-013-R4: the state's label, then `: ` and the note. A note that opens with a status word mapped to the
-    current state is the project's finer name for it (`changed`, `partial`) and is shown alone; once the state moves,
-    the word no longer maps to it and the label is prefixed."""
+    current state, and delimited (followed by the end, `:`, `;`, `,`, `.` or ` (`), is the project's finer name for
+    it (`changed`, `partial (HB-95)`) and is shown alone; once the state moves, the word no longer maps to it and the
+    label is prefixed. The delimiter keeps prose that merely starts with such a word (`satisfied by: ...`) from being
+    read as one (SEL-035 Part F: 13 RTM rows lost their `met` before it)."""
     state = str(node.get("state") or "")
     label = labels.get(state, state)
     note = " ".join(str(node.get("note") or "").split())
     if not note:
         return label
     word = status_word(note, status_map)
-    if word is not None and status_map[word] == state:
+    rest = note[len(word):] if word else ""
+    if word is not None and status_map[word] == state and (not rest or rest[0] in ":;,." or rest.startswith(" (")):
         return note
     return f"{label}: {note}"
 
