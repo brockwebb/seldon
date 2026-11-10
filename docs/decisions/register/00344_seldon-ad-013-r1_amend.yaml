@@ -1,3 +1,4 @@
+seq: 344
 event: amend
 id: seldon:AD-013-R1
 date: '2026-11-09'
@@ -22,3 +23,5 @@ changes:
     anchor: AD-013-R1
 written_by: seldon decision 0.1.0
 provisional_id: f3d5641a4ec1bb0f677da85313f578f948404b0a729a0b43a633a00130bcb4fd
+prev_hash: db0db364ac1435bd90f6b47d20aa592102783e7d22c025fb4aab61b84a049dd1
+record_hash: 397f0d7df28de6a3869c2f6501678a7dabe5be0cba7b829329644abad424440b
