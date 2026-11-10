@@ -1,0 +1,48 @@
+{
+ "standard": {
+  "admitted": 19,
+  "appended": 46,
+  "dropped": 15,
+  "run_id": "read_20261109T233623_38d91511",
+  "by_type": {
+   "Decision": 6,
+   "Standard": 19,
+   "SupportsDecision": 21
+  },
+  "drops": {
+   "Decision: duplicate within the slice": 15
+  }
+ },
+ "work": {
+  "admitted": 63,
+  "appended": 793,
+  "dropped": 76,
+  "run_id": "read_20261109T233623_9075d5bd",
+  "by_type": {
+   "AuthoredBy": 326,
+   "Decision": 9,
+   "Person": 320,
+   "SupportsDecision": 75,
+   "Work": 63
+  },
+  "drops": {
+   "AuthoredBy: duplicate within the slice": 2,
+   "Decision: already in the ledger (shared class, matched not re-minted)": 36,
+   "Decision: duplicate within the slice": 30,
+   "Person: duplicate within the slice": 8
+  }
+ },
+ "software": {
+  "admitted": 10,
+  "appended": 21,
+  "dropped": 11,
+  "run_id": "read_20261109T233623_f6c176d3",
+  "by_type": {
+   "Software": 10,
+   "SupportsDecision": 11
+  },
+  "drops": {
+   "Decision: already in the ledger (shared class, matched not re-minted)": 11
+  }
+ }
+}

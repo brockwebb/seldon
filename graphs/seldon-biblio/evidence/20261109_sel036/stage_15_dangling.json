@@ -1,0 +1,33 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "dangling",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.gates",
+    "dangling",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--mutate",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036/dangling_gate_20261109_sel036.json"
+  ],
+  "wall_seconds": 0.39,
+  "finished_utc": "2026-11-10T01:03:17.496611+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[dangling] ledger: CLEAN (427 nodes, 433 edges; legs edge_endpoints, superseded_by)",
+    "[dangling] positive control: FIRED on every seeded defect the declared legs cover",
+    "  - (mutant) edge-endpoint: SupportsDecision iso29148_2018 -> node-that-does-not-exist (missing ['node-that-does-not-exist']; event a566666a0eaf4665a0127fb2c1cc21de)",
+    "  - (mutant) superseded_by: event 56c50194aecc41f389332d6e6a82b4aa names 'event-that-does-not-exist', which is not in the ledger",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"",
+    "  class Decision(Node):"
+  ],
+  "first_line": "[dangling] ledger: CLEAN (427 nodes, 433 edges; legs edge_endpoints, superseded_by)"
+}

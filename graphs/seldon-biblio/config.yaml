@@ -1,4 +1,4 @@
-# squiddy-generated: graph config | spec sha256 8593298b3e7b1a84f978d0fdb5e86d9f88594461b0841e600a24612d4bfee8a7
+# squiddy-generated: graph config | spec sha256 79ca92fdded9ca81770af89f7225c1c3a83d379b28039a50715b0c528f2eee8f
 # Do not edit. Edit the spec and re-run `squiddy init`; `squiddy init --check` reports drift.
 #
 # Rendered by `squiddy init` from graph.yaml. Every value here is either a choice in
@@ -241,6 +241,8 @@ engine:
   - source: inbox
     dir: intake/inbox
   visibility: public
+  disk:
+    floor_gb: 10
   archive:
     root: ~/kg-archive/seldon-biblio
   emit:

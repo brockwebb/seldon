@@ -1,0 +1,35 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "claims-reachable",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.conformance",
+    "run",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json",
+    "--scope",
+    "graph",
+    "--gate",
+    "claims_reachable",
+    "--controls",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036/claims_reachable_20261109_sel036.json"
+  ],
+  "wall_seconds": 0.34,
+  "finished_utc": "2026-11-10T01:11:19.879745+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[N/A    ] 40 claims_reachable  (the served export holds no Claim: no claim to reach)",
+    "[control caught ] 40 claims_reachable"
+  ],
+  "first_line": "[N/A    ] 40 claims_reachable  (the served export holds no Claim: no claim to reach)"
+}

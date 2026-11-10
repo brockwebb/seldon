@@ -1,0 +1,14 @@
+{
+ "nodes": {
+  "Decision": 15,
+  "Person": 320,
+  "Software": 10,
+  "Standard": 19,
+  "Work": 63
+ },
+ "edges": {
+  "AuthoredBy": 326,
+  "SupportsDecision": 107
+ },
+ "dangling": 0
+}

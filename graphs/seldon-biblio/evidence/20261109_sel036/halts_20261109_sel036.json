@@ -1,0 +1,16 @@
+{
+  "real": {
+    "clean": true,
+    "findings": [],
+    "in_graph_entries": 92,
+    "with_halts": 0
+  },
+  "sources": {
+    "manifest": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/manifest.yaml",
+    "acquire_record": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/records/acquire.jsonl",
+    "decision_log": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/decision_log.jsonl"
+  },
+  "positive_control": {
+    "fired": true
+  }
+}

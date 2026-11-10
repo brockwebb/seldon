@@ -1,0 +1,968 @@
+{
+  "graph": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+  "kit_config": "squiddy/conformance.yaml",
+  "anchor_mode": "all",
+  "export": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json",
+  "export_sha256": "6a92c10d25362669b52a33ea717c21df4b1d12a350006e38b21f9adc6dcc3ac0",
+  "text_held_table": {
+    "admitted": 92,
+    "held": 0,
+    "verified": true,
+    "applies": false,
+    "admitted_works": 63,
+    "by_kind": {
+      "software:not_held": 10,
+      "standard:not_held": 19,
+      "work:not_held": 63
+    },
+    "by_reason": {
+      "null": 92
+    },
+    "rows": [
+      {
+        "id": "iso29148_2018",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "iso15288_2023",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "omg_reqif_1_2",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "doc_omg_reqif_1_2_1",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "omg_sysml_v2",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "doc_omg_sysml_v2_1",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "omg_kerml",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "doc_omg_kerml_1",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "ibm_doors",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "doc_ibm_doors_1",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "gotel1994traceability",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "clelandhuang2012traceability",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "clelandhuang2014traceability",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_cog",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_doorstop",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "browning2014doorstop",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_openfasttrace",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_strictdoc",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_sphinx_needs",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_requiem",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "scukanec2010verification",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "argondigital_verification_methods",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "cohen1960kappa",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "newcombe1998proportion",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "gwet2008ac1",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "bloom1956taxonomy",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "kahneman2011thinking",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "keller1987arcs",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "mayer2009multimedia",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sweller1988cognitive",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "kahn1962topological",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "kelley1959critical",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "pmi_pmbok",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "clark2014micropublications",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "groth2010nanopublication",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "shotton2010cito",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "kleppmann2017ddia",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "antoniol2002traceability",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "jansen2005decisions",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "lee1997rationale",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "kruchten2004ontology",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "mavin2009ears",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "fuchss2025lissa",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "li2024selfroute",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "liu2024lostmiddle",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "zhao2024expel",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "amodei2016concrete",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "erman1980hearsay",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "krakovna2020specgaming",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "lehman2020creativity",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "nist_sp800_53r5",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "cfr21_11_10e",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "who_trs1033_annex4",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "w3c_prov_o",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "slsa_v1_0",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "torresarias2019intoto",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "crosby2009tamper",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "rfc9162",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "rfc8493",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "premis_3_0",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "oais_iso14721",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "ndsa_levels_v2",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_openlineage",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "weber2001lessons",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "gao_02_195",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "nasa_oig_ig_12_012",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "nygard2011adr",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_madr",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "niosh_hierarchy_of_controls",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "rtca_do178c",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "nasa_swe_072",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "arxiv_2406_14325",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "han2017checklists",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "chen2023chatgpt",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "rethlefsen2021prismas",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "zhuge2024agentjudge",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sae_as9102b",
+        "kind": "standard",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "aaai_v40i44_41105",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "anthropic2026seeing",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "adler2021incremental",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "qian2019systemer",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "pershina2014graph",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "xiang2025splite",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "arxiv_2104_03986",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "xiong2026alma",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "ilyas2022saga",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "ilyas2023growing",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "sw_autoresearch",
+        "kind": "software",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "liang2026skillnet",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "randomlabs2026slate",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "yu2026multiagentmemory",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      },
+      {
+        "id": "zhang2026rlm",
+        "kind": "work",
+        "held": false,
+        "text_expected": null,
+        "text_route": null,
+        "text_host": null,
+        "reason": null,
+        "detail": null
+      }
+    ]
+  },
+  "gates": [
+    {
+      "gate": "text_held",
+      "item": 32,
+      "level": "error",
+      "status": "n/a",
+      "why": "the graph declares no `engine.acquire.text_routes` (ACQ-001), so no admit recorded a text expectation (DN-032 R-147); admitted 92, text held 0, not held 92: nothing checked is not a pass",
+      "findings": [],
+      "source": "KG-001 delivery report findings 5 and 6, 2026-10-01 (release 20261001_kg001d shipped 23 documents, 8 with text, and 14 of its 19 papers as one metadata row each; the admit was made on a plan that showed no text availability and no gate compared the admitted entries to the texts held); DN-032 R-147 to R-150",
+      "lesson": "2026-10-01_text_decided_before_admit_gated_before_release.md"
+    }
+  ],
+  "controls": [
+    {
+      "gate": "text_held",
+      "item": 32,
+      "control": "caught",
+      "planted_findings": [
+        "iso29148_2018: no text is held and the admit recorded no text expectation (R-147)",
+        "iso15288_2023: no text is held and the admit recorded no text expectation (R-147)",
+        "omg_reqif_1_2: no text is held and the admit recorded no text expectation (R-147)"
+      ]
+    }
+  ]
+}

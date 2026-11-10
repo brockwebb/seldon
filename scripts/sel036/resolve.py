@@ -53,6 +53,9 @@ import yaml
 
 #: Bumped when a resolver's query, parse or confirmation rule changes: every key changes with it.
 RESOLVER_VERSION = "sel036-resolve/2"   # 2: the confirmation rule amended after the first run's audit (confirm())
+#: The fetch units' own version: 2 writes the text derivative as the form-feed `.txt` squiddy reads (fetch/1 wrote `.md`,
+#: which squiddy's acquire quarantined as an unreadable PDF on the first build).
+FETCH_VERSION = "sel036-fetch/2"
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 
@@ -662,8 +665,10 @@ def fetch(seed: dict, url: str, net, cfg: dict, root: Path) -> dict:
         text, title = body.decode("utf-8", "replace"), ""
     else:
         text, title, _ = html_text(body)
-    text_rel = f"{cfg['archive_text_dir']}/{stem}.md"
-    header = f"<!-- snapshot of {url} retrieved {now()} sha256 {raw_sha} -->\n\n"
+    text_rel = f"{cfg['archive_text_dir']}/{stem}.txt"
+    # squiddy reads two text forms, PDF and the form-feed `.txt` (squiddy docs/KIT_BOUNDARY.md; `pdftext.page_texts`);
+    # the whole snapshot is one page. The provenance line is the text's first line, not a comment syntax.
+    header = f"Snapshot of {url}, retrieved {now()}, sha256 {raw_sha}.\n\n"
     tbytes = (header + text + "\n").encode("utf-8")
     (root / text_rel).parent.mkdir(parents=True, exist_ok=True)
     (root / text_rel).write_bytes(tbytes)
@@ -685,7 +690,7 @@ def plan(seeds: list[dict], cfg: dict) -> list[dict]:
     for s in seeds:
         urls = list(s.get("texts") or [])
         for u in urls:
-            out.append({"phase": "fetch", "seed": s["id"], "url": u, "key": unit_key("fetch", s["id"], u)})
+            out.append({"phase": "fetch", "seed": s["id"], "url": u, "key": unit_key(FETCH_VERSION, s["id"], u)})
     return out
 
 

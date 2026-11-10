@@ -1,0 +1,28 @@
+{
+  "stage": 16,
+  "sub": null,
+  "label": "16",
+  "name": "diff",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.release_diff",
+    "--prev",
+    "",
+    "--new",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json",
+    "--out",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/diff_none_20261109_sel036.md"
+  ],
+  "wall_seconds": 0.17,
+  "finished_utc": "2026-11-10T01:11:20.373521+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "wrote /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/diff_none_20261109_sel036.md: nodes 0 -> 427, edges 0 -> 433"
+  ],
+  "first_line": "wrote /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/diff_none_20261109_sel036.md: nodes 0 -> 427, edges 0 -> 433"
+}

@@ -1,0 +1,35 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "index",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.index",
+    "build",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--release",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json"
+  ],
+  "wall_seconds": 469.92,
+  "finished_utc": "2026-11-10T01:11:09.563117+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "index: encoder pin holds (e9b6763023c6, weights 9e7d262b1fe5)",
+    "index: corpus 19 texts, 21432 paragraph rows, 0 node units, 0 node rows, 92 metadata rows (0 units new this run)",
+    "index: database built, 21524 rows over 92 documents",
+    "index: pilot 2000 random rows in 63.5s (6276 chars/s); projected 0.17 h for the 3,869,303 characters of 21,524 rows in 92 units not yet keyed",
+    "dense: 7924/21524 rows, 19 units this run, 51.0 rows/s, ETA 267s, units failed 0, elapsed 155s",
+    "dense: 18498/21524 rows, 21 units this run, 65.3 rows/s, ETA 46s, units failed 0, elapsed 283s",
+    "dense: 20452/21524 rows, 88 units this run, 57.8 rows/s, ETA 19s, units failed 0, elapsed 354s",
+    "index: built, 21524 rows, 21524 vectors, 92 shards (92 keyed, 0 retired this run); manifest /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/work/index/index_manifest.json",
+    "<All keys matched successfully>"
+  ],
+  "first_line": "index: encoder pin holds (e9b6763023c6, weights 9e7d262b1fe5)"
+}

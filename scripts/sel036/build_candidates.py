@@ -104,6 +104,13 @@ def seed_entry(seed: dict, rows: list[dict], n_auth: int, gov_keys: list[str], d
             e[k] = v
     if e.get("licence_file") and not ans.get("pypi"):
         e["licence_basis"] = "LICENSE file first line (scripts/sel036/resolve.py spdx_guess)"
+    if str(e.get("doi") or "").startswith("10.48550/") and not e.get("openalex_id"):
+        # An arXiv DOI is DataCite's, and squiddy's acquire asks DataCite only when Crossref fails; this task's Network
+        # line does not name api.datacite.org, so the forwarder refuses it. With no OpenAlex record either, the DOI
+        # leaves acquire nothing to resolve and it halts (first build, li2024kgllm). The arXiv id is the identifier
+        # the note gives; the DOI is kept beside it, and the text comes from arXiv itself (arxiv.org is allowed).
+        e["arxiv_doi"] = e.pop("doi")
+        e["direct_download_url"] = f"https://arxiv.org/pdf/{e['arxiv_id']}"
     url = seed.get("url") or ans.get("url") or (f"https://doi.org/{e['doi']}" if e.get("doi") else None) \
         or (f"https://arxiv.org/abs/{e['arxiv_id']}" if e.get("arxiv_id") else None)
     if url:

@@ -132,3 +132,13 @@ serve:
 
 pause: false
 pause_reason: null
+
+# TOUCHPOINT 3 (DN-027 R-127), answered 2026-11-09 by SEL-036 Part D, as aacps-ai-policy AP-02 and hazbrief-mcp HB-01b
+# answered theirs. Which entries go in was decided by the operator's order the task records ("All those sources that we
+# are quoting must have a citation and added to the Seldon knowledge graph"; Part D: "Run squiddy's normal admit over
+# every acquired entry ... Metadata-only entries are admitted as records"), and per entry, with its grounding, by
+# scripts/sel036/build_candidates.py (each entry's `disposition` and `resolution`). The count is the plan's undecided
+# count at that moment (factory/plan.json): 106 of the 106 cataloged entries. The operator overrides by editing a seed
+# (graphs/seldon-biblio/intake/seeds.yaml) and re-running the resolver, the catalog builder and the build.
+review:
+  undecided: {count: 106, date: 2026-11-09}

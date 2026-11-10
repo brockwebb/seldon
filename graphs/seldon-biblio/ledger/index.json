@@ -4,5 +4,17 @@
  "schema_file": "../schema/seldon_biblio.yaml",
  "segment_max_bytes": 40000000,
  "open": "open.jsonl",
- "segments": []
+ "segments": [
+  {
+   "segment": "20261109_sel036.jsonl",
+   "release_id": "20261109_sel036",
+   "sha256": "81e1b6f777a13f669235090536c8b399d198cb25ec34f051bce62b58ff155864",
+   "bytes": 542901,
+   "events": 862,
+   "first_event_id": "97c9da0fc10b4d6d9573fb89fb75a2d3",
+   "last_event_id": "e4f8a93a839346378fe0f824da4be49a",
+   "sealed_at": "2026-11-10T01:11:20.720623+00:00",
+   "schema_epoch_at_seal": "0.1.0+de21b9c7ec65"
+  }
+ ]
 }

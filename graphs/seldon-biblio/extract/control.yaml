@@ -1,0 +1,44 @@
+# graphs/seldon-biblio/extract/control.yaml: the index block (squiddy S-016, DN-025 R-110), and nothing else.
+#
+# SEL-036 Part D. Extraction stays closed (factory/control.yaml `valves.extract: closed`; squiddy CONOPS R-106: it
+# opens when a task's downstream test can earn it), so this file carries no extraction daemon settings. The index is
+# what the prior-art gate's library arm searches (seldon AD-036-R3; `squiddy.serve.Verbs.search`): the block below is
+# ../../../../hazbrief-mcp/graphs/hazbrief-corpus/extract/control.yaml `index:` VERBATIM in every value (itself
+# arnold-evidence's KG-001 block, the kit's measured reference), so the encoder pin and its cached model are the ones
+# this machine already holds; the pin file is a byte copy of hazbrief-corpus's.
+index:
+  work_dir: work/index
+  # The text every receipt is cut from (squiddy SQ-028R, R-216): the parse intermediate, as hazbrief-corpus declares.
+  text_of_record: parsed
+  encoder:
+    model_id: nomic-ai/nomic-embed-text-v1.5
+    revision: e9b6763023c676ca8431644204f50c2b100d9aab
+    trust_remote_repo: nomic-ai/nomic-bert-2048
+    trust_remote_revision: 7710840340a098cfb869c4f65e87cf2b1b70caca
+    dimension: 768
+    query_prefix: "search_query: "
+    document_prefix: "search_document: "
+    device: cpu
+    normalize: true
+    max_seq_length: 2048
+    batch_size: 32
+    torch_threads: 8
+  encoder_pin:
+    file: extract/pin/encoder_pin.json     # byte copy of hazbrief-mcp graphs/hazbrief-corpus/extract/pin/encoder_pin.json
+    sha256: b260301fee037dedd906ecb976737882f8cdf2b19cd3ff3d1db807d3da41227b
+  dense:
+    pad_to: longest
+    progress_rows: 10000
+    progress_seconds: 60
+    pilot_rows: 2000
+    pilot_seed: 20260923
+    wall_seconds_max: 3600
+    retries_per_unit: 2
+  fusion:
+    rrf_k: 60
+    candidates_per_subarm: 200
+    tuned: false
+  top_k_documents: 10
+  rows_per_document: 3
+  text_max_chars: 1000
+  corpus_progress_every: 50

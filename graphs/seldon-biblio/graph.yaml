@@ -39,6 +39,12 @@ serve:
 # Not under ~/Documents: squiddy DN-056 section 0 measured 97 percent of the files there evicted by iCloud.
 archive:
   root: ~/kg-archive/seldon-biblio
+# squiddy DN-035 R-163: the factory stops before its first item when the graph's volume has less free space than this.
+# The kit's default (25 GB) is sized for graphs/library (a 0.6 GB corpus checkpoint, a dense index of 1,500 works);
+# this graph held 11 MB after Part C (`du -sh ~/kg-archive/seldon-biblio`, 2026-11-09) and the first build stopped at
+# 21.96 GB free. 10 GB keeps three orders of magnitude of margin over its own footprint.
+disk:
+  floor_gb: 10
 intake:
   # SEL-036 Part B: the catalog, generated from the resolution checkpoint by scripts/sel036/build_candidates.py.
   # content_fields: a unit whose resolution or held bytes moved is re-admitted as a revision (squiddy SQ-023, R-213).

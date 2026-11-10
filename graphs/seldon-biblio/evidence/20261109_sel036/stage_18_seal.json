@@ -1,0 +1,25 @@
+{
+  "stage": 18,
+  "sub": null,
+  "label": "18",
+  "name": "seal",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-c",
+    "from squiddy.cli import seal_release; import sys; raise SystemExit(seal_release(*sys.argv[1:4]))",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "20261109_sel036",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json"
+  ],
+  "wall_seconds": 0.19,
+  "finished_utc": "2026-11-10T01:11:20.744590+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[seal] 20261109_sel036.jsonl: 862 events, 542,901 bytes, sha256 81e1b6f777a13f66, epoch 0.1.0+de21b9c7ec65"
+  ],
+  "first_line": "[seal] 20261109_sel036.jsonl: 862 events, 542,901 bytes, sha256 81e1b6f777a13f66, epoch 0.1.0+de21b9c7ec65"
+}

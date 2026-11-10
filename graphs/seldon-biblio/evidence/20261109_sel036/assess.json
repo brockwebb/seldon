@@ -1,0 +1,20 @@
+{
+ "standard": {
+  "assessed": 19,
+  "admitted": 19,
+  "by_decline_code": {},
+  "by_basis": {}
+ },
+ "work": {
+  "assessed": 77,
+  "admitted": 77,
+  "by_decline_code": {},
+  "by_basis": {}
+ },
+ "software": {
+  "assessed": 10,
+  "admitted": 10,
+  "by_decline_code": {},
+  "by_basis": {}
+ }
+}

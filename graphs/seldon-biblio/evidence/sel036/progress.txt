@@ -19,3 +19,5 @@
 2026-11-09T23:20:47Z 245/459 units, 180 requests, 0 failed, 0.93 units/s, eta 230s :: finished
 2026-11-09T23:21:59Z 230/462 units, 0 requests, 0 failed, 2642986.08 units/s, eta 0s :: start: 476 rows in /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/sel036/units.jsonl
 2026-11-09T23:22:02Z 248/462 units, 6 requests, 0 failed, 78.20 units/s, eta 3s :: finished
+2026-11-09T23:50:50Z 231/462 units, 0 requests, 0 failed, 1416497.40 units/s, eta 0s :: start: 494 rows in /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/sel036/units.jsonl
+2026-11-09T23:51:00Z 248/462 units, 16 requests, 0 failed, 26.06 units/s, eta 8s :: finished

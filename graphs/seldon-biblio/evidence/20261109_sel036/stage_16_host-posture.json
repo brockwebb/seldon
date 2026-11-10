@@ -1,0 +1,27 @@
+{
+  "stage": 16,
+  "sub": null,
+  "label": "16",
+  "name": "host-posture",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.posture",
+    "table",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--version",
+    "20261109_sel036"
+  ],
+  "wall_seconds": 0.32,
+  "finished_utc": "2026-11-10T01:11:20.199544+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[host-posture] wrote /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/host_posture_20261109_sel036.md and /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/host_posture_20261109_sel036.json"
+  ],
+  "first_line": "[host-posture] wrote /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/host_posture_20261109_sel036.md and /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/host_posture_20261109_sel036.json"
+}
