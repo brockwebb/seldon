@@ -1,0 +1,24 @@
+{
+ "record": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/decisions.jsonl",
+ "record_present": false,
+ "applied": {},
+ "intake_moved": [],
+ "record_rows_not_in_manifest": 0,
+ "uncovered_count": 14,
+ "uncovered": [
+  "doc_sw_cog_1",
+  "doc_sw_cog_2",
+  "doc_sw_doorstop_1",
+  "doc_sw_doorstop_2",
+  "doc_sw_openfasttrace_1",
+  "doc_sw_openfasttrace_2",
+  "doc_sw_strictdoc_1",
+  "doc_sw_sphinx_needs_1",
+  "doc_sw_sphinx_needs_2",
+  "doc_sw_requiem_1",
+  "doc_argondigital_verification_methods_1",
+  "doc_sw_madr_1",
+  "li2024kgllm",
+  "doc_sw_autoresearch_1"
+ ]
+}

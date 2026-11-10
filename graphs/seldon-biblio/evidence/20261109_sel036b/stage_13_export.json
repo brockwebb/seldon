@@ -1,0 +1,33 @@
+{
+  "stage": 13,
+  "sub": null,
+  "label": "13",
+  "name": "export",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.export",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--version",
+    "20261109_sel036b",
+    "--date",
+    "2026-11-09"
+  ],
+  "wall_seconds": 0.48,
+  "finished_utc": "2026-11-10T01:23:50.111673+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "built graph from the ledger: 448 nodes / 456 edges in 0.24s; position 906 event(s), last 3753013434c143359dd8074f432d4886 (R-207)",
+    "wrote seldon_biblio_graph_20261109_sel036b_2026-11-09.json (364,324 bytes); KGX 448 nodes, 456 edges",
+    "  round trip OK: 448 nodes and 456 edges identical",
+    "published -> /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph.json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"",
+    "  class Decision(Node):"
+  ],
+  "first_line": "built graph from the ledger: 448 nodes / 456 edges in 0.24s; position 906 event(s), last 3753013434c143359dd8074f432d4886 (R-207)"
+}

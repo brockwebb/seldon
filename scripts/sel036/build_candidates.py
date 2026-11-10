@@ -201,10 +201,13 @@ def doc_entries(seed: dict, units: list[dict], done: dict, gov_keys: list[str]) 
              "posture_host": p.get("host"), "posture_observed_at": p.get("at")}
         if r.get("acquisition") == "auto":
             e.update({"disposition": "active", "acquisition": "auto", "acquisition_status": "acquired",
-                      "local_path": r["text_path"], "sha256": r["text_sha256"], "raw_path": r["raw_path"],
+                      "local_path": r["text_path"], "sha256": r["text_sha256"],
+                      "raw_path": r["raw_path"],
                       "raw_sha256": r["raw_sha256"], "bytes": r["bytes"], "retrieved_at": r["retrieved_at"],
                       "direct_download_url": r["final_url"], "verification_status": "fetched",
                       "manual_acquisition": False, "access": "open"})
+            if r["text_path"] != r["raw_path"]:
+                e["text_sha256"] = r["text_sha256"]      # a derivative's own digest; a held PDF is its own text
         else:
             e.update({"disposition": "metadata_only", "metadata_only_reason": "oa_text_not_retrievable",
                       "acquisition": "pending_manual", "manual_acquisition": True, "access": "open",

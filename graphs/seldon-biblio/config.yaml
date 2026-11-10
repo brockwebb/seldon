@@ -1,4 +1,4 @@
-# squiddy-generated: graph config | spec sha256 79ca92fdded9ca81770af89f7225c1c3a83d379b28039a50715b0c528f2eee8f
+# squiddy-generated: graph config | spec sha256 bf00d480f5642f78a1d0901b3e59424e722450153cf69e5bb60a89c1f43fba8c
 # Do not edit. Edit the spec and re-run `squiddy init`; `squiddy init --check` reports drift.
 #
 # Rendered by `squiddy init` from graph.yaml. Every value here is either a choice in
@@ -233,11 +233,11 @@ engine:
     files:
     - corpus/candidates/*.yaml
     content_fields:
-    - sha256
-    - access
-    - acquisition
     - doi
-    - openalex_id
+    - arxiv_id
+    - access
+    - raw_sha256
+    - text_sha256
   - source: inbox
     dir: intake/inbox
   visibility: public

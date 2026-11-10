@@ -1,0 +1,2377 @@
+{
+ "tool": "squiddy build (factory, F-001)",
+ "graph": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+ "version": "20261109_sel036b",
+ "maintain": false,
+ "run_id": "factory_20261110T012239_a36dac8d",
+ "kit_version": "0.8.0",
+ "control_sha256": "2079ca4de74ac307d12415f17045844ba7b97319adda373f9741f987e8b00dcd",
+ "extract": false,
+ "nodes": [
+  {
+   "node": "F-20",
+   "unit": "seeds",
+   "what": "each scope subject's MeSH descriptors, as NLM's lookup service returns them",
+   "requires": [],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.lookup per seed, through squiddy.calls (the MeSH lookup service)"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-21",
+   "unit": "seed_select",
+   "what": "the model's choice among the returned descriptors, enforced to that vocabulary",
+   "requires": [
+    "F-20"
+   ],
+   "valve": null,
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.selection_prompt -> the model -> parse_selection (R-152), via squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-23",
+   "unit": "seed_propose",
+   "what": "at most five lookup labels proposed for a seed no descriptor fits (R-160)",
+   "requires": [
+    "F-21"
+   ],
+   "valve": null,
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.proposal_prompt -> the model -> parse_proposal (R-160), via squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-24",
+   "unit": "seed_relookup",
+   "what": "each proposed label sent to the MeSH lookup (R-160)",
+   "requires": [
+    "F-23"
+   ],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.lookup_labels per seed with proposed labels, through squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-25",
+   "unit": "seed_reselect",
+   "what": "the choice among what the proposed labels returned, under R-152's guard (R-160)",
+   "requires": [
+    "F-24"
+   ],
+   "valve": null,
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.selection_prompt over the proposed labels' descriptors -> the model -> parse_selection (R-152's guard), via squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-26",
+   "unit": "seed_context",
+   "what": "scope.context_descriptors resolved through the lookup, with MeSH tree numbers (R-161)",
+   "requires": [],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.resolve_context per scope.context_descriptors phrase, through squiddy.calls (the MeSH lookup and its SPARQL tree numbers)"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-22",
+   "unit": "seed_search",
+   "what": "PubMed by rule per chosen descriptor; the candidates file the catalog reads",
+   "requires": [
+    "F-21"
+   ],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_seed.search per chosen descriptor through squiddy.calls (E-utilities), then the candidates file"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no mesh_seed intake (DN-033): its catalog reads its shelf sources only",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-27",
+   "unit": "shelf_screen",
+   "what": "each shelf file's title and first page screened include/exclude/unsure (R-162)",
+   "requires": [],
+   "valve": null,
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.shelf_screen per unique file: title and opening -> the model -> parse_verdict (R-162, R-165), via squiddy.calls; then the recall-control gate (R-164) and the candidates file"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no shelf_screen intake (DN-035 R-162)",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-01",
+   "unit": "catalog",
+   "what": "every file in the declared intake becomes a manifest entry",
+   "requires": [],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.lessons",
+    "catalog",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/lessons_catalog.json"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "already-complete",
+   "total": 106,
+   "done": 106,
+   "pending": 0,
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-19",
+   "unit": "routes",
+   "what": "each entry's text route, licence and host, from the services' metadata, before admit",
+   "requires": [
+    "F-01"
+   ],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.text_routes.resolve per entry not declined, through squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `engine.acquire.text_routes` block (ACQ-001): no route is recorded before admit, and acquire takes OpenAlex's locations as before",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-02",
+   "unit": "assess",
+   "what": "the graph's own criterion decides each cataloged entry",
+   "requires": [
+    "F-01"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "tools.admit_batch",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--assess-only",
+    "--assess-json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/assess.json",
+    "--write-json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/write.json",
+    "--progress-every",
+    "0"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": [
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "assess"
+     }
+    ]
+   },
+   "state": "runs",
+   "total": 106,
+   "done": 92,
+   "pending": 14,
+   "rc": 0,
+   "seconds": 1.36,
+   "detail": "14 entries at stage 'cataloged'\nassess: {\"work\": 14} admitted in 0s -> /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/assess.json\n",
+   "evidence": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/assess.log",
+   "result": {
+    "decisions": {},
+    "uncovered": 14,
+    "operator_fields_captured": 0,
+    "holds_released": []
+   },
+   "after": {
+    "done": 106,
+    "total": 106,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-03",
+   "unit": "acquire",
+   "what": "the declared resolvers answer, one keyed row per entry, through the call layer",
+   "requires": [
+    "F-02"
+   ],
+   "valve": null,
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.acquire.acquire_entry per admitting entry, through squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> the allowlisting forwarder http://127.0.0.1:49272 (23 host(s)); every other host refused and logged"
+    ],
+    "forwarder_log": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/egress.jsonl",
+    "children": [],
+    "forwarder_decisions": {
+     "allowed": 2,
+     "refused": 0
+    }
+   },
+   "state": "runs",
+   "total": 14,
+   "done": 0,
+   "pending": 14,
+   "rc": 0,
+   "seconds": 2.64,
+   "detail": "",
+   "evidence": null,
+   "result": {
+    "unit": "acquire",
+    "total": 14,
+    "already_done": 0,
+    "done_this_run": 14,
+    "failed_this_run": 0,
+    "pending_at_start": 14,
+    "in_flight": 0,
+    "pilot": null,
+    "torn_bytes_recovered": 0,
+    "pilot_note": "14 unit(s) were pending, not more than the pilot's 20; the whole run was the pilot and no projection was needed",
+    "quota_waits": 0,
+    "quota_paused_until": null,
+    "answered_from_record": 0,
+    "texts": {
+     "applicable": false,
+     "why": "this graph declares no `engine.acquire.texts` block"
+    },
+    "held": {}
+   },
+   "after": {
+    "done": 14,
+    "total": 14,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-16",
+   "unit": "resolve",
+   "what": "the recorded work-identity merges (HV-003/HV-004) set on their entries, before write",
+   "requires": [
+    "F-03"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.resolve.apply: the merge plans' elections set on their members' entries"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `engine.resolve.merge_plans`; no identity merge is recorded for it",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-06",
+   "unit": "write",
+   "what": "the emitter's instances, appended through the single write path",
+   "requires": [
+    "F-16"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "tools.admit_batch",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--stage",
+    "admitting",
+    "--write-only",
+    "--records",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/records/acquire.jsonl",
+    "--assess-json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/assess.json",
+    "--write-json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/write.json",
+    "--progress-every",
+    "0"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": [
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "write"
+     }
+    ]
+   },
+   "state": "runs",
+   "total": 14,
+   "done": 0,
+   "pending": 14,
+   "rc": 0,
+   "seconds": 1.29,
+   "detail": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"\n  class Decision(Node):\n/Users/brock/GitHub/seldon/.claude/w [... 174 characters elided ...] arent \"Node\"\n  class Decision(Node):\n/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"\n  class Decision(Node):\n",
+   "evidence": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/write.log",
+   "result": {},
+   "after": {
+    "done": 14,
+    "total": 14,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-04",
+   "unit": "admin",
+   "what": "what OpenAlex says each Work is about (L-001), through the call layer; the layer of every Work that lacks it",
+   "requires": [
+    "F-06"
+   ],
+   "valve": "admin",
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.openalex_admin resolve per Work the projection holds, through squiddy.calls; then the layer of every Work that lacks it, through the write path"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `engine.admin_layer` block",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-18",
+   "unit": "rulings",
+   "what": "the graph's recorded verdicts, replayed from the decision record",
+   "requires": [
+    "F-06"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "(in process) the decision record's Rulings through squiddy.write.append_slices"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no Ruling class",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-28",
+   "unit": "headings",
+   "what": "NLM's MeSH headings on each Work with a PMID, as authority-tagged HasConcept edges",
+   "requires": [
+    "F-06"
+   ],
+   "valve": "admin",
+   "buckets": [
+    "http.*"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.mesh_headings.record per Work with a PMID (E-utilities efetch), through squiddy.calls; then the headings as HasConcept edges, through the write path"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "http"
+    ],
+    "hosts": [
+     "api.crossref.org",
+     "api.openalex.org",
+     "api.semanticscholar.org",
+     "argondigital.com",
+     "arxiv.org",
+     "cog.readthedocs.io",
+     "danieleades.github.io",
+     "dl.acm.org",
+     "doi.org",
+     "doorstop-dev.github.io",
+     "export.arxiv.org",
+     "github.com",
+     "ieeexplore.ieee.org",
+     "link.springer.com",
+     "nedbatchelder.com",
+     "pypi.org",
+     "raw.githubusercontent.com",
+     "sphinx-needs.readthedocs.io",
+     "standards.ieee.org",
+     "strictdoc.readthedocs.io",
+     "www.incose.org",
+     "www.iso.org",
+     "www.omg.org"
+    ]
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `engine.mesh_headings` block (SQ-005, DN-040 R-173)",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-30",
+   "unit": "parse_text",
+   "what": "each held text's parse intermediate, under the graph's parser pin (engine.parse.kit_pin)",
+   "requires": [
+    "F-06"
+   ],
+   "valve": null,
+   "buckets": [
+    "cpu"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256"
+   ],
+   "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-c",
+    "<ParseText.CHILD>",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--id",
+    "<each item>",
+    "--timeout",
+    "3600",
+    "(squiddy imported from the running kit)"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": [
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_cog_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_cog_2"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_doorstop_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_doorstop_2"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_openfasttrace_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_openfasttrace_2"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_strictdoc_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_sphinx_needs_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_sphinx_needs_2"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_requiem_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_argondigital_verification_methods_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_madr_1"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text li2024kgllm"
+     },
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "parse_text doc_sw_autoresearch_1"
+     }
+    ]
+   },
+   "state": "runs",
+   "total": 33,
+   "done": 19,
+   "pending": 14,
+   "rc": 0,
+   "seconds": 58.92,
+   "detail": "",
+   "evidence": null,
+   "result": {
+    "parsed": 14,
+    "failed": [],
+    "held_out": [],
+    "refusals_cleared": [],
+    "not_reached": 0,
+    "kit_pin": null,
+    "kit_commit": null,
+    "seconds": 58.3,
+    "record": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/records/parse_text.jsonl"
+   },
+   "after": {
+    "done": 33,
+    "total": 33,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-05",
+   "unit": "parse",
+   "what": "the index's units: one checkpointed line per text and metadata document",
+   "requires": [
+    "F-06",
+    "F-30"
+   ],
+   "valve": "index",
+   "buckets": [
+    "cpu"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.index.build_corpus_rows, checkpointed per unit"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": []
+   },
+   "state": "runs",
+   "total": 139,
+   "done": 111,
+   "pending": 28,
+   "rc": 0,
+   "seconds": 0.55,
+   "detail": "",
+   "evidence": null,
+   "result": {
+    "units": 139,
+    "new_units": 28,
+    "failures": [],
+    "paragraph_rows": 25302,
+    "node_rows": 0,
+    "metadata_rows": 106,
+    "texts": 33,
+    "node_units": 0,
+    "wall_seconds": 0.0,
+    "rule": "sq028r-corpus/2:parsed"
+   },
+   "after": {
+    "done": 139,
+    "total": 139,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-17",
+   "unit": "concepts",
+   "what": "the vocabularies from the held bytes, then HV-006's text-mention scan (zero calls)",
+   "requires": [
+    "F-06"
+   ],
+   "valve": "concepts",
+   "buckets": [
+    "cpu"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "(in process) squiddy.vocab parse + write over the held bytes; then python -m tools.scan_text_mentions over a shadow export of the projection; mentions.write_mentions"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `domain.vocabularies`; it imports no concept layer",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-32",
+   "unit": "derivations",
+   "what": "each in-graph entry's declared derivations against the ledger's live edges; the difference through the single write path",
+   "requires": [
+    "F-06"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.derivations.write: each in-graph entry's declared pairs against the ledger's live WorkDerivedFrom edges; the difference through the single write path"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph's schema has no `WorkDerivedFrom` class, so it holds no declared derivation (DN-050 R-230)",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-07",
+   "unit": "project",
+   "what": "the ledger replayed into the graph's classes",
+   "requires": [
+    "F-06"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.project",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--counts",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/project_counts.json"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": [
+     {
+      "policy": "none",
+      "classes": [],
+      "hosts": [],
+      "where": "child",
+      "enforcement": [
+       "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty",
+       "sandbox-exec none profile"
+      ],
+      "sandbox": "applied",
+      "command": "project"
+     }
+    ]
+   },
+   "state": "runs",
+   "total": 1,
+   "done": 0,
+   "pending": 1,
+   "rc": 0,
+   "seconds": 0.72,
+   "detail": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"\n  class Decision(Node):\n",
+   "evidence": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/project.log",
+   "result": {},
+   "after": {
+    "done": 1,
+    "total": 1,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-08",
+   "unit": "extract",
+   "what": "grounded claims from a model (the daemon; item 18's valve)",
+   "requires": [
+    "F-07"
+   ],
+   "valve": "extract",
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256"
+   ],
+   "command": [
+    "(in process) squiddy.extract_daemon.daemon (launchd remains its supervisor)"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares `engine.extract.enabled: false`",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-09",
+   "unit": "preview",
+   "what": "what commit will write, rendered, with its DECIDED record",
+   "requires": [
+    "F-08"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "(in process) extract_daemon.ingest(dry_run=True), rendered to evidence"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "already-complete",
+   "total": 0,
+   "done": 0,
+   "pending": 0,
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-10",
+   "unit": "commit",
+   "what": "the extraction records through the single write path",
+   "requires": [
+    "F-09"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item"
+   ],
+   "command": [
+    "(in process) squiddy.extract_daemon.ingest, through the single write path"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "already-complete",
+   "total": 0,
+   "done": 0,
+   "pending": 0,
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-29",
+   "unit": "mentions",
+   "what": "S-008 Part E's node-field mention scan over the held vocabularies (zero calls)",
+   "requires": [
+    "F-17"
+   ],
+   "valve": "concepts",
+   "buckets": [
+    "cpu"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "(in process) squiddy.vocab parse over the held bytes; squiddy.mentions build + write_mentions"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares no `domain.vocabularies`; it imports no concept layer",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-31",
+   "unit": "rate",
+   "what": "every claim of the served release lacking a ruling under the declared rubric, rated and ruled",
+   "requires": [
+    "F-07"
+   ],
+   "valve": "rate",
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "role",
+    "prompt_sha256",
+    "claim",
+    "model"
+   ],
+   "command": [
+    "(in process) squiddy.rate.run over the served release, under sweep 20261109_sel036b; no release cut"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph declares `engine.extract.enabled: false`, so it has no claims to rate",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-11",
+   "unit": "release",
+   "what": "export; the cheap gates, all reported before the index (R-175); index, index-parity, anchors; diff, registers, seal",
+   "requires": [
+    "F-07"
+   ],
+   "valve": null,
+   "buckets": [
+    "cpu"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "(in process) squiddy.cli.release: export; conform, dangling, conformance, presence, halts, text_held, anchors-by-id; index, index-parity, anchors; diff, registers, seal"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": []
+   },
+   "state": "runs",
+   "total": 1,
+   "done": 0,
+   "pending": 1,
+   "rc": 0,
+   "seconds": 106.0,
+   "detail": "",
+   "evidence": null,
+   "result": {},
+   "after": {
+    "done": 1,
+    "total": 1,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-12",
+   "unit": "serve-check",
+   "what": "one verb answered over the graph's declared read surface",
+   "requires": [
+    "F-11"
+   ],
+   "valve": null,
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "(in process) squiddy.serve one verb over the graph's primary class"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": [],
+    "where": "in process",
+    "sandbox": "not applicable (in process)",
+    "enforcement": [
+     "proxy variables -> http://127.0.0.1:9 (closed), NO_PROXY empty"
+    ],
+    "children": []
+   },
+   "state": "runs",
+   "total": 1,
+   "done": 0,
+   "pending": 1,
+   "rc": 0,
+   "seconds": 0.36,
+   "detail": "",
+   "evidence": null,
+   "result": {
+    "first_verb": {
+     "verb": "nodes_of(Standard)",
+     "seconds": 0.0,
+     "answered": true,
+     "first": "cfr21_11_10e",
+     "label": "Standard"
+    },
+    "census": {
+     "Decision": 15,
+     "ExternalReference": 0,
+     "Organization": 0,
+     "Person": 327,
+     "Software": 10,
+     "Standard": 19,
+     "Work": 77,
+     "unresolvable_citation_excluded": 0,
+     "registered_no_work_metadata_excluded": 0
+    }
+   },
+   "after": {
+    "done": 1,
+    "total": 1,
+    "not_complete": []
+   }
+  },
+  {
+   "node": "F-13",
+   "unit": "questions",
+   "what": "questions from the scope and the corpus, generated through the call layer",
+   "requires": [
+    "F-12"
+   ],
+   "valve": "test.generate",
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.downstream.generate_questions: scope topic and exclusions + corpus -> the model, via squiddy.calls"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph's factory control declares no `test:` block (the arms the demand test compares are the graph's to name)",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-14",
+   "unit": "test",
+   "what": "the demand test: probes, replicates, ABBA, Wilson bar; the verdict is the demand gate",
+   "requires": [
+    "F-13"
+   ],
+   "valve": "test.judge",
+   "buckets": [
+    "model"
+   ],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version",
+    "role",
+    "prompt_sha256",
+    "model",
+    "transport"
+   ],
+   "command": [
+    "(in process) squiddy.downstream.run_test: packet, probes, judge x replicates via squiddy.calls, ingest, Wilson bar, release-bound verdict -> the demand gate"
+   ],
+   "network": {
+    "policy": "buckets",
+    "classes": [
+     "model"
+    ],
+    "hosts": []
+   },
+   "state": "skipped-by-config",
+   "why": "this graph's factory control declares no `test:` block (the arms the demand test compares are the graph's to name)",
+   "rc": 0,
+   "seconds": 0.0
+  },
+  {
+   "node": "F-15",
+   "unit": "publish",
+   "what": "record the publication decision (touchpoint 2)",
+   "requires": [
+    "F-14"
+   ],
+   "valve": "publish",
+   "buckets": [],
+   "key_components": [
+    "unit",
+    "item",
+    "input_sha256",
+    "control_sha256",
+    "kit_version"
+   ],
+   "command": [
+    "(in process) record the publication decision"
+   ],
+   "network": {
+    "policy": "none",
+    "classes": [],
+    "hosts": []
+   },
+   "state": "skipped-by-valve",
+   "why": "valves.publish is closed",
+   "touchpoint": 2,
+   "rc": 0,
+   "seconds": 0.0
+  }
+ ],
+ "ceilings": {
+  "model": 1000000.0,
+  "cpu": 18.0,
+  "http.default": 5000.0,
+  "http.api.openalex.org": 5000.0,
+  "http.export.arxiv.org": 5000.0,
+  "http.arxiv.org": 5000.0,
+  "http.api.crossref.org": 5000.0,
+  "http.doi.org": 5000.0,
+  "http.api.semanticscholar.org": 5000.0,
+  "http.github.com": 5000.0,
+  "http.raw.githubusercontent.com": 5000.0,
+  "http.pypi.org": 5000.0,
+  "http.doorstop-dev.github.io": 5000.0,
+  "http.strictdoc.readthedocs.io": 5000.0,
+  "http.sphinx-needs.readthedocs.io": 5000.0,
+  "http.cog.readthedocs.io": 5000.0,
+  "http.nedbatchelder.com": 5000.0,
+  "http.www.incose.org": 5000.0,
+  "http.www.omg.org": 5000.0,
+  "http.www.iso.org": 5000.0,
+  "http.standards.ieee.org": 5000.0,
+  "http.ieeexplore.ieee.org": 5000.0,
+  "http.dl.acm.org": 5000.0,
+  "http.link.springer.com": 5000.0,
+  "http.danieleades.github.io": 5000.0,
+  "http.argondigital.com": 5000.0
+ },
+ "network": {
+  "sandbox": {
+   "available": true,
+   "why": "/usr/bin/sandbox-exec applied the none profile to /usr/bin/true"
+  },
+  "closed_proxy": "http://127.0.0.1:9",
+  "offline": {
+   "variables": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "HF_HUB_DISABLE_TELEMETRY": "1",
+    "FASTMCP_CHECK_FOR_UPDATES": "off"
+   },
+   "imported_before_kit": [],
+   "hub_constant": null
+  },
+  "forwarder_log": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/egress.jsonl"
+ },
+ "overrides": [],
+ "disk": {
+  "scratch": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/factory/scratch/factory_20261110T012239_a36dac8d",
+  "inherited_temp": "/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T",
+  "swept": [],
+  "floor_gb": 10.0,
+  "checks": 9,
+  "first": {
+   "floor_gb": 10.0,
+   "floor_source": "the graph's spec (disk.floor_gb)",
+   "volumes": [
+    {
+     "what": "graph root (the data volume)",
+     "path": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+     "device": 16777231,
+     "free_bytes": 21354741760,
+     "probe": "the volume (shutil.disk_usage)",
+     "free_gb": 21.35,
+     "total_gb": 994.66
+    }
+   ],
+   "below": [],
+   "ok": true,
+   "at": "2026-11-10T01:22:41Z",
+   "where": "before item 1"
+  },
+  "last": {
+   "floor_gb": 10.0,
+   "floor_source": "the graph's spec (disk.floor_gb)",
+   "volumes": [
+    {
+     "what": "graph root (the data volume)",
+     "path": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+     "device": 16777231,
+     "free_bytes": 20262404096,
+     "probe": "the volume (shutil.disk_usage)",
+     "free_gb": 20.26,
+     "total_gb": 994.66
+    }
+   ],
+   "below": [],
+   "ok": true,
+   "at": "2026-11-10T01:25:35Z",
+   "where": "serve-check/before its first item"
+  }
+ },
+ "seconds_total": 174.0,
+ "rc": 0,
+ "buckets": {
+  "cpu": {
+   "unit": "hours",
+   "spent": 0.016,
+   "ceiling": 18.0,
+   "share_of_ceiling": 0.0009,
+   "rate_limited": 0
+  },
+  "http.api.crossref.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 9000.0,
+   "rate_per_hour": 9000.0,
+   "halved": false
+  },
+  "http.api.openalex.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 18000.0,
+   "rate_per_hour": 18000.0,
+   "halved": false
+  },
+  "http.api.semanticscholar.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 1199.88,
+   "rate_per_hour": 1199.88,
+   "halved": false
+  },
+  "http.argondigital.com": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.arxiv.org": {
+   "unit": "requests",
+   "spent": 2.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0004,
+   "rate_limited": 0,
+   "level": 1199.88,
+   "rate_per_hour": 1199.88,
+   "halved": false
+  },
+  "http.cog.readthedocs.io": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.danieleades.github.io": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.default": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 9000.0,
+   "rate_per_hour": 9000.0,
+   "halved": false
+  },
+  "http.dl.acm.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.doi.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 9000.0,
+   "rate_per_hour": 9000.0,
+   "halved": false
+  },
+  "http.doorstop-dev.github.io": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.export.arxiv.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 1199.88,
+   "rate_per_hour": 1199.88,
+   "halved": false
+  },
+  "http.github.com": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.ieeexplore.ieee.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.link.springer.com": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.nedbatchelder.com": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.pypi.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.raw.githubusercontent.com": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.sphinx-needs.readthedocs.io": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.standards.ieee.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.strictdoc.readthedocs.io": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.www.incose.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.www.iso.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "http.www.omg.org": {
+   "unit": "requests",
+   "spent": 0.0,
+   "ceiling": 5000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 3600.0,
+   "rate_per_hour": 3600.0,
+   "halved": false
+  },
+  "model": {
+   "unit": "tokens",
+   "spent": 0.0,
+   "ceiling": 1000000.0,
+   "share_of_ceiling": 0.0,
+   "rate_limited": 0,
+   "level": 13000000.0,
+   "rate_per_hour": 13000000.0,
+   "halved": false
+  }
+ },
+ "pause": {
+  "cause": "touchpoint 2",
+  "detail": "publish is closed: the publication decision is the operator's",
+  "touchpoint": 2,
+  "where": "publish",
+  "source": "factory",
+  "at": "2026-11-10T01:25:35.984360+00:00"
+ },
+ "model_calls": 0,
+ "phase_seconds": {
+  "kit_import_to_run": 0.01,
+  "start_to_plan": 0.02,
+  "plan": 2.67,
+  "plan_decide": [
+   {
+    "node": "F-20",
+    "unit": "seeds",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-21",
+    "unit": "seed_select",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-23",
+    "unit": "seed_propose",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-24",
+    "unit": "seed_relookup",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-25",
+    "unit": "seed_reselect",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-26",
+    "unit": "seed_context",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-22",
+    "unit": "seed_search",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-27",
+    "unit": "shelf_screen",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-01",
+    "unit": "catalog",
+    "seconds": 1.61
+   },
+   {
+    "node": "F-19",
+    "unit": "routes",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-02",
+    "unit": "assess",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-03",
+    "unit": "acquire",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-16",
+    "unit": "resolve",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-06",
+    "unit": "write",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-04",
+    "unit": "admin",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-18",
+    "unit": "rulings",
+    "seconds": 0.48
+   },
+   {
+    "node": "F-28",
+    "unit": "headings",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-30",
+    "unit": "parse_text",
+    "seconds": 0.34
+   },
+   {
+    "node": "F-05",
+    "unit": "parse",
+    "seconds": 0.17
+   },
+   {
+    "node": "F-17",
+    "unit": "concepts",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-32",
+    "unit": "derivations",
+    "seconds": 0.03
+   },
+   {
+    "node": "F-07",
+    "unit": "project",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-08",
+    "unit": "extract",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-09",
+    "unit": "preview",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-10",
+    "unit": "commit",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-29",
+    "unit": "mentions",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-31",
+    "unit": "rate",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-11",
+    "unit": "release",
+    "seconds": 0.01
+   },
+   {
+    "node": "F-12",
+    "unit": "serve-check",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-13",
+    "unit": "questions",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-14",
+    "unit": "test",
+    "seconds": 0.0
+   },
+   {
+    "node": "F-15",
+    "unit": "publish",
+    "seconds": 0.0
+   }
+  ],
+  "decide": [
+   {
+    "node": "F-20",
+    "unit": "seeds",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-21",
+    "unit": "seed_select",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-23",
+    "unit": "seed_propose",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-24",
+    "unit": "seed_relookup",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-25",
+    "unit": "seed_reselect",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-26",
+    "unit": "seed_context",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-22",
+    "unit": "seed_search",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-27",
+    "unit": "shelf_screen",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-01",
+    "unit": "catalog",
+    "decide": 0.2,
+    "recount": 0.0
+   },
+   {
+    "node": "F-19",
+    "unit": "routes",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-02",
+    "unit": "assess",
+    "decide": 0.0,
+    "recount": 0.28
+   },
+   {
+    "node": "F-03",
+    "unit": "acquire",
+    "decide": 0.26,
+    "recount": 0.29
+   },
+   {
+    "node": "F-16",
+    "unit": "resolve",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-06",
+    "unit": "write",
+    "decide": 0.26,
+    "recount": 0.28
+   },
+   {
+    "node": "F-04",
+    "unit": "admin",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-18",
+    "unit": "rulings",
+    "decide": 0.04,
+    "recount": 0.0
+   },
+   {
+    "node": "F-28",
+    "unit": "headings",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-30",
+    "unit": "parse_text",
+    "decide": 0.6,
+    "recount": 0.32
+   },
+   {
+    "node": "F-05",
+    "unit": "parse",
+    "decide": 0.46,
+    "recount": 0.49
+   },
+   {
+    "node": "F-17",
+    "unit": "concepts",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-32",
+    "unit": "derivations",
+    "decide": 0.18,
+    "recount": 0.0
+   },
+   {
+    "node": "F-07",
+    "unit": "project",
+    "decide": 0.0,
+    "recount": 0.05
+   },
+   {
+    "node": "F-08",
+    "unit": "extract",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-09",
+    "unit": "preview",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-10",
+    "unit": "commit",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-29",
+    "unit": "mentions",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-31",
+    "unit": "rate",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-11",
+    "unit": "release",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-12",
+    "unit": "serve-check",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-13",
+    "unit": "questions",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-14",
+    "unit": "test",
+    "decide": 0.0,
+    "recount": 0.0
+   },
+   {
+    "node": "F-15",
+    "unit": "publish",
+    "decide": 0.0,
+    "recount": 0.0
+   }
+  ],
+  "plan_to_first_node": 0.01,
+  "nodes": 170.26,
+  "between_nodes": 3.75,
+  "after_last_node": 0.0,
+  "total": 176.71
+ },
+ "summary": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/run_summary.md"
+}

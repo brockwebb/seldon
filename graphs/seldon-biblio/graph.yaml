@@ -48,7 +48,14 @@ disk:
 intake:
   # SEL-036 Part B: the catalog, generated from the resolution checkpoint by scripts/sel036/build_candidates.py.
   # content_fields: a unit whose resolution or held bytes moved is re-admitted as a revision (squiddy SQ-023, R-213).
-  - {source: candidates, files: ["corpus/candidates/*.yaml"], content_fields: [sha256, access, acquisition, doi, openalex_id]}
+  # ONLY fields the candidate alone writes: squiddy compares the candidate row with the MANIFEST entry
+  # (`revision.content_of`), and acquire writes `sha256`, `acquisition` and `local_path` into the manifest for every
+  # text it fetches, and the OpenAlex id in its URL form. SEL-036's second build declared `sha256`, `acquisition` and
+  # `openalex_id` here and so opened a revision for 70
+  # unchanged entries; its catalog writes were reverted before assess and these fields declared instead. `raw_sha256`
+  # and `text_sha256` are a documentation snapshot's held bytes and its text derivative (scripts/sel036/resolve.py),
+  # which acquire never writes.
+  - {source: candidates, files: ["corpus/candidates/*.yaml"], content_fields: [doi, arxiv_id, access, raw_sha256, text_sha256]}
   # squiddy DN-049 R-212: the operator's hand drop. A file the Desktop thread fetches through the operator's browser
   # lands here and is a `manual` candidate whose provenance stub is filled before it is admitted.
   - {source: inbox, dir: intake/inbox}

@@ -1,0 +1,32 @@
+{
+  "stage": 17,
+  "sub": null,
+  "label": "17",
+  "name": "registers",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.registers",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--version",
+    "20261109_sel036b",
+    "--date",
+    "2026-11-09",
+    "--diff",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/diff_20261109_sel036_20261109_sel036b.md",
+    "--note",
+    "SEL-036 Parts C and D: the second build, the documentation snapshots as .txt and li2024kgllm from arXiv"
+  ],
+  "wall_seconds": 0.18,
+  "finished_utc": "2026-11-10T01:25:35.428062+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "EXPORT_VERSIONS.md: wrote the 20261109_sel036b row (448 nodes / 456 edges, sha256 76f754f493f86618)"
+  ],
+  "first_line": "EXPORT_VERSIONS.md: wrote the 20261109_sel036b row (448 nodes / 456 edges, sha256 76f754f493f86618)"
+}

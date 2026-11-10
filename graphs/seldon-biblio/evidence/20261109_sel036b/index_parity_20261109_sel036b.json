@@ -1,0 +1,19 @@
+{
+  "control": {
+    "findings": [
+      "count: the release has 25408 units and the index 25407 rows",
+      "missing: 1 unit(s) of the release are not in the index: ['doc_omg_sysml_v2_1#b3645:783901-784184']",
+      "fingerprint: release a82b92868247bb40 != index 9eaaab3f335b5f3e"
+    ],
+    "fired": true,
+    "planted": "row doc_omg_sysml_v2_1#b3645:783901-784184 removed from the index"
+  },
+  "db_sha256": "58b4dec7ffa65fdf8a6971dd14b7430b537541b048a1bfe21f5f1ed124024b65",
+  "expected_units": 25408,
+  "findings": [],
+  "index_manifest": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/work/index/index_manifest.json",
+  "index_rows": 25408,
+  "pass": true,
+  "row_fingerprint": "a82b92868247bb402ae9947b7af45f6ff74e381bfefd06ce8bca9f2ff7d6109d",
+  "vectors": 25408
+}

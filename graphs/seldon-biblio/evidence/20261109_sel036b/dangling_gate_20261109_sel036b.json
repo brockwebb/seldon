@@ -1,0 +1,28 @@
+{
+  "real": {
+    "clean": true,
+    "findings": [],
+    "legs": [
+      "edge_endpoints",
+      "superseded_by"
+    ],
+    "nodes": 448,
+    "edges": 456
+  },
+  "legs": [
+    "edge_endpoints",
+    "superseded_by"
+  ],
+  "positive_control": {
+    "fired": true,
+    "legs": [
+      "edge_endpoints",
+      "superseded_by"
+    ],
+    "not_seeded": {},
+    "findings": [
+      "edge-endpoint: SupportsDecision iso29148_2018 -> node-that-does-not-exist (missing ['node-that-does-not-exist']; event dedec088442f433f963f54a0cab44825)",
+      "superseded_by: event 20ae0fb18ffd4428bbda5c0205b5bd04 names 'event-that-does-not-exist', which is not in the ledger"
+    ]
+  }
+}

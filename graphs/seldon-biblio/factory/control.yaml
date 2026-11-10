@@ -140,5 +140,8 @@ pause_reason: null
 # scripts/sel036/build_candidates.py (each entry's `disposition` and `resolution`). The count is the plan's undecided
 # count at that moment (factory/plan.json): 106 of the 106 cataloged entries. The operator overrides by editing a seed
 # (graphs/seldon-biblio/intake/seeds.yaml) and re-running the resolver, the catalog builder and the build.
+# Re-answered for the second build (release 20261109_sel036b), on the same basis: the 14 entries the first build held
+# (12 documentation snapshots re-held as form-feed .txt, and li2024kgllm's text taken from arXiv), refreshed in place by
+# the catalog because none was yet in the graph. The first build's answer was 106 (the whole catalog).
 review:
-  undecided: {count: 106, date: 2026-11-09}
+  undecided: {count: 14, date: 2026-11-09}

@@ -1,0 +1,17 @@
+{
+ "work": {
+  "admitted": 14,
+  "appended": 44,
+  "dropped": 16,
+  "run_id": "read_20261110T012247_18bfc24d",
+  "by_type": {
+   "AuthoredBy": 7,
+   "Person": 7,
+   "SupportsDecision": 16,
+   "Work": 14
+  },
+  "drops": {
+   "Decision: already in the ledger (shared class, matched not re-minted)": 16
+  }
+ }
+}

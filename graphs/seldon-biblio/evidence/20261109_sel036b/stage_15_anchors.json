@@ -1,0 +1,36 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "anchors",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.conformance",
+    "run",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036b_2026-11-09.json",
+    "--scope",
+    "graph",
+    "--gate",
+    "scope_anchors_covered",
+    "--controls",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/anchors_20261109_sel036b.json"
+  ],
+  "wall_seconds": 10.65,
+  "finished_utc": "2026-11-10T01:25:34.331496+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[N/A    ] 29 scope_anchors_covered  (the graph's scope names no anchors (DN-028 R-129: they are optional); nothing to check, and nothing checked is not a pass)",
+    "[control caught ] 29 scope_anchors_covered",
+    "<All keys matched successfully>"
+  ],
+  "first_line": "[N/A    ] 29 scope_anchors_covered  (the graph's scope names no anchors (DN-028 R-129: they are optional); nothing to check, and nothing checked is not a pass)"
+}

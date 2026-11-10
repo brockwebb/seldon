@@ -15,6 +15,17 @@
    "last_event_id": "e4f8a93a839346378fe0f824da4be49a",
    "sealed_at": "2026-11-10T01:11:20.720623+00:00",
    "schema_epoch_at_seal": "0.1.0+de21b9c7ec65"
+  },
+  {
+   "segment": "20261109_sel036b.jsonl",
+   "release_id": "20261109_sel036b",
+   "sha256": "d6f981b23bfdcd5be3ee42ebb6ae92a085e72a7907f311a3ab6991e7309bd715",
+   "bytes": 28155,
+   "events": 45,
+   "first_event_id": "53633cf4bb4f43f78f08f5c41af60be4",
+   "last_event_id": "fcc9415aaf874b9b8e09f093fc40653d",
+   "sealed_at": "2026-11-10T01:25:35.590779+00:00",
+   "schema_epoch_at_seal": "0.1.0+de21b9c7ec65"
   }
  ]
 }

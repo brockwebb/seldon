@@ -785,11 +785,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_cog_1
-    verification_detail: "the held file archive:docs/text/sw_cog__97f014e7e7.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_cog__97f014e7e7.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-013; SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-013; SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "6ec64b611d1d9962cd934be637b86e7fb633464230c511d6b3855f678973a013"
+    text_sha256: "82da6e15d68f306e9adbe6575560ce9ca4ee855c6ea15b0aec21a5ad062aa7dc"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: Running cog — cog 3.6.0 documentation
     entry_kind: documentation
@@ -802,27 +802,27 @@ documents:
     posture: open
     access_posture: open
     posture_host: cog.readthedocs.io
-    posture_observed_at: '2026-11-09T23:20:40Z'
-    local_path: archive:docs/text/sw_cog__97f014e7e7.md
-    sha256: 34bdec28c50baec186a4f827e50dc4ed900c76e63ac1565936226b24afe3bc56
+    posture_observed_at: "2026-11-09T23:50:52Z"
+    local_path: "archive:docs/text/sw_cog__97f014e7e7.txt"
+    sha256: "82da6e15d68f306e9adbe6575560ce9ca4ee855c6ea15b0aec21a5ad062aa7dc"
     raw_path: archive:docs/raw/sw_cog__97f014e7e7.html
     raw_sha256: c4fe6026d3ef8b16f600e25ce8092798d8298cc9eee72b84033b0ff62d2cb1ab
-    bytes: 20486
-    retrieved_at: '2026-11-09T23:20:40Z'
+    bytes: 9213
+    retrieved_at: "2026-11-09T23:50:52Z"
     direct_download_url: https://cog.readthedocs.io/en/latest/running.html
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_cog_2
-    verification_detail: "the held file archive:docs/text/sw_cog__9f40b1802c.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_cog__9f40b1802c.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-013; SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-013; SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "3e649f52c845a7d9e2b08336db0caa9e162ef1a7437a6e45a38c8a09e1e7ced9"
+    text_sha256: "3dca145eab622f138a5a14dbe616831d47f64cd7ac41c551aec1cd205a3da13b"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'Cog: generate code with inlined Python: README.rst'
     entry_kind: documentation
@@ -835,19 +835,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:40Z'
-    local_path: archive:docs/text/sw_cog__9f40b1802c.md
-    sha256: fec6ac79360316b60205dd5c7b050f7b7ba3cd2ad5dd2ba380280278cfe7a624
+    posture_observed_at: "2026-11-09T23:50:52Z"
+    local_path: "archive:docs/text/sw_cog__9f40b1802c.txt"
+    sha256: "3dca145eab622f138a5a14dbe616831d47f64cd7ac41c551aec1cd205a3da13b"
     raw_path: archive:docs/raw/sw_cog__9f40b1802c.rst
     raw_sha256: 47a05c5f2c41f3d5f49a76687603003ad32e90096ca013dd93d41ec2c5648f94
-    bytes: 2170
-    retrieved_at: '2026-11-09T23:20:40Z'
+    bytes: 2351
+    retrieved_at: "2026-11-09T23:50:52Z"
     direct_download_url: https://raw.githubusercontent.com/nedbat/cog/HEAD/README.rst
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: sw_doorstop
@@ -933,11 +933,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_doorstop_1
-    verification_detail: "the held file archive:docs/text/sw_doorstop__c003b7bfa4.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_doorstop__c003b7bfa4.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "02e7957f1848b67f28f833c68df6773cbd04ce3c76543b57672f936f7389366c"
+    text_sha256: "a988834890e4b2c2b4336a17ae96956df545e5b652e44a09d41f72a2d0ae533c"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'Doorstop: requirements management using version control: documentation'
     entry_kind: documentation
@@ -950,27 +950,27 @@ documents:
     posture: open
     access_posture: open
     posture_host: doorstop-dev.github.io
-    posture_observed_at: '2026-11-09T23:20:40Z'
-    local_path: archive:docs/text/sw_doorstop__c003b7bfa4.md
-    sha256: f2d7bb53cafc97db69268158c579133ceac0de9d025b9ee39ccc5848ed7093a3
+    posture_observed_at: "2026-11-09T23:50:52Z"
+    local_path: "archive:docs/text/sw_doorstop__c003b7bfa4.txt"
+    sha256: "a988834890e4b2c2b4336a17ae96956df545e5b652e44a09d41f72a2d0ae533c"
     raw_path: archive:docs/raw/sw_doorstop__c003b7bfa4.html
     raw_sha256: 8286479607e927adc25fb77e8f7536cc3c3c986b70075c489f7a6ac00ad2a8ee
-    bytes: 12454
-    retrieved_at: '2026-11-09T23:20:40Z'
+    bytes: 1726
+    retrieved_at: "2026-11-09T23:50:52Z"
     direct_download_url: https://doorstop-dev.github.io/doorstop/
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_doorstop_2
-    verification_detail: "the held file archive:docs/text/sw_doorstop__3d40695200.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_doorstop__3d40695200.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "849785fbbcbd9ad17ad9190ccb643dbdee0385a4e03552a3925bbd795cb17a01"
+    text_sha256: "92d43264eb22b83b5fb3f85d67303583d6a355d09feb82f58d5e3fb1dbc462eb"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'Doorstop: requirements management using version control: README.md'
     entry_kind: documentation
@@ -983,19 +983,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:41Z'
-    local_path: archive:docs/text/sw_doorstop__3d40695200.md
-    sha256: f50a0d94944f6872186d67e65853ccc1eeea94d01eef174e31c5aa45f3d370e1
+    posture_observed_at: "2026-11-09T23:50:52Z"
+    local_path: "archive:docs/text/sw_doorstop__3d40695200.txt"
+    sha256: "92d43264eb22b83b5fb3f85d67303583d6a355d09feb82f58d5e3fb1dbc462eb"
     raw_path: archive:docs/raw/sw_doorstop__3d40695200.md
     raw_sha256: 6a7e8e6e82f04910e3e1a7c789e7e1e485c7abc147d1c5b98da9092d90dadd20
-    bytes: 3912
-    retrieved_at: '2026-11-09T23:20:41Z'
+    bytes: 4103
+    retrieved_at: "2026-11-09T23:50:52Z"
     direct_download_url: https://raw.githubusercontent.com/doorstop-dev/doorstop/HEAD/README.md
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: browning2014doorstop
@@ -1142,11 +1142,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_openfasttrace_1
-    verification_detail: "the held file archive:docs/text/sw_openfasttrace__95aeb18cd6.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_openfasttrace__95aeb18cd6.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "f748a2d8b8384a521a800510ebff97ac7031f879900e4117652eecb1a0c27f06"
+    text_sha256: "eb82b868dff443a9d70fb7968a555e88726bc65104b3f1707bbc499facb0d81e"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'OpenFastTrace: requirement tracing suite: user_guide.md'
     entry_kind: documentation
@@ -1159,27 +1159,27 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:41Z'
-    local_path: archive:docs/text/sw_openfasttrace__95aeb18cd6.md
-    sha256: 74d4f468ef2010649d89df1adb158c74605e9fbeba504d2763b6a187ece11f98
+    posture_observed_at: "2026-11-09T23:50:53Z"
+    local_path: "archive:docs/text/sw_openfasttrace__95aeb18cd6.txt"
+    sha256: "eb82b868dff443a9d70fb7968a555e88726bc65104b3f1707bbc499facb0d81e"
     raw_path: archive:docs/raw/sw_openfasttrace__95aeb18cd6.md
     raw_sha256: fa7a23cead0140357bb6d015f671f76c2fe9f3ee62dae08dc6082c91691af85b
-    bytes: 1005
-    retrieved_at: '2026-11-09T23:20:41Z'
+    bytes: 1218
+    retrieved_at: "2026-11-09T23:50:53Z"
     direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/HEAD/doc/user_guide/user_guide.md
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_openfasttrace_2
-    verification_detail: "the held file archive:docs/text/sw_openfasttrace__8311108479.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_openfasttrace__8311108479.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "00eb0a87481a6971c75aef6cafadf29b3d8764eb7476fa86c608e9d22686e0b4"
+    text_sha256: "ccebe07b02c8f8de3e187fce0161df6ea5ebe66f37f404a31b93abd2ab7d140f"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'OpenFastTrace: requirement tracing suite: README.md'
     entry_kind: documentation
@@ -1192,19 +1192,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:42Z'
-    local_path: archive:docs/text/sw_openfasttrace__8311108479.md
-    sha256: 7868a5a86abfb8670b81d89de3667c15e865ae38bf76c3d7c629e01be3514d04
+    posture_observed_at: "2026-11-09T23:50:53Z"
+    local_path: "archive:docs/text/sw_openfasttrace__8311108479.txt"
+    sha256: "ccebe07b02c8f8de3e187fce0161df6ea5ebe66f37f404a31b93abd2ab7d140f"
     raw_path: archive:docs/raw/sw_openfasttrace__8311108479.md
     raw_sha256: c7928b4a437a6df88665c03ab0fc6051b47e47d35fda32be859c6e78ba43b9b7
-    bytes: 8704
-    retrieved_at: '2026-11-09T23:20:42Z'
+    bytes: 8898
+    retrieved_at: "2026-11-09T23:50:53Z"
     direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/HEAD/README.md
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: sw_strictdoc
@@ -1286,11 +1286,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_strictdoc_1
-    verification_detail: "the held file archive:docs/text/sw_strictdoc__57cf787633.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_strictdoc__57cf787633.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "54e1b9a4aa957e61d9add5952580d0ec439ff500d962610cd5aae4487a42e5c7"
+    text_sha256: "8b136ada292fedee0e3ecd53689642b66d61d07a073d288c69f7dd09a446e494"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: StrictDoc Documentation - Project index
     entry_kind: documentation
@@ -1303,19 +1303,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: strictdoc.readthedocs.io
-    posture_observed_at: '2026-11-09T23:20:42Z'
-    local_path: archive:docs/text/sw_strictdoc__57cf787633.md
-    sha256: a10fb74ff843093ee7ec6ccb53c915aad5c55eec4fc91b069b69f9c7685cdf34
+    posture_observed_at: "2026-11-09T23:50:54Z"
+    local_path: "archive:docs/text/sw_strictdoc__57cf787633.txt"
+    sha256: "8b136ada292fedee0e3ecd53689642b66d61d07a073d288c69f7dd09a446e494"
     raw_path: archive:docs/raw/sw_strictdoc__57cf787633.html
     raw_sha256: 26b5017757b851971bd5a2293f75072285649cd61b8417ae149bf8999b3cae68
-    bytes: 37059
-    retrieved_at: '2026-11-09T23:20:42Z'
+    bytes: 3146
+    retrieved_at: "2026-11-09T23:50:54Z"
     direct_download_url: https://strictdoc.readthedocs.io/en/stable/
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: sw_sphinx_needs
@@ -1397,11 +1397,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_sphinx_needs_1
-    verification_detail: "the held file archive:docs/text/sw_sphinx_needs__d213f37f51.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_sphinx_needs__d213f37f51.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "2a1321c3cff40727e036a6f9e17f2b3a85f6525da366a2ed37f2f417a1f7d2c8"
+    text_sha256: "919f224854dcc3d0dabcf4f62b26b151317f5bdaa9079c6c6f9eef8ebaafdd00"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: needtable - Sphinx-Needs 9.2.0 documentationContentsMenuExpandLight modeDark modeAuto light/dark, in light modeAuto light/dark, in dark mode
     entry_kind: documentation
@@ -1414,27 +1414,27 @@ documents:
     posture: open
     access_posture: open
     posture_host: sphinx-needs.readthedocs.io
-    posture_observed_at: '2026-11-09T23:20:42Z'
-    local_path: archive:docs/text/sw_sphinx_needs__d213f37f51.md
-    sha256: f0ec2a2a3ae157c938b604f9741115779483d17eb52ba38b432c06b42bd70f2a
+    posture_observed_at: "2026-11-09T23:50:54Z"
+    local_path: "archive:docs/text/sw_sphinx_needs__d213f37f51.txt"
+    sha256: "919f224854dcc3d0dabcf4f62b26b151317f5bdaa9079c6c6f9eef8ebaafdd00"
     raw_path: archive:docs/raw/sw_sphinx_needs__d213f37f51.html
     raw_sha256: 753448a89849397e0b9f23109f8cc87369c2227130666b5a1e1573382c6c3913
-    bytes: 336239
-    retrieved_at: '2026-11-09T23:20:42Z'
+    bytes: 45447
+    retrieved_at: "2026-11-09T23:50:54Z"
     direct_download_url: https://sphinx-needs.readthedocs.io/en/latest/directives/needtable.html
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_sphinx_needs_2
-    verification_detail: "the held file archive:docs/text/sw_sphinx_needs__017ac800c1.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_sphinx_needs__017ac800c1.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "a0e545e2e7ab01602d654dab88bd7d4cea307abd8d80183e41e4922c86301233"
+    text_sha256: "f859ed4796dec1d117e8af51a0a0a8beb2fda02ddaae46bfd15d963f15d8077d"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: Delayed field evaluation - Sphinx-Needs 9.2.0 documentationContentsMenuExpandLight modeDark modeAuto light/dark, in light modeAuto light/dark, in dark mode
     entry_kind: documentation
@@ -1447,19 +1447,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: sphinx-needs.readthedocs.io
-    posture_observed_at: '2026-11-09T23:20:43Z'
-    local_path: archive:docs/text/sw_sphinx_needs__017ac800c1.md
-    sha256: 5992e2e1a2047c33989e3d0ce60293d244f370233aa3d677aaca4d4b831a8748
+    posture_observed_at: "2026-11-09T23:50:54Z"
+    local_path: "archive:docs/text/sw_sphinx_needs__017ac800c1.txt"
+    sha256: "f859ed4796dec1d117e8af51a0a0a8beb2fda02ddaae46bfd15d963f15d8077d"
     raw_path: archive:docs/raw/sw_sphinx_needs__017ac800c1.html
     raw_sha256: fca8ff52d97316b14603a166cf247faf57064a7bf4ed9633a5384890bcda5153
-    bytes: 280833
-    retrieved_at: '2026-11-09T23:20:43Z'
+    bytes: 53486
+    retrieved_at: "2026-11-09T23:50:54Z"
     direct_download_url: https://sphinx-needs.readthedocs.io/en/latest/dynamic_functions.html
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: sw_requiem
@@ -1543,11 +1543,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_requiem_1
-    verification_detail: "the held file archive:docs/text/sw_requiem__79fdb34707.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_requiem__79fdb34707.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "f1c5ef520eb0974d3378eb9383bdc6abee95b3de0f54729d00a7a54f8955990a"
+    text_sha256: "e819ba79fb2446d8b9192a58e0ae16f753568e1313216250e0ac428968521ca9"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: Introduction - Requiem User Guide
     entry_kind: documentation
@@ -1560,19 +1560,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: danieleades.github.io
-    posture_observed_at: '2026-11-09T23:20:43Z'
-    local_path: archive:docs/text/sw_requiem__79fdb34707.md
-    sha256: e9f80438b08986d22f9a65d272b76ad267be267587c9c83663e9b4aa8a35abf6
+    posture_observed_at: "2026-11-09T23:50:55Z"
+    local_path: "archive:docs/text/sw_requiem__79fdb34707.txt"
+    sha256: "e819ba79fb2446d8b9192a58e0ae16f753568e1313216250e0ac428968521ca9"
     raw_path: archive:docs/raw/sw_requiem__79fdb34707.html
     raw_sha256: 24a4c389eb4ba0acb2347293907787a918a1436ea017de70df92dd752178e2c9
-    bytes: 16618
-    retrieved_at: '2026-11-09T23:20:43Z'
+    bytes: 4533
+    retrieved_at: "2026-11-09T23:50:55Z"
     direct_download_url: https://danieleades.github.io/requiem/
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: scukanec2010verification
@@ -1706,11 +1706,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_argondigital_verification_methods_1
-    verification_detail: "the held file archive:docs/text/argondigital_verification_methods__ea9c3a7601.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/argondigital_verification_methods__ea9c3a7601.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "ed77821ab0bf9aad42973c965990ab7e46e12f3527de8f5f652be53f41f1796f"
+    text_sha256: "358424e28379f846aca25e241ca1e715c464771abd84624298fda278c82341bc"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: Use of Multiple Verification Methods - update - ArgonDigital | Making Technology a Strategic Advantage
     entry_kind: documentation
@@ -1723,19 +1723,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: argondigital.com
-    posture_observed_at: '2026-11-09T23:20:47Z'
-    local_path: archive:docs/text/argondigital_verification_methods__ea9c3a7601.md
-    sha256: 501aa2d6ca477b1f1cf4ff90ec78141b1a872c2228bd3353f8259f16a58a8f8f
+    posture_observed_at: "2026-11-09T23:50:59Z"
+    local_path: "archive:docs/text/argondigital_verification_methods__ea9c3a7601.txt"
+    sha256: "358424e28379f846aca25e241ca1e715c464771abd84624298fda278c82341bc"
     raw_path: archive:docs/raw/argondigital_verification_methods__ea9c3a7601.html
-    raw_sha256: fce443cc85effcda2cf3e41f31e91cce6e503e4d7ece0560bfc5050cca23f9fc
-    bytes: 345664
-    retrieved_at: '2026-11-09T23:20:47Z'
+    raw_sha256: "7b14b6bbb58a7ed74745907ab4841393b1c004bf0e8f95374d5159bea04015cf"
+    bytes: 14719
+    retrieved_at: "2026-11-09T23:50:59Z"
     direct_download_url: https://argondigital.com/blog/product-management/use-of-multiple-verification-methods/
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: cohen1960kappa
@@ -4653,11 +4653,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_madr_1
-    verification_detail: "the held file archive:docs/text/sw_madr__989575deb0.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_madr__989575deb0.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "e7196ab7fdbc88f6a911e64c1b8c7a838a108df0fd0ab0b40b1547937cd0abe5"
+    text_sha256: "a9d4639c53a77976a5bd4d76dd7b6af69fe36004e7e6ed79e19fed1d398410d7"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'MADR: Markdown Architectural Decision Records: README.md'
     entry_kind: documentation
@@ -4672,19 +4672,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:47Z'
-    local_path: archive:docs/text/sw_madr__989575deb0.md
-    sha256: 1710d4990378ad85eaa277adc328d67c47aec7e87ccb56ad9126fe54e9701605
+    posture_observed_at: "2026-11-09T23:50:59Z"
+    local_path: "archive:docs/text/sw_madr__989575deb0.txt"
+    sha256: "a9d4639c53a77976a5bd4d76dd7b6af69fe36004e7e6ed79e19fed1d398410d7"
     raw_path: archive:docs/raw/sw_madr__989575deb0.md
     raw_sha256: 075685b90e5367fb17b113e662b752e0705cedc065d11c49c5a27ee24101bc4b
-    bytes: 6102
-    retrieved_at: '2026-11-09T23:20:47Z'
+    bytes: 6280
+    retrieved_at: "2026-11-09T23:50:59Z"
     direct_download_url: https://raw.githubusercontent.com/adr/madr/HEAD/README.md
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: niosh_hierarchy_of_controls
@@ -5524,13 +5524,25 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: li2024kgllm
-    verification_detail: "neither Crossref nor OpenAlex returned a record for 10.48550/arxiv.2403.07311: crossref=crossref HTTP 404 openalex=openalex HTTP 404"
-    acquire_halts: ["neither Crossref nor OpenAlex returned a record for 10.48550/arxiv.2403.07311: crossref=crossref HTTP 404 openalex=openalex HTTP 404"]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "1103a3f58851f31b267304d4f8dac8483fb126a5a73bb2cd761a67a786de2497"
+    last_modified: "Tue, 17 Jun 2025 01:11:58 GMT"
+    etag: "CL+wtpej940DEAI="
+    manual_acquisition: false
+    route_used: "direct https://arxiv.org/pdf/2403.07311"
+    posture_observed_at: "2026-11-10T01:22:46.008356+00:00"
+    posture_host: "arxiv.org"
+    posture_evidence: "HTTP 200 OK at https://arxiv.org/pdf/2403.07311; robots.txt HTTP 200 -> successful (RFC 9309 2.3.1.1); Allow: /pdf (line 11); text taken"
+    posture: "open"
+    retrieved_date: "2026-11-09"
+    bytes: 678812
+    sha256: "93a8f68366ab6fb256c2d4da7269484912990fb33a7a2bb86ad8b90eed419ae2"
+    local_path: "archive:oa/li2024kgllm.pdf"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture.md. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    direct_download_url: "https://arxiv.org/pdf/2403.07311"
+    arxiv_doi: "10.48550/arxiv.2403.07311"
+    content_key: "d01dc6b3f44ffcd1201e2676a3c8c0feb26b337384427753fcfcda5b4d1dcb06"
     kind: work
-    stage: "assess_queue"
-    disposition: active
+    stage: "in_graph"
+    disposition: "active"
     title: Knowledge Graph Large Language Model (KG-LLM) for Link Prediction
     entry_kind: work
     title_cited: Knowledge Graph Large Language Model (KG-LLM) for Link Prediction
@@ -5548,9 +5560,8 @@ documents:
     - Yongfeng Zhang
     year: 2024
     venue: Asian Conference on Machine Learning
-    doi: 10.48550/arxiv.2403.07311
     arxiv_id: '2403.07311'
-    source_url: https://doi.org/10.48550/arxiv.2403.07311
+    source_url: "https://arxiv.org/abs/2403.07311"
     access: restricted_or_unknown
     resolved_by: semanticscholar
     citation_discrepancies:
@@ -5601,9 +5612,9 @@ documents:
         title: Knowledge Graph Large Language Model (KG-LLM) for Link Prediction
         venue: Asian Conference on Machine Learning
         year: 2024
-    acquisition: auto
-    acquisition_status: pending
-    verification_status: "halted"
+    acquisition: "auto"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: qian2019systemer
@@ -6220,11 +6231,11 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: doc_sw_autoresearch_1
-    verification_detail: "the held file archive:docs/text/sw_autoresearch__85a9ac7c16.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."
-    acquire_halts: ["the held file archive:docs/text/sw_autoresearch__85a9ac7c16.md is not a readable PDF: PdfiumError: Failed to load document (PDFium: Data format error)."]
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: docs/design/seldon_architectural_decisions.md. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: docs/design/seldon_architectural_decisions.md. Assessed mechanically by squiddy.assess on 2026-11-10. || PRIOR NOTE, PRESERVED:"
+    content_key: "99155c2f2295292bb3ebbc4b6c6d8a74c2e39821f532a1fa6e87930c4c09c953"
+    text_sha256: "59d55cd80dcc843610a5c94c1240f4138deb03e61efd7f0c6cf657e6544e4b77"
     kind: work
-    stage: "assess_queue"
+    stage: "in_graph"
     disposition: active
     title: 'autoresearch: README.md'
     entry_kind: documentation
@@ -6239,19 +6250,19 @@ documents:
     posture: open
     access_posture: open
     posture_host: raw.githubusercontent.com
-    posture_observed_at: '2026-11-09T23:20:47Z'
-    local_path: archive:docs/text/sw_autoresearch__85a9ac7c16.md
-    sha256: 107ef7cfc607e6a50200e76b772d7667ce38cf6dab0e7b4da6ca36a4847f0fd2
+    posture_observed_at: "2026-11-09T23:51:00Z"
+    local_path: "archive:docs/text/sw_autoresearch__85a9ac7c16.txt"
+    sha256: "59d55cd80dcc843610a5c94c1240f4138deb03e61efd7f0c6cf657e6544e4b77"
     raw_path: archive:docs/raw/sw_autoresearch__85a9ac7c16.md
     raw_sha256: 3958fd4195ac2f98ed35c4eaa4f3028a335165ee24945e96426c408d25793a41
-    bytes: 8039
-    retrieved_at: '2026-11-09T23:20:47Z'
+    bytes: 8230
+    retrieved_at: "2026-11-09T23:51:00Z"
     direct_download_url: https://raw.githubusercontent.com/karpathy/autoresearch/HEAD/README.md
     manual_acquisition: false
     access: open
     acquisition: auto
-    acquisition_status: "quarantined"
-    verification_status: "halted"
+    acquisition_status: "acquired"
+    verification_status: "declared"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: liang2026skillnet

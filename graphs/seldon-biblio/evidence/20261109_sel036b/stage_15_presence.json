@@ -1,0 +1,29 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "presence",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.gates",
+    "presence",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--mutate",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/presence_20261109_sel036b.json"
+  ],
+  "wall_seconds": 0.44,
+  "finished_utc": "2026-11-10T01:23:52.183060+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[presence] 106 primary node(s), 106 in-graph entr(y|ies): CLEAN",
+    "[presence] positive control: FIRED on both directions"
+  ],
+  "first_line": "[presence] 106 primary node(s), 106 in-graph entr(y|ies): CLEAN"
+}

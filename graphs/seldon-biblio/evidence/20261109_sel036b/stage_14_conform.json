@@ -1,0 +1,31 @@
+{
+  "stage": 14,
+  "sub": null,
+  "label": "14",
+  "name": "conform",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.gates",
+    "schema",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036b_2026-11-09.json",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/evidence/20261109_sel036b/schema_gate_20261109_sel036b.json"
+  ],
+  "wall_seconds": 0.52,
+  "finished_utc": "2026-11-10T01:23:50.629492+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[schema] validated 448 nodes and 456 links against seldon_biblio.schema.json: 0 distinct failure row(s)",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"",
+    "  class Decision(Node):"
+  ],
+  "first_line": "[schema] validated 448 nodes and 456 links against seldon_biblio.schema.json: 0 distinct failure row(s)"
+}

@@ -1,0 +1,402 @@
+{
+ "acquired": [
+  "doc_omg_reqif_1_2_1",
+  "doc_omg_sysml_v2_1",
+  "doc_omg_kerml_1",
+  "doc_sw_cog_1",
+  "doc_sw_cog_2",
+  "doc_sw_doorstop_1",
+  "doc_sw_doorstop_2",
+  "doc_sw_openfasttrace_1",
+  "doc_sw_openfasttrace_2",
+  "doc_sw_strictdoc_1",
+  "doc_sw_sphinx_needs_1",
+  "doc_sw_sphinx_needs_2",
+  "doc_sw_requiem_1",
+  "doc_argondigital_verification_methods_1",
+  "clark2014micropublications",
+  "li2024selfroute",
+  "liu2024lostmiddle",
+  "zhao2024expel",
+  "amodei2016concrete",
+  "lehman2020creativity",
+  "doc_sw_madr_1",
+  "arxiv_2406_14325",
+  "chen2023chatgpt",
+  "zhuge2024agentjudge",
+  "li2024kgllm",
+  "arxiv_2104_03986",
+  "xiong2026alma",
+  "ilyas2022saga",
+  "ilyas2023growing",
+  "doc_sw_autoresearch_1",
+  "liang2026skillnet",
+  "yu2026multiagentmemory",
+  "zhang2026rlm"
+ ],
+ "counts": {
+  "acquired": 33,
+  "admitted": 106,
+  "cataloged": 106,
+  "disposition:active": 33,
+  "disposition:metadata_only": 73,
+  "manual": 19,
+  "metadata_only": 73,
+  "resolved": 87,
+  "stage:in_graph": 106
+ },
+ "manual": [
+  {
+   "hosts": [
+    "www.ibm.com"
+   ],
+   "id": "doc_ibm_doors_1",
+   "kind": "documentation",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors",
+   "why": "off_allowlist at www.ibm.com"
+  },
+  {
+   "hosts": [
+    "deepmind.google"
+   ],
+   "id": "krakovna2020specgaming",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/",
+   "why": "no index holds it, and its publisher's page (deepmind.google) is off_allowlist"
+  },
+  {
+   "hosts": [],
+   "id": "nist_sp800_53r5",
+   "kind": "standard",
+   "oa_url": "https://doi.org/10.6028/nist.sp.800-53r5",
+   "posture": null,
+   "url": "https://doi.org/10.6028/nist.sp.800-53r5",
+   "why": "the text is published free and was not fetched: no fetch route at https://doi.org/10.6028/nist.sp.800-53r5"
+  },
+  {
+   "hosts": [
+    "www.ecfr.gov"
+   ],
+   "id": "cfr21_11_10e",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11/subpart-B/section-11.10",
+   "why": "the text is published free and was not fetched: off_allowlist at www.ecfr.gov"
+  },
+  {
+   "hosts": [],
+   "id": "who_trs1033_annex4",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": null,
+   "url": null,
+   "why": "the text is published free and was not fetched: no fetch route at None"
+  },
+  {
+   "hosts": [
+    "www.w3.org"
+   ],
+   "id": "w3c_prov_o",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.w3.org/TR/prov-o/",
+   "why": "the text is published free and was not fetched: off_allowlist at www.w3.org"
+  },
+  {
+   "hosts": [
+    "slsa.dev"
+   ],
+   "id": "slsa_v1_0",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://slsa.dev/spec/v1.0/",
+   "why": "the text is published free and was not fetched: off_allowlist at slsa.dev"
+  },
+  {
+   "hosts": [],
+   "id": "rfc9162",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": null,
+   "url": "https://doi.org/10.17487/rfc9162",
+   "why": "the text is published free and was not fetched: no fetch route at https://doi.org/10.17487/rfc9162"
+  },
+  {
+   "hosts": [],
+   "id": "rfc8493",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": null,
+   "url": "https://doi.org/10.17487/rfc8493",
+   "why": "the text is published free and was not fetched: no fetch route at https://doi.org/10.17487/rfc8493"
+  },
+  {
+   "hosts": [
+    "www.loc.gov"
+   ],
+   "id": "premis_3_0",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.loc.gov/standards/premis/v3/",
+   "why": "the text is published free and was not fetched: off_allowlist at www.loc.gov"
+  },
+  {
+   "hosts": [
+    "public.ccsds.org"
+   ],
+   "id": "oais_iso14721",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://public.ccsds.org/Pubs/650x0m2.pdf",
+   "why": "the text is published free and was not fetched: off_allowlist at public.ccsds.org"
+  },
+  {
+   "hosts": [],
+   "id": "ndsa_levels_v2",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": null,
+   "url": null,
+   "why": "the text is published free and was not fetched: no fetch route at None"
+  },
+  {
+   "hosts": [
+    "www.gao.gov"
+   ],
+   "id": "gao_02_195",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.gao.gov/products/gao-02-195",
+   "why": "no index holds it, and its publisher's page (www.gao.gov) is off_allowlist"
+  },
+  {
+   "hosts": [
+    "oig.nasa.gov"
+   ],
+   "id": "nasa_oig_ig_12_012",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://oig.nasa.gov/docs/IG-12-012.pdf",
+   "why": "no index holds it, and its publisher's page (oig.nasa.gov) is off_allowlist"
+  },
+  {
+   "hosts": [
+    "cognitect.com"
+   ],
+   "id": "nygard2011adr",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions",
+   "why": "no index holds it, and its publisher's page (cognitect.com) is off_allowlist"
+  },
+  {
+   "hosts": [
+    "www.cdc.gov"
+   ],
+   "id": "niosh_hierarchy_of_controls",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://www.cdc.gov/niosh/hierarchy-of-controls/",
+   "why": "no index holds it, and its publisher's page (www.cdc.gov) is off_allowlist"
+  },
+  {
+   "hosts": [],
+   "id": "nasa_swe_072",
+   "kind": "standard",
+   "oa_url": null,
+   "posture": null,
+   "url": null,
+   "why": "the text is published free and was not fetched: no fetch route at None"
+  },
+  {
+   "hosts": [],
+   "id": "anthropic2026seeing",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": null,
+   "url": null,
+   "why": "no index holds it, and its publisher's page (www.anthropic.com) is off the Network line, URL unknown to the note"
+  },
+  {
+   "hosts": [
+    "randomlabs.ai"
+   ],
+   "id": "randomlabs2026slate",
+   "kind": "grey",
+   "oa_url": null,
+   "posture": "off_allowlist",
+   "url": "https://randomlabs.ai/blog/slate",
+   "why": "no index holds it, and its publisher's page (randomlabs.ai) is off_allowlist"
+  }
+ ],
+ "open_text_not_fetched_off_network_line": [
+  {
+   "detail": "https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf: robots.txt ProxyError: HTTPSConnectionPool(host='discovery.ucl.ac.uk', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Un",
+   "hosts": [
+    "discovery.ucl.ac.uk"
+   ],
+   "id": "gotel1994traceability",
+   "oa_url": "https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "http://www.gbv.de/dms/ilmenau/toc/673088804.PDF: HTTP 403",
+   "hosts": [
+    "www.gbv.de"
+   ],
+   "id": "clelandhuang2012traceability",
+   "oa_url": "http://www.gbv.de/dms/ilmenau/toc/673088804.PDF",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://content.scirp.org/pdf/jsea_2014032713545074.pdf: robots.txt ProxyError: HTTPSConnectionPool(host='content.scirp.org', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyErro",
+   "hosts": [
+    "content.scirp.org"
+   ],
+   "id": "browning2014doorstop",
+   "oa_url": "https://content.scirp.org/pdf/jsea_2014032713545074.pdf",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_pdf: robots.txt ProxyError: HTTPSConnectionPool(host='www.jstage.jst.go.jp', port=443): Max retries exceeded with url: /robots.txt (Caused by",
+   "hosts": [
+    "www.jstage.jst.go.jp"
+   ],
+   "id": "mayer2009multimedia",
+   "oa_url": "https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_pdf",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://dl.acm.org/doi/pdf/10.1145/368996.369025: HTTP 403",
+   "hosts": [
+    "dl.acm.org"
+   ],
+   "id": "kahn1962topological",
+   "oa_url": "https://dl.acm.org/doi/pdf/10.1145/368996.369025",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://dl.acm.org/doi/pdf/10.1145/1460299.1460318: HTTP 403",
+   "hosts": [
+    "dl.acm.org"
+   ],
+   "id": "kelley1959critical",
+   "oa_url": "https://dl.acm.org/doi/pdf/10.1145/1460299.1460318",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://content.iospress.com:443/download/information-services-and-use/isu613?id=information-services-and-use%2Fisu613: robots.txt ProxyError: HTTPSConnectionPool(host='content.iospress.com', port=443",
+   "hosts": [
+    "content.iospress.com"
+   ],
+   "id": "groth2010nanopublication",
+   "oa_url": "https://content.iospress.com:443/download/information-services-and-use/isu613?id=information-services-and-use%2Fisu613",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://jbiomedsem.biomedcentral.com/track/pdf/10.1186/2041-1480-1-S1-S6: robots.txt ProxyError: HTTPSConnectionPool(host='jbiomedsem.biomedcentral.com', port=443): Max retries exceeded with url: /rob",
+   "hosts": [
+    "jbiomedsem.biomedcentral.com"
+   ],
+   "id": "shotton2010cito",
+   "oa_url": "https://jbiomedsem.biomedcentral.com/track/pdf/10.1186/2041-1480-1-S1-S6",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://publikationen.bibliothek.kit.edu/1000178348/156555617: robots.txt ProxyError: HTTPSConnectionPool(host='publikationen.bibliothek.kit.edu', port=443): Max retries exceeded with url: /robots.txt",
+   "hosts": [
+    "publikationen.bibliothek.kit.edu"
+   ],
+   "id": "fuchss2025lissa",
+   "oa_url": "https://publikationen.bibliothek.kit.edu/1000178348/156555617",
+   "posture": "unreachable",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://dl.acm.org/doi/pdf/10.1145/356810.356816: HTTP 403",
+   "hosts": [
+    "dl.acm.org"
+   ],
+   "id": "erman1980hearsay",
+   "oa_url": "https://dl.acm.org/doi/pdf/10.1145/356810.356816",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "",
+   "hosts": [],
+   "id": "han2017checklists",
+   "oa_url": "https://doi.org/10.1371/journal.pone.0183591",
+   "posture": null,
+   "reason": "no_oa_pdf_url"
+  },
+  {
+   "detail": "https://systematicreviewsjournal.biomedcentral.com/track/pdf/10.1186/s13643-020-01542-z: robots.txt ProxyError: HTTPSConnectionPool(host='systematicreviewsjournal.biomedcentral.com', port=443): Max re",
+   "hosts": [
+    "figshare.com",
+    "systematicreviewsjournal.biomedcentral.com"
+   ],
+   "id": "rethlefsen2021prismas",
+   "oa_url": "https://systematicreviewsjournal.biomedcentral.com/track/pdf/10.1186/s13643-020-01542-z",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "",
+   "hosts": [],
+   "id": "aaai_v40i44_41105",
+   "oa_url": "https://doi.org/10.1609/aaai.v40i44.41105",
+   "posture": null,
+   "reason": "no_oa_pdf_url"
+  },
+  {
+   "detail": "",
+   "hosts": [],
+   "id": "adler2021incremental",
+   "oa_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/7250616",
+   "posture": null,
+   "reason": "no_oa_pdf_url"
+  },
+  {
+   "detail": "http://pqdtopen.proquest.com/#viewpdf?dispub=10139524: HTTP 403",
+   "hosts": [
+    "pqdtopen.proquest.com"
+   ],
+   "id": "pershina2014graph",
+   "oa_url": null,
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  },
+  {
+   "detail": "https://dl.acm.org/doi/pdf/10.1145/3768620: HTTP 403",
+   "hosts": [
+    "dl.acm.org"
+   ],
+   "id": "xiang2025splite",
+   "oa_url": "https://dl.acm.org/doi/pdf/10.1145/3768620",
+   "posture": "refused",
+   "reason": "oa_text_not_retrievable"
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+  "graph": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio",
+  "kit_config": "squiddy/conformance.yaml",
+  "anchor_mode": "all",
+  "export": "/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036b_2026-11-09.json",
+  "export_sha256": "76f754f493f8661896e9773f6ee8e5096def827c11678631b1ffdfee8c819d1f",
+  "gates": [
+    {
+      "gate": "claims_reachable",
+      "item": 40,
+      "level": "error",
+      "status": "n/a",
+      "why": "the served export holds no Claim: no claim to reach",
+      "findings": [],
+      "source": "hazbrief HB-13 RESULT section 4 and LN-06 section 3 cause 1, 2026-10-21 (claims grounded in docling's parse were served under receipts cut from pypdfium's page text: 0 of 7 questions, a pipe-bomb claim returned for a spill receipt); squiddy SQ-028 finding, SQ-028R, DN-025 ADDENDUM 01 R-216",
+      "lesson": "2026-10-22_claims_and_receipts_share_one_text.md"
+    }
+  ],
+  "controls": [
+    {
+      "gate": "claims_reachable",
+      "item": 40,
+      "control": "caught",
+      "planted_findings": [
+        "x028r_planted_claim_from_the_other_rendering (x028r_planted_claim_from_the_other_rendering_doc): unreachable: no receipt row of its document was cut from the text its parsed_sha256 181b4097c42b names (the rows name ['489ad819fbf8'])",
+        "1 of 1 Claim not reachable (0 do not re-read; 0 cross a receipt boundary; 0 of superseded entries not checked; 0 not named above); a graph whose claims name another text re-grounds them (re-extract or re-anchor, recorded), never a silent re-offset"
+      ]
+    }
+  ]
+}
