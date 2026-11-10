@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-013-R4
+date: '2026-11-09'
+decided_by: cc:086d89ff
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:142: AD-013-R4'
+reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
+kind: decision
+status: accepted
+statement: 'Every projection cell that is not an authored field of the requirement shall be computed at render from the graph: Status from the state''s label and the note, Verified-by from the verified_by targets, Satisfied-by from the satisfies sources, Derived-from and Decision from the derived_from targets; a projection column whose source is neither computed nor authored shall be refused.'
+source:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  lines:
+  - 142
+  - 148
+  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  text: |-
+    - **AD-013-R4. Every cell of a projection that is not an authored field is computed at render: Status is the state's label (the projection's `state_labels`, else `requirements.state_labels`, else the state's name) followed by `: ` and the note when there is one; Verified-by lists the `verified_by` targets; Satisfied-by the `satisfies` sources; Derived-from the `derived_from` targets; Decision the `derived_from` targets that are register records; and a column whose source is none of these and no authored field is refused when the projection is read.**
+      One refinement, from evidence item 4: a note that opens with a word `requirements.status_map` maps to the
+      requirement's current state is rendered without the label, because the word is the project's finer name for that
+      state (`changed`, `partial`, `not met`); when the state moves, the word no longer maps to it and the label is
+      prefixed, so a stale qualifier shows rather than hides. A requirement with no `verified_by` edge renders the
+      projection's `none_text` when its method is test, and `<method>: <none_text>` otherwise. `{status:<word>}` in a
+      counts template counts the rendered Status cells that open with the word.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  anchor: AD-013-R4
+consumer:
+- cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md
+- tests/test_sel035_authored_once.py
+- seldon/core/requirements.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 2bb4762d49cb9b3c4457a1857f3ebe6634c39b8f5989663c8ae94550617e7910

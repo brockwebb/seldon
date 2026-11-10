@@ -1,0 +1,24 @@
+event: amend
+id: seldon:AD-013-R1
+date: '2026-11-09'
+decided_by: cc:086d89ff
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:136: AD-013-R1'
+reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
+amendment:
+  clause: the ruling
+  text: Amended by AD-013 ADDENDUM 02 (docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:136).
+changes:
+  statement: A requirement's authored fields shall be its id, statement, source, document, section, verification method and an optional note; nothing else about it shall be stored as text, and a load source's verbatim cells shall not be kept, what each said being an edge, the state, the method or the note; it reaches verified only with a verified_by edge.
+  consumer:
+  - cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md
+  - tests/test_sel035_authored_once.py
+  - seldon/core/requirements.py
+  - seldon/commands/req.py
+  - seldon/commands/docs.py
+  rationale:
+    path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+    anchor: AD-013-R1
+written_by: seldon decision 0.1.0
+provisional_id: f3d5641a4ec1bb0f677da85313f578f948404b0a729a0b43a633a00130bcb4fd

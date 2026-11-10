@@ -1,0 +1,24 @@
+event: amend
+id: seldon:AD-013-R2
+date: '2026-11-09'
+decided_by: cc:086d89ff
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:150: AD-013-R2'
+reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
+amendment:
+  clause: the ruling
+  text: Amended by AD-013 ADDENDUM 02 (docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:150).
+changes:
+  statement: 'A table inside projection markers shall be output only: seldon req import shall refuse a file that carries projection markers, and seldon docs generate shall refuse, printing the differing rows and writing nothing, a file whose marker blocks no longer hash to the revision stamped on its first line, unless --discard-edits is given.'
+  consumer:
+  - cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md
+  - tests/test_sel035_authored_once.py
+  - seldon/core/requirements.py
+  - seldon/commands/req.py
+  - seldon/commands/docs.py
+  rationale:
+    path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+    anchor: AD-013-R2
+written_by: seldon decision 0.1.0
+provisional_id: ecd2d9051e085ff81c392ef74901058b39100a9f1fb6c29b8b30701222faab39

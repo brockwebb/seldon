@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-013-R5
+date: '2026-11-09'
+decided_by: cc:086d89ff
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:155: AD-013-R5'
+reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
+kind: decision
+status: accepted
+statement: A test shall declare the requirements it verifies with the pytest marker verifies; seldon req trace shall read the test files with ast and keep one verified_by edge, marked declared_by marker, from each named requirement to the test's Script, removing edges whose marker is gone and listing markers naming no requirement and files that do not parse; seldon verify shall report the trace's plan.
+source:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  lines:
+  - 155
+  - 159
+  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  text: |-
+    - **AD-013-R5. A test declares what it verifies: `@pytest.mark.verifies("VR-012", ...)` on a test function or class; `seldon req trace` reads the project's test files with the standard library's `ast` (no import, no collection), makes a `verified_by` edge marked `declared_by: marker` from each named requirement to the SEL-021 test `Script` of the marked node, removes a marker edge whose marker is gone and the imported test edges of a requirement a marker now names, and lists a marker that names no requirement and a file that does not parse; `seldon verify` reports the trace's plan; and no new text grammar for test references is added.**
+      `seldon verify` is the commit gate and reads; it does not write (as `check_prior_art` reads verdicts it does not
+      run), so it reports the edges a trace would add or remove and the marker findings, and `seldon req trace` writes
+      them through the event log. Edges SEL-033 imported from table cells stay until a marker names their requirement.
+      The trace moves no state; a `verified` requirement left with no verifying edge is reported by `seldon verify`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  anchor: AD-013-R5
+consumer:
+- cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md
+- tests/test_sel035_authored_once.py
+- seldon/core/req_trace.py
+- seldon/commands/verify.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 2db1311ccd13d6c58d85abc90632ccfa614134b51b667faeb680086c6cc71f01

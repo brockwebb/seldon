@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-013-R6
+date: '2026-11-09'
+decided_by: cc:086d89ff
+operator_stated: false
+receipts:
+- 'docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md:161: AD-013-R6'
+reason: SEL-035 Part A; OODA on SEL-033 (review findings 83b09573, 1cc32488)
+kind: decision
+status: accepted
+statement: Seldon verify and seldon docs check shall count requirements with no verification separately by method, test against inspection, analysis or demonstration, and a requirement of a non-test method shall reach verified only on a verified_by edge to the Result or Issue recording its evidence.
+source:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  lines:
+  - 161
+  - 165
+  sha256: 9d514e663f922258fad6a6c776ed014db98e56c09eeabb192f0ec44705cef39a
+  text: |-
+    - **AD-013-R6. Verification counts follow the method: `seldon verify` and `seldon docs check` report the requirements whose method is test and that have no test separately from those whose method is inspection, analysis or demonstration and that have no evidence, and such a requirement reaches `verified` on a `verified_by` edge to the Result or Issue that records its evidence.**
+      The task said "Document, Result or Issue". A governed `Document` is left out, as AD-013-R1 left it out of the
+      sources: the domain's endpoint sets are independent, so admitting it would admit `Issue -> Document`, which AD-030
+      section 4's closed edge set refuses. Evidence that exists only as a document is registered as a Result or recorded
+      in an Issue.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md
+  anchor: AD-013-R6
+consumer:
+- cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md
+- tests/test_sel035_authored_once.py
+- seldon/core/requirements.py
+- seldon/commands/verify.py
+- seldon/commands/docs.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: ed86778ccbde7e7c424f1d143433a635d7a8963ef6aa48e69f581b887904da51
