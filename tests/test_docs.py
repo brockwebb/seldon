@@ -38,6 +38,7 @@ def test_artifact_types_has_all_types(research_config):
         "AuditRun", "AuditFinding",  # AD-020 audit pipeline ingest
         "Document", "Section", "Ruling", "Passage",  # AD-030 governed documents
         "Decision",  # AD-033 decision register projection
+        "ExternalReference",  # AD-036-R22 (SEL-036): a Citation's pointer into another graph
     }
     assert set(research_config.artifact_types.keys()) == expected
 
