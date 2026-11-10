@@ -304,6 +304,68 @@ def decisions_text(project_dir: Path) -> tuple:
     return new, name
 
 
+def marker_step(project_dir: Path) -> Step:
+    """Register the `verifies` pytest marker (AD-013-R5, SEL-035) in the project's pytest configuration, so a test
+    that declares the requirements it verifies is not an unknown mark.
+
+    `pyproject.toml` with or without a `[tool.pytest.ini_options]` table gets a `markers` entry (inserted into an
+    existing `markers = [` list, else a new line under the table, else a new table); with no pyproject, a
+    `pytest.ini` that exists gets a `markers =` line under `[pytest]`, and one that does not is written. A pytest.ini
+    is never created beside a pyproject: pytest reads pytest.ini first, so it would silently replace the project's
+    pyproject configuration. Anything else (tox.ini, setup.cfg) is `refused` with the line to add by hand.
+    """
+    from seldon.core.req_trace import MARKER_LINE
+
+    pyproject, ini = project_dir / "pyproject.toml", project_dir / "pytest.ini"
+    for p in (pyproject, ini, project_dir / "tox.ini", project_dir / "setup.cfg"):
+        if p.is_file() and "verifies(" in p.read_text(encoding="utf-8"):
+            return Step("marker", "ok", f"`verifies` marker registered in {p.name}")
+    entry = f'"{MARKER_LINE}"'
+    if ini.is_file() or not pyproject.is_file():
+        if any((project_dir / f).is_file() for f in ("tox.ini", "setup.cfg")) and not ini.is_file():
+            return Step("marker", "refused", f"no pyproject.toml or pytest.ini; add `verifies` to the pytest "
+                                              f"markers yourself: `{MARKER_LINE}`")
+        text = ini.read_text(encoding="utf-8") if ini.is_file() else "[pytest]\n"
+        lines = text.split("\n")
+        at = next((i for i, l in enumerate(lines) if l.strip() == "[pytest]"), None)
+        if at is None:
+            return Step("marker", "refused", f"pytest.ini has no [pytest] section; add `{MARKER_LINE}` under its "
+                                              f"markers yourself")
+        m = next((i for i in range(at + 1, len(lines)) if re.match(r"^markers\s*=", lines[i])), None)
+        lines.insert((m + 1) if m is not None else at + 1, f"    {MARKER_LINE}" if m is not None
+                     else f"markers =\n    {MARKER_LINE}")
+        ini.write_text("\n".join(lines), encoding="utf-8")
+        return Step("marker", "changed", "pytest.ini + markers verifies", ["pytest.ini"])
+    text = pyproject.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    at = next((i for i, l in enumerate(lines) if l.strip() == "[tool.pytest.ini_options]"), None)
+    if at is None:
+        new = text.rstrip("\n") + f"\n\n[tool.pytest.ini_options]\nmarkers = [{entry}]\n"
+    else:
+        end = next((i for i in range(at + 1, len(lines)) if lines[i].startswith("[")), len(lines))
+        m = next((i for i in range(at + 1, end) if re.match(r"^markers\s*=\s*\[", lines[i])), None)
+        if m is None:
+            lines.insert(at + 1, f"markers = [{entry}]")
+        elif lines[m].rstrip().endswith("]"):          # a one-line list: append inside its brackets
+            line = lines[m].rstrip()
+            head, inner = line[:line.index("[") + 1], line[line.index("[") + 1:-1].strip().rstrip(",")
+            lines[m] = head + (inner + ", " if inner else "") + entry + "]"
+        else:                                           # a multi-line list: a new first item
+            lines.insert(m + 1, f"    {entry},")
+        new = "\n".join(lines)
+    import tomllib
+    try:
+        markers = tomllib.loads(new).get("tool", {}).get("pytest", {}).get("ini_options", {}).get("markers", [])
+    except tomllib.TOMLDecodeError as exc:
+        return Step("marker", "refused", f"the pyproject.toml this step would write does not parse ({exc}); "
+                                          f"nothing written; add `{MARKER_LINE}` to its pytest markers yourself")
+    if MARKER_LINE not in markers:
+        return Step("marker", "refused", f"could not place the marker in pyproject.toml; add `{MARKER_LINE}` to "
+                                          f"[tool.pytest.ini_options] markers yourself")
+    pyproject.write_text(new, encoding="utf-8")
+    return Step("marker", "changed", "pyproject.toml + pytest markers verifies", ["pyproject.toml"])
+
+
 def check_interpreter(interpreter: str) -> None:
     """AD-037-R15: a declared interpreter must import seldon, or every check's `seldon` fails under it (SEL-016
     left hazbrief's undeclared for exactly this reason)."""

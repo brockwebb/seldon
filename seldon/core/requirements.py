@@ -1,22 +1,25 @@
-"""Requirements as graph content, and the requirements table and RTM as projections of it (SEL-033, AD-013 ADDENDUM 01).
+"""Requirements as graph content; the requirements table and the RTM are projections of it (AD-013 ADDENDA 01, 02).
 
-**What this module owns.** AD-013 declared `SRS_Requirement` in 2026-03 and nothing loaded or rendered it, so a project
-kept its requirements in markdown and the graph held the file's hash (hazbrief-mcp SEL-032). Here are:
+**What this module owns.**
 
-- the **load** (`seldon req import`, `seldon req add`, AD-013-R1): a markdown pipe table becomes `SRS_Requirement`
-  nodes, idempotent on the requirement id, with `derived_from` to the source its `Set by` key names, `verified_by` to
-  the test `Script` its `Verified by` cell names (SEL-021's test-node Script) and `satisfies` from the task its status
-  names. What does not resolve is listed, never dropped (Gotel and Finkelstein 1994);
-- the **projection** (`seldon docs generate requirements|rtm`, AD-013-R2): each file `docs.projections` declares has
-  blocks between `<!-- seldon:projection ... -->` and `<!-- /seldon:projection -->` markers (Cog's generated regions),
-  and only those blocks are rendered, so a file keeps its prose. A header line names the graph revision, the sha256 of
-  the rendered blocks, so an unchanged graph renders the same bytes and commits nothing;
-- the **checks** (AD-013-R3): requirements with no `verified_by` edge, and projections whose file differs from a fresh
-  render.
+- the **authored record** (AD-013-R1 as amended by ADDENDUM 02): a requirement's `requirement_id`, `description`,
+  `set_by`, `document`, `section`, `verification_method` and `note`. Nothing else about it is stored as text: its
+  status is its state, and its trace is its edges (`derived_from` its source, `verified_by` what verifies it,
+  `satisfies` from what meets it). `seldon req add` / `seldon req update` write it (:func:`write_one`);
+- the **projection** (`seldon docs generate requirements|rtm`, AD-013-R2, R4): the blocks between
+  `<!-- seldon:projection ... -->` and `<!-- /seldon:projection -->` markers (Cog's generated regions) are rendered,
+  and every cell that is not an authored field is computed from the state and the edges at render (sphinx-needs'
+  dynamic functions; OpenFastTrace's computed coverage). Line 1 stamps the revision, the sha256 of the rendered
+  blocks; a file whose blocks no longer hash to its stamp was edited by hand and is refused, as Cog `-c` refuses,
+  unless the edit is discarded;
+- the **checks** (AD-013-R3, R6): requirements with no verification, counted by method, and stale projections.
 
-The vocabulary follows ISO/IEC/IEEE 29148 (identifier, statement, source, verification, status), ReqIF (an object
-with typed attributes and typed relations; a document is a hierarchy over objects) and SysML v2 (satisfy, verify,
-derive). The design note is `docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`.
+The vocabulary follows ISO/IEC/IEEE 29148 (identifier, statement, source, verification method, status), ReqIF and
+SysML v2 (satisfy, verify, derive). Beside it: the onboarding load of an unmarked markdown table
+(`seldon/core/req_load.py`), the test-declared trace (AD-013-R5, `seldon/core/req_trace.py`) and the one-time
+removal of SEL-033's verbatim cells (`seldon/core/req_migrate.py`). Design notes:
+`docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md`,
+`docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md`.
 """
 
 from __future__ import annotations
@@ -42,10 +45,20 @@ REL_SATISFIES = "satisfies"
 #: The actor every write of this module carries.
 ACTOR = "seldon-req"
 
+#: AD-013-R1: the fields a person authors. Every other projection cell is computed (AD-013-R4).
+AUTHORED = ("requirement_id", "description", "set_by", "document", "section", "verification_method", "note")
+#: The verification methods of ISO/IEC/IEEE 15288 and INCOSE; `test` is the default (AD-013-R1, R6).
+METHODS = ("test", "inspection", "analysis", "demonstration")
+DEFAULT_METHOD = "test"
+#: The types whose node may verify a requirement of a non-test method (AD-013-R6; Document is out, AD-030 s.4).
+EVIDENCE_TYPES = ("Result", "Issue")
+#: The computed sources a projection column may name (AD-013-R4).
+COMPUTED = ("@status", "@state", "@verified_by", "@satisfied_by", "@derived_from", "@decision")
+
 #: The text a projection prints in a verification cell with no `verified_by` edge (hazbrief-mcp's own wording,
-#: HB-134R2; a project overrides it in `requirements.none_text`).
+#: HB-134R2); `requirements.none_text`, or a projection's own `none_text`, overrides it.
 DEFAULT_NONE_TEXT = "none yet"
-#: The text a projection prints for an empty attribute (hazbrief-mcp's `Validated by` dash).
+#: The text a projection prints for an empty attribute.
 DEFAULT_EMPTY_TEXT = "—"
 
 #: Header names the importer recognises for each column, case-insensitively. A project overrides any of them in
@@ -63,28 +76,13 @@ DEFAULT_COLUMNS: Dict[str, List[str]] = {
     "decision": ["Decision"],
 }
 
-#: The node property each optional column is kept in, verbatim (AD-013-R1: the edges carry the trace, the verbatim
-#: cell keeps the source's wording for the projection).
-COLUMN_PROPERTY = {
-    "statement": "description",
-    "set_by": "set_by",
-    "verified_by": "verified_by_text",
-    "validated_by": "validated_by",
-    "satisfied_by": "satisfied_by_text",
-    "status": "status_text",
-    "decision": "decision_text",
-}
-
-#: The columns a projection renders when its `docs.projections` entry names none. A source is a node property, or one
-#: of the computed sources: `@verified_by` (the test nodes of the `verified_by` edges), `@derived_from`,
-#: `@satisfied_by`, `@state`, `@status` (status_text, else the state).
+#: The columns a projection renders when its `docs.projections` entry names none.
 DEFAULT_PROJECTION_COLUMNS: Dict[str, List[Dict[str, str]]] = {
     "requirements": [
         {"header": "ID", "source": "requirement_id"},
         {"header": "Requirement", "source": "description"},
         {"header": "Set by", "source": "set_by"},
         {"header": "Verified by", "source": "@verified_by"},
-        {"header": "Validated by", "source": "validated_by"},
         {"header": "Status", "source": "@status"},
     ],
     "rtm": [
@@ -93,7 +91,7 @@ DEFAULT_PROJECTION_COLUMNS: Dict[str, List[Dict[str, str]]] = {
         {"header": "Derived from", "source": "@derived_from"},
         {"header": "Satisfied by", "source": "@satisfied_by"},
         {"header": "Verified by", "source": "@verified_by"},
-        {"header": "State", "source": "@state"},
+        {"header": "Status", "source": "@status"},
     ],
 }
 KINDS = tuple(DEFAULT_PROJECTION_COLUMNS)
@@ -106,15 +104,15 @@ END_MARK = "<!-- /seldon:projection -->"
 END_RE = re.compile(r"<!--\s*/seldon:projection\s*-->")
 HEADER_RE = re.compile(r"^<!-- seldon:projection-revision (?P<rev>[0-9a-f]+) .*-->$")
 _ATTR_RE = re.compile(r'(\w+)=(?:"((?:[^"\\]|\\.)*)"|(\S+))')
-_TEST_NODE_RE = re.compile(r"(?P<path>[\w./-]+\.py)::(?P<node>[\w\[\]./-]+)")
-_PY_PATH_RE = re.compile(r"^[\w./-]+\.py$")
-_TEST_NAME_RE = re.compile(r"^test_\w+$")
-_KEY_RE = re.compile(r"\b[A-Z][A-Z0-9]*-\d+[A-Za-z0-9]*(?:-[A-Z]\d+)?\b")
 _PLACEHOLDER_RE = re.compile(r"\{(total|unverified|status_counts|status:[^}]+|state:[^}]+|prefix:[^}]+)\}")
 
 
 class RequirementsError(ValueError):
     """A load or a projection that cannot proceed; the message names what to fix."""
+
+
+class EditedBlocks(RequirementsError):
+    """A projection whose marker blocks no longer hash to the revision on its line 1 (AD-013-R2)."""
 
 
 # ─────────────────────────────────────────────────────────────── settings
@@ -126,20 +124,31 @@ class Settings:
 
     columns: Dict[str, List[str]]
     status_map: Dict[str, str]
+    state_labels: Dict[str, str]
     none_text: str
     empty_text: str
     counts_template: str
+    test_paths: List[str]
     projections: List[Dict[str, Any]]
+
+    def projection_for(self, document: str) -> Optional[Dict[str, Any]]:
+        return next((p for p in self.projections if p["path"] == document), None)
+
+    def labels(self, document: Optional[str]) -> Dict[str, str]:
+        """The state labels of `document`'s projection, over the project's (AD-013-R4)."""
+        p = self.projection_for(document or "")
+        return {**self.state_labels, **((p or {}).get("state_labels") or {})}
 
 
 def settings(config: dict) -> Settings:
     """Read the blocks; refuse a malformed one by name (a misspelled key must not fall back silently).
 
     Raises:
-        RequirementsError: an unknown key, a projection with no path or an unknown kind.
+        RequirementsError: an unknown key, a projection with no path or an unknown kind, or a column whose source is
+            neither an authored field nor a computed one (AD-013-R4).
     """
     block = (config or {}).get("requirements") or {}
-    known = {"columns", "status_map", "none_text", "empty_text", "counts_template"}
+    known = {"columns", "status_map", "state_labels", "none_text", "empty_text", "counts_template", "test_paths"}
     extra = set(block) - known
     if extra:
         raise RequirementsError(f"seldon.yaml requirements: unknown key(s) {sorted(extra)}; known {sorted(known)}")
@@ -155,152 +164,38 @@ def settings(config: dict) -> Settings:
         kind = p.get("kind", "requirements")
         if kind not in KINDS:
             raise RequirementsError(f"seldon.yaml docs.projections[{i}].kind {kind!r}: one of {list(KINDS)}")
-        extra = set(p) - {"path", "kind", "columns", "counts_template"}
+        extra = set(p) - {"path", "kind", "columns", "counts_template", "state_labels", "none_text"}
         if extra:
             raise RequirementsError(f"seldon.yaml docs.projections[{i}]: unknown key(s) {sorted(extra)}")
-        projections.append({"path": p["path"], "kind": kind,
-                            "columns": p.get("columns") or DEFAULT_PROJECTION_COLUMNS[kind],
-                            "counts_template": p.get("counts_template")})
+        cols = p.get("columns") or DEFAULT_PROJECTION_COLUMNS[kind]
+        for c in cols:
+            if c.get("source") not in AUTHORED + COMPUTED:
+                raise RequirementsError(
+                    f"seldon.yaml docs.projections[{i}] ({p['path']}) column {c.get('header')!r}: source "
+                    f"{c.get('source')!r} is neither an authored field {list(AUTHORED)} nor computed {list(COMPUTED)}; "
+                    f"a column the graph cannot compute is not a projection column (AD-013-R4)")
+        projections.append({"path": p["path"], "kind": kind, "columns": cols,
+                            "counts_template": p.get("counts_template"), "state_labels": p.get("state_labels") or {},
+                            "none_text": p.get("none_text")})
+    tp = block.get("test_paths", ["tests"])
     return Settings(columns=columns, status_map=dict(block.get("status_map") or {}),
+                    state_labels=dict(block.get("state_labels") or {}),
                     none_text=block.get("none_text", DEFAULT_NONE_TEXT),
                     empty_text=block.get("empty_text", DEFAULT_EMPTY_TEXT),
                     counts_template=block.get("counts_template", DEFAULT_COUNTS_TEMPLATE),
-                    projections=projections)
+                    test_paths=[tp] if isinstance(tp, str) else list(tp), projections=projections)
 
 
 # ─────────────────────────────────────────────────────────────── markdown tables
 
 
-def split_row(line: str) -> List[str]:
-    """The cells of a GFM pipe-table row, split on unescaped pipes, each stripped; escapes are kept verbatim so a
-    rendered row reproduces the source."""
-    s = line.strip()
-    if s.startswith("|"):
-        s = s[1:]
-    if s.endswith("|") and not s.endswith("\\|"):
-        s = s[:-1]
-    return [c.strip() for c in re.split(r"(?<!\\)\|", s)]
-
-
-def _is_separator(cells: List[str]) -> bool:
-    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", c) for c in cells)
-
-
-@dataclass
-class Table:
-    header: List[str]
-    rows: List[Tuple[int, List[str]]]   # (1-based line number, cells)
-    heading: Optional[str]              # the nearest markdown heading above the table
-    header_line: int                    # 1-based
-    last_line: int                      # 1-based, the last row
-
-
-def parse_tables(text: str) -> List[Table]:
-    """Every pipe table in `text`, with the heading it sits under."""
-    lines = text.splitlines()
-    tables: List[Table] = []
-    heading = None
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        m = re.match(r"^#{1,6}\s+(.*?)\s*#*\s*$", line)
-        if m:
-            heading = m.group(1).strip()
-        if line.lstrip().startswith("|") and i + 1 < len(lines) and _is_separator(split_row(lines[i + 1])):
-            header = split_row(line)
-            rows = []
-            j = i + 2
-            while j < len(lines) and lines[j].lstrip().startswith("|"):
-                rows.append((j + 1, split_row(lines[j])))
-                j += 1
-            tables.append(Table(header=header, rows=rows, heading=heading, header_line=i + 1, last_line=j))
-            i = j
-            continue
-        i += 1
-    return tables
-
-
-def _column_index(header: List[str], names: List[str]) -> Optional[int]:
-    wanted = [n.strip().lower() for n in names]
-    for idx, h in enumerate(header):
-        if h.strip().lower() in wanted:
-            return idx
-    return None
-
-
-@dataclass
-class Row:
-    """One requirement row of a load source."""
-
-    requirement_id: str
-    fields: Dict[str, str]              # field name -> verbatim cell (statement, set_by, ...)
-    section: Optional[str]
-    line: int
-    table: int                          # index into the source's tables
-
-
-@dataclass
-class Source:
-    path: str                           # relative to the project
-    tables: List[Table]
-    req_tables: List[int]               # indices of the tables that are requirements tables
-    rows: List[Row]
-    keys: Dict[str, str]                # a `Key | File` table's map
-
-
-def read_source(project_dir: Path, rel: str, columns: Dict[str, List[str]]) -> Source:
-    """Parse a markdown requirements file.
-
-    A table is a requirements table when its header names an id column and a statement column. A table whose header
-    is `Key | File` is the key map for `Set by`.
-
-    Raises:
-        RequirementsError: the file is missing, holds no requirements table, or repeats an id.
-    """
-    path = Path(project_dir) / rel
-    if not path.is_file():
-        raise RequirementsError(f"{rel} is not a file in {project_dir}")
-    tables = parse_tables(path.read_text(encoding="utf-8"))
-    rows: List[Row] = []
-    req_tables: List[int] = []
-    keys: Dict[str, str] = {}
-    for ti, t in enumerate(tables):
-        lower = [h.lower() for h in t.header]
-        if lower == ["key", "file"]:
-            for _, cells in t.rows:
-                if len(cells) == 2:
-                    keys[cells[0].strip("`")] = cells[1].strip("`")
-            continue
-        id_col = _column_index(t.header, columns["id"])
-        st_col = _column_index(t.header, columns["statement"])
-        if id_col is None or st_col is None:
-            continue
-        req_tables.append(ti)
-        idx = {f: _column_index(t.header, names) for f, names in columns.items() if f not in ("id",)}
-        for line, cells in t.rows:
-            if len(cells) != len(t.header):
-                raise RequirementsError(f"{rel}:{line}: {len(cells)} cells under a {len(t.header)}-column header")
-            rid = cells[id_col].strip()
-            if not rid:
-                raise RequirementsError(f"{rel}:{line}: a row with no id")
-            fields = {f: cells[i] for f, i in idx.items() if i is not None}
-            rows.append(Row(requirement_id=rid, fields=fields, section=t.heading, line=line, table=ti))
-    if not rows:
-        raise RequirementsError(f"{rel} holds no requirements table (a header naming {columns['id']} and "
-                                f"{columns['statement']})")
-    dup = [k for k, n in Counter(r.requirement_id for r in rows).items() if n > 1]
-    if dup:
-        raise RequirementsError(f"{rel}: id(s) repeated: {dup}")
-    return Source(path=rel, tables=tables, req_tables=req_tables, rows=rows, keys=keys)
-
-
 # ─────────────────────────────────────────────────────────────── cell readers
 
 
-def status_word(status_text: str, status_map: Dict[str, str]) -> Optional[str]:
-    """The status-map key `status_text` starts with (the longest; case-insensitive; followed by a non-letter or the
-    end), or None. `not met (ruled out)` matches before `not met`, and `met` never matches `metadata`."""
-    s = (status_text or "").strip().lower()
+def status_word(text: str, status_map: Dict[str, str]) -> Optional[str]:
+    """The status-map key `text` starts with (the longest; case-insensitive; followed by a non-letter or the end),
+    or None. `not met (ruled out)` matches before `not met`, and `met` never matches `metadata`."""
+    s = (text or "").strip().lower()
     best = None
     for key in status_map:
         k = key.lower()
@@ -308,70 +203,6 @@ def status_word(status_text: str, status_map: Dict[str, str]) -> Optional[str]:
             if best is None or len(k) > len(best):
                 best = key
     return best
-
-
-def test_refs(cell: str, project_dir: Path) -> Tuple[List[str], List[str]]:
-    """The pytest node ids a verification cell names, in order, and the references that name no file.
-
-    Three forms: `path::node` (SEL-021's grammar); a test file followed by test names (`tests/x.py` `test_a`,
-    `test_b`); a test file alone, itself a pytest node id. Anything else (a harness, "inspection") is not a test and is
-    neither a ref nor unresolved: it stays in the verbatim cell.
-    """
-    refs: List[str] = []
-    missing: List[str] = []
-    text = cell or ""
-    seen = set()
-
-    def add(ref: str, path: str) -> None:
-        if ref in seen:
-            return
-        seen.add(ref)
-        if (Path(project_dir) / path).is_file() and ".." not in Path(path).parts and not Path(path).is_absolute():
-            refs.append(ref)
-        else:
-            missing.append(ref)
-
-    # Tokens in order: backticked spans and bare words, split on `;`, `,` and whitespace.
-    tokens = re.findall(r"`[^`]+`|[^\s;,`()]+", text)
-    current_file = None
-    file_used = True
-    for raw in tokens:
-        tok = raw.strip("`").strip()
-        m = _TEST_NODE_RE.fullmatch(tok)
-        if m:
-            if current_file and not file_used:
-                add(current_file, current_file)
-            current_file, file_used = None, True
-            add(tok, m.group("path"))
-            continue
-        if _PY_PATH_RE.match(tok) and "test" in Path(tok).name:
-            if current_file and not file_used:
-                add(current_file, current_file)
-            current_file, file_used = tok, False
-            continue
-        if current_file and _TEST_NAME_RE.match(tok):
-            add(f"{current_file}::{tok}", current_file)
-            file_used = True
-            continue
-    if current_file and not file_used:
-        add(current_file, current_file)
-    return refs, missing
-
-
-def set_by_keys(cell: str) -> List[str]:
-    """The key of each `;`-separated part of a `Set by` cell: its first word (`DN-019 §3 row 2` -> `DN-019`)."""
-    out = []
-    for part in (cell or "").split(";"):
-        part = part.strip().strip("`")
-        if not part or part in ("—", "-"):
-            continue
-        out.append(part.split()[0].rstrip(",.:"))
-    return out
-
-
-def decision_keys(cell: str) -> List[str]:
-    """The record ids a `Decision` cell lists (`HBD-001, HBD-006`; a `—` or blank lists none)."""
-    return [k.strip("` ") for k in re.split(r"[;,]", cell or "") if k.strip("` ") not in ("", "—", "-")]
 
 
 def natural_key(rid: str) -> list:
@@ -393,29 +224,8 @@ def find_requirement(session, rid: str) -> Optional[dict]:
     return dict(rows[0]["r"]) if rows else None
 
 
-def resolve_key(session, key: str, keymap: Dict[str, str]) -> Optional[dict]:
-    """The artifact a `Set by` or status key names: through the source's key map to a file (a task's source_file, a
-    DesignNote's path), else a task whose name starts with the key, a register record, an ArchitecturalDecision, or a
-    requirement (a parent). None when nothing or more than one artifact matches. A governed Document is never a
-    target: AD-030 section 4 closes its edge set, so a requirement whose source is one lists it as unresolved."""
-    path = keymap.get(key)
-    if path:
-        rows = _rows(session,
-                     "MATCH (a:Artifact) WHERE (a:ResearchTask AND a.source_file = $p) "
-                     "OR (a:DesignNote AND a.path = $p) "
-                     "RETURN DISTINCT a.artifact_id AS id, a.artifact_type AS type", p=path)
-        if len(rows) == 1:
-            return rows[0]
-    rows = _rows(session,
-                 "MATCH (a:Artifact) WHERE (a:ResearchTask AND (a.name = $k OR a.name STARTS WITH $k + ' ')) "
-                 "OR (a:Decision AND a.decision_id ENDS WITH ':' + $k) "
-                 "OR (a:ArchitecturalDecision AND a.name = $k) "
-                 f"OR (a:{REQ_TYPE} AND a.requirement_id = $k) "
-                 "RETURN DISTINCT a.artifact_id AS id, a.artifact_type AS type", k=key)
-    return rows[0] if len(rows) == 1 else None
-
-
-def _test_scripts(session, refs: Iterable[str]) -> Dict[str, str]:
+def test_scripts(session, refs: Iterable[str]) -> Dict[str, str]:
+    """test node id -> the SEL-021 test `Script` that stands for it (the oldest, when several)."""
     rows = _rows(session, "MATCH (s:Artifact:Script) WHERE s.test_node IN $refs "
                           "RETURN s.test_node AS t, s.artifact_id AS id ORDER BY s.created_at", refs=list(refs))
     out: Dict[str, str] = {}
@@ -424,17 +234,39 @@ def _test_scripts(session, refs: Iterable[str]) -> Dict[str, str]:
     return out
 
 
+def plan_test_script(project_dir: Path, domain_config, ref: str) -> Tuple[str, PlannedWrite]:
+    """A new SEL-021 test `Script` for the pytest node id `ref`."""
+    return plan_artifact(project_dir=project_dir, domain_config=domain_config, artifact_type="Script",
+                         properties={"name": ref, "path": ref.split("::", 1)[0], "test_node": ref,
+                                     "description": "A test node a requirement is verified by (AD-013-R5)."},
+                         actor=ACTOR, authority="accepted")
+
+
 def _out_edges(session, rid: str) -> Dict[str, set]:
+    """A requirement's edges by type. `KEPT` holds the `verified_by` targets a load never prunes: a marker's
+    (AD-013-R5, the trace owns them) and evidence (AD-013-R6, `req update --evidence` owns them)."""
     rows = _rows(session,
                  f"MATCH (r:Artifact:{REQ_TYPE} {{artifact_id: $id}})-[e:VERIFIED_BY|DERIVED_FROM]->(t:Artifact) "
-                 "RETURN type(e) AS rel, t.artifact_id AS to", id=rid)
+                 "RETURN type(e) AS rel, t.artifact_id AS to, "
+                 "(e.declared_by IS NOT NULL OR t.artifact_type <> 'Script') AS kept", id=rid)
     rows += _rows(session,
                   f"MATCH (t:Artifact)-[e:SATISFIES]->(r:Artifact:{REQ_TYPE} {{artifact_id: $id}}) "
-                  "RETURN type(e) AS rel, t.artifact_id AS to", id=rid)
-    out: Dict[str, set] = {"VERIFIED_BY": set(), "DERIVED_FROM": set(), "SATISFIES": set()}
+                  "RETURN type(e) AS rel, t.artifact_id AS to, false AS kept", id=rid)
+    out: Dict[str, set] = {"VERIFIED_BY": set(), "DERIVED_FROM": set(), "SATISFIES": set(), "KEPT": set()}
     for r in rows:
         out[r["rel"]].add(r["to"])
+        if r["kept"] and r["rel"] == "VERIFIED_BY":
+            out["KEPT"].add(r["to"])
     return out
+
+
+def qualifying_edges(session, artifact_id: str, method: Optional[str]) -> int:
+    """The `verified_by` edges that let a requirement of `method` be `verified` (AD-013-R1, R6): a test Script for
+    method test; a test Script, Result or Issue for the others."""
+    targets = ["Script"] if (method or DEFAULT_METHOD) == "test" else ["Script", *EVIDENCE_TYPES]
+    return _rows(session, "MATCH (r:Artifact {artifact_id: $id})-[:VERIFIED_BY]->(t:Artifact) "
+                          "WHERE t.artifact_type IN $types AND (t.artifact_type <> 'Script' OR t.test_node IS NOT NULL) "
+                          "RETURN count(t) AS n", id=artifact_id, types=targets)[0]["n"]
 
 
 # ─────────────────────────────────────────────────────────────── state walk
@@ -461,12 +293,25 @@ def state_path(machine: Dict[str, List[str]], start: str, goal: str) -> Optional
     return None
 
 
-# ─────────────────────────────────────────────────────────────── the load
+def plan_walk(domain_config, artifact_id: str, start: str, goal: str) -> Optional[List[PlannedWrite]]:
+    """The state changes from `start` to `goal`, or None when the machine has no path."""
+    steps = state_path(domain_config.state_machines.get(REQ_TYPE, {}), start, goal)
+    if steps is None:
+        return None
+    out, cur = [], start
+    for nxt in steps:
+        out.append(plan_state_change(domain_config=domain_config, artifact_id=artifact_id, artifact_type=REQ_TYPE,
+                                     current_state=cur, new_state=nxt, actor=ACTOR, authority="accepted"))
+        cur = nxt
+    return out
+
+
+# ─────────────────────────────────────────────────────────────── the onboarding load
 
 
 @dataclass
 class Plan:
-    """What an import or an add will write, and what did not resolve."""
+    """What an import, an add or an update will write, and what did not resolve."""
 
     writes: List[PlannedWrite] = field(default_factory=list)
     created: List[str] = field(default_factory=list)
@@ -479,183 +324,6 @@ class Plan:
     states: Counter = field(default_factory=Counter)
 
 
-@dataclass
-class Spec:
-    """One requirement as a load names it: its properties, the target state and the refs to resolve."""
-
-    requirement_id: str
-    properties: Dict[str, str]
-    status_text: Optional[str]
-    test_refs: List[str]
-    set_by_keys: List[str]
-    satisfier_keys: List[str]
-    decision_keys: List[str]
-    where: str                           # for messages: `<file>:<line>` or `req add`
-
-
-def spec_from_row(row: Row, src: Source, project_dir: Path, s: Settings, document: str) -> Tuple[Spec, List[str]]:
-    """The Spec of one source row, and the unresolved test references it names."""
-    f = row.fields
-    props = {"requirement_id": row.requirement_id, "document": document}
-    if row.section:
-        props["section"] = row.section
-    for field_name, prop in COLUMN_PROPERTY.items():
-        if field_name in f:
-            props[prop] = f[field_name]
-    refs, missing = test_refs(f.get("verified_by", ""), project_dir)
-    status = f.get("status")
-    word = status_word(status or "", s.status_map) if status is not None else None
-    satisfiers = []
-    if word and s.status_map.get(word) in ("implemented", "verified"):
-        tail = (status or "")[len(word):]
-        satisfiers = _KEY_RE.findall(tail)
-    where = f"{src.path}:{row.line}"
-    return (Spec(requirement_id=row.requirement_id, properties=props, status_text=status,
-                 test_refs=refs, set_by_keys=set_by_keys(f.get("set_by", "")), satisfier_keys=satisfiers,
-                 decision_keys=decision_keys(f.get("decision", "")), where=where),
-            [f"{where} {row.requirement_id}: verified_by {m!r} names no file in the project" for m in missing])
-
-
-def plan_specs(project_dir: Path, driver, database: str, domain_config, specs: List[Spec], s: Settings,
-               keymap: Dict[str, str], prune: bool = True) -> Plan:
-    """Plan every write that brings the graph to `specs`, idempotent on the requirement id.
-
-    - a new id is created; a known id has its changed properties updated;
-    - the state walks the domain machine to the status map's target; `verified` needs a `verified_by` edge
-      (AD-013-R1), so a requirement mapped there with none is held at `implemented`;
-    - `verified_by`, `derived_from` and `satisfies` edges are added where missing and, with `prune`, removed where the
-      load no longer names them, so the graph mirrors the load.
-
-    Nothing is written here; :func:`apply` commits the plan in one append.
-    """
-    plan = Plan()
-    machine = domain_config.state_machines.get(REQ_TYPE, {})
-    initial = domain_config.get_initial_state(REQ_TYPE)
-    new_tests: Dict[str, str] = {}
-    with driver.session(database=database) as session:
-        scripts = _test_scripts(session, {r for sp in specs for r in sp.test_refs})
-        for sp in specs:
-            existing = find_requirement(session, sp.requirement_id)
-            # resolve before any write is planned for this row
-            sources = []
-            for k in sp.set_by_keys:
-                hit = resolve_key(session, k, keymap)
-                if hit is None:
-                    plan.unresolved.append(f"{sp.where} {sp.requirement_id}: set_by {k!r} names no single artifact")
-                elif hit["id"] not in [x["id"] for x in sources]:
-                    sources.append(hit)
-            for k in sp.decision_keys:
-                hit = resolve_key(session, k, keymap)
-                if hit is None or hit["type"] not in ("Decision", "ArchitecturalDecision"):
-                    plan.unresolved.append(f"{sp.where} {sp.requirement_id}: decision {k!r} names no projected "
-                                           f"register record (run `seldon decision project`)")
-                elif hit["id"] not in [x["id"] for x in sources]:
-                    sources.append(hit)
-            satisfiers = []
-            for k in sp.satisfier_keys:
-                hit = resolve_key(session, k, keymap)
-                if hit and hit["type"] == "ResearchTask" and hit["id"] not in [x["id"] for x in satisfiers]:
-                    satisfiers.append(hit)
-            tests = []
-            for ref in sp.test_refs:
-                sid = scripts.get(ref) or new_tests.get(ref)
-                if sid is None:
-                    sid, creation = plan_artifact(
-                        project_dir=project_dir, domain_config=domain_config, artifact_type="Script",
-                        properties={"name": ref, "path": ref.split("::", 1)[0], "test_node": ref,
-                                    "description": "A test node a requirement is verified by (SEL-033)."},
-                        actor=ACTOR, authority="accepted")
-                    plan.writes.append(creation)
-                    new_tests[ref] = sid
-                    plan.tests_created += 1
-                if sid not in tests:
-                    tests.append(sid)
-
-            # the node
-            if existing is None:
-                rid, creation = plan_artifact(project_dir=project_dir, domain_config=domain_config,
-                                              artifact_type=REQ_TYPE, properties=dict(sp.properties),
-                                              actor=ACTOR, authority="accepted")
-                plan.writes.append(creation)
-                plan.created.append(sp.requirement_id)
-                state = initial
-                have = {"VERIFIED_BY": set(), "DERIVED_FROM": set(), "SATISFIES": set()}
-                changed = True
-            else:
-                rid = existing["artifact_id"]
-                state = existing.get("state") or initial
-                have = _out_edges(session, rid)
-                diff = {k: v for k, v in sp.properties.items() if existing.get(k) != v}
-                changed = bool(diff)
-                if diff:
-                    plan.writes.append(plan_update_artifact(project_dir=project_dir, driver=driver,
-                                                            database=database, artifact_id=rid, properties=diff,
-                                                            actor=ACTOR, authority="accepted"))
-
-            # the edges
-            def link(rel: str, from_id: str, to_id: str, from_type: str, to_type: str) -> None:
-                plan.writes.append(plan_link(driver=driver, database=database, domain_config=domain_config,
-                                             from_id=from_id, to_id=to_id, from_type=from_type, to_type=to_type,
-                                             rel_type=rel, actor=ACTOR, authority="accepted"))
-                plan.links_added += 1
-
-            for sid in tests:
-                if sid not in have["VERIFIED_BY"]:
-                    link(REL_VERIFIED_BY, rid, sid, REQ_TYPE, "Script")
-                    changed = True
-            for src in sources:
-                if src["id"] not in have["DERIVED_FROM"]:
-                    link(REL_DERIVED_FROM, rid, src["id"], REQ_TYPE, src["type"])
-                    changed = True
-            for sat in satisfiers:
-                if sat["id"] not in have["SATISFIES"]:
-                    link(REL_SATISFIES, sat["id"], rid, sat["type"], REQ_TYPE)
-                    changed = True
-            if prune:
-                wanted = {"VERIFIED_BY": set(tests), "DERIVED_FROM": {x["id"] for x in sources},
-                          "SATISFIES": {x["id"] for x in satisfiers}}
-                for rel, ids in have.items():
-                    for other in sorted(ids - wanted[rel]):
-                        frm, to = (other, rid) if rel == "SATISFIES" else (rid, other)
-                        plan.writes.append(_plan_unlink(frm, to, rel.lower()))
-                        plan.links_removed += 1
-                        changed = True
-
-            # the state
-            target = state
-            if sp.status_text is not None:
-                word = status_word(sp.status_text, s.status_map)
-                if word is None:
-                    if s.status_map:
-                        plan.unresolved.append(f"{sp.where} {sp.requirement_id}: status {sp.status_text[:60]!r} "
-                                               f"is not in requirements.status_map; state left {state}")
-                elif s.status_map[word] not in machine:
-                    raise RequirementsError(f"requirements.status_map[{word!r}] = {s.status_map[word]!r} is not a "
-                                            f"{REQ_TYPE} state ({sorted(machine)})")
-                else:
-                    target = s.status_map[word]
-            if target == "verified" and not tests:
-                target = "implemented"
-            if target != state:
-                steps = state_path(machine, state, target)
-                if steps is None:
-                    plan.unresolved.append(f"{sp.where} {sp.requirement_id}: no path on the {REQ_TYPE} machine "
-                                           f"from {state} to {target}; state left {state}")
-                    target = state
-                else:
-                    cur = state
-                    for nxt in steps:
-                        plan.writes.append(plan_state_change(domain_config=domain_config, artifact_id=rid,
-                                                             artifact_type=REQ_TYPE, current_state=cur,
-                                                             new_state=nxt, actor=ACTOR, authority="accepted"))
-                        cur = nxt
-                    changed = True
-            plan.states[target] += 1
-            if existing is not None:
-                (plan.updated if changed else plan.unchanged).append(sp.requirement_id)
-    return plan
-
-
 def _plan_unlink(from_id: str, to_id: str, rel: str) -> PlannedWrite:
     event = make_event(event_type="link_removed", actor=ACTOR, authority="accepted",
                        payload={"from_id": from_id, "to_id": to_id, "rel_type": rel})
@@ -666,86 +334,91 @@ def _plan_unlink(from_id: str, to_id: str, rel: str) -> PlannedWrite:
     return PlannedWrite(event=event, project=project)
 
 
+def _link(plan: Plan, driver, database: str, dc, rel: str, frm: Tuple[str, str], to: Tuple[str, str],
+          props: Optional[dict] = None) -> None:
+    plan.writes.append(plan_link(driver=driver, database=database, domain_config=dc, from_id=frm[0], to_id=to[0],
+                                 from_type=frm[1], to_type=to[1], rel_type=rel, actor=ACTOR, authority="accepted",
+                                 rel_properties=props))
+    plan.links_added += 1
+
+
 def apply(project_dir: Path, driver, database: str, plan: Plan) -> None:
     """Write the plan: one append to the event log, then the graph (AD-001, SEL-007's all-or-nothing boundary)."""
     if plan.writes:
         commit_writes(project_dir, driver, database, plan.writes)
 
 
-def import_file(project_dir: Path, driver, database: str, domain_config, config: dict, rel: str, *,
-                document: Optional[str] = None, column_overrides: Optional[Dict[str, str]] = None,
-                dry_run: bool = False) -> Tuple[Plan, Source]:
-    """`seldon req import`: load a markdown requirements file into the graph (AD-013-R1, R2).
+# ─────────────────────────────────────────────────────────────── add and update
+
+
+def write_one(project_dir: Path, driver, database: str, domain_config, config: dict, rid: str, *, create: bool,
+              fields: Dict[str, Optional[str]], state: Optional[str] = None, evidence: Iterable[str] = (),
+              dry_run: bool = False) -> Plan:
+    """`seldon req add` (create) and `seldon req update` (change): the authored fields, a state walk and evidence
+    edges. Fields given as None keep the node's values.
 
     Raises:
-        RequirementsError: the file does not parse as a requirements source.
+        RequirementsError: add of a known id or update of an unknown one; a new requirement with no statement; a
+            field that is not authored; an unknown method; evidence that is not a Result or Issue; a state the machine
+            cannot reach, or `verified` with no qualifying `verified_by` edge (AD-013-R1, R6).
     """
-    s = settings(config)
-    columns = dict(s.columns)
-    for f, name in (column_overrides or {}).items():
-        if name:
-            columns[f] = [name]
-    src = read_source(project_dir, rel, columns)
-    specs, unresolved = [], []
-    for row in src.rows:
-        sp, missing = spec_from_row(row, src, project_dir, s, document or rel)
-        specs.append(sp)
-        unresolved.extend(missing)
-    plan = plan_specs(project_dir, driver, database, domain_config, specs, s, src.keys)
-    plan.unresolved = unresolved + plan.unresolved
-    if not dry_run:
-        apply(project_dir, driver, database, plan)
-    return plan, src
-
-
-def add_one(project_dir: Path, driver, database: str, domain_config, config: dict, rid: str, *,
-            statement: Optional[str], set_by: Optional[str], verified_by: List[str], validated_by: Optional[str],
-            status: Optional[str], section: Optional[str], document: Optional[str],
-            dry_run: bool = False) -> Plan:
-    """`seldon req add`: create or update one requirement. Options not given keep the node's current values; a new
-    requirement needs a statement.
-
-    Raises:
-        RequirementsError: a new id with no statement, or a test reference that names no file.
-    """
-    s = settings(config)
+    bad = set(fields) - set(AUTHORED)
+    if bad:
+        raise RequirementsError(f"{sorted(bad)} are not authored fields of a requirement {list(AUTHORED)} (AD-013-R1)")
+    method = fields.get("verification_method")
+    if method is not None and method not in METHODS:
+        raise RequirementsError(f"verification method {method!r}: one of {list(METHODS)}")
+    machine = domain_config.state_machines.get(REQ_TYPE, {})
+    if state is not None and state not in machine:
+        raise RequirementsError(f"state {state!r} is not a {REQ_TYPE} state ({sorted(machine)})")
+    plan = Plan()
     with driver.session(database=database) as session:
         existing = find_requirement(session, rid)
-    if existing is None and not (statement or "").strip():
-        raise RequirementsError(f"{rid} is a new requirement; give its statement (--statement)")
-    props = {"requirement_id": rid}
-    if statement is not None:
-        props["description"] = statement
-    for prop, value in (("set_by", set_by), ("validated_by", validated_by), ("status_text", status),
-                        ("section", section), ("document", document)):
-        if value is not None:
-            props[prop] = value
-    if existing is not None:
-        for prop in ("description", "set_by", "validated_by", "status_text", "section", "document",
-                     "decision_text", "satisfied_by_text"):
-            if prop not in props and existing.get(prop) is not None:
-                props[prop] = existing[prop]
-    refs: List[str] = []
-    if verified_by:
-        refs, missing = test_refs("; ".join(verified_by), project_dir)
-        if missing or not refs:
-            raise RequirementsError(f"--verified-by {missing or verified_by}: not a test file or node in the project")
-        props["verified_by_text"] = "; ".join(refs)
-    elif existing is not None:
-        with driver.session(database=database) as session:
-            rows = _rows(session, f"MATCH (r:Artifact:{REQ_TYPE} {{artifact_id: $id}})-[:VERIFIED_BY]->"
-                                  "(t:Artifact:Script) RETURN t.test_node AS t", id=existing["artifact_id"])
-        refs = [r["t"] for r in rows if r["t"]]
-        if existing.get("verified_by_text") is not None:
-            props["verified_by_text"] = existing["verified_by_text"]
-    keys = set_by_keys(props.get("set_by", ""))
-    word = status_word(props.get("status_text") or "", s.status_map)
-    satisfiers = (_KEY_RE.findall((props.get("status_text") or "")[len(word):])
-                  if word and s.status_map.get(word) in ("implemented", "verified") else [])
-    sp = Spec(requirement_id=rid, properties=props, status_text=props.get("status_text"), test_refs=refs,
-              set_by_keys=keys, satisfier_keys=satisfiers, decision_keys=decision_keys(props.get("decision_text", "")),
-              where="req add")
-    plan = plan_specs(project_dir, driver, database, domain_config, [sp], s, {})
+        if create and existing is not None:
+            raise RequirementsError(f"{rid} exists; change it with `seldon req update {rid}`")
+        if not create and existing is None:
+            raise RequirementsError(f"{rid} is not a requirement in the graph; create it with `seldon req add {rid}`")
+        if create and not (fields.get("description") or "").strip():
+            raise RequirementsError(f"{rid} is a new requirement; give its statement (--statement)")
+        props = {k: v for k, v in fields.items() if v is not None}
+        if existing is None:
+            props["requirement_id"] = rid
+            aid, creation = plan_artifact(project_dir=project_dir, domain_config=domain_config, artifact_type=REQ_TYPE,
+                                          properties=props, actor=ACTOR, authority="accepted")
+            plan.writes.append(creation)
+            plan.created.append(rid)
+            cur = domain_config.get_initial_state(REQ_TYPE)
+        else:
+            aid, cur = existing["artifact_id"], existing.get("state")
+            diff = {k: v for k, v in props.items() if existing.get(k) != v}
+            if diff:
+                plan.writes.append(plan_update_artifact(project_dir=project_dir, driver=driver, database=database,
+                                                        artifact_id=aid, properties=diff, actor=ACTOR,
+                                                        authority="accepted"))
+        linked = 0
+        for eid in evidence:
+            rows = _rows(session, "MATCH (a:Artifact {artifact_id: $id}) RETURN a.artifact_type AS t", id=eid)
+            if not rows or rows[0]["t"] not in EVIDENCE_TYPES:
+                raise RequirementsError(f"--evidence {eid}: not a {' or '.join(EVIDENCE_TYPES)} artifact (AD-013-R6)")
+            have = _out_edges(session, aid)["VERIFIED_BY"] if existing else set()
+            if eid not in have:
+                _link(plan, driver, database, domain_config, REL_VERIFIED_BY, (aid, REQ_TYPE), (eid, rows[0]["t"]))
+                linked += 1
+        if state is not None and state != cur:
+            m = props.get("verification_method") or (existing or {}).get("verification_method")
+            if state == "verified" and not (linked and (m or DEFAULT_METHOD) != DEFAULT_METHOD) \
+                    and not (existing and qualifying_edges(session, aid, m)):
+                raise RequirementsError(
+                    f"{rid} cannot be verified: method {m or DEFAULT_METHOD} needs a verified_by edge to "
+                    + ("a test (`@pytest.mark.verifies` and `seldon req trace`)" if (m or "test") == "test" else
+                       "the Result or Issue recording its evidence (`--evidence <id>`)") + " (AD-013-R1, R6)")
+            walk = plan_walk(domain_config, aid, cur, state)
+            if walk is None:
+                raise RequirementsError(f"no path on the {REQ_TYPE} machine from {cur} to {state}")
+            plan.writes += walk
+        if existing is not None:
+            (plan.updated if plan.writes else plan.unchanged).append(rid)
+        plan.states[state or cur] += 1
     if not dry_run:
         apply(project_dir, driver, database, plan)
     return plan
@@ -755,73 +428,102 @@ def add_one(project_dir: Path, driver, database: str, domain_config, config: dic
 
 
 def load_requirements(driver, database: str) -> List[dict]:
-    """Every requirement with its edges, for rendering: each a node dict plus `_tests` (test nodes), `_sources`
-    (derived_from targets' labels) and `_satisfiers` (satisfies sources' labels)."""
+    """Every requirement with its edges, for rendering: each a node dict plus `_tests` (verified_by targets),
+    `_sources` (derived_from targets), `_decisions` (the register records among them) and `_satisfiers`."""
     with driver.session(database=database) as session:
         rows = _rows(session,
                      f"MATCH (r:Artifact:{REQ_TYPE}) "
                      "OPTIONAL MATCH (r)-[:VERIFIED_BY]->(t:Artifact) "
-                     "WITH r, collect(DISTINCT coalesce(t.test_node, t.path, t.name)) AS tests "
+                     "WITH r, collect(DISTINCT coalesce(t.test_node, t.name, t.path)) AS tests "
                      "OPTIONAL MATCH (r)-[:DERIVED_FROM]->(d:Artifact) "
-                     "WITH r, tests, collect(DISTINCT coalesce(d.requirement_id, d.decision_id, d.name, d.path)) AS srcs "
+                     "WITH r, tests, collect(DISTINCT coalesce(d.requirement_id, d.decision_id, d.name, d.path)) AS srcs,"
+                     " collect(DISTINCT CASE WHEN d:Decision THEN d.decision_id "
+                     "                       WHEN d:ArchitecturalDecision THEN d.name END) AS decs "
                      "OPTIONAL MATCH (s:Artifact)-[:SATISFIES]->(r) "
-                     "RETURN r, tests, srcs, collect(DISTINCT coalesce(s.name, s.path)) AS sats")
+                     "RETURN r, tests, srcs, decs, collect(DISTINCT coalesce(s.name, s.path)) AS sats")
     out = []
     for row in rows:
         node = dict(row["r"])
-        node["_tests"] = [t for t in row["tests"] if t]
+        node["_tests"] = sorted((t for t in row["tests"] if t), key=natural_key)
         node["_sources"] = sorted(x for x in row["srcs"] if x)
+        node["_decisions"] = sorted({x.rsplit(":", 1)[-1] for x in row["decs"] if x}, key=natural_key)
         node["_satisfiers"] = sorted(x for x in row["sats"] if x)
         out.append(node)
     out.sort(key=lambda n: natural_key(str(n.get("requirement_id", ""))))
     return out
 
 
-def _ordered_tests(node: dict) -> List[str]:
-    """The test nodes in the order the verbatim cell lists them, then any other edge, sorted (the graph is the truth
-    of which tests; the cell keeps the source's order)."""
-    tests = list(node.get("_tests") or [])
-    text = node.get("verified_by_text") or ""
-    order = {t: text.find(t) for t in tests if t in text}
-    return sorted([t for t in tests if t in order], key=lambda t: order[t]) + sorted(t for t in tests if t not in order)
+def status_cell(node: dict, labels: Dict[str, str], status_map: Dict[str, str]) -> str:
+    """AD-013-R4: the state's label, then `: ` and the note. A note that opens with a status word mapped to the
+    current state is the project's finer name for it (`changed`, `partial`) and is shown alone; once the state moves,
+    the word no longer maps to it and the label is prefixed."""
+    state = str(node.get("state") or "")
+    label = labels.get(state, state)
+    note = " ".join(str(node.get("note") or "").split())
+    if not note:
+        return label
+    word = status_word(note, status_map)
+    if word is not None and status_map[word] == state:
+        return note
+    return f"{label}: {note}"
 
 
-def _cell(value: Any) -> str:
-    text = " ".join(str(value).split())
-    return re.sub(r"(?<!\\)\|", r"\\|", text)
+@dataclass
+class View:
+    """What a projection needs to compute its cells: the settings and its own labels and none text."""
+
+    s: Settings
+    labels: Dict[str, str]
+    none_text: str
+
+    @classmethod
+    def of(cls, s: Settings, proj: Optional[Dict[str, Any]]) -> "View":
+        proj = proj or {}
+        return cls(s=s, labels={**s.state_labels, **(proj.get("state_labels") or {})},
+                   none_text=proj.get("none_text") or s.none_text)
 
 
-def cell_value(node: dict, source: str, s: Settings) -> str:
+def cell_value(node: dict, source: str, v: View) -> str:
+    """One cell (AD-013-R4): an authored field as it is, else computed from the state and the edges."""
     if source == "@verified_by":
-        tests = _ordered_tests(node)
-        return "; ".join(tests) if tests else s.none_text
+        if node.get("_tests"):
+            return "; ".join(node["_tests"])
+        m = node.get("verification_method") or DEFAULT_METHOD
+        return v.none_text if m == DEFAULT_METHOD else f"{m}: {v.none_text}"
     if source == "@derived_from":
-        return "; ".join(node.get("_sources") or []) or s.empty_text
+        return "; ".join(node.get("_sources") or []) or v.s.empty_text
+    if source == "@decision":
+        return ", ".join(node.get("_decisions") or []) or v.s.empty_text
     if source == "@satisfied_by":
-        return "; ".join(node.get("_satisfiers") or []) or s.empty_text
+        return "; ".join(node.get("_satisfiers") or []) or v.s.empty_text
     if source == "@state":
         return str(node.get("state") or "")
     if source == "@status":
-        return str(node.get("status_text") or node.get("state") or "")
-    v = node.get(source)
-    if v is None or not str(v).strip():
-        return s.empty_text
-    return str(v)
+        return status_cell(node, v.labels, v.s.status_map)
+    val = node.get(source)
+    return v.s.empty_text if val is None or not str(val).strip() else str(val)
 
 
-def render_table(nodes: List[dict], columns: List[Dict[str, str]], s: Settings) -> str:
+def _cell(value: Any) -> str:
+    return re.sub(r"(?<!\\)\|", r"\\|", " ".join(str(value).split()))
+
+
+def render_table(nodes: List[dict], columns: List[Dict[str, str]], v: View) -> str:
     heads = [c["header"] for c in columns]
     lines = ["| " + " | ".join(heads) + " |", "|" + "|".join("---" for _ in heads) + "|"]
-    for n in nodes:
-        lines.append("| " + " | ".join(_cell(cell_value(n, c["source"], s)) for c in columns) + " |")
+    lines += ["| " + " | ".join(_cell(cell_value(n, c["source"], v)) for c in columns) + " |" for n in nodes]
     return "\n".join(lines)
 
 
-def render_counts(nodes: List[dict], template: str, s: Settings) -> str:
-    """The counts sentence: `{total}`, `{unverified}` (no `verified_by` edge), `{status:<word>}` (status_text starting
-    with a status-map key), `{state:<state>}`, `{prefix:<text>}` (statements starting with the text) and
+def render_counts(nodes: List[dict], template: str, v: View) -> str:
+    """The counts sentence: `{total}`, `{unverified}` (no `verified_by` edge), `{status:<word>}` (rendered Status
+    cells opening with the word), `{state:<state>}`, `{prefix:<text>}` (statements starting with the text) and
     `{status_counts}` (each status word, in the map's order, `N word`)."""
-    words = Counter(status_word(n.get("status_text") or "", s.status_map) for n in nodes)
+    cells = [status_cell(n, v.labels, v.s.status_map).lower() for n in nodes]
+
+    def opens(word: str) -> int:
+        w = word.lower()
+        return sum(1 for c in cells if c.startswith(w) and (len(c) == len(w) or not c[len(w)].isalnum()))
 
     def value(m: re.Match) -> str:
         key = m.group(1)
@@ -830,14 +532,11 @@ def render_counts(nodes: List[dict], template: str, s: Settings) -> str:
         if key == "unverified":
             return str(sum(1 for n in nodes if not n.get("_tests")))
         if key == "status_counts":
-            parts = [f"{words[w]} {w}" for w in s.status_map if words[w]]
-            if not parts:
-                parts = [f"{c} {st}" for st, c in sorted(Counter(n.get("state") for n in nodes).items())]
-            return ", ".join(parts)
+            parts = [f"{opens(w)} {w}" for w in v.s.status_map if opens(w)]
+            return ", ".join(parts or [f"{c} {st}" for st, c in sorted(Counter(n.get("state") for n in nodes).items())])
         kind, arg = key.split(":", 1)
         if kind == "status":
-            return str(words[arg] if arg in s.status_map else
-                       sum(1 for n in nodes if (n.get("status_text") or "").lower().startswith(arg.lower())))
+            return str(opens(arg))
         if kind == "state":
             return str(sum(1 for n in nodes if n.get("state") == arg))
         return str(sum(1 for n in nodes if str(n.get("description") or "").startswith(arg)))
@@ -850,20 +549,16 @@ def _attrs(text: str) -> Dict[str, str]:
             for m in _ATTR_RE.finditer(text)}
 
 
-def _quote(v: str) -> str:
-    return '"' + v.replace('"', '\\"') + '"'
-
-
 def start_marker(attrs: Dict[str, str]) -> str:
-    return "<!-- seldon:projection " + " ".join(f"{k}={_quote(v)}" for k, v in attrs.items()) + " -->"
+    return "<!-- seldon:projection " + " ".join(f'{k}="' + v.replace('"', '\\"') + '"' for k, v in attrs.items()) \
+        + " -->"
 
 
 def block_columns(rel: str, section: Optional[str], headers: Optional[str],
                   columns: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """The columns a table block renders: the projection's columns, or, when the block's start marker names
-    `headers="A|B|C"` (written by `req import --mark` from the source table), those labels in that order, each
-    mapped to the projection column of the same header (case-insensitive). One file's tables may differ in
-    columns (hazbrief-mcp's RTM: a `Decision` column on the design-note tables only, HB-144).
+    """The columns a table block renders: the projection's, or, when the block's start marker names
+    `headers="A|B|C"` (written by `req import --mark` from the source table), those labels in that order, each mapped
+    to the projection column of the same header (case-insensitive).
 
     Raises:
         RequirementsError: a label the projection declares no column for.
@@ -876,8 +571,8 @@ def block_columns(rel: str, section: Optional[str], headers: Optional[str],
         col = by_label.get(label.strip().lower())
         if col is None:
             raise RequirementsError(f"{rel}: block {section!r} has a column {label!r} the projection declares no "
-                                    f"source for; add `{{header: {label}, source: <property or @computed>}}` to its "
-                                    f"docs.projections columns")
+                                    f"source for; add `{{header: {label}, source: <authored field or @computed>}}` to "
+                                    f"its docs.projections columns, or drop it from the block's `headers`")
         out.append({"header": label, "source": col["source"]})
     return out
 
@@ -890,36 +585,54 @@ class Rendered:
     current: Optional[str]   # the file on disk, None when absent
     revision: str
     unplaced: List[str]      # requirements of this document that no table block shows
+    edited: List[str] = field(default_factory=list)   # rows of a hand-edited file that differ from the render
 
     @property
     def changed(self) -> bool:
         return self.text != self.current
 
 
-def _replace_blocks(text: str, render_block) -> str:
-    """Replace each marker block's body with `render_block(attrs)`, keeping the markers and the text around them.
-    A block is inline when its start marker is followed by text on the same line, and a table block otherwise."""
+def _blocks(text: str) -> List[Tuple[re.Match, re.Match, bool]]:
+    """Each marker block: (start match, end match, inline?). A block is inline when text follows its start marker
+    on the same line."""
     out, pos = [], 0
     for m in START_RE.finditer(text):
         if m.start() < pos:
             continue
         end = END_RE.search(text, m.end())
         if end is None:
-            line = text.count("\n", 0, m.start()) + 1
-            raise RequirementsError(f"line {line}: a seldon:projection start marker with no end marker "
-                                    f"({END_MARK})")
-        attrs = _attrs(m.group("attrs"))
-        body = render_block(attrs)
-        inline = not text[m.end():end.start()].startswith("\n")
-        out.append(text[pos:m.end()])
-        out.append(body if inline else "\n" + body + "\n")
-        pos = end.start()
-    out.append(text[pos:])
-    return "".join(out)
+            raise RequirementsError(f"line {text.count(chr(10), 0, m.start()) + 1}: a seldon:projection start marker "
+                                    f"with no end marker ({END_MARK})")
+        out.append((m, end, not text[m.end():end.start()].startswith("\n")))
+        pos = end.end()
+    return out
+
+
+def _body(text: str, m: re.Match, end: re.Match, inline: bool) -> str:
+    body = text[m.end():end.start()]
+    return body if inline else body[1:-1] if body.endswith("\n") else body[1:]
+
+
+def _revision(bodies: List[str]) -> str:
+    return hashlib.sha256("\n\x00\n".join(bodies).encode("utf-8")).hexdigest()[:16]
+
+
+def stamped_revision(text: Optional[str]) -> Optional[str]:
+    m = HEADER_RE.match((text or "").split("\n", 1)[0])
+    return m.group("rev") if m else None
+
+
+def hand_edited(text: Optional[str]) -> bool:
+    """Whether a rendered file's blocks no longer hash to the revision on its line 1 (Cog's checksum, AD-013-R2).
+    A file with no stamp (never rendered) is not edited."""
+    rev = stamped_revision(text)
+    if rev is None:
+        return False
+    return _revision([_body(text, *b) for b in _blocks(text)]) != rev
 
 
 def render_projection(project_dir: Path, proj: Dict[str, Any], nodes: List[dict], s: Settings) -> Rendered:
-    """Render one declared projection (AD-013-R2).
+    """Render one declared projection (AD-013-R2, R4).
 
     A file with marker blocks keeps everything outside them; a table block shows the requirements of its `document`
     (default: this file) under its `section`, a counts block (`view="counts"`) the counts sentence of its `document`.
@@ -940,14 +653,15 @@ def render_projection(project_dir: Path, proj: Dict[str, Any], nodes: List[dict]
     def block(attrs: Dict[str, str]) -> str:
         doc = attrs.get("document", rel)
         pool = by_doc.get(doc, [])
+        v = View.of(s, s.projection_for(doc) or proj)
         if attrs.get("view") == "counts":
-            body = render_counts(pool, proj.get("counts_template") or s.counts_template, s)
+            body = render_counts(pool, proj.get("counts_template") or s.counts_template, v)
         else:
             section = attrs.get("section")
             rows = [n for n in pool if (n.get("section") or None) == (section or None)]
             if doc == rel:
                 shown.update(n["requirement_id"] for n in rows)
-            body = render_table(rows, block_columns(rel, section, attrs.get("headers"), columns), s)
+            body = render_table(rows, block_columns(rel, section, attrs.get("headers"), columns), v)
         bodies.append(body)
         return body
 
@@ -955,33 +669,38 @@ def render_projection(project_dir: Path, proj: Dict[str, Any], nodes: List[dict]
         # A hand file with no markers is never overwritten: its prose is not the graph's to replace.
         raise RequirementsError(f"{rel} exists and has no seldon:projection markers; run `seldon req import --mark "
                                 f"{rel}` to wrap its tables, or move it aside so the projection is rendered whole")
-    base = current
-    if base is None:
-        title = "# Requirements" if proj["kind"] == "requirements" else "# Requirements traceability matrix"
-        base = title + "\n"
+    if current is None:
+        base = ("# Requirements" if proj["kind"] == "requirements" else "# Requirements traceability matrix") + "\n"
     else:
-        base = "\n".join(l for l in base.split("\n") if not HEADER_RE.match(l)).lstrip("\n")
-    text = _replace_blocks(base, block)
+        base = "\n".join(l for l in current.split("\n") if not HEADER_RE.match(l)).lstrip("\n")
+    out, pos = [], 0
+    for m, end, inline in _blocks(base):
+        body = block(_attrs(m.group("attrs")))
+        out += [base[pos:m.end()], body if inline else "\n" + body + "\n"]
+        pos = end.start()
+    text = "".join(out) + base[pos:]
+    unplaced = [n["requirement_id"] for n in mine if n["requirement_id"] not in shown]
     sections: List[Optional[str]] = []
     for n in mine:
-        if n["requirement_id"] not in shown and n.get("section") not in sections:
+        if n["requirement_id"] in unplaced and n.get("section") not in sections:
             sections.append(n.get("section"))
-    unplaced = [n["requirement_id"] for n in mine if n["requirement_id"] not in shown]
     for sec in sections:
-        attrs = {"view": "table"}
-        if sec:
-            attrs["section"] = sec
-        rows = [n for n in mine if n.get("section") == sec]
-        body = render_table(rows, columns, s)
+        attrs = {"view": "table", **({"section": sec} if sec else {})}
+        body = render_table([n for n in mine if n.get("section") == sec], columns, View.of(s, proj))
         bodies.append(body)
         text = text.rstrip("\n") + "\n\n" + (f"## {sec}\n\n" if sec else "") + start_marker(attrs) + "\n" + body \
             + "\n" + END_MARK + "\n"
-    revision = hashlib.sha256("\n\x00\n".join(bodies).encode("utf-8")).hexdigest()[:16]
+    revision = _revision(bodies)
     header = (f"<!-- seldon:projection-revision {revision} (the tables and counts between seldon:projection markers "
               f"are rendered from the graph by `seldon docs generate {proj['kind']}`; change a requirement with "
               f"`seldon req`, not here; AD-013-R2) -->")
-    return Rendered(path=rel, kind=proj["kind"], text=header + "\n" + text, current=current, revision=revision,
-                    unplaced=unplaced if current is not None else [])
+    full = header + "\n" + text
+    edited = []
+    if hand_edited(current):
+        new = set(full.split("\n"))
+        edited = [l for l in current.split("\n") if l not in new and not HEADER_RE.match(l)]
+    return Rendered(path=rel, kind=proj["kind"], text=full, current=current, revision=revision,
+                    unplaced=unplaced if current is not None else [], edited=edited)
 
 
 def render_all(project_dir: Path, driver, database: str, config: dict, kind: Optional[str] = None) -> List[Rendered]:
@@ -1000,73 +719,78 @@ def render_all(project_dir: Path, driver, database: str, config: dict, kind: Opt
     return [render_projection(project_dir, p, nodes, s) for p in projs]
 
 
-def write_and_commit(project_dir: Path, rendered: List[Rendered], commit: bool = True) -> dict:
-    """Write the changed projections, then commit exactly those paths through the hooks (AD-038-R15: a command
-    commits what it writes)."""
-    from seldon.core.dispatch import commit_paths
+def refuse_edited(rendered: List[Rendered]) -> None:
+    """AD-013-R2: a projection whose blocks were edited by hand is never overwritten.
 
+    Raises:
+        EditedBlocks: naming each edited file and its rows that differ from the render.
+    """
+    hit = [r for r in rendered if r.current is not None and hand_edited(r.current)]
+    if hit:
+        lines = []
+        for r in hit:
+            lines.append(f"{r.path}: its marker blocks no longer hash to revision {stamped_revision(r.current)} "
+                         f"(edited by hand); {len(r.edited)} line(s) differ from the render:")
+            lines += [f"    {l[:200]}" for l in r.edited[:20]] + (["    ..."] if len(r.edited) > 20 else [])
+        raise EditedBlocks("\n".join(lines) + "\nA table inside projection markers is output (AD-013-R2): make the "
+                           "change with `seldon req update <id>` and re-render, or re-render with `--discard-edits` "
+                           "to drop the edit. Nothing was written.")
+
+
+def write_and_commit(project_dir: Path, rendered: List[Rendered], commit: bool = True,
+                     discard_edits: bool = False) -> dict:
+    """Write the changed projections, then commit exactly those paths through the hooks (AD-038-R15: a command
+    commits what it writes). A hand-edited projection refuses the whole write unless `discard_edits` (AD-013-R2).
+
+    Raises:
+        EditedBlocks: a projection's blocks were edited by hand and `discard_edits` is false.
+    """
+    from seldon.core.dispatch import commit_paths, git
+
+    if not discard_edits:
+        refuse_edited(rendered)
     changed = [r for r in rendered if r.changed]
     for r in changed:
         p = Path(project_dir) / r.path
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(r.text, encoding="utf-8")
-    if not changed or not commit:
+    # A discarded edit can restore the committed bytes exactly: written, but nothing to commit.
+    dirty = [r for r in changed if not commit or git(project_dir, "status", "--porcelain", "--", r.path).stdout.strip()]
+    if not dirty or not commit:
         return {"written": [r.path for r in changed], "committed": False,
-                "reason": "nothing_to_commit" if not changed else "no_commit"}
-    kinds = sorted({r.kind for r in changed})
-    revs = ", ".join(f"{r.path} {r.revision}" for r in changed)
+                "reason": "nothing_to_commit" if not dirty else "no_commit"}
+    kinds = sorted({r.kind for r in dirty})
+    revs = ", ".join(f"{r.path} {r.revision}" for r in dirty)
     msg = (f"docs: render {' and '.join(kinds)} projection(s) from the graph (AD-013-R2)\n\n"
            f"seldon docs generate {' '.join(kinds)}; graph revision per file: {revs}")
-    out = commit_paths(Path(project_dir), [r.path for r in changed], msg)
+    out = commit_paths(Path(project_dir), [r.path for r in dirty], msg)
     out["written"] = [r.path for r in changed]
     return out
 
 
-def mark_source(project_dir: Path, src: Source) -> bool:
-    """`seldon req import --mark`: wrap each requirements table of the source in projection markers, once.
-
-    The start marker carries the table's section and its own header labels, so the first render reproduces the
-    table's wording. A table already inside markers is left. Returns whether the file changed.
-    """
-    path = Path(project_dir) / src.path
-    lines = path.read_text(encoding="utf-8").split("\n")
-    inside = set()
-    depth = False
-    for i, l in enumerate(lines):
-        if START_RE.search(l):
-            depth = True
-        if depth:
-            inside.add(i + 1)
-        if END_RE.search(l):
-            depth = False
-    changed = False
-    for ti in sorted(src.req_tables, key=lambda t: -src.tables[t].header_line):
-        t = src.tables[ti]
-        if t.header_line in inside:
-            continue
-        attrs = {"view": "table"}
-        if t.heading:
-            attrs["section"] = t.heading
-        attrs["headers"] = "|".join(t.header)
-        lines.insert(t.last_line, END_MARK)
-        lines.insert(t.header_line - 1, start_marker(attrs))
-        changed = True
-    if changed:
-        path.write_text("\n".join(lines), encoding="utf-8")
-    return changed
-
-
-# ─────────────────────────────────────────────────────────────── the checks (AD-013-R3)
+# ─────────────────────────────────────────────────────────────── the checks (AD-013-R3, R6)
 
 
 def unverified(driver, database: str) -> List[dict]:
-    """Requirements with no `verified_by` edge, rejected ones excepted (a withdrawn requirement binds nothing)."""
+    """Requirements with no qualifying `verified_by` edge, rejected ones excepted, each with its method
+    (AD-013-R6): a test Script for method test; a test Script, Result or Issue for the others."""
     with driver.session(database=database) as session:
         return _rows(session,
-                     f"MATCH (r:Artifact:{REQ_TYPE}) WHERE NOT (r)-[:VERIFIED_BY]->(:Artifact) "
-                     "AND coalesce(r.state, '') <> 'rejected' "
-                     "RETURN r.requirement_id AS id, r.state AS state, r.document AS document "
-                     "ORDER BY r.requirement_id")
+                     f"MATCH (r:Artifact:{REQ_TYPE}) WHERE coalesce(r.state, '') <> 'rejected' "
+                     "WITH r, coalesce(r.verification_method, 'test') AS m "
+                     "OPTIONAL MATCH (r)-[:VERIFIED_BY]->(t:Artifact) "
+                     "WHERE (t:Script AND t.test_node IS NOT NULL) OR (m <> 'test' AND t.artifact_type IN $ev) "
+                     "WITH r, m, count(t) AS n WHERE n = 0 "
+                     "RETURN r.requirement_id AS id, r.state AS state, r.document AS document, m AS method "
+                     "ORDER BY r.requirement_id", ev=list(EVIDENCE_TYPES))
+
+
+def by_method(rows: List[dict]) -> Dict[str, List[str]]:
+    """Unverified ids grouped by method, test first (AD-013-R6)."""
+    out: Dict[str, List[str]] = {}
+    for r in sorted(rows, key=lambda r: (r["method"] != DEFAULT_METHOD, r["method"])):
+        out.setdefault(r["method"], []).append(r["id"])
+    return out
 
 
 def count(driver, database: str) -> int:
@@ -1075,8 +799,8 @@ def count(driver, database: str) -> int:
 
 
 def stale_projections(project_dir: Path, driver, database: str, config: dict) -> List[str]:
-    """One finding per declared projection whose file is missing or differs from a fresh render, and per requirement
-    of a marked file that no block shows."""
+    """One finding per declared projection whose file is missing, was edited by hand, or differs from a fresh render
+    because the graph moved; and per requirement of a marked file that no block shows."""
     s = settings(config)
     if not s.projections:
         return []
@@ -1090,11 +814,12 @@ def stale_projections(project_dir: Path, driver, database: str, config: dict) ->
             continue
         if r.current is None:
             out.append(f"{r.path}: not rendered; run `seldon docs generate {r.kind}`")
+        elif hand_edited(r.current):
+            out.append(f"{r.path}: its blocks were edited by hand, so `seldon docs generate {r.kind}` refuses it; "
+                       f"make the change with `seldon req update` and re-render with `--discard-edits`")
         elif r.changed:
-            m = HEADER_RE.match(r.current.split("\n", 1)[0])
-            why = ("the graph moved since revision " + m.group("rev")) if m and m.group("rev") != r.revision \
-                else "the file was edited outside the graph"
-            out.append(f"{r.path}: differs from a fresh render ({why}); run `seldon docs generate {r.kind}`")
+            out.append(f"{r.path}: the graph moved since revision {stamped_revision(r.current)}; run "
+                       f"`seldon docs generate {r.kind}`")
         if r.unplaced:
             out.append(f"{r.path}: {len(r.unplaced)} requirement(s) of this document in no block "
                        f"(first: {', '.join(r.unplaced[:5])}); `seldon docs generate {r.kind}` appends them")

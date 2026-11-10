@@ -122,8 +122,11 @@ def test_the_issue_enums_admit_a_review_finding():
 
 def test_the_domain_declares_the_trace_edges_and_optional_properties(domain_config):
     rels = domain_config.relationship_types
-    # SEL-033 (AD-013-R1) widened the origin to SRS_Requirement; an Issue still verifies only against a Script.
-    assert rels["verified_by"].from_types == ["Issue", "SRS_Requirement"] and rels["verified_by"].to_types == ["Script"]
+    # SEL-033 (AD-013-R1) widened the origin to SRS_Requirement. SEL-035 (AD-013-R6) widened the targets to the
+    # Result or Issue that records a non-test method's evidence; the endpoint sets are independent, so an Issue may
+    # now point at one too, but `seldon issue orphans` still counts only a test Script (review_findings.orphans).
+    assert rels["verified_by"].from_types == ["Issue", "SRS_Requirement"]
+    assert rels["verified_by"].to_types == ["Script", "Result", "Issue"]
     assert rels["changes"].from_types == ["Issue"]
     assert set(rels["changes"].to_types) == {"Decision", "ArchitecturalDecision"}
     assert "ResearchTask" in rels["remediated_by"].to_types

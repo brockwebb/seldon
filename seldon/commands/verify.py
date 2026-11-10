@@ -280,26 +280,46 @@ def check_requirements(driver, database: str, project_dir: Path, config: dict) -
 
     Advisory, as a stale Result is: an unverified requirement is a property of the project's history, not of the
     change in hand, so it is not Tier A. A project with no requirement and no projection passes.
+
+    SEL-035: the unverified are counted by method (AD-013-R6); the test markers' trace is planned, not written,
+    and its pending edges and findings are reported (AD-013-R5: verify reads, `seldon req trace` writes); a
+    `verified` requirement with no qualifying edge is named (AD-013-R1's invariant).
     """
+    from seldon.core import req_trace as RT
     from seldon.core import requirements as RQ
+    from seldon.domain.loader import load_domain_config
 
     try:
         total = RQ.count(driver, database)
         missing = RQ.unverified(driver, database)
         stale = RQ.stale_projections(project_dir, driver, database, config)
+        tr = None
+        if total:
+            name = (config.get("project") or {}).get("domain", "research")
+            dc = load_domain_config(Path(__file__).parent.parent / "domain" / f"{name}.yaml")
+            tr = RT.plan_trace(project_dir, driver, database, dc, config)
     except RQ.RequirementsError as exc:
         return CheckResult(name="Requirements", symbol="warn", summary=str(exc)[:300])
     if total == 0 and not stale:
         return CheckResult(name="Requirements", symbol="pass", summary="No requirements in the graph")
     details = []
-    if missing:
-        details.append(f"{len(missing)} with no verified_by test (first: "
-                       f"{', '.join(r['id'] for r in missing[:10])}); `seldon req add <id> --verified-by "
-                       f"<path::node>`")
+    for method, ids in RQ.by_method(missing).items():
+        what, clears = (("no test", "mark a test `@pytest.mark.verifies(\"<id>\")`, then `seldon req trace`")
+                        if method == RQ.DEFAULT_METHOD else
+                        ("no evidence", "`seldon req update <id> --evidence <Result or Issue id>`"))
+        details.append(f"{len(ids)} of method {method} with {what} (first: {', '.join(ids[:10])}); {clears}")
+    bad = [r["id"] for r in missing if r["state"] == "verified"]
+    if bad:
+        details.append(f"{len(bad)} verified with no qualifying verified_by edge (AD-013-R1): {', '.join(bad[:10])}")
+    if tr is not None and (tr.added or tr.removed):
+        details.append(f"the test markers' trace is not in the graph: {len(tr.added)} edge(s) to add, "
+                       f"{len(tr.removed)} to remove; run `seldon req trace`")
+    if tr is not None:
+        details.extend(tr.findings[:10])
     details.extend(stale)
     if not details:
         return CheckResult(name="Requirements", symbol="pass",
-                           summary=f"{total} requirement(s), each verified by a test; projections current")
+                           summary=f"{total} requirement(s), each verified by its method; projections current")
     return CheckResult(name="Requirements", symbol="warn",
                        summary=f"{total} requirement(s): {len(missing)} unverified, {len(stale)} projection "
                                f"finding(s)", details=details[:25])

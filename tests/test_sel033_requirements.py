@@ -9,6 +9,12 @@ B. `seldon req import` loads a markdown table into `SRS_Requirement` nodes, idem
 C. `seldon docs generate requirements|rtm` renders the declared projections into their marker blocks from the graph,
    stamps the graph revision and commits; `docs check` and `verify` report unverified requirements and stale
    projections.
+
+Amended by SEL-035 (AD-013 ADDENDUM 02): a requirement keeps only its authored fields, and every other cell is
+computed at render (R1, R4). So the fixture's tables lost hazbrief's `Validated by` column (no edge computes it), the
+projection's Status cells come from the state's label and the note, and a row the source called `satisfied` that has
+no test (VR-003, held at `implemented` by R1) now says so. The SEL-035 rules themselves are tested in
+`tests/test_sel035_authored_once.py`.
 """
 from __future__ import annotations
 
@@ -23,6 +29,7 @@ from click.testing import CliRunner
 from seldon.commands.docs import docs_group
 from seldon.commands.req import req_group
 from seldon.commands.verify import TIER_A_CHECKS, check_requirements
+from seldon.core import req_load as RL
 from seldon.core import requirements as RQ
 from seldon.core.artifacts import create_artifact
 from seldon.core.events import EVENTS_FILENAME, read_events
@@ -51,23 +58,26 @@ Prose the projection must keep: the TEVV reading.
 
 ### The map
 
-| ID | Requirement | Set by | Verified by | Validated by | Status |
-|---|---|---|---|---|---|
-| VR-001 | The map is first. | DN-019 §1 | tests/test_map.py::test_first; tests/test_map.py::test_order | — | satisfied: HB-900 |
-| VR-002 | The map spans the page. | DN-019 §1; DN-404 §2 | none yet | — | open: the panel shares the row |
+| ID | Requirement | Set by | Verified by | Status |
+|---|---|---|---|---|
+| VR-001 | The map is first. | DN-019 §1 | tests/test_map.py::test_first; tests/test_map.py::test_order | satisfied: HB-900 |
+| VR-002 | The map spans the page. | DN-019 §1; DN-404 §2 | none yet | open: the panel shares the row |
 
 More prose between the tables.
 
 ### The legend
 
-| ID | Requirement | Set by | Verified by | Validated by | Status |
-|---|---|---|---|---|---|
-| VR-003 | The legend names the wind. | HB-900 §A | none yet | — | satisfied |
-| VR-004 | The legend floats. | DN-019 §4 | none yet | — | withdrawn: VR-003 replaces it |
+| ID | Requirement | Set by | Verified by | Status |
+|---|---|---|---|---|
+| VR-003 | The legend names the wind. | HB-900 §A | none yet | satisfied |
+| VR-004 | The legend floats. | DN-019 §4 | none yet | withdrawn: VR-003 replaces it |
 
 The table at HB-900: COUNTS.
 """
-COUNTS = '4 rows: 2 satisfied, 1 open, 0 changed, 1 withdrawn; 3 verified by "none yet"'
+#: The project's labels for the states its status words map to (AD-013-R4).
+LABELS = {"verified": "satisfied", "accepted": "open", "rejected": "withdrawn"}
+#: VR-003 said `satisfied` with no test: it is `implemented`, so it no longer counts as satisfied (AD-013-R1, R4).
+COUNTS = '4 rows: 1 satisfied, 1 open, 0 changed, 1 withdrawn; 3 verified by "none yet"'
 TEMPLATE = ('{total} rows: {status:satisfied} satisfied, {status:open} open, {status:changed} changed, '
             '{status:withdrawn} withdrawn; {unverified} verified by "none yet"')
 
@@ -81,7 +91,7 @@ def _config(projections=None) -> dict:
     cfg = {"project": {"name": "test", "domain": "research"},
            "neo4j": {"database": NEO4J_DB, "uri": "bolt://localhost:7687"},
            "event_store": {"path": "seldon_events.jsonl"},
-           "requirements": {"status_map": STATUS_MAP, "counts_template": TEMPLATE}}
+           "requirements": {"status_map": STATUS_MAP, "state_labels": LABELS, "counts_template": TEMPLATE}}
     if projections is not None:
         cfg["docs"] = {"projections": projections}
     return cfg
@@ -129,7 +139,7 @@ def _note(project_dir, driver, dc):
 
 def _import(project_dir, driver, dc, rel="docs/VR.md", **kw):
     cfg = yaml.safe_load((project_dir / "seldon.yaml").read_text())
-    return RQ.import_file(project_dir, driver, NEO4J_DB, dc, cfg, rel, **kw)
+    return RL.import_file(project_dir, driver, NEO4J_DB, dc, cfg, rel, **kw)
 
 
 def _node(driver, rid):
@@ -149,7 +159,7 @@ def _edges(driver, rid):
 class TestReaders:
     def test_the_source_parses_its_tables_sections_and_key_map(self, tmp_path):
         (tmp_path / "VR.md").write_text(SOURCE)
-        src = RQ.read_source(tmp_path, "VR.md", RQ.settings({}).columns)
+        src = RL.read_source(tmp_path, "VR.md", RQ.settings({}).columns)
         assert [r.requirement_id for r in src.rows] == ["VR-001", "VR-002", "VR-003", "VR-004"]
         assert [r.section for r in src.rows] == ["The map", "The map", "The legend", "The legend"]
         assert src.keys == {"DN-019": "docs/design/DN-019.md", "HB-900": TASK_FILE}
@@ -159,12 +169,12 @@ class TestReaders:
     def test_a_repeated_id_is_refused(self, tmp_path):
         (tmp_path / "VR.md").write_text(SOURCE.replace("VR-002", "VR-001"))
         with pytest.raises(RQ.RequirementsError, match="repeated"):
-            RQ.read_source(tmp_path, "VR.md", RQ.settings({}).columns)
+            RL.read_source(tmp_path, "VR.md", RQ.settings({}).columns)
 
     def test_a_file_with_no_requirements_table_is_refused(self, tmp_path):
         (tmp_path / "x.md").write_text("| a | b |\n|---|---|\n| 1 | 2 |\n")
         with pytest.raises(RQ.RequirementsError, match="no requirements table"):
-            RQ.read_source(tmp_path, "x.md", RQ.settings({}).columns)
+            RL.read_source(tmp_path, "x.md", RQ.settings({}).columns)
 
     def test_the_status_word_is_the_longest_whole_word_prefix(self):
         m = {"met": "verified", "not met": "accepted", "not met (ruled out)": "rejected", "partial": "accepted"}
@@ -180,22 +190,23 @@ class TestReaders:
             (tmp_path / "tests" / f).write_text("")
         cell = ("tests/test_a.py::test_x; `tests/test_b.py` `test_y`, `test_z`; `tests/test_c.py` (round trip); "
                 "harness A part 4; tests/test_gone.py::test_q")
-        refs, missing = RQ.test_refs(cell, tmp_path)
+        refs, missing = RL.test_refs(cell, tmp_path)
         assert refs == ["tests/test_a.py::test_x", "tests/test_b.py::test_y", "tests/test_b.py::test_z",
                         "tests/test_c.py"]
         assert missing == ["tests/test_gone.py::test_q"]
-        assert RQ.test_refs("none yet", tmp_path) == ([], [])
+        assert RL.test_refs("none yet", tmp_path) == ([], [])
 
     def test_a_rendered_row_reproduces_its_source_cells(self):
-        s = RQ.settings({})
-        nodes = [{"a": "x \\| y", "b": "`p|q`"}]
-        out = RQ.render_table(nodes, [{"header": "A", "source": "a"}, {"header": "B", "source": "b"}], s)
+        v = RQ.View.of(RQ.settings({}), None)
+        nodes = [{"description": "x \\| y", "set_by": "`p|q`"}]
+        out = RQ.render_table(nodes, [{"header": "A", "source": "description"}, {"header": "B", "source": "set_by"}],
+                              v)
         assert out.splitlines()[2] == "| x \\| y | `p\\|q` |"
 
     def test_a_block_selects_its_columns_by_header_label(self):
         """One RTM file whose tables differ in columns (HB-144's Decision column on the design-note tables only):
         the start marker's `headers` pick the projection's columns by label, in the table's order."""
-        cols = [{"header": "ID", "source": "requirement_id"}, {"header": "Decision", "source": "decision_text"},
+        cols = [{"header": "ID", "source": "requirement_id"}, {"header": "Decision", "source": "@decision"},
                 {"header": "Requirement", "source": "description"}, {"header": "Criterion", "source": "description"}]
         got = RQ.block_columns("RTM.md", "GSA", "ID|Criterion", cols)
         assert got == [{"header": "ID", "source": "requirement_id"}, {"header": "Criterion", "source": "description"}]
@@ -230,7 +241,11 @@ class TestImport:
         assert sorted(plan.created) == ["VR-001", "VR-002", "VR-003", "VR-004"]
         assert plan.tests_created == 2
         # VR-002's second source names no artifact, and is listed, not dropped (AD-013-R1)
-        assert len(plan.unresolved) == 1 and "DN-404" in plan.unresolved[0] and "VR-002" in plan.unresolved[0]
+        sources = [u for u in plan.unresolved if "set_by" in u]
+        assert len(sources) == 1 and "DN-404" in sources[0] and "VR-002" in sources[0]
+        # VR-003 says `satisfied` and has no test: held at implemented, its word kept in the note and listed
+        assert [u for u in plan.unresolved if "set_by" not in u] == [
+            "docs/VR.md:27 VR-003: status 'satisfied' maps to verified, the state is implemented: kept in the note"]
 
         n1 = _node(neo4j_driver, "VR-001")
         assert n1["state"] == "verified"
@@ -261,23 +276,29 @@ class TestImport:
             "|---|---|---|---|---|---|\n"
             "| S3-1 | HBD-002, HBD-404 | Four classes | `packs/x.json` | `tests/test_map.py` `test_first` | met |\n")
         plan, _ = _import(req_project, neo4j_driver, domain_config, rel="docs/RTM.md")
-        assert [u for u in plan.unresolved if "decision" in u] == [
+        assert [u for u in plan.unresolved if "names no projected" in u] == [
             "docs/RTM.md:5 S3-1: decision 'HBD-404' names no projected register record (run `seldon decision "
             "project`)"]
         n = _node(neo4j_driver, "S3-1")
-        assert n["decision_text"] == "HBD-002, HBD-404" and n["satisfied_by_text"] == "`packs/x.json`"
+        # SEL-035 (AD-013-R1): no verbatim cell; what no edge carries is in the note, under its column's name
+        assert not {"decision_text", "satisfied_by_text", "verified_by_text", "status_text"} & set(n)
+        assert n["note"] == "met; satisfied by: `packs/x.json`; decision: HBD-002, HBD-404"
         assert {"t": "DERIVED_FROM", "o": "HBD-002"} in _edges(neo4j_driver, "S3-1")
         assert {"t": "VERIFIED_BY", "o": "tests/test_map.py::test_first"} in _edges(neo4j_driver, "S3-1")
-        cols = [{"header": h, "source": s} for h, s in (("ID", "requirement_id"), ("Decision", "decision_text"),
-                ("Requirement", "description"), ("Satisfied by", "satisfied_by_text"),
-                ("Checked by", "verified_by_text"), ("State", "status_text"))]
+        cols = [{"header": h, "source": s} for h, s in (("ID", "requirement_id"), ("Decision", "@decision"),
+                ("Requirement", "description"), ("Satisfied by", "@satisfied_by"),
+                ("Checked by", "@verified_by"), ("State", "@status"))]
         nodes = RQ.load_requirements(neo4j_driver, NEO4J_DB)
-        assert RQ.render_table(nodes, cols, RQ.settings({})).splitlines()[2] == (
-            "| S3-1 | HBD-002, HBD-404 | Four classes | `packs/x.json` | `tests/test_map.py` `test_first` | met |")
+        # each cell computed (AD-013-R4): the decision the edge carries; `met` maps to no state in this project's
+        # status map, so the requirement stays proposed and the label is prefixed to the note
+        assert RQ.render_table(nodes, cols, RQ.View.of(RQ.settings({}), None)).splitlines()[2] == (
+            "| S3-1 | HBD-002 | Four classes | — | tests/test_map.py::test_first | proposed: met; satisfied by: "
+            "`packs/x.json`; decision: HBD-002, HBD-404 |")
 
     def test_a_source_with_no_artifact_is_listed_per_row(self, req_project, neo4j_driver, domain_config):
         plan, _ = _import(req_project, neo4j_driver, domain_config)
-        listed = [u.split(": ", 1)[0].split()[-1] + " " + u.split("set_by ")[1].split()[0] for u in plan.unresolved]
+        listed = [u.split(": ", 1)[0].split()[-1] + " " + u.split("set_by ")[1].split()[0] for u in plan.unresolved
+                  if "set_by " in u]
         assert listed == ["VR-001 'DN-019'", "VR-002 'DN-019'", "VR-002 'DN-404'", "VR-003 'HB-900'",
                           "VR-004 'DN-019'"]
         assert _node(neo4j_driver, "VR-004")["state"] == "rejected", "an unresolved source does not stop the row"
@@ -296,8 +317,8 @@ class TestImport:
         _import(req_project, neo4j_driver, domain_config)
         p = req_project / "docs" / "VR.md"
         p.write_text(p.read_text().replace(
-            "tests/test_map.py::test_first; tests/test_map.py::test_order | — | satisfied: HB-900",
-            "tests/test_map.py::test_first | — | open: a review found it wrong"))
+            "tests/test_map.py::test_first; tests/test_map.py::test_order | satisfied: HB-900",
+            "tests/test_map.py::test_first | open: a review found it wrong"))
         plan, _ = _import(req_project, neo4j_driver, domain_config)
         assert plan.updated == ["VR-001"] and plan.links_removed == 2   # one test, and the task's satisfies
         assert _node(neo4j_driver, "VR-001")["state"] == "accepted"
@@ -312,25 +333,32 @@ class TestImport:
         assert plan.writes and len(read_events(req_project)) == before
         assert _node(neo4j_driver, "VR-001") is None
 
-    def test_req_add_creates_then_updates_one(self, req_project, neo4j_driver, domain_config):
+    def test_req_add_creates_then_update_changes_one(self, req_project, neo4j_driver, domain_config):
+        """SEL-035: `add` creates (a statement is required, a known id is refused); `update` changes authored fields
+        and the state, and refuses an unknown id; `verified` needs a qualifying edge (AD-013-R1)."""
         cfg = yaml.safe_load((req_project / "seldon.yaml").read_text())
+
+        def one(rid, create, state=None, **fields):
+            return RQ.write_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, rid, create=create,
+                                state=state, fields=fields)
+
         with pytest.raises(RQ.RequirementsError, match="statement"):
-            RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-010", statement=None,
-                       set_by=None, verified_by=[], validated_by=None, status=None, section=None, document=None)
-        RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-010", statement="It holds.",
-                   set_by="DN-019 §2", verified_by=[], validated_by=None, status="open", section="The map",
-                   document="docs/VR.md")
+            one("VR-010", True)
+        with pytest.raises(RQ.RequirementsError, match="req add VR-010"):
+            one("VR-010", False, note="x")
+        one("VR-010", True, state="accepted", description="It holds.", set_by="DN-019 §2", section="The map",
+            document="docs/VR.md")
         assert _node(neo4j_driver, "VR-010")["state"] == "accepted"
-        RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-010", statement=None,
-                   set_by=None, verified_by=["tests/test_map.py::test_first"], validated_by=None,
-                   status="satisfied", section=None, document=None)
+        with pytest.raises(RQ.RequirementsError, match="exists"):
+            one("VR-010", True, description="Again.")
+        with pytest.raises(RQ.RequirementsError, match="cannot be verified"):
+            one("VR-010", False, state="verified")
+        one("VR-010", False, state="implemented", note="HB-900 built it")
         n = _node(neo4j_driver, "VR-010")
-        assert n["state"] == "verified" and n["description"] == "It holds." and n["section"] == "The map"
-        assert n["verified_by_text"] == "tests/test_map.py::test_first"
-        with pytest.raises(RQ.RequirementsError, match="not a test"):
-            RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-010", statement=None,
-                       set_by=None, verified_by=["tests/test_gone.py::test_x"], validated_by=None, status=None,
-                       section=None, document=None)
+        assert n["state"] == "implemented" and n["description"] == "It holds." and n["section"] == "The map"
+        assert n["note"] == "HB-900 built it"
+        with pytest.raises(RQ.RequirementsError, match="not authored"):
+            one("VR-010", False, status_text="satisfied")
 
     def test_the_cli_import_reports_and_marks(self, req_project, neo4j_driver, domain_config):
         result = CliRunner().invoke(req_group, ["import", "docs/VR.md", "--mark"])
@@ -348,8 +376,8 @@ class TestImport:
 
 def _mark_and_count(project_dir):
     """Mark the source as `req import --mark` does, and put a counts block where the hand sentence was."""
-    src = RQ.read_source(project_dir, "docs/VR.md", RQ.settings({}).columns)
-    RQ.mark_source(project_dir, src)
+    src = RL.read_source(project_dir, "docs/VR.md", RQ.settings({}).columns)
+    RL.mark_source(project_dir, src)
     p = project_dir / "docs" / "VR.md"
     p.write_text(p.read_text().replace(
         "COUNTS.", '<!-- seldon:projection view="counts" -->COUNTS<!-- /seldon:projection -->.'))
@@ -371,8 +399,10 @@ class TestProjection:
         text = (req_project / "docs" / "VR.md").read_text()
         first, rest = text.split("\n", 1)
         assert RQ.HEADER_RE.match(first) and rendered[0].revision in first
-        # the tables come back byte for byte; only the counts sentence is new
-        assert rest == marked.replace("-->COUNTS<!--", f"-->{COUNTS}<!--")
+        # the tables come back byte for byte but for one computed cell (SEL-035, AD-013-R4): VR-003 said `satisfied`
+        # with no test, and the graph holds it at implemented; the counts sentence is new
+        assert rest == marked.replace("-->COUNTS<!--", f"-->{COUNTS}<!--").replace(
+            "| none yet | satisfied |", "| none yet | implemented: satisfied |")
         assert "Prose the projection must keep" in rest and "More prose between the tables." in rest
         assert _git(req_project, "log", "-1", "--format=%s").startswith("docs: render requirements projection")
         assert "VR.md" not in _git(req_project, "status", "--porcelain"), "the projection is committed"
@@ -388,20 +418,20 @@ class TestProjection:
         RQ.write_and_commit(req_project, RQ.render_all(req_project, neo4j_driver, NEO4J_DB, cfg), commit=False)
         assert RQ.stale_projections(req_project, neo4j_driver, NEO4J_DB, cfg) == []
 
-        RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-002", statement=None, set_by=None,
-                   verified_by=["tests/test_map.py::test_order"], validated_by=None, status="satisfied",
-                   section=None, document=None)
+        RQ.write_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-002", create=False,
+                     state="rejected", fields={"note": "VR-001 covers it"})
         stale = RQ.stale_projections(req_project, neo4j_driver, NEO4J_DB, cfg)
         assert len(stale) == 1 and "the graph moved since revision" in stale[0]
         RQ.write_and_commit(req_project, RQ.render_all(req_project, neo4j_driver, NEO4J_DB, cfg), commit=False)
         text = (req_project / "docs" / "VR.md").read_text()
-        assert "| VR-002 | The map spans the page. | DN-019 §1; DN-404 §2 | tests/test_map.py::test_order |" in text
-        assert '1 open' not in text and "3 satisfied" in text
+        assert "| VR-002 | The map spans the page. | DN-019 §1; DN-404 §2 | none yet | withdrawn: VR-001 covers it |" \
+            in text
+        assert '1 open' not in text and "2 withdrawn" in text
 
         p = req_project / "docs" / "VR.md"
         p.write_text(p.read_text().replace("The legend floats.", "The legend floats, edited by hand."))
         stale = RQ.stale_projections(req_project, neo4j_driver, NEO4J_DB, cfg)
-        assert len(stale) == 1 and "edited outside the graph" in stale[0]
+        assert len(stale) == 1 and "edited by hand" in stale[0]
 
     def test_an_unmarked_hand_file_is_never_overwritten(self, req_project, neo4j_driver, domain_config):
         _import(req_project, neo4j_driver, domain_config)
@@ -419,17 +449,18 @@ class TestProjection:
         assert "# Requirements traceability matrix" in r.text
         assert "## The map" in r.text and "## The legend" in r.text
         assert "| VR-001 | The map is first. | — | HB-900 the map | tests/test_map.py::test_first; " \
-               "tests/test_map.py::test_order | verified |" in r.text
-        assert "| VR-003 | The legend names the wind. | HB-900 the map | — | none yet | implemented |" in r.text
+               "tests/test_map.py::test_order | satisfied: HB-900 |" in r.text
+        assert "| VR-003 | The legend names the wind. | HB-900 the map | — | none yet | implemented: satisfied |" \
+            in r.text
 
     def test_a_requirement_with_no_block_is_appended_in_its_section(self, req_project, neo4j_driver,
                                                                    domain_config):
         _import(req_project, neo4j_driver, domain_config)
         _mark_and_count(req_project)
         cfg = yaml.safe_load((req_project / "seldon.yaml").read_text())
-        RQ.add_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-005", statement="Stream it.",
-                   set_by=None, verified_by=[], validated_by=None, status="open", section="The stream",
-                   document="docs/VR.md")
+        RQ.write_one(req_project, neo4j_driver, NEO4J_DB, domain_config, cfg, "VR-005", create=True,
+                     state="accepted", fields={"description": "Stream it.", "section": "The stream",
+                                               "document": "docs/VR.md"})
         [r] = RQ.render_all(req_project, neo4j_driver, NEO4J_DB, cfg)
         assert r.unplaced == ["VR-005"]
         assert r.text.rstrip().endswith(RQ.END_MARK) and "## The stream" in r.text and "| VR-005 | Stream it." in r.text
@@ -461,7 +492,7 @@ class TestChecks:
         r = check_requirements(neo4j_driver, NEO4J_DB, req_project, cfg)
         assert r.symbol == "warn"
         # VR-002 and VR-003 have no test; VR-004 is rejected, so it binds nothing
-        assert "2 with no verified_by test" in r.details[0] and "VR-002, VR-003" in r.details[0]
+        assert "2 of method test with no test" in r.details[0] and "VR-002, VR-003" in r.details[0]
         assert any("no seldon:projection markers" in d for d in r.details)
         assert "Requirements" not in TIER_A_CHECKS
 
@@ -473,7 +504,8 @@ class TestChecks:
         assert data["requirements"]["total"] == 4
         assert data["requirements"]["unverified"] == ["VR-002", "VR-003"]
         strict = CliRunner().invoke(docs_group, ["check", "--type", "SRS_Requirement", "--strict"])
-        assert strict.exit_code == 1 and "with no verified_by test" in strict.output
+        assert strict.exit_code == 1 and "of method test with no test" in strict.output
+        assert data["requirements"]["unverified_by_method"] == {"test": ["VR-002", "VR-003"]}
 
     def test_the_load_appends_one_batch(self, req_project, neo4j_driver, domain_config):
         before = len(read_events(req_project))

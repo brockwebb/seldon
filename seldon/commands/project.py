@@ -128,6 +128,8 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
                                  ["seldon.yaml"]))
         else:
             steps.append(PN.Step("decisions", "ok", "decision register declared"))
+        # 4c. the `verifies` pytest marker (AD-013-R5, SEL-035): a test declares the requirements it verifies
+        steps.append(PN.marker_step(project_dir))
         absent = PN.missing_siblings(project_dir, cfg["environment_packages"])
         if absent:
             steps.append(PN.Step("environment", "refused",

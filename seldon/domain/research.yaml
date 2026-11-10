@@ -544,11 +544,13 @@ artifact_types:
         description: "The statement's first line, for listings."
 
   SRS_Requirement:
-    # AD-013-R1 (SEL-033, AD-013 ADDENDUM 01): a requirement is graph content. Its trace is in the edges
-    # (`derived_from` its source, `verified_by` a test Script, `satisfies` from what meets it); the `trace`
-    # properties keep a load source's cells verbatim so a projection (`seldon docs generate requirements|rtm`)
-    # reproduces its wording. `trace` is neither documentation nor system: `seldon docs check` does not count it,
-    # because the edges are what is counted (AD-013-R3).
+    # AD-013-R1 (SEL-033, AD-013 ADDENDUM 01; amended by ADDENDUM 02, SEL-035): a requirement is graph content,
+    # authored once. Its authored fields are below; its status is its state and its trace is its edges
+    # (`derived_from` its source, `verified_by` a test Script or, for another method, the Result or Issue that
+    # records the evidence, `satisfies` from what meets it). Every other projection cell is computed at render
+    # (AD-013-R4). SEL-033's verbatim cells (status_text, verified_by_text, satisfied_by_text, validated_by,
+    # decision_text) were removed by `seldon req migrate`. `trace` is neither documentation nor system: `seldon docs
+    # check` does not count it, because the edges are what is counted (AD-013-R3).
     properties:
       requirement_id:
         required: true
@@ -565,21 +567,12 @@ artifact_types:
       section:
         category: trace
         description: "The heading the requirement sits under in its document; a projection groups by it"
-      verified_by_text:
+      verification_method:
         category: trace
-        description: "The load source's verification cell, verbatim; the `verified_by` edges are the trace"
-      validated_by:
+        description: "How it is verified (ISO/IEC/IEEE 15288, INCOSE): test, inspection, analysis or demonstration; absent means test (AD-013-R1, R6)"
+      note:
         category: trace
-        description: "The review finding or operator answer that confirmed or changed it, verbatim"
-      satisfied_by_text:
-        category: trace
-        description: "The load source's satisfied-by cell, verbatim"
-      status_text:
-        category: trace
-        description: "The load source's status cell, verbatim; `requirements.status_map` maps its first word to the state"
-      decision_text:
-        category: trace
-        description: "The load source's decision cell, verbatim (register record ids, hazbrief-mcp HB-144); each id that names a projected Decision is a `derived_from` edge"
+        description: "Free text the author keeps on it; the projection's Status cell is the state's label followed by it (AD-013-R4)"
 
   AgentRole:
     properties:
@@ -1097,8 +1090,15 @@ relationship_types:
     # for one test node (`test_node`: `<path>::<node id>`); `seldon issue orphans` requires one on a fixed finding.
     # SRS_Requirement origin added (SEL-033, AD-013-R1): a requirement -> the test that verifies it (SysML verify);
     # a requirement reaches `verified` only with one, and `seldon verify` counts those without (AD-013-R3).
+    # Result and Issue targets added (SEL-035, AD-013-R6): a requirement verified by inspection, analysis or
+    # demonstration points at the record of its evidence. Document stays out: the endpoint sets are independent, so
+    # admitting it would admit Issue -> Document, which AD-030 section 4's closed edge set refuses.
     from_types: [Issue, SRS_Requirement]
-    to_types: [Script]
+    to_types: [Script, Result, Issue]
+    properties:
+      declared_by:
+        required: false
+        description: "`marker` when a test's `@pytest.mark.verifies` declares the edge and `seldon req trace` keeps it (AD-013-R5); absent on an edge a load or a person made"
 
   changes:
     # SEL-021 (factory F-010): a review finding -> a decision its outcome altered, a register record

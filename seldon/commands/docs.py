@@ -117,27 +117,33 @@ def run_docs_check(
 
 
 def requirement_findings(project_dir: Path, driver, database: str, config: dict) -> Dict:
-    """AD-013-R3: the requirements with no `verified_by` edge (rejected ones excepted) and the declared projections
-    that differ from a fresh render. `{"total", "unverified": [ids], "projections": [findings]}`."""
+    """AD-013-R3, R6: the requirements with no qualifying `verified_by` edge (rejected ones excepted), all and by
+    method, and the declared projections that differ from a fresh render.
+    `{"total", "unverified": [ids], "unverified_by_method": {method: [ids]}, "projections": [findings]}`."""
     from seldon.core import requirements as RQ
 
     try:
         projections = RQ.stale_projections(project_dir, driver, database, config)
     except RQ.RequirementsError as exc:
         projections = [str(exc)]
-    return {"total": RQ.count(driver, database),
-            "unverified": [r["id"] for r in RQ.unverified(driver, database)],
-            "projections": projections}
+    rows = RQ.unverified(driver, database)
+    return {"total": RQ.count(driver, database), "unverified": [r["id"] for r in rows],
+            "unverified_by_method": RQ.by_method(rows), "projections": projections}
+
+
+#: What clears an unverified requirement, by method (AD-013-R5, R6).
+_CLEARS = {"test": "a test marked `@pytest.mark.verifies(\"<id>\")`, then `seldon req trace`"}
 
 
 def _print_requirements(req: Dict) -> None:
     if not req or not (req.get("total") or req.get("projections")):
         return
     click.echo(f"REQUIREMENTS (AD-013-R3): {req['total']} in the graph")
-    if req["unverified"]:
-        ids = req["unverified"]
-        click.echo(f"  ⚠ {len(ids)} with no verified_by test: {', '.join(ids[:20])}"
-                   + (" ..." if len(ids) > 20 else "") + "  (seldon req add <id> --verified-by <path::node>)")
+    for method, ids in (req.get("unverified_by_method") or {}).items():
+        what = "no test" if method == "test" else "no evidence"
+        clears = _CLEARS.get(method, "`seldon req update <id> --evidence <Result or Issue id>`")
+        click.echo(f"  ⚠ {len(ids)} of method {method} with {what}: {', '.join(ids[:20])}"
+                   + (" ..." if len(ids) > 20 else "") + f"  ({clears})")
     for f in req["projections"]:
         click.echo(f"  ⚠ {f}")
     if not req["unverified"] and not req["projections"]:
@@ -408,7 +414,10 @@ def _generate_docs(driver, database: str, domain_config, output_dir: Path) -> Li
               help="VIEW: write the projections, do not commit them.")
 @click.option("--check", "check_only", is_flag=True, default=False,
               help="VIEW: write nothing; exit 1 when a projection differs from a fresh render.")
-def docs_generate(view, output_dir, no_commit, check_only):
+@click.option("--discard-edits", is_flag=True, default=False,
+              help="VIEW: render over a projection whose blocks were edited by hand, dropping the edit "
+                   "(AD-013-R2; without it such a file is refused and nothing is written).")
+def docs_generate(view, output_dir, no_commit, check_only, discard_edits):
     """Generate documentation from the graph.
 
     With no VIEW: the reference files (scripts, data, results, experiments, reproduction) into --output-dir.
@@ -428,20 +437,24 @@ def docs_generate(view, output_dir, no_commit, check_only):
         finally:
             driver.close()
         for r in rendered:
-            state = "differs" if r.changed else "current"
+            state = ("edited by hand" if RQ.hand_edited(r.current) else "differs") if r.changed else "current"
             click.echo(f"  {r.path}: graph revision {r.revision} ({state})"
                        + (f"; {len(r.unplaced)} requirement(s) appended in new blocks" if r.unplaced else ""))
         if check_only:
             if any(r.changed for r in rendered):
                 raise SystemExit(1)
             return
-        out = RQ.write_and_commit(project_dir, rendered, commit=not no_commit)
+        try:
+            out = RQ.write_and_commit(project_dir, rendered, commit=not no_commit, discard_edits=discard_edits)
+        except RQ.EditedBlocks as exc:
+            click.echo(f"REFUSED: {exc}", err=True)
+            raise SystemExit(1)
         if out.get("committed"):
             click.echo(f"committed {out['commit']}: {', '.join(out['written'])}")
         elif out["written"]:
             click.echo(f"wrote {', '.join(out['written'])}; not committed ({out.get('reason')}"
                        + (f": {out.get('stderr')}" if out.get("stderr") else "") + ")")
-            if out.get("reason") not in ("no_commit",):
+            if out.get("reason") not in ("no_commit", "nothing_to_commit"):
                 raise SystemExit(1)
         else:
             click.echo("every projection is current; nothing written")
