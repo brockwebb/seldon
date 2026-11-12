@@ -1,0 +1,4 @@
+FAILED tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
+FAILED tests/test_friction002_auto_mode.py::test_a_classifier_breaker_becomes_a_line_stop_with_the_classifiers_reason
+2 failed, 3386 passed, 11 skipped in 4316.09s (1:11:56)
+EXIT=1
