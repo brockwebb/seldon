@@ -452,8 +452,12 @@ def append_only_paths(repo: Path, config: dict) -> list[str]:
 
     The event store (`event_store.path`); the governed ledger where the governed graph directory exists; the
     prior-art query log where a `prior_art:` block is configured (its own or the one its `ref` names, AD-036-R10:
-    the log is the calling project's). A path git ignores is left out: an untracked file is never merged. A path
-    outside the repository is left out: no attribute here can govern it.
+    the log is the calling project's); and the prior-art verdict ledger (AD-036-R23, SEL-038), which every writer
+    appends to as the query log is written. The verdict ledger is the governed ledger when the project keeps a
+    governed graph (`prior_art.verdict_ledger`), already listed; otherwise it is `gate.verdict_ledger_without_governed`,
+    resolved against the project as the log is. A block without that key has no verdict ledger to declare:
+    `prior_art.settings` refuses such a block, so no verdict can be written to one. A path git ignores is left out:
+    an untracked file is never merged. A path outside the repository is left out: no attribute here can govern it.
 
     Raises:
         HookError: the `prior_art:` block cannot be resolved, or names no `log`. A list that silently omitted the
@@ -475,6 +479,11 @@ def append_only_paths(repo: Path, config: dict) -> list[str]:
         if not block.get("log"):
             raise HookError("the prior_art block names no `log`; its query log cannot be declared merge=union")
         paths.append(Path(os.path.expanduser(str(block["log"]))))
+        # AD-036-R23: hazbrief HB-166 conflicted twice in `state/prior_art_verdicts.jsonl` on a rebase where main and
+        # the branch had each appended one verdict; the query log beside it merged by union and this did not.
+        verdicts = (block.get("gate") or {}).get("verdict_ledger_without_governed")
+        if prior_art.governed_ledger(repo, config) is None and verdicts:
+            paths.append(Path(os.path.expanduser(str(verdicts))))
     out = []
     for p in paths:
         p = Path(p)
