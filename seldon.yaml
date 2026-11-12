@@ -247,6 +247,13 @@ dispatch:
   # installed by symlink). `seldon go` reports `dispatch: on` only while it is loaded.
   launchd_label: com.brock.seldon-dispatch
   cadence: []
+  # `worktree_links` is left at its default (`.env`) ON PURPOSE (SEL-037 Part A). graphs/seldon-biblio's release cannot
+  # be carried out of a worktree build by links: exports/ holds tracked reports, so a checkout creates it and
+  # `worktree.link` skips it; the served FILE can be linked (hazbrief HB-73's form), but the versioned export a
+  # library receipt names gets a new name each release and would stay in the worktree, leaving the primary serving a
+  # release whose receipts fail `release_unavailable`. tests/test_sel037_worktree_links_exports.py pins both. The gate
+  # reads the primary's graph from any worktree anyway (`prior_art.corpus_anchor`); a release built in a worktree is
+  # installed by copying its gitignored outputs into the primary (SEL-037 RESULT, Part A).
   # AD-038-R16, R17 (SEL-014R): the OODA between chained tasks is a knowledge source each pass launches on a completed
   # task with an open successor; c18 holds the successor only while that OODA is due or blocked.
   # `ooda_grace_s` is the OODA session's wall-clock timeout (R17), not a gate. The SEL-014R model replay's longest run
