@@ -1,0 +1,27 @@
+{
+  "stage": 16,
+  "sub": null,
+  "label": "16",
+  "name": "host-posture",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.posture",
+    "table",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--version",
+    "20261111_sel037"
+  ],
+  "wall_seconds": 0.37,
+  "finished_utc": "2026-11-12T04:33:33.894343+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[host-posture] wrote /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/host_posture_20261111_sel037.md and /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/host_posture_20261111_sel037.json"
+  ],
+  "first_line": "[host-posture] wrote /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/host_posture_20261111_sel037.md and /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/host_posture_20261111_sel037.json"
+}

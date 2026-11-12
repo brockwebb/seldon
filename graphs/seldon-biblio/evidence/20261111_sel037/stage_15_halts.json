@@ -1,0 +1,29 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "halts",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.gates",
+    "halts",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--mutate",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/20261111_sel037/halts_20261111_sel037.json"
+  ],
+  "wall_seconds": 0.82,
+  "finished_utc": "2026-11-12T04:28:00.335383+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[halts] 148 in-graph entr(y|ies), 0 with an acquire halt: CLEAN",
+    "[halts] positive control: FIRED"
+  ],
+  "first_line": "[halts] 148 in-graph entr(y|ies), 0 with an acquire halt: CLEAN"
+}

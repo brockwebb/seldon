@@ -1,0 +1,35 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "text_held",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.conformance",
+    "run",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+    "--scope",
+    "graph",
+    "--gate",
+    "text_held",
+    "--controls",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/20261111_sel037/text_held_20261111_sel037.json"
+  ],
+  "wall_seconds": 0.62,
+  "finished_utc": "2026-11-12T04:28:00.955981+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[N/A    ] 32 text_held  (the graph declares no `engine.acquire.text_routes` (ACQ-001), so no admit recorded a text expectation (DN-032 R-147); admitted 148, text held 0, not held 148: nothing checked is not a pass)",
+    "[control caught ] 32 text_held"
+  ],
+  "first_line": "[N/A    ] 32 text_held  (the graph declares no `engine.acquire.text_routes` (ACQ-001), so no admit recorded a text expectation (DN-032 R-147); admitted 148, text held 0, not held 148: nothing checked is not a pass)"
+}

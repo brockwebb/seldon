@@ -1,0 +1,37 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "anchors-by-id",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.conformance",
+    "run",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+    "--scope",
+    "graph",
+    "--gate",
+    "scope_anchors_covered",
+    "--anchors",
+    "identifier",
+    "--controls",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/20261111_sel037/anchors_by_id_20261111_sel037.json"
+  ],
+  "wall_seconds": 0.33,
+  "finished_utc": "2026-11-12T04:28:01.289477+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[N/A    ] 29 scope_anchors_covered  (the graph's scope names no anchors (DN-028 R-129: they are optional); nothing to check, and nothing checked is not a pass)",
+    "[control caught ] 29 scope_anchors_covered"
+  ],
+  "first_line": "[N/A    ] 29 scope_anchors_covered  (the graph's scope names no anchors (DN-028 R-129: they are optional); nothing to check, and nothing checked is not a pass)"
+}

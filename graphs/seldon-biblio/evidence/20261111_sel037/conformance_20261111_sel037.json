@@ -1,0 +1,225 @@
+{
+  "graph": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+  "kit_config": "squiddy/conformance.yaml",
+  "anchor_mode": "all",
+  "export": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+  "export_sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+  "gates": [
+    {
+      "gate": "resolution_fields_projected",
+      "item": 1,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "Q-003 ADDENDUM 03 and Q-003 report 0b.1, 2026-09-24 (resolved_title never projected); DI-202, DI-210",
+      "lesson": "2026-09-24_resolution_fields_never_projected.md"
+    },
+    {
+      "gate": "pair_edges_complete",
+      "item": 2,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "Q-001 section 0 item 1, 2026-09-23 (CitedIn out-degree 1 for all 1,364 sources); DN-016 R-70; DI-197",
+      "lesson": "2026-09-23_one_per_pair_edge_held_one_pair.md"
+    },
+    {
+      "gate": "records_ingested",
+      "item": 3,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "Q-001 section 0, 2026-09-23 (525 records on disk, 2 of 849 texts served); DN-016 R-72; DI-199",
+      "lesson": "2026-09-23_records_on_disk_not_in_the_ledger.md"
+    },
+    {
+      "gate": "control_mode_matches_use",
+      "item": 5,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "Q-003 report 0b.5 and 0b.7, 2026-09-24 (demand procedure controlled on plan questions); DI-210",
+      "lesson": "2026-09-24_control_in_the_wrong_mode.md"
+    },
+    {
+      "gate": "bars_powered",
+      "item": 6,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "DN-014 R-63, 2026-09-22 (a bar that cannot reach the null is a report line); DI-034, DI-210",
+      "lesson": "2026-09-22_bar_without_its_power.md"
+    },
+    {
+      "gate": "agreement_not_kappa_headline",
+      "item": 7,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "DN-012 R-52, 2026-09-21 (kappa is not the headline where prevalence is under 0.10 or over 0.90; H-011 kappa 0.009 beside PA 0.51, NA 0.03, AC1 -0.18); DI-210",
+      "lesson": "2026-09-21_kappa_headline_at_extreme_prevalence.md"
+    },
+    {
+      "gate": "failed_raters_voided",
+      "item": 9,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "H-011 report section 1, 2026-09-22 (haiku caught 1 of 30 plants; two-rater aggregates void); DN-013 R-55; DI-100, DI-210",
+      "lesson": "2026-09-22_rater_that_failed_its_plants.md"
+    },
+    {
+      "gate": "control_read_times",
+      "item": 14,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "E-002, 2026-09-25 (control.yaml promised 'edits take effect at the next paper'; papers_in_flight sized the pool once); DN-019 R-86, R-87; DI-206, DI-210",
+      "lesson": "2026-09-25_control_key_read_once_documented_as_live.md"
+    },
+    {
+      "gate": "identifier_keys_well_formed",
+      "item": 16,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "L-001 Part B, 2026-09-26 (unresolved Works keyed by malformed DOIs, e.g. 10.1002/aaai.70002[21, served after the DI-171 fix); DN-020 R-90; DI-171, DI-046; extended by M-002 D.2 (DN-030 R-140, DI-245) to identifier VALUES a property rule names, after M-001's currency sweep found 64 Expression DOIs not current, most of them malformed",
+      "lesson": "2026-09-26_malformed_identifier_served_as_a_key.md"
+    },
+    {
+      "gate": "verb_reads_match_schema",
+      "item": 19,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "Q-004 report and DN-024 section 1, 2026-09-29 (Verbs.discover read Concept-[Mentions]->Claim; the write path records Claim-[MentionsConcept]->Concept; the release held 0 of the edge read and 29 of 29 calls returned 0 claims); DN-024 R-108; DI-231",
+      "lesson": "2026-09-29_a_verb_that_read_an_edge_nobody_writes.md"
+    },
+    {
+      "gate": "census_classes_have_a_producer",
+      "item": 30,
+      "level": "error",
+      "status": "n/a",
+      "why": "the graph declares no `produced_by:` map (DN-030 R-138); the 7 classes it serves (AuthoredBy, Decision, Person, Software, Standard, SupportsDecision, Work) are not traced to a node, and nothing checked is not a pass",
+      "findings": [],
+      "source": "M-001 Part A finding 4, 2026-09-30 (four served layers of library with no factory node: the HV-003/HV-004 merges, HV-005's texts, L-001's layer for a maintenance-admitted Work, HV-006's concepts); DN-030 R-138; DI-243",
+      "lesson": "2026-09-30_every_served_layer_has_a_node.md"
+    },
+    {
+      "gate": "licence_distributable",
+      "item": 33,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "DN-034 R-157 to R-159 (2026-10-01, the operator's rule: anything that goes out carries visible, correct licences and nothing is distributed against a licence's terms); SEED-001 finding 5, 2026-10-01 (the publish valve did not read a held text's licence, so five `private_copy` shelf files had no refusal between them and a publish)",
+      "lesson": "2026-10-02_licence_recorded_always_enforced_at_distribution.md"
+    },
+    {
+      "gate": "retired_labels",
+      "item": 38,
+      "level": "error",
+      "status": "pass",
+      "findings": [],
+      "source": "DN-045 section 1 and R-200, 2026-10-12: R-190 wrote `confabulated_or_truncated` on 28 library entries, including real identifiers no agency serves as a work and a registered CORDIS record; squiddy issue 2a91cd46",
+      "lesson": "2026-10-12_a_decline_states_only_what_was_measured.md"
+    }
+  ],
+  "controls": [
+    {
+      "gate": "resolution_fields_projected",
+      "item": 1,
+      "control": "n/a",
+      "why": "no resolution record for an in-graph entry to plant into"
+    },
+    {
+      "gate": "pair_edges_complete",
+      "item": 2,
+      "control": "n/a",
+      "why": "pair_edges: declared empty"
+    },
+    {
+      "gate": "records_ingested",
+      "item": 3,
+      "control": "n/a",
+      "why": "records_ingested: not_applicable (no extraction daemon in this graph yet)"
+    },
+    {
+      "gate": "control_mode_matches_use",
+      "item": 5,
+      "control": "caught",
+      "planted_findings": [
+        "evidence/PLANTED-CONTROL/control.json: the control exercised arm_t.demand in mode 'plan'; the mechanism is used in mode 'demand'"
+      ]
+    },
+    {
+      "gate": "bars_powered",
+      "item": 6,
+      "control": "n/a",
+      "why": "bars: not_applicable (no extraction daemon control file yet)"
+    },
+    {
+      "gate": "agreement_not_kappa_headline",
+      "item": 7,
+      "control": "caught",
+      "planted_findings": [
+        "evidence/PLANTED/scores.json#/agreement: reports kappa without positive_agreement, negative_agreement, ac1 (R-52)"
+      ]
+    },
+    {
+      "gate": "failed_raters_voided",
+      "item": 9,
+      "control": "caught",
+      "planted_findings": [
+        "evidence/PLANTED: rater 'planted_rater' caught 1/30 plants (floor 0.9) and is not recorded as removed in VOID.json",
+        "evidence/PLANTED/controls.json: verdict.agreement uses failed rater(s) ['planted_rater'] and is not voided"
+      ]
+    },
+    {
+      "gate": "control_read_times",
+      "item": 14,
+      "control": "n/a",
+      "why": "control_read_times: not_applicable (no extraction daemon control file yet)"
+    },
+    {
+      "gate": "identifier_keys_well_formed",
+      "item": 16,
+      "control": "caught",
+      "planted_findings": [
+        "PlantedClass 'doi:10.1002/aaai.70002[21': doi: suffix character(s) '[' outside Crossref's class (class not declared in identifier_keys)"
+      ]
+    },
+    {
+      "gate": "verb_reads_match_schema",
+      "item": 19,
+      "control": "caught",
+      "planted_findings": [
+        "x001_planted_verb:AuthoredBy:out reads AuthoredBy out from ['Person']; the schema declares (Work)-[:AUTHORED_BY]->(Person), so that read is not declared",
+        "x001_planted_verb:AuthoredBy:out reads AuthoredBy out from Person; the release holds 0 such edges of its 333 AuthoredBy edges: the read is misdirected against the data"
+      ]
+    },
+    {
+      "gate": "census_classes_have_a_producer",
+      "item": 30,
+      "control": "caught",
+      "planted_findings": [
+        "x001-planted-orphan: 1 served and no producing node in `produced_by` (an orphan layer: a rebuild cannot produce it)"
+      ]
+    },
+    {
+      "gate": "licence_distributable",
+      "item": 33,
+      "control": "caught",
+      "planted_findings": [
+        "x001-planted-unlicensed-text: its held text texts/local/x001_planted.pdf records licence 'unstated', which the graph's allowlist (none declared) does not cover and which is not an arXiv copy; a public graph does not distribute it (DN-034 R-158). Remove the text or record its licence"
+      ]
+    },
+    {
+      "gate": "retired_labels",
+      "item": 38,
+      "control": "caught",
+      "planted_findings": [
+        "x013_planted_retired_label: identifier_label 'confabulated_or_truncated' is retired (DN-045 R-200); re-answer it by the rule (`squiddy manifest answer-halts --reanswer`)"
+      ]
+    }
+  ]
+}

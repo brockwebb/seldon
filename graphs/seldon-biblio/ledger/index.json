@@ -26,6 +26,17 @@
    "last_event_id": "fcc9415aaf874b9b8e09f093fc40653d",
    "sealed_at": "2026-11-10T01:25:35.590779+00:00",
    "schema_epoch_at_seal": "0.1.0+de21b9c7ec65"
+  },
+  {
+   "segment": "20261111_sel037.jsonl",
+   "release_id": "20261111_sel037",
+   "sha256": "2852d700a415a4f4e34cf0cbd5bf0973092ddc29bcf9d91a0be0513eb1c54795",
+   "bytes": 133630,
+   "events": 112,
+   "first_event_id": "51958dda26ab4198ba0ab5cf916e1565",
+   "last_event_id": "1f4502be0aa34c32943a312476eeafe0",
+   "sealed_at": "2026-11-12T04:33:34.364542+00:00",
+   "schema_epoch_at_seal": "0.1.0+de21b9c7ec65"
   }
  ]
 }

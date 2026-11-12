@@ -1,0 +1,19 @@
+{
+  "control": {
+    "findings": [
+      "count: the release has 35781 units and the index 35780 rows",
+      "missing: 1 unit(s) of the release are not in the index: ['doc_omg_sysml_v2_1#b7224:1069499-1069532']",
+      "fingerprint: release 2275e06db2108b63 != index 9aeb9948577658d9"
+    ],
+    "fired": true,
+    "planted": "row doc_omg_sysml_v2_1#b7224:1069499-1069532 removed from the index"
+  },
+  "db_sha256": "9cd8bc5693b98dac29c9bfcf84047c575450819343bdec9996d7e88b59ec392d",
+  "expected_units": 35781,
+  "findings": [],
+  "index_manifest": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/work/index/index_manifest.json",
+  "index_rows": 35781,
+  "pass": true,
+  "row_fingerprint": "2275e06db2108b634a1843a640eda305f09f032aeef54ab16bd2e8e7d8811621",
+  "vectors": 35781
+}

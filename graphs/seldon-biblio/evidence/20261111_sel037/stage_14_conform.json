@@ -1,0 +1,31 @@
+{
+  "stage": 14,
+  "sub": null,
+  "label": "14",
+  "name": "conform",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.gates",
+    "schema",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--export",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/20261111_sel037/schema_gate_20261111_sel037.json"
+  ],
+  "wall_seconds": 0.85,
+  "finished_utc": "2026-11-12T04:27:56.819207+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "[schema] validated 490 nodes and 498 links against seldon_biblio.schema.json: 0 distinct failure row(s)",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"",
+    "  class Decision(Node):"
+  ],
+  "first_line": "[schema] validated 490 nodes and 498 links against seldon_biblio.schema.json: 0 distinct failure row(s)"
+}

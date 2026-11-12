@@ -1,0 +1,29 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "index-parity",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.index",
+    "parity",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--mutate",
+    "--json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/20261111_sel037/index_parity_20261111_sel037.json"
+  ],
+  "wall_seconds": 1.2,
+  "finished_utc": "2026-11-12T04:33:24.994167+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "index parity control: planted row doc_omg_sysml_v2_1#b7224:1069499-1069532 removed from the index; fired True",
+    "index parity PASS: 35781 release units, 35781 index rows, 35781 vectors"
+  ],
+  "first_line": "index parity control: planted row doc_omg_sysml_v2_1#b7224:1069499-1069532 removed from the index; fired True"
+}

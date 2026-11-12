@@ -1,0 +1,20 @@
+{
+ "work": {
+  "admitted": 51,
+  "appended": 93,
+  "dropped": 118,
+  "run_id": "read_20261112T025638_8c22e9c1,read_20261112T025638_3f7a7856",
+  "by_type": {
+   "SupportsDecision": 42,
+   "Work": 51
+  },
+  "drops": {
+   "AuthoredBy: edge unchanged since the last ingest": 27,
+   "Decision: already in the ledger (shared class, matched not re-minted)": 42,
+   "Decision: duplicate within the slice": 3,
+   "Decision: unchanged since the last ingest": 8,
+   "Person: unchanged since the last ingest": 27,
+   "SupportsDecision: edge unchanged since the last ingest": 11
+  }
+ }
+}

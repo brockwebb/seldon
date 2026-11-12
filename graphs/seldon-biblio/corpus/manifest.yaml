@@ -505,14 +505,7 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: gotel1994traceability
-    manual_acquisition: false
-    posture_observed_at: "2026-11-09T23:26:25.253344+00:00"
-    posture_host: "discovery.ucl.ac.uk"
-    posture_evidence: "not requested: https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf; robots.txt ProxyError: HTTPSConnectionPool(host='discovery.ucl.ac.uk', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4)"
-    posture: "unreachable"
-    metadata_only_detail: "https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf: robots.txt ProxyError: HTTPSConnectionPool(host='discovery.ucl.ac.uk', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4)"
-    metadata_only_reason: "oa_text_not_retrievable"
-    verification_method: "squiddy.acquire crossref+openalex 2026-11-09; title gate 1.00"
+    verification_method: "squiddy.acquire crossref+openalex 2026-11-11; title gate 1.00"
     abstract: "Investigates and discusses the underlying nature of the requirements traceability problem. Our work is based on empirical studies, involving over 100 practitioners, and an evaluation of current support. We introduce the distinction between pre-requirements specification (pre-RS) traceability and post-requirements specification (post-RS) traceability to demonstrate why an all-encompassing solution to the problem is unlikely, and to provide a framework through which to understand its multifaceted nature. We report how the majority of the problems attributed to poor requirements traceability are due to inadequate pre-RS traceability and show the fundamental need for improvements. We present an analysis of the main barriers confronting such improvements in practice, identify relevant areas in which advances have been (or can be) made, and make recommendations for research.>"
     publication_date: "2002-12-17"
     best_oa_landing: "http://discovery.ucl.ac.uk/749/"
@@ -522,11 +515,31 @@ documents:
     oa_status: "green"
     openalex_id: "https://openalex.org/W2129559874"
     title_authority: "An analysis of the requirements traceability problem"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-013; AD-030. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "99e7870b92d6a0ce04348f699002d706c695080c1316d0d1969b8b26f475f952"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event 51958dda26ab4198ba0ab5cf916e1565 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.668501+00:00"
+    revision: 2
+    inbox_stated_by: "UCL Discovery repository record (OpenAlex OA location); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "author's deposit in UCL Discovery; no licence stated on the copy"
+    inbox_obtained_from: "https://discovery.ucl.ac.uk/id/eprint/749/1/2.2_rtprob.pdf"
+    inbox_source_url: "https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf"
+    text_chars: 55445
+    text_pages: 8
+    access_posture: "open"
+    direct_download_url: "https://discovery.ucl.ac.uk/id/eprint/749/1/2.2_rtprob.pdf"
+    retrieved_at: "2026-11-12T02:49:32Z"
+    bytes: 77573
+    raw_sha256: "b0ed5a52f3f97e25b645ad63790f7c1ce2c1cabce9df876903516de3869c0919"
+    raw_path: "archive:docs/raw/gotel1994traceability__fbe3e0d57f.pdf"
+    sha256: "b0ed5a52f3f97e25b645ad63790f7c1ce2c1cabce9df876903516de3869c0919"
+    local_path: "archive:docs/raw/gotel1994traceability__fbe3e0d57f.pdf"
+    manual_acquisition: false
+    posture_observed_at: "2026-11-12T02:49:32Z"
+    posture_host: "discovery.ucl.ac.uk"
+    posture: "open"
+    content_key: "b9a1801d40eb137b77afeb3216beff229ec7997c7102ea8064890c365cadb1dd"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: An analysis of the requirements traceability problem
     entry_kind: work
     title_cited: An analysis of the requirements traceability problem
@@ -542,7 +555,7 @@ documents:
     publisher: IEEE Comput. Soc. Press
     doi: 10.1109/icre.1994.292398
     source_url: https://doi.org/10.1109/icre.1994.292398
-    access: restricted_or_unknown
+    access: "open"
     resolved_by: crossref
     resolution:
     - authority: openalex
@@ -574,9 +587,9 @@ documents:
         title: An analysis of the requirements traceability problem
         venue: Proceedings of IEEE International Conference on Requirements Engineering
     acquisition: auto
-    acquisition_status: "not_acquired"
+    acquisition_status: "acquired"
     verification_status: "resolved"
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: clelandhuang2012traceability
     manual_acquisition: true
@@ -999,14 +1012,7 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: browning2014doorstop
-    manual_acquisition: false
-    posture_observed_at: "2026-11-09T23:27:08.774392+00:00"
-    posture_host: "content.scirp.org"
-    posture_evidence: "not requested: https://content.scirp.org/pdf/jsea_2014032713545074.pdf; robots.txt ProxyError: HTTPSConnectionPool(host='content.scirp.org', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4)"
-    posture: "unreachable"
-    metadata_only_detail: "https://content.scirp.org/pdf/jsea_2014032713545074.pdf: robots.txt ProxyError: HTTPSConnectionPool(host='content.scirp.org', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4)"
-    metadata_only_reason: "oa_text_not_retrievable"
-    verification_method: "squiddy.acquire crossref+openalex 2026-11-09; title gate 1.00"
+    verification_method: "squiddy.acquire crossref+openalex 2026-11-11; title gate 1.00"
     abstract: "Effectively managing the requirements and traceability in a complex software project can be a challenging task. Many tools exist to support the initial creation and management of changes to text-based requirements. The most popular commercial solutions use a centralized server to host a database with a front-end desktop or web interface. Some downsides to this approach include user interface bloat, server costs, and an inherent disconnection from the project’s source files. To provide an alternative to traditional requirements management, Doorstop was created as a tool to allow requirements to be stored as text files in version control. This solution allows a project to utilize its existing development tools to manage versions of the requirements using a lightweight, developer-friendly interface."
     publication_date: "2014-01-01"
     best_oa_landing: "https://doi.org/10.4236/jsea.2014.73020"
@@ -1014,11 +1020,32 @@ documents:
     open_access: true
     oa_status: "hybrid"
     title_authority: "Doorstop: Text-Based Requirements  Management Using Version Control"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "1de74627b519d7bd6366f4fdba3dbc39f67560b0a2ab4830f224365868d2dade"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event 9996c920bf2649f985a93f97785e4d82 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.671586+00:00"
+    revision: 2
+    licence_found: ["CC BY 4.0"]
+    inbox_stated_by: "SCIRP Journal of Software Engineering and Applications, open access; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: CC BY 4.0"
+    inbox_licence: "CC BY 4.0"
+    inbox_obtained_from: "https://content.scirp.org/pdf/jsea_2014032713545074.pdf"
+    inbox_source_url: "https://content.scirp.org/pdf/jsea_2014032713545074.pdf"
+    text_chars: 21730
+    text_pages: 8
+    access_posture: "open"
+    direct_download_url: "https://content.scirp.org/pdf/jsea_2014032713545074.pdf"
+    retrieved_at: "2026-11-12T02:49:34Z"
+    bytes: 771991
+    raw_sha256: "922cf2b57310ba76a3c9386ab4c29adf4bc723a54071b703810556f282122666"
+    raw_path: "archive:docs/raw/browning2014doorstop__fa4f126433.pdf"
+    sha256: "922cf2b57310ba76a3c9386ab4c29adf4bc723a54071b703810556f282122666"
+    local_path: "archive:docs/raw/browning2014doorstop__fa4f126433.pdf"
+    manual_acquisition: false
+    posture_observed_at: "2026-11-12T02:49:34Z"
+    posture_host: "content.scirp.org"
+    posture: "open"
+    content_key: "52a7c2b0deadd0da4040e8ac6dabac0511fa69453d5250756def81a9f8969c1d"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: 'Doorstop: Text-Based Requirements Management Using Version Control'
     entry_kind: work
     title_cited: 'Doorstop: Text-Based Requirements Management Using Version Control'
@@ -1056,9 +1083,9 @@ documents:
         venue: Journal of Software Engineering and Applications
         year: 2014
     acquisition: auto
-    acquisition_status: "not_acquired"
+    acquisition_status: "acquired"
     verification_status: "resolved"
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: sw_openfasttrace
     metadata_only_reason: "software_not_a_document"
@@ -2875,14 +2902,7 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: fuchss2025lissa
-    manual_acquisition: false
-    posture_observed_at: "2026-11-09T23:29:32.121554+00:00"
-    posture_host: "publikationen.bibliothek.kit.edu"
-    posture_evidence: "not requested: https://publikationen.bibliothek.kit.edu/1000178348/156555617; robots.txt ProxyError: HTTPSConnectionPool(host='publikationen.bibliothek.kit.edu', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4)"
-    posture: "unreachable"
-    metadata_only_detail: "https://publikationen.bibliothek.kit.edu/1000178348/156555617: robots.txt ProxyError: HTTPSConnectionPool(host='publikationen.bibliothek.kit.edu', port=443): Max retries exceeded with url: /robots.txt (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))) -> unreachable (RFC 9309 2.3.1.4); https://publikationen.bibliothek.kit.edu/1000179816/1645630"
-    metadata_only_reason: "oa_text_not_retrievable"
-    verification_method: "squiddy.acquire crossref+openalex 2026-11-09; title gate 1.00"
+    verification_method: "squiddy.acquire crossref+openalex 2026-11-11; title gate 1.00"
     abstract: "There are a multitude of software artifacts which need to be handled during the development and maintenance of a software system. These artifacts interrelate in multiple, complex ways. Therefore, many software engineering tasks are enabled - and even empowered - by a clear understanding of artifact interrelationships and also by the continued advancement of techniques for automated artifact linking. However, current approaches in automatic Traceability Link Recovery (TLR) target mostly the links between specific sets of artifacts, such as those between requirements and code. Fortu-nately, recent advancements in Large Language Models (LLMs) can enable TLR approaches to achieve broad applicability. Still, it is a nontrivial problem how to provide the LLMs with the specific information needed to perform TLR. In this paper, we present LiSSA, a framework that har-nesses LLM performance and enhances them through Retrieval-Augmented Generation (RAG). We empirically evaluate LiSSA on three different TLR tasks, requirements to code, documentation to code, and architecture documentation to architecture models, and we compare our approach to state-of-the-art approaches. Our results show that the RAG-based approach can signifi-cantly outperform the state-of-the-art on the code-related tasks. However, further research is required to improve the performance of RAG-based approaches to be applicable in practice."
     publication_date: "2025-04-26"
     best_oa_landing: "https://publikationen.bibliothek.kit.edu/1000178348"
@@ -2890,11 +2910,31 @@ documents:
     open_access: true
     oa_status: "green"
     title_authority: "LiSSA: Toward Generic Traceability Link Recovery Through Retrieval-Augmented Generation"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-033. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "eb86b6058a2144e75c6d448d3acb44e230a10e34eee81efe5105f691d1015509"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event 7a373cd730e0484480d113a0af630c50 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.673891+00:00"
+    revision: 2
+    inbox_stated_by: "KITopen repository record (OpenAlex OA location); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "KITopen open-access deposit"
+    inbox_obtained_from: "https://publikationen.bibliothek.kit.edu/1000178348/156555617"
+    inbox_source_url: "https://publikationen.bibliothek.kit.edu/1000178348/156555617"
+    text_chars: 80005
+    text_pages: 13
+    access_posture: "open"
+    direct_download_url: "https://publikationen.bibliothek.kit.edu/1000178348/156555617"
+    retrieved_at: "2026-11-12T02:49:38Z"
+    bytes: 230845
+    raw_sha256: "4456441f8b09a808d19fe7fb40ce8e30a14c30f6d76368a3d176314355a498db"
+    raw_path: "archive:docs/raw/fuchss2025lissa__f0d0ddbbe6.pdf"
+    sha256: "4456441f8b09a808d19fe7fb40ce8e30a14c30f6d76368a3d176314355a498db"
+    local_path: "archive:docs/raw/fuchss2025lissa__f0d0ddbbe6.pdf"
+    manual_acquisition: false
+    posture_observed_at: "2026-11-12T02:49:38Z"
+    posture_host: "publikationen.bibliothek.kit.edu"
+    posture: "open"
+    content_key: "58d36950b6776d8a98293f42b21417fe4cd661dc8c227551577337f8be595bc3"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: 'LiSSA: Toward Generic Traceability Link Recovery Through Retrieval-Augmented Generation'
     entry_kind: work
     title_cited: 'LiSSA: Toward Generic Traceability Link Recovery through Retrieval-Augmented Generation'
@@ -2936,9 +2976,9 @@ documents:
         venue: 'ACM/IEEE International Conference on Software Engineering: Companion Proceedings (ICSE-Companion)'
         year: 2025
     acquisition: auto
-    acquisition_status: "not_acquired"
+    acquisition_status: "acquired"
     verification_status: "resolved"
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: li2024selfroute
     last_modified: "Fri, 18 Oct 2024 01:25:44 GMT"
@@ -3305,11 +3345,28 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: krakovna2020specgaming
-    metadata_only_detail: "acquire found: no_open_access_text"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event b0c07caa37f647f2ba7ab03dc30c9317 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.676013+00:00"
+    revision: 2
+    content_key: "d9a382414649523307309d69f4cbd55a810c1d9eb1a2553bed1d27a924e27bdf"
+    text_sha256: "4478012827b70bc0bacc5b51c8ff327b7abea21f03d5e8f8ee180b1a8b2b9d17"
+    inbox_stated_by: "deepmind.google; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "publisher's free web page; all rights reserved"
+    inbox_obtained_from: "https://deepmind.google/blog/specification-gaming-the-flip-side-of-ai-ingenuity/"
+    inbox_source_url: "https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/"
+    text_chars: 11343
+    text_pages: 1
+    direct_download_url: "https://deepmind.google/blog/specification-gaming-the-flip-side-of-ai-ingenuity/"
+    retrieved_at: "2026-11-12T02:49:49Z"
+    bytes: 11348
+    raw_sha256: "8d3f5614be190db73375d1b2ab83c35a841cb1e55d11b704d25a26df3709cc6e"
+    raw_path: "archive:docs/raw/krakovna2020specgaming__c6b3c3f066.html"
+    sha256: "4478012827b70bc0bacc5b51c8ff327b7abea21f03d5e8f8ee180b1a8b2b9d17"
+    local_path: "archive:docs/text/krakovna2020specgaming__c6b3c3f066.txt"
+    posture: "open"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: 'Specification gaming: the flip side of AI ingenuity'
     entry_kind: grey
     title_cited: 'Specification gaming: the flip side of AI ingenuity'
@@ -3322,7 +3379,7 @@ documents:
     year: 2020
     publisher: DeepMind
     source_url: https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/
-    access: restricted_or_unknown
+    access: "open"
     resolution:
     - authority: openalex
       confirmed: false
@@ -3380,17 +3437,14 @@ documents:
         error: off_allowlist:deepmind.google
         at: '2026-11-09T23:18:05Z'
       answer: null
-    access_posture: off_allowlist
+    access_posture: "open"
     posture_host: deepmind.google
-    posture_observed_at: '2026-11-09T23:18:05Z'
-    posture_evidence: 'HTTP None off_allowlist:deepmind.google first bytes: '''''
-    metadata_only_reason: "publisher_page_not_reachable_by_script"
-    manual_acquisition: true
-    manual_reason: no index holds it, and its publisher's page (deepmind.google) is off_allowlist
-    acquisition: pending_manual
-    acquisition_status: "not_acquired"
+    posture_observed_at: "2026-11-12T02:49:49Z"
+    manual_acquisition: false
+    acquisition: "auto"
+    acquisition_status: "acquired"
     verification_status: declared
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: lehman2020creativity
     last_modified: "Sun, 22 Jan 2023 20:47:42 GMT"
@@ -4402,11 +4456,27 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: nasa_oig_ig_12_012
-    metadata_only_detail: "acquire found: no_open_access_text"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event c7ccbd40471046139981be374c1465e7 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.678066+00:00"
+    revision: 2
+    content_key: "1e79dce60d502367f084cfc48ea030e97c26d78c271c0938bcb6e167926efd4c"
+    inbox_stated_by: "a NASA OIG report; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "US Government work, not subject to copyright (17 U.S.C. 105)"
+    inbox_obtained_from: "https://oig.nasa.gov/wp-content/uploads/2024/02/IG-12-012.pdf"
+    inbox_source_url: "https://oig.nasa.gov/docs/IG-12-012.pdf"
+    text_chars: 67518
+    text_pages: 42
+    direct_download_url: "https://oig.nasa.gov/wp-content/uploads/2024/02/IG-12-012.pdf"
+    retrieved_at: "2026-11-12T02:49:54Z"
+    bytes: 639618
+    raw_sha256: "cde9af9c166990c035e28e918e7f892e6fb7204fec45938a739e401d43e8cc13"
+    raw_path: "archive:docs/raw/nasa_oig_ig_12_012__5c598b5d56.pdf"
+    sha256: "cde9af9c166990c035e28e918e7f892e6fb7204fec45938a739e401d43e8cc13"
+    local_path: "archive:docs/raw/nasa_oig_ig_12_012__5c598b5d56.pdf"
+    posture: "open"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: NASA's Management of the Lessons Learned Information System (IG-12-012)
     entry_kind: grey
     title_cited: NASA's Management of the Lessons Learned Information System (IG-12-012)
@@ -4419,7 +4489,7 @@ documents:
     year: 2012
     standard_number: IG-12-012
     source_url: https://oig.nasa.gov/docs/IG-12-012.pdf
-    access: restricted_or_unknown
+    access: "open"
     resolution:
     - authority: openalex
       confirmed: false
@@ -4475,24 +4545,38 @@ documents:
         error: off_allowlist:oig.nasa.gov
         at: '2026-11-09T23:19:12Z'
       answer: null
-    access_posture: off_allowlist
+    access_posture: "open"
     posture_host: oig.nasa.gov
-    posture_observed_at: '2026-11-09T23:19:12Z'
-    posture_evidence: 'HTTP None off_allowlist:oig.nasa.gov first bytes: '''''
-    metadata_only_reason: "publisher_page_not_reachable_by_script"
-    manual_acquisition: true
-    manual_reason: no index holds it, and its publisher's page (oig.nasa.gov) is off_allowlist
-    acquisition: pending_manual
-    acquisition_status: "not_acquired"
+    posture_observed_at: "2026-11-12T02:49:54Z"
+    manual_acquisition: false
+    acquisition: "auto"
+    acquisition_status: "acquired"
     verification_status: declared
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: nygard2011adr
-    metadata_only_detail: "acquire found: no_open_access_text"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event 9b17263cc0094bf880ad4b90be2f448a holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.680094+00:00"
+    revision: 2
+    content_key: "02dc9360fba8479d497b3a33ed899903b74d9fc540970103dce3b0dcb12922a5"
+    text_sha256: "7185ab40109ec959f30c8fd9e6b91819f89d7982945f5cc837b39b757044e9a0"
+    inbox_stated_by: "cognitect.com; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "publisher's free web page; all rights reserved"
+    inbox_obtained_from: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"
+    inbox_source_url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"
+    text_chars: 8668
+    text_pages: 1
+    direct_download_url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"
+    retrieved_at: "2026-11-12T02:49:55Z"
+    bytes: 8691
+    raw_sha256: "01bdb22a561924b5eb072b501b530d14157d4a674561dac25cfff3197eb04faf"
+    raw_path: "archive:docs/raw/nygard2011adr__692ba2f113.html"
+    sha256: "7185ab40109ec959f30c8fd9e6b91819f89d7982945f5cc837b39b757044e9a0"
+    local_path: "archive:docs/text/nygard2011adr__692ba2f113.txt"
+    posture: "open"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: Documenting Architecture Decisions
     entry_kind: grey
     title_cited: Documenting Architecture Decisions
@@ -4505,7 +4589,7 @@ documents:
     - Nygard
     year: 2011
     source_url: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
-    access: restricted_or_unknown
+    access: "open"
     resolution:
     - authority: openalex
       confirmed: false
@@ -4566,17 +4650,14 @@ documents:
         error: off_allowlist:cognitect.com
         at: '2026-11-09T23:19:21Z'
       answer: null
-    access_posture: off_allowlist
+    access_posture: "open"
     posture_host: cognitect.com
-    posture_observed_at: '2026-11-09T23:19:21Z'
-    posture_evidence: 'HTTP None off_allowlist:cognitect.com first bytes: '''''
-    metadata_only_reason: "publisher_page_not_reachable_by_script"
-    manual_acquisition: true
-    manual_reason: no index holds it, and its publisher's page (cognitect.com) is off_allowlist
-    acquisition: pending_manual
-    acquisition_status: "not_acquired"
+    posture_observed_at: "2026-11-12T02:49:55Z"
+    manual_acquisition: false
+    acquisition: "auto"
+    acquisition_status: "acquired"
     verification_status: declared
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: sw_madr
     metadata_only_reason: "software_not_a_document"
@@ -4688,11 +4769,28 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: niosh_hierarchy_of_controls
-    metadata_only_detail: "acquire found: no_open_access_text"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event b91dff1a303145818f28b279ab6f1ad8 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.682180+00:00"
+    revision: 2
+    content_key: "d5c6d15d14e23c4345a59d0801f4f3d12f4a21a1684dba4fce057b6bb8f4b14f"
+    text_sha256: "66d2452562e4c85e0e51a43500446324f97940fbf9a7a3d540597407a4e902a5"
+    inbox_stated_by: "a CDC/NIOSH page; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "US Government work, not subject to copyright (17 U.S.C. 105)"
+    inbox_obtained_from: "https://www.cdc.gov/niosh/hierarchy-of-controls/about/index.html"
+    inbox_source_url: "https://www.cdc.gov/niosh/hierarchy-of-controls/"
+    text_chars: 7144
+    text_pages: 1
+    direct_download_url: "https://www.cdc.gov/niosh/hierarchy-of-controls/about/index.html"
+    retrieved_at: "2026-11-12T02:49:58Z"
+    bytes: 7146
+    raw_sha256: "968c0d34ff7739f5f53f74b41ba504745d241b5a91bdf8f43bd749a0e9de19c6"
+    raw_path: "archive:docs/raw/niosh_hierarchy_of_controls__4f8b8c4d33.html"
+    sha256: "66d2452562e4c85e0e51a43500446324f97940fbf9a7a3d540597407a4e902a5"
+    local_path: "archive:docs/text/niosh_hierarchy_of_controls__4f8b8c4d33.txt"
+    posture: "open"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: Hierarchy of Controls
     entry_kind: grey
     title_cited: Hierarchy of Controls
@@ -4703,7 +4801,7 @@ documents:
     authors:
     - NIOSH
     source_url: https://www.cdc.gov/niosh/hierarchy-of-controls/
-    access: restricted_or_unknown
+    access: "open"
     resolution:
     - authority: openalex
       confirmed: false
@@ -4760,17 +4858,14 @@ documents:
         error: off_allowlist:www.cdc.gov
         at: '2026-11-09T23:19:53Z'
       answer: null
-    access_posture: off_allowlist
+    access_posture: "open"
     posture_host: www.cdc.gov
-    posture_observed_at: '2026-11-09T23:19:53Z'
-    posture_evidence: 'HTTP None off_allowlist:www.cdc.gov first bytes: '''''
-    metadata_only_reason: "publisher_page_not_reachable_by_script"
-    manual_acquisition: true
-    manual_reason: no index holds it, and its publisher's page (www.cdc.gov) is off_allowlist
-    acquisition: pending_manual
-    acquisition_status: "not_acquired"
+    posture_observed_at: "2026-11-12T02:49:58Z"
+    manual_acquisition: false
+    acquisition: "auto"
+    acquisition_status: "acquired"
     verification_status: declared
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: rtca_do178c
     notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
@@ -4960,19 +5055,39 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: han2017checklists
-    metadata_only_reason: "no_oa_pdf_url"
-    verification_method: "squiddy.acquire crossref+openalex 2026-11-09; title gate 1.00"
+    verification_method: "squiddy.acquire crossref+openalex 2026-11-11; title gate 1.00"
     abstract: "Irreproducibility of preclinical biomedical research has gained recent attention. It is suggested that requiring authors to complete a checklist at the time of manuscript submission would improve the quality and transparency of scientific reporting, and ultimately enhance reproducibility. Whether a checklist enhances quality and transparency in reporting preclinical animal studies, however, has not been empirically studied. Here we searched two highly cited life science journals, one that requires a checklist at submission (Nature) and one that does not (Cell), to identify in vivo animal studies. After screening 943 articles, a total of 80 articles were identified in 2013 (pre-checklist) and 2015 (post-checklist), and included for the detailed evaluation of reporting methodological and analytical information. We compared the quality of reporting preclinical animal studies between the two journals, accounting for differences between journals and changes over time in reporting. We find that reporting of randomization, blinding, and sample-size estimation significantly improved when comparing Nature to Cell from 2013 to 2015, likely due to implementation of a checklist. Specifically, improvement in reporting of the three methodological information was at least three times greater when a mandatory checklist was implemented than when it was not. Reporting the sex of animals and the number of independent experiments performed also improved from 2013 to 2015, likely from factors not related to a checklist. Our study demonstrates that completing a checklist at manuscript submission is associated with improved reporting of key methodological information in preclinical animal studies."
     publication_date: "2017-09-13"
     best_oa_landing: "https://doi.org/10.1371/journal.pone.0183591"
     open_access: true
     oa_status: "gold"
     title_authority: "A checklist is associated with increased quality of reporting preclinical biomedical research: A systematic review"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-035; AD-036. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "7aa98c58f53600b49da6fa72cfcff2a4c42e3f90e27f99823558af20ff7d5cd9"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event ccf9769de265460482dbc4199bf4b828 holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.684365+00:00"
+    revision: 2
+    licence_found: ["CC BY 4.0"]
+    inbox_stated_by: "PLoS ONE (every article CC BY); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: CC BY 4.0"
+    inbox_licence: "CC BY 4.0"
+    inbox_obtained_from: "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable"
+    inbox_source_url: "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable"
+    text_chars: 49842
+    text_pages: 14
+    posture_observed_at: "2026-11-12T02:49:42Z"
+    posture_host: "journals.plos.org"
+    access_posture: "open"
+    posture: "open"
+    manual_acquisition: false
+    direct_download_url: "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable"
+    retrieved_at: "2026-11-12T02:49:42Z"
+    bytes: 12565555
+    raw_sha256: "4aefe740d81f5164e8eeac0a93c608f9581619510c9591206db827114fd1dc2f"
+    raw_path: "archive:docs/raw/han2017checklists__6ca948bb8b.pdf"
+    sha256: "4aefe740d81f5164e8eeac0a93c608f9581619510c9591206db827114fd1dc2f"
+    local_path: "archive:docs/raw/han2017checklists__6ca948bb8b.pdf"
+    content_key: "530aab1d3820165abad755d2fd7cdb2bde5c06148f66a851d2051de61bb30b0b"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: 'A checklist is associated with increased quality of reporting preclinical biomedical research: A systematic review'
     entry_kind: work
     title_cited: 'A checklist is associated with increased quality of reporting preclinical biomedical research: A systematic review'
@@ -5021,9 +5136,9 @@ documents:
         venue: PLoS ONE
         year: 2017
     acquisition: auto
-    acquisition_status: "not_acquired"
+    acquisition_status: "acquired"
     verification_status: "resolved"
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: chen2023chatgpt
     last_modified: "Wed, 01 Nov 2023 02:53:13 GMT"
@@ -5331,19 +5446,39 @@ documents:
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
 
   - id: aaai_v40i44_41105
-    metadata_only_reason: "no_oa_pdf_url"
-    verification_method: "squiddy.acquire crossref+openalex 2026-11-09; title gate 1.00"
+    verification_method: "squiddy.acquire crossref+openalex 2026-11-11; title gate 1.00"
     abstract: "Language models (LMs) judges are widely used to evaluate the quality of LM outputs. Despite many advantages, LM judges display concerning biases that can impair their integrity in evaluations. One such bias is self-preference: LM judges preferring their own answers over those produced by other LMs or humans. The bias is hard to eliminate as frontier LM judges can distinguish their own outputs from those of others, even when the evaluation candidates are not labeled with their sources. In this paper, we investigate strategies to mitigate self-preference by reducing the LM judges' ability to recognize their own outputs. We apply black-box perturbations to evaluation candidates in pairwise comparison to obfuscate the authorship and reduce self-recognition. We find that perturbations as simple as synonym replacement for a few words predictably reduce self-preference. However, we also uncover fundamental challenges to eliminating the bias: when we extrapolate our perturbations to a more complete neutralization of stylistic differences between the evaluation candidates, self-preference recovers. Our findings suggest that self-recognition and self-preference can happen on many semantic levels, and complete mitigation remains challenging despite promising initial results."
     publication_date: "2026-03-14"
     best_oa_landing: "https://doi.org/10.1609/aaai.v40i44.41105"
     open_access: true
     oa_status: "diamond"
     title_authority: "Mitigating Self-Preference by Authorship Obfuscation"
-    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-037. Assessed mechanically by squiddy.assess on 2026-11-09. || PRIOR NOTE, PRESERVED:"
-    content_key: "bd14f1423a56d3713c84b9c036500b322f0fde4debc2425b2ab55419e52fa117"
+    notes: "RE-ADMITTED AS A REVISION: revision 2 of a unit in the graph: its source's declared content moved (ledger event c533b61390fd4902bb592d0a2a1190fe holds the record it supersedes). Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    revised_at: "2026-11-12T02:54:58.686429+00:00"
+    revision: 2
+    text_found_by: "Crossref's record of the DOI (its text-mining link); doi.org's robots.txt redirects off the Network line"
+    inbox_stated_by: "AAAI OJS; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none"
+    inbox_licence: "AAAI open access proceedings"
+    inbox_obtained_from: "https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066"
+    inbox_source_url: "https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066"
+    text_chars: 34163
+    text_pages: 8
+    posture_observed_at: "2026-11-12T02:49:45Z"
+    posture_host: "ojs.aaai.org"
+    access_posture: "open"
+    posture: "open"
+    manual_acquisition: false
+    direct_download_url: "https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066"
+    retrieved_at: "2026-11-12T02:49:45Z"
+    bytes: 253545
+    raw_sha256: "c74ecaf4ae7a3bc4461fc013266539af1ecb18ee23a578a43e3bb29e17c99d35"
+    raw_path: "archive:docs/raw/aaai_v40i44_41105__0c735e58eb.pdf"
+    sha256: "c74ecaf4ae7a3bc4461fc013266539af1ecb18ee23a578a43e3bb29e17c99d35"
+    local_path: "archive:docs/raw/aaai_v40i44_41105__0c735e58eb.pdf"
+    content_key: "7b2fec6b786efc08e09f6b90502d527a8bb5c6bd38bc2b77bd0030f00717c021"
     kind: work
     stage: "in_graph"
-    disposition: "metadata_only"
+    disposition: "active"
     title: Mitigating Self-Preference by Authorship Obfuscation
     entry_kind: work
     title_cited: doi:10.1609/aaai.v40i44.41105
@@ -5380,9 +5515,9 @@ documents:
         venue: Proceedings of the AAAI Conference on Artificial Intelligence
         year: 2026
     acquisition: auto
-    acquisition_status: "not_acquired"
+    acquisition_status: "acquired"
     verification_status: "resolved"
-    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+    cataloged_by: "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml"
 
   - id: anthropic2026seeing
     metadata_only_detail: "acquire found: no_open_access_text"
@@ -6624,3 +6759,1611 @@ documents:
     acquisition_status: "acquired"
     verification_status: "resolved"
     cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_nist_sp800_53r5_1
+    parse_refused_attempts: 1
+    parse_refused_key: "fc63bcd61715d0181dd8e85998b1e6201ae3515fc6626102101cab1841e11ec6|parser 451f57df1a46099e19fec01a4102393b035c1487bbd50729feb71b89ceb05612"
+    parse_refused: "parse_refused: the parse child died by signal SIGSEGV after 3017.3s under the running kit, attempt 1 of 2 (row in parse_text.jsonl); the text is held out of the index, and the next build retries it"
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'NIST SP 800-53 Rev. 5, Security and Privacy Controls for Information Systems and Organizations (AU family): text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+    documents: nist_sp800_53r5
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/raw/nist_sp800_53r5__59354d6322.pdf
+    sha256: "fc63bcd61715d0181dd8e85998b1e6201ae3515fc6626102101cab1841e11ec6"
+    raw_path: archive:docs/raw/nist_sp800_53r5__59354d6322.pdf
+    raw_sha256: fc63bcd61715d0181dd8e85998b1e6201ae3515fc6626102101cab1841e11ec6
+    bytes: 6073678
+    retrieved_at: '2026-11-12T02:50:02Z'
+    direct_download_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: nvlpubs.nist.gov
+    posture_observed_at: '2026-11-12T02:50:02Z'
+    text_pages: 492
+    text_chars: 1583747
+    inbox_source_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+    inbox_obtained_from: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+    inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+    inbox_stated_by: 'a NIST Special Publication; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_who_trs1033_annex4_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'WHO TRS 1033 Annex 4: Guideline on data integrity (ALCOA+): text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://iris.who.int/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/download
+    documents: who_trs1033_annex4
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/raw/who_trs1033_annex4__da7bf7ff27.pdf
+    sha256: "02074af0640353918750da1b5d4f469ea86fb36fb89eb06d3df447f1a6912ebc"
+    raw_path: archive:docs/raw/who_trs1033_annex4__da7bf7ff27.pdf
+    raw_sha256: 02074af0640353918750da1b5d4f469ea86fb36fb89eb06d3df447f1a6912ebc
+    bytes: 2567091
+    retrieved_at: '2026-11-12T02:50:12Z'
+    direct_download_url: https://iris.who.int/server/api/core/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/content
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: iris.who.int
+    posture_observed_at: '2026-11-12T02:50:12Z'
+    text_pages: 324
+    text_chars: 721514
+    inbox_source_url: https://iris.who.int/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/download
+    inbox_obtained_from: https://iris.who.int/server/api/core/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/content
+    inbox_licence: CC BY-NC-SA 3.0 IGO
+    inbox_stated_by: 'WHO IRIS (WHO''s standard licence for its publications); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: CC BY-NC-SA 3.0'
+    licence_found:
+    - CC BY-NC-SA 3.0
+    text_found_by: WHO IRIS record of TRS 1033 (the whole report; Annex 4 is inside it)
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_w3c_prov_o_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'PROV-O: The PROV Ontology'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://www.w3.org/TR/prov-o/
+    documents: w3c_prov_o
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/text/w3c_prov_o__6e48bcc4a0.txt
+    sha256: "f8ee7c241f6cbefbcd9bf23b93e1f00054869e20964021ce34f854bb9e4db860"
+    raw_path: archive:docs/raw/w3c_prov_o__6e48bcc4a0.html
+    raw_sha256: 6b96671ab84faf12ce3f041aca12c3f93a6df2ed242348810743179a68e69555
+    bytes: 191516
+    retrieved_at: '2026-11-12T02:50:14Z'
+    direct_download_url: https://www.w3.org/TR/prov-o/
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: www.w3.org
+    posture_observed_at: '2026-11-12T02:50:14Z'
+    text_pages: 1
+    text_chars: 191487
+    inbox_source_url: https://www.w3.org/TR/prov-o/
+    inbox_obtained_from: https://www.w3.org/TR/prov-o/
+    inbox_licence: W3C Document License
+    inbox_stated_by: 'W3C Recommendation; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: f8ee7c241f6cbefbcd9bf23b93e1f00054869e20964021ce34f854bb9e4db860
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_slsa_v1_0_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: SLSA • SLSA specification
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://slsa.dev/spec/v1.0/
+    documents: slsa_v1_0
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/text/slsa_v1_0__71a8d7609a.txt
+    sha256: "50524558a4ca4b27d3e6b3b1e483cddc7f88c126f9d099794c9760e4f57e35c9"
+    raw_path: archive:docs/raw/slsa_v1_0__71a8d7609a.html
+    raw_sha256: 8908b5ce4bbfd28d92d1b10361f077b0693d6ae5bb6db403e25f9488526b8ea9
+    bytes: 653
+    retrieved_at: '2026-11-12T02:50:15Z'
+    direct_download_url: https://slsa.dev/spec/v1.0/
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: slsa.dev
+    posture_observed_at: '2026-11-12T02:50:15Z'
+    text_pages: 1
+    text_chars: 646
+    inbox_source_url: https://slsa.dev/spec/v1.0/
+    inbox_obtained_from: https://slsa.dev/spec/v1.0/
+    inbox_licence: Community Specification License 1.0
+    inbox_stated_by: 'the SLSA specification (OpenSSF); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 50524558a4ca4b27d3e6b3b1e483cddc7f88c126f9d099794c9760e4f57e35c9
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_rfc9162_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'RFC 9162: Certificate Transparency Version 2.0: text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+    documents: rfc9162
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/text/rfc9162__4e673cd4fa.txt
+    sha256: "41fbb0d01b204ecb24252f658da1bfa4852a75f012c2b9caf1183a6ab6838051"
+    raw_path: archive:docs/raw/rfc9162__4e673cd4fa.txt
+    raw_sha256: a0e432ce7580c99fcc8faf0cf3f6191f9ce6b4864f949158e020d4ecb295081f
+    bytes: 128429
+    retrieved_at: '2026-11-12T02:50:17Z'
+    direct_download_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: www.rfc-editor.org
+    posture_observed_at: '2026-11-12T02:50:17Z'
+    text_pages: 1
+    text_chars: 128425
+    inbox_source_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+    inbox_obtained_from: https://www.rfc-editor.org/rfc/rfc9162.txt
+    inbox_licence: IETF Trust Legal Provisions (BCP 78)
+    inbox_stated_by: 'an RFC; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 41fbb0d01b204ecb24252f658da1bfa4852a75f012c2b9caf1183a6ab6838051
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_rfc8493_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'RFC 8493: The BagIt File Packaging Format (V1.0): text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+    documents: rfc8493
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/text/rfc8493__7480b4b582.txt
+    sha256: "a18c985ec8709aa1c5ef0907bc557e180d8d3508679897b8106d8622afb79601"
+    raw_path: archive:docs/raw/rfc8493__7480b4b582.txt
+    raw_sha256: 4964147d2e6e16442d4a6dbfbe68178a8f33c3e791c06d68a8b33f51ad821537
+    bytes: 48946
+    retrieved_at: '2026-11-12T02:50:18Z'
+    direct_download_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: www.rfc-editor.org
+    posture_observed_at: '2026-11-12T02:50:18Z'
+    text_pages: 26
+    text_chars: 48918
+    inbox_source_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+    inbox_obtained_from: https://www.rfc-editor.org/rfc/rfc8493.txt
+    inbox_licence: IETF Trust Legal Provisions (BCP 78)
+    inbox_stated_by: 'an RFC; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: a18c985ec8709aa1c5ef0907bc557e180d8d3508679897b8106d8622afb79601
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_premis_3_0_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'PREMIS Data Dictionary for Preservation Metadata, Version 3.0: text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+    documents: premis_3_0
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
+    local_path: archive:docs/raw/premis_3_0__0f5b62523a.pdf
+    sha256: "2e3e3fe001798f3f43d26b4aed03e8737310fa044ee001af2493f7c72517b0e0"
+    raw_path: archive:docs/raw/premis_3_0__0f5b62523a.pdf
+    raw_sha256: 2e3e3fe001798f3f43d26b4aed03e8737310fa044ee001af2493f7c72517b0e0
+    bytes: 2176353
+    retrieved_at: '2026-11-12T02:50:20Z'
+    direct_download_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: www.loc.gov
+    posture_observed_at: '2026-11-12T02:50:20Z'
+    text_pages: 283
+    text_chars: 380369
+    inbox_source_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+    inbox_obtained_from: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+    inbox_licence: Library of Congress publication, free to use
+    inbox_stated_by: 'loc.gov; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_found_by: the PREMIS v3 page's link to the data dictionary
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_nasa_swe_072_1
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: AD-032. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'NASA NPR 7150.2, Software Engineering Requirements: SWE-072 (bidirectional traceability): text'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+    documents: nasa_swe_072
+    provenance_flag: public
+    cited_in: AD-032
+    governed_citations:
+    - docs_design_ad_032_factory_control_design@decisions_and_lessons_weber_aha_and_becerra_fernandez_2001_gao_02_195_2002_nasa_
+    local_path: archive:docs/raw/nasa_swe_072__93aea914ac.pdf
+    sha256: "1a5b7f9b0b0141e88374adf7a21a4d6ced0b29c221ca89a0a514f495d6532802"
+    raw_path: archive:docs/raw/nasa_swe_072__93aea914ac.pdf
+    raw_sha256: 1a5b7f9b0b0141e88374adf7a21a4d6ced0b29c221ca89a0a514f495d6532802
+    bytes: 566622
+    retrieved_at: '2026-11-12T02:50:24Z'
+    direct_download_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: nodis3.gsfc.nasa.gov
+    posture_observed_at: '2026-11-12T02:50:24Z'
+    text_pages: 89
+    text_chars: 215490
+    inbox_source_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+    inbox_obtained_from: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+    inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+    inbox_stated_by: 'NASA NODIS; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_found_by: NPR 7150.2D, the current revision, in NASA's directives system
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_installation_installation
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: installation/installation.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_installation__41a78e777e.txt
+    sha256: "c3cdddfccdb1314bb38e548c455469e83db78c4da96e2da44134e59f1670d7e3"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_installation__41a78e777e.md
+    raw_sha256: a9cb1fd11546abf25aa048b0e43b6a1afc572cc34702a50ae1d53666fc0b785f
+    bytes: 1596
+    retrieved_at: '2026-11-12T02:50:27Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:27Z'
+    text_pages: 1
+    text_chars: 1594
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: c3cdddfccdb1314bb38e548c455469e83db78c4da96e2da44134e59f1670d7e3
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_installation_linux
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: installation/linux.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_linux__3f7cdf50fd.txt
+    sha256: "c92970e7017e681066f54f1dc22c7a7ddb093090040708cd29e1c47ab0236dea"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_linux__3f7cdf50fd.md
+    raw_sha256: bebbe465ce9eff67bc118f4544a39d5c0952aa310a002e77bcdf5fa1597ec137
+    bytes: 1957
+    retrieved_at: '2026-11-12T02:50:28Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:28Z'
+    text_pages: 1
+    text_chars: 1955
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: c92970e7017e681066f54f1dc22c7a7ddb093090040708cd29e1c47ab0236dea
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_installation_macos
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: installation/macos.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_macos__d226fc8ba6.txt
+    sha256: "f09614124f2cb6cd297dbec3f24ccfd4f307d597118d6669556b147f0f2c4f2e"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_macos__d226fc8ba6.md
+    raw_sha256: f5bc6b23358b8406ceab801e684fd1442736b240b08e22afc47b60b3fc93f7a0
+    bytes: 1514
+    retrieved_at: '2026-11-12T02:50:29Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:29Z'
+    text_pages: 1
+    text_chars: 1512
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: f09614124f2cb6cd297dbec3f24ccfd4f307d597118d6669556b147f0f2c4f2e
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_installation_windows
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: installation/windows.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_windows__e9d6a84d68.txt
+    sha256: "a5933cd0c51dda2cae72ada1e6aaf31567520f2ccee744612ce043d5da09c782"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_windows__e9d6a84d68.md
+    raw_sha256: 3768266937e9245c6475e9d0801df829d723f448dc2ba5014636ef945f1bcd7c
+    bytes: 1427
+    retrieved_at: '2026-11-12T02:50:30Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:30Z'
+    text_pages: 1
+    text_chars: 1425
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: a5933cd0c51dda2cae72ada1e6aaf31567520f2ccee744612ce043d5da09c782
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_introduction_concepts_and_terms
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: introduction/concepts_and_terms.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_concepts_and_terms__4dc7194bf6.txt
+    sha256: "384f3a48eea4f66a027f6945458b2600725faf08e681aabf7f33bb94248b5671"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_concepts_and_terms__4dc7194bf6.md
+    raw_sha256: 1e1840ebb159c3ae820ece06d00f6b63ad7a55b89332cbfa738e2178a6c7e809
+    bytes: 3145
+    retrieved_at: '2026-11-12T02:50:31Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:31Z'
+    text_pages: 1
+    text_chars: 3143
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 384f3a48eea4f66a027f6945458b2600725faf08e681aabf7f33bb94248b5671
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_introduction_introduction
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: introduction/introduction.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_introduction__b1bed337d0.txt
+    sha256: "5ec7a63b37c51c6fa8ecc16a66abb55526ccfd3ebeca914412afcd2a3f8ad833"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_introduction__b1bed337d0.md
+    raw_sha256: 67758df505692a8829641e82de486ad996824a0cb87190f471d79be42d864038
+    bytes: 613
+    retrieved_at: '2026-11-12T02:50:32Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:32Z'
+    text_pages: 1
+    text_chars: 611
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 5ec7a63b37c51c6fa8ecc16a66abb55526ccfd3ebeca914412afcd2a3f8ad833
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: introduction/what_is_requirement_tracing.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing__5791cb7f60.txt
+    sha256: "62dcf0fad589966d3a3ef1b7b18eccfabd1a947616c1543116eaed79d49af9f0"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing__5791cb7f60.md
+    raw_sha256: 1c147928fd8d5a5b97a7ca3f9a268c40caef71df45eff9f12bb86ca5b87d67f4
+    bytes: 1712
+    retrieved_at: '2026-11-12T02:50:34Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:34Z'
+    text_pages: 1
+    text_chars: 1710
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 62dcf0fad589966d3a3ef1b7b18eccfabd1a947616c1543116eaed79d49af9f0
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_introduction_who_should_read_this_document
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: introduction/who_should_read_this_document.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_who_should_read_this_document__4b3667f0b8.txt
+    sha256: "e11e160e0f7323861c1ff135030e0dd096a26f41b6944555f2895bc9abf4ee5e"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_who_should_read_this_document__4b3667f0b8.md
+    raw_sha256: 808e668280638284029e1a18716ec7d73b97c2c42a48bb990a5956c7e4a670b2
+    bytes: 1124
+    retrieved_at: '2026-11-12T02:50:35Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:35Z'
+    text_pages: 1
+    text_chars: 1122
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: e11e160e0f7323861c1ff135030e0dd096a26f41b6944555f2895bc9abf4ee5e
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: introduction/why_do_i_need_requirement_tracing.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing__48ffe80439.txt
+    sha256: "2564686e23262516fa9771d623947059634a924e4a4c174c8ee24669033d5ca0"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing__48ffe80439.md
+    raw_sha256: 3788fa70fcd6d54b23f51ba71a4e727b72527b45a5b86f6dbc4146bfc6ea6a9b
+    bytes: 720
+    retrieved_at: '2026-11-12T02:50:36Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:36Z'
+    text_pages: 1
+    text_chars: 718
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 2564686e23262516fa9771d623947059634a924e4a4c174c8ee24669033d5ca0
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_oft_api_exit_codes
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: oft_api/exit_codes.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_exit_codes__6c0acfe43e.txt
+    sha256: "87e5a043865fb61da6cdae68a4d3363927ff95a3cdc195d45d2ebbd2663247a8"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_exit_codes__6c0acfe43e.md
+    raw_sha256: 4d104261b69a1110a9236996d31b411bbceb0b427cb9f50ac3a7040c540ad714
+    bytes: 464
+    retrieved_at: '2026-11-12T02:50:37Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:37Z'
+    text_pages: 1
+    text_chars: 462
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 87e5a043865fb61da6cdae68a4d3363927ff95a3cdc195d45d2ebbd2663247a8
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_oft_api_oft_api
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: oft_api/oft_api.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_oft_api__0ab99e7e18.txt
+    sha256: "66232f7501d1c6f6d2d38b651182e0eb40c8ddfb6ba8f8993d357b7a10ace03f"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_oft_api__0ab99e7e18.md
+    raw_sha256: 3a1db1ad5d37f737f15afc3209909f370c0a4deed3fc032f6478db720ee83470
+    bytes: 811
+    retrieved_at: '2026-11-12T02:50:38Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:38Z'
+    text_pages: 1
+    text_chars: 809
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 66232f7501d1c6f6d2d38b651182e0eb40c8ddfb6ba8f8993d357b7a10ace03f
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_oft_api_using_oft_from_java
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: oft_api/using_oft_from_java.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_using_oft_from_java__ba604c81b4.txt
+    sha256: "4062041f5bf8d162e302940aa618aafd096c82a9d6da1dfec61578ad23129179"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_using_oft_from_java__ba604c81b4.md
+    raw_sha256: e9e2091d085e9b02774a1a2ab0d9e7ce833d7d78ea6f65b5ac262c85324b3f35
+    bytes: 4696
+    retrieved_at: '2026-11-12T02:50:39Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:39Z'
+    text_pages: 1
+    text_chars: 4694
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 4062041f5bf8d162e302940aa618aafd096c82a9d6da1dfec61578ad23129179
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: product_lifecycle/product_lifecycle.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle__6eac649476.txt
+    sha256: "b51a662b34b78c71241af24a859ec091bc3f9e038ef3a5d23c338e613d073afb"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle__6eac649476.md
+    raw_sha256: fc02f8ea8130203e5666918c95cb01bef9527bac8dabec433b9a34414263a085
+    bytes: 4157
+    retrieved_at: '2026-11-12T02:50:40Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:40Z'
+    text_pages: 1
+    text_chars: 4156
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: b51a662b34b78c71241af24a859ec091bc3f9e038ef3a5d23c338e613d073afb
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_build_integration
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/build_integration.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_build_integration__1ad372d5b5.txt
+    sha256: "f87acdc828fcdcf646bb9ad53bf11ffb65dc4faf15f5067362853160dd180293"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_build_integration__1ad372d5b5.md
+    raw_sha256: f5c5a33a6777805562ab990ef8892284cfe902113b3d21fa05a117b9fd5ffe00
+    bytes: 645
+    retrieved_at: '2026-11-12T02:50:42Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:42Z'
+    text_pages: 1
+    text_chars: 643
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: f87acdc828fcdcf646bb9ad53bf11ffb65dc4faf15f5067362853160dd180293
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_console_tracing_report
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/console_tracing_report.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_console_tracing_report__c945f9243c.txt
+    sha256: "b9661dbdae6ea577b0e043ba1843387694050dcc36985510122426815326f885"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_console_tracing_report__c945f9243c.md
+    raw_sha256: 76c195ed06be404cde10720e1784edc74c29398c03978a32d6a4aa8e33825145
+    bytes: 4449
+    retrieved_at: '2026-11-12T02:50:43Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:43Z'
+    text_pages: 1
+    text_chars: 4413
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: b9661dbdae6ea577b0e043ba1843387694050dcc36985510122426815326f885
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_input_format_support
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/input_format_support.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_input_format_support__04bff56624.txt
+    sha256: "4f5dc6698053809ce755023171f1f5135a0c8dffe79ab09bc3e48ff67c29dc1f"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_input_format_support__04bff56624.md
+    raw_sha256: faa40b59a35b171bdb2b60c1eeee6863905e0b87bef2efe3c080794b364e28aa
+    bytes: 5588
+    retrieved_at: '2026-11-12T02:50:44Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:44Z'
+    text_pages: 1
+    text_chars: 5586
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 4f5dc6698053809ce755023171f1f5135a0c8dffe79ab09bc3e48ff67c29dc1f
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_oft_command_line
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/oft_command_line.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_oft_command_line__54db3253df.txt
+    sha256: "ba4e7567eb76b7c127306b953e63ea0f1ada47b293a700583f0119d6836a836c"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_oft_command_line__54db3253df.md
+    raw_sha256: 5d8ba01a96343ebbf6dce82910d50436fea7cbe65a40f098981c0db7d44115f0
+    bytes: 3961
+    retrieved_at: '2026-11-12T02:50:45Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:45Z'
+    text_pages: 1
+    text_chars: 3959
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: ba4e7567eb76b7c127306b953e63ea0f1ada47b293a700583f0119d6836a836c
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_reference
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/reference.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_reference__354b69af1a.txt
+    sha256: "295bda63555c20fe9fe15750b9360a456e8cef3e2b374057047bbab7a487887f"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_reference__354b69af1a.md
+    raw_sha256: cfacb73a26e8a04ee37f03101cd240cb7d14783785b9eb53779ea42fd50e7824
+    bytes: 1295
+    retrieved_at: '2026-11-12T02:50:46Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:46Z'
+    text_pages: 1
+    text_chars: 1293
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 295bda63555c20fe9fe15750b9360a456e8cef3e2b374057047bbab7a487887f
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_report_summary
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/report_summary.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_report_summary__ebc874bc4a.txt
+    sha256: "58af0967e197f0f3081aae9f381015313ad7c9fce3d583f8ec66c0c31a93a86f"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_report_summary__ebc874bc4a.md
+    raw_sha256: 291aa74de4fd4c3fec62d4f835128e030a0e0fa137fb17c2d06b8c32cb19e556
+    bytes: 783
+    retrieved_at: '2026-11-12T02:50:47Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:47Z'
+    text_pages: 1
+    text_chars: 781
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 58af0967e197f0f3081aae9f381015313ad7c9fce3d583f8ec66c0c31a93a86f
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_reference_xml_tracing_report
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: reference/xml_tracing_report.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_xml_tracing_report__68356b4530.txt
+    sha256: "636fd8c5390bf72918da27816c019e2595917dc7d39a4d751616bc2595c9e4b2"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_xml_tracing_report__68356b4530.md
+    raw_sha256: 760ac3af48c0d9d4485a807fe9d9c94da2b3365a069e0d8cc613af36e464c9ed
+    bytes: 7828
+    retrieved_at: '2026-11-12T02:50:48Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:48Z'
+    text_pages: 1
+    text_chars: 7826
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 636fd8c5390bf72918da27816c019e2595917dc7d39a4d751616bc2595c9e4b2
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_tool_support_templates_for_ides
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: tool_support/templates_for_ides.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_templates_for_ides__297c3a5d4a.txt
+    sha256: "e78bb2e057ae42e85b5cd9734f0a15209aa516362692293d603251df1fb96f5b"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_templates_for_ides__297c3a5d4a.md
+    raw_sha256: a31dc5abdd6bc35867f72316fcfe3351dbc4d122fceeff00c9196b3c4f83fe73
+    bytes: 545
+    retrieved_at: '2026-11-12T02:50:50Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:50Z'
+    text_pages: 1
+    text_chars: 543
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: e78bb2e057ae42e85b5cd9734f0a15209aa516362692293d603251df1fb96f5b
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_tool_support_tool_support
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: tool_support/tool_support.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_tool_support__de3a24af35.txt
+    sha256: "b47119707221948153b6926881cd4ca4ff458366c22a985e50696d97f5fc38f1"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_tool_support__de3a24af35.md
+    raw_sha256: e97cea8f4d942a7c30af42c0067a67b4390d48662cd9112d5f8eb070ac591cdc
+    bytes: 478
+    retrieved_at: '2026-11-12T02:50:51Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:51Z'
+    text_pages: 1
+    text_chars: 476
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: b47119707221948153b6926881cd4ca4ff458366c22a985e50696d97f5fc38f1
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: tool_support/tools_for_authoring_oft_documents.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents__47b2960e92.txt
+    sha256: "59dbd6c177d2071f590d49c0da703d8efb801f38eca1c88d7b04631b34c4eb86"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents__47b2960e92.md
+    raw_sha256: 3ac564eea9d66bb5f8d83e77e4994ff905a322e7d362a3d79a1a5ef353e35fda
+    bytes: 3172
+    retrieved_at: '2026-11-12T02:50:52Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:52Z'
+    text_pages: 1
+    text_chars: 3161
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 59dbd6c177d2071f590d49c0da703d8efb801f38eca1c88d7b04631b34c4eb86
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/delegating_requirement_coverage.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage__410e9687a8.txt
+    sha256: "3677e72490ac88d418f6d365999d6edb5bcf93ef541f9e30611d795c23b0bd7b"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage__410e9687a8.md
+    raw_sha256: ce0c2f620952b6e003ac5df87e09088a3f1e8529dc7875379ccadcb91fe0cee9
+    bytes: 2640
+    retrieved_at: '2026-11-12T02:50:53Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:53Z'
+    text_pages: 1
+    text_chars: 2634
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 3677e72490ac88d418f6d365999d6edb5bcf93ef541f9e30611d795c23b0bd7b
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/distributing_the_detailing_work.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work__25ef14f07a.txt
+    sha256: "40ca6d683816a6b142977c7b7402deaee4ae8bd6d4b38db6769d58b3be54a46f"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work__25ef14f07a.md
+    raw_sha256: 0c0bc2cab3bd5d485e1a78d5e489da4bf912856c615a9dd4bcaecabfa34e7b25
+    bytes: 3576
+    retrieved_at: '2026-11-12T02:50:54Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:54Z'
+    text_pages: 1
+    text_chars: 3575
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 40ca6d683816a6b142977c7b7402deaee4ae8bd6d4b38db6769d58b3be54a46f
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing__77a9eaeab8.txt
+    sha256: "84642d1720c533c0e371dfade3998d78c4b4bfeecce2201c062ed208eda56b61"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing__77a9eaeab8.md
+    raw_sha256: ce77668a6d3ef92994d3c59ca2c0281ce9f9eaab3e3f2b58174e5111f23fd059
+    bytes: 1138
+    retrieved_at: '2026-11-12T02:50:55Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:55Z'
+    text_pages: 1
+    text_chars: 1136
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 84642d1720c533c0e371dfade3998d78c4b4bfeecce2201c062ed208eda56b61
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_filtering_by_status
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/filtering_by_status.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_filtering_by_status__58eb3aff79.txt
+    sha256: "f52579cb689f31b5657a34ff79dcbcd329363d7ae96c11956d21a69fffee39b1"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_filtering_by_status__58eb3aff79.md
+    raw_sha256: 9d71b4f15af4c8b5069d0d19cd4226474a7f3ce7f21aac128e77746a76f47e5f
+    bytes: 836
+    retrieved_at: '2026-11-12T02:50:57Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:57Z'
+    text_pages: 1
+    text_chars: 834
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: f52579cb689f31b5657a34ff79dcbcd329363d7ae96c11956d21a69fffee39b1
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_html_tracing_reports
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/html_tracing_reports.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_html_tracing_reports__f8e079a05e.txt
+    sha256: "a7b430b9b39769b2828f3258a7f57a535661a92dff20cf12f5525e5354f891bd"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_html_tracing_reports__f8e079a05e.md
+    raw_sha256: 93c42aafe12138f5121cce706d6f6ac515f47fc78b50418b1dff5a216dcfe57e
+    bytes: 770
+    retrieved_at: '2026-11-12T02:50:58Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:58Z'
+    text_pages: 1
+    text_chars: 768
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: a7b430b9b39769b2828f3258a7f57a535661a92dff20cf12f5525e5354f891bd
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/partial_tracing_by_responsibility.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility__4269e5a1fa.txt
+    sha256: "e53d25d3c91d65a665374d56da4e633cb63143ada3ebccdf2ec915d541e8c55b"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility__4269e5a1fa.md
+    raw_sha256: fc1fa7dcaa18c8b4cb9b48044fd261458b78d70315e787ec3d6522e76fffdf39
+    bytes: 3758
+    retrieved_at: '2026-11-12T02:50:59Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:50:59Z'
+    text_pages: 1
+    text_chars: 3728
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: e53d25d3c91d65a665374d56da4e633cb63143ada3ebccdf2ec915d541e8c55b
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/tracing_the_whole_chain.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain__16f6e2eb44.txt
+    sha256: "18a3c637c39e859573053dafe78ae2aac8b24838b365186c6785a689a4f50bb6"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain__16f6e2eb44.md
+    raw_sha256: cb9f858c4871fefd49fbe3b233389b2dc45ef966811ad5cd1feab36b77b0d770
+    bytes: 488
+    retrieved_at: '2026-11-12T02:51:00Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:51:00Z'
+    text_pages: 1
+    text_chars: 486
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 18a3c637c39e859573053dafe78ae2aac8b24838b365186c6785a689a4f50bb6
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/tracing_the_whole_chain_in_the_same_file_system.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system__6386421023.txt
+    sha256: "a5821edb37159108a33654b0e6cc66863173a42fc425ec2e2baa8c07f8d74afb"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system__6386421023.md
+    raw_sha256: 427a1f9f1e7377c1ae75c5b447d420c1f38e0c4fdbee96485622ab38c83f17dd
+    bytes: 1785
+    retrieved_at: '2026-11-12T02:51:01Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:51:01Z'
+    text_pages: 1
+    text_chars: 1783
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: a5821edb37159108a33654b0e6cc66863173a42fc425ec2e2baa8c07f8d74afb
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/understanding_and_fixing_broken_requirement_branches.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches__94ca0d4e1f.txt
+    sha256: "f1873aeea14cb09cc50d36db58b4c6025efe5d359407c28688ca87586f601e7b"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches__94ca0d4e1f.md
+    raw_sha256: 19bbb5054090cfb4d8dc67e09b8cc0bb82b86344e34545a4a415d24a14cae217
+    bytes: 8189
+    retrieved_at: '2026-11-12T02:51:02Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:51:02Z'
+    text_pages: 1
+    text_chars: 8155
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: f1873aeea14cb09cc50d36db58b4c6025efe5d359407c28688ca87586f601e7b
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_use_cases
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/use_cases.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_use_cases__15052b6883.txt
+    sha256: "8346065b979f3854d3e4bcdc4e5170a44e4161f62306507c241e76674fd378f8"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_use_cases__15052b6883.md
+    raw_sha256: 01a8fd27459c74b0e7b873a57a4985923e81d3b1b4377c522d6ca296db2f8468
+    bytes: 2229
+    retrieved_at: '2026-11-12T02:51:03Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:51:03Z'
+    text_pages: 1
+    text_chars: 2227
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: 8346065b979f3854d3e4bcdc4e5170a44e4161f62306507c241e76674fd378f8
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml
+
+  - id: doc_sw_openfasttrace_ug_use_cases_writing_a_specification
+    notes: "ADMITTED under criterion cited_by_recorded_decision: cited by a recorded decision: SEL-035. Assessed mechanically by squiddy.assess on 2026-11-12. || PRIOR NOTE, PRESERVED:"
+    kind: work
+    stage: "in_graph"
+    disposition: active
+    title: 'OpenFastTrace: requirement tracing suite: use_cases/writing_a_specification.md'
+    entry_kind: documentation
+    work_type: documentation
+    source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+    documents: sw_openfasttrace
+    provenance_flag: public
+    cited_in: SEL-035
+    governed_citations: []
+    local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_writing_a_specification__84e540ea81.txt
+    sha256: "bbd20045e3eea7fc0c6474eff41cefeda271ce8c9119ba414debb912feb61067"
+    raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_writing_a_specification__84e540ea81.md
+    raw_sha256: 951d29440b88d3c59aed8c43286214360966f172b434eae9b0c62b3cae54d194
+    bytes: 11723
+    retrieved_at: '2026-11-12T02:51:05Z'
+    direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+    manual_acquisition: false
+    access: open
+    posture: open
+    access_posture: open
+    posture_host: raw.githubusercontent.com
+    posture_observed_at: '2026-11-12T02:51:05Z'
+    text_pages: 1
+    text_chars: 11717
+    inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+    inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+    inbox_licence: GPL-3.0
+    inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+    text_sha256: bbd20045e3eea7fc0c6474eff41cefeda271ce8c9119ba414debb912feb61067
+    acquisition: auto
+    acquisition_status: "acquired"
+    verification_status: declared
+    cataloged_by: /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml

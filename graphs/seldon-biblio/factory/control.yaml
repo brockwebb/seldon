@@ -143,5 +143,10 @@ pause_reason: null
 # Re-answered for the second build (release 20261109_sel036b), on the same basis: the 14 entries the first build held
 # (12 documentation snapshots re-held as form-feed .txt, and li2024kgllm's text taken from arXiv), refreshed in place by
 # the catalog because none was yet in the graph. The first build's answer was 106 (the whole catalog).
+# Re-answered for SEL-037 Part C (release 20261111_sel037), on the same basis, by the same order: 51 entries, all
+# `active` and all `admit` under the graph's criterion (factory/plan.json): the 42 text entries SEL-037 Part B added
+# (8 standards' texts and 34 pages of OpenFastTrace's user guide, scripts/sel037/overlay.py) and the 9 entries
+# admitted metadata-only whose text Part B now holds, re-admitted as revisions (R-213) because their declared content
+# fields moved. The date is local (EST), as the kit reads it.
 review:
-  undecided: {count: 14, date: 2026-11-09}
+  undecided: {count: 51, date: 2026-11-11}

@@ -1,0 +1,29 @@
+{
+  "graph": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+  "kit_config": "squiddy/conformance.yaml",
+  "anchor_mode": "all",
+  "export": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+  "export_sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+  "gates": [
+    {
+      "gate": "scope_anchors_covered",
+      "item": 29,
+      "level": "error",
+      "status": "n/a",
+      "why": "the graph's scope names no anchors (DN-028 R-129: they are optional); nothing to check, and nothing checked is not a pass",
+      "findings": [],
+      "source": "DN-028 R-130, 2026-09-30 (the operator: when he knows something in advance it is anchors, not questions; for the AI-readiness graph a list of what it must cover so it would not be AI-washing); F-001 ADDENDUM 02; DI-238",
+      "lesson": "2026-09-30_what_must_be_covered_is_checked_not_asked.md"
+    }
+  ],
+  "controls": [
+    {
+      "gate": "scope_anchors_covered",
+      "item": 29,
+      "control": "caught",
+      "planted_findings": [
+        "scope anchor 'x001-planted-anchor that no row holds 7f3c' resolves to no located receipt through the served verbs (`work` by identifier, or a `search` row at k = 10 that holds it): the graph does not cover what its operator said it must"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "stage": 13,
+  "sub": null,
+  "label": "13",
+  "name": "export",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.export",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--version",
+    "20261111_sel037",
+    "--date",
+    "2026-11-11"
+  ],
+  "wall_seconds": 0.75,
+  "finished_utc": "2026-11-12T04:27:55.972145+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "built graph from the ledger: 490 nodes / 498 edges in 0.39s; position 1018 event(s), last 49b67ebd3b854223848b790c79da1166 (R-207)",
+    "wrote seldon_biblio_graph_20261111_sel037_2026-11-11.json (410,642 bytes); KGX 490 nodes, 498 edges",
+    "  round trip OK: 490 nodes and 498 edges identical",
+    "published -> /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph.json",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py:500: UserWarning: Field name \"register\" in \"Decision\" shadows an attribute in parent \"Node\"",
+    "  class Decision(Node):"
+  ],
+  "first_line": "built graph from the ledger: 490 nodes / 498 edges in 0.39s; position 1018 event(s), last 49b67ebd3b854223848b790c79da1166 (R-207)"
+}

@@ -1,0 +1,32 @@
+{
+  "stage": 17,
+  "sub": null,
+  "label": "17",
+  "name": "registers",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.registers",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--version",
+    "20261111_sel037",
+    "--date",
+    "2026-11-11",
+    "--diff",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/diff_20261109_sel036_20261111_sel037.md",
+    "--note",
+    "SEL-037 Part C: SEL-036's release plus the open texts Part B fetched (robots.txt read first)"
+  ],
+  "wall_seconds": 0.16,
+  "finished_utc": "2026-11-12T04:33:34.212153+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "EXPORT_VERSIONS.md: wrote the 20261111_sel037 row (490 nodes / 498 edges, sha256 076422bb8382009f)"
+  ],
+  "first_line": "EXPORT_VERSIONS.md: wrote the 20261111_sel037 row (490 nodes / 498 edges, sha256 076422bb8382009f)"
+}

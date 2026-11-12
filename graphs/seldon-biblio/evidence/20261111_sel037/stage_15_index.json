@@ -1,0 +1,35 @@
+{
+  "stage": 15,
+  "sub": null,
+  "label": "15",
+  "name": "index",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.index",
+    "build",
+    "--graph",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio",
+    "--release",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json"
+  ],
+  "wall_seconds": 322.5,
+  "finished_utc": "2026-11-12T04:33:23.794752+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "index: encoder pin holds (e9b6763023c6, weights 9e7d262b1fe5)",
+    "index: corpus 83 texts, 35633 paragraph rows, 0 node units, 0 node rows, 148 metadata rows (0 units new this run)",
+    "index: database built, 35781 rows over 148 documents",
+    "index: pilot 2000 random rows in 104.0s (3161 chars/s); projected 0.19 h for the 2,137,264 characters of 10,382 rows in 51 units not yet keyed",
+    "dense: 27567/35781 rows, 5 units this run, 27.8 rows/s, ETA 295s, units failed 0, elapsed 78s",
+    "dense: 32007/35781 rows, 43 units this run, 45.9 rows/s, ETA 82s, units failed 0, elapsed 144s",
+    "dense: 35556/35781 rows, 49 units this run, 47.6 rows/s, ETA 5s, units failed 0, elapsed 214s",
+    "index: built, 35781 rows, 35781 vectors, 148 shards (51 keyed, 9 retired this run); manifest /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/work/index/index_manifest.json",
+    "<All keys matched successfully>"
+  ],
+  "first_line": "index: encoder pin holds (e9b6763023c6, weights 9e7d262b1fe5)"
+}

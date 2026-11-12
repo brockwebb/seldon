@@ -1,0 +1,28 @@
+{
+  "stage": 16,
+  "sub": null,
+  "label": "16",
+  "name": "diff",
+  "question": "",
+  "pass": true,
+  "decision_stop": false,
+  "returncode": 0,
+  "command": [
+    "/Users/brock/GitHub/squiddy/.venv/bin/python3",
+    "-m",
+    "squiddy.release_diff",
+    "--prev",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261109_sel036_2026-11-09.json",
+    "--new",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+    "--out",
+    "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/diff_20261109_sel036_20261111_sel037.md"
+  ],
+  "wall_seconds": 0.16,
+  "finished_utc": "2026-11-12T04:33:34.051254+00:00",
+  "defect_of_record": null,
+  "output_tail": [
+    "wrote /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/diff_20261109_sel036_20261111_sel037.md: nodes 427 -> 490, edges 433 -> 498"
+  ],
+  "first_line": "wrote /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/exports/diff_20261109_sel036_20261111_sel037.md: nodes 427 -> 490, edges 433 -> 498"
+}
