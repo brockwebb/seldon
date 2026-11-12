@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-9.0.2, pluggy-1.6.0 -- /opt/anaconda3/bin/python
+Using --randomly-seed=1428959453
+rootdir: /Users/brock/GitHub/seldon/.claude/worktrees/calm-riding-melody
+configfile: pyproject.toml
+plugins: randomly-3.16.0, httpx-0.36.0, anyio-4.9.0, xdist-3.8.0, Faker-40.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 18 items / 14 deselected / 4 selected
+
+tests/test_sel038_journals_and_held_releases.py::test_a_receipt_naming_a_held_release_verifies[squiddy] PASSED [ 25%]
+tests/test_sel038_journals_and_held_releases.py::test_an_absent_release_is_still_unavailable_naming_both_names[squiddy] PASSED [ 50%]
+tests/test_sel038_journals_and_held_releases.py::test_a_held_release_that_does_not_decompress_to_its_record_is_unavailable_not_an_exit[squiddy] PASSED [ 75%]
+tests/test_sel038_journals_and_held_releases.py::test_a_superseded_register_release_held_compressed_reads_its_rows[squiddy] PASSED [100%]
+
+======================= 4 passed, 14 deselected in 1.29s =======================

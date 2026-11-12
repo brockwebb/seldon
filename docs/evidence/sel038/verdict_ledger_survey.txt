@@ -1,0 +1,7 @@
+seldon: verdicts -> governed/ledger/events.jsonl (governed ledger); union missing with SEL-038's list: []
+squiddy: verdicts -> governed/ledger/events.jsonl (governed ledger); union missing with SEL-038's list: []
+hazbrief-mcp: verdicts -> state/prior_art_verdicts.jsonl (fallback); union missing with SEL-038's list: ['state/prior_art_verdicts.jsonl']
+aacps-ai-policy: no prior_art block
+factory: no prior_art block
+arnold: verdicts -> governed/ledger/events.jsonl (governed ledger); union missing with SEL-038's list: []
+ai-readiness-kg: verdicts -> state/prior_art_verdicts.jsonl (fallback); union missing with SEL-038's list: ['state/prior_art_verdicts.jsonl']

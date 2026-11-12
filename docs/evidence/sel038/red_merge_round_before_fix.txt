@@ -1,0 +1,92 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge[verdict_ledger] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-3084/test_a_journal_dirty_in_main_d0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x15f892600>
+clean_test_db = None
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+journal = 'state/prior_art_verdicts.jsonl'
+branch_line = {'event_id': 'v-branch', 'type': 'prior_art_verdict'}
+main_line = {'event_id': 'v-main', 'type': 'prior_art_verdict'}
+
+    @pytest.mark.usefixtures("neo4j_available")
+    @pytest.mark.parametrize("journal,branch_line,main_line", [
+        (QUERY_LOG, {"tool": "prior-art/1", "query": "the branch's receipt"},
+         {"tool": "prior-art/1", "query": "Desktop's search during the run"}),
+        (VERDICTS, {"event_id": "v-branch", "type": "prior_art_verdict"},
+         {"event_id": "v-main", "type": "prior_art_verdict"}),
+    ], ids=["query_log", "verdict_ledger"])
+    def test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge(
+            tmp_path, neo4j_driver, clean_test_db, dc, journal, branch_line, main_line):
+        """HB-155, reproduced: the branch appends to a prior-art journal and commits it; during the run a Desktop tool
+        appends to the same journal in main and leaves it uncommitted. With one merge attempt the round must merge: it
+        commits every journal class under the lease, rebases over that housekeeping commit by union, and fast-forwards."""
+        p = _prior_art_dispatch_project(tmp_path, merge_attempts=1)
+        add_task(p, "a", "**Exclusive:** no\n**Touches:** out/a/\n")
+        write_stub(p, {"a": {"write": {journal: json.dumps(branch_line) + "\n", "out/a/1.txt": "a\n"},
+                             "primary_append": {journal: json.dumps(main_line) + "\n"}}})
+        register(p, neo4j_driver, dc, "a", "2026-11-11T00:00:01Z")
+    
+        assert _once(p).count("launching") == 1
+        _wait_settled(p, neo4j_driver, ["a"])
+    
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == "merged" and fin["merge"]["attempts"] == 1, fin["merge"]
+E       AssertionError: {'attempts': 1, 'files': [], 'reason': 'ff_refused', 'stderr': 'error: Your local changes to the following files would...ten by merge:
+E         \tstate/prior_art_verdicts.jsonl
+E         Please commit your changes or stash them before you merge.
+E         Aborting'}
+E       assert ('merge_blocked' == 'merged'
+E         
+E         - merged
+E         + merge_blocked)
+
+tests/test_sel038_journals_and_held_releases.py:214: AssertionError
+_ test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge[query_log] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-3084/test_a_journal_dirty_in_main_d1')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x15f892600>
+clean_test_db = None
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+journal = 'state/prior_art_queries.jsonl'
+branch_line = {'query': "the branch's receipt", 'tool': 'prior-art/1'}
+main_line = {'query': "Desktop's search during the run", 'tool': 'prior-art/1'}
+
+    @pytest.mark.usefixtures("neo4j_available")
+    @pytest.mark.parametrize("journal,branch_line,main_line", [
+        (QUERY_LOG, {"tool": "prior-art/1", "query": "the branch's receipt"},
+         {"tool": "prior-art/1", "query": "Desktop's search during the run"}),
+        (VERDICTS, {"event_id": "v-branch", "type": "prior_art_verdict"},
+         {"event_id": "v-main", "type": "prior_art_verdict"}),
+    ], ids=["query_log", "verdict_ledger"])
+    def test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge(
+            tmp_path, neo4j_driver, clean_test_db, dc, journal, branch_line, main_line):
+        """HB-155, reproduced: the branch appends to a prior-art journal and commits it; during the run a Desktop tool
+        appends to the same journal in main and leaves it uncommitted. With one merge attempt the round must merge: it
+        commits every journal class under the lease, rebases over that housekeeping commit by union, and fast-forwards."""
+        p = _prior_art_dispatch_project(tmp_path, merge_attempts=1)
+        add_task(p, "a", "**Exclusive:** no\n**Touches:** out/a/\n")
+        write_stub(p, {"a": {"write": {journal: json.dumps(branch_line) + "\n", "out/a/1.txt": "a\n"},
+                             "primary_append": {journal: json.dumps(main_line) + "\n"}}})
+        register(p, neo4j_driver, dc, "a", "2026-11-11T00:00:01Z")
+    
+        assert _once(p).count("launching") == 1
+        _wait_settled(p, neo4j_driver, ["a"])
+    
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == "merged" and fin["merge"]["attempts"] == 1, fin["merge"]
+E       AssertionError: {'attempts': 1, 'files': [], 'reason': 'ff_refused', 'stderr': 'error: Your local changes to the following files would...tten by merge:
+E         \tstate/prior_art_queries.jsonl
+E         Please commit your changes or stash them before you merge.
+E         Aborting'}
+E       assert ('merge_blocked' == 'merged'
+E         
+E         - merged
+E         + merge_blocked)
+
+tests/test_sel038_journals_and_held_releases.py:214: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sel038_journals_and_held_releases.py::test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge[verdict_ledger]
+FAILED tests/test_sel038_journals_and_held_releases.py::test_a_journal_dirty_in_main_during_the_run_does_not_block_the_merge[query_log]
+2 failed in 51.87s
