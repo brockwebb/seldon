@@ -133,11 +133,17 @@ ai-readiness-kg gets no return of its own. The other seven hits were not read.)
 
 ## The filings
 
-- hazbrief `a7795a22` and `6d607cb9`: answered by the return below (`seldon cc return --answers`), which closes both.
-- squiddy `2ce35aa9`: squiddy has nothing to do on seldon's account, so per R16 there is no return task. The filing is
-  closed with this answer: seldon reads a held release through `squiddy.exports` (AD-036-R24), and no `keep_plain`
-  declaration is needed for seldon. Until SQ-134's branch is on squiddy main, a receipt naming a held release is
-  refused as held and names the missing accessor. No current receipt names one.
+- hazbrief `a7795a22` and `6d607cb9`: one return, filed from the section below with `seldon cc return --answers
+  seldon:a7795a22`. It is hazbrief-mcp **HB-168** (task `5ed41376`),
+  `cc_tasks/2026-11-12_HB-168_seldon_sel_038_landed_the_verdict_ledger_merges_by_union_and_desktop_p.md`, registered
+  and committed in hazbrief-mcp by the writer. `a7795a22` closed with it. The same command with `--answers
+  seldon:6d607cb9` found the existing return and closed `6d607cb9` too. Both read `completed`.
+- squiddy `2ce35aa9`: squiddy has nothing to do on seldon's account, so per R16 there is no return task. The filing was
+  closed (`seldon task close`, now `completed`) with a note carrying this answer:
+  - seldon reads a held release through `squiddy.exports` (AD-036-R24);
+  - no `keep_plain` declaration is needed for seldon;
+  - until SQ-134's branch is on squiddy main, a receipt naming a held release is refused as held and names the missing
+    accessor. No current receipt names one.
 
 ## For hazbrief-mcp
 
