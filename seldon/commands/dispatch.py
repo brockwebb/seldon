@@ -432,6 +432,35 @@ def _record_own_lines(project_dir, config, cfg) -> dict:
     return c
 
 
+def _record_journals(project_dir, config, cfg) -> list:
+    """AD-034-R19 (SEL-038): commit every system-written append-only journal (`reconcile.JOURNAL_CLASSES`), the event
+    store through `_record_own_lines` and each other journal class in one commit of its own, as a pass's reconcile
+    would. The merge round calls this under the lease before its fast-forward: a journal left dirty in main makes git
+    refuse to fast-forward over a branch that appended to it too (hazbrief HB-155, `state/prior_art_queries.jsonl`).
+
+    **Callers hold the lease**, as `_record_own_lines`'s do. Returns the commit records, the event store's first;
+    a refused commit is printed and returned, never raised, so the fast-forward that follows names what is left.
+    """
+    from seldon.core import reconcile as R
+    out = [_record_own_lines(project_dir, config, cfg)]
+    rest = tuple(c for c in R.JOURNAL_CLASSES if c != "event_store")
+    if not rest or D.tree_state(project_dir)["branch"] != cfg["branch"]:
+        return out
+    try:
+        got = R.reconcile(project_dir, config, set(), classes=rest)
+    except RuntimeError as exc:
+        click.echo(f"record: {', '.join(rest)} NOT committed: {exc}", err=True)
+        return out
+    for c in got["commits"]:
+        if c.get("committed"):
+            click.echo(f"record: {c['message']} -> {c['commit']}")
+        else:
+            click.echo(f"record: {', '.join(c['paths'])} NOT committed ({c['class']}, {c.get('reason')}): "
+                       f"{c.get('stderr', '')}", err=True)
+        out.append(c)
+    return out
+
+
 def _store_dirty(project_dir, store) -> bool:
     return bool(D.git(project_dir, "status", "--porcelain", "--", store).stdout.strip())
 

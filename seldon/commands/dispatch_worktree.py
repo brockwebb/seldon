@@ -946,8 +946,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             moved = WT.changed_files(wt, fork, main_sha)
             rb = WT.rebase(wt, main_sha)
             if not rb["ok"]:
-                return blocked("rebase_conflict", rb["conflicts"], stderr=rb["stderr"][-500:],
-                               attempt=attempt)
+                return blocked("rebase_conflict", rb["conflicts"] or WT.files_named(rb["stderr"]),
+                               stderr=rb["stderr"][-500:], attempt=attempt)
             # Append-only `merge=union` files are excluded: decision 4's check reads their
             # merged content below, and every merge moves the event store, so counting it
             # would re-gate every task whose main moved at all.
@@ -978,8 +978,9 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         with lease_cm():
             # What a pass would commit first, committed first here: a line a Desktop tool
             # appended while a pass held the lease would otherwise make the fast-forward
-            # refuse to overwrite the store.
-            S._record_own_lines(project_dir, config, cfg)
+            # refuse to overwrite the store. Every journal class, not the store alone (AD-034-R19, SEL-038):
+            # hazbrief HB-155 was left `ff_refused` over six prior-art lines Desktop appended during its run.
+            S._record_journals(project_dir, config, cfg)
             _commit_shared(project_dir, cfg)
             now = WT.rev(project_dir, cfg["branch"])
             if now != main_sha:
@@ -990,7 +991,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                     continue   # real change landed while this was gated; rebase again
                 rb = WT.rebase(wt, now)
                 if not rb["ok"]:
-                    return unmerged("rebase_conflict", rb["conflicts"],
+                    return unmerged("rebase_conflict", rb["conflicts"] or WT.files_named(rb["stderr"]),
                                     stderr=rb["stderr"][-500:], attempt=attempt)
                 tip, main_sha = dedupe() or WT.rev(wt, "HEAD"), now
                 bad = union_bad(tip, main_sha, writes)
@@ -1013,8 +1014,9 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 continue
             ff = WT.git(project_dir, "merge", "--ff-only", "-q", branch)
             if ff.returncode != 0:
-                last = ("ff_refused", [], {"attempts": attempt,
-                                           "stderr": (ff.stderr or ff.stdout).strip()[-500:]})
+                said = (ff.stderr or ff.stdout).strip()
+                # AD-034-R20 (SEL-038): the files git named, so the Issue names them (HB-155's said "none named").
+                last = ("ff_refused", WT.files_named(said), {"attempts": attempt, "stderr": said[-500:]})
                 continue
             merge = {"commit": tip, "attempts": attempt, "regated": regated, "gate": gate, "writes": writes,
                      "undeclared_writes": _undeclared(project_dir, cfg, rel, writes),
@@ -2054,7 +2056,8 @@ def regate(project_dir, config, driver, database, domain_config, session_id, cfg
             rb = WT.rebase(wt, main_sha)
             record.update(diff_key=key, main=main_sha)
             if not rb["ok"]:
-                record.update(outcome="fail", reason="rebase_conflict", files=rb["conflicts"],
+                record.update(outcome="fail", reason="rebase_conflict",
+                              files=rb["conflicts"] or WT.files_named(rb["stderr"]),
                               stderr=rb["stderr"][-500:], checks=[], failed=[])
             else:
                 text = (wt / fin["source_file"]).read_text(encoding="utf-8", errors="surrogateescape")

@@ -24,6 +24,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import re
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
@@ -264,6 +265,33 @@ def changed_files(repo: Path, a: str, b: str) -> list:
     # loses the file the task moved away from.
     r = git(repo, "diff", "--name-only", "--no-renames", a, b)
     return sorted(p for p in r.stdout.splitlines() if p)
+
+
+#: The heading git prints above a tab-indented list of the paths that stopped a merge, checkout or rebase
+#: (`unpack-trees.c`'s messages): "Your local changes to the following files would be overwritten by merge:", "The
+#: following untracked working tree files would be removed by checkout:", and their kin.
+_FILES_HEADING_RE = re.compile(r"following (?:untracked working tree )?files? would be \w+ by \w+:\s*$")
+#: The line a content merge prints for each conflicted path ("CONFLICT (content): Merge conflict in <path>").
+_CONFLICT_IN_RE = re.compile(r"^CONFLICT \([^)]*\): Merge conflict in (.+?)\s*$")
+
+
+def files_named(said: str) -> list:
+    """The paths git's own message names (AD-034-R20, SEL-038), sorted and unique; `[]` when it names none.
+
+    hazbrief HB-155's `ff_refused` Issue said "Files: none named" while the stderr it carried read "Your local changes
+    to the following files would be overwritten by merge:" followed by `\\tstate/prior_art_queries.jsonl`. The round
+    records these in a block's `files`, so the Issue names what git named.
+    """
+    out, listing = set(), False
+    for line in (said or "").splitlines():
+        if listing and line[:1] in ("\t", " ") and line.strip():
+            out.add(line.strip())
+            continue
+        listing = bool(_FILES_HEADING_RE.search(line))
+        m = _CONFLICT_IN_RE.match(line.strip())
+        if m:
+            out.add(m.group(1))
+    return sorted(out)
 
 
 def rebase(worktree: Path, onto: str) -> dict:

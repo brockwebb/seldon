@@ -49,6 +49,16 @@ from pathlib import Path
 #: to it, and a reader of `git log` finds each record before the files it records.
 CLASSES = ("event_store", "prior_art", "decision_register", "cadence", "task_files", "filing", "hooks")
 
+#: AD-034-R19 (SEL-038): the classes whose files are system-written append-only JOURNALS, which a Desktop tool may
+#: append to in main while a dispatched session holds the lease, and which that session's branch may append to as
+#: well. The merge round commits all of them under the lease before its fast-forward; with only the event store
+#: committed there, hazbrief HB-155 (six hours, green, strictly ahead) was left `ff_refused` over six uncommitted lines
+#: in `state/prior_art_queries.jsonl`. Every file in these classes is `merge=union` (`hooks.append_only_paths`), so the
+#: round rebases over the commit without a re-gate. The other classes are not journals: the register's rendering is
+#: regenerated, the cadence edits a line in place, and task files, filings and hooks are whole files a branch does not
+#: share with main's dirt; committing them here would only turn a fast-forward into `main_kept_moving`.
+JOURNAL_CLASSES = ("event_store", "prior_art")
+
 #: SEL-025 (AD-038-R23): the directory a consumer files into (AD-036-R12), and the Status words a filing written
 #: before `**Kind:** filing` existed (SEL-023 A) carries. factory's FAC-03 filing, `**Status:** proposed (consumer
 #: filing; no dispatch headers. ...)`, sat untracked in seldon's cc_tasks/ and refused the queue that would fix it.
