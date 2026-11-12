@@ -436,18 +436,21 @@ candidates:
   cited_in: AD-013
   governed_citations: []
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
-  posture: null
-  access_posture: off_allowlist
+  posture: refused
+  access_posture: javascript_only
   posture_host: www.ibm.com
-  posture_observed_at: '2026-11-09T23:50:52Z'
+  posture_observed_at: '2026-11-12T02:50:00Z'
   disposition: metadata_only
   metadata_only_reason: oa_text_not_retrievable
   acquisition: pending_manual
   manual_acquisition: true
   access: open
   verification_status: declared
-  posture_evidence: 'HTTP None off_allowlist:www.ibm.com first bytes: '''''
-  manual_reason: off_allowlist at www.ibm.com
+  posture_evidence: 'HTTP 200  first bytes: ''<!doctype html><html lang="en-US" dir="ltr"><head><script>// fill in DDO\n      digitalData
+    = {\n        page: {\n          category: {\n            primaryCategory: \''ELSKCS\'', // e.g. SB03\n          },\n  '''
+  manual_reason: 'SEL-037 fetch: javascript_only at www.ibm.com'
+  sel037_urls_tried:
+  - https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors
 - id: gotel1994traceability
   kind: work
   entry_kind: work
@@ -467,7 +470,7 @@ candidates:
   publisher: IEEE Comput. Soc. Press
   doi: 10.1109/icre.1994.292398
   source_url: https://doi.org/10.1109/icre.1994.292398
-  access: restricted_or_unknown
+  access: open
   resolved_by: crossref
   resolution:
   - authority: openalex
@@ -500,6 +503,27 @@ candidates:
       venue: Proceedings of IEEE International Conference on Requirements Engineering
   verification_status: resolved
   disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/gotel1994traceability__fbe3e0d57f.pdf
+  sha256: b0ed5a52f3f97e25b645ad63790f7c1ce2c1cabce9df876903516de3869c0919
+  raw_path: archive:docs/raw/gotel1994traceability__fbe3e0d57f.pdf
+  raw_sha256: b0ed5a52f3f97e25b645ad63790f7c1ce2c1cabce9df876903516de3869c0919
+  bytes: 77573
+  retrieved_at: '2026-11-12T02:49:32Z'
+  direct_download_url: https://discovery.ucl.ac.uk/id/eprint/749/1/2.2_rtprob.pdf
+  manual_acquisition: false
+  posture: open
+  access_posture: open
+  posture_host: discovery.ucl.ac.uk
+  posture_observed_at: '2026-11-12T02:49:32Z'
+  text_pages: 8
+  text_chars: 55445
+  inbox_source_url: https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf
+  inbox_obtained_from: https://discovery.ucl.ac.uk/id/eprint/749/1/2.2_rtprob.pdf
+  inbox_licence: author's deposit in UCL Discovery; no licence stated on the copy
+  inbox_stated_by: 'UCL Discovery repository record (OpenAlex OA location); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
 - id: clelandhuang2012traceability
   kind: work
   entry_kind: work
@@ -542,6 +566,17 @@ candidates:
       year: 2012
   verification_status: resolved
   disposition: active
+  sel037_label: table of contents only (GBV's scan); the book is Springer's and is not open
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: null
+  access_posture: off_allowlist
+  posture_host: www.gbv.de
+  posture_observed_at: '2026-11-12T02:49:33Z'
+  posture_evidence: 'HTTP None off_allowlist:www.gbv.de first bytes: ''''; robots.txt None -> not_asked'
+  manual_reason: 'SEL-037 fetch: off_allowlist at www.gbv.de'
+  sel037_urls_tried:
+  - http://www.gbv.de/dms/ilmenau/toc/673088804.PDF
 - id: clelandhuang2014traceability
   kind: work
   entry_kind: work
@@ -906,6 +941,29 @@ candidates:
       year: 2014
   verification_status: resolved
   disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/browning2014doorstop__fa4f126433.pdf
+  sha256: 922cf2b57310ba76a3c9386ab4c29adf4bc723a54071b703810556f282122666
+  raw_path: archive:docs/raw/browning2014doorstop__fa4f126433.pdf
+  raw_sha256: 922cf2b57310ba76a3c9386ab4c29adf4bc723a54071b703810556f282122666
+  bytes: 771991
+  retrieved_at: '2026-11-12T02:49:34Z'
+  direct_download_url: https://content.scirp.org/pdf/jsea_2014032713545074.pdf
+  manual_acquisition: false
+  posture: open
+  access_posture: open
+  posture_host: content.scirp.org
+  posture_observed_at: '2026-11-12T02:49:34Z'
+  text_pages: 8
+  text_chars: 21730
+  inbox_source_url: https://content.scirp.org/pdf/jsea_2014032713545074.pdf
+  inbox_obtained_from: https://content.scirp.org/pdf/jsea_2014032713545074.pdf
+  inbox_licence: CC BY 4.0
+  inbox_stated_by: 'SCIRP Journal of Software Engineering and Applications, open access; recorded by scripts/sel037/fetch.py
+    (SEL-037), licence URLs in the text: CC BY 4.0'
+  licence_found:
+  - CC BY 4.0
 - id: sw_openfasttrace
   kind: software
   entry_kind: software
@@ -1821,6 +1879,23 @@ candidates:
       year: 2009
   verification_status: resolved
   disposition: active
+  sel037_check: OpenAlex's OA location for Mayer's 2009 book (Cambridge, ~300 pages); a short J-STAGE article is not the book
+  manual_acquisition: false
+  acquisition: none
+  posture: null
+  access_posture: rejected
+  posture_host: www.jstage.jst.go.jp
+  posture_observed_at: '2026-11-12T02:53:00Z'
+  posture_evidence: 'HTTP 200  first bytes: ''<!DOCTYPE html>\r\n<html lang="en" xmlns:mml="http://www.w3.org/1998/Math/MathML">\r\n<head>\r\n\r\n\r\n\r\n<!--
+    2.3.9 -->\r\n<meta charset="utf-8">\r\n<meta http-equiv="X-UA-Compatible" content="IE=edge">\r\n<meta nam'''
+  sel037_urls_tried:
+  - https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_pdf
+  - https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_article
+  metadata_only_reason: no_open_access_text
+  metadata_only_detail: 'OpenAlex''s only open-access location for the book is J-STAGE arepj1962/41/0/41_27, which is a different
+    work: Mayer, R. E. (2002), ''Multimedia Learning'', The Annual Report of Educational Psychology in Japan 41:27-29, doi
+    10.5926/arepj1962.41.0_27, 3 pages (its landing page, fetched 2026-11-12). The 2009 second edition is Cambridge University
+    Press''s and has no free copy'
 - id: sweller1988cognitive
   kind: work
   entry_kind: work
@@ -2094,6 +2169,18 @@ candidates:
       year: 2010
   verification_status: resolved
   disposition: active
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: refused
+  access_posture: bot_wall
+  posture_host: content.iospress.com
+  posture_observed_at: '2026-11-12T02:49:36Z'
+  posture_evidence: 'HTTP 403  first bytes: ''<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta
+    http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta
+    nam'''
+  manual_reason: 'SEL-037 fetch: bot_wall at content.iospress.com'
+  sel037_urls_tried:
+  - https://content.iospress.com/download/information-services-and-use/isu613
 - id: shotton2010cito
   kind: work
   entry_kind: work
@@ -2137,6 +2224,16 @@ candidates:
       year: 2010
   verification_status: resolved
   disposition: active
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: null
+  access_posture: off_allowlist
+  posture_host: link.springer.com
+  posture_observed_at: '2026-11-12T02:49:36Z'
+  posture_evidence: 'HTTP None off_allowlist:link.springer.com first bytes: ''''; robots.txt None -> disallow_all'
+  manual_reason: 'SEL-037 fetch: off_allowlist at link.springer.com'
+  sel037_urls_tried:
+  - https://jbiomedsem.biomedcentral.com/track/pdf/10.1186/2041-1480-1-S1-S6
 - id: kleppmann2017ddia
   kind: work
   entry_kind: work
@@ -2424,6 +2521,27 @@ candidates:
       year: 2025
   verification_status: resolved
   disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/fuchss2025lissa__f0d0ddbbe6.pdf
+  sha256: 4456441f8b09a808d19fe7fb40ce8e30a14c30f6d76368a3d176314355a498db
+  raw_path: archive:docs/raw/fuchss2025lissa__f0d0ddbbe6.pdf
+  raw_sha256: 4456441f8b09a808d19fe7fb40ce8e30a14c30f6d76368a3d176314355a498db
+  bytes: 230845
+  retrieved_at: '2026-11-12T02:49:38Z'
+  direct_download_url: https://publikationen.bibliothek.kit.edu/1000178348/156555617
+  manual_acquisition: false
+  posture: open
+  access_posture: open
+  posture_host: publikationen.bibliothek.kit.edu
+  posture_observed_at: '2026-11-12T02:49:38Z'
+  text_pages: 13
+  text_chars: 80005
+  inbox_source_url: https://publikationen.bibliothek.kit.edu/1000178348/156555617
+  inbox_obtained_from: https://publikationen.bibliothek.kit.edu/1000178348/156555617
+  inbox_licence: KITopen open-access deposit
+  inbox_stated_by: 'KITopen repository record (OpenAlex OA location); recorded by scripts/sel037/fetch.py (SEL-037), licence
+    URLs in the text: none'
 - id: li2024selfroute
   kind: work
   entry_kind: work
@@ -2680,7 +2798,7 @@ candidates:
   year: 2020
   publisher: DeepMind
   source_url: https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/
-  access: restricted_or_unknown
+  access: open
   resolved_by: null
   resolution:
   - authority: openalex
@@ -2739,17 +2857,29 @@ candidates:
       error: off_allowlist:deepmind.google
       at: '2026-11-09T23:18:05Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: open
+  access_posture: open
   posture_host: deepmind.google
-  posture_observed_at: '2026-11-09T23:18:05Z'
-  posture_evidence: 'HTTP None off_allowlist:deepmind.google first bytes: '''''
-  disposition: metadata_only
+  posture_observed_at: '2026-11-12T02:49:49Z'
+  disposition: active
   verification_status: declared
-  metadata_only_reason: publisher_page_not_reachable_by_script
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (deepmind.google) is off_allowlist
+  manual_acquisition: false
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/krakovna2020specgaming__c6b3c3f066.txt
+  sha256: 4478012827b70bc0bacc5b51c8ff327b7abea21f03d5e8f8ee180b1a8b2b9d17
+  raw_path: archive:docs/raw/krakovna2020specgaming__c6b3c3f066.html
+  raw_sha256: 8d3f5614be190db73375d1b2ab83c35a841cb1e55d11b704d25a26df3709cc6e
+  bytes: 155421
+  retrieved_at: '2026-11-12T02:49:49Z'
+  direct_download_url: https://deepmind.google/blog/specification-gaming-the-flip-side-of-ai-ingenuity/
+  text_pages: 1
+  text_chars: 11343
+  inbox_source_url: https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/
+  inbox_obtained_from: https://deepmind.google/blog/specification-gaming-the-flip-side-of-ai-ingenuity/
+  inbox_licence: publisher's free web page; all rights reserved
+  inbox_stated_by: 'deepmind.google; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: 4478012827b70bc0bacc5b51c8ff327b7abea21f03d5e8f8ee180b1a8b2b9d17
 - id: lehman2020creativity
   kind: work
   entry_kind: work
@@ -2856,7 +2986,7 @@ candidates:
   title_cited: NIST SP 800-53 Rev. 5, Security and Privacy Controls for Information Systems and Organizations (AU family)
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id009
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   authors:
@@ -2890,9 +3020,7 @@ candidates:
   verification_status: resolved
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at https://doi.org/10.6028/nist.sp.800-53r5'
+  text_in: doc_nist_sp800_53r5_1
 - id: cfr21_11_10e
   kind: standard
   entry_kind: standard
@@ -2944,17 +3072,21 @@ candidates:
       error: off_allowlist:www.ecfr.gov
       at: '2026-11-09T23:18:06Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: robots_disallowed
+  access_posture: robots_disallowed
   posture_host: www.ecfr.gov
-  posture_observed_at: '2026-11-09T23:18:06Z'
-  posture_evidence: 'HTTP None off_allowlist:www.ecfr.gov first bytes: '''''
+  posture_observed_at: '2026-11-12T02:50:06Z'
+  posture_evidence: 'HTTP 200  first bytes: ''''; robots.txt 200 -> rules, rule Disallow: /api/renderer/v1/content/ (line
+    16)'
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: off_allowlist at www.ecfr.gov'
+  manual_reason: 'SEL-037 fetch: robots_disallowed at www.ecfr.gov'
+  sel037_urls_tried:
+  - https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11/subpart-B/section-11.10
+  - https://www.ecfr.gov/api/renderer/v1/content/enhanced/current/title-21?part=11&section=11.10
 - id: who_trs1033_annex4
   kind: standard
   entry_kind: standard
@@ -2963,7 +3095,7 @@ candidates:
   title_cited: 'WHO TRS 1033 Annex 4: Guideline on data integrity (ALCOA+)'
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id010
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   year: 2021
@@ -3005,9 +3137,7 @@ candidates:
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at None'
+  text_in: doc_who_trs1033_annex4_1
 - id: w3c_prov_o
   kind: standard
   entry_kind: standard
@@ -3016,7 +3146,7 @@ candidates:
   title_cited: 'PROV-O: The PROV Ontology'
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id011
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   year: 2013
@@ -3064,13 +3194,10 @@ candidates:
   access_posture: off_allowlist
   posture_host: www.w3.org
   posture_observed_at: '2026-11-09T23:18:06Z'
-  posture_evidence: 'HTTP None off_allowlist:www.w3.org first bytes: '''''
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: off_allowlist at www.w3.org'
+  text_in: doc_w3c_prov_o_1
 - id: slsa_v1_0
   kind: standard
   entry_kind: standard
@@ -3079,7 +3206,7 @@ candidates:
   title_cited: SLSA specification v1.0
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id012
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   year: 2023
@@ -3127,13 +3254,10 @@ candidates:
   access_posture: off_allowlist
   posture_host: slsa.dev
   posture_observed_at: '2026-11-09T23:18:06Z'
-  posture_evidence: 'HTTP None off_allowlist:slsa.dev first bytes: '''''
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: off_allowlist at slsa.dev'
+  text_in: doc_slsa_v1_0_1
 - id: torresarias2019intoto
   kind: work
   entry_kind: work
@@ -3216,7 +3340,7 @@ candidates:
   title_cited: 'RFC 9162: Certificate Transparency Version 2.0'
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id013
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   authors:
@@ -3249,9 +3373,7 @@ candidates:
   verification_status: resolved
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at https://doi.org/10.17487/rfc9162'
+  text_in: doc_rfc9162_1
 - id: rfc8493
   kind: standard
   entry_kind: standard
@@ -3260,7 +3382,7 @@ candidates:
   title_cited: 'RFC 8493: The BagIt File Packaging Format (V1.0)'
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id014
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   authors:
@@ -3295,9 +3417,7 @@ candidates:
   verification_status: resolved
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at https://doi.org/10.17487/rfc8493'
+  text_in: doc_rfc8493_1
 - id: premis_3_0
   kind: standard
   entry_kind: standard
@@ -3306,7 +3426,7 @@ candidates:
   title_cited: PREMIS Data Dictionary for Preservation Metadata, Version 3.0
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id015
   - docs_design_ad_032_factory_control_design@audit_and_provenance_nist_sp_800_53_rev_5_au_family_21_cfr_11_10_e_who_trs_1033_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   year: 2015
@@ -3354,13 +3474,10 @@ candidates:
   access_posture: off_allowlist
   posture_host: www.loc.gov
   posture_observed_at: '2026-11-09T23:18:08Z'
-  posture_evidence: 'HTTP None off_allowlist:www.loc.gov first bytes: '''''
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: off_allowlist at www.loc.gov'
+  text_in: doc_premis_3_0_1
 - id: oais_iso14721
   kind: standard
   entry_kind: standard
@@ -3415,15 +3532,17 @@ candidates:
     answer: null
   posture: null
   access_posture: off_allowlist
-  posture_host: public.ccsds.org
-  posture_observed_at: '2026-11-09T23:18:08Z'
-  posture_evidence: 'HTTP None off_allowlist:public.ccsds.org first bytes: '''''
+  posture_host: ccsds.org
+  posture_observed_at: '2026-11-12T02:50:21Z'
+  posture_evidence: 'HTTP None off_allowlist:ccsds.org first bytes: ''''; robots.txt None -> disallow_all'
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: off_allowlist at public.ccsds.org'
+  manual_reason: 'SEL-037 fetch: off_allowlist at ccsds.org'
+  sel037_urls_tried:
+  - https://public.ccsds.org/Pubs/650x0m2.pdf
 - id: ndsa_levels_v2
   kind: standard
   entry_kind: standard
@@ -3476,7 +3595,14 @@ candidates:
   metadata_only_reason: standard_no_doi
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at None'
+  manual_reason: 'SEL-037 fetch: off_allowlist at www.ndsa.org'
+  posture: null
+  access_posture: off_allowlist
+  posture_host: www.ndsa.org
+  posture_observed_at: '2026-11-12T02:50:21Z'
+  posture_evidence: 'HTTP None off_allowlist:www.ndsa.org first bytes: ''''; robots.txt None -> disallow_all'
+  sel037_urls_tried:
+  - https://ndsa.org/publications/levels-of-digital-preservation/
 - id: sw_openlineage
   kind: software
   entry_kind: software
@@ -3665,17 +3791,22 @@ candidates:
       error: off_allowlist:www.gao.gov
       at: '2026-11-09T23:18:40Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: refused
+  access_posture: bot_wall
   posture_host: www.gao.gov
-  posture_observed_at: '2026-11-09T23:18:40Z'
-  posture_evidence: 'HTTP None off_allowlist:www.gao.gov first bytes: '''''
+  posture_observed_at: '2026-11-12T02:49:51Z'
+  posture_evidence: 'HTTP 403  first bytes: ''<HTML><HEAD>\n<TITLE>Access Denied</TITLE>\n</HEAD><BODY>\n<H1>Access Denied</H1>\n
+    \nYou don\''t have permission to access "http&#58;&#47;&#47;www&#46;gao&#46;gov&#47;products&#47;gao&#45;02&#45;195" on
+    thi'''
   disposition: metadata_only
   verification_status: declared
   metadata_only_reason: publisher_page_not_reachable_by_script
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (www.gao.gov) is off_allowlist
+  manual_reason: 'SEL-037 fetch: bot_wall at www.gao.gov'
+  sel037_urls_tried:
+  - https://www.gao.gov/assets/gao-02-195.pdf
+  - https://www.gao.gov/products/gao-02-195
 - id: nasa_oig_ig_12_012
   kind: work
   entry_kind: grey
@@ -3692,7 +3823,7 @@ candidates:
   year: 2012
   standard_number: IG-12-012
   source_url: https://oig.nasa.gov/docs/IG-12-012.pdf
-  access: restricted_or_unknown
+  access: open
   resolved_by: null
   resolution:
   - authority: openalex
@@ -3749,17 +3880,28 @@ candidates:
       error: off_allowlist:oig.nasa.gov
       at: '2026-11-09T23:19:12Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: open
+  access_posture: open
   posture_host: oig.nasa.gov
-  posture_observed_at: '2026-11-09T23:19:12Z'
-  posture_evidence: 'HTTP None off_allowlist:oig.nasa.gov first bytes: '''''
-  disposition: metadata_only
+  posture_observed_at: '2026-11-12T02:49:54Z'
+  disposition: active
   verification_status: declared
-  metadata_only_reason: publisher_page_not_reachable_by_script
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (oig.nasa.gov) is off_allowlist
+  manual_acquisition: false
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/nasa_oig_ig_12_012__5c598b5d56.pdf
+  sha256: cde9af9c166990c035e28e918e7f892e6fb7204fec45938a739e401d43e8cc13
+  raw_path: archive:docs/raw/nasa_oig_ig_12_012__5c598b5d56.pdf
+  raw_sha256: cde9af9c166990c035e28e918e7f892e6fb7204fec45938a739e401d43e8cc13
+  bytes: 639618
+  retrieved_at: '2026-11-12T02:49:54Z'
+  direct_download_url: https://oig.nasa.gov/wp-content/uploads/2024/02/IG-12-012.pdf
+  text_pages: 42
+  text_chars: 67518
+  inbox_source_url: https://oig.nasa.gov/docs/IG-12-012.pdf
+  inbox_obtained_from: https://oig.nasa.gov/wp-content/uploads/2024/02/IG-12-012.pdf
+  inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+  inbox_stated_by: 'a NASA OIG report; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
 - id: nygard2011adr
   kind: work
   entry_kind: grey
@@ -3776,7 +3918,7 @@ candidates:
   - Nygard
   year: 2011
   source_url: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
-  access: restricted_or_unknown
+  access: open
   resolved_by: null
   resolution:
   - authority: openalex
@@ -3838,17 +3980,29 @@ candidates:
       error: off_allowlist:cognitect.com
       at: '2026-11-09T23:19:21Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: open
+  access_posture: open
   posture_host: cognitect.com
-  posture_observed_at: '2026-11-09T23:19:21Z'
-  posture_evidence: 'HTTP None off_allowlist:cognitect.com first bytes: '''''
-  disposition: metadata_only
+  posture_observed_at: '2026-11-12T02:49:55Z'
+  disposition: active
   verification_status: declared
-  metadata_only_reason: publisher_page_not_reachable_by_script
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (cognitect.com) is off_allowlist
+  manual_acquisition: false
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/nygard2011adr__692ba2f113.txt
+  sha256: 7185ab40109ec959f30c8fd9e6b91819f89d7982945f5cc837b39b757044e9a0
+  raw_path: archive:docs/raw/nygard2011adr__692ba2f113.html
+  raw_sha256: 01bdb22a561924b5eb072b501b530d14157d4a674561dac25cfff3197eb04faf
+  bytes: 45800
+  retrieved_at: '2026-11-12T02:49:55Z'
+  direct_download_url: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+  text_pages: 1
+  text_chars: 8668
+  inbox_source_url: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+  inbox_obtained_from: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+  inbox_licence: publisher's free web page; all rights reserved
+  inbox_stated_by: 'cognitect.com; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: 7185ab40109ec959f30c8fd9e6b91819f89d7982945f5cc837b39b757044e9a0
 - id: sw_madr
   kind: software
   entry_kind: software
@@ -3961,7 +4115,7 @@ candidates:
   authors:
   - NIOSH
   source_url: https://www.cdc.gov/niosh/hierarchy-of-controls/
-  access: restricted_or_unknown
+  access: open
   resolved_by: null
   resolution:
   - authority: openalex
@@ -4020,17 +4174,29 @@ candidates:
       error: off_allowlist:www.cdc.gov
       at: '2026-11-09T23:19:53Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: open
+  access_posture: open
   posture_host: www.cdc.gov
-  posture_observed_at: '2026-11-09T23:19:53Z'
-  posture_evidence: 'HTTP None off_allowlist:www.cdc.gov first bytes: '''''
-  disposition: metadata_only
+  posture_observed_at: '2026-11-12T02:49:58Z'
+  disposition: active
   verification_status: declared
-  metadata_only_reason: publisher_page_not_reachable_by_script
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (www.cdc.gov) is off_allowlist
+  manual_acquisition: false
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/niosh_hierarchy_of_controls__4f8b8c4d33.txt
+  sha256: 66d2452562e4c85e0e51a43500446324f97940fbf9a7a3d540597407a4e902a5
+  raw_path: archive:docs/raw/niosh_hierarchy_of_controls__4f8b8c4d33.html
+  raw_sha256: 968c0d34ff7739f5f53f74b41ba504745d241b5a91bdf8f43bd749a0e9de19c6
+  bytes: 49089
+  retrieved_at: '2026-11-12T02:49:58Z'
+  direct_download_url: https://www.cdc.gov/niosh/hierarchy-of-controls/about/index.html
+  text_pages: 1
+  text_chars: 7144
+  inbox_source_url: https://www.cdc.gov/niosh/hierarchy-of-controls/
+  inbox_obtained_from: https://www.cdc.gov/niosh/hierarchy-of-controls/about/index.html
+  inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+  inbox_stated_by: 'a CDC/NIOSH page; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: 66d2452562e4c85e0e51a43500446324f97940fbf9a7a3d540597407a4e902a5
 - id: rtca_do178c
   kind: standard
   entry_kind: standard
@@ -4089,7 +4255,7 @@ candidates:
   title_cited: 'NASA NPR 7150.2, Software Engineering Requirements: SWE-072 (bidirectional traceability)'
   provenance_flag: public
   cited_in: AD-032
-  governed_citations:
+  governed_citations: &id016
   - docs_design_ad_032_factory_control_design@decisions_and_lessons_weber_aha_and_becerra_fernandez_2001_gao_02_195_2002_nasa_
   cataloged_by: scripts/sel036/build_candidates.py (SEL-036 Part B)
   publisher: NASA
@@ -4130,9 +4296,9 @@ candidates:
   verification_status: declared
   disposition: metadata_only
   metadata_only_reason: standard_no_doi
-  manual_acquisition: true
-  acquisition: pending_manual
-  manual_reason: 'the text is published free and was not fetched: no fetch route at None'
+  sel037_note: '7150.2D carries no SWE-072: bi-directional traceability is section 3.12.1, [SWE-052]. The cited number is
+    an earlier revision''s, and NODIS serves only the current one (N_PR_7150_002C_ answered 404, 2026-11-12)'
+  text_in: doc_nasa_swe_072_1
 - id: arxiv_2406_14325
   kind: work
   entry_kind: work
@@ -4241,6 +4407,29 @@ candidates:
       year: 2017
   verification_status: resolved
   disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/han2017checklists__6ca948bb8b.pdf
+  sha256: 4aefe740d81f5164e8eeac0a93c608f9581619510c9591206db827114fd1dc2f
+  raw_path: archive:docs/raw/han2017checklists__6ca948bb8b.pdf
+  raw_sha256: 4aefe740d81f5164e8eeac0a93c608f9581619510c9591206db827114fd1dc2f
+  bytes: 12565555
+  retrieved_at: '2026-11-12T02:49:42Z'
+  direct_download_url: https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable
+  manual_acquisition: false
+  posture: open
+  access_posture: open
+  posture_host: journals.plos.org
+  posture_observed_at: '2026-11-12T02:49:42Z'
+  text_pages: 14
+  text_chars: 49842
+  inbox_source_url: https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable
+  inbox_obtained_from: https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable
+  inbox_licence: CC BY 4.0
+  inbox_stated_by: 'PLoS ONE (every article CC BY); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text:
+    CC BY 4.0'
+  licence_found:
+  - CC BY 4.0
 - id: chen2023chatgpt
   kind: work
   entry_kind: work
@@ -4372,6 +4561,16 @@ candidates:
       year: 2021
   verification_status: resolved
   disposition: active
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: null
+  access_posture: off_allowlist
+  posture_host: link.springer.com
+  posture_observed_at: '2026-11-12T02:49:38Z'
+  posture_evidence: 'HTTP None off_allowlist:link.springer.com first bytes: ''''; robots.txt None -> disallow_all'
+  manual_reason: 'SEL-037 fetch: off_allowlist at link.springer.com'
+  sel037_urls_tried:
+  - https://systematicreviewsjournal.biomedcentral.com/track/pdf/10.1186/s13643-020-01542-z
 - id: zhuge2024agentjudge
   kind: work
   entry_kind: work
@@ -4510,6 +4709,27 @@ candidates:
       year: 2026
   verification_status: resolved
   disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/aaai_v40i44_41105__0c735e58eb.pdf
+  sha256: c74ecaf4ae7a3bc4461fc013266539af1ecb18ee23a578a43e3bb29e17c99d35
+  raw_path: archive:docs/raw/aaai_v40i44_41105__0c735e58eb.pdf
+  raw_sha256: c74ecaf4ae7a3bc4461fc013266539af1ecb18ee23a578a43e3bb29e17c99d35
+  bytes: 253545
+  retrieved_at: '2026-11-12T02:49:45Z'
+  direct_download_url: https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066
+  manual_acquisition: false
+  posture: open
+  access_posture: open
+  posture_host: ojs.aaai.org
+  posture_observed_at: '2026-11-12T02:49:45Z'
+  text_pages: 8
+  text_chars: 34163
+  inbox_source_url: https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066
+  inbox_obtained_from: https://ojs.aaai.org/index.php/AAAI/article/download/41105/45066
+  inbox_licence: AAAI open access proceedings
+  inbox_stated_by: 'AAAI OJS; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_found_by: Crossref's record of the DOI (its text-mining link); doi.org's robots.txt redirects off the Network line
 - id: anthropic2026seeing
   kind: work
   entry_kind: grey
@@ -4589,8 +4809,14 @@ candidates:
   metadata_only_reason: publisher_page_not_reachable_by_script
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (www.anthropic.com) is off the Network line, URL unknown to the
-    note
+  manual_reason: 'SEL-037 fetch: off_allowlist at claude.com'
+  posture: null
+  access_posture: off_allowlist
+  posture_host: claude.com
+  posture_observed_at: '2026-11-12T02:49:59Z'
+  posture_evidence: 'HTTP None off_allowlist:claude.com first bytes: ''''; robots.txt None -> not_asked'
+  sel037_urls_tried:
+  - https://claude.com/blog/seeing-like-an-agent
 - id: adler2021incremental
   kind: work
   entry_kind: work
@@ -4637,6 +4863,17 @@ candidates:
       year: 2020
   verification_status: resolved
   disposition: active
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: refused
+  access_posture: bot_wall
+  posture_host: pmc.ncbi.nlm.nih.gov
+  posture_observed_at: '2026-11-12T02:49:46Z'
+  posture_evidence: 'HTTP 403  first bytes: ''<!doctype html><meta charset="utf-8"><meta name=viewport content="width=device-width,
+    initial-scale=1"><title>403</title>403 Forbidden'''
+  manual_reason: 'SEL-037 fetch: bot_wall at pmc.ncbi.nlm.nih.gov'
+  sel037_urls_tried:
+  - https://pmc.ncbi.nlm.nih.gov/articles/PMC7250616/
 - id: li2024kgllm
   kind: work
   entry_kind: work
@@ -4791,6 +5028,17 @@ candidates:
       venue: ProQuest Demo Repository
   verification_status: resolved
   disposition: active
+  manual_acquisition: true
+  acquisition: pending_manual
+  posture: robots_disallowed
+  access_posture: robots_disallowed
+  posture_host: pqdtopen.proquest.com
+  posture_observed_at: '2026-11-12T02:49:40Z'
+  posture_evidence: 'HTTP 521  first bytes: ''''; robots.txt 521 -> disallow_all'
+  manual_reason: 'SEL-037 fetch: robots_disallowed at pqdtopen.proquest.com'
+  sel037_urls_tried:
+  - https://api.openalex.org/works/W2566161782
+  - http://pqdtopen.proquest.com/#viewpdf?dispub=10139524
 - id: xiang2025splite
   kind: work
   entry_kind: work
@@ -5368,17 +5616,21 @@ candidates:
       error: off_allowlist:randomlabs.ai
       at: '2026-11-09T23:20:39Z'
     answer: null
-  posture: null
-  access_posture: off_allowlist
+  posture: refused
+  access_posture: javascript_only
   posture_host: randomlabs.ai
-  posture_observed_at: '2026-11-09T23:20:39Z'
-  posture_evidence: 'HTTP None off_allowlist:randomlabs.ai first bytes: '''''
+  posture_observed_at: '2026-11-12T02:49:59Z'
+  posture_evidence: 'HTTP 200  first bytes: ''<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <link rel="icon"
+    type="image/svg+xml" href="/favicon.svg" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0"
+    />\n   '''
   disposition: metadata_only
   verification_status: declared
   metadata_only_reason: publisher_page_not_reachable_by_script
   manual_acquisition: true
   acquisition: pending_manual
-  manual_reason: no index holds it, and its publisher's page (randomlabs.ai) is off_allowlist
+  manual_reason: 'SEL-037 fetch: javascript_only at randomlabs.ai'
+  sel037_urls_tried:
+  - https://randomlabs.ai/blog/slate
 - id: yu2026multiagentmemory
   kind: work
   entry_kind: work
@@ -5482,3 +5734,1552 @@ candidates:
       year: 2025
   verification_status: resolved
   disposition: active
+- id: doc_nist_sp800_53r5_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'NIST SP 800-53 Rev. 5, Security and Privacy Controls for Information Systems and Organizations (AU family): text'
+  source_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+  documents: nist_sp800_53r5
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id009
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/nist_sp800_53r5__59354d6322.pdf
+  sha256: fc63bcd61715d0181dd8e85998b1e6201ae3515fc6626102101cab1841e11ec6
+  raw_path: archive:docs/raw/nist_sp800_53r5__59354d6322.pdf
+  raw_sha256: fc63bcd61715d0181dd8e85998b1e6201ae3515fc6626102101cab1841e11ec6
+  bytes: 6073678
+  retrieved_at: '2026-11-12T02:50:02Z'
+  direct_download_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: nvlpubs.nist.gov
+  posture_observed_at: '2026-11-12T02:50:02Z'
+  text_pages: 492
+  text_chars: 1583747
+  inbox_source_url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+  inbox_obtained_from: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf
+  inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+  inbox_stated_by: 'a NIST Special Publication; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+- id: doc_who_trs1033_annex4_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'WHO TRS 1033 Annex 4: Guideline on data integrity (ALCOA+): text'
+  source_url: https://iris.who.int/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/download
+  documents: who_trs1033_annex4
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id010
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/who_trs1033_annex4__da7bf7ff27.pdf
+  sha256: 02074af0640353918750da1b5d4f469ea86fb36fb89eb06d3df447f1a6912ebc
+  raw_path: archive:docs/raw/who_trs1033_annex4__da7bf7ff27.pdf
+  raw_sha256: 02074af0640353918750da1b5d4f469ea86fb36fb89eb06d3df447f1a6912ebc
+  bytes: 2567091
+  retrieved_at: '2026-11-12T02:50:12Z'
+  direct_download_url: https://iris.who.int/server/api/core/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/content
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: iris.who.int
+  posture_observed_at: '2026-11-12T02:50:12Z'
+  text_pages: 324
+  text_chars: 721514
+  inbox_source_url: https://iris.who.int/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/download
+  inbox_obtained_from: https://iris.who.int/server/api/core/bitstreams/ad465ddb-fad4-47b5-9094-442b25baf261/content
+  inbox_licence: CC BY-NC-SA 3.0 IGO
+  inbox_stated_by: 'WHO IRIS (WHO''s standard licence for its publications); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: CC BY-NC-SA 3.0'
+  licence_found:
+  - CC BY-NC-SA 3.0
+  text_found_by: WHO IRIS record of TRS 1033 (the whole report; Annex 4 is inside it)
+- id: doc_w3c_prov_o_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'PROV-O: The PROV Ontology'
+  source_url: https://www.w3.org/TR/prov-o/
+  documents: w3c_prov_o
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id011
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/w3c_prov_o__6e48bcc4a0.txt
+  sha256: f8ee7c241f6cbefbcd9bf23b93e1f00054869e20964021ce34f854bb9e4db860
+  raw_path: archive:docs/raw/w3c_prov_o__6e48bcc4a0.html
+  raw_sha256: 6b96671ab84faf12ce3f041aca12c3f93a6df2ed242348810743179a68e69555
+  bytes: 464179
+  retrieved_at: '2026-11-12T02:50:14Z'
+  direct_download_url: https://www.w3.org/TR/prov-o/
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: www.w3.org
+  posture_observed_at: '2026-11-12T02:50:14Z'
+  text_pages: 1
+  text_chars: 191487
+  inbox_source_url: https://www.w3.org/TR/prov-o/
+  inbox_obtained_from: https://www.w3.org/TR/prov-o/
+  inbox_licence: W3C Document License
+  inbox_stated_by: 'W3C Recommendation; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: f8ee7c241f6cbefbcd9bf23b93e1f00054869e20964021ce34f854bb9e4db860
+- id: doc_slsa_v1_0_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: SLSA • SLSA specification
+  source_url: https://slsa.dev/spec/v1.0/
+  documents: slsa_v1_0
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id012
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/slsa_v1_0__71a8d7609a.txt
+  sha256: 50524558a4ca4b27d3e6b3b1e483cddc7f88c126f9d099794c9760e4f57e35c9
+  raw_path: archive:docs/raw/slsa_v1_0__71a8d7609a.html
+  raw_sha256: 8908b5ce4bbfd28d92d1b10361f077b0693d6ae5bb6db403e25f9488526b8ea9
+  bytes: 16585
+  retrieved_at: '2026-11-12T02:50:15Z'
+  direct_download_url: https://slsa.dev/spec/v1.0/
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: slsa.dev
+  posture_observed_at: '2026-11-12T02:50:15Z'
+  text_pages: 1
+  text_chars: 646
+  inbox_source_url: https://slsa.dev/spec/v1.0/
+  inbox_obtained_from: https://slsa.dev/spec/v1.0/
+  inbox_licence: Community Specification License 1.0
+  inbox_stated_by: 'the SLSA specification (OpenSSF); recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text:
+    none'
+  text_sha256: 50524558a4ca4b27d3e6b3b1e483cddc7f88c126f9d099794c9760e4f57e35c9
+- id: doc_rfc9162_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'RFC 9162: Certificate Transparency Version 2.0: text'
+  source_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+  documents: rfc9162
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id013
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/rfc9162__4e673cd4fa.txt
+  sha256: 41fbb0d01b204ecb24252f658da1bfa4852a75f012c2b9caf1183a6ab6838051
+  raw_path: archive:docs/raw/rfc9162__4e673cd4fa.txt
+  raw_sha256: a0e432ce7580c99fcc8faf0cf3f6191f9ce6b4864f949158e020d4ecb295081f
+  bytes: 128266
+  retrieved_at: '2026-11-12T02:50:17Z'
+  direct_download_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: www.rfc-editor.org
+  posture_observed_at: '2026-11-12T02:50:17Z'
+  text_pages: 1
+  text_chars: 128425
+  inbox_source_url: https://www.rfc-editor.org/rfc/rfc9162.txt
+  inbox_obtained_from: https://www.rfc-editor.org/rfc/rfc9162.txt
+  inbox_licence: IETF Trust Legal Provisions (BCP 78)
+  inbox_stated_by: 'an RFC; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: 41fbb0d01b204ecb24252f658da1bfa4852a75f012c2b9caf1183a6ab6838051
+- id: doc_rfc8493_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'RFC 8493: The BagIt File Packaging Format (V1.0): text'
+  source_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+  documents: rfc8493
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id014
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/rfc8493__7480b4b582.txt
+  sha256: a18c985ec8709aa1c5ef0907bc557e180d8d3508679897b8106d8622afb79601
+  raw_path: archive:docs/raw/rfc8493__7480b4b582.txt
+  raw_sha256: 4964147d2e6e16442d4a6dbfbe68178a8f33c3e791c06d68a8b33f51ad821537
+  bytes: 48783
+  retrieved_at: '2026-11-12T02:50:18Z'
+  direct_download_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: www.rfc-editor.org
+  posture_observed_at: '2026-11-12T02:50:18Z'
+  text_pages: 26
+  text_chars: 48918
+  inbox_source_url: https://www.rfc-editor.org/rfc/rfc8493.txt
+  inbox_obtained_from: https://www.rfc-editor.org/rfc/rfc8493.txt
+  inbox_licence: IETF Trust Legal Provisions (BCP 78)
+  inbox_stated_by: 'an RFC; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_sha256: a18c985ec8709aa1c5ef0907bc557e180d8d3508679897b8106d8622afb79601
+- id: doc_premis_3_0_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'PREMIS Data Dictionary for Preservation Metadata, Version 3.0: text'
+  source_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+  documents: premis_3_0
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id015
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/premis_3_0__0f5b62523a.pdf
+  sha256: 2e3e3fe001798f3f43d26b4aed03e8737310fa044ee001af2493f7c72517b0e0
+  raw_path: archive:docs/raw/premis_3_0__0f5b62523a.pdf
+  raw_sha256: 2e3e3fe001798f3f43d26b4aed03e8737310fa044ee001af2493f7c72517b0e0
+  bytes: 2176353
+  retrieved_at: '2026-11-12T02:50:20Z'
+  direct_download_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: www.loc.gov
+  posture_observed_at: '2026-11-12T02:50:20Z'
+  text_pages: 283
+  text_chars: 380369
+  inbox_source_url: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+  inbox_obtained_from: https://www.loc.gov/standards/premis/v3/premis-3-0-final.pdf
+  inbox_licence: Library of Congress publication, free to use
+  inbox_stated_by: 'loc.gov; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_found_by: the PREMIS v3 page's link to the data dictionary
+- id: doc_nasa_swe_072_1
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'NASA NPR 7150.2, Software Engineering Requirements: SWE-072 (bidirectional traceability): text'
+  source_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+  documents: nasa_swe_072
+  provenance_flag: public
+  cited_in: AD-032
+  governed_citations: *id016
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/raw/nasa_swe_072__93aea914ac.pdf
+  sha256: 1a5b7f9b0b0141e88374adf7a21a4d6ced0b29c221ca89a0a514f495d6532802
+  raw_path: archive:docs/raw/nasa_swe_072__93aea914ac.pdf
+  raw_sha256: 1a5b7f9b0b0141e88374adf7a21a4d6ced0b29c221ca89a0a514f495d6532802
+  bytes: 566622
+  retrieved_at: '2026-11-12T02:50:24Z'
+  direct_download_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: nodis3.gsfc.nasa.gov
+  posture_observed_at: '2026-11-12T02:50:24Z'
+  text_pages: 89
+  text_chars: 215490
+  inbox_source_url: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+  inbox_obtained_from: https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf
+  inbox_licence: US Government work, not subject to copyright (17 U.S.C. 105)
+  inbox_stated_by: 'NASA NODIS; recorded by scripts/sel037/fetch.py (SEL-037), licence URLs in the text: none'
+  text_found_by: NPR 7150.2D, the current revision, in NASA's directives system
+- id: doc_sw_openfasttrace_ug_installation_installation
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: installation/installation.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_installation__41a78e777e.txt
+  sha256: c3cdddfccdb1314bb38e548c455469e83db78c4da96e2da44134e59f1670d7e3
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_installation__41a78e777e.md
+  raw_sha256: a9cb1fd11546abf25aa048b0e43b6a1afc572cc34702a50ae1d53666fc0b785f
+  bytes: 1368
+  retrieved_at: '2026-11-12T02:50:27Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:27Z'
+  text_pages: 1
+  text_chars: 1594
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/installation.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: c3cdddfccdb1314bb38e548c455469e83db78c4da96e2da44134e59f1670d7e3
+- id: doc_sw_openfasttrace_ug_installation_linux
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: installation/linux.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_linux__3f7cdf50fd.txt
+  sha256: c92970e7017e681066f54f1dc22c7a7ddb093090040708cd29e1c47ab0236dea
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_linux__3f7cdf50fd.md
+  raw_sha256: bebbe465ce9eff67bc118f4544a39d5c0952aa310a002e77bcdf5fa1597ec137
+  bytes: 1736
+  retrieved_at: '2026-11-12T02:50:28Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:28Z'
+  text_pages: 1
+  text_chars: 1955
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/linux.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: c92970e7017e681066f54f1dc22c7a7ddb093090040708cd29e1c47ab0236dea
+- id: doc_sw_openfasttrace_ug_installation_macos
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: installation/macos.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_macos__d226fc8ba6.txt
+  sha256: f09614124f2cb6cd297dbec3f24ccfd4f307d597118d6669556b147f0f2c4f2e
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_macos__d226fc8ba6.md
+  raw_sha256: f5bc6b23358b8406ceab801e684fd1442736b240b08e22afc47b60b3fc93f7a0
+  bytes: 1293
+  retrieved_at: '2026-11-12T02:50:29Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:29Z'
+  text_pages: 1
+  text_chars: 1512
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/macos.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: f09614124f2cb6cd297dbec3f24ccfd4f307d597118d6669556b147f0f2c4f2e
+- id: doc_sw_openfasttrace_ug_installation_windows
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: installation/windows.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_installation_windows__e9d6a84d68.txt
+  sha256: a5933cd0c51dda2cae72ada1e6aaf31567520f2ccee744612ce043d5da09c782
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_installation_windows__e9d6a84d68.md
+  raw_sha256: 3768266937e9245c6475e9d0801df829d723f448dc2ba5014636ef945f1bcd7c
+  bytes: 1204
+  retrieved_at: '2026-11-12T02:50:30Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:30Z'
+  text_pages: 1
+  text_chars: 1425
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/installation/windows.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: a5933cd0c51dda2cae72ada1e6aaf31567520f2ccee744612ce043d5da09c782
+- id: doc_sw_openfasttrace_ug_introduction_concepts_and_terms
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: introduction/concepts_and_terms.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_concepts_and_terms__4dc7194bf6.txt
+  sha256: 384f3a48eea4f66a027f6945458b2600725faf08e681aabf7f33bb94248b5671
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_concepts_and_terms__4dc7194bf6.md
+  raw_sha256: 1e1840ebb159c3ae820ece06d00f6b63ad7a55b89332cbfa738e2178a6c7e809
+  bytes: 2911
+  retrieved_at: '2026-11-12T02:50:31Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:31Z'
+  text_pages: 1
+  text_chars: 3143
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/concepts_and_terms.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 384f3a48eea4f66a027f6945458b2600725faf08e681aabf7f33bb94248b5671
+- id: doc_sw_openfasttrace_ug_introduction_introduction
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: introduction/introduction.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_introduction__b1bed337d0.txt
+  sha256: 5ec7a63b37c51c6fa8ecc16a66abb55526ccfd3ebeca914412afcd2a3f8ad833
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_introduction__b1bed337d0.md
+  raw_sha256: 67758df505692a8829641e82de486ad996824a0cb87190f471d79be42d864038
+  bytes: 385
+  retrieved_at: '2026-11-12T02:50:32Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:32Z'
+  text_pages: 1
+  text_chars: 611
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/introduction.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 5ec7a63b37c51c6fa8ecc16a66abb55526ccfd3ebeca914412afcd2a3f8ad833
+- id: doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: introduction/what_is_requirement_tracing.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing__5791cb7f60.txt
+  sha256: 62dcf0fad589966d3a3ef1b7b18eccfabd1a947616c1543116eaed79d49af9f0
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing__5791cb7f60.md
+  raw_sha256: 1c147928fd8d5a5b97a7ca3f9a268c40caef71df45eff9f12bb86ca5b87d67f4
+  bytes: 1469
+  retrieved_at: '2026-11-12T02:50:34Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:34Z'
+  text_pages: 1
+  text_chars: 1710
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/what_is_requirement_tracing.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 62dcf0fad589966d3a3ef1b7b18eccfabd1a947616c1543116eaed79d49af9f0
+- id: doc_sw_openfasttrace_ug_introduction_who_should_read_this_document
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: introduction/who_should_read_this_document.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_who_should_read_this_document__4b3667f0b8.txt
+  sha256: e11e160e0f7323861c1ff135030e0dd096a26f41b6944555f2895bc9abf4ee5e
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_who_should_read_this_document__4b3667f0b8.md
+  raw_sha256: 808e668280638284029e1a18716ec7d73b97c2c42a48bb990a5956c7e4a670b2
+  bytes: 879
+  retrieved_at: '2026-11-12T02:50:35Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:35Z'
+  text_pages: 1
+  text_chars: 1122
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/who_should_read_this_document.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: e11e160e0f7323861c1ff135030e0dd096a26f41b6944555f2895bc9abf4ee5e
+- id: doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: introduction/why_do_i_need_requirement_tracing.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing__48ffe80439.txt
+  sha256: 2564686e23262516fa9771d623947059634a924e4a4c174c8ee24669033d5ca0
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing__48ffe80439.md
+  raw_sha256: 3788fa70fcd6d54b23f51ba71a4e727b72527b45a5b86f6dbc4146bfc6ea6a9b
+  bytes: 471
+  retrieved_at: '2026-11-12T02:50:36Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:36Z'
+  text_pages: 1
+  text_chars: 718
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/introduction/why_do_i_need_requirement_tracing.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 2564686e23262516fa9771d623947059634a924e4a4c174c8ee24669033d5ca0
+- id: doc_sw_openfasttrace_ug_oft_api_exit_codes
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: oft_api/exit_codes.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_exit_codes__6c0acfe43e.txt
+  sha256: 87e5a043865fb61da6cdae68a4d3363927ff95a3cdc195d45d2ebbd2663247a8
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_exit_codes__6c0acfe43e.md
+  raw_sha256: 4d104261b69a1110a9236996d31b411bbceb0b427cb9f50ac3a7040c540ad714
+  bytes: 243
+  retrieved_at: '2026-11-12T02:50:37Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:37Z'
+  text_pages: 1
+  text_chars: 462
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/exit_codes.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 87e5a043865fb61da6cdae68a4d3363927ff95a3cdc195d45d2ebbd2663247a8
+- id: doc_sw_openfasttrace_ug_oft_api_oft_api
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: oft_api/oft_api.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_oft_api__0ab99e7e18.txt
+  sha256: 66232f7501d1c6f6d2d38b651182e0eb40c8ddfb6ba8f8993d357b7a10ace03f
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_oft_api__0ab99e7e18.md
+  raw_sha256: 3a1db1ad5d37f737f15afc3209909f370c0a4deed3fc032f6478db720ee83470
+  bytes: 593
+  retrieved_at: '2026-11-12T02:50:38Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:38Z'
+  text_pages: 1
+  text_chars: 809
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/oft_api.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 66232f7501d1c6f6d2d38b651182e0eb40c8ddfb6ba8f8993d357b7a10ace03f
+- id: doc_sw_openfasttrace_ug_oft_api_using_oft_from_java
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: oft_api/using_oft_from_java.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_oft_api_using_oft_from_java__ba604c81b4.txt
+  sha256: 4062041f5bf8d162e302940aa618aafd096c82a9d6da1dfec61578ad23129179
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_oft_api_using_oft_from_java__ba604c81b4.md
+  raw_sha256: e9e2091d085e9b02774a1a2ab0d9e7ce833d7d78ea6f65b5ac262c85324b3f35
+  bytes: 4466
+  retrieved_at: '2026-11-12T02:50:39Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:39Z'
+  text_pages: 1
+  text_chars: 4694
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/oft_api/using_oft_from_java.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 4062041f5bf8d162e302940aa618aafd096c82a9d6da1dfec61578ad23129179
+- id: doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: product_lifecycle/product_lifecycle.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle__6eac649476.txt
+  sha256: b51a662b34b78c71241af24a859ec091bc3f9e038ef3a5d23c338e613d073afb
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle__6eac649476.md
+  raw_sha256: fc02f8ea8130203e5666918c95cb01bef9527bac8dabec433b9a34414263a085
+  bytes: 3919
+  retrieved_at: '2026-11-12T02:50:40Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:40Z'
+  text_pages: 1
+  text_chars: 4156
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/product_lifecycle/product_lifecycle.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: b51a662b34b78c71241af24a859ec091bc3f9e038ef3a5d23c338e613d073afb
+- id: doc_sw_openfasttrace_ug_reference_build_integration
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/build_integration.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_build_integration__1ad372d5b5.txt
+  sha256: f87acdc828fcdcf646bb9ad53bf11ffb65dc4faf15f5067362853160dd180293
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_build_integration__1ad372d5b5.md
+  raw_sha256: f5c5a33a6777805562ab990ef8892284cfe902113b3d21fa05a117b9fd5ffe00
+  bytes: 415
+  retrieved_at: '2026-11-12T02:50:42Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:42Z'
+  text_pages: 1
+  text_chars: 643
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/build_integration.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: f87acdc828fcdcf646bb9ad53bf11ffb65dc4faf15f5067362853160dd180293
+- id: doc_sw_openfasttrace_ug_reference_console_tracing_report
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/console_tracing_report.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_console_tracing_report__c945f9243c.txt
+  sha256: b9661dbdae6ea577b0e043ba1843387694050dcc36985510122426815326f885
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_console_tracing_report__c945f9243c.md
+  raw_sha256: 76c195ed06be404cde10720e1784edc74c29398c03978a32d6a4aa8e33825145
+  bytes: 4214
+  retrieved_at: '2026-11-12T02:50:43Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:43Z'
+  text_pages: 1
+  text_chars: 4413
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/console_tracing_report.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: b9661dbdae6ea577b0e043ba1843387694050dcc36985510122426815326f885
+- id: doc_sw_openfasttrace_ug_reference_input_format_support
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/input_format_support.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_input_format_support__04bff56624.txt
+  sha256: 4f5dc6698053809ce755023171f1f5135a0c8dffe79ab09bc3e48ff67c29dc1f
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_input_format_support__04bff56624.md
+  raw_sha256: faa40b59a35b171bdb2b60c1eeee6863905e0b87bef2efe3c080794b364e28aa
+  bytes: 5355
+  retrieved_at: '2026-11-12T02:50:44Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:44Z'
+  text_pages: 1
+  text_chars: 5586
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/input_format_support.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 4f5dc6698053809ce755023171f1f5135a0c8dffe79ab09bc3e48ff67c29dc1f
+- id: doc_sw_openfasttrace_ug_reference_oft_command_line
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/oft_command_line.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_oft_command_line__54db3253df.txt
+  sha256: ba4e7567eb76b7c127306b953e63ea0f1ada47b293a700583f0119d6836a836c
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_oft_command_line__54db3253df.md
+  raw_sha256: 5d8ba01a96343ebbf6dce82910d50436fea7cbe65a40f098981c0db7d44115f0
+  bytes: 3732
+  retrieved_at: '2026-11-12T02:50:45Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:45Z'
+  text_pages: 1
+  text_chars: 3959
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/oft_command_line.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: ba4e7567eb76b7c127306b953e63ea0f1ada47b293a700583f0119d6836a836c
+- id: doc_sw_openfasttrace_ug_reference_reference
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/reference.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_reference__354b69af1a.txt
+  sha256: 295bda63555c20fe9fe15750b9360a456e8cef3e2b374057047bbab7a487887f
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_reference__354b69af1a.md
+  raw_sha256: cfacb73a26e8a04ee37f03101cd240cb7d14783785b9eb53779ea42fd50e7824
+  bytes: 1073
+  retrieved_at: '2026-11-12T02:50:46Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:46Z'
+  text_pages: 1
+  text_chars: 1293
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/reference.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 295bda63555c20fe9fe15750b9360a456e8cef3e2b374057047bbab7a487887f
+- id: doc_sw_openfasttrace_ug_reference_report_summary
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/report_summary.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_report_summary__ebc874bc4a.txt
+  sha256: 58af0967e197f0f3081aae9f381015313ad7c9fce3d583f8ec66c0c31a93a86f
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_report_summary__ebc874bc4a.md
+  raw_sha256: 291aa74de4fd4c3fec62d4f835128e030a0e0fa137fb17c2d06b8c32cb19e556
+  bytes: 556
+  retrieved_at: '2026-11-12T02:50:47Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:47Z'
+  text_pages: 1
+  text_chars: 781
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/report_summary.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 58af0967e197f0f3081aae9f381015313ad7c9fce3d583f8ec66c0c31a93a86f
+- id: doc_sw_openfasttrace_ug_reference_xml_tracing_report
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: reference/xml_tracing_report.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_reference_xml_tracing_report__68356b4530.txt
+  sha256: 636fd8c5390bf72918da27816c019e2595917dc7d39a4d751616bc2595c9e4b2
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_reference_xml_tracing_report__68356b4530.md
+  raw_sha256: 760ac3af48c0d9d4485a807fe9d9c94da2b3365a069e0d8cc613af36e464c9ed
+  bytes: 7597
+  retrieved_at: '2026-11-12T02:50:48Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:48Z'
+  text_pages: 1
+  text_chars: 7826
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/reference/xml_tracing_report.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 636fd8c5390bf72918da27816c019e2595917dc7d39a4d751616bc2595c9e4b2
+- id: doc_sw_openfasttrace_ug_tool_support_templates_for_ides
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: tool_support/templates_for_ides.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_templates_for_ides__297c3a5d4a.txt
+  sha256: e78bb2e057ae42e85b5cd9734f0a15209aa516362692293d603251df1fb96f5b
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_templates_for_ides__297c3a5d4a.md
+  raw_sha256: a31dc5abdd6bc35867f72316fcfe3351dbc4d122fceeff00c9196b3c4f83fe73
+  bytes: 311
+  retrieved_at: '2026-11-12T02:50:50Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:50Z'
+  text_pages: 1
+  text_chars: 543
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/templates_for_ides.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: e78bb2e057ae42e85b5cd9734f0a15209aa516362692293d603251df1fb96f5b
+- id: doc_sw_openfasttrace_ug_tool_support_tool_support
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: tool_support/tool_support.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_tool_support__de3a24af35.txt
+  sha256: b47119707221948153b6926881cd4ca4ff458366c22a985e50696d97f5fc38f1
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_tool_support__de3a24af35.md
+  raw_sha256: e97cea8f4d942a7c30af42c0067a67b4390d48662cd9112d5f8eb070ac591cdc
+  bytes: 250
+  retrieved_at: '2026-11-12T02:50:51Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:51Z'
+  text_pages: 1
+  text_chars: 476
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tool_support.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: b47119707221948153b6926881cd4ca4ff458366c22a985e50696d97f5fc38f1
+- id: doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: tool_support/tools_for_authoring_oft_documents.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents__47b2960e92.txt
+  sha256: 59dbd6c177d2071f590d49c0da703d8efb801f38eca1c88d7b04631b34c4eb86
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents__47b2960e92.md
+  raw_sha256: 3ac564eea9d66bb5f8d83e77e4994ff905a322e7d362a3d79a1a5ef353e35fda
+  bytes: 2923
+  retrieved_at: '2026-11-12T02:50:52Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:52Z'
+  text_pages: 1
+  text_chars: 3161
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/tool_support/tools_for_authoring_oft_documents.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 59dbd6c177d2071f590d49c0da703d8efb801f38eca1c88d7b04631b34c4eb86
+- id: doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/delegating_requirement_coverage.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage__410e9687a8.txt
+  sha256: 3677e72490ac88d418f6d365999d6edb5bcf93ef541f9e30611d795c23b0bd7b
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage__410e9687a8.md
+  raw_sha256: ce0c2f620952b6e003ac5df87e09088a3f1e8529dc7875379ccadcb91fe0cee9
+  bytes: 2396
+  retrieved_at: '2026-11-12T02:50:53Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:53Z'
+  text_pages: 1
+  text_chars: 2634
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/delegating_requirement_coverage.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 3677e72490ac88d418f6d365999d6edb5bcf93ef541f9e30611d795c23b0bd7b
+- id: doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/distributing_the_detailing_work.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work__25ef14f07a.txt
+  sha256: 40ca6d683816a6b142977c7b7402deaee4ae8bd6d4b38db6769d58b3be54a46f
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work__25ef14f07a.md
+  raw_sha256: 0c0bc2cab3bd5d485e1a78d5e489da4bf912856c615a9dd4bcaecabfa34e7b25
+  bytes: 3332
+  retrieved_at: '2026-11-12T02:50:54Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:54Z'
+  text_pages: 1
+  text_chars: 3575
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/distributing_the_detailing_work.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 40ca6d683816a6b142977c7b7402deaee4ae8bd6d4b38db6769d58b3be54a46f
+- id: doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing__77a9eaeab8.txt
+  sha256: 84642d1720c533c0e371dfade3998d78c4b4bfeecce2201c062ed208eda56b61
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing__77a9eaeab8.md
+  raw_sha256: ce77668a6d3ef92994d3c59ca2c0281ce9f9eaab3e3f2b58174e5111f23fd059
+  bytes: 866
+  retrieved_at: '2026-11-12T02:50:55Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:55Z'
+  text_pages: 1
+  text_chars: 1136
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/excluding_parts_of_a_specification_document_for_oft_parsing.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 84642d1720c533c0e371dfade3998d78c4b4bfeecce2201c062ed208eda56b61
+- id: doc_sw_openfasttrace_ug_use_cases_filtering_by_status
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/filtering_by_status.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_filtering_by_status__58eb3aff79.txt
+  sha256: f52579cb689f31b5657a34ff79dcbcd329363d7ae96c11956d21a69fffee39b1
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_filtering_by_status__58eb3aff79.md
+  raw_sha256: 9d71b4f15af4c8b5069d0d19cd4226474a7f3ce7f21aac128e77746a76f47e5f
+  bytes: 604
+  retrieved_at: '2026-11-12T02:50:57Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:57Z'
+  text_pages: 1
+  text_chars: 834
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/filtering_by_status.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: f52579cb689f31b5657a34ff79dcbcd329363d7ae96c11956d21a69fffee39b1
+- id: doc_sw_openfasttrace_ug_use_cases_html_tracing_reports
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/html_tracing_reports.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_html_tracing_reports__f8e079a05e.txt
+  sha256: a7b430b9b39769b2828f3258a7f57a535661a92dff20cf12f5525e5354f891bd
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_html_tracing_reports__f8e079a05e.md
+  raw_sha256: 93c42aafe12138f5121cce706d6f6ac515f47fc78b50418b1dff5a216dcfe57e
+  bytes: 537
+  retrieved_at: '2026-11-12T02:50:58Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:58Z'
+  text_pages: 1
+  text_chars: 768
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/html_tracing_reports.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: a7b430b9b39769b2828f3258a7f57a535661a92dff20cf12f5525e5354f891bd
+- id: doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/partial_tracing_by_responsibility.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility__4269e5a1fa.txt
+  sha256: e53d25d3c91d65a665374d56da4e633cb63143ada3ebccdf2ec915d541e8c55b
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility__4269e5a1fa.md
+  raw_sha256: fc1fa7dcaa18c8b4cb9b48044fd261458b78d70315e787ec3d6522e76fffdf39
+  bytes: 3512
+  retrieved_at: '2026-11-12T02:50:59Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:50:59Z'
+  text_pages: 1
+  text_chars: 3728
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/partial_tracing_by_responsibility.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: e53d25d3c91d65a665374d56da4e633cb63143ada3ebccdf2ec915d541e8c55b
+- id: doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/tracing_the_whole_chain.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain__16f6e2eb44.txt
+  sha256: 18a3c637c39e859573053dafe78ae2aac8b24838b365186c6785a689a4f50bb6
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain__16f6e2eb44.md
+  raw_sha256: cb9f858c4871fefd49fbe3b233389b2dc45ef966811ad5cd1feab36b77b0d770
+  bytes: 252
+  retrieved_at: '2026-11-12T02:51:00Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:51:00Z'
+  text_pages: 1
+  text_chars: 486
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 18a3c637c39e859573053dafe78ae2aac8b24838b365186c6785a689a4f50bb6
+- id: doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/tracing_the_whole_chain_in_the_same_file_system.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system__6386421023.txt
+  sha256: a5821edb37159108a33654b0e6cc66863173a42fc425ec2e2baa8c07f8d74afb
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system__6386421023.md
+  raw_sha256: 427a1f9f1e7377c1ae75c5b447d420c1f38e0c4fdbee96485622ab38c83f17dd
+  bytes: 1525
+  retrieved_at: '2026-11-12T02:51:01Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:51:01Z'
+  text_pages: 1
+  text_chars: 1783
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/tracing_the_whole_chain_in_the_same_file_system.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: a5821edb37159108a33654b0e6cc66863173a42fc425ec2e2baa8c07f8d74afb
+- id: doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/understanding_and_fixing_broken_requirement_branches.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches__94ca0d4e1f.txt
+  sha256: f1873aeea14cb09cc50d36db58b4c6025efe5d359407c28688ca87586f601e7b
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches__94ca0d4e1f.md
+  raw_sha256: 19bbb5054090cfb4d8dc67e09b8cc0bb82b86344e34545a4a415d24a14cae217
+  bytes: 7924
+  retrieved_at: '2026-11-12T02:51:02Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:51:02Z'
+  text_pages: 1
+  text_chars: 8155
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/understanding_and_fixing_broken_requirement_branches.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: f1873aeea14cb09cc50d36db58b4c6025efe5d359407c28688ca87586f601e7b
+- id: doc_sw_openfasttrace_ug_use_cases_use_cases
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/use_cases.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_use_cases__15052b6883.txt
+  sha256: 8346065b979f3854d3e4bcdc4e5170a44e4161f62306507c241e76674fd378f8
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_use_cases__15052b6883.md
+  raw_sha256: 01a8fd27459c74b0e7b873a57a4985923e81d3b1b4377c522d6ca296db2f8468
+  bytes: 2007
+  retrieved_at: '2026-11-12T02:51:03Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:51:03Z'
+  text_pages: 1
+  text_chars: 2227
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/use_cases.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: 8346065b979f3854d3e4bcdc4e5170a44e4161f62306507c241e76674fd378f8
+- id: doc_sw_openfasttrace_ug_use_cases_writing_a_specification
+  kind: work
+  entry_kind: documentation
+  work_type: documentation
+  stage: cataloged
+  title: 'OpenFastTrace: requirement tracing suite: use_cases/writing_a_specification.md'
+  source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+  documents: sw_openfasttrace
+  provenance_flag: public
+  cited_in: SEL-035
+  governed_citations: []
+  cataloged_by: scripts/sel037/overlay.py (SEL-037 Part B)
+  verification_status: fetched
+  disposition: active
+  acquisition: auto
+  acquisition_status: acquired
+  local_path: archive:docs/text/doc_sw_openfasttrace_ug_use_cases_writing_a_specification__84e540ea81.txt
+  sha256: bbd20045e3eea7fc0c6474eff41cefeda271ce8c9119ba414debb912feb61067
+  raw_path: archive:docs/raw/doc_sw_openfasttrace_ug_use_cases_writing_a_specification__84e540ea81.md
+  raw_sha256: 951d29440b88d3c59aed8c43286214360966f172b434eae9b0c62b3cae54d194
+  bytes: 11487
+  retrieved_at: '2026-11-12T02:51:05Z'
+  direct_download_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+  manual_acquisition: false
+  access: open
+  posture: open
+  access_posture: open
+  posture_host: raw.githubusercontent.com
+  posture_observed_at: '2026-11-12T02:51:05Z'
+  text_pages: 1
+  text_chars: 11717
+  inbox_source_url: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+  inbox_obtained_from: https://raw.githubusercontent.com/itsallcode/openfasttrace/main/doc/user_guide/use_cases/writing_a_specification.md
+  inbox_licence: GPL-3.0
+  inbox_stated_by: 'the repository''s LICENSE (SEL-036 catalog, sw_openfasttrace); recorded by scripts/sel037/fetch.py (SEL-037),
+    licence URLs in the text: none'
+  text_sha256: bbd20045e3eea7fc0c6474eff41cefeda271ce8c9119ba414debb912feb61067

@@ -1,0 +1,158 @@
+# scripts/sel037/sel037.yaml: every tunable and every target of SEL-037 Part B's fetcher (scripts/sel037/fetch.py).
+# ~/GitHub/CLAUDE.md section 2: no host, path, ceiling or URL lives in the code.
+checkpoint: graphs/seldon-biblio/evidence/sel037/units.jsonl     # one fsynced line per finished unit (section 15.1)
+log: graphs/seldon-biblio/evidence/sel037/progress.txt            # progress lines, as on stdout (15.3)
+# Held bytes go where SEL-036's went: under the graph's archive root (graph.yaml `archive.root`, squiddy DN-056 R-246).
+archive_raw_dir: docs/raw
+archive_text_dir: docs/text
+# No contact address is sent anywhere (factory FAC-01 RESULT). Its product token, `seldon-biblio`, is what robots.txt
+# rules are matched against (squiddy.robots.product_token).
+user_agent: "seldon-biblio/0.1 (SEL-037; https://github.com/brockwebb/seldon)"
+timeout_seconds: 60
+max_redirects: 5
+retries: 3                          # on 429 and 5xx only; a 403 is an answer (a posture), not a transient
+retry_backoff_seconds: 4
+host_delay_seconds: {default: 1.0, arxiv.org: 3.0, api.openalex.org: 0.2}
+min_page_text_chars: 400            # sel036.yaml's: under this, with scripts, a page is a JavaScript shell
+min_pdf_text_chars: 1200            # graphs/seldon-biblio/config.yaml engine.acquire.min_text_chars (squiddy's floor)
+evidence_first_bytes: 200           # the response bytes a refusal's evidence keeps (the task: status, first bytes, time)
+pilot_units: 5                      # section 15.4: the first units of a fresh checkpoint, timed, then a projection
+progress_seconds: 30
+ceiling_requests: 600
+ceiling_wall_seconds: 3600
+# SEL-037's Network line, verbatim. A URL or a redirect hop to any other host is never requested: it is recorded
+# `off_allowlist` with the host, and the entry stays `acquisition: manual`.
+allowlist: [api.openalex.org, api.crossref.org, api.datacite.org, api.github.com, doi.org, arxiv.org, github.com,
+            raw.githubusercontent.com, discovery.ucl.ac.uk, content.scirp.org, www.jstage.jst.go.jp,
+            content.iospress.com, jbiomedsem.biomedcentral.com, systematicreviewsjournal.biomedcentral.com,
+            publikationen.bibliothek.kit.edu, journals.plos.org, ojs.aaai.org, www.ncbi.nlm.nih.gov,
+            pmc.ncbi.nlm.nih.gov, www.ibm.com, deepmind.google, nvlpubs.nist.gov, www.ecfr.gov, www.w3.org, slsa.dev,
+            www.rfc-editor.org, www.loc.gov, public.ccsds.org, www.gao.gov, oig.nasa.gov, cognitect.com, www.cdc.gov,
+            randomlabs.ai, www.who.int, iris.who.int, ndsa.org, osf.io, nodis3.gsfc.nasa.gov, www.anthropic.com,
+            pqdtopen.proquest.com]
+# Hosts the task forbids asking again (SEL-036 drew HTTP 403 there): never requested, recorded `not_retried`.
+never_retry: [dl.acm.org]
+
+# THE TARGETS. One unit each. `entry` is the catalog id the text belongs to. `mode`:
+#   on_entry   the text is held on the entry itself (a work, grey literature or a documentation entry): squiddy's
+#              acquire reads it through its held-file branch
+#   doc_entry  a STANDARD's text: squiddy's acquire gives a `standard` no text (`standard_no_doi`), so the text is a
+#              documentation entry `doc_<entry>_1` that `documents` the standard, as SEL-036 held its OMG specs
+#   doc_many   every link `discover` finds, each its own documentation entry `<new_prefix><file stem>`
+# `urls` are tried in order, the first that yields a text ending the unit. `discover` fetches `page` (robots read
+# first) and takes the first match of `link` (every match for doc_many) as the URL, resolved against the page.
+# `expect` (a regex the text must contain, case-insensitive) and `min_pages` check that the bytes ARE the work; a
+# failure is `rejected` with what was found, never kept. `licence` is what the publisher states, `licence_basis`
+# where; the fetcher also records every Creative Commons licence URL the text itself carries (`licence_found`).
+# `found_by`: how a URL the note did not give was found.
+targets:
+  # ---- works: open texts SEL-036's Network line did not name ----
+  - {entry: gotel1994traceability, mode: on_entry, urls: ["https://discovery.ucl.ac.uk/749/1/2.2_rtprob.pdf"],
+     expect: "traceability", licence: "author's deposit in UCL Discovery; no licence stated on the copy",
+     licence_basis: "UCL Discovery repository record (OpenAlex OA location)"}
+  - {entry: clelandhuang2012traceability, mode: on_entry, urls: ["http://www.gbv.de/dms/ilmenau/toc/673088804.PDF"],
+     label: "table of contents only (GBV's scan); the book is Springer's and is not open",
+     licence: "a library catalogue's table-of-contents scan", licence_basis: "GBV catalogue enrichment"}
+  - {entry: browning2014doorstop, mode: on_entry, urls: ["https://content.scirp.org/pdf/jsea_2014032713545074.pdf"],
+     expect: "doorstop", licence: "CC BY 4.0", licence_basis: "SCIRP Journal of Software Engineering and Applications, open access"}
+  # The landing page is second: if robots.txt forbids the PDF, the page still says what the item is, and the
+  # `min_pages` check then records it as not the book rather than keeping it.
+  - {entry: mayer2009multimedia, mode: on_entry, urls: ["https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_pdf",
+                                                        "https://www.jstage.jst.go.jp/article/arepj1962/41/0/41_27/_article"],
+     expect: "multimedia", min_pages: 100,
+     check: "OpenAlex's OA location for Mayer's 2009 book (Cambridge, ~300 pages); a short J-STAGE article is not the book",
+     no_open_copy: "OpenAlex's only open-access location for the book is J-STAGE arepj1962/41/0/41_27, which is a
+       different work: Mayer, R. E. (2002), 'Multimedia Learning', The Annual Report of Educational Psychology in Japan
+       41:27-29, doi 10.5926/arepj1962.41.0_27, 3 pages (its landing page, fetched 2026-11-12). The 2009 second
+       edition is Cambridge University Press's and has no free copy",
+     licence: "J-STAGE free access", licence_basis: "J-STAGE article page"}
+  - {entry: groth2010nanopublication, mode: on_entry,
+     urls: ["https://content.iospress.com/download/information-services-and-use/isu613"], expect: "nanopublication",
+     licence: "IOS Press free access copy", licence_basis: "OpenAlex OA location"}
+  - {entry: shotton2010cito, mode: on_entry, urls: ["https://jbiomedsem.biomedcentral.com/track/pdf/10.1186/2041-1480-1-S1-S6"],
+     expect: "CiTO", licence: "CC BY 2.0", licence_basis: "BioMed Central open access (Journal of Biomedical Semantics)"}
+  - {entry: fuchss2025lissa, mode: on_entry, urls: ["https://publikationen.bibliothek.kit.edu/1000178348/156555617"],
+     expect: "LiSSA", licence: "KITopen open-access deposit", licence_basis: "KITopen repository record (OpenAlex OA location)"}
+  - {entry: rethlefsen2021prismas, mode: on_entry,
+     urls: ["https://systematicreviewsjournal.biomedcentral.com/track/pdf/10.1186/s13643-020-01542-z"], expect: "PRISMA",
+     licence: "CC BY 4.0", licence_basis: "BioMed Central open access (Systematic Reviews)"}
+  - {entry: pershina2014graph, mode: on_entry,
+     discover: {page: "https://api.openalex.org/works/W2566161782", link: "https?://pqdtopen\\.proquest\\.com/[^\"\\s]+"},
+     expect: "graph", licence: "ProQuest Dissertations open (PQDT Open): author-granted open access",
+     licence_basis: "OpenAlex W2566161782 OA location", found_by: "OpenAlex's record of the thesis"}
+  - {entry: han2017checklists, mode: on_entry,
+     urls: ["https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0183591&type=printable"],
+     expect: "checklist", licence: "CC BY 4.0", licence_basis: "PLoS ONE (every article CC BY)"}
+  - {entry: aaai_v40i44_41105, mode: on_entry,
+     discover: {page: "https://api.crossref.org/works/10.1609/aaai.v40i44.41105",
+                link: "https://ojs\\.aaai\\.org/index\\.php/AAAI/article/download/41105/[0-9]+"},
+     expect: "obfuscation", licence: "AAAI open access proceedings", licence_basis: "AAAI OJS",
+     found_by: "Crossref's record of the DOI (its text-mining link); doi.org's robots.txt redirects off the Network line"}
+  - {entry: adler2021incremental, mode: on_entry,
+     discover: {page: "https://pmc.ncbi.nlm.nih.gov/articles/PMC7250616/", link: "pdf/[^\"'\\s]+\\.pdf"},
+     expect: "incremental", licence: "PMC free full text (Springer ESWC 2020 chapter)", licence_basis: "PMC article page",
+     found_by: "the PMC article page's PDF link"}
+  # ---- grey literature ----
+  - {entry: krakovna2020specgaming, mode: on_entry,
+     urls: ["https://deepmind.google/discover/blog/specification-gaming-the-flip-side-of-ai-ingenuity/"],
+     expect: "specification gaming", licence: "publisher's free web page; all rights reserved", licence_basis: "deepmind.google"}
+  - {entry: gao_02_195, mode: on_entry, urls: ["https://www.gao.gov/assets/gao-02-195.pdf", "https://www.gao.gov/products/gao-02-195"],
+     licence: "US Government work, not subject to copyright (17 U.S.C. 105)", licence_basis: "a GAO report"}
+  - {entry: nasa_oig_ig_12_012, mode: on_entry, urls: ["https://oig.nasa.gov/docs/IG-12-012.pdf"],
+     licence: "US Government work, not subject to copyright (17 U.S.C. 105)", licence_basis: "a NASA OIG report"}
+  - {entry: nygard2011adr, mode: on_entry, urls: ["https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions"],
+     expect: "architecture decision", licence: "publisher's free web page; all rights reserved", licence_basis: "cognitect.com"}
+  - {entry: niosh_hierarchy_of_controls, mode: on_entry, urls: ["https://www.cdc.gov/niosh/hierarchy-of-controls/"],
+     expect: "hierarchy of controls", licence: "US Government work, not subject to copyright (17 U.S.C. 105)",
+     licence_basis: "a CDC/NIOSH page"}
+  - {entry: randomlabs2026slate, mode: on_entry, urls: ["https://randomlabs.ai/blog/slate"],
+     licence: "publisher's free web page; all rights reserved", licence_basis: "randomlabs.ai"}
+  - {entry: anthropic2026seeing, mode: on_entry, urls: ["https://claude.com/blog/seeing-like-an-agent"],
+     expect: "agent", licence: "publisher's free web page; all rights reserved", licence_basis: "Anthropic",
+     found_by: "web search 2026-11-11 for the cited title: the post is on claude.com, not www.anthropic.com"}
+  - {entry: doc_ibm_doors_1, mode: on_entry, urls: ["https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors"],
+     licence: "IBM Documentation, free to read; all rights reserved", licence_basis: "ibm.com"}
+  # ---- standards: the text is a documentation entry that documents the standard ----
+  - {entry: nist_sp800_53r5, mode: doc_entry, urls: ["https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf"],
+     expect: "security and privacy controls", licence: "US Government work, not subject to copyright (17 U.S.C. 105)",
+     licence_basis: "a NIST Special Publication"}
+  - {entry: cfr21_11_10e, mode: doc_entry,
+     urls: ["https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11/subpart-B/section-11.10",
+            "https://www.ecfr.gov/api/renderer/v1/content/enhanced/current/title-21?part=11&section=11.10"],
+     expect: "audit trail", licence: "US Government work, not subject to copyright (17 U.S.C. 105)", licence_basis: "the eCFR"}
+  - {entry: who_trs1033_annex4, mode: doc_entry,
+     discover: {page: "https://iris.who.int/handle/10665/340323", link: "https://iris\\.who\\.int/bitstreams/[0-9a-f\\-]+/download"},
+     expect: "data integrity", licence: "CC BY-NC-SA 3.0 IGO", licence_basis: "WHO IRIS (WHO's standard licence for its publications)",
+     found_by: "WHO IRIS record of TRS 1033 (the whole report; Annex 4 is inside it)"}
+  - {entry: w3c_prov_o, mode: doc_entry, urls: ["https://www.w3.org/TR/prov-o/"], expect: "PROV-O",
+     licence: "W3C Document License", licence_basis: "W3C Recommendation"}
+  - {entry: slsa_v1_0, mode: doc_entry, urls: ["https://slsa.dev/spec/v1.0/"], expect: "SLSA",
+     licence: "Community Specification License 1.0", licence_basis: "the SLSA specification (OpenSSF)"}
+  - {entry: rfc9162, mode: doc_entry, urls: ["https://www.rfc-editor.org/rfc/rfc9162.txt"], expect: "Certificate Transparency",
+     licence: "IETF Trust Legal Provisions (BCP 78)", licence_basis: "an RFC"}
+  - {entry: rfc8493, mode: doc_entry, urls: ["https://www.rfc-editor.org/rfc/rfc8493.txt"], expect: "BagIt",
+     licence: "IETF Trust Legal Provisions (BCP 78)", licence_basis: "an RFC"}
+  - {entry: premis_3_0, mode: doc_entry,
+     discover: {page: "https://www.loc.gov/standards/premis/v3/", link: "[^\"'\\s]*premis-3[^\"'\\s]*\\.pdf"},
+     expect: "PREMIS", licence: "Library of Congress publication, free to use", licence_basis: "loc.gov",
+     found_by: "the PREMIS v3 page's link to the data dictionary"}
+  - {entry: oais_iso14721, mode: doc_entry, urls: ["https://public.ccsds.org/Pubs/650x0m2.pdf"], expect: "Open Archival Information System",
+     licence: "CCSDS publication, free (technically identical to ISO 14721:2012)", licence_basis: "public.ccsds.org"}
+  - {entry: ndsa_levels_v2, mode: doc_entry,
+     discover: {page: "https://ndsa.org/publications/levels-of-digital-preservation/", link: "https://osf\\.io/[a-z0-9]{5}/?"},
+     expect: "Levels", licence: "CC BY 3.0 (NDSA)", licence_basis: "ndsa.org",
+     found_by: "the NDSA Levels page's link to the OSF project"}
+  - {entry: nasa_swe_072, mode: doc_entry, urls: ["https://nodis3.gsfc.nasa.gov/npg_img/N_PR_7150_002D_/N_PR_7150_002D_.pdf"],
+     expect: "Bi-Directional Traceability", licence: "US Government work, not subject to copyright (17 U.S.C. 105)",
+     licence_basis: "NASA NODIS", found_by: "NPR 7150.2D, the current revision, in NASA's directives system",
+     note: "7150.2D carries no SWE-072: bi-directional traceability is section 3.12.1, [SWE-052]. The cited number is an
+       earlier revision's, and NODIS serves only the current one (N_PR_7150_002C_ answered 404, 2026-11-12)"}
+  # ---- OpenFastTrace's user guide: SEL-036 held only its index ----
+  # The guide's pages sit in seven section directories, so the listing is the repository's recursive tree (one request)
+  # and each page's raw URL is built from its path. The index (user_guide.md) is SEL-036's doc_sw_openfasttrace_2.
+  - {entry: sw_openfasttrace, mode: doc_many, new_prefix: doc_sw_openfasttrace_ug_, id_below: /doc/user_guide/,
+     discover: {page: "https://api.github.com/repos/itsallcode/openfasttrace/git/trees/main?recursive=1",
+                link: "\"path\": ?\"(doc/user_guide/[^\"]+\\.md)\"",
+                template: "https://raw.githubusercontent.com/itsallcode/openfasttrace/main/{0}"},
+     exclude_link: "/doc/user_guide/user_guide\\.md$",
+     licence: "GPL-3.0", licence_basis: "the repository's LICENSE (SEL-036 catalog, sw_openfasttrace)"}

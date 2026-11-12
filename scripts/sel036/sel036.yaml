@@ -40,3 +40,7 @@ pilot_units: 6
 progress_seconds: 30
 ceiling_requests: 1500
 ceiling_wall_seconds: 3600
+# SEL-037 Part B: overlays applied to the catalog after it is built from the seeds and this checkpoint, in order
+# (scripts/sel036/build_candidates.py). Each names a fetcher config whose checkpoint holds texts this resolver's
+# Network line could not reach; scripts/sel037/overlay.py says what an overlay changes.
+acquired_overlays: [scripts/sel037/sel037.yaml]

@@ -1,0 +1,76 @@
+2026-11-12T02:45:53Z 0/3 units, 0 requests, 0 failed, 0.00 units/s, eta nans :: start: 0 rows in /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/sel037/units.jsonl
+2026-11-12T02:45:57Z 1/3 units, 3 requests, 0 failed, 0.31 units/s, eta 7s :: gotel1994traceability: acquired
+2026-11-12T02:45:58Z 2/3 units, 5 requests, 0 failed, 0.41 units/s, eta 2s :: doc_ibm_doors_1: manual
+2026-11-12T02:46:00Z 3/3 units, 7 requests, 0 failed, 0.49 units/s, eta 0s :: rfc8493: acquired
+2026-11-12T02:46:00Z 3/3 units, 7 requests, 0 failed, 0.49 units/s, eta 0s :: finished
+2026-11-12T02:46:17Z 3/32 units, 0 requests, 0 failed, 111353.20 units/s, eta 0s :: start: 3 rows in /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/sel037/units.jsonl
+2026-11-12T02:46:17Z 4/32 units, 0 requests, 0 failed, 7055.18 units/s, eta 0s :: clelandhuang2012traceability: manual
+2026-11-12T02:46:19Z 5/32 units, 2 requests, 0 failed, 2.91 units/s, eta 9s :: browning2014doorstop: acquired
+2026-11-12T02:46:19Z 6/32 units, 3 requests, 0 failed, 2.56 units/s, eta 10s :: mayer2009multimedia: manual
+2026-11-12T02:46:21Z 7/32 units, 5 requests, 0 failed, 1.94 units/s, eta 13s :: groth2010nanopublication: manual
+2026-11-12T02:46:21Z 8/32 units, 6 requests, 0 failed, 2.02 units/s, eta 12s :: shotton2010cito: manual
+2026-11-12T02:46:23Z 9/32 units, 8 requests, 0 failed, 1.53 units/s, eta 15s :: fuchss2025lissa: acquired
+2026-11-12T02:46:23Z 10/32 units, 9 requests, 0 failed, 1.62 units/s, eta 14s :: rethlefsen2021prismas: manual
+2026-11-12T02:46:25Z 11/32 units, 13 requests, 0 failed, 1.37 units/s, eta 15s :: pershina2014graph: manual
+2026-11-12T02:46:28Z 12/32 units, 15 requests, 0 failed, 1.11 units/s, eta 18s :: han2017checklists: acquired
+2026-11-12T02:46:28Z 13/32 units, 16 requests, 0 failed, 1.18 units/s, eta 16s :: aaai_v40i44_41105: manual
+2026-11-12T02:46:29Z 14/32 units, 18 requests, 0 failed, 1.14 units/s, eta 16s :: adler2021incremental: manual
+2026-11-12T02:46:32Z 15/32 units, 21 requests, 0 failed, 1.01 units/s, eta 17s :: krakovna2020specgaming: acquired
+2026-11-12T02:46:34Z 16/32 units, 24 requests, 0 failed, 0.92 units/s, eta 17s :: gao_02_195: manual
+2026-11-12T02:46:37Z 17/32 units, 27 requests, 0 failed, 0.85 units/s, eta 18s :: nasa_oig_ig_12_012: acquired
+2026-11-12T02:46:38Z 18/32 units, 29 requests, 0 failed, 0.85 units/s, eta 17s :: nygard2011adr: acquired
+2026-11-12T02:46:41Z 19/32 units, 32 requests, 0 failed, 0.80 units/s, eta 16s :: niosh_hierarchy_of_controls: acquired
+2026-11-12T02:46:42Z 20/32 units, 34 requests, 0 failed, 0.80 units/s, eta 15s :: randomlabs2026slate: manual
+2026-11-12T02:46:42Z 21/32 units, 34 requests, 0 failed, 0.84 units/s, eta 13s :: anthropic2026seeing: manual
+2026-11-12T02:46:46Z 22/32 units, 36 requests, 0 failed, 0.75 units/s, eta 13s :: nist_sp800_53r5: acquired
+2026-11-12T02:46:48Z 23/32 units, 38 requests, 0 failed, 0.75 units/s, eta 12s :: cfr21_11_10e: manual
+2026-11-12T02:46:53Z 24/32 units, 41 requests, 0 failed, 0.66 units/s, eta 12s :: who_trs1033_annex4: manual
+2026-11-12T02:46:54Z 25/32 units, 43 requests, 0 failed, 0.67 units/s, eta 10s :: w3c_prov_o: acquired
+2026-11-12T02:46:56Z 26/32 units, 45 requests, 0 failed, 0.67 units/s, eta 9s :: slsa_v1_0: acquired
+2026-11-12T02:46:57Z 27/32 units, 47 requests, 0 failed, 0.67 units/s, eta 7s :: rfc9162: acquired
+2026-11-12T02:47:02Z 28/32 units, 50 requests, 0 failed, 0.62 units/s, eta 6s :: premis_3_0: acquired
+2026-11-12T02:47:02Z 29/32 units, 51 requests, 0 failed, 0.64 units/s, eta 5s :: oais_iso14721: manual
+2026-11-12T02:47:03Z 30/32 units, 52 requests, 0 failed, 0.65 units/s, eta 3s :: ndsa_levels_v2: manual
+2026-11-12T02:47:05Z 31/32 units, 54 requests, 0 failed, 0.64 units/s, eta 2s :: nasa_swe_072: manual
+2026-11-12T02:47:07Z 32/32 units, 56 requests, 0 failed, 0.64 units/s, eta 0s :: sw_openfasttrace: manual
+2026-11-12T02:47:07Z 32/32 units, 56 requests, 0 failed, 0.64 units/s, eta 0s :: finished
+2026-11-12T02:49:30Z 0/32 units, 0 requests, 0 failed, 0.00 units/s, eta nans :: start: 32 rows in /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/sel037/units.jsonl
+2026-11-12T02:49:33Z 1/32 units, 3 requests, 0 failed, 0.34 units/s, eta 91s :: gotel1994traceability: acquired
+2026-11-12T02:49:33Z 2/32 units, 3 requests, 0 failed, 0.68 units/s, eta 44s :: clelandhuang2012traceability: manual
+2026-11-12T02:49:34Z 3/32 units, 5 requests, 0 failed, 0.68 units/s, eta 43s :: browning2014doorstop: acquired
+2026-11-12T02:49:35Z 4/32 units, 6 requests, 0 failed, 0.79 units/s, eta 35s :: mayer2009multimedia: manual
+2026-11-12T02:49:36Z 5/32 units, 8 requests, 0 failed, 0.81 units/s, eta 33s :: groth2010nanopublication: manual
+2026-11-12T02:49:36Z 6/32 units, 9 requests, 0 failed, 0.95 units/s, eta 27s :: shotton2010cito: manual
+2026-11-12T02:49:38Z 7/32 units, 11 requests, 0 failed, 0.85 units/s, eta 29s :: fuchss2025lissa: acquired
+2026-11-12T02:49:38Z 8/32 units, 12 requests, 0 failed, 0.97 units/s, eta 25s :: rethlefsen2021prismas: manual
+2026-11-12T02:49:40Z 9/32 units, 16 requests, 0 failed, 0.91 units/s, eta 25s :: pershina2014graph: manual
+2026-11-12T02:49:42Z 10/32 units, 18 requests, 0 failed, 0.81 units/s, eta 27s :: han2017checklists: acquired
+2026-11-12T02:49:45Z 11/32 units, 22 requests, 0 failed, 0.72 units/s, eta 29s :: aaai_v40i44_41105: acquired
+2026-11-12T02:49:46Z 12/32 units, 24 requests, 0 failed, 0.72 units/s, eta 28s :: adler2021incremental: manual
+2026-11-12T02:49:49Z 13/32 units, 27 requests, 0 failed, 0.68 units/s, eta 28s :: krakovna2020specgaming: acquired
+2026-11-12T02:49:51Z 14/32 units, 30 requests, 0 failed, 0.65 units/s, eta 28s :: gao_02_195: manual
+2026-11-12T02:49:54Z 15/32 units, 33 requests, 0 failed, 0.62 units/s, eta 27s :: nasa_oig_ig_12_012: acquired
+2026-11-12T02:49:55Z 16/32 units, 35 requests, 0 failed, 0.63 units/s, eta 26s :: nygard2011adr: acquired
+2026-11-12T02:49:58Z 17/32 units, 38 requests, 0 failed, 0.61 units/s, eta 25s :: niosh_hierarchy_of_controls: acquired
+2026-11-12T02:49:59Z 18/32 units, 40 requests, 0 failed, 0.62 units/s, eta 23s :: randomlabs2026slate: manual
+2026-11-12T02:49:59Z 19/32 units, 40 requests, 0 failed, 0.65 units/s, eta 20s :: anthropic2026seeing: manual
+2026-11-12T02:50:00Z 20/32 units, 42 requests, 0 failed, 0.65 units/s, eta 18s :: doc_ibm_doors_1: manual
+2026-11-12T02:50:05Z 21/32 units, 44 requests, 0 failed, 0.59 units/s, eta 18s :: nist_sp800_53r5: acquired
+2026-11-12T02:50:06Z 22/32 units, 46 requests, 0 failed, 0.60 units/s, eta 17s :: cfr21_11_10e: manual
+2026-11-12T02:50:13Z 23/32 units, 51 requests, 0 failed, 0.53 units/s, eta 17s :: who_trs1033_annex4: acquired
+2026-11-12T02:50:14Z 24/32 units, 53 requests, 0 failed, 0.54 units/s, eta 15s :: w3c_prov_o: acquired
+2026-11-12T02:50:15Z 25/32 units, 55 requests, 0 failed, 0.55 units/s, eta 13s :: slsa_v1_0: acquired
+2026-11-12T02:50:17Z 26/32 units, 57 requests, 0 failed, 0.55 units/s, eta 11s :: rfc9162: acquired
+2026-11-12T02:50:18Z 27/32 units, 58 requests, 0 failed, 0.56 units/s, eta 9s :: rfc8493: acquired
+2026-11-12T02:50:21Z 28/32 units, 61 requests, 0 failed, 0.54 units/s, eta 7s :: premis_3_0: acquired
+2026-11-12T02:50:21Z 29/32 units, 62 requests, 0 failed, 0.56 units/s, eta 5s :: oais_iso14721: manual
+2026-11-12T02:50:21Z 30/32 units, 63 requests, 0 failed, 0.58 units/s, eta 3s :: ndsa_levels_v2: manual
+2026-11-12T02:50:24Z 31/32 units, 65 requests, 0 failed, 0.57 units/s, eta 2s :: nasa_swe_072: acquired
+2026-11-12T02:51:05Z 32/32 units, 102 requests, 0 failed, 0.34 units/s, eta 0s :: sw_openfasttrace: acquired
+2026-11-12T02:51:05Z 32/32 units, 102 requests, 0 failed, 0.34 units/s, eta 0s :: finished
+2026-11-12T02:51:24Z 0/1 units, 0 requests, 0 failed, 0.00 units/s, eta nans :: start: 64 rows in /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/sel037/units.jsonl
+2026-11-12T02:51:27Z 1/1 units, 2 requests, 0 failed, 0.36 units/s, eta 0s :: mayer2009multimedia: manual
+2026-11-12T02:51:27Z 1/1 units, 2 requests, 0 failed, 0.36 units/s, eta 0s :: finished
+2026-11-12T02:52:57Z 0/1 units, 0 requests, 0 failed, 0.00 units/s, eta nans :: start: 65 rows in /Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble/graphs/seldon-biblio/evidence/sel037/units.jsonl
+2026-11-12T02:53:00Z 1/1 units, 2 requests, 0 failed, 0.37 units/s, eta 0s :: mayer2009multimedia: manual
+2026-11-12T02:53:00Z 1/1 units, 2 requests, 0 failed, 0.37 units/s, eta 0s :: finished

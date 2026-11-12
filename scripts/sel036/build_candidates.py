@@ -228,7 +228,14 @@ def build(cfg: dict, seeds_doc: dict, done: dict) -> tuple[dict, dict]:
         docs = doc_entries(s, units, done, gov.get(s["id"], []))
         cands.append(seed_entry(s, chain(s, units, done), n_auth, gov.get(s["id"], []), docs))
         cands += docs
-    c = {"seeds": len(seeds), "entries": len(cands), "checkpoint_rows": len(done)}
+    # SEL-037: later tasks' fetch checkpoints, applied in the order the config names them (scripts/sel037/overlay.py)
+    overlays = []
+    for ov in cfg.get("acquired_overlays") or []:
+        sys.path.insert(0, str((ROOT / ov).parent))
+        import overlay as OV  # noqa: E402  (the overlay module beside its config)
+        cands, rep = OV.apply(cands, ROOT / ov, ROOT)
+        overlays.append(rep)
+    c = {"seeds": len(seeds), "entries": len(cands), "checkpoint_rows": len(done), "overlays": overlays}
     for key in ("entry_kind", "disposition", "verification_status", "access", "resolved_by"):
         c[f"by_{key}"] = {}
         for e in cands:

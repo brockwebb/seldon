@@ -1,22 +1,22 @@
 {
  "by_access": {
-  "open": 71,
+  "open": 118,
   "purchase": 5,
-  "restricted_or_unknown": 30
+  "restricted_or_unknown": 25
  },
  "by_disposition": {
-  "active": 69,
-  "metadata_only": 37
+  "active": 115,
+  "metadata_only": 33
  },
  "by_entry_kind": {
-  "documentation": 17,
+  "documentation": 59,
   "grey": 8,
   "software": 10,
   "standard": 19,
   "work": 52
  },
  "by_resolved_by": {
-  "None": 35,
+  "None": 77,
   "crossref": 3,
   "openalex": 51,
   "page": 16,
@@ -24,36 +24,109 @@
  },
  "by_verification_status": {
   "declared": 19,
-  "fetched": 16,
+  "fetched": 58,
   "resolved": 71
  },
  "checkpoint_rows": 511,
  "declined": [],
- "entries": 106,
+ "entries": 148,
  "governed_artifacts": 72,
  "governed_artifacts_naming_no_work": [
   "docs_design_ad_033_decision_register@ad_033_r3_the_record_required_fields_id_repository_qualified_the_repository_s_na"
  ],
  "manual_acquisition": [
+  "adler2021incremental",
   "anthropic2026seeing",
   "cfr21_11_10e",
+  "clelandhuang2012traceability",
   "doc_ibm_doors_1",
   "gao_02_195",
-  "krakovna2020specgaming",
-  "nasa_oig_ig_12_012",
-  "nasa_swe_072",
+  "groth2010nanopublication",
   "ndsa_levels_v2",
-  "niosh_hierarchy_of_controls",
-  "nist_sp800_53r5",
-  "nygard2011adr",
   "oais_iso14721",
-  "premis_3_0",
+  "pershina2014graph",
   "randomlabs2026slate",
-  "rfc8493",
-  "rfc9162",
-  "slsa_v1_0",
-  "w3c_prov_o",
-  "who_trs1033_annex4"
+  "rethlefsen2021prismas",
+  "shotton2010cito"
+ ],
+ "overlays": [
+  {
+   "acquired_on_entry": [
+    "gotel1994traceability",
+    "browning2014doorstop",
+    "fuchss2025lissa",
+    "han2017checklists",
+    "aaai_v40i44_41105",
+    "krakovna2020specgaming",
+    "nasa_oig_ig_12_012",
+    "nygard2011adr",
+    "niosh_hierarchy_of_controls"
+   ],
+   "doc_entries": [
+    "doc_nist_sp800_53r5_1",
+    "doc_who_trs1033_annex4_1",
+    "doc_w3c_prov_o_1",
+    "doc_slsa_v1_0_1",
+    "doc_rfc9162_1",
+    "doc_rfc8493_1",
+    "doc_premis_3_0_1",
+    "doc_nasa_swe_072_1",
+    "doc_sw_openfasttrace_ug_installation_installation",
+    "doc_sw_openfasttrace_ug_installation_linux",
+    "doc_sw_openfasttrace_ug_installation_macos",
+    "doc_sw_openfasttrace_ug_installation_windows",
+    "doc_sw_openfasttrace_ug_introduction_concepts_and_terms",
+    "doc_sw_openfasttrace_ug_introduction_introduction",
+    "doc_sw_openfasttrace_ug_introduction_what_is_requirement_tracing",
+    "doc_sw_openfasttrace_ug_introduction_who_should_read_this_document",
+    "doc_sw_openfasttrace_ug_introduction_why_do_i_need_requirement_tracing",
+    "doc_sw_openfasttrace_ug_oft_api_exit_codes",
+    "doc_sw_openfasttrace_ug_oft_api_oft_api",
+    "doc_sw_openfasttrace_ug_oft_api_using_oft_from_java",
+    "doc_sw_openfasttrace_ug_product_lifecycle_product_lifecycle",
+    "doc_sw_openfasttrace_ug_reference_build_integration",
+    "doc_sw_openfasttrace_ug_reference_console_tracing_report",
+    "doc_sw_openfasttrace_ug_reference_input_format_support",
+    "doc_sw_openfasttrace_ug_reference_oft_command_line",
+    "doc_sw_openfasttrace_ug_reference_reference",
+    "doc_sw_openfasttrace_ug_reference_report_summary",
+    "doc_sw_openfasttrace_ug_reference_xml_tracing_report",
+    "doc_sw_openfasttrace_ug_tool_support_templates_for_ides",
+    "doc_sw_openfasttrace_ug_tool_support_tool_support",
+    "doc_sw_openfasttrace_ug_tool_support_tools_for_authoring_oft_documents",
+    "doc_sw_openfasttrace_ug_use_cases_delegating_requirement_coverage",
+    "doc_sw_openfasttrace_ug_use_cases_distributing_the_detailing_work",
+    "doc_sw_openfasttrace_ug_use_cases_excluding_parts_of_a_specification_document_for_oft_parsing",
+    "doc_sw_openfasttrace_ug_use_cases_filtering_by_status",
+    "doc_sw_openfasttrace_ug_use_cases_html_tracing_reports",
+    "doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility",
+    "doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain",
+    "doc_sw_openfasttrace_ug_use_cases_tracing_the_whole_chain_in_the_same_file_system",
+    "doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches",
+    "doc_sw_openfasttrace_ug_use_cases_use_cases",
+    "doc_sw_openfasttrace_ug_use_cases_writing_a_specification"
+   ],
+   "manual": [
+    "clelandhuang2012traceability",
+    "groth2010nanopublication",
+    "shotton2010cito",
+    "rethlefsen2021prismas",
+    "pershina2014graph",
+    "adler2021incremental",
+    "gao_02_195",
+    "randomlabs2026slate",
+    "anthropic2026seeing",
+    "doc_ibm_doors_1",
+    "cfr21_11_10e",
+    "oais_iso14721",
+    "ndsa_levels_v2"
+   ],
+   "no_open_copy": [
+    "mayer2009multimedia"
+   ],
+   "overlay": "scripts/sel037/sel037.yaml",
+   "targets": 32
+  }
  ],
  "seeds": 89
 }
