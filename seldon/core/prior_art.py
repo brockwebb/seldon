@@ -748,11 +748,44 @@ class Library:
                                 f"exports directory")
         return self.exports_dir() / release
 
+    def _export_exists(self, path: Path) -> bool:
+        """Is the export on disk, plain or held compressed (AD-036-R24, squiddy DN-059 R-253)? Read through
+        `squiddy.exports.exists`, the kit's one accessor for a dated export.
+
+        Raises:
+            PriorArtError: `release_unavailable` when the release is held (`<name>.gz` beside it) and the squiddy
+                installed in this interpreter predates the accessor, so it cannot be read; never a silent "absent".
+        """
+        acc = _exports_accessor()
+        if acc is not None:
+            return bool(acc.exists(path))
+        if path.is_file():
+            return True
+        held = path.with_name(path.name + HELD_SUFFIX)
+        if held.is_file():
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: {path.name} is held compressed as {held} and the squiddy "
+                                f"installed in this interpreter has no `squiddy.exports` to read it (squiddy DN-059 "
+                                f"R-253); install a squiddy that carries it")
+        return False
+
     def _digest(self, path: Path) -> str:
-        st = path.stat()
-        key = (str(path), st.st_size, st.st_mtime_ns)
-        if key not in self._digests:
-            self._digests[key] = _sha_file(path)
+        """The sha256 of the export's ORIGINAL bytes, plain or held, cached by path, size and modification time."""
+        acc = _exports_accessor()
+        if acc is None:
+            st = path.stat()
+            key = (str(path), st.st_size, st.st_mtime_ns)
+            if key not in self._digests:
+                self._digests[key] = _sha_file(path)
+            return self._digests[key]
+        try:
+            key = (str(path), acc.size(path), acc.mtime(path))
+            if key not in self._digests:
+                self._digests[key] = acc.sha256(path)
+        except (FileNotFoundError, SystemExit) as exc:
+            # `HeldExportError` is a SystemExit (squiddy's FATAL convention): a held file that does not decompress to
+            # the bytes it was held as. Here it is this release being unavailable, not the process ending.
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: {path} cannot be read through squiddy.exports: "
+                                f"{exc}") from exc
         return self._digests[key]
 
     def search_release(self, query: str, release: str, sha256: str, k: int | None = None) -> dict:
@@ -766,8 +799,9 @@ class Library:
         """
         terms_of(query)
         path = self.export_path(release)
-        if not path.is_file():
-            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release {release} is not on disk: looked for {path}")
+        if not self._export_exists(path):
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release {release} is not on disk: looked for {path}, "
+                                f"plain or held ({path.name}{HELD_SUFFIX})")
         got = self._digest(path)
         if got != sha256:
             raise PriorArtError(f"{RELEASE_UNAVAILABLE}: {path} hashes to sha256:{got[:12]}..., not the "
@@ -847,8 +881,8 @@ class Library:
         """
         if sha16 not in self._carried:
             path = self.export_path(release)
-            if not path.is_file():
-                raise PriorArtError(f"export {path} is not on disk")
+            if not self._export_exists(path):
+                raise PriorArtError(f"export {path} is not on disk, plain or held ({path.name}{HELD_SUFFIX})")
             sha = self._digest(path)
             if not sha.startswith(sha16):
                 raise PriorArtError(f"export {path} hashes to sha256:{sha[:16]}, not the register's {sha16}")
@@ -939,6 +973,22 @@ class Libraries:
     def close(self) -> None:
         for lib in self.libs.values():
             lib.close()
+
+
+#: The name squiddy gives a held export, the original's plus this suffix (squiddy DN-059 R-253, `squiddy.exports.SUFFIX`:
+#: logrotate's and gzip's convention). Read here only to NAME a held release when the installed squiddy cannot read it.
+HELD_SUFFIX = ".gz"
+
+
+def _exports_accessor():
+    """`squiddy.exports`, the kit's one reader of a dated export, plain or held (AD-036-R24, squiddy DN-059 R-253), or
+    None when the squiddy installed in this interpreter predates it (a squiddy without the accessor holds nothing
+    itself; a host whose exports another squiddy held is named by `Library._export_exists`)."""
+    try:
+        from squiddy import exports
+    except ImportError:
+        return None
+    return exports
 
 
 def _sha_file(path: Path) -> str:
