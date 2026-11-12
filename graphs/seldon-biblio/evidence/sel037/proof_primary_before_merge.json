@@ -1,0 +1,147 @@
+{
+ "project": "/Users/brock/GitHub/seldon/.claude/worktrees/curried-mixing-bubble",
+ "served_from": "/Users/brock/GitHub/seldon/graphs/seldon-biblio",
+ "queries": [
+  {
+   "query": "requirements traceability matrix",
+   "graphs": {
+    "library": {
+     "release": "library_graph_20261106_sq125_c_2026-11-06.json",
+     "sha256": "bbd841d3b5ab8822258c824656a1b80365d3a4707f0456ddb4f73d508a120cd3",
+     "rows": 45,
+     "top_documents": [
+      "lesson:2026-04-05_arXiv_2603_28589",
+      "lesson:2026-08-25_arXiv_2607_02771",
+      "lesson:2026-02-22_arXiv_2505_24876",
+      "lesson:2026-04-12_arXiv_2502_02617",
+      "lesson:2026-02-22_arXiv_2311_05965",
+      "lesson:2026-08-25_arXiv_2512_03541",
+      "lesson:2026-03-07_arXiv_2508_21038",
+      "lesson:2026-06-09_arXiv_2512_22473"
+     ],
+     "unavailable": null
+    },
+    "seldon-biblio": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library search failed: gotel1994traceability: the segment rule cannot read its intermediate: FATAL: gotel1994traceability holds no text (`local_path`); a `parsed` index has nothing to cut"
+    }
+   }
+  },
+  {
+   "query": "trace link maintenance",
+   "graphs": {
+    "library": {
+     "release": "library_graph_20261106_sq125_c_2026-11-06.json",
+     "sha256": "bbd841d3b5ab8822258c824656a1b80365d3a4707f0456ddb4f73d508a120cd3",
+     "rows": 49,
+     "top_documents": [
+      "lesson:2026-02-22_arXiv_2510_02387",
+      "lesson:2026-08-25_arXiv_2606_08317",
+      "lesson:2026-03-17_arXiv_2601_10338",
+      "lesson:2026-03-17_arXiv_2602_02474",
+      "lesson:2026-02-22_arXiv_2505_15155",
+      "lesson:2026-02-21_arXiv_2510_09517",
+      "lesson:2026-02-22_arXiv_2412_05255",
+      "lesson:2026-02-22_arXiv_2304_05128"
+     ],
+     "unavailable": null
+    },
+    "seldon-biblio": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library search failed: fuchss2025lissa: the segment rule cannot read its intermediate: FATAL: fuchss2025lissa holds no text (`local_path`); a `parsed` index has nothing to cut"
+    }
+   }
+  },
+  {
+   "query": "suspect link",
+   "graphs": {
+    "library": {
+     "release": "library_graph_20261106_sq125_c_2026-11-06.json",
+     "sha256": "bbd841d3b5ab8822258c824656a1b80365d3a4707f0456ddb4f73d508a120cd3",
+     "rows": 46,
+     "top_documents": [
+      "lesson:2026-06-17_arXiv_2310_04835",
+      "lesson:2026-02-22_arXiv_2504_07079",
+      "lesson:2026-02-22_arXiv_2112_09332",
+      "lesson:2026-05-23_arXiv_2407_10794",
+      "lesson:2026-02-22_arXiv_2506_18959",
+      "lesson:2026-02-22_arXiv_2310_02172",
+      "lesson:2026-07-15_arXiv_2003_02320",
+      "lesson:2026-03-13_arXiv_2204_07309"
+     ],
+     "unavailable": null
+    },
+    "seldon-biblio": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library search failed: fuchss2025lissa: the segment rule cannot read its intermediate: FATAL: fuchss2025lissa holds no text (`local_path`); a `parsed` index has nothing to cut"
+    }
+   }
+  },
+  {
+   "query": "generated region markers",
+   "graphs": {
+    "library": {
+     "release": "library_graph_20261106_sq125_c_2026-11-06.json",
+     "sha256": "bbd841d3b5ab8822258c824656a1b80365d3a4707f0456ddb4f73d508a120cd3",
+     "rows": 42,
+     "top_documents": [
+      "lesson:2026-02-22_arXiv_2507_07998",
+      "lesson:2026-02-22_arXiv_2506_24019",
+      "lesson:2026-02-22_arXiv_2502_08916",
+      "lesson:2026-02-22_arXiv_2511_09127",
+      "lesson:2026-02-21_arXiv_2510_09517",
+      "lesson:2026-06-13_arXiv_2410_21155",
+      "lesson:2026-02-22_arXiv_2510_23595",
+      "lesson:2026-02-22_arXiv_2301_04104"
+     ],
+     "unavailable": null
+    },
+    "seldon-biblio": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library search failed: doc_w3c_prov_o_1 holds index rows and is not in the manifest; the segment rule has no intermediate to read (R-229)"
+    }
+   }
+  },
+  {
+   "query": "verification method inspection analysis demonstration test",
+   "graphs": {
+    "library": {
+     "release": "library_graph_20261106_sq125_c_2026-11-06.json",
+     "sha256": "bbd841d3b5ab8822258c824656a1b80365d3a4707f0456ddb4f73d508a120cd3",
+     "rows": 51,
+     "top_documents": [
+      "lesson:2026-02-22_arXiv_2504_07952",
+      "lesson:2026-02-22_arXiv_2505_14963",
+      "lesson:2026-05-09_arXiv_2503_13657",
+      "lesson:2026-03-17_arXiv_2602_12670",
+      "lesson:2026-02-22_arXiv_2505_16517",
+      "lesson:2026-03-17_10_18653_v1_2024_emnlp_main_64",
+      "lesson:2026-02-22_arXiv_2410_10762",
+      "lesson:2026-02-22_arXiv_2305_16504"
+     ],
+     "unavailable": null
+    },
+    "seldon-biblio": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library search failed: doc_who_trs1033_annex4_1 holds index rows and is not in the manifest; the segment rule has no intermediate to read (R-229)"
+    }
+   }
+  }
+ ],
+ "every_query_has_seldon_biblio_rows": false
+}

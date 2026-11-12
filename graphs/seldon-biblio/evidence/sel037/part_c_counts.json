@@ -1,0 +1,195 @@
+{
+ "counts": {
+  "acquired_with_text": 84,
+  "admitted_in_graph": 148,
+  "cataloged": 148,
+  "declined": 0,
+  "manual": 17,
+  "metadata_only": 64,
+  "text_held_not_indexed": 1
+ },
+ "manual": [
+  {
+   "evidence": "HTTP 200  first bytes: '<!doctype html><html lang=\"en-US\" dir=\"ltr\"><head><script>// fill in DDO\\n      digitalData = {\\n        page: {\\n          category: {\\n            primaryCategory: \\'ELSKCS\\', // e.g. SB03\\n          },\\n  '",
+   "host": "www.ibm.com",
+   "id": "doc_ibm_doors_1",
+   "kind": "documentation",
+   "label": null,
+   "observed_at": "2026-11-12T02:50:00Z",
+   "posture": "javascript_only",
+   "url": "https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:www.gbv.de first bytes: ''; robots.txt None -> not_asked",
+   "host": "www.gbv.de",
+   "id": "clelandhuang2012traceability",
+   "kind": "work",
+   "label": "table of contents only (GBV's scan); the book is Springer's and is not open",
+   "observed_at": "2026-11-12T02:49:33Z",
+   "posture": "off_allowlist",
+   "url": "http://www.gbv.de/dms/ilmenau/toc/673088804.PDF"
+  },
+  {
+   "evidence": "HTTP 403 Forbidden at https://dl.acm.org/doi/pdf/10.1145/368996.369025; robots.txt HTTP 200 -> successful (RFC 9309 2.3.1.1)",
+   "host": "dl.acm.org",
+   "id": "kahn1962topological",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-09T23:28:24.638816+00:00",
+   "posture": "refused",
+   "url": "https://doi.org/10.1145/368996.369025"
+  },
+  {
+   "evidence": "HTTP 403 Forbidden at https://dl.acm.org/doi/pdf/10.1145/1460299.1460318; robots.txt HTTP 200 -> successful (RFC 9309 2.3.1.1)",
+   "host": "dl.acm.org",
+   "id": "kelley1959critical",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-09T23:28:26.363650+00:00",
+   "posture": "refused",
+   "url": "https://doi.org/10.1145/1460299.1460318"
+  },
+  {
+   "evidence": "HTTP 403  first bytes: '<!DOCTYPE html><html lang=\"en-US\"><head><title>Just a moment...</title><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\"><meta nam'",
+   "host": "content.iospress.com",
+   "id": "groth2010nanopublication",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:36Z",
+   "posture": "bot_wall",
+   "url": "https://content.iospress.com/download/information-services-and-use/isu613"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:link.springer.com first bytes: ''; robots.txt None -> disallow_all",
+   "host": "link.springer.com",
+   "id": "shotton2010cito",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:36Z",
+   "posture": "off_allowlist",
+   "url": "https://jbiomedsem.biomedcentral.com/track/pdf/10.1186/2041-1480-1-S1-S6"
+  },
+  {
+   "evidence": "HTTP 403 Forbidden at https://dl.acm.org/doi/pdf/10.1145/356810.356816; robots.txt HTTP 200 -> successful (RFC 9309 2.3.1.1)",
+   "host": "dl.acm.org",
+   "id": "erman1980hearsay",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-09T23:30:33.830917+00:00",
+   "posture": "refused",
+   "url": "https://doi.org/10.1145/356810.356816"
+  },
+  {
+   "evidence": "HTTP 200  first bytes: ''; robots.txt 200 -> rules, rule Disallow: /api/renderer/v1/content/ (line 16)",
+   "host": "www.ecfr.gov",
+   "id": "cfr21_11_10e",
+   "kind": "standard",
+   "label": null,
+   "observed_at": "2026-11-12T02:50:06Z",
+   "posture": "robots_disallowed",
+   "url": "https://www.ecfr.gov/api/renderer/v1/content/enhanced/current/title-21?part=11&section=11.10"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:ccsds.org first bytes: ''; robots.txt None -> disallow_all",
+   "host": "ccsds.org",
+   "id": "oais_iso14721",
+   "kind": "standard",
+   "label": null,
+   "observed_at": "2026-11-12T02:50:21Z",
+   "posture": "off_allowlist",
+   "url": "https://public.ccsds.org/Pubs/650x0m2.pdf"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:www.ndsa.org first bytes: ''; robots.txt None -> disallow_all",
+   "host": "www.ndsa.org",
+   "id": "ndsa_levels_v2",
+   "kind": "standard",
+   "label": null,
+   "observed_at": "2026-11-12T02:50:21Z",
+   "posture": "off_allowlist",
+   "url": "https://ndsa.org/publications/levels-of-digital-preservation/"
+  },
+  {
+   "evidence": "HTTP 403  first bytes: '<HTML><HEAD>\\n<TITLE>Access Denied</TITLE>\\n</HEAD><BODY>\\n<H1>Access Denied</H1>\\n \\nYou don\\'t have permission to access \"http&#58;&#47;&#47;www&#46;gao&#46;gov&#47;products&#47;gao&#45;02&#45;195\" on thi'",
+   "host": "www.gao.gov",
+   "id": "gao_02_195",
+   "kind": "grey",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:51Z",
+   "posture": "bot_wall",
+   "url": "https://www.gao.gov/products/gao-02-195"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:link.springer.com first bytes: ''; robots.txt None -> disallow_all",
+   "host": "link.springer.com",
+   "id": "rethlefsen2021prismas",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:38Z",
+   "posture": "off_allowlist",
+   "url": "https://systematicreviewsjournal.biomedcentral.com/track/pdf/10.1186/s13643-020-01542-z"
+  },
+  {
+   "evidence": "HTTP None off_allowlist:claude.com first bytes: ''; robots.txt None -> not_asked",
+   "host": "claude.com",
+   "id": "anthropic2026seeing",
+   "kind": "grey",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:59Z",
+   "posture": "off_allowlist",
+   "url": "https://claude.com/blog/seeing-like-an-agent"
+  },
+  {
+   "evidence": "HTTP 403  first bytes: '<!doctype html><meta charset=\"utf-8\"><meta name=viewport content=\"width=device-width, initial-scale=1\"><title>403</title>403 Forbidden'",
+   "host": "pmc.ncbi.nlm.nih.gov",
+   "id": "adler2021incremental",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:46Z",
+   "posture": "bot_wall",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7250616/"
+  },
+  {
+   "evidence": "HTTP 521  first bytes: ''; robots.txt 521 -> disallow_all",
+   "host": "pqdtopen.proquest.com",
+   "id": "pershina2014graph",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:40Z",
+   "posture": "robots_disallowed",
+   "url": "http://pqdtopen.proquest.com/#viewpdf?dispub=10139524"
+  },
+  {
+   "evidence": "HTTP 403 Forbidden at https://dl.acm.org/doi/pdf/10.1145/3768620; robots.txt HTTP 200 -> successful (RFC 9309 2.3.1.1)",
+   "host": "dl.acm.org",
+   "id": "xiang2025splite",
+   "kind": "work",
+   "label": null,
+   "observed_at": "2026-11-09T23:34:57.008026+00:00",
+   "posture": "refused",
+   "url": "https://doi.org/10.1145/3768620"
+  },
+  {
+   "evidence": "HTTP 200  first bytes: '<html lang=\"en\">\\n  <head>\\n    <meta charset=\"UTF-8\" />\\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/favicon.svg\" />\\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\\n   '",
+   "host": "randomlabs.ai",
+   "id": "randomlabs2026slate",
+   "kind": "grey",
+   "label": null,
+   "observed_at": "2026-11-12T02:49:59Z",
+   "posture": "javascript_only",
+   "url": "https://randomlabs.ai/blog/slate"
+  }
+ ],
+ "metadata_only_by_reason": {
+  "no_oa_pdf_url": 1,
+  "no_open_access_text": 21,
+  "oa_text_not_retrievable": 10,
+  "publisher_page_not_reachable_by_script": 3,
+  "purchase": 5,
+  "software_not_a_document": 10,
+  "standard_no_doi": 14
+ },
+ "text_held_not_indexed": [
+  "doc_nist_sp800_53r5_1"
+ ]
+}

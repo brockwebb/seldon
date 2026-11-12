@@ -1,0 +1,147 @@
+{
+ "project": "/tmp/sel037/sim/primary_after_merge",
+ "served_from": "/private/tmp/sel037/sim/primary_after_merge/graphs/seldon-biblio",
+ "queries": [
+  {
+   "query": "requirements traceability matrix",
+   "graphs": {
+    "library": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library graph /private/tmp/sel037/sim/squiddy/graphs/library does not exist"
+    },
+    "seldon-biblio": {
+     "release": "seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+     "sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+     "rows": 33,
+     "top_documents": [
+      "gotel1994traceability",
+      "doc_sw_openfasttrace_ug_use_cases_understanding_and_fixing_broken_requirement_branches",
+      "doc_nasa_swe_072_1",
+      "doc_argondigital_verification_methods_1",
+      "fuchss2025lissa",
+      "doc_sw_requiem_1",
+      "clelandhuang2012traceability",
+      "doc_omg_reqif_1_2_1"
+     ],
+     "unavailable": null
+    }
+   }
+  },
+  {
+   "query": "trace link maintenance",
+   "graphs": {
+    "library": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library graph /private/tmp/sel037/sim/squiddy/graphs/library does not exist"
+    },
+    "seldon-biblio": {
+     "release": "seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+     "sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+     "rows": 35,
+     "top_documents": [
+      "fuchss2025lissa",
+      "doc_sw_openfasttrace_ug_oft_api_using_oft_from_java",
+      "doc_sw_openfasttrace_ug_reference_oft_command_line",
+      "doc_sw_requiem_1",
+      "zhuge2024agentjudge",
+      "doc_sw_openfasttrace_ug_use_cases_partial_tracing_by_responsibility",
+      "browning2014doorstop",
+      "doc_who_trs1033_annex4_1"
+     ],
+     "unavailable": null
+    }
+   }
+  },
+  {
+   "query": "suspect link",
+   "graphs": {
+    "library": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library graph /private/tmp/sel037/sim/squiddy/graphs/library does not exist"
+    },
+    "seldon-biblio": {
+     "release": "seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+     "sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+     "rows": 38,
+     "top_documents": [
+      "sw_requiem",
+      "ilyas2022saga",
+      "doc_omg_kerml_1",
+      "li2024kgllm",
+      "doc_sw_sphinx_needs_2",
+      "doc_sw_doorstop_2",
+      "fuchss2025lissa",
+      "doc_w3c_prov_o_1"
+     ],
+     "unavailable": null
+    }
+   }
+  },
+  {
+   "query": "generated region markers",
+   "graphs": {
+    "library": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library graph /private/tmp/sel037/sim/squiddy/graphs/library does not exist"
+    },
+    "seldon-biblio": {
+     "release": "seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+     "sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+     "rows": 50,
+     "top_documents": [
+      "doc_sw_cog_1",
+      "doc_w3c_prov_o_1",
+      "aaai_v40i44_41105",
+      "liang2026skillnet",
+      "doc_omg_kerml_1",
+      "zhuge2024agentjudge",
+      "doc_sw_openfasttrace_ug_reference_input_format_support",
+      "xiong2026alma"
+     ],
+     "unavailable": null
+    }
+   }
+  },
+  {
+   "query": "verification method inspection analysis demonstration test",
+   "graphs": {
+    "library": {
+     "release": null,
+     "sha256": null,
+     "rows": 0,
+     "top_documents": [],
+     "unavailable": "release_unavailable: library graph /private/tmp/sel037/sim/squiddy/graphs/library does not exist"
+    },
+    "seldon-biblio": {
+     "release": "seldon_biblio_graph_20261111_sel037_2026-11-11.json",
+     "sha256": "076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c",
+     "rows": 42,
+     "top_documents": [
+      "doc_argondigital_verification_methods_1",
+      "doc_omg_sysml_v2_1",
+      "doc_who_trs1033_annex4_1",
+      "scukanec2010verification",
+      "doc_nasa_swe_072_1",
+      "liang2026skillnet",
+      "fuchss2025lissa",
+      "zhuge2024agentjudge"
+     ],
+     "unavailable": null
+    }
+   }
+  }
+ ],
+ "every_query_has_seldon_biblio_rows": true
+}
