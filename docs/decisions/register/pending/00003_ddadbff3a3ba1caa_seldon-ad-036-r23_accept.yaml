@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-036-R23
+date: '2026-11-12'
+decided_by: cc:cefcfa29
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md:57: AD-036-R23'
+reason: 'SEL-038: answers hazbrief-mcp filings a7795a22 and 6d607cb9 and squiddy''s held-release filing of 2026-11-10; prior-art verify of the AD-034 and AD-036 families passes with the addendum'
+kind: decision
+status: accepted
+statement: The prior-art verdict ledger shall be declared merge=union wherever the query log is, read from gate.verdict_ledger_without_governed; a project whose verdicts go to its governed ledger has that ledger declared already.
+source:
+  path: docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md
+  lines:
+  - 57
+  - 63
+  sha256: 03cee3ae6e641fa66bd8e5c6d492e96855f18dae791ff44d9445f9f50749d3af
+  text: |-
+    - **AD-036-R23. The prior-art verdict ledger merges by union wherever the query log does.**
+      `seldon hooks install`, and the dispatcher's own declaration at every pass, declare the verdict ledger `merge=union`
+      beside the query log: `gate.verdict_ledger_without_governed`, resolved against the project as the log is, read from
+      the configuration and never a literal. A project with a governed graph records its verdicts in the governed ledger,
+      which AD-034 ADDENDUM 05 already declares, so it has nothing further to declare. A block without the fallback key has
+      no verdict ledger to declare. A rebase where main and a branch each appended a verdict completes with every line once,
+      and the round's union check (AD-034-R7) reads the result.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md
+  anchor: AD-036-R23
+consumer:
+- cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.md
+- tests/test_sel038_journals_and_held_releases.py
+- seldon/core/hooks.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: ddadbff3a3ba1caaf69d500f7d58ff73a6fb72f1742cc4746184f2a593965c40

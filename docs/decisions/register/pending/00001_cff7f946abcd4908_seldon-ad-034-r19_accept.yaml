@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-034-R19
+date: '2026-11-12'
+decided_by: cc:cefcfa29
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md:52: AD-034-R19'
+reason: 'SEL-038: answers hazbrief-mcp filings a7795a22 and 6d607cb9 and squiddy''s held-release filing of 2026-11-10; prior-art verify of the AD-034 and AD-036 families passes with the addendum'
+kind: decision
+status: accepted
+statement: The merge round shall commit, under the lease and before its fast-forward, every dirty file of every journal class (the event store and the prior-art query log and verdict ledger), each class in its own commit, and no other reconcile class.
+source:
+  path: docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md
+  lines:
+  - 52
+  - 60
+  sha256: 8b5d253e9f689889623164121e82ac71e7edfe5c286f685b0d5bd7b1bec428e6
+  text: |-
+    - **AD-034-R19. Before the fast-forward, under the lease, the merge round commits every dirty file of every journal class, not the event store alone.**
+      The journal classes are the reconcile classes whose files are system-written append-only JSONL journals
+      (`reconcile.JOURNAL_CLASSES`): `event_store` and `prior_art` (the query log and the verdict ledger). Each class is
+      committed in its own commit, with the subject a pass's reconcile gives it; a refused commit is printed and the
+      fast-forward that follows names what is left. The other reconcile classes are not committed there, for stated
+      reasons: the decision register's records are committed with their writer's own commit (DESK-002R) and its rendering
+      is regenerated, never union-merged; the cadence edits one line of seldon.yaml in place; task files, filings and hooks
+      are whole files a branch does not share with main's dirt. Committing those would turn a fast-forward into
+      `main_kept_moving` and fix nothing.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md
+  anchor: AD-034-R19
+consumer:
+- cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.md
+- tests/test_sel038_journals_and_held_releases.py
+- seldon/core/reconcile.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: cff7f946abcd49082b16d422590b8a39ca4723f2c99ab7ec68eb2d0a0a216450

@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-036-R24
+date: '2026-11-12'
+decided_by: cc:cefcfa29
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md:64: AD-036-R24'
+reason: 'SEL-038: answers hazbrief-mcp filings a7795a22 and 6d607cb9 and squiddy''s held-release filing of 2026-11-10; prior-art verify of the AD-034 and AD-036 families passes with the addendum'
+kind: decision
+status: accepted
+statement: The library arm shall open a release a receipt names through squiddy.exports, plain or held, and shall refuse a held release it cannot read as held, never as absent.
+source:
+  path: docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md
+  lines:
+  - 64
+  - 69
+  sha256: 03cee3ae6e641fa66bd8e5c6d492e96855f18dae791ff44d9445f9f50749d3af
+  text: |-
+    - **AD-036-R24. The library arm opens a release a receipt names through `squiddy.exports`, plain or held.**
+      Existence, the sha256 of the original bytes, and the size and modification time the digest cache keys on are read
+      through the accessor, so a receipt naming a release squiddy holds compressed verifies exactly as a plain one does. A
+      held file that does not decompress to its recorded bytes is `release_unavailable`, never a process exit. Where the
+      squiddy installed in the interpreter predates the accessor, a held release is refused as held, naming the `.gz` and
+      the missing accessor, never as "not on disk". seldon needs no `keep_plain` declaration from squiddy on its account.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md
+  anchor: AD-036-R24
+consumer:
+- cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.md
+- tests/test_sel038_journals_and_held_releases.py
+- seldon/core/prior_art.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: df268daa37fbcca1996a54004380602373a14fe07fcff040a7e29409f6bc11bb

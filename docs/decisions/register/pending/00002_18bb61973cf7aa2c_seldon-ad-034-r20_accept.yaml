@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-034-R20
+date: '2026-11-12'
+decided_by: cc:cefcfa29
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md:61: AD-034-R20'
+reason: 'SEL-038: answers hazbrief-mcp filings a7795a22 and 6d607cb9 and squiddy''s held-release filing of 2026-11-10; prior-art verify of the AD-034 and AD-036 families passes with the addendum'
+kind: decision
+status: accepted
+statement: A merge block that carries git's message shall record in its files the paths that message names, so the Issue opened for the block names them.
+source:
+  path: docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md
+  lines:
+  - 61
+  - 64
+  sha256: 8b5d253e9f689889623164121e82ac71e7edfe5c286f685b0d5bd7b1bec428e6
+  text: |-
+    - **AD-034-R20. A merge block that carries git's message names the files that message names.**
+      `ff_refused` records in `files` the paths git's stderr lists (`worktree.files_named`); a `rebase_conflict` whose
+      unmerged-path list is empty does the same, in the round and in a regate. The Issue opened for the block names them.
+      A message that names no path still gives `[]`, and the Issue says so.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md
+  anchor: AD-034-R20
+consumer:
+- cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.md
+- tests/test_sel038_journals_and_held_releases.py
+- seldon/core/worktree.py
+- seldon/commands/dispatch_worktree.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 18bb61973cf7aa2c902ba56764d549690e9ff73aff988a78b2aab331ace44431
