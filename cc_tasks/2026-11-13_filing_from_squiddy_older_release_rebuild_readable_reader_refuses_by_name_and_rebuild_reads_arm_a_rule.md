@@ -1,0 +1,26 @@
+# Filing from squiddy: an older library release now rebuilds into an index the kit's reader can read, the reader refuses one it cannot by name, and the rebuild reads the corpus checkpoint under arm A's rule
+
+**Repo:** seldon. **Date:** 2026-11-13. **Authored by:** squiddy SQ-139's dispatched session (worktree `transient-strolling-anchor`), filed under AD-036-R12 as a report of what changed in the kit seldon's verify calls, and of one thing found in seldon's rebuild. No candidacy headers, not a dispatcher candidate. This filing proposes no fix; the seldon thread decides what, if anything, changes.
+**Evidence:** squiddy `cc_tasks/2026-11-13_SQ-139_an_index_built_for_an_earlier_release_is_readable_by_the_kits_own_reader_so_prior_art_verify_answers_again_RESULT.md`; squiddy `squiddy/index.py` (`build_db`, `check_index_schema`, `Index.COLUMNS`), `squiddy/release_receipt.py`, `tests/test_sq139_*.py`; hazbrief's filing `squiddy/cc_tasks/2026-11-13_filing_from_hazbrief_prior_art_verify_crashes_on_every_library_receipt_no_such_column_text_sha256.md`.
+**Kind:** filing
+**Filed by:** squiddy
+
+## What squiddy changed (SQ-139)
+
+1. **`squiddy.index.build_db`'s default columns are now `INDEX_ROW_COLUMNS`**, the list the kit's reader (`squiddy.index.Index`, `Index.COLUMNS`) selects. Before, the default was arm A's `ROW_COLUMNS` (no `text_sha256`), and `seldon/core/prior_art.py` `rebuild_release` (`built = ix.build_db(rows, db)`, about line 1046) takes the default, then `open_rebuilt` opens it with `ix.Index`, whose `row` selects `text_sha256`. Every receipt naming a release other than the served one ended in `sqlite3.OperationalError: no such column: text_sha256` from SQ-028R (squiddy 9065eb7e, 2026-10-22) on. seldon's call is unchanged and now builds a readable index. Arm A's frozen database keeps `ROW_COLUMNS` through `squiddy.arms.build_index`.
+2. **The reader checks the index it is handed.** `Index.__init__` runs `check_index_schema` (`PRAGMA table_info(rows)`) and raises `squiddy.index.IndexSchemaError`, a subclass of `ArmExecutionError` (a `RuntimeError`), whose message starts `index_schema_mismatch:` and names the database, the missing column and how to rebuild. It is raised when the index is OPENED, before any query, so it would reach `Library._release_index` from `open_rebuilt`. seldon does not catch it today; with the new default it cannot fire on seldon's own rebuild, but an index built elsewhere and handed to `open_rebuilt` would surface it as a traceback rather than `release_unavailable`. Whether to map it is seldon's call.
+3. **A standing check in squiddy's release.** After `seal` and `hold`, stage 18 `release-receipt` (`python -m squiddy.release_receipt`) rebuilds the release just superseded through seldon's own `rebuild_release` and `open_rebuilt`, searches it, re-runs the search, and fails the release if the reader errors or the receipt's rows do not come back; with `--mutate` it plants the column dropped and requires `IndexSchemaError`. seldon's named `release_unavailable` refusal is recorded and does not fail the release (verify answers with it, AD-036-R19). It imports `seldon.core.prior_art`, so a change to `rebuild_release` or `open_rebuilt`'s signatures reaches squiddy's release.
+
+## What was found in `rebuild_release` (seldon's code; not changed)
+
+`_release_rows` reads the corpus checkpoint with `ix.iter_rows(wd / CORPUS_ROWS, manifest, ix.meta_renderer(cfg), stage, None)` (`seldon/core/prior_art.py:1152`), so it takes `iter_rows`' default `rule=CORPUS_RULE` (`q003-corpus/1`, arm A's) and no `parsed`. A release cut since SQ-028R was built from units keyed under the graph's text-of-record rule (`squiddy.index.text_row_rule`; for the library `sq028r-corpus/2:pages:reader=f3d92fedd4b6863a`). Measured on the primary's `graphs/library/work/index/corpus_rows.jsonl`, 2026-11-13:
+
+- The checkpoint holds 2,357 lines under `q003-corpus/1`, 2,261 under `sq028r-corpus/2:pages` and 2,261 under `sq028r-corpus/2:pages:reader=f3d92fedd4b6863a`.
+- Of the 2,261 units with rows under both `q003-corpus/1` and the current pages rule, 2,260 have the same row ids and 2,258 the same texts; 3 differ.
+- Rows under `q003-corpus/1` carry no `text_sha256`, so a rebuilt release's rows have the column with NULL values, and their receipts have none.
+
+So the library's older releases rebuild from arm A's rows, which are almost but not exactly the rows those releases served, and both of SQ-139's notes pass on them. A graph whose checkpoint holds no arm A lines (seldon-biblio and hazbrief-corpus declare `text_of_record: parsed`; squiddy's test fixture likewise) gets `release_unavailable: ... units have no current rows ...` for every older release instead. The rule a release was cut under is not in its export; the served `index_manifest.json` records it only for the served release.
+
+## What squiddy wants to know back
+
+Whether seldon wants the kit to expose one call that returns a release's rows under the rule it was cut under (so `rebuild_release` stops naming `iter_rows`' arguments), or will pass `rule` and `parsed` itself. Return path per AD-036-R16: a task file in `/Users/brock/GitHub/squiddy/cc_tasks/` only if squiddy has something to do.
