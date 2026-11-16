@@ -1,3 +1,4 @@
+seq: 356
 event: amend
 id: seldon:AD-036-R21
 date: '2026-11-15'
@@ -10,3 +11,5 @@ changes:
   statement: The prior-art library arm shall search, each separately, the graphs AD-036-R25 orders for the project (its own graphs first, then the graphs prior_art.library.graph lists less those inside a referenced project's repository), and each library receipt shall name the graph its rows came from; a receipt naming no graph shall be verified in the first graph library.graph lists.
 written_by: seldon decision 0.1.0
 provisional_id: e19c40e6a89d408e28629bd799fe9625e9f58316d29737d54ccff6c8430a5017
+prev_hash: a6329e8ac63da4a603908aa1cece6d10525afa045f3663c3ade768ff9b814038
+record_hash: f63f8f2e90bde8ca28db57c29324e575a02abf98f0535c8c3bc55f6b8df71d0a
