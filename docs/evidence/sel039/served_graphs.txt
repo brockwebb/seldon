@@ -1,0 +1,9 @@
+/Users/brock/GitHub/aacps-ai-policy/graphs/aacps-policy-dm served aacps_policy_dm_graph.json
+/Users/brock/GitHub/ai-readiness-kg/graphs/ai-readiness served ai_readiness_graph.json
+/Users/brock/GitHub/arnold/graphs/arnold-evidence served arnold_evidence_graph.json
+/Users/brock/GitHub/factory/graphs/factory-kg NOT served factory_kg_graph.json
+/Users/brock/GitHub/hazbrief-mcp/graphs/hazbrief-corpus served hazbrief_corpus_graph.json
+/Users/brock/GitHub/seldon/graphs/seldon-biblio served seldon_biblio_graph.json
+/Users/brock/GitHub/squiddy/graphs/biblio NOT served biblio_graph.json
+/Users/brock/GitHub/squiddy/graphs/library served library_graph.json
+/Users/brock/GitHub/squiddy/graphs/registry NOT served registry_graph.json

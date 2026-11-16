@@ -1,0 +1,26 @@
+seldon imported from /Users/brock/GitHub/seldon/.claude/worktrees/fluffy-chasing-pond/seldon/core/prior_art.py
+fluffy-chasing-pond: search [('seldon-biblio', 'own'), ('library', 'shared')]
+    default (unnamed receipt) -> library; reachable ['library', 'seldon-biblio']
+    R27 notice: None
+hazbrief-mcp: search [('hazbrief-corpus', 'own'), ('library', 'shared')]
+    not searched seldon-biblio: lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this
+    default (unnamed receipt) -> library; reachable ['hazbrief-corpus', 'library', 'seldon-biblio']
+    R27 notice: None
+squiddy: search [('library', 'own')]
+    not searched biblio: no served export (biblio_graph.json absent)
+    not searched registry: no served export (registry_graph.json absent)
+    not searched seldon-biblio: lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this
+    default (unnamed receipt) -> library; reachable ['library', 'seldon-biblio']
+    R27 notice: None
+arnold: search [('arnold-evidence', 'own'), ('library', 'shared')]
+    not searched seldon-biblio: lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this
+    default (unnamed receipt) -> library; reachable ['arnold-evidence', 'library', 'seldon-biblio']
+    R27 notice: the project has 1 graph(s) of its own and the prior-art library arm can read none, so its library searches never reach its own literature (AD-036-R27): arnold-evidence: squiddy cannot load it: FATAL: /Users/brock/GitHub/arnold/graphs/arnold-evidence/extract/control.yaml: the graph declares `domain.extract` and no `index.text_of_record`; declare which text the index cuts its receipts from, `parsed` (the parse intermediate the extractor reads) or `pages` (the page text), so claims and receipts share one text (SQ-028R)
+ai-readiness-kg: search [('ai-readiness', 'own'), ('library', 'shared')]
+    not searched seldon-biblio: lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this
+    default (unnamed receipt) -> library; reachable ['ai-readiness', 'library', 'seldon-biblio']
+    R27 notice: the project has 1 graph(s) of its own and the prior-art library arm can read none, so its library searches never reach its own literature (AD-036-R27): ai-readiness: the graph declares no index (SQ-019 admits the catalog and the extracted items and serves the release export only; no retrieval index is built (factory valve `index: closed`); the extraction daemon and its pilot are SQ-021's (DN-049 R-211))
+slosh-pipe: search [('library', 'shared')]
+    not searched seldon-biblio: lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this
+    default (unnamed receipt) -> library; reachable ['library', 'seldon-biblio']
+    R27 notice: None

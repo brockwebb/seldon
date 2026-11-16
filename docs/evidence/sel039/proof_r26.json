@@ -1,0 +1,42 @@
+[
+ {
+  "project": "hazbrief-mcp",
+  "note": "docs/design/2026-11-12_DN-029_the_threat_timeline_rows_order_considerations_occupancy_and_the_exercise_events_list.md",
+  "verdict": "pass",
+  "library": [
+   {
+    "graph": "library",
+    "status": "pass",
+    "source": "2026-11-12_DN-029_the_threat_timeline_rows_order_considerations_occupancy_and_the_exercise_events_list.md:216",
+    "detail": "48 row(s) returned"
+   },
+   {
+    "graph": "seldon-biblio",
+    "status": "pass",
+    "source": "2026-11-12_DN-029_the_threat_timeline_rows_order_considerations_occupancy_and_the_exercise_events_list.md:217",
+    "detail": "43 row(s) returned"
+   }
+  ],
+  "problems": []
+ },
+ {
+  "project": "squiddy",
+  "note": "docs/design/2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md",
+  "verdict": "pass",
+  "library": [
+   {
+    "graph": "library",
+    "status": "pass",
+    "source": "2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md:81",
+    "detail": "46 row(s) returned"
+   },
+   {
+    "graph": "seldon-biblio",
+    "status": "pass",
+    "source": "2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md:82",
+    "detail": "48 row(s) returned"
+   }
+  ],
+  "problems": []
+ }
+]

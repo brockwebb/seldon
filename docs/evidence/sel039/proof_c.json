@@ -1,0 +1,174 @@
+{
+ "project": "/Users/brock/GitHub/hazbrief-mcp",
+ "searched": [
+  [
+   "hazbrief-corpus",
+   "own"
+  ],
+  [
+   "library",
+   "shared"
+  ]
+ ],
+ "not_searched": [
+  {
+   "graph": "seldon-biblio",
+   "why": "lives in the referenced project's repository /Users/brock/GitHub/seldon, so it is that project's own, not this one's (AD-036-R25); name it on the call to search it"
+  }
+ ],
+ "queries": [
+  {
+   "query": "dense gas shallow layer time dependent",
+   "graphs": [
+    {
+     "graph": "hazbrief-corpus",
+     "origin": "own",
+     "release": "hazbrief_corpus_graph_hb01b_61_2026-11-12.json",
+     "rows": 48,
+     "receipt": "- library receipt: query \"dense gas shallow layer time dependent\" | graph hazbrief-corpus | release hazbrief_corpus_graph_hb01b_61_2026-11-12.json sha256:a7d60cd3684c7f6313bee702a2db8dd623135152d3b58e19890243d21d2f1ced | rows noaa-aloha-technical-documentation#b481:120600-120749, noaa-aloha-technical-documentation#b402:112246-112638, noaa-aloha-technical-documentation#b403:112640-113200, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b2045:723984-724172, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b1969:717328-717505, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b718:278945-280526, epa-slab-users-guide-1990#b1342:218674-218895, epa-slab-users-guide-1990#b32:5680-6108, epa-slab-users-guide-1990#b190:50490-51249, erg2016-anl-technical-report#b551:213405-213677, erg2016-anl-technical-report#b504:201886-202846, erg2016-anl-technical-report#b486:194174-195284, epa-rmp-oca-guidance-2009#b1026:524380-524427, epa-rmp-oca-guidance-2009#b861:371945-372208, epa-rmp-oca-guidance-2009#b858:371062-371821, erg2020-anl-technical-report#b540:204294-204323, erg2020-anl-technical-report#b475:186463-187058, erg2020-anl-technical-report#b494:193624-194588, erg2020-anl-technical-report#b542:205156-205522, epa-aloha-users-manual-2007#b1101:331457-331481, epa-aloha-users-manual-2007#b1010:293289-293473, epa-aloha-users-manual-2007#b665:200170-200710, erg2024-methodology#b546:209614-209643, epa-dense-gas-evaluation-1991#b46:16701-19015, epa-dense-gas-evaluation-1991#b241:130061-130434, epa-dense-gas-evaluation-1991#b319:150283-150410, csb-2024-04-i-ga-biolab-conyers#b781:302555-302746, csb-2024-04-i-ga-biolab-conyers#b778:300796-301614, epa-rmp-oca-guidance-appendices-1999#b18:3205-3345, epa-rmp-oca-guidance-appendices-1999#b934:221291-221507, epa-rmp-oca-guidance-appendices-1999#b328:141926-142947, fmh1-2019#b987:219467-219647, fmh1-2019#b399:75802-75931, fmh1-2019#b822:159845-159991, narac-dense-gas#meta, mazzola-2020-jack-rabbit-ii-17-dense-gas-models-manuscript#meta, cfr40-part68-govinfo-2025#b242:31199-31411, cfr40-part68-govinfo-2025#b271:37713-38077, epa-scipuff-overview-2000#b18:4525-4571, epa-scipuff-overview-2000#b29:6843-7021, epa-scipuff-overview-2000#b39:9336-9524, erg-distances-background#b127:17206-17250, erg2024-en-pdf#b4325:760500-760544, erg2024-en-pdf#b4827:915107-915320, hanna-2008-psp-six-dense-gas-models-railcar#meta, fema-hazus-earthquake-technical-manual-6-1#b242:163738-166573, fema-hazus-earthquake-technical-manual-6-1#b233:151879-157104, fema-hazus-earthquake-technical-manual-6-1#b2775:1715654-1715735"
+    },
+    {
+     "graph": "library",
+     "origin": "shared",
+     "release": "library_graph_20261110_sq133r_b.r1_2026-11-13.json",
+     "rows": 41,
+     "receipt": "- library receipt: query \"dense gas shallow layer time dependent\" | graph library | release library_graph_20261110_sq133r_b.r1_2026-11-13.json sha256:c38db2b4106bbc762c984d545e044a60ac0a91923254ba2e4de8cf8a3964d784 | rows lesson:2026-02-22_arXiv_2311_13743#p8:166:5795-6138, lesson:2026-02-22_arXiv_2311_13743#p8:144:3948-4343, lesson:2026-02-22_arXiv_2311_13743#p9:191:839-1141, lesson:2024-05-17_arXiv_2204_04198#p279:6346:1634-1845, lesson:2024-05-17_arXiv_2204_04198#p259:6031:2046-2257, lesson:2024-05-17_arXiv_2204_04198#p122:2800:1657-2345, lesson:2026-02-22_arXiv_2502_04180#p5:211:2590-2647, lesson:2024-05-17_arXiv_2306_14894#p7:222:2023-2200, lesson:2026-02-22_arXiv_2505_02484#p131:1548:1886-2088, lesson:2026-02-22_arXiv_2505_02484#p7:81:2467-2701, lesson:2026-02-22_arXiv_2505_02484#p130:1517:887-994, lesson:2026-02-22_arXiv_2501_06590#p34:547:1850-2267, lesson:2026-02-22_arXiv_2501_06590#p34:536:821-978, lesson:2026-02-22_arXiv_2501_06590#p33:507:258-437, lesson:2026-06-09_arXiv_2512_22471#p19:281:657-1266, lesson:2026-06-09_arXiv_2512_22471#p17:262:414-902, lesson:2026-06-09_arXiv_2512_22471#p14:249:540-906, lesson:2026-02-22_arXiv_2410_04223#p20:455:2485-2655, lesson:2026-02-22_arXiv_2410_04223#p20:458:2682-2880, lesson:2026-02-22_arXiv_2410_04223#p13:370:1244-1443, lesson:2025-06-28_arXiv_2411_06577#p2:17:153-168, lesson:2026-02-22_arXiv_2504_00741#p13:100:3511-3831, lesson:2026-02-22_arXiv_2508_06471#p3:57:1126-1276, lesson:2026-04-05_arXiv_2604_01007#p20:275:660-713, lesson:2026-04-05_arXiv_2604_01007#p6:68:3357-3732, lesson:2026-02-22_arXiv_2503_08275#p27:446:1779-1893, lesson:2026-02-22_arXiv_2503_08275#p18:247:958-1056, lesson:2026-02-22_arXiv_2503_08275#p18:246:856-956, lesson:2026-02-22_arXiv_2510_06217#p22:418:56-388, lesson:2026-04-12_arXiv_2401_06066#p18:312:0-594, lesson:2026-04-12_arXiv_2401_06066#p9:228:1404-2784, lesson:2026-04-12_arXiv_2401_06066#p21:331:1535-1562, lesson:2026-02-22_arXiv_2411_04983#p17:293:1211-2197, lesson:2026-02-22_arXiv_2411_04983#p17:294:2199-2557, lesson:2026-02-22_arXiv_2504_21776#p3:46:0-8, lesson:2026-02-22_arXiv_2504_21776#p33:609:1677-1791, lesson:2026-03-22_arXiv_2512_12818#p18:341:2007-2427, lesson:2026-02-01_arXiv_2601_02451#p12:517:4545-4830, lesson:2026-02-01_arXiv_2601_02451#p13:549:3250-3549, lesson:2026-02-01_arXiv_2601_02451#p6:182:1185-1391, lesson:2026-03-27_arXiv_2509_18970#p5:124:277-284"
+    }
+   ],
+   "first_five": [
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "noaa-aloha-technical-documentation",
+     "row": "noaa-aloha-technical-documentation#b481:120600-120749",
+     "text": "The steady-plumes generated by the Heavy Gas model are combined to create a time-dependent cloud, as described in the General Comments secti"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2",
+     "row": "hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b2045:723984-724172",
+     "text": "316 o-y PERFORMANCE MEASURES FOR CONCENTRATIONS FOR CONTINUOUS DENSE GAS RELEASES (BURRO, COYOTE, DESERT TORTOISE, GOLDFISH, MAPLIN SANDS, T"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "epa-slab-users-guide-1990",
+     "row": "epa-slab-users-guide-1990#b1342:218674-218895",
+     "text": "Morgan, D.L., Jr., L.K. Morris, and D.L. Ermak (1983), \"SLAB: A Time-Dependent Computer Model for the Dispersion of Heavy Gas Released in th"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "erg2016-anl-technical-report",
+     "row": "erg2016-anl-technical-report#b551:213405-213677",
+     "text": "Like the passive gas dispersion model used in CASRAM, the dense gas algorithm is integral in nature. The initial conditions are specified by"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "epa-rmp-oca-guidance-2009",
+     "row": "epa-rmp-oca-guidance-2009#b1026:524380-524427",
+     "text": "Dense Gas Distances to Lower Flammability Limit"
+    }
+   ]
+  },
+  {
+   "query": "SCIPUFF vertical resolution puff split dense",
+   "graphs": [
+    {
+     "graph": "hazbrief-corpus",
+     "origin": "own",
+     "release": "hazbrief_corpus_graph_hb01b_61_2026-11-12.json",
+     "rows": 49,
+     "receipt": "- library receipt: query \"SCIPUFF vertical resolution puff split dense\" | graph hazbrief-corpus | release hazbrief_corpus_graph_hb01b_61_2026-11-12.json sha256:a7d60cd3684c7f6313bee702a2db8dd623135152d3b58e19890243d21d2f1ced | rows epa-scipuff-overview-2000#b29:6843-7021, epa-scipuff-overview-2000#b7:1465-2248, epa-scipuff-overview-2000#b43:9932-10443, nws-10-518#b208:60754-61379, nws-10-518#b210:61408-61853, epa-slab-users-guide-1990#b115:33495-34132, epa-slab-users-guide-1990#b313:75002-75200, epa-slab-users-guide-1990#b99:31745-32362, scichem-scipuff-fi#meta, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b412:141442-142881, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b441:162459-162691, hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b894:343330-343488, osd-ncbdp-specialized-radiological#b15:5141-5854, osd-ncbdp-specialized-radiological#b12:3351-4195, osd-ncbdp-specialized-radiological#b36:14136-14902, liu-2022-smoke-plume-dynamics#b123:50411-51010, liu-2022-smoke-plume-dynamics#b310:96110-96240, liu-2022-smoke-plume-dynamics#b68:27074-27361, erg2016-anl-technical-report#b845:309242-309380, erg2016-anl-technical-report#b547:211924-212753, erg2016-anl-technical-report#b486:194174-195284, erg2016-anl-technical-report#b560:214759-215237, erg2020-anl-technical-report#b853:301669-301808, erg2020-anl-technical-report#b541:204325-205154, erg2020-anl-technical-report#b483:189982-190771, erg2024-methodology#b860:308060-308199, usfs-lavdas-1996-vsmoke-users-manual#b140:37998-38808, usfs-lavdas-1996-vsmoke-users-manual#b616:195329-195630, usfs-lavdas-1996-vsmoke-users-manual#b214:63499-65807, jamc-2009-scipuff-nwp-ensembles#meta, ecfr-40-cfr-51-appendix-w-2025#b947:264566-264986, ecfr-40-cfr-51-appendix-w-2025#b872:252953-253720, ecfr-40-cfr-51-appendix-w-2025#b1004:272199-272366, epa-mmgrma-1999#b244:112474-113396, epa-mmgrma-1999#b781:288521-289448, epa-mmgrma-1999#b1052:385050-385931, faa-hf-std-001b#b284:92754-92972, faa-hf-std-001b#b1187:275201-275341, faa-hf-std-001b#b1985:421526-421854, perplexity-report-scipuff-uncertainty-2026-11-10#meta, achtemeier-2011-daysmoke#b109:42701-42947, achtemeier-2011-daysmoke#b66:24421-25001, achtemeier-2011-daysmoke#b135:54510-56486, epa-pcrammet-users-guide#b77:14846-15458, csb-2017-01-i-ks-mgpi-atchison#b45:4812-4927, csb-2017-01-i-ks-mgpi-atchison#b191:50127-50732, csb-2017-01-i-ks-mgpi-atchison#b189:49466-49723, epa-wildfire-smoke-guide-2019#b199:100936-100963, epa-wildfire-smoke-guide-2019#b200:100965-101370"
+    },
+    {
+     "graph": "library",
+     "origin": "shared",
+     "release": "library_graph_20261110_sq133r_b.r1_2026-11-13.json",
+     "rows": 43,
+     "receipt": "- library receipt: query \"SCIPUFF vertical resolution puff split dense\" | graph library | release library_graph_20261110_sq133r_b.r1_2026-11-13.json sha256:c38db2b4106bbc762c984d545e044a60ac0a91923254ba2e4de8cf8a3964d784 | rows lesson:2026-02-22_arXiv_2505_12370#p8:195:3176-3947, lesson:2026-02-22_arXiv_2505_12370#p4:70:261-279, lesson:2026-01-28_10_1007_s11135_017_0533_4#p18:174:688-737, lesson:2026-01-28_10_1007_s11135_017_0533_4#p32:499:1455-1498, lesson:2026-01-28_10_1007_s11135_017_0533_4#p6:69:776-823, lesson:2026-05-09_arXiv_2605_06161#p22:439:1161-2496, lesson:2026-05-09_arXiv_2605_06161#p23:442:138-997, lesson:2026-05-09_arXiv_2605_06161#p23:440:0-117, lesson:2026-03-17_arXiv_2303_18223#p85:1573:4-395, lesson:2026-05-23_arXiv_2305_08703#p6:209:2995-3010, lesson:2026-05-23_arXiv_2305_08703#p6:206:2944-2959, lesson:2026-02-22_arXiv_2503_22732#p14:279:4131-5567, lesson:2026-02-22_arXiv_2503_22732#p8:218:2595-2704, lesson:2026-02-22_arXiv_2505_16517#p13:290:2780-2993, lesson:2026-08-25_arXiv_2606_08317#p11:152:2923-2945, lesson:2026-08-25_arXiv_2606_08317#p12:173:49-98, lesson:2026-02-01_arXiv_2204_02311#p7:101:3106-3540, lesson:2026-02-01_arXiv_2204_02311#p23:466:1069-1090, lesson:2026-02-01_arXiv_2204_02311#p7:98:1167-1743, lesson:2026-02-22_arXiv_2402_06596#p10:360:3375-3410, lesson:2026-02-22_arXiv_2501_08944#p6:36:365-385, lesson:2026-02-22_arXiv_2501_08944#p21:152:1248-1292, lesson:2026-02-22_arXiv_2501_08944#p6:40:1332-1373, lesson:2026-02-22_arXiv_2505_09388#p18:278:1531-1693, lesson:2026-02-22_arXiv_2505_09388#p7:74:1377-1490, lesson:2026-02-22_arXiv_2505_09388#p8:80:229-340, lesson:2026-02-22_arXiv_2505_02484#p173:2264:0-279, lesson:2026-02-22_arXiv_2505_02484#p148:1812:0-766, lesson:2026-02-22_arXiv_2505_02484#p149:1830:426-978, lesson:2026-04-12_arXiv_2407_21783#p78:1083:3428-3694, lesson:2026-04-12_arXiv_2407_21783#p91:1233:3965-4450, lesson:2026-04-12_arXiv_2306_07629#p16:350:236-794, lesson:2026-04-12_arXiv_2306_07629#p23:447:0-626, lesson:2026-04-12_arXiv_2306_07629#p17:361:0-96, lesson:2026-08-25_arXiv_2607_02771#p8:162:559-840, lesson:2026-08-25_arXiv_2607_02771#p7:155:912-2383, lesson:2026-08-25_arXiv_2607_02771#p8:170:3396-4456, lesson:2026-02-22_arXiv_2407_10022#p21:383:2304-2466, lesson:2026-02-22_arXiv_2503_18968#p5:122:1668-2090, lesson:2026-02-22_arXiv_2512_23044#p5:74:1627-2294, lesson:2026-02-22_arXiv_2512_23044#p7:101:735-1283, lesson:2026-02-22_arXiv_2512_23044#p13:197:2243-3268, lesson:2026-04-12_arXiv_2402_12065#p10:264:0-198"
+    }
+   ],
+   "first_five": [
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "epa-scipuff-overview-2000",
+     "row": "epa-scipuff-overview-2000#b29:6843-7021",
+     "text": "SCIPUFF is a time-dependent Gaussian puff model that employs second-order closure turbulence modeling techniques to relate the dispersion ra"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "nws-10-518",
+     "row": "nws-10-518#b208:60754-61379",
+     "text": "The dispersion of a pollutant is calculated by assuming either a Gaussian or Top-Hat horizontal distribution within a puff or from the dispe"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "epa-slab-users-guide-1990",
+     "row": "epa-slab-users-guide-1990#b115:33495-34132",
+     "text": "The average puff volume concentration C(t) is obtained from the average puff mass concentration using Eq. (12), where the independent variab"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "scichem-scipuff-fi",
+     "row": "scichem-scipuff-fi#meta",
+     "text": "id: scichem-scipuff-fi\nkind: work\ntitle: SCICHEM source/src/lib/SCIPUFFlib/SCIPUFF/inc/scipuff_fi.f90 at commit 156625ef\nsource_url: https:/"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2",
+     "row": "hanna-strimaitis-chang-1993-hazard-response-modeling-uncertainty-vol2#b412:141442-142881",
+     "text": "With a transport speed greater than 1.5 m/s, a puff would pass by all receptors located within 100 m by the end of the first 1l-min time-ste"
+    }
+   ]
+  },
+  {
+   "query": "Jack Rabbit chlorine model comparison",
+   "graphs": [
+    {
+     "graph": "hazbrief-corpus",
+     "origin": "own",
+     "release": "hazbrief_corpus_graph_hb01b_61_2026-11-12.json",
+     "rows": 47,
+     "receipt": "- library receipt: query \"Jack Rabbit chlorine model comparison\" | graph hazbrief-corpus | release hazbrief_corpus_graph_hb01b_61_2026-11-12.json sha256:a7d60cd3684c7f6313bee702a2db8dd623135152d3b58e19890243d21d2f1ced | rows mazzola-2020-jack-rabbit-ii-17-dense-gas-models-manuscript#meta, hanna-2016-ae-jack-rabbit-lyme-bay#meta, ams-2011-186566-hanna-dense-gas-poster#meta, atsdr-tp-fluorides-hf-fluorine-2003#b2232:779215-779337, atsdr-tp-fluorides-hf-fluorine-2003#b2970:887620-887798, atsdr-tp-fluorides-hf-fluorine-2003#b2443:811043-811221, atsdr-tp-chlorine-2010#b721:297272-297774, atsdr-tp-chlorine-2010#b1234:525949-526110, atsdr-tp-chlorine-2010#b1342:543653-543819, erg2020-anl-technical-report#b815:294662-294831, erg2020-anl-technical-report#b474:185868-186461, erg2020-anl-technical-report#b541:204325-205154, erg2024-methodology#b822:301053-301222, erg2024-methodology#b483:191189-192385, niosh-idlh-hydrogen-chloride-2025#b286:74852-75069, epa-aloha-users-manual-2007#b271:94276-94588, epa-aloha-users-manual-2007#b490:147208-147512, epa-aloha-users-manual-2007#b483:145307-145802, atsdr-tp-ethylene-oxide-2022#b536:262171-263015, atsdr-tp-ethylene-oxide-2022#b504:243148-244185, atsdr-tp-ethylene-oxide-2022#b1368:684260-684629, dod-mil-std-1472h#b3580:668723-668831, dod-mil-std-1472h#b3581:668833-668983, dod-mil-std-1472h#b4426:829144-829345, achtemeier-2011-daysmoke#b88:37178-37226, achtemeier-2011-daysmoke#b181:74368-74584, epa-slab-users-guide-1990#b550:123667-123983, epa-slab-users-guide-1990#b1331:216822-217015, epa-slab-users-guide-1990#b552:124882-125620, nrc-nureg-0700-r4#b5494:954215-954239, nrc-nureg-0700-r4#b7982:1316249-1316424, nrc-nureg-0700-r4#b607:147640-147961, turner-sigma-curves#b460:93708-93915, ecfr-40-cfr-51-appendix-w-2025#b226:35434-35595, ecfr-40-cfr-51-appendix-w-2025#b677:207316-207467, ecfr-40-cfr-51-appendix-w-2025#b820:237890-238057, johnston-2005-analytic-culture#b1239:356439-356521, johnston-2005-analytic-culture#b1130:341875-342100, johnston-2005-analytic-culture#b1493:391621-391848, atsdr-tp-ammonia-2004#b293:136014-136022, atsdr-tp-ammonia-2004#b1465:546576-546739, atsdr-tp-ammonia-2004#b1056:476727-476952, ntsb-hzm-19-01-new-martinsville#b116:29057-29908, ntsb-hzm-19-01-new-martinsville#b117:29910-30351, ntsb-hzm-19-01-new-martinsville#b174:50564-51882, ntsb-rar-05-04-graniteville#b225:87962-88774, ntsb-rar-05-04-graniteville#b222:87004-87332"
+    },
+    {
+     "graph": "library",
+     "origin": "shared",
+     "release": "library_graph_20261110_sq133r_b.r1_2026-11-13.json",
+     "rows": 41,
+     "receipt": "- library receipt: query \"Jack Rabbit chlorine model comparison\" | graph library | release library_graph_20261110_sq133r_b.r1_2026-11-13.json sha256:c38db2b4106bbc762c984d545e044a60ac0a91923254ba2e4de8cf8a3964d784 | rows lesson:2026-02-22_arXiv_2505_02484#p75:806:351-483, lesson:2026-02-22_arXiv_2505_02484#p82:902:870-1071, lesson:2026-02-22_arXiv_2505_02484#p135:1600:0-600, lesson:2026-02-22_arXiv_2311_10776#p9:106:1124-2220, lesson:2026-02-22_arXiv_2311_10776#p8:93:617-1223, lesson:2026-02-22_arXiv_2311_10776#p16:202:0-465, lesson:2026-02-22_arXiv_2404_10775#p22:381:167-319, lesson:2026-02-22_arXiv_2502_18439#p18:430:4350-4622, lesson:2026-02-21_arXiv_2305_16291#p40:731:2660-2720, lesson:2026-04-07_arXiv_2509_09705#p4:70:2145-2558, lesson:2026-04-07_arXiv_2509_09705#p4:71:2560-3364, lesson:2026-04-07_arXiv_2509_09705#p12:124:1448-2048, lesson:2026-04-07_arXiv_2506_14092#p5:47:2249-2523, lesson:2026-04-07_arXiv_2506_14092#p44:413:0-754, lesson:2026-05-23_arXiv_2307_16699#p2:36:1431-1671, lesson:2026-04-12_arXiv_2401_06066#p2:47:288-708, lesson:2026-02-21_10_18653_v1_2025_acl_long_1354#p23:459:701-802, lesson:2026-02-21_10_18653_v1_2025_acl_long_1354#p13:268:3958-3985, lesson:2026-04-03_arXiv_2509_26483#p15:91:0-688, lesson:2026-04-03_arXiv_2509_26483#p20:121:0-49, lesson:2026-04-03_arXiv_2509_26483#p21:125:0-979, lesson:2026-02-22_arXiv_2412_05255#p31:486:0-151, lesson:2026-04-12_arXiv_2306_07629#p21:439:2686-2954, lesson:2026-04-12_arXiv_2306_07629#p21:440:2956-3274, lesson:2026-04-12_arXiv_2306_07629#p19:412:1763-2493, lesson:2026-02-21_arXiv_2502_07577#p33:599:191-197, lesson:2026-02-21_arXiv_2502_07577#p33:606:463-469, lesson:2026-02-21_arXiv_2502_07577#p49:900:1611-1669, lesson:2026-02-22_arXiv_2411_07228#p13:241:2847-3850, lesson:2026-02-22_arXiv_2411_07228#p5:107:1828-2515, lesson:2026-02-22_arXiv_2411_07228#p3:39:1287-1835, lesson:2026-02-22_arXiv_2505_08638#p19:251:340-745, lesson:2026-02-22_arXiv_2505_08638#p9:123:1690-2103, lesson:2026-02-22_arXiv_2505_08638#p7:101:390-459, lesson:2026-02-22_arXiv_2409_14634#p17:260:479-1483, lesson:2026-03-17_arXiv_2305_17144#p7:152:1909-2492, lesson:2026-03-17_arXiv_2305_17144#p7:154:2527-3020, lesson:2026-02-22_arXiv_2311_12871#p31:672:2321-2342, lesson:2026-02-22_arXiv_2410_04223#p22:488:3374-3988, lesson:2026-02-22_arXiv_2410_04223#p21:473:3221-4233, lesson:2026-02-22_arXiv_2410_04223#p20:462:2963-3753"
+    }
+   ],
+   "first_five": [
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "mazzola-2020-jack-rabbit-ii-17-dense-gas-models-manuscript",
+     "row": "mazzola-2020-jack-rabbit-ii-17-dense-gas-models-manuscript#meta",
+     "text": "id: mazzola-2020-jack-rabbit-ii-17-dense-gas-models-manuscript\nkind: work\ntitle: Results of comparisons of the predictions of 17 dense gas d"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "hanna-2016-ae-jack-rabbit-lyme-bay",
+     "row": "hanna-2016-ae-jack-rabbit-lyme-bay#meta",
+     "text": "id: hanna-2016-ae-jack-rabbit-lyme-bay\nkind: work\ntitle: Observed chlorine concentrations during Jack Rabbit I and Lyme Bay field experiment"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "ams-2011-186566-hanna-dense-gas-poster",
+     "row": "ams-2011-186566-hanna-dense-gas-poster#meta",
+     "text": "id: ams-2011-186566-hanna-dense-gas-poster\nkind: work\ntitle: Comparing results of two chlorine release field experiments - Wild Stallions an"
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "atsdr-tp-fluorides-hf-fluorine-2003",
+     "row": "atsdr-tp-fluorides-hf-fluorine-2003#b2232:779215-779337",
+     "text": "*Hall LL, Kilpper RW, Smith FA, et al.  1977.  Kinetic model of fluoride metabolism in the rabbit. Environ Res 13:282-302."
+    },
+    {
+     "graph": "hazbrief-corpus",
+     "doc_id": "atsdr-tp-chlorine-2010",
+     "row": "atsdr-tp-chlorine-2010#b721:297272-297774",
+     "text": "A computational fluid dynamics-physiologically based pharmacokinetic model is being developed for chlorine (Jarabek et al. 2007).  The model"
+    }
+   ]
+  }
+ ]
+}

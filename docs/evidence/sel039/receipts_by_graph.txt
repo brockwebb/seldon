@@ -1,0 +1,14 @@
+('ai-readiness-kg', '(none)') 27 
+('census-web-concept-inventory', '(none)') 3 
+('hazbrief-mcp', '(none)') 37 
+('hazbrief-mcp', 'library') 45 ['2026-11-10_DN-019_ADDENDUM_03_the_operator_shell.md', '2026-11-10_DN-019_ADDENDUM_04_less_at_once.md', '2026-11-10_DN-023_siting_command_post_triage_and_staging.md', '2026-11-10_DN-024_the_plume_over_time.md']
+('hazbrief-mcp', 'seldon-biblio') 29 ['2026-11-12_DN-025_a_passive_puff_follows_the_forecast_wind_of_every_hour_it_travels.md', '2026-11-12_DN-026_one_engine_per_release_by_the_held_criterion_and_one_cloud_drawn_by_health_effect_level.md', '2026-11-12_DN-028_ADDENDUM_01_the_night_gap_traced_the_stable_class_layer_and_what_a_night_brief_draws.md', '2026-11-12_DN-028_ADDENDUM_02_every_citation_checked_against_the_held_text_and_what_the_held_evaluations_say.md']
+('seldon', '(none)') 41 
+('seldon', 'library') 3 ['AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md']
+('slosh-pipe', '(none)') 48 
+('slosh-pipe-wt-closed', '(none)') 42 
+('slosh-pipe-wt-control', '(none)') 42 
+('slosh-pipe-wt-metrics', '(none)') 39 
+('squiddy', '(none)') 51 
+('squiddy', 'library') 7 ['2026-11-10_DN-059_sealed_releases_older_than_the_diff_base_are_held_compressed.md', '2026-11-14_DN-060_the_record_pass_runs_its_seeds_side_by_side_and_shows_a_pass_in_flight.md', '2026-11-14_DN-061_a_pass_is_one_random_order_run_and_more_orders_are_a_search_not_a_gate.md', '2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md']
+('squiddy', 'seldon-biblio') 5 ['2026-11-14_DN-060_the_record_pass_runs_its_seeds_side_by_side_and_shows_a_pass_in_flight.md', '2026-11-14_DN-061_a_pass_is_one_random_order_run_and_more_orders_are_a_search_not_a_gate.md', '2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md']
