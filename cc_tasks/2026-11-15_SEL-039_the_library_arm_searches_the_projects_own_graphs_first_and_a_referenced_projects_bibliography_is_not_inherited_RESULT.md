@@ -145,7 +145,12 @@ works around them.
 
 ## D. The return, and the filing's item 4
 
-Filed with `seldon cc return --answers hazbrief-mcp:bbfd478f` (RETURN_LINE). Item 4, what happens to query-log lines a
+Filed with `seldon cc return <this task> --to hazbrief-mcp --answers seldon:2026-11-15_filing_from_hazbrief_...`
+(the filing is registered in seldon's graph, so `hazbrief-mcp:bbfd478f` does not resolve; dry run first): hazbrief
+**HB-191** (task `5a3e8777`), `cc_tasks/2026-11-16_HB-191_seldon_sel_039_landed_your_library_searches_now_start_with_hazbrief_co.md`,
+committed by its registration in hazbrief (`e2740587`, `3628de38`). The filing `bbfd478f` closed by its return
+(proposed -> completed; AD-036-R17). The return's first body line says nothing in it is urgent for the 2026-11-20
+submission. Item 4, what happens to query-log lines a
 Desktop search leaves while another session holds the lease: they stay modified in hazbrief's primary until the next
 pass that takes the lease, which commits them as the `prior_art` class (`reconcile: N prior-art line(s) ... (prior_art,
 AD-038-R1)`); a merge round commits them before its fast-forward (AD-034-R19). Pinned by
