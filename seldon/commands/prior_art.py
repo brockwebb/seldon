@@ -1,7 +1,7 @@
 """`seldon prior-art`: search the prior art and verify a note's receipts (AD-036).
 
     seldon prior-art search --internal "<query>" [--root NAME ...] [--top N] [--note N] [--project DIR] [--json]
-    seldon prior-art search --library "<query>" [--project DIR] [--json]
+    seldon prior-art search --library "<query>" [--graph NAME ...] [--project DIR] [--json]
     seldon prior-art verify docs/design/<note>.md [--no-record] [--project DIR] [--json]
 
 `search` prints receipts in AD-036-R1's form, ready to paste under `### Internal` or
@@ -44,11 +44,15 @@ def _commit(project_dir: Path, config: dict, before: dict, what: str) -> dict:
 
 def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
                project_dir: Path | None = None, config: dict | None = None, note: str | None = None,
-               cwd: Path | None = None) -> dict:
+               cwd: Path | None = None, graphs: tuple = ()) -> dict:
     """One search, logged in the calling project and committed there. Returns {receipts, hits, meta, commit}; shared
     by the CLI and the MCP tool. `note` is the note the receipts are for: the internal arm leaves it out (QC-001
     premise 3), and the log goes to its repository (AD-036-R10). `project_dir` is an explicit project; without one
-    the note's repository, else the project at or above `cwd` (default: the working directory)."""
+    the note's repository, else the project at or above `cwd` (default: the working directory).
+
+    Library arm (AD-036-R25, R26): without `graphs`, the project's own graphs first, then the shared list less the
+    referenced project's own; `not_searched` names what was left out and why. `graphs` names exactly the graphs to
+    search instead: a graph of this project's by its name, or another project's as `<repository>/<graph>`."""
     project_dir, note = _resolve(project_dir, note, Path(cwd or Path.cwd()))
     config = config if config is not None else load_project_config(project_dir)
     s = pa.settings(project_dir, config)
@@ -70,8 +74,9 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
                          "hits": len(res["hits"]),
                          "top": [f"{h.root}:{h.cite()}" for h in res["hits"][:n]]})
     elif arm == "library":
-        # AD-036-R21 (SEL-036): every graph `prior_art.library.graph` lists, one receipt per graph that answered.
-        tool = pa.Libraries(s)
+        # AD-036-R21 (SEL-036): one receipt per graph that answered. AD-036-R25 (SEL-039): the project's own graphs
+        # first, then the shared list less the referenced project's own; or exactly the graphs the call names.
+        tool = pa.Libraries(s, graphs or None)
         try:
             results = tool.search(query)
         finally:
@@ -80,26 +85,31 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
         if not answered:
             raise pa.PriorArtError("no library graph answered: "
                                    + "; ".join(f"{r['graph']}: {r['error']}" for r in results))
-        graphs = []
+        searched = []
         for res in results:
+            origin = res.get("origin")
             if res.get("error"):
-                graphs.append({"graph": res["graph"], "error": res["error"]})
+                searched.append({"graph": res["graph"], "origin": origin, "error": res["error"]})
                 pa.log_query(s, {"arm": "library", "purpose": "search", "query": query, "graph": res["graph"],
-                                 "error": res["error"][:300]})
+                                 "origin": origin, "error": res["error"][:300]})
                 continue
-            graphs.append({"graph": res["graph"], "release": res["release"], "sha256": res["sha256"],
-                           "total_hits": len(res["rows"]), "receipt": pa.Library.receipt(res),
-                           "top": [{"doc_id": h["doc_id"], "rows": [r["receipt"]["row_id"] for r in h["rows"]],
-                                    "text": h["rows"][0]["text"][:200] if h["rows"] else ""}
-                                   for h in res["hits"]]})
+            searched.append({"graph": res["graph"], "origin": origin, "release": res["release"],
+                             "sha256": res["sha256"], "total_hits": len(res["rows"]),
+                             "receipt": pa.Library.receipt(res),
+                             "top": [{"doc_id": h["doc_id"], "rows": [r["receipt"]["row_id"] for r in h["rows"]],
+                                      "text": h["rows"][0]["text"][:200] if h["rows"] else ""}
+                                     for h in res["hits"]]})
             pa.log_query(s, {"arm": "library", "purpose": "search", "query": query, "graph": res["graph"],
-                             "release": res["release"], "sha256": res["sha256"], "rows": len(res["rows"])})
+                             "origin": origin, "release": res["release"], "sha256": res["sha256"],
+                             "rows": len(res["rows"])})
         first = answered[0]
         # `release`, `sha256`, `total_hits` and `top` stay the FIRST answering graph's, as every caller before R21 read
-        # them; `graphs` carries each graph's, and `receipts` one line per answering graph.
-        out = {"arm": arm, "query": query, "receipts": [g["receipt"] for g in graphs if "receipt" in g],
+        # them (since R25, the project's own graph when it answers); `graphs` carries each graph's, and `receipts` one
+        # line per answering graph.
+        out = {"arm": arm, "query": query, "receipts": [g["receipt"] for g in searched if "receipt" in g],
                "release": first["release"], "sha256": first["sha256"], "total_hits": len(first["rows"]),
-               "top": next(g["top"] for g in graphs if "receipt" in g), "graphs": graphs}
+               "top": next(g["top"] for g in searched if "receipt" in g), "graphs": searched,
+               "not_searched": [{"graph": g["name"], "why": g["why"]} for g in tool.not_searched]}
     else:
         raise pa.PriorArtError(f"unknown arm {arm!r}")
     out["seconds"] = round(time.monotonic() - started, 3)
@@ -145,7 +155,11 @@ def prior_art_group():
 @prior_art_group.command("search")
 @click.argument("query")
 @click.option("--internal", "arm", flag_value="internal", help="The operator's own repositories.")
-@click.option("--library", "arm", flag_value="library", help="The squiddy library graph.")
+@click.option("--library", "arm", flag_value="library",
+              help="The library graphs: the project's own first, then the shared list (AD-036-R25).")
+@click.option("--graph", "graphs", multiple=True,
+              help="Library arm: search exactly this graph instead (repeatable): one of the project's graphs by name, "
+                   "or another project's as <repository>/<graph> (AD-036-R26).")
 @click.option("--root", "roots", multiple=True, help="Internal arm: only these roots.")
 @click.option("--top", type=int, default=None, help="Hits to print (default: config top_n).")
 @click.option("--note", default=None, help="Internal arm: the note these receipts are for; it is left out of the "
@@ -154,12 +168,14 @@ def prior_art_group():
               help="The project whose evidence this search is (default: the note's repository, else the project at "
                    "or above the working directory). Its log gets the line, and the commit (AD-036-R10).")
 @click.option("--json", "as_json", is_flag=True, help="Print the full result as JSON.")
-def search_command(query, arm, roots, top, note, project, as_json):
+def search_command(query, arm, graphs, roots, top, note, project, as_json):
     """Run QUERY on one arm; print receipts to paste into a note's `## Prior art` section."""
     if arm is None:
         raise click.UsageError("choose --internal or --library")
+    if graphs and arm != "library":
+        raise click.UsageError("--graph names a library graph; use it with --library")
     try:
-        out = run_search(arm, query, roots, top, project, note=note)
+        out = run_search(arm, query, roots, top, project, note=note, graphs=tuple(graphs))
     except (pa.PriorArtError, FileNotFoundError) as exc:
         raise click.ClickException(str(exc))
     _report_commit(out)
@@ -179,13 +195,16 @@ def search_command(query, arm, roots, top, note, project, as_json):
             click.echo(f"  {h['score']:>8.3f}  {h['root']}:{h['cite']}  (lines {h['lines']})")
     else:
         for g in out.get("graphs") or [{"graph": "library", **out}]:
+            origin = f" ({g['origin']})" if g.get("origin") else ""
             if g.get("error"):
-                click.echo(f"  graph {g['graph']}: unavailable: {g['error']}")
+                click.echo(f"  graph {g['graph']}{origin}: unavailable: {g['error']}")
                 continue
-            click.echo(f"  graph {g['graph']}: release {g['release']} sha256:{str(g['sha256'])[:12]}..., "
+            click.echo(f"  graph {g['graph']}{origin}: release {g['release']} sha256:{str(g['sha256'])[:12]}..., "
                        f"{g['total_hits']} row(s)")
             for h in g["top"]:
                 click.echo(f"    {h['doc_id']}  {h['text'][:120]!r}")
+        for g in out.get("not_searched") or []:
+            click.echo(f"  not searched: {g['graph']}: {g['why']}")
     click.echo("\nReceipts:")
     for r in out["receipts"]:
         click.echo(r)

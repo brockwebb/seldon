@@ -626,6 +626,25 @@ def _get_register_notice(project_dir: str) -> Optional[str]:
     return f"## Decision register\n\n**⚠ {notice}.** To fix: {dr.NO_REGISTER_REMEDY}."
 
 
+def _get_own_graph_notice(project_dir: str) -> Optional[str]:
+    """AD-036-R27 (SEL-039): the `## Prior-art own graphs` section when the project has a graph of its own that the
+    prior-art library arm cannot read, so its library searches never reach its own literature; else None. Never
+    raises: `seldon go` renders with no seldon.yaml, and a malformed prior_art block is `seldon verify`'s to fail."""
+    from seldon.core import prior_art as pa
+    try:
+        config = load_project_config(project_dir)
+    except FileNotFoundError:
+        return None
+    try:
+        notice = pa.own_graph_notice(Path(project_dir), config)
+    except pa.PriorArtError as exc:
+        return f"## Prior-art own graphs\n\n**⚠ not checked: the prior_art block: {exc}**"
+    if notice is None:
+        return None
+    return (f"## Prior-art own graphs\n\n**⚠ {notice}.** To fix: build and serve the graph's index "
+            f"(squiddy `index`), or declare `prior_art.own_graphs` naming the graphs to search (AD-036-R25).")
+
+
 GATE_PROFILES: dict[str, dict] = {
     "academic_paper": {
         "gates": ["content_audit", "practitioner_stress_test", "bloom_depth_check", "secondary_sweep", "cascade_results", "review_synthesis"],
@@ -1100,6 +1119,11 @@ def assemble_go_context(
     register = _get_register_notice(project_dir)
     if register is not None:
         sections.append(register)
+
+    # Section 5.2 — own graphs the prior-art library arm cannot read (AD-036-R27), only when there are such
+    own_graphs = _get_own_graph_notice(project_dir)
+    if own_graphs is not None:
+        sections.append(own_graphs)
 
     # Section 5.5 — Audit Pipeline
     pipeline = _get_pipeline_section(project_dir)

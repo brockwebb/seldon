@@ -375,6 +375,25 @@ def check_prior_art(project_dir: Path, config: dict) -> CheckResult:
                        + [f"draft: {r['note']}: {r['why']}" for r in drafts[:25]], fixable=fixable)
 
 
+def check_own_graphs(project_dir: Path, config: dict) -> CheckResult:
+    """AD-036-R27 (SEL-039): warn when the project has a `prior_art:` block and a graph directory of its own, and the
+    prior-art library arm can read none of its own graphs (a served export and a served index), so its library searches
+    never reach its own literature. A warning, never a failure, as a missing decision register is (AD-033-R13):
+    building a graph's index is the project's own act. A malformed prior_art block is check 16's to fail."""
+    from seldon.core import prior_art as pa
+
+    name = "Prior-art own graphs"
+    try:
+        notice = pa.own_graph_notice(project_dir, config)
+    except pa.PriorArtError as exc:
+        return CheckResult(name=name, symbol="warn", summary=f"not checked: the prior_art block: {str(exc)[:200]}")
+    if notice is None:
+        return CheckResult(name=name, symbol="pass",
+                           summary="the library arm reads this project's own graphs first, or it has none "
+                                   "(AD-036-R25)")
+    return CheckResult(name=name, symbol="warn", summary=notice[:300], details=[notice])
+
+
 def _fix_prior_art(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon prior-art verify` on every gated note with no verdict for its current bytes."""
     from seldon.core import prior_art as pa
@@ -2117,6 +2136,7 @@ def _run_all_checks(
         check_decisions(driver, database, project_dir, config),
         check_requirements(driver, database, project_dir, config),
         check_prior_art(project_dir, config),
+        check_own_graphs(project_dir, config),
         check_commit_hook(project_dir, config),
         check_tracked_dirs(project_dir, config),
         check_pass_ledger(project_dir, config),

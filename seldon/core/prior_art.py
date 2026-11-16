@@ -101,8 +101,10 @@ _RECEIPT_START_RE = re.compile(r"^\s*[-*]\s+(library|internal|web)\s+receipt:\s*
 _LOOSE_RECEIPT_RE = re.compile(r"^\s*[-*]\s+.*\breceipt\s*:", re.IGNORECASE)
 #: AD-036-R21 (SEL-036): `| graph <name> |` names the library graph a receipt's rows came from. Optional: a receipt
 #: without it names the FIRST graph `prior_art.library.graph` lists, which is the only graph every receipt written
-#: before R21 could name (squiddy's library), so each of them verifies as it did.
-_LIB_RE = re.compile(r'^query "([^"]+)" \| (?:graph ([A-Za-z0-9_.\-]+) \| )?release (\S+) sha256:([0-9a-f]{64}) '
+#: before R21 could name (squiddy's library), so each of them verifies as it did. AD-036-R26 (SEL-039): another
+#: project's graph, named on a call, is `<repository>/<graph>`, so the name takes one optional `/`.
+_LIB_RE = re.compile(r'^query "([^"]+)" \| (?:graph ([A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]+)?) \| )?'
+                     r'release (\S+) sha256:([0-9a-f]{64}) '
                      r'\| rows (.+)$')
 _INT_RE = re.compile(r'^query "([^"]+)" \| repo ([A-Za-z0-9_.\-]+)@((?:tree:)?[0-9a-f]{40,64}) '
                      r'\| hits (.+)$')
@@ -157,16 +159,36 @@ class Settings:
     #: first is `library_graph`. A graph's name is its directory's name, unique across the list. Empty only for a
     #: Settings built by hand (tests), which then means `library_graph` alone.
     library_graphs: tuple = ()
+    #: AD-036-R25 (SEL-039): the project's own graphs as `((name, path), ...)` when it declares
+    #: `prior_art.own_graphs`; None when it does not, and then every served graph in `own_repo` is its own.
+    own_graphs: Optional[tuple] = None
+    #: The project's repository, at the primary checkout (`corpus_anchor`): where its own graphs live, and the
+    #: sibling of every other project a call may name (`<repository>/<graph>`, AD-036-R26). None for a Settings built
+    #: by hand, which then has no own graphs.
+    own_repo: Optional[Path] = None
+    #: The repository of the block a `ref` names (AD-036 ADDENDUM 03), at its primary checkout; None when the project
+    #: defines its block itself. A listed graph inside it is that project's own, not this one's (AD-036-R25).
+    referenced_repo: Optional[Path] = None
 
 
 _REQUIRED = ("log", "internal_roots", "internal", "library", "gate")
 
 #: The key that makes a project's `prior_art:` block a reference (AD-036 ADDENDUM 03).
 REF_KEY = "ref"
+#: AD-036-R25 (SEL-039): a project's own library graphs, declared. Per project like the baseline: a referencing block
+#: may set it, and the definer's value is never inherited (seldon's own graphs are not a consumer's).
+OWN_GRAPHS_KEY = "own_graphs"
 #: What a referencing block may set for itself, and nothing else: one definition, never a copy
 #: (SQ-010 Part 0). The baseline is per project because it lists THAT project's grandfathered
-#: notes; every other key is the machine's one rule and lives only in the file the ref names.
-REF_LOCAL_KEYS = {"ref": None, "gate": ("baseline",)}
+#: notes, and `own_graphs` because it names THAT project's graphs (AD-036-R25); every other key is
+#: the machine's one rule and lives only in the file the ref names.
+REF_LOCAL_KEYS = {"ref": None, OWN_GRAPHS_KEY: None, "gate": ("baseline",)}
+#: Where a project keeps its graphs, one directory each holding a `graph.yaml`: the layout `squiddy init` writes and
+#: every governed repository uses (`graphs/seldon-biblio`, `graphs/hazbrief-corpus`). The kit's layout, not a tunable.
+GRAPHS_DIR = "graphs"
+GRAPH_FILE = "graph.yaml"
+#: A graph's receipt name: its directory's name, or `<repository>/<graph>` for another project's (AD-036-R26).
+_GRAPH_PART_RE = re.compile(r"^[A-Za-z0-9_.\-]+$")
 
 
 def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional[Path]]:
@@ -235,7 +257,10 @@ def resolve_block(project_dir: Path, config: dict) -> tuple[dict, Path, Optional
         raise PriorArtError(f"prior_art.ref {ref!r} resolves to another reference "
                             f"({node[REF_KEY]!r}); a ref must name the definition itself, never "
                             f"a chain (AD-036 ADDENDUM 03)")
-    merged = dict(node)
+    # AD-036-R25: the definer's own graphs are the definer's; the project's own, if it declares them, are its own.
+    merged = {k: v for k, v in node.items() if k != OWN_GRAPHS_KEY}
+    if OWN_GRAPHS_KEY in block:
+        merged[OWN_GRAPHS_KEY] = block[OWN_GRAPHS_KEY]
     merged["gate"] = {**(node.get("gate") or {}), "baseline": gate_local["baseline"]}
     return merged, target.parent, target
 
@@ -312,6 +337,13 @@ def settings(project_dir: Path, config: dict) -> Settings:
     if len(set(names)) != len(names):
         raise PriorArtError(f"prior_art.internal_roots names are not unique: {names}")
     graphs = library_graphs_of(library["graph"], lambda p: at(corpus_dir, p), where)
+    # AD-036-R25: the project's own graphs live in ITS repository, at the primary checkout like every corpus path
+    # (ADDENDUM 06: a worktree holds no served export, which is gitignored).
+    own_repo = corpus_anchor(project_dir)
+    own = None
+    if block.get(OWN_GRAPHS_KEY) is not None:
+        own = library_graphs_of(block[OWN_GRAPHS_KEY], lambda p: at(own_repo, p),
+                                f"{project_dir / 'seldon.yaml'} prior_art", key=OWN_GRAPHS_KEY)
 
     return Settings(project_dir=project_dir, log=at(project_dir, block["log"]), roots=tuple(roots),
                     suffixes=tuple(internal["suffixes"]), top_n=int(internal["top_n"]),
@@ -324,21 +356,158 @@ def settings(project_dir: Path, config: dict) -> Settings:
                     exempt_globs=tuple(gate["exempt_globs"]),
                     verdict_ledger_without_governed=at(project_dir,
                                                        gate["verdict_ledger_without_governed"]),
-                    defined_in=defined_in)
+                    defined_in=defined_in, own_graphs=own, own_repo=own_repo,
+                    referenced_repo=corpus_dir if defined_in else None)
 
 
-def library_graphs_of(value, resolve, where: str = "seldon.yaml prior_art") -> tuple:
-    """`library.graph` as `((name, path), ...)`: one path, or a list of them searched together (AD-036-R21). A graph's
-    name is its directory's name (`library`, `seldon-biblio`); a receipt names it, so two graphs may not share one."""
+def library_graphs_of(value, resolve, where: str = "seldon.yaml prior_art", key: str = "library.graph") -> tuple:
+    """`library.graph` (or `own_graphs`) as `((name, path), ...)`: one path, or a list of them searched together
+    (AD-036-R21, R25). A graph's name is its directory's name (`library`, `seldon-biblio`); a receipt names it, so two
+    graphs may not share one."""
     paths = [value] if isinstance(value, str) else value
     if not isinstance(paths, list) or not paths or not all(isinstance(p, str) and p.strip() for p in paths):
-        raise PriorArtError(f"{where}.library.graph is a graph directory or a non-empty list of them; got {value!r}")
+        raise PriorArtError(f"{where}.{key} is a graph directory or a non-empty list of them; got {value!r}")
     out = tuple((Path(resolve(p)).name, Path(resolve(p))) for p in paths)
     names = [n for n, _p in out]
     if len(set(names)) != len(names):
-        raise PriorArtError(f"{where}.library.graph names two graphs with one directory name: {names}; a receipt "
+        raise PriorArtError(f"{where}.{key} names two graphs with one directory name: {names}; a receipt "
                             f"names its graph by that name (AD-036-R21)")
     return out
+
+
+# ------------------------------------------------------------------------------ which graphs (AD-036-R25 to R27)
+
+def served_export_reason(graph_dir: Path) -> Optional[str]:
+    """None when the graph's served export is on disk, else why not. The served export is squiddy's own name for it,
+    `<exports_dir>/<artifact_stem>.json` (`squiddy.serve.ExportBackend`, the file the library arm's search loads),
+    read through squiddy's loader so seldon keeps no second copy of the graph's layout. Never raises: a graph squiddy
+    cannot load is reported with squiddy's reason, beside the graphs that can."""
+    try:
+        from squiddy.config import load_graph
+    except ImportError as exc:
+        return f"squiddy is not installed in this interpreter ({exc})"
+    try:
+        graph = load_graph(str(graph_dir))
+        p = Path(graph.path("exports_dir")) / f"{graph.engine['export']['artifact_stem']}.json"
+    except (SystemExit, KeyError, TypeError, ValueError, OSError, yaml.YAMLError) as exc:
+        # squiddy stops with SystemExit("FATAL: ...") on a graph it cannot load; here it is this graph's reason.
+        return f"squiddy cannot load it: {exc}"
+    return None if p.is_file() else f"no served export ({p.name} absent)"
+
+
+def index_reason(graph_dir: Path) -> Optional[str]:
+    """None when the graph's served index is on disk (its manifest, `squiddy.index.INDEX_MANIFEST`, in the index's work
+    directory), else why not. The library arm's search needs it beside the export. Never raises."""
+    try:
+        from squiddy import index as ix
+        from squiddy.config import load_graph
+    except ImportError as exc:
+        return f"squiddy is not installed in this interpreter ({exc})"
+    try:
+        graph = load_graph(str(graph_dir))
+        cfg = ix.load_config(graph)
+        mp = Path(ix.work_dir(graph, cfg)) / ix.INDEX_MANIFEST
+    except ix.NotApplicable as exc:
+        return f"the graph declares no index ({exc})"
+    except (SystemExit, KeyError, TypeError, ValueError, OSError, yaml.YAMLError) as exc:
+        return f"squiddy cannot load it: {exc}"
+    return None if mp.is_file() else f"no served index ({mp.name} absent)"
+
+
+def _inside(path: Path, root: Optional[Path]) -> bool:
+    if root is None:
+        return False
+    try:
+        Path(path).resolve().relative_to(Path(root).resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _own_graph_dirs(s: Settings) -> list:
+    """`[(name, path)]`: the declared own graphs, else every `graphs/*/graph.yaml` directory in the project's
+    repository, in directory-name order."""
+    if s.own_graphs is not None:
+        return [(n, Path(p)) for n, p in s.own_graphs]
+    if s.own_repo is None:
+        return []
+    return [(g.parent.name, g.parent.resolve()) for g in sorted((Path(s.own_repo) / GRAPHS_DIR).glob(f"*/{GRAPH_FILE}"))]
+
+
+def library_plan(s: Settings) -> dict:
+    """The library arm's graphs for this project, in search order (AD-036-R25):
+
+    1. own: `own_graphs` when declared, else every graph in the project's repository with a served export; a listed
+       graph that lies in the project's repository is an own graph too;
+    2. shared: the graphs `library.graph` lists, less every graph inside the referenced project's repository;
+    3. another project's graph: never here; only when a call names it (`Libraries(s, graphs=...)`).
+
+    Returns:
+        `{"search": [{name, path, origin}], "not_searched": [{name, path, why}], "reachable": {name: path}}`.
+        `reachable` is every graph a receipt may name by its bare name (AD-036-R26): the searched ones, the ones
+        removed from the shared list, and the first graph listed (an unnamed receipt's).
+
+    Raises:
+        PriorArtError: two searched graphs share one directory name (a receipt could not say which).
+    """
+    own, skipped = [], []
+    declared = s.own_graphs is not None
+    for name, path in _own_graph_dirs(s):
+        why = None if declared else served_export_reason(path)
+        if why is None:
+            own.append((name, Path(path).resolve()))
+        else:
+            skipped.append({"name": name, "path": Path(path).resolve(), "why": why})
+    listed = s.library_graphs or ((s.library_graph.name, s.library_graph),)
+    shared, removed = [], []
+    for name, path in listed:
+        rp = Path(path).resolve()
+        if _inside(rp, s.own_repo):
+            # A listed graph in this project's own repository is its own (seldon's seldon-biblio, squiddy's library).
+            if all(rp != p for _n, p in own) and all(rp != g["path"] for g in skipped):
+                own.append((name, rp))
+        elif _inside(rp, s.referenced_repo):
+            why = (f"lives in the referenced project's repository {s.referenced_repo}, so it is that project's own, "
+                   f"not this one's (AD-036-R25); name it on the call to search it")
+            skipped.append({"name": name, "path": rp, "why": why})
+            removed.append((name, rp))
+        else:
+            shared.append((name, rp))
+    search = ([{"name": n, "path": p, "origin": "own"} for n, p in own]
+              + [{"name": n, "path": p, "origin": "shared"} for n, p in shared])
+    names = [g["name"] for g in search]
+    if len(set(names)) != len(names):
+        raise PriorArtError(f"the library arm's graphs for {s.project_dir} name two graphs with one directory name: "
+                            + ", ".join(f"{g['name']} ({g['origin']}: {g['path']})" for g in search)
+                            + "; a receipt names its graph by that name (AD-036-R21, R25). Declare "
+                              "`prior_art.own_graphs` to choose")
+    reachable = {n: p for n, p in removed}
+    reachable[s.library_graph.name] = Path(s.library_graph).resolve()
+    reachable.update({g["name"]: g["path"] for g in search})
+    return {"search": search, "not_searched": skipped, "reachable": reachable}
+
+
+def own_graph_notice(project_dir: Path, config: dict) -> Optional[str]:
+    """AD-036-R27: the warning for a project with a `prior_art:` block and a graph directory, none of whose own graphs
+    the library arm can read (a served export AND a served index); None otherwise. Names each graph and what it lacks.
+
+    Raises:
+        PriorArtError: the project's prior_art block is malformed (its own error, reported by the caller).
+    """
+    if not isinstance((config or {}).get("prior_art"), dict):
+        return None
+    s = settings(project_dir, config)
+    dirs = _own_graph_dirs(s)
+    if not dirs:
+        return None
+    lacking = []
+    for name, path in dirs:
+        why = served_export_reason(path) or index_reason(path)
+        if why is None:
+            return None
+        lacking.append(f"{name}: {why}")
+    return (f"the project has {len(dirs)} graph(s) of its own and the prior-art library arm can read none, so its "
+            f"library searches never reach its own literature (AD-036-R27): " + "; ".join(lacking))
 
 
 def _glob_re(pattern: str) -> re.Pattern:
@@ -936,42 +1105,99 @@ class Library:
 
 
 class Libraries:
-    """Every library graph `prior_art.library.graph` lists, searched together (AD-036-R21, SEL-036).
+    """The library graphs of one project, searched together (AD-036-R21, SEL-036), in AD-036-R25's order (SEL-039):
+    its own graphs, then the shared list less the referenced project's own, or exactly the graphs a call names.
 
     Each graph is its own `Library` (its own served index, release and register), so a result, a receipt and a
     verification each belong to ONE graph: rows from two graphs are never one receipt, because no single release holds
     them. `search` asks every graph and returns one result per graph; a graph that cannot answer (no served index yet,
     a missing directory) is reported beside the others with its reason and never fails the search of the rest.
-    Verification routes each receipt to the graph it names (`for_graph`), the first when it names none."""
+    Verification routes each receipt to the graph it names (`for_graph`), the first graph `library.graph` lists when it
+    names none; a named graph resolves whether or not it is searched by default (AD-036-R26)."""
 
-    def __init__(self, s: Settings):
+    def __init__(self, s: Settings, graphs: Iterable[str] | None = None):
         self.s = s
-        graphs = s.library_graphs or ((s.library_graph.name, s.library_graph),)
-        # The first graph is `Library(s)`'s own default (`s.library_graph`), so it is built exactly as every caller
-        # before R21 built the arm: one argument. Tests that stand in for the arm by replacing `Library` keep working.
-        self.libs = {name: (Library(s) if i == 0 else Library(s, path, name))
-                     for i, (name, path) in enumerate(graphs)}
-        self.default = next(iter(self.libs))
+        self.plan = library_plan(s)
+        #: An unnamed receipt's graph: the first `library.graph` lists, as AD-036-R21 rules, whatever is searched first.
+        self.default = s.library_graph.name
+        #: How each searched graph came to be searched: own, shared or named.
+        self.origin: dict = {}
+        #: The graphs R25 leaves out, `[{name, path, why}]`; empty when the call names its graphs.
+        self.not_searched = [] if graphs else list(self.plan["not_searched"])
+        self._extra: dict = {}
+        self.libs: dict = {}
+        if graphs:
+            targets = []
+            for g in graphs:
+                name, path = self._resolve(g)
+                targets.append({"name": name, "path": path, "origin": "named"})
+        else:
+            targets = self.plan["search"]
+        for t in targets:
+            self.libs[t["name"]] = self._make(t["name"], t["path"])
+            self.origin[t["name"]] = t["origin"]
+
+    def _make(self, name: str, path: Path) -> Library:
+        # The first listed graph is `Library(s)`'s own default (`s.library_graph`), so it is built exactly as every
+        # caller before R21 built the arm: one argument. Tests that stand in for the arm by replacing `Library` keep
+        # working.
+        if Path(path).resolve() == Path(self.s.library_graph).resolve() and name == self.s.library_graph.name:
+            return Library(self.s)
+        return Library(self.s, path, name)
+
+    def _resolve(self, name: str) -> tuple[str, Path]:
+        """`(receipt name, path)` of a graph a receipt or a call names (AD-036-R26): one of this project's reachable
+        graphs by its bare name, or `<repository>/<graph>`, which is `graphs/<graph>` in the repository of that name
+        beside this project's (a qualified name for one of this project's own graphs is receipted by its bare name).
+
+        Raises:
+            PriorArtError: `release_unavailable`, naming the graph, when the name is malformed or resolves to no graph.
+        """
+        reach = self.plan["reachable"]
+        if name in reach:
+            return name, reach[name]
+        known = sorted(set(reach) | set(self.libs))
+        if "/" not in name:
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: the receipt names library graph {name!r}, which is not one of "
+                                f"this project's graphs ({known}); another project's graph is named "
+                                f"`<repository>/<graph>` (AD-036-R26)")
+        parts = name.split("/")
+        if len(parts) != 2 or not all(_GRAPH_PART_RE.match(p) and p not in (".", "..") for p in parts):
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: {name!r} is not a graph name: expected `<graph>` or "
+                                f"`<repository>/<graph>`, each a directory name (AD-036-R26)")
+        siblings = Path(self.s.own_repo or self.s.project_dir).resolve().parent
+        path = (siblings / parts[0] / GRAPHS_DIR / parts[1]).resolve()
+        for n, p in reach.items():
+            if p == path:
+                return n, p
+        if not (path / GRAPH_FILE).is_file():
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library graph {name!r} names {path}, which holds no "
+                                f"{GRAPH_FILE} (AD-036-R26)")
+        return name, path
 
     def for_graph(self, name: str | None) -> Library:
-        lib = self.libs.get(name or self.default)
-        if lib is None:
-            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: the receipt names library graph {name!r}, which "
-                                f"prior_art.library.graph does not list ({sorted(self.libs)})")
-        return lib
+        name = name or self.default
+        if name in self.libs:
+            return self.libs[name]
+        if name not in self._extra:
+            canonical, path = self._resolve(name)
+            self._extra[name] = self.libs.get(canonical) or self._make(canonical, path)
+        return self._extra[name]
 
     def search(self, query: str, k: int | None = None) -> list[dict]:
-        """One result per graph, in the listed order: the Library result, or `{graph, query, error}`."""
+        """One result per graph, in search order: the Library result, or `{graph, query, error}`; each carries the
+        graph's `origin` (own, shared, named)."""
         out = []
         for name, lib in self.libs.items():
             try:
-                out.append(lib.search(query, k))
+                res = lib.search(query, k)
             except PriorArtError as exc:
-                out.append({"graph": name, "query": query, "error": str(exc)})
+                res = {"graph": name, "query": query, "error": str(exc)}
+            out.append({**res, "origin": self.origin.get(name)})
         return out
 
     def close(self) -> None:
-        for lib in self.libs.values():
+        for lib in [*self.libs.values(), *self._extra.values()]:
             lib.close()
 
 

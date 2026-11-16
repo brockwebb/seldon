@@ -122,6 +122,11 @@ prior_art:
     # naming no graph is verified in the first one listed and every receipt before R21 named none; then Seldon's
     # bibliographic graph (SEL-036: the works, standards and software Seldon's notes and tasks cite). A graph with no
     # served release in this checkout is reported unavailable beside the others and fails no search.
+    # AD-036-R25 (SEL-039): a project searches its OWN graphs first (`own_graphs`, else every served graph in its
+    # repository), then this list less any graph inside the referenced project's repository. So for seldon,
+    # seldon-biblio is its own graph and is searched first; for a project that takes this block by `ref`, it is
+    # seldon's own and is NOT searched unless the call names it (`--graph seldon-biblio`). Keep it listed: a consumer's
+    # receipt naming `graph seldon-biblio` resolves through this list (AD-036-R26; hazbrief and squiddy carry such).
     graph:
       - ../squiddy/graphs/library
       - graphs/seldon-biblio

@@ -2316,17 +2316,23 @@ def _prior_art_commit_line(out: dict) -> list:
     c = out.get("commit") or {}
     if c.get("committed") or c.get("reason") in (None, "nothing_to_commit", "not_a_work_tree"):
         return []
-    return [f"(prior-art lines in {out.get('project')} not committed: {c.get('reason')})"]
+    # hazbrief's filing bbfd478f item 4 (SEL-039): say what commits them. Lines left beside a held lease, or appended
+    # to a log that was already dirty, are the `prior_art` class the next pass that takes the lease commits
+    # (AD-038-R1), and a merge round commits them before its fast-forward (AD-034-R19).
+    then = ("; the dispatcher's next pass commits them (AD-038-R1)"
+            if c.get("reason") in ("lease_held", "dirty_before_this_run") else "")
+    return [f"(prior-art lines in {out.get('project')} not committed: {c.get('reason')}{then})"]
 
 
 @_tool()
 def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".",
-                            top: int = 0, note: str = "") -> str:
+                            top: int = 0, note: str = "", graphs: list[str] | None = None) -> str:
     """Search the prior art BEFORE writing a design note, and get receipts to paste (AD-036).
 
     `arm` is `internal` (the operator's own repositories: seldon, squiddy, ai-readiness-kg,
     arnold, icsp_notebook, Wintermute, the 2026-10-03 audit, at their HEAD commits), `library`
-    (the squiddy library graph of the literature) or `both`. Internal matching is lexical: every
+    (the literature: the project's OWN graphs first, then the shared library list; a graph another
+    project owns only when `graphs` names it, AD-036-R25) or `both`. Internal matching is lexical: every
     query word must occur in one paragraph, so search with a few topic words and run several
     queries. Each receipt line goes, verbatim, under `### Internal` or `### External` of the
     note's `## Prior art` section; a query that found nothing is still a receipt (`hits none`),
@@ -2340,6 +2346,9 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
         top: Hits to show per arm (0: the configured top_n).
         note: The note these receipts are for (absolute, or relative to the default project). It is left out of the
             internal search, and the query is logged in its repository.
+        graphs: Library arm only: search exactly these graphs instead of the project's own and the shared list,
+            each one of the project's graphs by name or another project's as `<repository>/<graph>`
+            (AD-036-R26). Its receipts name the graph.
     """
     from seldon.commands.prior_art import run_search
     from seldon.core.prior_art import PriorArtError
@@ -2348,7 +2357,8 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
     for a in arms:
         try:
             r = run_search(a, query, top=top or None, project_dir=None if project_dir == "." else project_dir,
-                           note=note or None, cwd=Path(_project_path(".")))
+                           note=note or None, cwd=Path(_project_path(".")),
+                           graphs=tuple(graphs or ()) if a == "library" else ())
         except (PriorArtError, ValueError) as exc:
             out.append(f"## {a}: error\n{exc}")
             continue
@@ -2357,14 +2367,17 @@ def seldon_prior_art_search(query: str, arm: str = "both", project_dir: str = ".
             for h in r["top"]:
                 lines.append(f"- {h['root']}:{h['cite']} (lines {h['lines']}, score {h['score']})")
         else:
-            # AD-036-R21: one block per library graph, each with its own release
+            # AD-036-R21: one block per library graph, each with its own release; R25: own first, labelled
             for g in r.get("graphs") or [{"graph": "library", **r}]:
+                origin = f" ({g['origin']})" if g.get("origin") else ""
                 if g.get("error"):
-                    lines.append(f"### graph {g['graph']}: unavailable: {g['error']}")
+                    lines.append(f"### graph {g['graph']}{origin}: unavailable: {g['error']}")
                     continue
-                lines.append(f"### graph {g['graph']}: {g['total_hits']} row(s)")
+                lines.append(f"### graph {g['graph']}{origin}: {g['total_hits']} row(s)")
                 for h in g["top"]:
                     lines.append(f"- {h['doc_id']}: {h['text'][:160]!r}")
+            for g in r.get("not_searched") or []:
+                lines.append(f"(not searched: {g['graph']}: {g['why']})")
         lines.append("Receipts:")
         lines.extend(r["receipts"])
         lines.extend(_prior_art_commit_line(r))
