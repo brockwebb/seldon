@@ -1,0 +1,12 @@
+event: amend
+id: seldon:AD-036-R21
+date: '2026-11-15'
+decided_by: cc:65889134
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md:75: AD-036-R25'
+reason: 'SEL-039: AD-036 ADDENDUM 14 amends R21''s list to R25''s order; a consumer by reference no longer inherits seldon''s own bibliography'
+changes:
+  statement: The prior-art library arm shall search, each separately, the graphs AD-036-R25 orders for the project (its own graphs first, then the graphs prior_art.library.graph lists less those inside a referenced project's repository), and each library receipt shall name the graph its rows came from; a receipt naming no graph shall be verified in the first graph library.graph lists.
+written_by: seldon decision 0.1.0
+provisional_id: e19c40e6a89d408e28629bd799fe9625e9f58316d29737d54ccff6c8430a5017

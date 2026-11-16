@@ -1,0 +1,46 @@
+event: accept
+id: seldon:AD-036-R25
+date: '2026-11-15'
+decided_by: cc:65889134
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md:75: AD-036-R25'
+reason: 'SEL-039: answers hazbrief-mcp filing bbfd478f on the operator''s ruling of 2026-11-15 (a project starts with its own knowledge); prior-art verify of the AD-036 family passes with the addendum'
+kind: decision
+status: accepted
+statement: The prior-art library arm shall search a project's own graphs first (prior_art.own_graphs, else every graph in the project's repository with a served export), then the shared library list with every graph inside the referenced project's repository removed, and another project's graph only when the call names it; a project's own_graphs shall never be inherited by reference.
+source:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  lines:
+  - 75
+  - 90
+  sha256: 537669aa85916b6ae2da2e6ee26bcf62a9feb0bd66aa1b445853c75a86b2847e
+  text: |-
+    - **AD-036-R25. The library arm searches a project's own graphs first, then the shared list, and never another
+      project's graph by default.** For a project, the graphs are, in this order:
+      1. **Own:** the graphs in the project's own repository. Declared as `prior_art.own_graphs` (a list of graph
+         directories, relative to the project) when present, and a referencing block may set it, as it sets its baseline;
+         otherwise every `graphs/*/graph.yaml` in the repository whose served export is on disk (squiddy's own name for
+         it, `<exports_dir>/<artifact_stem>.json`), in directory-name order. A graph the shared list names that lies in
+         the project's own repository is an own graph. Own graphs resolve at the primary checkout, as corpus paths do
+         (ADDENDUM 06).
+      2. **Shared:** the list the project declares or takes by reference (`library.graph`), with every graph that lies
+         inside the referenced project's repository removed. seldon-biblio is seldon's own graph; it is not hazbrief's. A
+         project's `own_graphs` is never inherited by a project that takes its block by reference.
+      3. **Another project's graph:** only when the call names it (`--graph`).
+
+      A search prints which graphs it searched, in this order, labelled own or shared, and which it did not and why (a graph
+      directory with no served export; a graph the referenced project owns). An own graph and a shared graph with one
+      directory name and two paths are refused as a configuration error, because a receipt names its graph by that name.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  anchor: AD-036-R25
+consumer:
+- cc_tasks/2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+- tests/test_sel039_own_graphs_first.py
+- seldon/core/prior_art.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9e94042775a0d02dd38997417b62317f7f501c2c107a83f6875a1333befdaf69

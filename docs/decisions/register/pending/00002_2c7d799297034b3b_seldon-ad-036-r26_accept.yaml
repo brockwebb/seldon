@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-036-R26
+date: '2026-11-15'
+decided_by: cc:65889134
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md:91: AD-036-R26'
+reason: 'SEL-039: 29 hazbrief and 5 squiddy receipts name seldon-biblio and must verify after R25 (AD-036-R19, no re-recording)'
+kind: decision
+status: accepted
+statement: A library receipt naming a graph shall be verified in that graph whether or not it is searched by default (an own graph, a shared graph, or one R25 removed); a receipt naming none in the first graph library.graph lists; another project's graph shall be named <repository>/<graph>.
+source:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  lines:
+  - 91
+  - 97
+  sha256: 537669aa85916b6ae2da2e6ee26bcf62a9feb0bd66aa1b445853c75a86b2847e
+  text: |-
+    - **AD-036-R26. A receipt's graph resolves whether or not the graph is searched by default.** A receipt naming no
+      graph is verified, as before, in the first graph `library.graph` lists. A receipt naming a graph is verified in that
+      graph when it is any of the project's own graphs, the shared list's graphs, or a graph R25 removed from the shared
+      list. So every receipt written before R25 verifies as it did, including hazbrief's and squiddy's receipts naming
+      `seldon-biblio`. Another project's graph, named on a call, is named in its receipt as `<repository>/<graph>`, which
+      resolves to `graphs/<graph>` in the repository of that name beside the project's primary checkout, the way the
+      internal roots name siblings. The `graph` field of a receipt therefore takes one optional `/`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  anchor: AD-036-R26
+consumer:
+- cc_tasks/2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+- tests/test_sel039_own_graphs_first.py
+- seldon/core/prior_art.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 2c7d799297034b3b4ed961045b68ad95b70fc0cf329644ce8b3d520aa6731f40

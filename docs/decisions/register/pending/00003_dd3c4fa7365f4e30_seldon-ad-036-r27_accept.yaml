@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-036-R27
+date: '2026-11-15'
+decided_by: cc:65889134
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md:98: AD-036-R27'
+reason: 'SEL-039 task section A: a project with a graph directory and no readable own graph is reported the way a missing decision register is (AD-033-R13)'
+kind: decision
+status: accepted
+statement: seldon verify and seldon go shall warn, never fail, when a project with a prior_art block has a graphs/*/graph.yaml and no own graph with both a served export and a served index.
+source:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  lines:
+  - 98
+  - 102
+  sha256: 537669aa85916b6ae2da2e6ee26bcf62a9feb0bd66aa1b445853c75a86b2847e
+  text: |-
+    - **AD-036-R27. A project with a graph directory and no own graph the arm can read is reported, never failed.** `seldon
+      verify` (check "Prior-art own graphs") and `seldon go` warn when the project has a `prior_art:` block and at least
+      one `graphs/*/graph.yaml`, and none of its own graphs has both a served export and a served index, naming each graph
+      and what it lacks. A warning, as a missing decision register is (AD-033-R13): building a graph's index is the
+      project's own act, and a failure would hold every task of a project that has not built one.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+  anchor: AD-036-R27
+consumer:
+- cc_tasks/2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md
+- tests/test_sel039_own_graphs_first.py
+- seldon/core/prior_art.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: dd3c4fa7365f4e30c3cd16b72ba908bea06a7c2adba6aba7d36cc0a9ce7ac1f4
