@@ -127,7 +127,16 @@ Full write-up: `docs/evidence/sel040/part_e_findings.md`.
 
 ## Part F: return
 
-Filed with `seldon cc return` (below). The return is built from the next section.
+Filed: `hazbrief-mcp/cc_tasks/2026-11-18_HB-200_a_session_lost_to_the_network_is_resumed_by_the_dispatcher_and_not_blo.md`
+(task `01509e24`). hazbrief's registration committed it as `8246fc95` and `c0d9f0ee`; hazbrief's tree is clean. The
+return was built from the next section, using `seldon cc return <SEL-040> --to hazbrief-mcp --answers
+hazbrief-mcp:HB-189`.
+
+`--answers` was needed: SEL-040 has no `**Answers:**` header, and no hazbrief filing in seldon's graph is the one it
+answers (hz-18's report came through the operator). Without it, `cc return --to` refuses ("carries no
+`**Answers:**` header"). For a task in another repository, the answered task is only read, so HB-189 is unchanged.
+The writer sequenced the return After HB-199, hazbrief's latest open task, so it is not a candidate before then. The
+section's first line says it is not needed for the 2026-11-20 submission.
 
 ## For hazbrief-mcp
 
