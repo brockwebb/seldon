@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R27
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md:58: AD-038-R27'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: A premise marked at launch shall be recorded unevaluated at registration and evaluated by station (a) with the task's other premises before the session starts.
+source:
+  path: docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+  lines:
+  - 58
+  - 61
+  sha256: 106dc9c30b824f41d4eafcc75d9954026a5a258aaeb2cd14494b1af6807e1fc1
+  text: |-
+    - **AD-038-R27. A premise line may end `| at: launch`; registration records it unevaluated (`at_launch`), and station (a) evaluates it with the task's other premises before the session starts.**
+      A false one refuses the launch with the premise named, as any false premise does (`premise_false` and its Issue). A
+      premise with no `at:` is evaluated at registration and at launch, as before; an `at:` value other than `launch` is
+      unreadable and refused.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+  anchor: AD-038-R27
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/filing.py
+- seldon/commands/cc.py
+- seldon/mcp_server.py
+- seldon/core/stations.py
+- tests/test_sel040_addendum_files_and_launch_premises.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 41de9890c395050d0977972bddb3347ebb7a92209a4c2cd3df125a680361f53f

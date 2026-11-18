@@ -1,0 +1,45 @@
+event: accept
+id: seldon:AD-034-R21
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md:68: AD-034-R21'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: Before a block is recorded, the finish shall class how the session ended, and a session its transport cut off shall be recorded interrupted, never stop_gate_unpassed.
+source:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  lines:
+  - 68
+  - 77
+  sha256: 98a69c81a89dd922fa77375a343c59b657d5981d5051bb2773a96f12caa17af3
+  text: |-
+    - **AD-034-R21. Before a block is recorded, the finish classes how the session ended, and a session its transport cut off is `interrupted`, never `stop_gate_unpassed`.**
+      The evidence, recorded on the finish as `interruption`: the CLI's own synthetic "API Error" naming a connection
+      failure (`dispatch.interruption.transport_patterns`), or its `api_retry` records reaching `max_retries` after the
+      last model turn with no client-error status; and, as corroboration, a Sleep in the host's power log
+      (`dispatch.interruption.host_sleep_command`) between the last model turn and the end. A killed process with no
+      `result` record and no dispatcher stop is `interrupted` only with that Sleep beside it; alone it is ambiguous (an
+      operating-system, out-of-memory and operator kill look alike) and is blocked for a person as before, with the
+      ambiguity named. Never `interrupted`: a session whose RESULT is committed (the regate answers it, AD-034-R10), a task
+      the graph shows terminal, a session a station or the dispatcher stopped, and a session its Stop gate let go
+      (`no_progress`, `ceiling`).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  anchor: AD-034-R21
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/interruption.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/redrive.py
+- seldon/core/stations.py
+- tests/test_sel040_interrupted_session_resumed.py
+- tests/test_loop001_register_seq.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 94c86ee5ab97b411fb9f2609818b0f56baaa695b828bcdc201d7ca2474c33a43

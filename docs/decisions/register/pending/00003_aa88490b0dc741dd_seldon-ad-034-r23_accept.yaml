@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-034-R23
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md:82: AD-034-R23'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: The dispatcher shall redrive an interrupted task itself once the API's host answers a probe, and relaunch it in its kept worktree with the prior session's last commit and the interruption stated to the new session.
+source:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  lines:
+  - 82
+  - 87
+  sha256: 98a69c81a89dd922fa77375a343c59b657d5981d5051bb2773a96f12caa17af3
+  text: |-
+    - **AD-034-R23. The dispatcher redrives an interrupted task itself, once the API's host answers a probe, and relaunches it in its kept worktree with the prior session's last commit and the fact of the interruption stated to the new session.**
+      The probe is a TCP connect to `dispatch.interruption.probe_host` (no model call); each change in its answer is
+      recorded (`interruption_probe`). The relaunch names the kept tree to the CLI (`--worktree <name>`), keeps the
+      first launch's `base`, and appends the resume clause to the prompt: when, on what evidence, which resume of two, the
+      branch, its last commit and subject, and the tokens already spent. A kept tree the stale sweep removed (its branch
+      held nothing) gives a fresh launch.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  anchor: AD-034-R23
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/interruption.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/redrive.py
+- seldon/core/stations.py
+- tests/test_sel040_interrupted_session_resumed.py
+- tests/test_loop001_register_seq.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: aa88490b0dc741dd039af604a66da91e753953eb7e8c6ff7c8b86e9ccaa194ad

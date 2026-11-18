@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-034-R22
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md:78: AD-034-R22'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: An interrupted task shall be redriven at most twice; a third interruption shall block it with the reason interrupted_thrice, and every interrupted session's tokens shall count toward the task's ceiling.
+source:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  lines:
+  - 78
+  - 81
+  sha256: 98a69c81a89dd922fa77375a343c59b657d5981d5051bb2773a96f12caa17af3
+  text: |-
+    - **AD-034-R22. An interrupted task is redriven at most twice; a third interruption blocks it with the reason `interrupted_thrice`, and every interrupted session's tokens count toward the task's ceiling.**
+      The count is the task's `interrupted` and `interrupted_thrice` finishes. The tokens a resumed launch carries
+      (`dispatch_launched.resume.prior_tokens`) are added wherever the station reads the launch's tokens: the Stop gate's
+      ceiling, the dispatcher's hard stop and `part-complete`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  anchor: AD-034-R22
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/interruption.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/redrive.py
+- seldon/core/stations.py
+- tests/test_sel040_interrupted_session_resumed.py
+- tests/test_loop001_register_seq.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 06c7920462e27a2a9e83f371002c229ed9eea2b223ce18531e82804453f6199c

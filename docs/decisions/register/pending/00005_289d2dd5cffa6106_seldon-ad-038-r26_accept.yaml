@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R26
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md:54: AD-038-R26'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: seldon cc file and seldon_cc_file shall file an addendum to a registered task in one call, writing and committing it under the filing lock and registering nothing new.
+source:
+  path: docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+  lines:
+  - 54
+  - 57
+  sha256: 106dc9c30b824f41d4eafcc75d9954026a5a258aaeb2cd14494b1af6807e1fc1
+  text: |-
+    - **AD-038-R26. `seldon cc file` and `seldon_cc_file` file an addendum in one call: a name that is an existing task's stem plus `_ADDENDUM_<NN>` is written and committed under the filing lock, and nothing new is registered.**
+      The base task's file must exist and be registered (`addendum_without_task` otherwise, and nothing is written); an
+      addendum that carries a header AD-038-R24 names is refused before it is written; an existing file is never
+      overwritten; an addendum that cannot be committed is removed again. The reply names the base task and the commit.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+  anchor: AD-038-R26
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/filing.py
+- seldon/commands/cc.py
+- seldon/mcp_server.py
+- seldon/core/stations.py
+- tests/test_sel040_addendum_files_and_launch_premises.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 289d2dd5cffa61062f03407d912714a20461d379b16646abbcf17d5a0b13fbb6

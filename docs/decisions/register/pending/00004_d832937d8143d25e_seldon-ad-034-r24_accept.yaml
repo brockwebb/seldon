@@ -1,0 +1,38 @@
+event: accept
+id: seldon:AD-034-R24
+date: '2026-11-17'
+decided_by: cc:b4a94a6b
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md:88: AD-034-R24'
+reason: 'SEL-040: from hazbrief hz-18''s report of 2026-11-16 (HB-189''s lost session, the addendum filing, HB-192''s premise, HB-186''s records, Issue 0c4232cb); evidence in docs/evidence/sel040'
+kind: decision
+status: accepted
+statement: The merge step shall project the register records it numbers, under the same lease, so the graph holds what main's register holds when main holds it.
+source:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  lines:
+  - 88
+  - 90
+  sha256: 98a69c81a89dd922fa77375a343c59b657d5981d5051bb2773a96f12caa17af3
+  text: |-
+    - **AD-034-R24. The merge step projects the register records it numbers, under the same lease, so the graph holds what main's register holds the moment main holds it.**
+      `register_numbered.projected` records what the projection did, or its error; a failed projection is printed and
+      left for `seldon decision project`, and never undoes the merge.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md
+  anchor: AD-034-R24
+consumer:
+- cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md
+- seldon/core/interruption.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/redrive.py
+- seldon/core/stations.py
+- tests/test_sel040_interrupted_session_resumed.py
+- tests/test_loop001_register_seq.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: d832937d8143d25e221b0668dc9e163a30ecceccd46983da3b35a2922f8f4716
