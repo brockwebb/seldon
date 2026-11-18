@@ -1655,6 +1655,10 @@ def seldon_cc_file(
     without candidacy headers and is never a candidate (AD-036-R17). It reports what you experienced; a filing whose
     headings carry the producer's fix is refused (`filing_designs_fix`).
 
+    An ADDENDUM files here too: name it `<task stem>_ADDENDUM_<NN>_<slug>.md`. It is written and committed in the same
+    call and registers nothing; its task must be registered, and it may not carry Spend, Network, Framework layer or
+    Exclusive (AD-038-R24, R26).
+
     Args:
         content: The task file's full text, starting with its `# <title>` line.
         project_dir: The repository to file into (another repository's root for a filing).
@@ -1666,6 +1670,12 @@ def seldon_cc_file(
         out = F.file_task(Path(_project_path(project_dir)), content, name=filename or None, actor=MCP_ACTOR)
     except F.FilingError as exc:
         return f"Error: {exc}"
+    if out.get("addendum"):
+        # SEL-040 Part C (AD-038-R26): `<stem>_ADDENDUM_NN_<slug>.md` is written and committed; nothing is registered.
+        return "\n".join([f"Filed addendum: {out['rel_path']}",
+                          f"  to task: {out['base_task'][:8]}... ({out['base_file']})",
+                          f"  source_commit: {out['source_commit']}",
+                          "  registers nothing: an addendum is its task's, read beside it at launch (AD-038-R26)"])
     lines = [f"Filed: {out['rel_path']}", f"  id: {out['artifact_id'][:8]}...", "  state: proposed"]
     if out.get("source_commit"):
         lines.append(f"  source_commit: {out['source_commit']}")

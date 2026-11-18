@@ -1266,7 +1266,7 @@ def retry_mechanical_refusal(*, project_dir: Path, config: dict, driver, databas
         Path(project_dir), Path(task_path), refusal, register=register,
         holders=lambda: numbering.graph_holders(driver, database),
         allocate=lambda prefix: numbering.allocate(Path(project_dir), driver, database, prefix)["token"],
-        review=lambda pd, text: stations.review_premises(Path(pd), text, scfg), record=record)
+        review=lambda pd, text: stations.review_premises(Path(pd), text, scfg, stage="registration"), record=record)
 
 
 def retry_line(outcome: dict) -> str | None:
@@ -1799,6 +1799,11 @@ def cc_file(project, content_file, name, actor):
     except F.FilingError as exc:
         click.echo(f"ERROR: {exc}", err=True)
         raise SystemExit(1)
+    if out.get("addendum"):
+        # SEL-040 Part C (AD-038-R26): an addendum is its base task's; nothing new is registered.
+        click.echo(f"filed addendum: {project_dir.name}/{out['rel_path']} to task {out['base_task'][:8]} "
+                   f"({out['base_file']}), commit {out['source_commit'][:12]}; registers nothing")
+        return
     if out.get("existing"):
         click.echo(f"already registered: {out['rel_path']} ({out['artifact_id'][:8]})")
     rl = retry_line(out)

@@ -242,6 +242,11 @@ _PART_HEADING_RE = re.compile(r"^(?P<hashes>#{1,6})\s+Part\s+(?P<name>[A-Za-z0-9
 _ANY_HEADING_RE = re.compile(r"^(?P<hashes>#{1,6})\s", re.MULTILINE)
 _PREMISES_HEADER_RE = re.compile(r"^\s*\*\*Premises:\*\*\s*(?P<rest>.*)$")
 _PREMISE_RE = re.compile(r"^\s*(?:[-*]\s+)?premise:\s*(?P<statement>.+?)\s*\|\s*(?P<kind>check|judgment):\s*(?P<rest>.+?)\s*$")
+#: SEL-040 Part D (AD-038-R27): a premise line's optional last field, `| at: launch`.
+_PREMISE_AT_RE = re.compile(r"\s*\|\s*at:\s*(?P<at>[A-Za-z_]+)\s*$")
+#: The `at:` values a premise may carry. `launch`: registration records the premise unevaluated and station (a)
+#: evaluates it before the session starts. A premise with no `at:` is evaluated at both, as before.
+PREMISE_AT_VALUES = ("launch",)
 _FIRST_ARTICLE_RE = re.compile(r"^\s*\*\*First article:\*\*\s*(?P<loop>[^,]+?)\s*,\s*(?P<rest>.+?)\s*$", re.MULTILINE)
 _BACKTICK_RE = re.compile(r"`([^`]+)`")
 
@@ -368,9 +373,18 @@ def parse_premises(text: str) -> dict:
                 errors.append({"line": n, "text": raw.strip()})
                 continue
             value = m.group("rest").strip()
+            at = _PREMISE_AT_RE.search(value)
+            if at:
+                if at.group("at") not in PREMISE_AT_VALUES:
+                    errors.append({"line": n, "text": raw.strip(),
+                                   "error": f"`at: {at.group('at')}` is not one of {', '.join(PREMISE_AT_VALUES)}"})
+                    continue
+                value = value[:at.start()].strip()
             span = _BACKTICK_RE.fullmatch(value)
             row = {"line": n, "statement": m.group("statement").strip(), "kind": m.group("kind")}
             row["command" if row["kind"] == "check" else "why"] = span.group(1).strip() if span else value
+            if at:
+                row["at"] = at.group("at")
             out.append(row)
         return {"declared": True, "premises": out, "errors": errors}
     return {"declared": False, "premises": [], "errors": []}
@@ -1223,13 +1237,21 @@ def environment_premise(project_dir: Path, config: dict, scfg: dict, lease_held:
             "kind": "check", "source": "dispatcher", "outcome": "false" if held else "true", "held": held}
 
 
-def review_premises(project_dir: Path, text: str, scfg: dict, run: Callable[..., dict] = run_check) -> dict:
+def review_premises(project_dir: Path, text: str, scfg: dict, run: Callable[..., dict] = run_check,
+                    stage: str = "launch") -> dict:
     """Station (a) over the task's own `**Premises:**` block. `check:` premises run; `judgment:` ones are listed for
-    the R2 checker and not evaluated. `ok` is False on any false, unrunnable or unreadable premise."""
+    the R2 checker and not evaluated. `ok` is False on any false, unrunnable or unreadable premise.
+
+    `stage` is `launch` (station (a), the default: every premise is evaluated) or `registration` (AD-038-R5), where a
+    premise marked `at: launch` is recorded `at_launch` and not run (SEL-040 Part D, AD-038-R27)."""
+    if stage not in ("launch", "registration"):
+        raise ValueError(f"review_premises stage must be launch or registration, got {stage!r}")
     parsed = parse_premises(text)
     rows = []
     for p in parsed["premises"]:
-        if p["kind"] == "check":
+        if stage == "registration" and p.get("at") == "launch":
+            rows.append({**p, "outcome": "at_launch", "evaluated_by": "station (a), before the session starts"})
+        elif p["kind"] == "check":
             r = run(p["command"], Path(project_dir), scfg["check_timeout_s"], **interpreter_kw(scfg))
             rows.append({**p, "outcome": "true" if r["outcome"] == "pass" else
                          ("false" if r["outcome"] == "fail" else "unrunnable"), "check": r})
@@ -1376,6 +1398,42 @@ def parts_registration_refusal(task_path: Path, project_dir: Path, config: dict)
 
 #: AD-038-R5's refusal at registration: a `check:` premise that is false when the task is registered.
 PREMISE_REGISTRATION_REFUSAL = "premise_false"
+#: SEL-040 Part D (AD-038-R28): a premise that says only that a predecessor the After header names has finished.
+PREMISE_RESTATES_AFTER = "premise_restates_after"
+#: What a premise says when it states a predecessor FINISHED rather than something about its output. Matched,
+#: case-insensitively, in the premise's statement or command together with the predecessor's stem or number.
+_FINISHED_WORDS_RE = re.compile(r"\bRESULT\b|\bcomplet(?:e|ed|es|ion)\b|\bfinish(?:ed|es)?\b|\bmerged\b|\bdone\b",
+                                re.IGNORECASE)
+
+
+def after_restating_premises(text: str) -> list:
+    """The premises that only restate the `**After:**` header (AD-038-R28): each names a predecessor the header lists
+    (its file stem or its number, e.g. `HB-189`) and says it finished (`RESULT`, complete, finished, merged, done).
+
+    A premise about what the predecessor PRODUCED (an export, a table) names the predecessor but not its finishing,
+    and is kept: that is a fact worth checking, at launch. hazbrief HB-192's premise "HB-189's RESULT exists" is the
+    case (2026-11-16), refused at registration while HB-189 ran."""
+    from seldon.core import dispatch as D
+    from seldon.core import numbering
+
+    parsed = D.parse_after(D._header_value(text, D.HEADER_AFTER))
+    if parsed["kind"] != "refs":
+        return []
+    names = set()
+    for ref in parsed["refs"]:
+        stem = ref.split(":", 1)[1] if ":" in ref else ref
+        names.add(stem.lower())
+        tok = numbering.file_token(stem + ".md")
+        if tok is not None:
+            names.add(tok.identity.lower())
+    out = []
+    for p in parse_premises(text)["premises"]:
+        said = " ".join(str(p.get(k) or "") for k in ("statement", "command", "why"))
+        low = said.lower()
+        if any(re.search(r"(?<![A-Za-z0-9])" + re.escape(n) + r"(?![0-9])", low) for n in names) \
+                and _FINISHED_WORDS_RE.search(said):
+            out.append(p)
+    return out
 
 
 def premises_registration_refusal(task_path: Path, project_dir: Path, config: dict,
@@ -1390,11 +1448,18 @@ def premises_registration_refusal(task_path: Path, project_dir: Path, config: di
     text = Path(task_path).read_text(encoding="utf-8", errors="replace")
     if not parse_premises(text)["declared"]:
         return None
+    restated = after_restating_premises(text)
+    if restated:
+        return (f"{PREMISE_RESTATES_AFTER}: {len(restated)} premise(s) only restate that a task this one is After has "
+                f"finished: " + "; ".join(f"line {r['line']}: {r['statement']}" for r in restated)
+                + ". The `**After:**` header already carries that: the dispatcher holds this task until each "
+                  "predecessor completes (and its OODA, AD-038-R16). Drop the premise; a fact about the predecessor's "
+                  "OUTPUT can stay as a premise marked `| at: launch` (AD-038-R28)")
     try:
         scfg = load_stations_config((config or {}).get("dispatch") or {}, Path(project_dir))
     except StationsConfigError:
         scfg = dict(STATIONS_DEFAULTS)
-    review = review_premises(Path(project_dir), text, scfg, run=run)
+    review = review_premises(Path(project_dir), text, scfg, run=run, stage="registration")
     if review["ok"]:
         return None
     lines = []

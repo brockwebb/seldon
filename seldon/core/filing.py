@@ -53,6 +53,12 @@ FIX_HEADINGS_DEFAULT = (
 FILING_DESIGNS_FIX = "filing_designs_fix"
 LOCK_TIMEOUT = "filing_lock_timeout"
 FILE_EXISTS = "file_exists"
+#: SEL-040 Part C (AD-038-R26): an addendum whose base task file is absent or unregistered.
+ADDENDUM_ORPHAN = "addendum_without_task"
+
+#: `<stem>_ADDENDUM_<NN>[_<slug>].md` (DN-006 decision 3's pattern, as `dispatch.is_addendum_name` reads it), with the
+#: base task's stem captured.
+_ADDENDUM_BASE_RE = re.compile(r"^(?P<stem>.+?)_ADDENDUM[_-]?(?P<nn>\d+)(?:[_-][^/]*)?\.md$")
 
 _HEADING_RE = re.compile(r"^#{1,6}\s+(?P<text>.+?)\s*#*\s*$")
 _LABEL_RE = re.compile(r"^\s*(?:[-*+]\s+)?\*\*(?P<text>[^*\n]+?):?\*\*")
@@ -206,6 +212,11 @@ def file_task(project_dir: Path, content: str, *, name: Optional[str] = None, ac
     rel = f"cc_tasks/{name}"
     driver = get_neo4j_driver(config)
     database = config["neo4j"]["database"]
+    if D.is_addendum_name(name):
+        try:
+            return file_addendum(project_dir, config, driver, database, content, name)
+        finally:
+            driver.close()
     try:
         with filing_lock(project_dir, config, holder=f"seldon cc file {rel}"):
             if path.exists():
@@ -238,3 +249,60 @@ def file_task(project_dir: Path, content: str, *, name: Optional[str] = None, ac
         driver.close()
     out["path"] = str(project_dir / out["rel_path"])
     return out
+
+
+# ---------------------------------------------------------------- an addendum, in one call (SEL-040 Part C)
+
+def addendum_base_stem(name: str) -> Optional[str]:
+    """The stem of the task an addendum's file name belongs to, or None when the name is not an addendum's."""
+    m = _ADDENDUM_BASE_RE.match(Path(name).name)
+    return m.group("stem") if m else None
+
+
+def file_addendum(project_dir: Path, config: dict, driver, database: str, content: str, name: str) -> dict:
+    """Write an addendum into cc_tasks/ and commit it, under the filing lock; register nothing (AD-038-R26).
+
+    An addendum belongs to its base task: the dispatcher and the session read it as the task's sibling (the dispatch
+    line tells every session to read `<stem>_ADDENDUM*.md`), so it needs no artifact, no candidacy headers and no
+    registration gate. What it still may not do is carry a candidacy header (AD-038-R24), and it must belong to a
+    task: the base file must exist and be registered (`addendum_without_task` otherwise). A refused or uncommittable
+    addendum is removed again, so the tree is left as it was (AD-038-R20's contract).
+
+    Returns ``{artifact_id, base_task, base_file, rel_path, path, addendum, existing, source_commit}``; `artifact_id`
+    is the base task's id, the task the addendum amends.
+    """
+    from seldon.commands.cc import _find_existing
+
+    rel = f"cc_tasks/{name}"
+    path = Path(project_dir) / rel
+    stem = addendum_base_stem(name)
+    if stem is None:
+        raise FilingError(f"{name!r} reads as an addendum but not as `<task stem>_ADDENDUM_<NN>[_<slug>].md`; name it "
+                          f"after its task's file")
+    base_rel = f"cc_tasks/{stem}.md"
+    refusal = D.addendum_header_refusal(content)
+    if refusal:
+        raise FilingError(f"{rel} was refused and not written: {refusal}")
+    with filing_lock(project_dir, config, holder=f"seldon cc file {rel}"):
+        base_id = _find_existing(driver, database, base_rel) if (Path(project_dir) / base_rel).is_file() else None
+        if base_id is None:
+            raise FilingError(f"{ADDENDUM_ORPHAN}: {rel} names task file {base_rel}, which "
+                              f"{'is not registered' if (Path(project_dir) / base_rel).is_file() else 'does not exist'}"
+                              f"; an addendum amends a registered task. Nothing was written.")
+        if path.exists():
+            raise FilingError(f"{FILE_EXISTS}: {rel} already exists; nothing was written (an addendum is never "
+                              f"overwritten: file the next number)")
+        path.write_text(content, encoding="utf-8")
+        added = D.git(project_dir, "add", "--", rel)
+        done = None if added.returncode else D.git(
+            project_dir, "commit", "-q", "-m",
+            f"addendum: {rel} to task {base_id[:8]} ({stem}), filed in one call (AD-038-R26)", "--", rel)
+        if added.returncode or done.returncode:
+            failed = added if added.returncode else done
+            D.git(project_dir, "rm", "--cached", "-q", "--ignore-unmatch", "--", rel)
+            path.unlink()
+            raise FilingError(f"{rel} could not be committed and was removed: "
+                              f"{(failed.stderr or failed.stdout).strip()[-500:]}")
+        sha = D.git(project_dir, "rev-parse", "HEAD").stdout.strip()
+    return {"artifact_id": base_id, "base_task": base_id, "base_file": base_rel, "rel_path": rel,
+            "path": str(path), "addendum": True, "existing": False, "source_commit": sha}
