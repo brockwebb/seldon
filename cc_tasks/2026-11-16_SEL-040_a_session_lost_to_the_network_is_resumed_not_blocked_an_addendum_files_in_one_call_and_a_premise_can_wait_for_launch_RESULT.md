@@ -133,6 +133,11 @@ Filed with `seldon cc return` (below). The return is built from the next section
 
 Nothing in this return is needed for the 2026-11-20 submission; it reports what seldon changed after hz-18's report of 2026-11-16, and nothing here asks hazbrief to act before then.
 
+The header names HB-189 as the task this answers because hz-18's report started with HB-189's lost session. HB-189
+itself was not filed into seldon. The operator passed hz-18's report on, and SEL-040's task file records it ("The
+condition"). The return machinery needs a task to name; the template sentence above says "filed into seldon", and for
+this return that is not true.
+
 1. **A session the network cuts off is now resumed, not blocked.** The dispatcher records it `interrupted`, not
    `stop_gate_unpassed`. That happens when the session ends on the CLI's "API Error ... (ENOTFOUND)" or similar, or
    on exhausted API retries, without a committed RESULT; a closed lid shows in the host's power log, as HB-189's did
