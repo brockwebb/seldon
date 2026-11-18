@@ -371,13 +371,16 @@ def _record_pending(project_dir, config, driver, database, session_id, cfg) -> N
         click.echo(f"gate record: NOT done: {type(exc).__name__}: {exc}", err=True)
 
 
-def _auto_redrive(project_dir, driver, database, domain_config, session_id) -> list:
+def _auto_redrive(project_dir, driver, database, domain_config, session_id, cfg: dict | None = None) -> list:
     """Redrive the blocked tasks whose stop was the dispatcher's own defect (AD-038-R2;
     `seldon.core.redrive.AUTO_REDRIVE_REASONS`). Each is printed; a failure is reported, not raised, since
-    the pass's other work does not depend on it and the next pass tries again."""
+    the pass's other work does not depend on it and the next pass tries again. An `interrupted` task is redriven
+    only once its API host answers the probe (SEL-040, AD-034-R21), read from `cfg`'s `interruption` block."""
+    from seldon.core import interruption as INT
     from seldon.core import redrive as RD
+    probe = (lambda: INT.probe(cfg[INT.CONFIG_KEY])) if cfg and cfg.get(INT.CONFIG_KEY) else None
     try:
-        done = RD.auto_redrive(project_dir, driver, database, domain_config, session_id)
+        done = RD.auto_redrive(project_dir, driver, database, domain_config, session_id, probe=probe)
     except (RD.RedriveRefused, ValueError) as exc:
         click.echo(f"redrive: automatic redrive NOT done: {exc}", err=True)
         return []
@@ -1488,7 +1491,7 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         _breaker_and_stale(project_dir, config, driver, database, domain_config, session_id, cfg)
         # AD-038-R2: a task blocked by one of the dispatcher's own recorded defects goes back on the
         # queue by itself, before the reconcile so its lines are committed in this pass.
-        _auto_redrive(project_dir, driver, database, domain_config, session_id)
+        _auto_redrive(project_dir, driver, database, domain_config, session_id, cfg)
         done = _reconcile(project_dir, config, cfg, driver, database)
         # AD-038-R16 (SEL-014R): the OODA knowledge source fires on the board's state, under this pass's lease and
         # before candidacy, so no successor is evaluated ahead of its predecessor's OODA; its records and any
@@ -1633,8 +1636,10 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     # run keeps the spec it starts with to the end.
     refresh_note = models.ensure_fresh("dispatch")
     spec = _session_spec(project_dir, rel)
-    cmd = _launch_cmd(cfg, W.worktree_prompt(rel, project_dir, chosen["task_id"]), spec, worktree=True,
-                      settings=_session_settings(project_dir, cfg))
+    # SEL-040 (AD-034-R21): an interrupted task the dispatcher redrove reopens its kept worktree.
+    plan = W.resume_for(project_dir, chosen["task_id"])
+    cmd = _launch_cmd(cfg, W.resume_prompt(W.worktree_prompt(rel, project_dir, chosen["task_id"]), plan), spec,
+                      worktree=plan["name"] if plan else True, settings=_session_settings(project_dir, cfg))
     # The child's root session id, minted here and handed down through the environment, so a
     # reader can join the session's `cc` events to this launch (decision 2).
     child_session_id = str(uuid.uuid4())
@@ -1652,6 +1657,7 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
            "permission_mode": cfg["permission_mode"], "launched_at": _now(),
            "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
            **({"push_repos": push_repos} if push_repos else {}),
+           **({"resume": plan} if plan else {}),
            **_station_fields(cfg, chosen),
            **_model_fields(spec, refresh_note),
            # PRUNE-002 Part B: the instruction context this session receives, for `qc chart`'s toil reading.
@@ -1662,8 +1668,8 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     base = WT.rev(project_dir, "HEAD")
     # `worktree`, `branch` and `linked` are filled by `name_worktree` at the session's `init` record.
     extra = {"worktree_task": chosen["task_id"], "stem": stem, "source_file": rel, "worktree": None,
-             "branch": None, "base": base, "child_session_id": child_session_id, "linked": [],
-             "model_spec": spec, "push_repos": push_repos}
+             "branch": None, "base": plan["base"] if plan else base, "child_session_id": child_session_id,
+             "linked": [], "model_spec": spec, "push_repos": push_repos, "resume": plan}
     click.echo(f"launching {chosen['task_id'][:8]} {rel} in a worktree the CLI names -> {log_rel}")
 
     started = time.monotonic()
@@ -2087,7 +2093,7 @@ def _session_settings(project_dir: Path, cfg: dict) -> dict:
                       "PreToolUse": [{"matcher": "*", "hooks": [hook("tool-gate")]}]}}
 
 
-def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: bool = False,
+def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: bool | str = False,
                 settings: dict | None = None) -> list:
     """The lock's CLI, `-p "<the dispatch line>"`, the permission mode, and the model block.
 
@@ -2119,7 +2125,10 @@ def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: bool = False,
         # turns on its hard isolation. A name the dispatcher made up hit the CLI's 64-character limit twice
         # (RECALL-001, MCP-001). Last on the line because the flag's value is optional: nothing may follow it
         # that the CLI could read as the name.
-        args = args + ["--worktree"]
+        # SEL-040 (AD-034-R21): a resumed launch NAMES its kept worktree. "If a worktree with the name you pass to
+        # `--worktree` already exists, Claude Code opens it instead of creating a new one", and with
+        # `worktree.baseRef: head` it "reopens the worktree at its old tip" (code.claude.com/docs/en/worktrees).
+        args = args + (["--worktree", worktree] if isinstance(worktree, str) else ["--worktree"])
     return cmd + args
 
 

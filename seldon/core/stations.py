@@ -423,6 +423,14 @@ def session_tokens(log_path: Path) -> dict:
     return {"tokens": tokens, "cache_read": cache, "messages": len(usage), "error": None}
 
 
+def launch_tokens(log_path: Path, launch_payload: dict) -> int | None:
+    """`session_tokens` for the launch, plus the tokens its task's interrupted sessions spent before it (SEL-040,
+    AD-034-R22: "Tokens already spent count toward the task's cap"). None while the log holds no reading."""
+    from seldon.core.interruption import launch_prior_tokens
+    tokens = session_tokens(log_path)["tokens"]
+    return None if tokens is None else tokens + launch_prior_tokens(launch_payload)
+
+
 _LOG_HEADER_TS_RE = re.compile(r"^=== (?P<ts>\S+) \| dispatch \|")
 
 
@@ -955,7 +963,7 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
         failed += [{"part": name, **r} for r in results if r["outcome"] == "fail"]
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
-    tokens = session_tokens(log)["tokens"] if log and log.is_file() else None
+    tokens = launch_tokens(log, lp) if log and log.is_file() else None
     # DISP-001R Part B step 1: `floor` is `spend_floor`'s measurement; the ceiling is never below it.
     limit = spend_ceiling(estimate, scfg["spend_ceiling_factor"], floor)
     ceiling = limit["ceiling"]
@@ -1126,7 +1134,7 @@ def inspect(project_dir: Path, task_id: str, events: list, scfg: dict, poll_inte
     hard_reasons = {(e.get("payload") or {}).get("reason") for e in records
                     if e.get("event_type") == EVENT_SESSION_STOP and (e.get("payload") or {}).get("kind") == "hard"}
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
-    used = session_tokens(log)["tokens"] if log else None
+    used = launch_tokens(log, lp) if log else None
     # DISP-001R Part B step 1: the ceiling is never below the measured cost of loading a session.
     limit = spend_ceiling(estimate, scfg["spend_ceiling_factor"],
                           spend_floor(project_dir, events, poll_interval_s, scfg["floor_launches"],

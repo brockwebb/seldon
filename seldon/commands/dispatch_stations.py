@@ -250,10 +250,16 @@ def part_complete_command(part, task):
         raise click.ClickException(f"Part {part!r} is not in the task's **Parts:** header "
                                    f"({parts['error'] or sorted(shares)})")
     used = S.session_tokens(project_dir / lp["log_path"]) if lp.get("log_path") else {"tokens": None}
+    # SEL-040 (AD-034-R22): a resumed launch counts the tokens its interrupted sessions spent.
+    from seldon.core.interruption import launch_prior_tokens
+    prior = launch_prior_tokens(lp)
+    if prior and used.get("tokens") is not None:
+        used = {**used, "tokens": used["tokens"] + prior, "prior_tokens": prior}
     launched = datetime.fromisoformat(lp.get("launched_at", launch["timestamp"]).replace("Z", "+00:00"))
     wall = round((datetime.now(timezone.utc) - launched).total_seconds(), 1)
     _emit(project_dir, S.EVENT_PART_COMPLETE,
           {"task_id": task_id, "part": part, "planned_share": shares[part], "tokens": used.get("tokens"),
+           **({"prior_tokens": used["prior_tokens"]} if used.get("prior_tokens") else {}),
            "cache_read": used.get("cache_read"), "token_source": lp.get("log_path"), "wall_clock_s": wall,
            "cwd": str(here["cwd"]), "branch": here["branch"],
            **({"parts_defaulted": True} if parts["defaulted"] else {})},

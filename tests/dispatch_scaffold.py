@@ -229,6 +229,11 @@ if spec.get("commit", True) and spec.get("result", True):
     subprocess.run(["git", "add", "--", *paths], check=True)
     subprocess.run(["git", "commit", "-q", "-m", f"{{stem}}: result", "--", *paths],
                    check=True)
+elif spec.get("work_commit"):
+    # SEL-040: a session that committed work and no RESULT before its transport failed (HB-189).
+    paths = list((spec.get("write") or {{}}).keys())
+    subprocess.run(["git", "add", "--", *paths], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", spec["work_commit"], "--", *paths], check=True)
 for n in range(spec.get("classifier_blocks", 0)):
     # FRICTION-002 Part D: the CLI runs the launch's PermissionDenied hook after each classifier denial.
     hooks = json.loads(sys.argv[sys.argv.index("--settings") + 1])["hooks"]["PermissionDenied"]
@@ -246,6 +251,11 @@ if spec.get("stop_hook"):
     print("stub stop hook:", r.stdout.strip() or "(allowed)")
 if spec.get("print"):
     print(spec["print"])
+if spec.get("tail"):
+    # SEL-040: the end of a real session's stream (a fixture cut from its log), its own `result` record included.
+    print(Path(spec["tail"]).read_text().rstrip("\\n"))
+    mark("end")
+    sys.exit(spec.get("exit", 0))
 mark("end")
 # AD-035 R6: the CLI's stream ends in a result object whose `modelUsage` names the served model.
 # The stub serves what `--model` asked for, unless the spec plants a substitution.

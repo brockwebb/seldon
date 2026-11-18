@@ -1,0 +1,31 @@
+SEL-040 Part B, reproduction first (2026-11-17, before any change to seldon/commands/dispatch_worktree.py).
+
+Fixture: tests/fixtures/sel040/hb189_log_tail.jsonl, cut by docs/evidence/sel040/cut_fixture.py from
+hazbrief-mcp logs/dispatch/2026-11-15_HB-189_*.log lines 3726..3747 (1-based; session 8b359199, launched
+2026-11-16T05:55:08Z). Content elided; types, timestamps, usage, the ten api_retry records and the CLI's own
+synthetic error text kept verbatim. The real log's next line is `EXIT=1`.
+
+What the real tail says:
+  10:36:44.301Z  last model record (assistant, claude-opus-5-5)
+  10:37:00Z      host: "Entering Sleep state due to 'Clamshell Sleep'" (pmset -g log, 05:37:00 -0500)
+  10:49:03.657Z  a local tool result lands (dark wake)
+  api_retry attempt 1..10 of max_retries 10, error_status null, error "unknown"
+  11:37:31.273Z  assistant, model "<synthetic>": "API Error: Can't reach the API server — check your internet or DNS
+                 (ENOTFOUND)"
+  result: subtype success, is_error true, stop_reason stop_sequence, num_turns 655
+  EXIT=1
+
+Command:
+  python -m dotenv -f .env run -- python -m pytest \
+    "tests/test_sel040_interrupted_session_resumed.py::test_the_hb189_tail_is_interrupted_not_blocked_for_a_person" -x -q
+
+Output on the pre-change code (the stub CLI commits work, declares Part A, prints the tail, exits 1):
+  >       assert fin["outcome"] == INT.INTERRUPTED, fin
+  E       assert 'stop_gate_unpassed' == 'interrupted'
+  E         + stop_gate_unpassed
+  1 failed in 46.55s
+
+So the code that blocked HB-189 for a person is the finish's `if not gate["passed"]` branch: the session declared
+Part A and never reached its Stop hook (the CLI ended on the API error), so `_gate_reading` returned
+"Parts declared and no stop gate ran" and the finish recorded `stop_gate_unpassed`, a block no automatic redrive
+answers (seldon/core/redrive.py AUTO_REDRIVE_REASONS).

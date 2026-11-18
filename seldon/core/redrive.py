@@ -14,6 +14,9 @@ task to `accepted`. The dispatcher redrives on its own in two cases:
 
 - a session it halted, when the stop's cause is one of its own recorded defects (`AUTO_REDRIVE_REASONS`): a station
   that ran its check in the wrong tree (AD-038-R4) or a database outage (R6's 59b2db84);
+- a session its transport cut off (`interrupted`, SEL-040, AD-034-R21), once the API's host answers a probe: the
+  relaunch reopens the kept worktree (`seldon.core.interruption.resume_plan`). The finish caps it at two
+  (`interrupted_thrice`, which is not here, waits for a person);
 - a DECLARED block (one no dispatcher claim set) on a task with cross-project waits, once every wait's target has
   reached terminal success (AD-038-R8, SEL-008). The block's stored reason (AD-038-R7) and the waits are what make
   this a rule rather than a memory: Airflow's `ExternalTaskSensor` releases a waiting task on the same condition.
@@ -28,7 +31,11 @@ EVENT_REDRIVE = "dispatch_redrive"
 
 #: Stops that are the dispatcher's own defects, so it answers them itself (AD-038-R2). Not a tunable: adding a reason
 #: here decides that a class of stop is never the session's fault, which is a ruling, not a setting.
-AUTO_REDRIVE_REASONS = ("check_unrunnable_wrong_tree", "database_unavailable")
+AUTO_REDRIVE_REASONS = ("check_unrunnable_wrong_tree", "database_unavailable", "interrupted")
+
+#: Of those, the reasons redriven only once a probe says the outside service is back (SEL-040, AD-034-R21): a relaunch
+#: while the network is still down would be cut off again and spend one of its two resumes on nothing.
+PROBED_REASONS = ("interrupted",)
 
 #: The stop reason a lifted declared block records (AD-038-R8).
 WAITS_SATISFIED = "waits_on_satisfied"
@@ -135,9 +142,14 @@ def redrive(project_dir: Path, driver, database: str, domain_config, task_id: st
     return payload
 
 
-def auto_redrive(project_dir: Path, driver, database: str, domain_config, session_id: str | None = None) -> list:
+def auto_redrive(project_dir: Path, driver, database: str, domain_config, session_id: str | None = None,
+                 probe=None) -> list:
     """Redrive every dispatcher-claimed blocked task whose stop is one of `AUTO_REDRIVE_REASONS`, once per stop, and
     every declared block whose cross-project waits are all satisfied (:func:`lift_satisfied_waits`).
+
+    A stop in `PROBED_REASONS` is redriven only when `probe()` returns ``{"ok": True, ...}``; with no probe it waits.
+    Each probe's answer is recorded (`interruption_probe`) when it differs from the last one recorded for that stop,
+    so a long outage writes one line, not one per pass.
 
     Returns the `dispatch_redrive` payloads written. The caller holds the lease with no claim in flight.
     """
@@ -154,9 +166,32 @@ def auto_redrive(project_dir: Path, driver, database: str, domain_config, sessio
             stop = answered_stop(events, b["id"])
             if stop is None or stop["reason"] not in AUTO_REDRIVE_REASONS or already_redriven(events, stop):
                 continue
+            if stop["reason"] in PROBED_REASONS and not _probe_answers(project_dir, events, b["id"], stop, probe,
+                                                                         session_id):
+                continue
             done.append(redrive(project_dir, driver, database, domain_config, b["id"], "dispatcher", session_id,
                                 events=events))
     return done + lift_satisfied_waits(project_dir, driver, database, domain_config, session_id)
+
+
+def _probe_answers(project_dir: Path, events: list, task_id: str, stop: dict, probe, session_id) -> bool:
+    """Run the probe for one probed stop and record its answer when it changed. True when the service answers."""
+    from seldon.core.events import append_event, make_event
+    from seldon.core.interruption import EVENT_PROBE
+
+    if probe is None:
+        return False
+    out = probe()
+    last = None
+    for e in events:
+        p = e.get("payload") or {}
+        if e.get("event_type") == EVENT_PROBE and p.get("answers") == stop["event_id"]:
+            last = p
+    if last is None or bool(last.get("ok")) != bool(out.get("ok")):
+        append_event(Path(project_dir), make_event(EVENT_PROBE, "dispatcher", "accepted",
+                                                   {"task_id": task_id, "answers": stop["event_id"],
+                                                    "stop_reason": stop["reason"], **out}, session_id=session_id))
+    return bool(out.get("ok"))
 
 
 def _last_block_event(events: list, task_id: str) -> dict | None:

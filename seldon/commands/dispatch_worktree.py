@@ -48,6 +48,7 @@ import seldon
 from seldon.commands import dispatch as S
 from seldon.core import dispatch as D
 from seldon.core import gate_record as GR
+from seldon.core import interruption as INT
 from seldon.core import kept_events as KE
 from seldon.core import worktree as WT
 from seldon.core.artifacts import create_artifact, create_link, update_artifact, walk_to_completed
@@ -71,7 +72,9 @@ WORKTREE_CLAUSE = (
 #: The per-worktree lease's persistent fields (`D.Lease.extra`): what a released or orphaned
 #: lease still has to say about which task, worktree and branch it guarded.
 LEASE_EXTRA_KEYS = ("worktree_task", "stem", "source_file", "worktree", "branch", "base",
-                    "child_session_id", "linked", "model_spec", "push_repos")
+                    "child_session_id", "linked", "model_spec", "push_repos",
+                    # SEL-040 (AD-034-R21): the kept worktree a resumed launch reopens, carried to the supervisor.
+                    "resume")
 
 #: `dispatch_finished.outcome` values this module writes, beside the serial `ok` boolean.
 OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
@@ -81,7 +84,9 @@ OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
             "classifier_breaker", "database_unavailable",
             # FRICTION-002 Part C: the session ended with its Stop gate not passed (the CLI's block cap or the token
             # ceiling ended it with a check failing, or it declared Parts and no gate ran).
-            "stop_gate_unpassed")
+            "stop_gate_unpassed",
+            # SEL-040 Part B (AD-034-R21, R22): the session's transport cut it off; redriven, or, the third time, not.
+            INT.INTERRUPTED, INT.INTERRUPTED_THRICE)
 
 #: The notify outcome of a merged finish whose cross-repo push was refused somewhere (DISP-004R, AD-034-R12).
 CROSS_REPO_PUSH_REFUSED = "cross_repo_push_refused"
@@ -182,7 +187,10 @@ def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links:
     if rel is None or not rel.startswith(D.CLI_WORKTREE_DIR + "/") or not branch or branch == "HEAD":
         record["error"] = f"init cwd {wt} is not a branch worktree under {project_dir}/{D.CLI_WORKTREE_DIR}"
     else:
-        extra.update({"worktree": rel, "branch": branch, "base": WT.rev(wt, "HEAD") or extra.get("base"),
+        # SEL-040: a resumed tree's HEAD is the interrupted session's last commit, not the commit it was cut from; its
+        # base stays the one the first launch recorded.
+        base = extra.get("base") if extra.get("resume") else (WT.rev(wt, "HEAD") or extra.get("base"))
+        extra.update({"worktree": rel, "branch": branch, "base": base,
                       "linked": WT.link(project_dir, wt, links)})
         record.update({k: extra[k] for k in ("worktree", "branch", "base", "linked")})
         # SEL-017 Part B (AD-034-R14): the worktree's own config points at its own `.githooks`, so HOOK-001's gate
@@ -518,8 +526,10 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     # with THIS spec, carried in the lease, so a lock bump while it starts changes nothing.
     refresh_note = S.models.ensure_fresh("dispatch")
     spec = S._session_spec(project_dir, rel)
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir, tid), spec, worktree=True,
-                        settings=S._session_settings(project_dir, cfg))
+    # SEL-040 (AD-034-R21): an interrupted task the dispatcher redrove reopens its kept worktree.
+    plan = resume_for(project_dir, tid)
+    cmd = S._launch_cmd(cfg, resume_prompt(worktree_prompt(rel, project_dir, tid), plan), spec,
+                        worktree=plan["name"] if plan else True, settings=S._session_settings(project_dir, cfg))
     conc = chosen["concurrency"]
     # DISP-004R (AD-034-R12): the other repositories the Repo line says to push, with their HEADs before the session.
     push_repos = D.cross_repo_launch(project_dir, cfg, (project_dir / rel).read_text(encoding="utf-8",
@@ -533,6 +543,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
              "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
              "touches": {"resources": conc["resources"], "paths": conc["paths"]}, **({"push_repos": push_repos} if push_repos else {}),
+             **({"resume": plan} if plan else {}),
              **S._model_fields(spec, refresh_note)})
     # Committed and pushed BEFORE the CLI cuts the worktree, so the task's branch starts from a
     # main that already carries its own claim.
@@ -540,8 +551,8 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     base = WT.rev(project_dir, "HEAD")
     # `worktree`, `branch` and `linked` are filled by the supervisor at the session's `init` (`name_worktree`).
     extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": None,
-             "branch": None, "base": base, "child_session_id": child_session_id,
-             "linked": [], "model_spec": spec, "push_repos": push_repos}
+             "branch": None, "base": plan["base"] if plan else base, "child_session_id": child_session_id,
+             "linked": [], "model_spec": spec, "push_repos": push_repos, "resume": plan}
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
     lease_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "seldon", "dispatch", "supervise", tid,
@@ -628,8 +639,9 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
                                                             errors="surrogateescape"))
     allow = D.parse_network(headers[D.HEADER_NETWORK])["hosts"]
     spec = extra["model_spec"]
-    cmd = S._launch_cmd(cfg, worktree_prompt(rel, project_dir, task_id), spec, worktree=True,
-                        settings=S._session_settings(project_dir, cfg))
+    plan = extra.get("resume")
+    cmd = S._launch_cmd(cfg, resume_prompt(worktree_prompt(rel, project_dir, task_id), plan), spec,
+                        worktree=plan["name"] if plan else True, settings=S._session_settings(project_dir, cfg))
     started = time.monotonic()
     offset = S._log_offset(log_path)
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
@@ -739,6 +751,21 @@ def finish_session(project_dir, config, driver, database, domain_config, session
                 _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
                                  {**finish, "task_terminal": graph_state}, name, "session_failed")
             return
+        if not gate["passed"] or code != 0:
+            # SEL-040 Part B (AD-034-R21): how the session ended is classed before a block is recorded. A session its
+            # transport cut off is `interrupted`, which the dispatcher redrives into its kept worktree once the API
+            # answers (at most twice, R22); the evidence is recorded either way.
+            reading = interruption_reading(project_dir, cfg, task_id, extra["child_session_id"], log_path, offset,
+                                           code, committed, gate)
+            if INT.worth_recording(reading):
+                finish["interruption"] = reading
+            if reading["interrupted"]:
+                outcome = (INT.INTERRUPTED if reading["resumes_before"] < INT.MAX_RESUMES
+                           else INT.INTERRUPTED_THRICE)
+                with lease_cm():
+                    _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                     {**finish, "failure": outcome}, name, outcome)
+                return
         if not gate["passed"]:
             # Part C: a session the CLI let end with a declared Part's check failing (its block cap, or the token
             # ceiling) is not merged; the work stays on its branch with the failing commands named.
@@ -765,6 +792,44 @@ def finish_session(project_dir, config, driver, database, domain_config, session
         # caller with no finish, which the next pass reads as `released_unfinished`.
         click.echo(f"could not take the pass lease in {cfg['merge_lock_timeout_s']}s (held by "
                    f"{held.body.get('holder')}); left for the next pass", err=True)
+
+
+def interruption_reading(project_dir: Path, cfg: dict, task_id: str, child_session_id: str, log_path: Path,
+                         offset: int, code, committed: bool, gate: dict) -> dict:
+    """SEL-040 Part B: `interruption.classify` over this launch's log segment, with what the finish records beside it:
+    when the session ended, its tokens, the tokens it carries (its own plus every earlier interrupted session's, which
+    count toward the task's cap, AD-034-R22) and how many interruptions came before it."""
+    from datetime import datetime, timezone
+
+    from seldon.core import stations as QS
+    from seldon.core.events import read_events
+
+    events = read_events(project_dir)
+    launch = next((e for e in reversed(events) if e.get("event_type") == D.EVENT_LAUNCHED
+                   and (e.get("payload") or {}).get("child_session_id") == child_session_id), None)
+    since = str((launch or {}).get("timestamp") or "")
+    stopped = [e.get("payload") or {} for e in events if e.get("event_type") == QS.EVENT_SESSION_STOP
+               and (e.get("payload") or {}).get("task_id") == task_id and str(e.get("timestamp") or "") >= since]
+    ended = datetime.now(timezone.utc)
+    out = INT.classify(lines=_segment(log_path, offset), exit_code=code, result_committed=committed, gate=gate,
+                       stopped=stopped, settings=cfg[INT.CONFIG_KEY], ended_at=ended)
+    tokens = QS.session_tokens(Path(log_path))["tokens"] or 0
+    prior = INT.launch_prior_tokens((launch or {}).get("payload"))
+    out.update({"ended_at": ended.isoformat().replace("+00:00", "Z"), "tokens": tokens, "prior_tokens": prior,
+                "carried_tokens": tokens + prior,
+                "resumes_before": len(INT.prior_interruptions(events, task_id))})
+    return out
+
+
+def resume_for(project_dir: Path, task_id: str) -> dict | None:
+    """SEL-040 Part B: the kept worktree this launch resumes in (`interruption.resume_plan`), or None."""
+    from seldon.core.events import read_events
+    return INT.resume_plan(project_dir, read_events(project_dir), task_id)
+
+
+def resume_prompt(prompt: str, plan: dict | None) -> str:
+    """The launch prompt, with the interruption stated when the launch resumes a kept worktree (AD-034-R21)."""
+    return prompt if not plan else prompt + " " + INT.resume_clause(plan)
 
 
 def last_launch_failure(events: list, task_id: str) -> dict | None:

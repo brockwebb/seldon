@@ -873,6 +873,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
         raise DispatchConfigError(
             f"dispatch.notify must be a non-empty shell command string, got {notify!r}")
     block["notify"] = notify
+    # SEL-040 (AD-034-R21): how the finish classes a session its transport cut off, and the probe that says the API
+    # answers again. Validated here, so a malformed block refuses at load and not at the first lost connection.
+    from seldon.core import interruption as INT
+    try:
+        block[INT.CONFIG_KEY] = INT.load_settings(block.get(INT.CONFIG_KEY))
+    except INT.InterruptionConfigError as exc:
+        raise DispatchConfigError(str(exc)) from exc
     # SEL-024 (AD-034-R16): the project's declared pass record, validated at load so a malformed one refuses here and
     # not at the first merge. Absent or `none` is None: the merge round asks for no record.
     from seldon.core import gate_record as GR
