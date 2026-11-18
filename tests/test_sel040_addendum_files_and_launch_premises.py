@@ -228,5 +228,23 @@ def test_the_dispatcher_re_checks_every_premise_at_launch_today():
     assert "stage=" not in inspect.getsource(ST.premise_review), "station (a) evaluates every premise"
 
 
+# ------------------------------------------------------------------------------------------- Part E (2)
+
+@neo4j_tests
+def test_an_issue_created_without_project_dir_says_the_default_chose_its_repository(proj, monkeypatch):
+    """hazbrief's Issue 0c4232cb was written into seldon's graph by a call with no project_dir (SELDON_DEFAULT_PROJECT
+    is seldon in Desktop's config), and the reply never said where it went. Recall lists it under seldon because it IS
+    seldon's; the reply now names the repository, and the default when it chose it."""
+    from seldon import mcp_server as M
+    p = proj
+    monkeypatch.setenv("SELDON_DEFAULT_PROJECT", str(p))
+    tool = getattr(M.seldon_issue_create, "__wrapped__", M.seldon_issue_create)
+    reply = tool("an-issue", "what is wrong")
+    assert f"project: {p.resolve().name} ({p.resolve()})" in reply, reply
+    assert "SELDON_DEFAULT_PROJECT chose it" in reply
+    named = tool("another-issue", "what is wrong", project_dir=str(p))
+    assert f"project: {p.resolve().name}" in named and "SELDON_DEFAULT_PROJECT" not in named
+
+
 def _cfg(p: Path) -> dict:
     return yaml.safe_load((p / "seldon.yaml").read_text(encoding="utf-8"))

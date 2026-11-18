@@ -143,6 +143,21 @@ def _resolve_project(project_dir: str):
     return config, driver, database, domain_config, str(p)
 
 
+def _written_to(asked: str, resolved: str) -> str:
+    """The reply line that names the repository a create tool wrote into (SEL-040 Part E, AD-038-R29).
+
+    hazbrief's Desktop created Issue `0c4232cb` with no `project_dir` on 2026-11-16; `_resolve_project` fell back to
+    SELDON_DEFAULT_PROJECT (seldon), the reply did not say so, and the Issue has lived in seldon's graph since, where
+    hazbrief's recall correctly lists it as `seldon:issue-0c4232cb`. The reply now says where the write went, and
+    says so loudly when the default chose it."""
+    where = Path(resolved).resolve()
+    line = f"  project: {where.name} ({where})"
+    if asked == ".":
+        line += (" -- project_dir was not given, so SELDON_DEFAULT_PROJECT chose it; pass project_dir to write into "
+                 "another repository")
+    return line + "\n"
+
+
 def _resolve_artifact_id(driver, database: str, id_prefix: str) -> str | None:
     """Return full artifact_id for a UUID or prefix. Returns None if not found or ambiguous."""
     with driver.session(database=database) as session:
@@ -394,6 +409,7 @@ def seldon_task_create(
     from seldon.commands.task import NOTHING_WRITTEN
     from seldon.core.artifacts import create_task
 
+    asked = project_dir
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
     links = [("blocks", blocks.strip())] if blocks.strip() else []
 
@@ -410,6 +426,7 @@ def seldon_task_create(
 
     return (
         f"Created ResearchTask: {artifact_id[:8]}...\n"
+        + _written_to(asked, project_dir) +
         f"  description: {description}\n"
         f"  state: proposed"
     )
@@ -1086,6 +1103,7 @@ def seldon_issue_create(
     from seldon.core.artifacts import commit_writes, plan_artifact
     from seldon.core.issue_utils import validate_issue_enum, eisenhower_quadrant
 
+    asked = project_dir
     config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
     p = Path(project_dir)
 
@@ -1128,6 +1146,7 @@ def seldon_issue_create(
         quadrant = eisenhower_quadrant(importance, urgency)
         return (
             f"Created Issue: {artifact_id[:8]}...\n"
+            + _written_to(asked, project_dir) +
             f"  name: {name}\n"
             f"  type: {issue_type} / detected: {detection_method} / target: {target}\n"
             f"  priority: {importance}/{urgency} ({quadrant})\n"

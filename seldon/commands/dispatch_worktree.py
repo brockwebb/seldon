@@ -1090,7 +1090,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                      "linked_by_session": WT.session_links(wt, exclude=linked)}
             if record is not None:
                 merge["gate_record"] = record
-            numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch)
+            numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch,
+                                              driver=driver, database=database, domain_config=domain_config)
             if numbered:
                 merge["register_numbered"] = numbered
             _finish_merged(project_dir, config, driver, database, domain_config, session_id,
@@ -1315,13 +1316,20 @@ def _register_findings(wt: Path, config: dict) -> list:
 
 
 def number_merged_register(project_dir: Path, config: dict, session_id, task_id: str | None,
-                           branch: str | None) -> dict | None:
+                           branch: str | None, driver=None, database: str | None = None,
+                           domain_config=None) -> dict | None:
     """LOOP-001 Part B (AD-033 ADDENDUM 01), after the fast-forward, under the pass lease, in the primary: give every
     unnumbered record the merge brought the next seq, render REGISTER.md, commit both, and record
     `register_numbered` with the mapping (provisional id -> seq). None when nothing was pending.
 
     A numbering that fails after the merge is recorded on the same event with its `error` and printed; the merge
-    stands (main already holds it), and the pending files stay for `seldon decision number` to retry."""
+    stands (main already holds it), and the pending files stay for `seldon decision number` to retry.
+
+    SEL-040 Part E (AD-034-R24): with a graph (`driver`), the numbered register is then projected
+    (`decisions.project`, idempotent by record hash), so the graph holds what main's register holds the moment main
+    holds it. hazbrief HB-186's merge numbered eleven records and nothing projected them until HB-187's `verify`
+    found them missing. `projected` on the event says what the projection did, or its `error`; a projection that
+    fails is printed and left for `seldon decision project`, and never undoes the merge."""
     from seldon.core import decisions as dr
     # The merged seldon.yaml, not the pass's: the branch may be the one that declared the register (SEL-033).
     config = _config_at(project_dir, config)
@@ -1343,11 +1351,28 @@ def number_merged_register(project_dir: Path, config: dict, session_id, task_id:
                              f"register: numbered {len(out['numbered'])} record(s) merged from {branch} "
                              f"(LOOP-001, AD-033 ADDENDUM 01)")
     payload["commit"] = commit
+    if driver is not None:
+        payload["projected"] = _project_register(project_dir, config, driver, database, domain_config, session_id)
     S._emit(project_dir, session_id, EVENT_REGISTER_NUMBERED, payload)
     done = ", ".join(f"{r['id']} {r['event']} -> {r['seq']}" for r in out["numbered"])
     click.echo(f"register: numbered {done or 'nothing'}"
                + (f"; {len(out['already'])} already numbered" if out["already"] else ""))
     return payload
+
+
+def _project_register(project_dir: Path, config: dict, driver, database: str, domain_config, session_id) -> dict:
+    """`decisions.project` over the numbered register, REGISTER.md left as numbering rendered it. Never raises."""
+    from seldon.core import decisions as dr
+    try:
+        rep = dr.project(project_dir=Path(project_dir), config=config, driver=driver, database=database,
+                         domain_config=domain_config, session_id=session_id, render=False)
+    except Exception as exc:                                        # noqa: BLE001 - recorded; the merge stands
+        click.echo(f"REGISTER NOT PROJECTED after numbering: {type(exc).__name__}: {exc}; "
+                   f"`seldon decision project` retries", err=True)
+        return {"error": f"{type(exc).__name__}: {str(exc)[:300]}", "created": 0, "updated": 0}
+    click.echo(f"register: projected {rep.created} created, {rep.updated} updated, {rep.unchanged} unchanged")
+    return {"error": None, "created": rep.created, "updated": rep.updated, "unchanged": rep.unchanged,
+            "transitions": rep.transitions}
 
 
 def commit_register(project_dir: Path, paths: list, message: str) -> dict:

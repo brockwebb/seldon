@@ -159,3 +159,25 @@ def test_two_branches_creating_one_id_are_refused_before_the_merge(repo):
     _git(wb, "rebase", "-q", "main")
     bad = W._register_findings(wb, _cfg(repo))
     assert any("already holds" in x for x in bad), bad
+
+
+@pytest.mark.usefixtures("neo4j_available", "clean_test_db")
+def test_the_records_a_merge_numbers_are_projected_into_the_graph(repo, neo4j_driver):
+    """SEL-040 Part E (AD-034-R24): hazbrief HB-186's eleven records (HBD-435..441 and four amendments) were numbered
+    by its merge and never projected; HB-187's `seldon verify` found them absent. The merge now projects what it
+    numbered, so the graph agrees with the register the moment main does."""
+    from seldon.domain.loader import load_domain_config
+    from tests.dispatch_scaffold import RESEARCH_YAML
+    from tests.testdb import TEST_DATABASE
+    wa = repo.parent / "wt-a"
+    _accept(wa, "R-2", 7, "The multiple stays as a reported number under a control chart.")
+    dr.write_rendered(dr.universe(wa, _cfg(wa)))
+    _commit_on(wa, "a: R-2")
+    _git(wa, "rebase", "-q", "main")
+    _git(repo, "merge", "--ff-only", "-q", "a")
+    out = W.number_merged_register(repo, _cfg(repo), "sess-1", "task-a", "a", driver=neo4j_driver,
+                                   database=TEST_DATABASE, domain_config=load_domain_config(RESEARCH_YAML))
+    assert out["projected"]["error"] is None and out["projected"]["created"] >= 1, out["projected"]
+    with neo4j_driver.session(database=TEST_DATABASE) as s:
+        ids = {r["d"] for r in s.run("MATCH (d:Decision) RETURN d.decision_id AS d")}
+    assert "proj:R-2" in ids, ids
