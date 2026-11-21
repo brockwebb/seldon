@@ -156,7 +156,9 @@ blocked `regate_red`. "For the operator" has the recipe.
 
 ## Part F: the returns
 
-- **hazbrief-mcp:** filed with `seldon cc return` (`--answers seldon:<the filing>`), from the section below.
+- **hazbrief-mcp:** filed with `seldon cc return --answers seldon:<the filing>` from the section below: HB-218
+  (`3d4c3c8f`), `hazbrief-mcp/cc_tasks/2026-11-21_HB-218_the_gate_runs_what_a_change_touched_the_whole_suite_runs_only_at_decla.md`.
+  It is sequenced after HB-217, and it closed filing `a844c156` (proposed to completed, AD-036-R17).
 - **squiddy:** a report only (below). squiddy has nothing to do, so no task is filed there, as the task allows.
 
 ## For the operator
