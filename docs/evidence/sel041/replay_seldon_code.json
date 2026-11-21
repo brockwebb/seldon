@@ -1,0 +1,520 @@
+[
+ {
+  "ts": "2026-10-26",
+  "task": "SEL-010R2_dispatch_waits_for_the_desktop_ooda_bet",
+  "files": 16,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 5,
+   "scripts": 1,
+   "seldon": 7,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-26",
+  "task": "SEL-011_registration_refuses_what_dispatch_would_",
+  "files": 9,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 2,
+   "seldon": 3,
+   "seldon_events.jsonl": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-27",
+  "task": "NUM-001R_task_numbers_allocated_and_headers_read_",
+  "files": 16,
+  "tops": {
+   "cc_tasks": 4,
+   "docs": 3,
+   "seldon": 5,
+   "seldon_events.jsonl": 1,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-27",
+  "task": "DESK-004R_every_file_the_machine_writes_is_commit",
+  "files": 11,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 2,
+   "seldon": 3,
+   "seldon_events.jsonl": 1,
+   "tests": 4
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-27",
+  "task": "DISP-004R_a_cross_repo_task_is_pushed_in_every_re",
+  "files": 12,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 2,
+   "governed": 1,
+   "seldon.yaml": 1,
+   "seldon": 3,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-27",
+  "task": "RECALL-002R_recall_turned_on_in_squiddy_arnold_an",
+  "files": 4,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 2,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-28",
+  "task": "SEL-012_the_pass_ledger_hook_lands_and_installs_i",
+  "files": 16,
+  "tops": {
+   ".githooks": 1,
+   "cc_tasks": 2,
+   "docs": 5,
+   "seldon": 4,
+   "seldon_events.jsonl": 1,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-28",
+  "task": "SEL-013R_a_consumer_filings_answer_files_its_own_",
+  "files": 15,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 3,
+   "governed": 1,
+   "seldon": 6,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-28",
+  "task": "SEL-014R_the_ooda_is_a_knowledge_source_the_dispa",
+  "files": 29,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 10,
+   "governed": 1,
+   "scripts": 1,
+   "seldon.yaml": 1,
+   "seldon": 8,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 5
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-28",
+  "task": "SEL-015_the_prepare_commit_msg_hook_installs_in_t",
+  "files": 12,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 10,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-29",
+  "task": "SEL-016_hazbrief_adopts_the_standing_dispatcher_a",
+  "files": 2,
+  "tops": {
+   "cc_tasks": 1,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-30",
+  "task": "SEL-017_a_linked_gitignored_directory_is_clean_th",
+  "files": 17,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 4,
+   "governed": 1,
+   "seldon": 5,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 4
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-10-30",
+  "task": "SEL-018_relative_dispatch_paths_resolve_against_t",
+  "files": 12,
+  "tops": {
+   "cc_tasks": 1,
+   "seldon": 9,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-01",
+  "task": "SEL-019_aacps_adopts_seldon_and_the_dispatcher_an",
+  "files": 12,
+  "tops": {
+   "CLAUDE.md": 1,
+   "cc_tasks": 1,
+   "docs": 1,
+   "pyproject.toml": 1,
+   "seldon.yaml": 1,
+   "seldon": 5,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-01",
+  "task": "SEL-020_project_new_ignores_its_state_governed_co",
+  "files": 12,
+  "tops": {
+   "CLAUDE.md": 1,
+   "cc_tasks": 1,
+   "docs": 1,
+   "seldon.yaml": 1,
+   "seldon": 6,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-01",
+  "task": "SEL-022_the_dd007_refusal_rings_the_stuck_alarm_o",
+  "files": 6,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 1,
+   "seldon": 2,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-01",
+  "task": "SEL-021_review_findings_are_issues_traced_to_fix_",
+  "files": 12,
+  "tops": {
+   "CLAUDE.md": 1,
+   "cc_tasks": 1,
+   "docs": 1,
+   "seldon": 7,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-06",
+  "task": "SEL-023_a_consumer_filing_is_a_kind_the_registrar",
+  "files": 25,
+  "tops": {
+   "cc_tasks": 2,
+   "docs": 7,
+   "seldon.yaml": 1,
+   "seldon": 13,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-06",
+  "task": "SEL-024_the_merge_gate_requires_the_projects_decl",
+  "files": 15,
+  "tops": {
+   "cc_tasks": 4,
+   "docs": 4,
+   "seldon.yaml": 1,
+   "seldon": 4,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-06",
+  "task": "SEL-025_the_dispatcher_cannot_dirty_its_own_tree_",
+  "files": 10,
+  "tops": {
+   ".gitignore": 1,
+   "cc_tasks": 1,
+   "docs": 3,
+   "scripts": 1,
+   "seldon": 2,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-08",
+  "task": "SEL-029_three_consumer_filings_answered_a_superse",
+  "files": 16,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 5,
+   "seldon.yaml": 1,
+   "seldon": 5,
+   "seldon_events.jsonl": 1,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-09",
+  "task": "SEL-033_requirements_and_decisions_live_in_the_gr",
+  "files": 29,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 5,
+   "governed": 1,
+   "handoffs": 1,
+   "seldon": 12,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 7
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-09",
+  "task": "SEL-034_a_terminal_task_stops_its_session_and_a_k",
+  "files": 14,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 4,
+   "seldon": 6,
+   "seldon_events.jsonl": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-10",
+  "task": "SEL-036_seldon_gets_a_bibliographic_graph_every_c",
+  "files": 122,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 3,
+   "governed": 1,
+   "graphs": 98,
+   "scripts": 5,
+   "seldon.yaml": 1,
+   "seldon": 6,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 5
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-10",
+  "task": "SEL-035_a_requirement_is_authored_once_every_othe",
+  "files": 23,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 6,
+   "governed": 1,
+   "seldon": 10,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-12",
+  "task": "SEL-037_seldon_biblio_is_served_in_the_primary_it",
+  "files": 63,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 2,
+   "graphs": 47,
+   "scripts": 8,
+   "seldon.yaml": 1,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 2
+  },
+  "G1": 0.002,
+  "G2": 0.002,
+  "G3": 0.002,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-12",
+  "task": "SEL-038_a_system_written_journal_never_blocks_a_m",
+  "files": 21,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 10,
+   "governed": 1,
+   "seldon": 6,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-16",
+  "task": "SEL-039_the_library_arm_searches_the_projects_own",
+  "files": 28,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 16,
+   "governed": 1,
+   "seldon.yaml": 1,
+   "seldon": 5,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "SEL-040_a_session_lost_to_the_network_is_resumed_",
+  "files": 32,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 13,
+   "governed": 1,
+   "seldon": 10,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 5
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-21",
+  "task": "SEL-042_a_stopped_session_is_never_merged_or_comp",
+  "files": 40,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 18,
+   "governed": 1,
+   "seldon": 9,
+   "seldon_events.jsonl": 1,
+   "state": 1,
+   "tests": 9
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": null
+ }
+]

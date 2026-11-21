@@ -1,0 +1,772 @@
+{
+ "seldon": {
+  "runs_seen": 550,
+  "largest_total": 3482,
+  "full_runs": [
+   {
+    "total": 3138,
+    "seconds": 1340.28,
+    "counts": {
+     "failed": 1,
+     "passed": 3130,
+     "skipped": 7
+    },
+    "log": "2026-11-01_SEL-020_project_new_ignores_its_state_governed_commit_paths_per_project_and_factory_adopts.log",
+    "date": "2026-11-01"
+   },
+   {
+    "total": 3176,
+    "seconds": 1687.61,
+    "counts": {
+     "failed": 3,
+     "passed": 3166,
+     "skipped": 7
+    },
+    "log": "2026-11-01_SEL-021_review_findings_are_issues_traced_to_fix_test_and_decision.log",
+    "date": "2026-11-01"
+   },
+   {
+    "total": 3144,
+    "seconds": 1557.98,
+    "counts": {
+     "failed": 1,
+     "passed": 3136,
+     "skipped": 7
+    },
+    "log": "2026-11-01_SEL-022_the_dd007_refusal_rings_the_stuck_alarm_once_and_stops_dirtying_the_log.log",
+    "date": "2026-11-01"
+   },
+   {
+    "total": 3216,
+    "seconds": 1393.12,
+    "counts": {
+     "failed": 2,
+     "passed": 3207,
+     "skipped": 7
+    },
+    "log": "2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.log",
+    "date": "2026-11-06"
+   },
+   {
+    "total": 3240,
+    "seconds": 4220.58,
+    "counts": {
+     "failed": 1,
+     "passed": 3232,
+     "skipped": 7
+    },
+    "log": "2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges.log",
+    "date": "2026-11-06"
+   },
+   {
+    "total": 3250,
+    "seconds": 1483.16,
+    "counts": {
+     "failed": 2,
+     "passed": 3241,
+     "skipped": 7
+    },
+    "log": "2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.log",
+    "date": "2026-11-06"
+   },
+   {
+    "total": 3274,
+    "seconds": 3305.72,
+    "counts": {
+     "failed": 5,
+     "passed": 3262,
+     "skipped": 7
+    },
+    "log": "2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend.log",
+    "date": "2026-11-08"
+   },
+   {
+    "total": 3311,
+    "seconds": 1747.27,
+    "counts": {
+     "failed": 7,
+     "passed": 3297,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.log",
+    "date": "2026-11-09"
+   },
+   {
+    "total": 3317,
+    "seconds": 1474.92,
+    "counts": {
+     "failed": 3,
+     "passed": 3307,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.log",
+    "date": "2026-11-09"
+   },
+   {
+    "total": 3330,
+    "seconds": 1570.83,
+    "counts": {
+     "failed": 3,
+     "passed": 3320,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-034_a_terminal_task_stops_its_session_and_a_kept_worktrees_events_reach_mains_log_or_are_discarded_on_record.log",
+    "date": "2026-11-09"
+   },
+   {
+    "total": 3373,
+    "seconds": 1680.14,
+    "counts": {
+     "failed": 2,
+     "passed": 3364,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.log",
+    "date": "2026-11-10"
+   },
+   {
+    "total": 3375,
+    "seconds": 1605.69,
+    "counts": {
+     "failed": 3,
+     "passed": 3365,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.log",
+    "date": "2026-11-10"
+   },
+   {
+    "total": 3346,
+    "seconds": 2458.6,
+    "counts": {
+     "failed": 5,
+     "passed": 3334,
+     "skipped": 7
+    },
+    "log": "2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_with_its_metadata_and_text.log",
+    "date": "2026-11-10"
+   },
+   {
+    "total": 3381,
+    "seconds": 2344.53,
+    "counts": {
+     "failed": 3,
+     "passed": 3371,
+     "skipped": 7
+    },
+    "log": "2026-11-11_SEL-037_seldon_biblio_is_served_in_the_primary_its_open_texts_are_fetched_and_the_notes_it_proved_wrong_get_errata.log",
+    "date": "2026-11-12"
+   },
+   {
+    "total": 3399,
+    "seconds": 4316.09,
+    "counts": {
+     "failed": 2,
+     "passed": 3386,
+     "skipped": 11
+    },
+    "log": "2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.log",
+    "date": "2026-11-12"
+   },
+   {
+    "total": 3422,
+    "seconds": 2058.79,
+    "counts": {
+     "failed": 4,
+     "passed": 3411,
+     "skipped": 7
+    },
+    "log": "2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.log",
+    "date": "2026-11-16"
+   },
+   {
+    "total": 3460,
+    "seconds": 2173.83,
+    "counts": {
+     "failed": 5,
+     "passed": 3448,
+     "skipped": 7
+    },
+    "log": "2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.log",
+    "date": "2026-11-18"
+   },
+   {
+    "total": 3480,
+    "seconds": 1540.25,
+    "counts": {
+     "failed": 11,
+     "passed": 3462,
+     "skipped": 7
+    },
+    "log": "2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 3482,
+    "seconds": 1551.81,
+    "counts": {
+     "failed": 3,
+     "passed": 3472,
+     "skipped": 7
+    },
+    "log": "2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.log",
+    "date": "2026-11-21"
+   }
+  ]
+ },
+ "hazbrief-mcp": {
+  "runs_seen": 2083,
+  "largest_total": 8366,
+  "full_runs": [
+   {
+    "total": 8236,
+    "seconds": 2259.38,
+    "counts": {
+     "passed": 8204,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-212_benchmark_status_by_significance.log",
+    "date": "2026-11-20"
+   },
+   {
+    "total": 8251,
+    "seconds": 2149.49,
+    "counts": {
+     "failed": 1,
+     "passed": 8218,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-212_benchmark_status_by_significance.log",
+    "date": "2026-11-20"
+   },
+   {
+    "total": 8251,
+    "seconds": 2116.63,
+    "counts": {
+     "passed": 8219,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-212_benchmark_status_by_significance.log",
+    "date": "2026-11-20"
+   },
+   {
+    "total": 8251,
+    "seconds": 2116.63,
+    "counts": {
+     "passed": 8219,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-212_benchmark_status_by_significance.ooda.log",
+    "date": "2026-11-20"
+   },
+   {
+    "total": 8251,
+    "seconds": 2116.63,
+    "counts": {
+     "passed": 8219,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-213_public_package_build.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8261,
+    "seconds": 2252.83,
+    "counts": {
+     "failed": 1,
+     "passed": 8228,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-213_public_package_build.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8261,
+    "seconds": 2227.62,
+    "counts": {
+     "passed": 8229,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-213_public_package_build.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8261,
+    "seconds": 2252.83,
+    "counts": {
+     "failed": 1,
+     "passed": 8228,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-213_public_package_build.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8261,
+    "seconds": 2227.62,
+    "counts": {
+     "passed": 8229,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-213_public_package_build.ooda.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8261,
+    "seconds": 2227.62,
+    "counts": {
+     "passed": 8229,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-214_benchmark_table_and_camera_layer.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8236,
+    "seconds": 2259.38,
+    "counts": {
+     "passed": 8204,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-214_benchmark_table_and_camera_layer.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8273,
+    "seconds": 2126.97,
+    "counts": {
+     "passed": 8241,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-214_benchmark_table_and_camera_layer.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8273,
+    "seconds": 2132.24,
+    "counts": {
+     "passed": 8241,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-214_benchmark_table_and_camera_layer.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8273,
+    "seconds": 2132.24,
+    "counts": {
+     "passed": 8241,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-214_benchmark_table_and_camera_layer.ooda.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8273,
+    "seconds": 2132.24,
+    "counts": {
+     "passed": 8241,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-215_three_minute_demo_sources_view_problem_slide.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8353,
+    "seconds": 2649.66,
+    "counts": {
+     "failed": 1,
+     "passed": 8320,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-215_three_minute_demo_sources_view_problem_slide.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8353,
+    "seconds": 2251.46,
+    "counts": {
+     "passed": 8321,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-215_three_minute_demo_sources_view_problem_slide.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8353,
+    "seconds": 2251.46,
+    "counts": {
+     "passed": 8321,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-20_HB-215_three_minute_demo_sources_view_problem_slide.ooda.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8353,
+    "seconds": 2251.46,
+    "counts": {
+     "passed": 8321,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-21_HB-216_benefit_slide_planning_uses.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 8366,
+    "seconds": 2386.67,
+    "counts": {
+     "passed": 8334,
+     "skipped": 15,
+     "deselected": 104,
+     "xfailed": 17
+    },
+    "log": "2026-11-21_HB-216_benefit_slide_planning_uses.log",
+    "date": "2026-11-21"
+   }
+  ]
+ },
+ "squiddy": {
+  "runs_seen": 544,
+  "largest_total": 3492,
+  "full_runs": [
+   {
+    "total": 3492,
+    "seconds": 228.01,
+    "counts": {
+     "failed": 16,
+     "passed": 3384,
+     "skipped": 50,
+     "xfailed": 41,
+     "error": 1
+    },
+    "log": "2026-11-04_SQ-109_ai_readiness_kg_filing_worktree_admissions_absent_from_the_primary_measured_owned_and_returned.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3492,
+    "seconds": 232.54,
+    "counts": {
+     "passed": 3443,
+     "skipped": 8,
+     "xfailed": 41,
+     "deselected": 0,
+     "failed": 0
+    },
+    "log": "2026-11-04_SQ-109_ai_readiness_kg_filing_worktree_admissions_absent_from_the_primary_measured_owned_and_returned.log",
+    "date": "2026-11-05"
+   }
+  ]
+ },
+ "aacps-ai-policy": {
+  "runs_seen": 0,
+  "largest_total": 0,
+  "full_runs": []
+ },
+ "ai-readiness-kg": {
+  "runs_seen": 244,
+  "largest_total": 3533,
+  "full_runs": [
+   {
+    "total": 3492,
+    "seconds": 232.54,
+    "counts": {
+     "passed": 3443,
+     "skipped": 8,
+     "xfailed": 41,
+     "deselected": 0,
+     "failed": 0
+    },
+    "log": "2026-11-04_AR-001_worktree_admissions_answered_by_squiddy_link_the_corpus_dirs_write_to_the_primary_and_verify_there.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3500,
+    "seconds": 214.71,
+    "counts": {
+     "failed": 7,
+     "passed": 3435,
+     "skipped": 17,
+     "xfailed": 41
+    },
+    "log": "2026-11-04_AR-001_worktree_admissions_answered_by_squiddy_link_the_corpus_dirs_write_to_the_primary_and_verify_there.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3501,
+    "seconds": 209.38,
+    "counts": {
+     "failed": 4,
+     "passed": 3448,
+     "skipped": 8,
+     "xfailed": 41
+    },
+    "log": "2026-11-04_AR-001_worktree_admissions_answered_by_squiddy_link_the_corpus_dirs_write_to_the_primary_and_verify_there.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3492,
+    "seconds": 201.4,
+    "counts": {
+     "failed": 17,
+     "passed": 3383,
+     "skipped": 50,
+     "xfailed": 41,
+     "error": 1
+    },
+    "log": "2026-11-04_sixteen_checks_on_the_usafacts_ladder_and_the_two_audience_documents.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3492,
+    "seconds": 248.66,
+    "counts": {
+     "passed": 3434,
+     "skipped": 17,
+     "xfailed": 41
+    },
+    "log": "2026-11-04_sixteen_checks_on_the_usafacts_ladder_and_the_two_audience_documents.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3492,
+    "seconds": 248.66,
+    "counts": {
+     "passed": 3434,
+     "skipped": 17,
+     "failed": 0,
+     "xfailed": 41
+    },
+    "log": "2026-11-04_sixteen_checks_on_the_usafacts_ladder_and_the_two_audience_documents.log",
+    "date": "2026-11-05"
+   },
+   {
+    "total": 3492,
+    "seconds": 248.66,
+    "counts": {
+     "passed": 3434,
+     "skipped": 17,
+     "failed": 0,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3501,
+    "seconds": 1481.21,
+    "counts": {
+     "failed": 11,
+     "passed": 3408,
+     "skipped": 41,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2234.5,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2497.98,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2244.33,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2349.2,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2249.32,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2386.58,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2373.61,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 3796.46,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3533,
+    "seconds": 2263.99,
+    "counts": {
+     "failed": 4,
+     "passed": 3483,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3524,
+    "seconds": 2257.72,
+    "counts": {
+     "passed": 3478,
+     "skipped": 5,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3501,
+    "seconds": 1237.86,
+    "counts": {
+     "passed": 3452,
+     "skipped": 8,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_regenerate_the_brief_pack_and_claims_file_stale_since_the_ladder_landed.log",
+    "date": "2026-11-13"
+   },
+   {
+    "total": 3501,
+    "seconds": 577.75,
+    "counts": {
+     "passed": 3452,
+     "skipped": 8,
+     "xfailed": 41
+    },
+    "log": "2026-11-13_the_icsp_page_and_explainer_rewritten_for_an_executive_reader.log",
+    "date": "2026-11-13"
+   }
+  ]
+ },
+ "factory": {
+  "runs_seen": 17,
+  "largest_total": 21,
+  "full_runs": [
+   {
+    "total": 21,
+    "seconds": 10.92,
+    "counts": {
+     "passed": 21
+    },
+    "log": "2026-11-21_FAC-07_todays_needs_become_requirements_the_architecture_gains_its_missing_units_and_the_plan_becomes_a_page.log",
+    "date": "2026-11-21"
+   },
+   {
+    "total": 21,
+    "seconds": 10.69,
+    "counts": {
+     "passed": 21
+    },
+    "log": "2026-11-21_FAC-07_todays_needs_become_requirements_the_architecture_gains_its_missing_units_and_the_plan_becomes_a_page.log",
+    "date": "2026-11-21"
+   }
+  ]
+ }
+}

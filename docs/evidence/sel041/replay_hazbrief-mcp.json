@@ -1,0 +1,529 @@
+[
+ {
+  "ts": "2026-11-14",
+  "task": "HB-185_scichems_daytime_shortfall_on_the_two_phas",
+  "files": 96,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 91,
+   "seldon_events.jsonl": 1,
+   "state": 2,
+   "tests": 1
+  },
+  "G1": 0.001,
+  "G2": 0.001,
+  "G3": 0.001,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-15",
+  "task": "HB-186_a_stable_night_brief_never_draws_less_than",
+  "files": 2978,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 5,
+   "docs": 97,
+   "evidence": 1809,
+   "fixtures": 1041,
+   "handoffs": 1,
+   "seldon_events.jsonl": 1,
+   "src": 8,
+   "state": 2,
+   "tests": 12
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:fixtures/evidence/load_read/csx-point-of-rocks-night.json"
+ },
+ {
+  "ts": "2026-11-15",
+  "task": "HB-188_what_is_already_published_on_a_dense_cloud",
+  "files": 34,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 31,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 0.001,
+  "G2": 0.001,
+  "G3": 0.001,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-16",
+  "task": "HB-187_a_night_cloud_that_moves_hour_by_hour_with",
+  "files": 124,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 119,
+   "seldon_events.jsonl": 1,
+   "state": 2,
+   "tests": 1
+  },
+  "G1": 0.001,
+  "G2": 0.001,
+  "G3": 0.001,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-17",
+  "task": "HB-193_hb189s_finished_branch_is_brought_onto_mai",
+  "files": 484,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 4,
+   "docs": 209,
+   "evidence": 108,
+   "fixtures": 120,
+   "seldon_events.jsonl": 1,
+   "src": 18,
+   "state": 2,
+   "tests": 20
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:fixtures/evidence/load_read/csx-point-of-rocks-crossing.json"
+ },
+ {
+  "ts": "2026-11-17",
+  "task": "HB-190_hb188s_fetched_sources_are_admitted_to_the",
+  "files": 120,
+  "tops": {
+   "cc_tasks": 2,
+   "corpus": 4,
+   "docs": 50,
+   "graphs": 61,
+   "scripts": 1,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:corpus/allowlist.txt"
+ },
+ {
+  "ts": "2026-11-17",
+  "task": "HB-194_the_gate_stops_failing_on_load_the_browser",
+  "files": 96,
+  "tops": {
+   "CLAUDE.md": 1,
+   "cc_tasks": 6,
+   "docs": 48,
+   "pyproject.toml": 1,
+   "seldon.yaml": 1,
+   "seldon_events.jsonl": 1,
+   "tests": 38
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "full:pyproject.toml"
+ },
+ {
+  "ts": "2026-11-17",
+  "task": "HB-191_seldon_sel_039_landed_your_library_searche",
+  "files": 3,
+  "tops": {
+   "cc_tasks": 1,
+   "seldon_events.jsonl": 1,
+   "state": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-17",
+  "task": "HB-195_the_eight_browser_list_documents_in_the_in",
+  "files": 114,
+  "tops": {
+   "cc_tasks": 5,
+   "corpus": 3,
+   "docs": 42,
+   "graphs": 60,
+   "scripts": 1,
+   "seldon_events.jsonl": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:corpus/ingest_log.jsonl"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-192_the_moving_cloud_plays_as_it_is_computed_f",
+  "files": 259,
+  "tops": {
+   "cc_tasks": 4,
+   "docs": 198,
+   "fixtures": 26,
+   "seldon_events.jsonl": 1,
+   "src": 19,
+   "state": 2,
+   "tests": 9
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:fixtures/evidence/load_read/csx-point-of-rocks-crossing.json"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-196_the_submission_documents_are_current_futur",
+  "files": 66,
+  "tops": {
+   "CLAUDE.md": 1,
+   "NOTICE": 1,
+   "README.md": 1,
+   "cc_tasks": 5,
+   "docs": 48,
+   "scripts": 4,
+   "seldon_events.jsonl": 1,
+   "src": 1,
+   "tests": 4
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:NOTICE"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-201_the_server_image_is_built_from_a_clean_cop",
+  "files": 19,
+  "tops": {
+   "cc_tasks": 2,
+   "docs": 15,
+   "seldon_events.jsonl": 1,
+   "tests": 1
+  },
+  "G1": 0.001,
+  "G2": 0.001,
+  "G3": 0.001,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-197_the_deck_is_regenerated_from_the_evidence_",
+  "files": 31,
+  "tops": {
+   ".env.example": 1,
+   "cc_tasks": 3,
+   "docs": 18,
+   "scripts": 4,
+   "seldon_events.jsonl": 1,
+   "tests": 4
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:.env.example"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-198_checkpoint_five_and_the_package_manifest_e",
+  "files": 18,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 15,
+   "scripts": 1,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/gate_ledger.py"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-199_hazbrief_is_run_on_jack_rabbit_ii_trial_7_",
+  "files": 53,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 4,
+   "docs": 42,
+   "seldon_events.jsonl": 1,
+   "src": 2,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:src/hazbrief/brief/orchestrator.yaml"
+ },
+ {
+  "ts": "2026-11-18",
+  "task": "HB-202_the_disk_is_measured_and_this_projects_fin",
+  "files": 35,
+  "tops": {
+   "cc_tasks": 5,
+   "docs": 26,
+   "scripts": 1,
+   "seldon_events.jsonl": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/gate_ledger.py"
+ },
+ {
+  "ts": "2026-11-19",
+  "task": "HB-204_hb203s_finished_branch_is_brought_onto_mai",
+  "files": 73,
+  "tops": {
+   "cc_tasks": 2,
+   "docs": 58,
+   "scripts": 6,
+   "seldon_events.jsonl": 1,
+   "tests": 6
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/deck_screenshots.py"
+ },
+ {
+  "ts": "2026-11-19",
+  "task": "HB-200_a_session_lost_to_the_network_is_resumed_b",
+  "files": 2,
+  "tops": {
+   "cc_tasks": 1,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-19",
+  "task": "HB-205_the_tevv_pages_say_on_the_same_line_why_ha",
+  "files": 40,
+  "tops": {
+   "cc_tasks": 2,
+   "docs": 32,
+   "seldon_events.jsonl": 1,
+   "src": 2,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:src/hazbrief/brief/orchestrator.yaml"
+ },
+ {
+  "ts": "2026-11-19",
+  "task": "HB-206_a_release_under_one_minute_gets_a_modelled",
+  "files": 77,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 65,
+   "scripts": 1,
+   "seldon_events.jsonl": 1,
+   "src": 3,
+   "tests": 4
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/future_work.yaml"
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-207_the_live_path_a_typed_line_with_a_common_n",
+  "files": 133,
+  "tops": {
+   ".gitignore": 1,
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 90,
+   "fixtures": 2,
+   "packs": 4,
+   "scripts": 2,
+   "seldon_events.jsonl": 1,
+   "src": 25,
+   "tests": 6
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:.gitignore"
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-208_a_start_page_with_the_scenario_menu_and_li",
+  "files": 73,
+  "tops": {
+   ".gitignore": 1,
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 52,
+   "scripts": 3,
+   "seldon_events.jsonl": 1,
+   "src": 11,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:.gitignore"
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-209_the_submission_documents_for_the_live_demo",
+  "files": 67,
+  "tops": {
+   "AGENTS.md": 1,
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 50,
+   "scripts": 7,
+   "seldon_events.jsonl": 1,
+   "tests": 5
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/agents_md.py"
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-210_google_basemap_and_traffic_check.md",
+  "files": 30,
+  "tops": {
+   "AGENTS.md": 1,
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 17,
+   "scripts": 1,
+   "seldon_events.jsonl": 1,
+   "src": 5,
+   "tests": 3
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/future_work.yaml"
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-211_google_key_localhost_recheck.md",
+  "files": 11,
+  "tops": {
+   "cc_tasks": 1,
+   "docs": 9,
+   "seldon_events.jsonl": 1
+  },
+  "G1": 0.0,
+  "G2": 0.0,
+  "G3": 0.0,
+  "full_reason": null
+ },
+ {
+  "ts": "2026-11-20",
+  "task": "HB-212_benchmark_status_by_significance.md",
+  "files": 64,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 4,
+   "docs": 44,
+   "scripts": 3,
+   "seldon_events.jsonl": 1,
+   "src": 1,
+   "state": 1,
+   "tests": 8
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/benchmark_state.py"
+ },
+ {
+  "ts": "2026-11-21",
+  "task": "HB-213_public_package_build.md",
+  "files": 137,
+  "tops": {
+   "CLAUDE.md": 1,
+   "README.md": 1,
+   "cc_tasks": 6,
+   "docs": 100,
+   "scripts": 14,
+   "seldon_events.jsonl": 1,
+   "src": 3,
+   "state": 2,
+   "tests": 9
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/benchmark_state.py"
+ },
+ {
+  "ts": "2026-11-21",
+  "task": "HB-214_benchmark_table_and_camera_layer.md",
+  "files": 92,
+  "tops": {
+   "AGENTS.md": 1,
+   "cc_tasks": 1,
+   "docs": 73,
+   "scripts": 7,
+   "seldon_events.jsonl": 1,
+   "src": 3,
+   "tests": 6
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/benchmark_table.py"
+ },
+ {
+  "ts": "2026-11-21",
+  "task": "HB-215_three_minute_demo_sources_view_problem_sli",
+  "files": 130,
+  "tops": {
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 107,
+   "fixtures": 1,
+   "scripts": 7,
+   "seldon_events.jsonl": 1,
+   "src": 6,
+   "tests": 6
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:fixtures/incidents/fra_released_incidents_2016_2025.geojson"
+ },
+ {
+  "ts": "2026-11-21",
+  "task": "HB-216_benefit_slide_planning_uses.md",
+  "files": 26,
+  "tops": {
+   "README.md": 1,
+   "cc_tasks": 1,
+   "docs": 19,
+   "scripts": 2,
+   "seldon_events.jsonl": 1,
+   "tests": 2
+  },
+  "G1": 1.0,
+  "G2": 1.0,
+  "G3": 1.0,
+  "full_reason": "unmatched:scripts/review_html.py"
+ }
+]
