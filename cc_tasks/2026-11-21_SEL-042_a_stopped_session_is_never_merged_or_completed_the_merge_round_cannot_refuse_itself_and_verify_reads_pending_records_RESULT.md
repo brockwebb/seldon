@@ -242,3 +242,12 @@ has nothing to do.
 
 `seldon dispatch part-complete` read 369,782 tokens at Part E. Zero model calls by code. The estimate was 1.2M and
 the stop is 1.45M.
+
+## Returns filed
+
+- hazbrief-mcp: `cc_tasks/2026-11-21_HB-217_a_session_the_dispatcher_stopped_is_never_merged_or_completed_the_merg.md`
+  (task `084beda4`), registered and committed in hazbrief's primary through its filing lock, with a dry run first. It
+  closed `de40f402`. Re-running it with `--answers` for `6a9c00fa` and `1639fa20` reported "return already filed", and
+  the graph now reads all three filings `completed`.
+- squiddy: `5b76278b` closed with `seldon task close` and the answer as its note (proposed -> completed). There is no
+  task in squiddy, because squiddy has nothing to do.
