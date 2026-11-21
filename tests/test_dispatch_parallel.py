@@ -311,7 +311,10 @@ def test_main_moving_under_the_write_set_reruns_the_gate(tmp_path, neo4j_driver,
     """Decision 3: when main moved and the rebase changed a file in the task's write set, the
     gate is rerun in the worktree. Green merges with `regated: true`; red is merge_blocked
     with the overlapping files named and main untouched by the task."""
-    p = _project(tmp_path)
+    # SEL-042 (AD-034-R26): a's own merge now runs the gate too (its session ran no check), so the gate must pass on
+    # a's tree and fail only on b's tree rebased over a: red when a's RED and b's mark are both present.
+    gate = "! { test -e RED && test -e out/b/mark; }"
+    p = _project(tmp_path, gate_command=gate)
     (p / "shared.txt").write_text("one\ntwo\nthree\nfour\nfive\nsix\n")
     git(p, "add", "shared.txt")
     git(p, "commit", "-q", "-m", "shared")
@@ -319,9 +322,9 @@ def test_main_moving_under_the_write_set_reruns_the_gate(tmp_path, neo4j_driver,
     add_task(p, "b", NONEXCL.format(touches="out/b/"))
     a_spec = {"replace": {"shared.txt": ["one\n", "ONE\n"]}, "sleep": 1}
     if red:
-        a_spec["write"] = {"RED": "the gate fails while this file exists\n"}
+        a_spec["write"] = {"RED": "the gate fails while this file exists beside b's mark\n"}
     write_stub(p, {"a": a_spec, "b": {"replace": {"shared.txt": ["six\n", "SIX\n"]},
-                                      "sleep": 3}})
+                                      "write": {"out/b/mark": "b\n"}, "sleep": 3}})
     register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
     register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:02Z")
     assert _once(p).count("launching") == 2
@@ -330,7 +333,8 @@ def test_main_moving_under_the_write_set_reruns_the_gate(tmp_path, neo4j_driver,
     fa, fb = _finished(p, "a")[-1], _finished(p, "b")[-1]
     assert fa["outcome"] == "merged" and fa["merge"]["regated"] is False
     gate_log = p / "logs" / "dispatch" / "b.gate.log"
-    assert gate_log.is_file() and "test ! -e RED" in gate_log.read_text()
+    assert gate_log.is_file() and gate in gate_log.read_text()
+    assert fa["merge"]["gate_evidence"]["source"] == "merge_gate"
     if red:
         assert fb["outcome"] == "merge_blocked" and fb["merge"]["reason"] == "regate_red"
         assert fb["merge"]["files"] == ["shared.txt"]

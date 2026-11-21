@@ -1,0 +1,38 @@
+base 1240b17b commits 31
+new main [1, 1, 1]
+34984e36 [1, 1, 1] -> [2, 2, 2] store docs(HB-189 Part C item 9): EVALUATION's paragraph and deficiencies 1 and 2 restated; the   <-- RESTORES
+ac66d9e1 [2, 2, 2] -> [2, 2, 2] store record(HB-189 Part D item 15): 15 registered file hashes refreshed (HB-91's route); three  
+fa8fd4d2 [2, 2, 2] -> [2, 2, 2] store dispatch: drop 3 event line(s) of HB-189 a stable night brief shows one moving cloud hour  
+final [2, 2, 2]
+1240b17b [1, 1, 1] [[11893], [11894], [11895]] 11931 record: kept_events_deduped f61999a7 — 1 line(s) written by dispatcher
+5dcfa090 [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art library search 'hazard zone truncated at the distanc
+af1ee0c2 [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art library search 'dispersion model vertical resolution
+57b5d5ac [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art library search 'protective action health criterion A
+b0a24b8e [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art internal search 'hazard zone truncated at the distan
+3516b5bd [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art internal search 'dispersion model vertical resolutio
+1182852a [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art internal search 'protective action health criterion
+25d913cd [1, 1, 1] [[11893], [11894], [11895]] 11931 design: DN-028 ADDENDUM-14 (HB-189 Part A): a clock on every brief wit
+00a5aca8 [1, 1, 1] [[11893], [11894], [11895]] 11931 record: prior-art verify docs/design/2026-11-16_DN-028_ADDENDUM_14_eve
+46584061 [1, 1, 1] [[11893], [11894], [11895]] 11931 decisions: register DN-028 ADDENDUM-14 (HB-189 Part A): HBD-442 to HBD
+999a5df4 [1, 1, 1] [[11893], [11894], [11895]] 11931 feat(HB-189 Part B): the stable treatment keyed on any stable hour, th
+faa73df6 [1, 1, 1] [[11893], [11894], [11895]] 11931 feat(HB-189): candidate blocks named, the time bound's cut words, the
+e7ed285d [1, 1, 1] [[11893], [11894], [11895]] 11931 feat(HB-189 Part C item 10): the Timeline's major road crossings of th
+34984e36 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 docs(HB-189 Part C item 9): EVALUATION's paragraph and deficiencies 1
+d44a4ffe [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 record(HB-189 Part B item 3): the eight dense briefs' SCICHEM runs at
+ac65bf51 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 test(HB-189): the Part D test file reads the page's data and covers th
+a415ac8a [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 record(HB-189 Part B item 3): the five located and day dense briefs at
+8c5b4680 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 test(HB-189): HB-184's and HB-186's tests of reversed decisions retire
+4f5a9263 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 fix(HB-189): the time-bound sentence for a SLAB band still open under
+55a34003 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 test(HB-172): the stable-class table keeps HB-172's record column for
+a2784b12 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 docs(HB-189 resume): resume.md, each item done or not with its commit;
+b51126a9 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 record(HB-189 Part D item 13): rebuild by replay (briefs, HB-130 event
+dd1f4b6f [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 evidence(HB-189 Part C item 8, Part D item 12): the four night briefs
+cd3f6f2e [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 fix(HB-189 Part B item 6): no exchange is removed: the 575 no brief op
+5c3d0f9b [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 fix(HB-189 Part D item 13): earlier tasks' tests restated for HB-189's
+f3566d9f [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 record(HB-189 Part D item 13): the six day briefs whose page links T56
+9380ff4d [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11934 fix(HB-189): stability_hours' docstring names the derived entry withou
+ac66d9e1 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11949 record(HB-189 Part D item 15): 15 registered file hashes refreshed (HB
+dacb9b2b [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11949 record: prior-art verify docs/design/2026-11-16_DN-028_ADDENDUM_14_eve
+ef410242 [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11949 fix(HB-189): stability_hours' docstring rewrapped to the line limit; r
+c10a7ecd [2, 2, 2] [[11893, 11932], [11894, 11933], [11895, 11934]] 11949 result(HB-189): RESULT, with the confirming gate's tail, seldon verify
+fa8fd4d2 [1, 1, 1] [[11893], [11894], [11895]] 11946 dispatch: drop 3 event line(s) of HB-189 a stable night brief shows on

@@ -81,6 +81,12 @@ are removed (string strip, `True`). Every other line is unchanged.
 of pointing the worktree's own `core.hooksPath` at `.githooks` (two records), and the merged finish's `merge`
 records `linked_by_session` (one, empty). Re-recorded on the SEL-017 code; the re-recording equals the pre-change
 fixture once exactly those three keys are removed (regex strip, `True`). Every other line is unchanged.
+
+**Erratum, SEL-042 (AD-034-R26, 2026-11-21).** t1's session runs no check, so the round runs the project's gate
+command (the scaffold now declares `gate_command: true`) before it merges: the merged finish's `merge.gate` records that
+run instead of null, `merge.gate_evidence` names it (`merge_gate`), and the logs section gains `t1.gate.log`.
+Re-recorded on the SEL-042 code; the re-recording equals the pre-change fixture once exactly those three additions are
+removed (regex strip, `True`). Every other line is unchanged.
 """
 from __future__ import annotations
 

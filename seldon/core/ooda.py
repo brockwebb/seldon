@@ -192,6 +192,14 @@ def brief(project_dir: Path, config: dict, item: dict, review: Callable[[Path, s
             "recall": hits, "recall_note": recall_note, "successors": successors}
 
 
+#: AD-038-R31 (SEL-042 ADDENDUM 01): the boundary the prompt did not state. On 2026-11-20 an OODA session in hazbrief
+#: ran `cd ../../../../seldon && uv run ...`; uv wrote `uv.lock` and `.venv/` into seldon's primary checkout and the
+#: untracked lock refused seldon's queue (`docs/evidence/sel042/uv_lock_writer.md`).
+BOUNDARY_RULE = ("Run every command inside this worktree (AD-038-R31): never change into another repository, and never "
+                 "run a package manager (`uv`, `pip`) against one; `uv run` in another checkout writes its `uv.lock` "
+                 "and `.venv` there. To see another repository's code, read its files.")
+
+
 def prompt(b: dict) -> str:
     """The session's instruction: the brief, the three decisions, and the verdict line it must end on."""
     pred = b["predecessor"]
@@ -199,6 +207,7 @@ def prompt(b: dict) -> str:
            f"{pred['task_id'][:8]} {pred['file']}. You are a knowledge source, not a task session: observe, orient, "
            f"decide, and write at most one addendum file per successor in this worktree. Do not commit, merge, push, "
            f"register, or run any `seldon` command that writes; the dispatcher records your verdict.",
+           BOUNDARY_RULE,
            "", "1. Run `seldon go --brief`.",
            f"2. Read the predecessor's RESULT in full: {b['result']}"
            + ("" if b["result_exists"] else " (NOT on disk: say so in your note)") + ". Then read each successor's "
