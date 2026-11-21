@@ -251,3 +251,15 @@ the stop is 1.45M.
   the graph now reads all three filings `completed`.
 - squiddy: `5b76278b` closed with `seldon task close` and the answer as its note (proposed -> completed). There is no
   task in squiddy, because squiddy has nothing to do.
+
+## Suite
+
+Confirming full run on `b9d52fa` (code, rulings and records final): **3 failed, 3472 passed, 7 skipped in 25:51**
+(`python -m dotenv -f .env run -- python -m pytest tests/ -q -p no:cacheprovider -n 6`). The failures:
+- `test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index` is the known library
+  drift, failing on main as well.
+- `test_sel024_gate_record::test_fixture_a_regate_whose_gate_outlasts_lock_wait...` and
+  `test_friction002_auto_mode::test_a_classifier_breaker_becomes_a_line_stop_with_the_classifiers_reason` are the known
+  load flakes. Both passed when run alone afterwards (2 passed, 70.9 s).
+
+Commits after `b9d52fa` change only this RESULT, the evidence and the event store.
