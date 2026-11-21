@@ -32,6 +32,7 @@ from seldon.commands.mcp_call import mcp_call_command
 from seldon.commands.prune import prune_group
 from seldon.commands.project import project_group
 from seldon.commands.req import req_group
+from seldon.commands.gate import gate_group
 
 
 @click.group()
@@ -74,3 +75,4 @@ main.add_command(mcp_call_command, name="mcp-call")
 main.add_command(prune_group, name="prune")
 main.add_command(project_group, name="project")
 main.add_command(req_group, name="req")
+main.add_command(gate_group, name="gate")

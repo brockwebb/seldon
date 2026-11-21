@@ -949,6 +949,13 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     block["candidacy_headers"] = load_candidacy_headers(block.get("candidacy_headers"))
     block["allow"] = _load_allow(block.get("allow"))
     _load_parallel_config(block)
+    # SEL-041 (AD-034-R29 to R37): the gate's two tiers. Validated at load, after `gate_command` (the full tier), so a
+    # malformed slice refuses here and not at the first gate. Absent is no slices: every gate is full, as before.
+    from seldon.core import gate_plan as GP
+    try:
+        block[GP.CONFIG_KEY] = GP.load_gate_config(block.get(GP.CONFIG_KEY), block["gate_command"])
+    except GP.GateConfigError as exc:
+        raise DispatchConfigError(str(exc)) from exc
     # QC-002: the stations' block, validated at load like every other key, so a misspelt ceiling refuses here.
     from seldon.core import stations as S
     try:

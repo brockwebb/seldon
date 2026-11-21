@@ -1,0 +1,9 @@
+        # A task blocked `stop_gate_unpassed` with its work kept (DISP-003R's case), whose check a later main fix passes.
+        assert _payloads(p, D.EVENT_FINISHED)[-1]["outcome"] == "stop_gate_unpassed"
+FAILED tests/test_sel024_gate_record.py::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing
+FAILED tests/test_dispatch_parallel.py::test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones
+FAILED tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
+FAILED tests/test_dispatch_parallel.py::test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge
+FAILED tests/test_dispatch_parallel.py::test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept
+5 failed, 3476 passed, 1 skipped in 3167.39s (0:52:47)
+EXIT=1

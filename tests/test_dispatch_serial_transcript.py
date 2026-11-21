@@ -87,6 +87,14 @@ command (the scaffold now declares `gate_command: true`) before it merges: the m
 run instead of null, `merge.gate_evidence` names it (`merge_gate`), and the logs section gains `t1.gate.log`.
 Re-recorded on the SEL-042 code; the re-recording equals the pre-change fixture once exactly those three additions are
 removed (regex strip, `True`). Every other line is unchanged.
+
+**Erratum, SEL-041 (AD-034-R33, R35, 2026-11-21).** Every gate run is one `gate_run` record, so t1's merge gate (the
+scaffold declares no slices: `tier: full`, `reason: no_slices`) appends one `gate_run` event before the finish, and the
+merge's `gate` (and `gate_evidence.gate`) gains `tier`, `reason`, `seconds` and `gate_run` (the record's id). A gate's
+wall seconds are masked as `<SECONDS>`. The gate log is the pre-change log, byte for byte. Re-recorded on the SEL-041
+code; the re-recording equals the pre-change fixture once exactly the `gate_run` line and those four keys are removed,
+the journal commit that carries the record no longer names it (`, gate_run`, one line fewer), and UUID and HEX tokens
+are renumbered (`docs/evidence/sel041/transcript_check.py`, `True`). Every other line is unchanged.
 """
 from __future__ import annotations
 
@@ -156,6 +164,8 @@ def _scenario(tmp_path, driver, dispatch_extra) -> str:
     # the test graph, neither of which is the serial behaviour this test holds; its tests are
     # tests/test_prune002_go_generated.py. The reading is a flat object, masked whole.
     text = re.sub(r'"instruction_context": \{[^{}]*\}', '"instruction_context": <READING>', text)
+    # SEL-041 (AD-034-R33): a gate run's wall seconds, in its `gate_run` record and the merge's `gate`, are wall clock.
+    text = re.sub(r'"seconds": [0-9.]+', '"seconds": <SECONDS>', text)
     return normalize(text, p) + "\n"
 
 

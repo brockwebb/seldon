@@ -419,6 +419,48 @@ def _hook_launch(project_dir: Path, events: list) -> dict | None:
     return S.launch_for_session(events, os.environ.get("SELDON_SESSION_ID"))
 
 
+def _stop_gate_plan(project_dir: Path, cfg: dict, scfg: dict, tree: dict, lp: dict, events: list) -> dict | None:
+    """SEL-041 (AD-034-R35): the scoped gate the Stop hook runs before a session may end, or None when the project
+    declares no slices (the Stop gate then runs only the Parts' checks, as before, R37).
+
+    A full plan is not run in the hook: it is recorded as `deferred` to the merge round, which runs it under the
+    gate's own timeout (AD-034-R26's merge gate). A tree that already has a passing `gate_run` is not gated again
+    (`reused`). Otherwise the scoped plan runs in the session's tree and is recorded (`call_site: stop_gate`); its
+    record is the merge evidence (R34) when it passes on a clean tree."""
+    from seldon.core import gate_plan as GP
+
+    gcfg = cfg.get(GP.CONFIG_KEY)
+    if not GP.declared(gcfg):
+        return None
+    cwd = Path(tree["cwd"])
+    rel = lp.get("source_file")
+    text = (cwd / rel).read_text(encoding="utf-8", errors="surrogateescape") if rel and (cwd / rel).is_file() else None
+    try:
+        plan = GP.plan(cwd, gcfg, base=cfg["branch"], gate_command=cfg["gate_command"], events=events,
+                       task_text=text, branch=tree["branch"], exclude=cfg.get("worktree_links") or ())
+    except GP.GateConfigError as exc:
+        return {"tier": GP.TIER_FULL, "reason": f"plan_failed: {exc}", "deferred": "merge_round"}
+    if plan["tier"] == GP.TIER_FULL:
+        return {"tier": GP.TIER_FULL, "reason": plan["reason"], "deferred": "merge_round"}
+    prior = None if plan["dirty"] else GP.passing_record(events, plan["tree"])
+    if prior is not None:
+        return {"tier": GP.TIER_SCOPED, "reason": plan["reason"], "outcome": GP.OUTCOME_PASS, "exit_code": 0,
+                "gate_run": prior["event_id"], "reused": True}
+    log = D.config_path(project_dir, cfg["log_dir"]) / f"{Path(rel or 'session').stem}.gate.log"
+    # Inside the hook's own timeout, so a slow scoped gate is recorded red (`timeout`) rather than killed unrecorded.
+    timeout = min(cfg["gate_timeout_s"], max(60, int(scfg["stop_gate_timeout_s"] * 0.8)))
+    result = GP.run(cwd, plan, gcfg, gate_command=cfg["gate_command"], timeout_s=timeout, log_path=log,
+                    primary=project_dir)
+    ev = GP.emit(project_dir, GP.record_payload(plan, result, call_site="stop_gate", events=events,
+                                                task_id=lp["task_id"], branch=tree["branch"],
+                                                log_rel=D.config_rel(project_dir, log)),
+                 actor=resolve_cli_actor())
+    return {"tier": GP.TIER_SCOPED, "reason": plan["reason"], "outcome": result["outcome"],
+            "exit_code": result["exit_code"], "seconds": result["seconds"], "files_selected": plan["files_selected"],
+            "files_total": plan["files_total"], "failed_files": result["failed_files"],
+            "tail": (result["tail"] or "")[-300:], "gate_run": ev["event_id"]}
+
+
 @dispatch_group.command("stop-gate", hidden=True)
 @click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
               help="the primary checkout, whose event store the dispatcher reads")
@@ -446,8 +488,9 @@ def stop_gate_command(project):
     scfg = _scfg(cfg)
     floor = S.spend_floor(project_dir, events, cfg["poll_interval_s"], scfg["floor_launches"],
                           exclude_session=launch["payload"].get("child_session_id"))
+    gate = _stop_gate_plan(project_dir, cfg, scfg, tree, lp, events)
     out = S.stop_gate(project_dir, launch, events, scfg, tree["cwd"], tree["branch"],
-                      stop_hook_active=bool(hook.get("stop_hook_active")), floor=floor)
+                      stop_hook_active=bool(hook.get("stop_hook_active")), floor=floor, gate=gate)
     gate = _emit(project_dir, S.EVENT_STOP_GATE, out["record"], actor=resolve_cli_actor())
     if out["hard_stop"]:
         stop = _emit(project_dir, S.EVENT_SESSION_STOP, {**out["hard_stop"], "stop_gate_event_id": gate["event_id"]})

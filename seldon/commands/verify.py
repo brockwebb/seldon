@@ -420,6 +420,32 @@ def check_own_graphs(project_dir: Path, config: dict) -> CheckResult:
     return CheckResult(name=name, symbol="warn", summary=notice[:300], details=[notice])
 
 
+def check_gate(project_dir: Path, config: dict) -> CheckResult:
+    """SEL-041 (AD-034-R36): warn, never fail, when the project declares a `gate_command` and no slices (every task
+    runs the whole suite), and when the median of its last ten scoped gates exceeds `dispatch.gate.warn_seconds`. A
+    project with no `dispatch:` block has no gate and passes. A dispatch block that does not load is another check's
+    to fail; here it is a warning that the gate was not read."""
+    from seldon.core import dispatch as D
+    from seldon.core import gate_plan as GP
+    from seldon.core.events import read_events
+
+    name = "Gate"
+    if not config.get("dispatch"):
+        return CheckResult(name=name, symbol="pass", summary="no dispatch block: no gate to time")
+    try:
+        cfg = D.load_dispatch_config(project_dir, config)
+    except D.DispatchConfigError as exc:
+        return CheckResult(name=name, symbol="warn", summary=f"not checked: the dispatch block: {str(exc)[:200]}")
+    warns = GP.warnings(cfg[GP.CONFIG_KEY], cfg["gate_command"], read_events(project_dir))
+    if warns:
+        return CheckResult(name=name, symbol="warn", summary=f"{len(warns)} gate warning(s) (AD-034-R36): "
+                                                             f"{warns[0][:200]}", details=warns)
+    gcfg = cfg[GP.CONFIG_KEY]
+    return CheckResult(name=name, symbol="pass",
+                       summary=(f"{len(gcfg['slices'])} slice(s) declared" if GP.declared(gcfg) else
+                                "no gate command declared") + "; no gate warning (AD-034-R36)")
+
+
 def _fix_prior_art(project_dir: Path, quiet: bool = False) -> None:
     """Run `seldon prior-art verify` on every gated note with no verdict for its current bytes."""
     from seldon.core import prior_art as pa
@@ -2163,6 +2189,7 @@ def _run_all_checks(
         check_requirements(driver, database, project_dir, config),
         check_prior_art(project_dir, config),
         check_own_graphs(project_dir, config),
+        check_gate(project_dir, config),
         check_commit_hook(project_dir, config),
         check_tracked_dirs(project_dir, config),
         check_pass_ledger(project_dir, config),

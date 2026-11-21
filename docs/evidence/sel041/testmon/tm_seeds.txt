@@ -1,0 +1,23 @@
+501 candidate functions; seeding 20 (every 25th)
+seldon/core/adopt.py:kit_config callers 1 selected 1 of them; 6 files selected; miss []
+seldon/core/criteria.py:registration_refusal callers 1 selected 1 of them; 24 files selected; miss []
+seldon/core/dispatch.py:parse_answers callers 1 selected 1 of them; 58 files selected; miss []
+seldon/core/dispatch.py:advance_stuck callers 2 selected 2 of them; 38 files selected; miss []
+seldon/core/filing.py:name_refusal callers 1 selected 1 of them; 7 files selected; miss []
+seldon/core/graph.py:canonical_rel_type callers 1 selected 1 of them; 8 files selected; miss []
+seldon/core/handoff.py:write_handoff callers 1 selected 1 of them; 5 files selected; miss []
+seldon/core/legacy_events.py:content_digest callers 1 selected 1 of them; 9 files selected; miss []
+seldon/core/ooda.py:mechanical_code callers 1 selected 1 of them; 10 files selected; miss []
+seldon/core/prior_art.py:release_commit callers 1 selected 1 of them; 3 files selected; miss []
+seldon/core/project_new.py:launchctl callers 1 selected 0 of them; 3 files selected; miss ['tests/test_sel019_project_new.py']
+seldon/core/recall.py:parse_used callers 1 selected 1 of them; 4 files selected; miss []
+seldon/core/requirements.py:settings callers 2 selected 2 of them; 8 files selected; miss []
+seldon/core/staleness.py:propagate_staleness callers 1 selected 1 of them; 10 files selected; miss []
+seldon/core/stations.py:chart callers 2 selected 2 of them; 8 files selected; miss []
+seldon/commands/artifact.py:_parse_properties callers 1 selected 1 of them; 5 files selected; miss []
+seldon/commands/dispatch.py:_push callers 1 selected 1 of them; 35 files selected; miss []
+seldon/commands/docs.py:run_docs_check callers 1 selected 1 of them; 34 files selected; miss []
+seldon/commands/ontology.py:build_ingest_plan callers 1 selected 1 of them; 6 files selected; miss []
+seldon/commands/verify.py:_pending_line callers 1 selected 1 of them; 6 files selected; miss []
+SEEDS 20 MISSES 1
+EXIT=0

@@ -1,0 +1,368 @@
+[
+ {
+  "file": "seldon/core/adopt.py",
+  "func": "kit_config",
+  "line": 68,
+  "col": 4,
+  "callers": [
+   "tests/test_sel010r2_ooda_gate_and_adopt.py"
+  ],
+  "selected_files": 6,
+  "callers_selected": [
+   "tests/test_sel010r2_ooda_gate_and_adopt.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "20/110 tests collected (90 deselected) in 0.59s"
+  ]
+ },
+ {
+  "file": "seldon/core/criteria.py",
+  "func": "registration_refusal",
+  "line": 108,
+  "col": 4,
+  "callers": [
+   "tests/test_criteria_marked.py"
+  ],
+  "selected_files": 24,
+  "callers_selected": [
+   "tests/test_criteria_marked.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "81/624 tests collected (543 deselected) in 1.61s"
+  ]
+ },
+ {
+  "file": "seldon/core/dispatch.py",
+  "func": "parse_answers",
+  "line": 360,
+  "col": 4,
+  "callers": [
+   "tests/test_sel013r_answers_files_its_return.py"
+  ],
+  "selected_files": 58,
+  "callers_selected": [
+   "tests/test_sel013r_answers_files_its_return.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "306/1130 tests collected (824 deselected) in 1.74s"
+  ]
+ },
+ {
+  "file": "seldon/core/dispatch.py",
+  "func": "advance_stuck",
+  "line": 1908,
+  "col": 4,
+  "callers": [
+   "tests/test_desk001_desktop_commit.py",
+   "tests/test_dispatch_stuck_and_journal.py"
+  ],
+  "selected_files": 38,
+  "callers_selected": [
+   "tests/test_desk001_desktop_commit.py",
+   "tests/test_dispatch_stuck_and_journal.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "160/477 tests collected (317 deselected) in 0.69s"
+  ]
+ },
+ {
+  "file": "seldon/core/filing.py",
+  "func": "name_refusal",
+  "line": 104,
+  "col": 4,
+  "callers": [
+   "tests/test_sel042_verify_pending_and_name_limit.py"
+  ],
+  "selected_files": 7,
+  "callers_selected": [
+   "tests/test_sel042_verify_pending_and_name_limit.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "26/144 tests collected (118 deselected) in 0.58s"
+  ]
+ },
+ {
+  "file": "seldon/core/graph.py",
+  "func": "canonical_rel_type",
+  "line": 132,
+  "col": 4,
+  "callers": [
+   "tests/test_verify_reltype_case.py"
+  ],
+  "selected_files": 8,
+  "callers_selected": [
+   "tests/test_verify_reltype_case.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "55/330 tests collected (275 deselected) in 1.40s"
+  ]
+ },
+ {
+  "file": "seldon/core/handoff.py",
+  "func": "write_handoff",
+  "line": 1220,
+  "col": 4,
+  "callers": [
+   "tests/test_handoff.py"
+  ],
+  "selected_files": 5,
+  "callers_selected": [
+   "tests/test_handoff.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "10/105 tests collected (95 deselected) in 0.54s"
+  ]
+ },
+ {
+  "file": "seldon/core/legacy_events.py",
+  "func": "content_digest",
+  "line": 113,
+  "col": 4,
+  "callers": [
+   "tests/test_legacy_events.py"
+  ],
+  "selected_files": 9,
+  "callers_selected": [
+   "tests/test_legacy_events.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "45/200 tests collected (155 deselected) in 0.64s"
+  ]
+ },
+ {
+  "file": "seldon/core/ooda.py",
+  "func": "mechanical_code",
+  "line": 357,
+  "col": 4,
+  "callers": [
+   "tests/test_sel014r_registration_retry.py"
+  ],
+  "selected_files": 10,
+  "callers_selected": [
+   "tests/test_sel014r_registration_retry.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "23/347 tests collected (324 deselected) in 1.72s"
+  ]
+ },
+ {
+  "file": "seldon/core/prior_art.py",
+  "func": "release_commit",
+  "line": 1229,
+  "col": 4,
+  "callers": [
+   "tests/test_pa002_release_resolve.py"
+  ],
+  "selected_files": 3,
+  "callers_selected": [
+   "tests/test_pa002_release_resolve.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "6/48 tests collected (42 deselected) in 0.58s"
+  ]
+ },
+ {
+  "file": "seldon/core/project_new.py",
+  "func": "launchctl",
+  "line": 406,
+  "col": 4,
+  "callers": [
+   "tests/test_sel019_project_new.py"
+  ],
+  "selected_files": 3,
+  "callers_selected": [],
+  "miss": [
+   "tests/test_sel019_project_new.py"
+  ],
+  "exit": 0,
+  "tail": [
+   "5/48 tests collected (43 deselected) in 0.57s"
+  ]
+ },
+ {
+  "file": "seldon/core/recall.py",
+  "func": "parse_used",
+  "line": 597,
+  "col": 4,
+  "callers": [
+   "tests/test_recall001_measure.py"
+  ],
+  "selected_files": 4,
+  "callers_selected": [
+   "tests/test_recall001_measure.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "8/54 tests collected (46 deselected) in 0.55s"
+  ]
+ },
+ {
+  "file": "seldon/core/requirements.py",
+  "func": "settings",
+  "line": 144,
+  "col": 4,
+  "callers": [
+   "tests/test_sel033_requirements.py",
+   "tests/test_sel035_authored_once.py"
+  ],
+  "selected_files": 8,
+  "callers_selected": [
+   "tests/test_sel033_requirements.py",
+   "tests/test_sel035_authored_once.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "46/144 tests collected (98 deselected) in 0.60s"
+  ]
+ },
+ {
+  "file": "seldon/core/staleness.py",
+  "func": "propagate_staleness",
+  "line": 22,
+  "col": 4,
+  "callers": [
+   "tests/test_staleness.py"
+  ],
+  "selected_files": 10,
+  "callers_selected": [
+   "tests/test_staleness.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "17/182 tests collected (165 deselected) in 0.57s"
+  ]
+ },
+ {
+  "file": "seldon/core/stations.py",
+  "func": "chart",
+  "line": 1280,
+  "col": 4,
+  "callers": [
+   "tests/test_friction002_auto_mode.py",
+   "tests/test_qc_chart.py"
+  ],
+  "selected_files": 8,
+  "callers_selected": [
+   "tests/test_friction002_auto_mode.py",
+   "tests/test_qc_chart.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "14/78 tests collected (64 deselected) in 0.61s"
+  ]
+ },
+ {
+  "file": "seldon/commands/artifact.py",
+  "func": "_parse_properties",
+  "line": 26,
+  "col": 4,
+  "callers": [
+   "tests/test_verify_snapshot.py"
+  ],
+  "selected_files": 5,
+  "callers_selected": [
+   "tests/test_verify_snapshot.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "17/91 tests collected (74 deselected) in 0.60s"
+  ]
+ },
+ {
+  "file": "seldon/commands/dispatch.py",
+  "func": "_push",
+  "line": 472,
+  "col": 4,
+  "callers": [
+   "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+  ],
+  "selected_files": 35,
+  "callers_selected": [
+   "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "163/440 tests collected (277 deselected) in 0.64s"
+  ]
+ },
+ {
+  "file": "seldon/commands/docs.py",
+  "func": "run_docs_check",
+  "line": 30,
+  "col": 4,
+  "callers": [
+   "tests/test_docs_check.py"
+  ],
+  "selected_files": 34,
+  "callers_selected": [
+   "tests/test_docs_check.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "113/552 tests collected (439 deselected) in 1.51s"
+  ]
+ },
+ {
+  "file": "seldon/commands/ontology.py",
+  "func": "build_ingest_plan",
+  "line": 363,
+  "col": 4,
+  "callers": [
+   "tests/test_ontology_ingest_lifecycle.py"
+  ],
+  "selected_files": 6,
+  "callers_selected": [
+   "tests/test_ontology_ingest_lifecycle.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "55/162 tests collected (107 deselected) in 0.64s"
+  ]
+ },
+ {
+  "file": "seldon/commands/verify.py",
+  "func": "_pending_line",
+  "line": 285,
+  "col": 4,
+  "callers": [
+   "tests/test_sel042_verify_pending_and_name_limit.py"
+  ],
+  "selected_files": 6,
+  "callers_selected": [
+   "tests/test_sel042_verify_pending_and_name_limit.py"
+  ],
+  "miss": [],
+  "exit": 0,
+  "tail": [
+   "12/88 tests collected (76 deselected) in 0.64s"
+  ]
+ }
+]

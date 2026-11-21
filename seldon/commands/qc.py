@@ -103,6 +103,9 @@ def chart_command(as_json):
     # PRUNE-002 Part B step 3: the instruction context a launched session receives, from the launch records.
     from seldon.core import instruction_context as IC
     out["instruction_context"] = IC.by_week(events)
+    # SEL-041 (AD-034-R36): gate seconds per week by tier, with escapes (R33), from the `gate_run` records.
+    from seldon.core import gate_plan as GP
+    out["gate"] = GP.by_week(events)
     if as_json:
         click.echo(json.dumps(out, indent=1, default=str))
         return
@@ -164,6 +167,16 @@ def chart_command(as_json):
                    f"{w['unmeasured']:>10d}")
     if not out["instruction_context"]:
         click.echo("    (no launch recorded yet)")
+    click.echo("  gate seconds per week (SEL-041, AD-034-R36; `gate_run` records; escapes are R33's):")
+    click.echo(f"    {'week':9s} {'scoped n':>8s} {'median s':>9s} {'total s':>9s} {'full n':>6s} {'median s':>9s} "
+               f"{'total s':>9s} {'red':>4s} {'escapes':>7s}")
+    for w in out["gate"]:
+        sc, fu = w["scoped"], w["full"]
+        fmt = (lambda v: f"{v:>9,.0f}" if v is not None else f"{'-':>9s}")
+        click.echo(f"    {w['week']:9s} {sc['n']:>8d} {fmt(sc['median_s'])} {fmt(sc['total_s'])} {fu['n']:>6d} "
+                   f"{fmt(fu['median_s'])} {fmt(fu['total_s'])} {w['failed']:>4d} {w['escapes']:>7d}")
+    if not out["gate"]:
+        click.echo("    (no gate run recorded yet)")
     rc = out["recall"]
     click.echo("  recall per week (RECALL-001 Part B; by the week a task was registered):")
     click.echo(f"    {'week':9s} {'registered':>10s} {'with-hits':>9s} {'results-read':>12s} {'used-a-hit':>10s}")

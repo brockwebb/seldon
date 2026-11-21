@@ -827,13 +827,17 @@ def launch_hard_stops(project_dir: Path, task_id: str, child_session_id: str) ->
             and (e.get("payload") or {}).get("kind") == "hard" and str(e.get("timestamp") or "") >= since]
 
 
-def gate_evidence(finish: dict, regate: dict | None, record: dict | None) -> dict | None:
+def gate_evidence(finish: dict, regate: dict | None, record: dict | None,
+                  gate_run: dict | None = None) -> dict | None:
     """SEL-042 Part B (AD-034-R26): the recorded evidence that a gate passed for the tip being merged, or None.
 
     In order: the project's declared pass record for the tip (SEL-024), the round's own re-gate, a kept branch's
-    regate of its declared checks (AD-034-R10), and the session's Stop gate, counted only when it passed AND ran at
-    least one check. A Stop gate that passed with no check to run (HB-197's three Parts each had `checks: []`,
-    HB-198 declared none) verified nothing, so it is not evidence: fail-safe defaults, an absent check denies."""
+    regate of its declared checks (AD-034-R10), a passing `gate_run` record for the tree the session left (SEL-041,
+    AD-034-R34: scoped or full, including a scoped plan whose every path matched a slice declared `tests: none`), and
+    the session's Stop gate, counted only when it passed AND ran at least one check. A Stop gate that passed with no
+    check to run (HB-197's three Parts each had `checks: []`, HB-198 declared none) verified nothing, so it is not
+    evidence: fail-safe defaults, an absent check denies. A `tests: none` slice is not an absent check: it is a
+    declaration on the record that permits the skip, and the cadence's full gate measures it (R33)."""
     if record is not None:
         return {"source": "gate_record", "record": record}
     if regate is not None and regate.get("ok"):
@@ -841,10 +845,20 @@ def gate_evidence(finish: dict, regate: dict | None, record: dict | None) -> dic
     kept = finish.get("regate") or {}
     if kept.get("checks"):
         return {"source": "kept_regate", "regate_id": kept.get("regate_id"), "checks": len(kept["checks"])}
+    if gate_run is not None:
+        from seldon.core import gate_plan as GP
+        return GP.evidence(gate_run)
     sg = finish.get("stop_gate") or {}
     if sg.get("verdict") == "pass" and (sg.get("checks_run") or 0) > 0:
         return {"source": "stop_gate", "checks_run": sg["checks_run"]}
     return None
+
+
+def _gate_run_for(project_dir: Path, tree_hash: str) -> dict | None:
+    """SEL-041 (AD-034-R34): the newest passing `gate_run` event for `tree_hash` on a clean tree, or None."""
+    from seldon.core import gate_plan as GP
+    from seldon.core.events import read_events
+    return GP.passing_record(read_events(project_dir), tree_hash) if tree_hash else None
 
 
 def interruption_reading(project_dir: Path, cfg: dict, task_id: str, child_session_id: str, log_path: Path,
@@ -959,25 +973,38 @@ def _task_name(driver, database, task_id):
 
 # ============================================================================== the merge
 
-def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str) -> dict:
-    """Run `dispatch.gate_command` in the worktree. `{ok, exit_code, log_path, timed_out}`."""
+def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, base: str,
+          task_id: str | None = None, branch: str | None = None, task_rel: str | None = None,
+          linked=()) -> dict:
+    """Run the project's gate in the worktree and record it. `{ok, exit_code, log_path, timed_out, tier, reason,
+    seconds, gate_run}`.
+
+    SEL-041 (AD-034-R35): the plan comes from the planner (`gate_plan.plan`) against `base`: with slices declared it
+    is scoped or full by R29 to R32; without, it is full (`no_slices`) and runs `dispatch.gate_command` exactly as
+    before. Either way the run is one `gate_run` record (R33), which the merge record's `gate_evidence` names by
+    `gate_run`. A tree the planner cannot read is gated in full (`plan_failed`), never skipped."""
+    from seldon.core import gate_plan as GP
+    from seldon.core.events import read_events
+
+    gcfg = cfg.get(GP.CONFIG_KEY) or GP.load_gate_config(None, cfg.get("gate_command"))
     log = D.config_path(project_dir, cfg["log_dir"]) / f"{stem}.gate.log"
-    env = {**os.environ, WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
-    with log.open("a", encoding="utf-8") as fh:
-        fh.write(f"=== {S._now()} | gate | {cfg['gate_command']}\n")
-        fh.flush()
-        proc = subprocess.Popen(["/bin/sh", "-c", cfg["gate_command"]], cwd=wt, env=env,
-                                stdin=subprocess.DEVNULL, stdout=fh, stderr=subprocess.STDOUT,
-                                start_new_session=True)
-        timed_out = False
-        try:
-            code = proc.wait(timeout=cfg["gate_timeout_s"])
-        except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
-            code, timed_out = proc.wait(), True
-        fh.write(f"\nEXIT={code}\n")
-    return {"ok": code == 0 and not timed_out, "exit_code": code, "timed_out": timed_out,
-            "log_path": D.config_rel(project_dir, log)}
+    events = read_events(project_dir)
+    text = None
+    if task_rel and (wt / task_rel).is_file():
+        text = (wt / task_rel).read_text(encoding="utf-8", errors="surrogateescape")
+    try:
+        plan = GP.plan(wt, gcfg, base=base, gate_command=cfg["gate_command"], events=events, task_text=text,
+                       branch=branch, exclude=linked)
+    except GP.GateConfigError as exc:
+        plan = GP.unplanned(wt, base, str(exc), branch)
+    result = GP.run(wt, plan, gcfg, gate_command=cfg["gate_command"], timeout_s=cfg["gate_timeout_s"],
+                    log_path=log, primary=project_dir)
+    rel = D.config_rel(project_dir, log)
+    ev = GP.emit(project_dir, GP.record_payload(plan, result, call_site=call_site, events=events, task_id=task_id,
+                                                branch=branch, log_rel=rel), actor=S.ACTOR)
+    return {"ok": result["ok"], "exit_code": result["exit_code"], "timed_out": result["timed_out"], "log_path": rel,
+            "tier": plan["tier"], "reason": plan["reason"], "seconds": result["seconds"],
+            "gate_run": ev["event_id"]}
 
 
 def _spec_modified(driver, database, task_id: str, path: Path) -> bool:
@@ -1037,6 +1064,9 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                              "duplicate_ids": check["duplicates"]}
         return bad
 
+    # SEL-041 (AD-034-R34): the tree the session left, before any rebase or drop commit of this round; a passing
+    # `gate_run` for it is evidence.
+    session_tree = _tree_of(wt, "HEAD")
     # SEL-046 (AD-038-R25): every task's reconciled ids, not only this task's. A branch that merged another task's
     # kept branch carries lines main already holds under that task's `kept_events_reconciled` record.
     reconciled = KE.reconciled_ids(project_dir, S._store_rel(config))
@@ -1089,7 +1119,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 # changed under it cannot be re-gated and is not merged on faith.
                 return blocked("regate_unavailable", overlap, attempt=attempt)
             if overlap:
-                regated, gate = True, _gate(project_dir, cfg, wt, stem)
+                regated, gate = True, _gate(project_dir, cfg, wt, stem, call_site="regate", base=main_sha,
+                                            task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked)
                 if not gate["ok"]:
                     return blocked("regate_red", overlap, gate=gate, attempt=attempt)
         tip = dedupe() or WT.rev(wt, "HEAD")
@@ -1111,13 +1142,15 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         # none, the round runs the project's gate command itself (the re-gate is one of the three evidences); with no
         # gate command either, the task is blocked `ungated`. Kept across attempts: an attempt that rebases over a
         # change outside the branch's write set re-gates on overlap as before, and needs nothing new here.
-        evidence = evidence or gate_evidence(finish, gate if regated else None, record)
+        evidence = evidence or gate_evidence(finish, gate if regated else None, record,
+                                             _gate_run_for(project_dir, session_tree))
         if evidence is None:
             if not cfg.get("gate_command"):
                 return blocked(UNGATED, [], attempt=attempt,
                                why="no Stop gate check ran, no re-gate ran and no pass record is declared, and the "
                                    "project declares no `dispatch.gate_command` to run")
-            gate = _gate(project_dir, cfg, wt, stem)
+            gate = _gate(project_dir, cfg, wt, stem, call_site="merge_gate", base=main_sha,
+                         task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked)
             if not gate["ok"]:
                 return blocked("regate_red", [], gate=gate, attempt=attempt, evidence_gate=True)
             evidence = {"source": "merge_gate", "gate": gate}

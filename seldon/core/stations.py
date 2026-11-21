@@ -927,7 +927,7 @@ def round_fingerprint(parts: list) -> str:
 
 def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Path, branch: str | None, *,
               run: Callable[..., dict] = run_check, stop_hook_active: bool = False,
-              floor: dict | None = None) -> dict:
+              floor: dict | None = None, gate: dict | None = None) -> dict:
     """FRICTION-002 Part C: the Stop hook's decision for a dispatched session that is trying to end.
 
     Runs the `check:` criteria of every Part the session has declared complete (`part_complete` since its launch)
@@ -953,6 +953,10 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     for the no-progress rule, the vendor's loop pattern (code.claude.com/docs/en/workflows: "keep fixing until a
     check passes ... or two rounds in a row make no progress") and Reflexion (Shinn et al. 2023).
 
+    SEL-041 (AD-034-R35): `gate` is the project's scoped gate for the session's tree, when the project declares
+    slices (`dispatch_stations._stop_gate_plan`): a red or timed-out one is a failure like a failing check, under the
+    same ceiling and no-progress rules, and the record carries it as `gate`. A full plan is not run here (`deferred`).
+
     Returns ``{"record": <stop_gate payload>, "block": bool, "reason": str | None, "hard_stop": payload | None}``.
     """
     from seldon.core.dispatch import spend_tokens, parse_headers, HEADER_SPEND
@@ -975,6 +979,13 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
                    for cmd in crit["checks"]]
         parts.append({"part": name, "answers": answers, "checks": results, "section_found": crit["section_found"]})
         failed += [{"part": name, **r} for r in results if r["outcome"] == "fail"]
+    rounds = list(parts)
+    if gate and gate.get("outcome"):
+        row = {"command": f"seldon gate run (scoped; {gate.get('reason')})", "exit": gate.get("exit_code"),
+               "outcome": "pass" if gate["outcome"] == "pass" else "fail", "tail": gate.get("tail") or ""}
+        rounds.append({"part": "gate", "checks": [row]})
+        if row["outcome"] == "fail":
+            failed.append({"part": "gate", **row})
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
     tokens = launch_tokens(log, lp) if log and log.is_file() else None
@@ -988,7 +999,7 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     prior = [(e.get("payload") or {}) for e in records if e.get("event_type") == EVENT_STOP_GATE
              and (e.get("payload") or {}).get("child_session_id") == lp.get("child_session_id")]
     refused = [g for g in prior if g.get("verdict") == "block"]
-    fingerprint = round_fingerprint(parts)
+    fingerprint = round_fingerprint(rounds)
     rnd, no_progress = len(refused) + 1, None
     if verdict == "block" and prior and prior[-1].get("verdict") == "block" \
             and prior[-1].get("fingerprint") == fingerprint:
@@ -1001,6 +1012,8 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
               "parts": parts, "failed": [f["command"] for f in failed], "tokens": tokens, "ceiling": ceiling,
               "verdict": verdict, "stop_hook_active": bool(stop_hook_active),
               "round": rnd, "fingerprint": fingerprint}
+    if gate is not None:
+        record["gate"] = gate
     if no_progress:
         record["no_progress"] = no_progress
     reason, hard = None, None

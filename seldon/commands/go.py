@@ -919,6 +919,22 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
                 + ("alive" if wl["alive"]
                    else f"GONE — `seldon dispatch lease reap --task {wl['stem']}`") + ")")
 
+        # SEL-041 (AD-034-R36): the gate's tiers, its last run, and its warnings (never a failure).
+        from seldon.core import gate_plan as GP
+        gcfg = cfg[GP.CONFIG_KEY]
+        gate_events = read_events(root)
+        gate_runs = GP.runs(gate_events)
+        last_gate = (gate_runs[-1].get("payload") or {}) if gate_runs else None
+        lines.append(
+            "**Gate:** "
+            + (f"{len(gcfg['slices'])} slice(s), full every {gcfg['full_every_s']:g} s" if GP.declared(gcfg)
+               else ("full only, no slices" if cfg["gate_command"] else "no gate command"))
+            + (f"; last run {last_gate.get('tier')} {last_gate.get('outcome')} in "
+               f"{float(last_gate.get('seconds') or 0):.0f} s ({last_gate.get('reason')})" if last_gate
+               else "; no gate run recorded yet"))
+        for w in GP.warnings(gcfg, cfg["gate_command"], gate_events):
+            lines.append(f"**Gate warning:** {w}")
+
         # DESK-001 Part B step 5: what the LAST pass refused, by candidate and criterion, with the
         # dirt it named. `Lease: free` alone said nothing while one untracked note held the queue
         # for 14 hours (2026-10-14); a blocked queue is visible at orientation now.
