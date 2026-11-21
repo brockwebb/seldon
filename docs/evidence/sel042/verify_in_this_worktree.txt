@@ -1,0 +1,53 @@
+
+seldon verify — seldon-self
+
+  ✗ File hashes           2 modified: 2026-09-15_standing_dispatcher.md, AD-036_ADDENDUM_01_self_test.md — run `seldon paper sync`
+      2026-09-15_standing_dispatcher.md
+      AD-036_ADDENDUM_01_self_test.md
+  ✓ Ontology              Up to date (epoch 6)
+  ✓ Glossary              No violations (validity)
+  ✓ References            No PaperSection files to check
+  ✓ Stale artifacts       None
+  ✓ Blocking tasks        None
+  ✓ Blocks and waits      5 blocked or waiting task(s), every block with a reason
+  ✓ Unregistered files    No tracked content directories found — skipping
+  ✓ Relationship types    All canonical (uppercase)
+  ✓ Precedence            33 edges, acyclic
+  ✓ Task source files     No open task is missing its spec (120 of 159 resolve on disk); 39 settled (finished task; spec lost, outcome recorded)
+  ✓ Event log             13732 events readable, 9 legacy record(s) with frozen ids
+  ✗ Governed docs         Governed documents: 185 never cataloged
+      cc_tasks/2026-10-17_MCP-001_every_mcp_tool_runs_the_checkout_in_a_fresh_process.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-17_MCP-001_every_mcp_tool_runs_the_checkout_in_a_fresh_process_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-17_RECALL-001_ADDENDUM_01_dispatcher_merges.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-17_RECALL-001_registration_retrieves_the_repos_own_history_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-17_SEC-001R_secrets_out_of_claude_desktop_config.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-17_SEC-001R_secrets_out_of_claude_desktop_config_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-001R_worktree_name_and_spend_floor_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-001_ADDENDUM_01_let_the_cli_name_it.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-001_worktree_name_capped.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-002_breaker_does_not_veto_a_green_merge.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_DISP-002_breaker_does_not_veto_a_green_merge_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_PA-002_receipts_verify_against_the_release_they_name.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_PA-002_receipts_verify_against_the_release_they_name_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_STD-001R_ADDENDUM_01_resume_from_branch.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_STD-001R_tracked_dirs_everywhere.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_STD-001R_tracked_dirs_everywhere_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-19_STD-001_tracked_dirs_everywhere.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+      cc_tasks/2026-10-20_DISP-003R_gate_runs_the_branch_code_RESULT.md — never cataloged; run `make -C governed catalog && make -C governed sweep`
+  ✓ Binding constraints   Every `constrained_by` edge points at a ruling that still binds
+  ✗ Decision register     1 register finding(s)
+      projection: 53 record(s) not projected as the register says (first: seldon:AD-038-R10, seldon:AD-038-R11, seldon:AD-038-R12, seldon:AD-038-R13, seldon:AD-038-R14); run `seldon decision project`
+      7 pending record(s), numbered at merge: seldon:AD-034-R25 accept, seldon:AD-034-R26 accept, seldon:AD-034-R27 accept, seldon:AD-034-R28 accept, seldon:AD-033-R14 accept, seldon:AD-038-R30 accept, seldon:AD-038-R31 accept
+  ⚠ Requirements          2 requirement(s): 2 unverified, 0 projection finding(s)
+      2 of method test with no test (first: AD-016, AD-017); mark a test `@pytest.mark.verifies("<id>")`, then `seldon req trace`
+  ✓ Prior art             3 note(s) outside the baseline, each with a passing verdict (AD-036-R4)
+  ✓ Prior-art own graphs  the library arm reads this project's own graphs first, or it has none (AD-036-R25)
+  ✓ Commit hook           installed (.githooks); no design note committed past it
+  ✓ Tracked dirs          cc_tasks/ and handoffs/ tracked (AD-039)
+  ✓ Pass ledger           no pass_ledger declared; skipping (squiddy DN-052 R-237)
+  ✓ Replay                Skipped (expensive) — run `seldon verify --replay`
+
+  3 issues, 1 warning. Run `seldon verify --fix` to auto-resolve fixable issues.
+

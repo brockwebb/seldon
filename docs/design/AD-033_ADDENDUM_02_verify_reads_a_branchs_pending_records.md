@@ -30,11 +30,15 @@ the graph is projected from numbered records only (AD-033-R12, AD-034-R24), so t
 
 ### External
 
-- **A staged write is not a committed write** (a write-ahead log's records before their commit point; a database
-  sequence drawn inside the committing transaction): a reader compares the committed state with the committed state
-  and reports what is staged separately, rather than treating the stage as committed. AD-033 ADDENDUM 01 cites the
-  same model (Kafka's broker-assigned offset) for numbering at merge; this addendum applies it to the reader. Named,
-  not fetched.
+- **Certificate Transparency 2.0** (RFC 9162, seldon-biblio `doc_rfc9162_1`): a log accepts a submission at once
+  and incorporates it into the tree within its maximum merge delay; a client verifies the signed tree head and
+  holds the accepted-but-unincorporated submission separately, never as part of the tree. The same split as a
+  branch's pending record (accepted, numbered at merge) against the chain. Adopted for the reader: verify compares
+  the graph with the numbered chain and reports the pending records beside it. A staged write is not a committed
+  write: the write-ahead log's records before their commit point, and AD-033 ADDENDUM 01's broker-assigned offset,
+  are the same model (named, not fetched).
+
+- library receipt: query "write-ahead log commit point staged records" | graph seldon-biblio | release seldon_biblio_graph_20261111_sel037_2026-11-11.json sha256:076422bb8382009ff8c0105c7ae07dd9b2f2a86b7ff7fd24b4674e219c6b7b4c | rows doc_rfc9162_1#b300:51813-52278, doc_rfc9162_1#b19:3535-4066, doc_rfc9162_1#b302:52542-52565, doc_sw_madr_1#b41:4856-4935, doc_sw_madr_1#b49:5614-5624, doc_sw_madr_1#b44:5082-5227, doc_who_trs1033_annex4_1#b1123:322753-322806, doc_who_trs1033_annex4_1#b1374:381146-381870, doc_who_trs1033_annex4_1#b1327:366822-366978, yu2026multiagentmemory#b0:0-89, doc_omg_kerml_1#b5421:813088-813119, doc_omg_kerml_1#b6288:924007-924067, doc_omg_kerml_1#b6257:914873-915009, crosby2009tamper#meta, doc_omg_sysml_v2_1#b6746:1054819-1054850, doc_omg_sysml_v2_1#b4087:899262-899584, doc_omg_sysml_v2_1#b4104:902540-902749, doc_sw_openfasttrace_ug_reference_oft_command_line#b71:3782-3813, fuchss2025lissa#b127:46746-47339, fuchss2025lissa#b141:56140-57037, fuchss2025lissa#b140:55685-56138, ilyas2022saga#b94:32003-32788, ilyas2022saga#b209:77821-77969, ilyas2022saga#b143:55901-56815, doc_w3c_prov_o_1#b249:28185-28916, doc_w3c_prov_o_1#b41:5231-5290, doc_w3c_prov_o_1#b44:5333-5410, browning2014doorstop#b44:11151-12006, browning2014doorstop#b53:14046-14462, browning2014doorstop#b83:19886-20176, doc_rfc8493_1#b283:46313-46567, doc_premis_3_0_1#b752:344506-344845, doc_premis_3_0_1#b148:55603-56329, doc_premis_3_0_1#b164:61203-62067, doc_nasa_swe_072_1#b564:97597-97644, doc_nasa_swe_072_1#b584:99110-99164, doc_nasa_swe_072_1#b516:90026-90157, arxiv_2104_03986#b38:15342-15572, arxiv_2104_03986#b148:57321-57622, arxiv_2104_03986#b25:10267-10552, zhang2026rlm#b72:33601-33981, zhang2026rlm#b15:5072-5935, zhang2026rlm#b233:120313-120714, ilyas2023growing#b72:24931-25580, liu2024lostmiddle#b116:40970-41103, liu2024lostmiddle#b56:16983-17930, liu2024lostmiddle#b126:42693-42858, amodei2016concrete#b301:110564-110728
 
 ## 3. Rulings
 

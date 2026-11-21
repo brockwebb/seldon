@@ -4,7 +4,7 @@ date: '2026-11-21'
 decided_by: cc:3c39bd22
 operator_stated: false
 receipts:
-- 'docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md:41: AD-033-R14'
+- 'docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md:45: AD-033-R14'
 reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
 kind: decision
 status: accepted
@@ -12,9 +12,9 @@ statement: seldon verify shall run with a branch's pending register records pres
 source:
   path: docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md
   lines:
-  - 41
-  - 44
-  sha256: e6ff952e9693d10bb8af9e65b7b2e263b648f4c8edc2628755690f3792724360
+  - 45
+  - 48
+  sha256: 4b10fb49e7c6ea88f410236f0213bba9df547d07b5002ec1982614f5eca49ea3
   text: |-
     - **AD-033-R14. `seldon verify` runs with a branch's pending register records present: it compares the graph with the numbered chain alone, reports the pending records as `N pending record(s), numbered at merge: <id> <event>, ...`, and runs every other check.**
       The pending records' own checks (name, canonical bytes, provisional id, shape, no duplicate create) still run in
@@ -31,4 +31,4 @@ consumer:
 - tests/test_sel042_verify_pending_and_name_limit.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: fdfb205d59c2073321e58b9a0b1d2002e5bb3a955bdf684f100a263a12680f1c
+provisional_id: 2b12a26c4c74c01bb2c92dc905674ffde34d249aea4cf60d377d4e545aa703c6
