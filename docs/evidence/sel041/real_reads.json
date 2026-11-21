@@ -1,0 +1,571 @@
+{
+ "cc_tasks": {
+  "tests/dispatch_scaffold.py": [
+   "cc_tasks/"
+  ],
+  "tests/stations_scaffold.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_after_header.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_cc_git_guard.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_dispatch_milestone.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_dispatch_parallel.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_mcp_cc_git_guard.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel013r_answers_files_its_return.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel014r_replay_overnight_chain.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel021_review_findings.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py": [
+   "cc_tasks/",
+   "cc_tasks/2026-11-03_consumer_filing_from_squiddy_a_consumer_filing_cannot_be_registered_and_consumer_threads_have_no_rule_against_designing_fixes.md"
+  ],
+  "tests/test_sel025_dispatcher_cannot_dirty_its_own_tree.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel040_addendum_files_and_launch_premises.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel041_gate_call_sites.py": [
+   "cc_tasks/"
+  ],
+  "tests/test_sel042_stopped_session_never_merges.py": [
+   "cc_tasks/"
+  ]
+ },
+ "seldon.yaml": {
+  "tests/dispatch_scaffold.py": [
+   "seldon.yaml"
+  ],
+  "tests/stations_scaffold.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_after_header.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_artifacts.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_attr001_union_attribute.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cadence.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cadence_pass.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cadence_render_command.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_complete.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_git_guard.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_orphan_supersede_migration.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_register_commits.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_register_commits_note.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cc_register_hash.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_cli_actor.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_decision_register.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_desk002_registration_event_lines.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_disk.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_launch.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_notify.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_own_record.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_parallel_held.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_premises.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dispatch_stuck_and_journal.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_dotenv.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_friction001_mcp_head.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_friction001_reconcile.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_friction001_registration_premises.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_friction001_stations_tree.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_friction002_auto_mode.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_go.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_governed.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_handoff.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_hook002_ref_anchor.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_hooks.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_impact.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_init.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_issue.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_legacy_events.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_loop001_register_seq.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_mcp001_fresh_process.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_mcp_audit.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_mcp_audit_ingest.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_mcp_cc_git_guard.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_mcp_tools.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_moving.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_num001r_task_numbers_allocated.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_ontology.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_ontology_sync_all.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_paper_build.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_parts_gate_in_projects.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_paths_ontology_root.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_precedence.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_precedence_cotenancy.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_prior_art_caller.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_prior_art_ref.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_projects_discovery.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_prune001.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_recall001_measure.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_recall001_operator_catch.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_recall001_registration.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_result_registry.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel007_atomic_multi_event.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel008_cross_project_waits_and_block_reason.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel009_refresh_defers_and_pilot_declaration.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel010r2_ooda_gate_and_adopt.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel011_registration_refuses_what_dispatch_would_refuse.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel013r_answers_files_its_return.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel014r_ooda_knowledge_source.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel014r_registration_retry.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel014r_replay_overnight_chain.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel018_relative_dispatch_paths.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel019_project_new.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel020_project_new_state_and_commit_paths.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel021_review_findings.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel024_gate_record.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel025_dispatcher_cannot_dirty_its_own_tree.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel033_register_warning.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel033_requirements.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel035_authored_once.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel038_journals_and_held_releases.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel039_own_graphs_first.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel040_addendum_files_and_launch_premises.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel041_gate_plan.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sel042_verify_pending_and_name_limit.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_session_identity.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_si09_check.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_sq096_pass_ledger.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_stale_decided_not_drifted.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_task_lifecycle.py": [
+   "seldon.yaml"
+  ],
+  "tests/test_verify_reltype_migration.py": [
+   "seldon.yaml"
+  ]
+ },
+ "state": {
+  "tests/test_attr001_union_attribute.py": [
+   "state/",
+   "state/prior_art_queries.jsonl"
+  ],
+  "tests/test_desk001_desktop_commit.py": [
+   "state/"
+  ],
+  "tests/test_friction001_registration_premises.py": [
+   "state/prior_art_queries.jsonl"
+  ],
+  "tests/test_hooks.py": [
+   "state/"
+  ],
+  "tests/test_prior_art_caller.py": [
+   "state/",
+   "state/prior_art_queries.jsonl"
+  ],
+  "tests/test_prior_art_ref.py": [
+   "state/"
+  ],
+  "tests/test_sel038_journals_and_held_releases.py": [
+   "state/prior_art_queries.jsonl"
+  ]
+ },
+ "governed": {
+  "tests/test_attr001_union_attribute.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_cc_register_commits_note.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_desk001_desktop_commit.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_desk002_ruling_commits_with_record.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_friction001_registration_premises.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_hooks.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_result_grammar.py": [
+   "governed/exports",
+   "governed/ledger"
+  ],
+  "tests/test_sel029_ledger_and_addendum_commit.py": [
+   "governed/ledger/events.jsonl"
+  ],
+  "tests/test_sel038_journals_and_held_releases.py": [
+   "governed/ledger/events.jsonl"
+  ]
+ },
+ "docs": {
+  "tests/test_attr001_union_attribute.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_cc_register_commits_note.py": [
+   "docs/decisions/register/",
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_decision_register.py": [
+   "docs/decisions/register",
+   "docs/design/"
+  ],
+  "tests/test_desk002_ruling_commits_with_record.py": [
+   "docs/decisions/REGISTER.md",
+   "docs/decisions/register"
+  ],
+  "tests/test_friction001_reconcile.py": [
+   "docs/decisions/REGISTER.md"
+  ],
+  "tests/test_friction001_registration_premises.py": [
+   "docs/decisions/REGISTER.md",
+   "docs/decisions/register"
+  ],
+  "tests/test_governed.py": [
+   "docs/design/AD-013_documentation_as_traceability.md",
+   "docs/design/AD-030_governed_documents_as_graph_content.md",
+   "docs/design/AD-030_implementation_findings_001.md"
+  ],
+  "tests/test_handoff.py": [
+   "docs/design"
+  ],
+  "tests/test_hooks.py": [
+   "docs/decisions",
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_loop001_register_seq.py": [
+   "docs/decisions/REGISTER.md"
+  ],
+  "tests/test_prior_art.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_prior_art_caller.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_prior_art_ref.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_result_grammar.py": [
+   "docs/conventions/result_units_vocabulary.md",
+   "docs/design",
+   "docs/plans",
+   "docs/superpowers"
+  ],
+  "tests/test_sec001_rewrite.py": [
+   "docs/evidence/"
+  ],
+  "tests/test_sel014r_ooda_knowledge_source.py": [
+   "docs/design/AD-038_the_machine_reconciles_its_own_state.md"
+  ],
+  "tests/test_sel020_project_new_state_and_commit_paths.py": [
+   "docs/"
+  ],
+  "tests/test_sel036_biblio_bridge.py": [
+   "docs/design/AD-029_task_precedence.md"
+  ],
+  "tests/test_sel038_journals_and_held_releases.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_sel039_own_graphs_first.py": [
+   "docs/design",
+   "docs/design/AD-036_baseline.txt"
+  ],
+  "tests/test_sel041_gate_plan.py": [
+   "docs/"
+  ]
+ },
+ "README.md": {
+  "tests/test_attr001_union_attribute.py": [
+   "README.md"
+  ],
+  "tests/test_cc_register_commits.py": [
+   "README.md"
+  ],
+  "tests/test_cc_register_commits_note.py": [
+   "README.md"
+  ],
+  "tests/test_desk001_desktop_commit.py": [
+   "README.md"
+  ],
+  "tests/test_desk004r_tool_commits_what_it_writes.py": [
+   "README.md"
+  ],
+  "tests/test_friction001_registration_premises.py": [
+   "README.md"
+  ],
+  "tests/test_governed.py": [
+   "README.md"
+  ],
+  "tests/test_handoff_picker.py": [
+   "README.md"
+  ],
+  "tests/test_hook002_ref_anchor.py": [
+   "README.md"
+  ],
+  "tests/test_hooks.py": [
+   "README.md"
+  ],
+  "tests/test_num001r_task_numbers_allocated.py": [
+   "README.md"
+  ],
+  "tests/test_prior_art.py": [
+   "README.md"
+  ],
+  "tests/test_prior_art_ref.py": [
+   "README.md"
+  ],
+  "tests/test_result_grammar.py": [
+   "README.md"
+  ],
+  "tests/test_sel017_links_hook_parts.py": [
+   "README.md"
+  ],
+  "tests/test_sel020_project_new_state_and_commit_paths.py": [
+   "README.md"
+  ],
+  "tests/test_sel039_own_graphs_first.py": [
+   "README.md"
+  ],
+  "tests/test_sel041_gate_plan.py": [
+   "README.md"
+  ],
+  "tests/test_sq096_pass_ledger.py": [
+   "README.md"
+  ]
+ },
+ "handoffs": {
+  "tests/test_desk001_desktop_commit.py": [
+   "handoffs/"
+  ],
+  "tests/test_prior_art.py": [
+   "handoffs/"
+  ],
+  "tests/test_sel020_project_new_state_and_commit_paths.py": [
+   "handoffs/"
+  ],
+  "tests/test_std001_tracked_dirs.py": [
+   "handoffs/"
+  ]
+ },
+ "CLAUDE.md": {
+  "tests/test_go.py": [
+   "CLAUDE.md"
+  ],
+  "tests/test_init.py": [
+   "CLAUDE.md"
+  ],
+  "tests/test_prune002_go_generated.py": [
+   "CLAUDE.md"
+  ]
+ },
+ "ontology": {
+  "tests/test_paths_ontology_root.py": [
+   "ontology/"
+  ]
+ },
+ "scripts": {
+  "tests/test_result_registry.py": [
+   "scripts/"
+  ]
+ },
+ "graphs": {
+  "tests/test_sel039_own_graphs_first.py": [
+   "graphs/seldon-biblio"
+  ],
+  "tests/test_sel041_gate_plan.py": [
+   "graphs/"
+  ]
+ }
+}

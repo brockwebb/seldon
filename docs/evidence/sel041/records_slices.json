@@ -1,0 +1,46 @@
+{
+ "documents": [
+  "tests/test_attr001_union_attribute.py",
+  "tests/test_cc_register_commits_note.py",
+  "tests/test_decision_register.py",
+  "tests/test_desk002_ruling_commits_with_record.py",
+  "tests/test_friction001_reconcile.py",
+  "tests/test_friction001_registration_premises.py",
+  "tests/test_friction002_worktree_only.py",
+  "tests/test_governed.py",
+  "tests/test_handoff.py",
+  "tests/test_hooks.py",
+  "tests/test_init.py",
+  "tests/test_loop001_register_seq.py",
+  "tests/test_prior_art.py",
+  "tests/test_prior_art_caller.py",
+  "tests/test_prior_art_ref.py",
+  "tests/test_result_grammar.py",
+  "tests/test_sec001_rewrite.py",
+  "tests/test_sel014r_ooda_knowledge_source.py",
+  "tests/test_sel036_biblio_bridge.py",
+  "tests/test_sel038_journals_and_held_releases.py",
+  "tests/test_sel039_own_graphs_first.py"
+ ],
+ "task_records": [
+  "tests/test_dispatch_concurrency.py",
+  "tests/test_dispatch_milestone.py",
+  "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+ ],
+ "ledgers": [
+  "tests/test_attr001_union_attribute.py",
+  "tests/test_cc_register_commits_note.py",
+  "tests/test_desk001_desktop_commit.py",
+  "tests/test_desk002_ruling_commits_with_record.py",
+  "tests/test_friction001_registration_premises.py",
+  "tests/test_governed.py",
+  "tests/test_hooks.py",
+  "tests/test_prior_art_caller.py",
+  "tests/test_result_grammar.py",
+  "tests/test_sel029_ledger_and_addendum_commit.py",
+  "tests/test_sel038_journals_and_held_releases.py"
+ ],
+ "graphs": [
+  "tests/test_sel039_own_graphs_first.py"
+ ]
+}
