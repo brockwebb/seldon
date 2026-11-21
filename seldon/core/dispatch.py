@@ -2256,6 +2256,32 @@ def disk_state(project_dir: Path, cfg: dict, worktree: bool) -> dict:
             "ok": free >= need}
 
 
+def disk_in_run(now: dict, launch: dict | None) -> dict:
+    """SEL-042 Part B (AD-034-R28): the disk station's reading of a RUNNING session, against what it was admitted with.
+
+    `now` is `disk_state` as the station reads it during the run; `launch` is the c12 reading the launch recorded
+    (`dispatch_launched.criteria.c12`). At launch the dispatcher admitted the run because `free >= need`, which is the
+    run's allowance: the disk its own work may use. During the run the station measures what the volume has lost since
+    launch (`consumed_bytes`, an upper bound on the run's own use: anything else writing to the volume counts too) and
+    stops the run only when it has used more than its allowance AND free space is below `need`, the stop as it was.
+    Inside its allowance the run is never stopped for disk it is using itself (`within_allowance`).
+
+    Kubernetes' node-pressure eviction separates the same two things: a pod's own ephemeral-storage limit, counted
+    against the pod, from the node's thresholds. The station has no per-run accounting, so the volume's loss since
+    launch stands in for the pod's usage. A launch with no c12 reading (recorded before c12, or unmeasured) is read
+    as before this ruling: `free >= need`."""
+    out = dict(now)
+    if not launch or not isinstance(launch.get("free_bytes"), int) or not isinstance(launch.get("need_bytes"), int) \
+            or not isinstance(now.get("free_bytes"), int):
+        return out
+    consumed = max(0, launch["free_bytes"] - now["free_bytes"])
+    allowance = launch["need_bytes"]
+    within = consumed <= allowance
+    out.update(launch_free_bytes=launch["free_bytes"], allowance_bytes=allowance, consumed_bytes=consumed,
+               within_allowance=within, ok=bool(now.get("ok", True)) or within)
+    return out
+
+
 # ------------------------------------------------------------- the OODA between chained tasks (c18)
 #
 # SEL-010R2 Part A (AD-038-R10) built c18 as a wait for a Desktop's reading of task N's RESULT, released by a record or

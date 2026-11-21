@@ -751,6 +751,16 @@ def finish_session(project_dir, config, driver, database, domain_config, session
                 _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
                                  {**finish, "task_terminal": graph_state}, name, "session_failed")
             return
+        stops = launch_hard_stops(project_dir, task_id, extra["child_session_id"])
+        if stops:
+            # SEL-042 Part B (AD-034-R25): the dispatcher stopped this session, so its gate did not finish whatever
+            # the Stop hook or the RESULT then said (hazbrief HB-197, HB-198). Blocked with the stop's reason, never
+            # merged or completed, so no successor is released from it.
+            with lease_cm():
+                _finish_unmerged(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                 {**finish, "hard_stop": {"reasons": [s.get("reason") for s in stops],
+                                                          "stops": stops}}, name, HARD_STOPPED)
+            return
         if not gate["passed"] or code != 0:
             # SEL-040 Part B (AD-034-R21): how the session ended is classed before a block is recorded. A session its
             # transport cut off is `interrupted`, which the dispatcher redrives into its kept worktree once the API
@@ -792,6 +802,49 @@ def finish_session(project_dir, config, driver, database, domain_config, session
         # caller with no finish, which the next pass reads as `released_unfinished`.
         click.echo(f"could not take the pass lease in {cfg['merge_lock_timeout_s']}s (held by "
                    f"{held.body.get('holder')}); left for the next pass", err=True)
+
+
+#: SEL-042 (AD-034-R25): the outcome of a session the dispatcher hard-stopped. Never merged, never completed.
+HARD_STOPPED = "hard_stopped"
+#: SEL-042 (AD-034-R26): the merge reason of a branch with no recorded evidence that a gate passed for its tip.
+UNGATED = "ungated"
+
+
+def launch_hard_stops(project_dir: Path, task_id: str, child_session_id: str) -> list:
+    """The `session_stop` records of kind `hard` written for `task_id` since this launch (AD-037-R6's dispatcher
+    stops: spend and disk ceilings, a terminal task), oldest first. Read from the store the stations write to; a stop
+    of an earlier launch of the same task is not this session's."""
+    from seldon.core import stations as QS
+    from seldon.core.events import read_events
+
+    events = read_events(project_dir)
+    launch = next((e for e in reversed(events) if e.get("event_type") == D.EVENT_LAUNCHED
+                   and (e.get("payload") or {}).get("child_session_id") == child_session_id), None)
+    since = str((launch or {}).get("timestamp") or "")
+    return [{"event_id": e.get("event_id"), "timestamp": e.get("timestamp"), **(e.get("payload") or {})}
+            for e in events if e.get("event_type") == QS.EVENT_SESSION_STOP
+            and (e.get("payload") or {}).get("task_id") == task_id
+            and (e.get("payload") or {}).get("kind") == "hard" and str(e.get("timestamp") or "") >= since]
+
+
+def gate_evidence(finish: dict, regate: dict | None, record: dict | None) -> dict | None:
+    """SEL-042 Part B (AD-034-R26): the recorded evidence that a gate passed for the tip being merged, or None.
+
+    In order: the project's declared pass record for the tip (SEL-024), the round's own re-gate, a kept branch's
+    regate of its declared checks (AD-034-R10), and the session's Stop gate, counted only when it passed AND ran at
+    least one check. A Stop gate that passed with no check to run (HB-197's three Parts each had `checks: []`,
+    HB-198 declared none) verified nothing, so it is not evidence: fail-safe defaults, an absent check denies."""
+    if record is not None:
+        return {"source": "gate_record", "record": record}
+    if regate is not None and regate.get("ok"):
+        return {"source": "regate", "gate": regate}
+    kept = finish.get("regate") or {}
+    if kept.get("checks"):
+        return {"source": "kept_regate", "regate_id": kept.get("regate_id"), "checks": len(kept["checks"])}
+    sg = finish.get("stop_gate") or {}
+    if sg.get("verdict") == "pass" and (sg.get("checks_run") or 0) > 0:
+        return {"source": "stop_gate", "checks_run": sg["checks_run"]}
+    return None
 
 
 def interruption_reading(project_dir: Path, cfg: dict, task_id: str, child_session_id: str, log_path: Path,
@@ -961,9 +1014,10 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
     stem, branch, rel = extra["stem"], extra["branch"], extra["source_file"]
     wt = project_dir / extra["worktree"]
     linked = extra.get("linked") or []
-    regated, gate, last = False, None, ("main_kept_moving", [], {})
+    regated, gate, last, evidence = False, None, ("main_kept_moving", [], {}), None
 
     def unmerged(reason, files, **detail):
+        flush_deduped()
         _finish_unmerged(project_dir, config, driver, database, domain_config, session_id,
                          cfg, finish, name, "merge_blocked",
                          merge={"reason": reason, "files": files, **detail})
@@ -984,6 +1038,12 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         return bad
 
     reconciled = KE.reconciled_ids(project_dir, S._store_rel(config), finish["task_id"])
+    # SEL-042 Part C (AD-034-R27): the `kept_events_deduped` records this round owes, written to main's store only
+    # once nothing stands between it and its fast-forward any more (`flush_deduped`). Appended under the lease between
+    # the journal commit and `git merge --ff-only`, the line made git refuse the fast-forward over main's own store
+    # (hazbrief HB-189, three attempts, `ff_refused`), and committing it moved main, which forced the rebase that
+    # restored the duplicates again.
+    deduped: list = []
 
     def dedupe():
         """SEL-034 Part B: the branch's copies of lines already reconciled into main are dropped (committed on the
@@ -992,10 +1052,15 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             return None
         out = KE.drop_reconciled(wt, S._store_rel(config), reconciled, name)
         if out["dropped"]:
-            S._emit(project_dir, session_id, "kept_events_deduped",
-                    {"task_id": finish["task_id"], "event_ids": out["dropped"], "commit": out["commit"],
-                     "stderr": out["stderr"] or None})
+            deduped.append({"task_id": finish["task_id"], "event_ids": out["dropped"], "commit": out["commit"],
+                            "stderr": out["stderr"] or None})
         return out["commit"]
+
+    def flush_deduped():
+        """Write the owed `kept_events_deduped` records: after the fast-forward, or in a finish that merges nothing
+        (`unmerged`), both under the lease and both followed by the finish's own journal commit."""
+        while deduped:
+            S._emit(project_dir, session_id, "kept_events_deduped", deduped.pop(0))
 
     for attempt in range(1, cfg["merge_attempts"] + 1):
         # Every round, not once: a gate that rewrote a tracked file would otherwise surface
@@ -1040,6 +1105,20 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             tip, record = got["tip"], got["record"]
             if record.get("ledger_commit"):
                 writes = sorted(set(writes) | {gr["ledger"]})
+        # SEL-042 Part B (AD-034-R26): nothing merges without recorded evidence that a gate passed for this tip. With
+        # none, the round runs the project's gate command itself (the re-gate is one of the three evidences); with no
+        # gate command either, the task is blocked `ungated`. Kept across attempts: an attempt that rebases over a
+        # change outside the branch's write set re-gates on overlap as before, and needs nothing new here.
+        evidence = evidence or gate_evidence(finish, gate if regated else None, record)
+        if evidence is None:
+            if not cfg.get("gate_command"):
+                return blocked(UNGATED, [], attempt=attempt,
+                               why="no Stop gate check ran, no re-gate ran and no pass record is declared, and the "
+                                   "project declares no `dispatch.gate_command` to run")
+            gate = _gate(project_dir, cfg, wt, stem)
+            if not gate["ok"]:
+                return blocked("regate_red", [], gate=gate, attempt=attempt, evidence_gate=True)
+            evidence = {"source": "merge_gate", "gate": gate}
         with lease_cm():
             # What a pass would commit first, committed first here: a line a Desktop tool
             # appended while a pass held the lease would otherwise make the fast-forward
@@ -1090,6 +1169,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                      "linked_by_session": WT.session_links(wt, exclude=linked)}
             if record is not None:
                 merge["gate_record"] = record
+            merge["gate_evidence"] = evidence
+            flush_deduped()
             numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch,
                                               driver=driver, database=database, domain_config=domain_config)
             if numbered:
@@ -1594,11 +1675,14 @@ def _finish_unmerged(project_dir, config, driver, database, domain_config, sessi
         # `completed` has no edge back to `blocked`: the graph says done for work that is not
         # on main. Recorded on the finish and in the Issue, never left implicit.
         record["graph_completed_unmerged"] = True
+    # SEL-042 (AD-034-R25): a hard-stopped task is blocked with the stop's own reason (`hard_stopped: disk_ceiling`).
+    label = (f"{HARD_STOPPED}: {', '.join(str(r) for r in finish['hard_stop']['reasons'])}"
+             if outcome == HARD_STOPPED else outcome)
     S._emit(project_dir, session_id, D.EVENT_FINISHED, record)
     S._block(project_dir, driver, database, domain_config, session_id, task_id, state,
              finish.get("exit_code"), finish["log_path"],
-             reason=S.block_reason(outcome, finish.get("exit_code"), finish["log_path"]))
-    reason = (merge or {}).get("reason") or outcome
+             reason=S.block_reason(label, finish.get("exit_code"), finish["log_path"]))
+    reason = (merge or {}).get("reason") or label
     if outcome == "stop_gate_unpassed":
         reason = f"stop_gate_unpassed: {(finish.get('stop_gate') or {}).get('why')}"
     _record_kept(project_dir, session_id, finish, outcome, reason)

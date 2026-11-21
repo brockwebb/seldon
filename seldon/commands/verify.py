@@ -234,6 +234,7 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
     except (dr.RegisterError, dr.BrokenRegister) as exc:
         return CheckResult(name="Decision register", symbol="fail", summary=str(exc)[:300])
     fixable_only = all("REGISTER.md" in f for f in findings)
+    pending = []
     if not any("chain" in f or "hash" in f or "bytes" in f for f in findings):
         u = dr.Universe(s)
         stale = []
@@ -244,7 +245,13 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
                                      "d.register_hash AS h, d.state AS st").data():
                     have[r["q"]] = (r["h"], r["st"])
             for repo in u.scope_repos():
-                for rec in u.records(repo).values():
+                # SEL-042 Part D (AD-033-R14): a branch's pending records carry no record_hash until the merge numbers
+                # them, and the graph is projected from numbered records only, so the projection is compared with the
+                # chain alone and the pending records are reported, not read as stale (squiddy SQ-124, hazbrief
+                # HB-193: `KeyError: 'record_hash'` ended verify and lost every other check's result).
+                reg = u.register(repo)
+                pending += [(repo, p) for p in reg.pending_files()]
+                for rec in dr.fold(reg.events(include_pending=False)).values():
                     if have.get(rec.id) != (rec.last_hash, rec.status):
                         stale.append(rec.id)
         except (dr.RegisterError, dr.BrokenRegister) as exc:
@@ -262,12 +269,31 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
             findings.append(f"binding: {row['t']} is bound to {row['d']}, which is {row['st']} "
                             f"(only accepted records bind, AD-033-R4)")
             fixable_only = False
+    pending_line = _pending_line(pending)
     if not findings:
         return CheckResult(name="Decision register", symbol="pass",
-                           summary="Register verifies; every label registered; projection current")
+                           summary="Register verifies; every label registered; projection current"
+                                   + (f"; {pending_line}" if pending_line else ""),
+                           details=[pending_line] if pending_line else [])
     return CheckResult(name="Decision register", symbol="fail",
-                       summary=f"{len(findings)} register finding(s)", details=findings[:25],
+                       summary=f"{len(findings)} register finding(s)",
+                       details=findings[:25] + ([pending_line] if pending_line else []),
                        fixable=fixable_only)
+
+
+def _pending_line(pending: list) -> str | None:
+    """SEL-042 Part D (AD-033-R14): `N pending record(s), numbered at merge: <id> <event>, ...`, or None."""
+    if not pending:
+        return None
+    import yaml
+    named = []
+    for _repo, path in pending:
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            named.append(f"{data.get('id', path.name)} {data.get('event', '?')}")
+        except (OSError, yaml.YAMLError) as exc:
+            named.append(f"{path.name} (unreadable: {type(exc).__name__})")
+    return f"{len(named)} pending record(s), numbered at merge: {', '.join(named)}"
 
 
 # ---------------------------------------------------------------------------

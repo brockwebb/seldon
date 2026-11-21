@@ -1,0 +1,420 @@
+FFFFFFFFFFF                                                              [100%]
+=================================== FAILURES ===================================
+___________ test_a_normal_green_finish_merges_on_the_rounds_own_gate ___________
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_a_normal_green_finish_mer0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x16289d3d0>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_a_normal_green_finish_merges_on_the_rounds_own_gate(tmp_path, neo4j_driver, dc):
+        p = make_project(tmp_path)          # the scaffold declares `gate_command: true`
+        add_task(p, "a")
+        tid = register(p, neo4j_driver, dc, "a", "2026-11-21T00:00:01Z")
+        write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}, "worktree_name": "a"}})
+        _once(p)
+        fin = _finished(p, "a")[-1]
+        assert fin["outcome"] == "merged", fin
+>       assert fin["merge"]["gate_evidence"]["source"] == "merge_gate" and fin["merge"]["regated"] is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'gate_evidence'
+
+tests/test_sel042_stopped_session_never_merges.py:183: KeyError
+_ test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence[HB-198] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_the_hazbrief_stop_gates_p0')
+task = 'HB-198'
+
+    @pytest.mark.parametrize("task", ["HB-197", "HB-198"])
+    def test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence(tmp_path, task):
+        """HB-197's three Parts each had `checks: []`; HB-198 declared none. The finish read both as a pass, and nothing
+        else stood for a gate (`regated: false`, `gate: null`). A pass that ran no check is not evidence."""
+        p = tmp_path / "p"
+        p.mkdir()
+        gate_row = _fixture(task, "stop_gate")
+        (p / STORE).write_text(json.dumps({k: v for k, v in gate_row.items() if k != "task"} | {"authority": "accepted"})
+                               + "\n")
+        reading = S._gate_reading(p, gate_row["payload"]["task_id"], gate_row["payload"]["child_session_id"])
+>       assert reading["passed"] is True and reading["checks_run"] == 0, reading
+                                             ^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'checks_run'
+
+tests/test_sel042_stopped_session_never_merges.py:89: KeyError
+___ test_a_branch_with_no_gate_evidence_in_a_project_with_no_gate_is_ungated ___
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_a_branch_with_no_gate_evi0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x16289d3d0>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_a_branch_with_no_gate_evidence_in_a_project_with_no_gate_is_ungated(tmp_path, neo4j_driver, dc):
+        p = make_project(tmp_path, dispatch_extra={"gate_command": None})
+        add_task(p, "a")
+        tid = register(p, neo4j_driver, dc, "a", "2026-11-21T00:00:01Z")
+        write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}, "worktree_name": "a"}})
+        _once(p)
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == "merge_blocked" and fin["merge"]["reason"] == W.UNGATED, fin
+E       AssertionError: {'base': '583db7aeb7df05f42bfea2794be8ff0bb05aeaaf', 'branch': 'worktree-a', 'child_session_id': 'faa18b38-b842-478e-b56d-69e61f1f6363', 'classifier_blocks': 0, ...}
+E       assert ('merged' == 'merge_blocked'
+E         
+E         - merge_blocked
+E         + merged)
+
+tests/test_sel042_stopped_session_never_merges.py:169: AssertionError
+____________ test_the_rounds_own_gate_red_keeps_the_branch_off_main ____________
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_the_rounds_own_gate_red_k0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x16289d3d0>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_the_rounds_own_gate_red_keeps_the_branch_off_main(tmp_path, neo4j_driver, dc):
+        p = make_project(tmp_path, dispatch_extra={"gate_command": "false"})
+        add_task(p, "a")
+        tid = register(p, neo4j_driver, dc, "a", "2026-11-21T00:00:01Z")
+        write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}, "worktree_name": "a"}})
+        _once(p)
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == "merge_blocked" and fin["merge"]["reason"] == "regate_red", fin
+E       AssertionError: {'base': '00fbdaa29512a1b76e8d131e410e0d16aa12ff80', 'branch': 'worktree-a', 'child_session_id': '879d7931-0a18-41ef-bfa1-ede5e6d83ed0', 'classifier_blocks': 0, ...}
+E       assert ('merged' == 'merge_blocked'
+E         
+E         - merge_blocked
+E         + merged)
+
+tests/test_sel042_stopped_session_never_merges.py:195: AssertionError
+____________________ test_each_evidence_counts_in_its_order ____________________
+
+    def test_each_evidence_counts_in_its_order():
+        passed = {"verdict": "pass", "checks_run": 2}
+>       assert W.gate_evidence({"stop_gate": passed}, None, None)["source"] == "stop_gate"
+               ^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.commands.dispatch_worktree' has no attribute 'gate_evidence'
+
+tests/test_sel042_stopped_session_never_merges.py:97: AttributeError
+_______ test_a_run_inside_its_allowance_is_not_stopped_for_its_own_disk ________
+
+    def test_a_run_inside_its_allowance_is_not_stopped_for_its_own_disk():
+        """Admitted with 6 GB free against a 5 GB need; its own work then uses 3 GB. Free (3 GB) is below the need, which
+        stopped it before; it is inside the 5 GB it was admitted for, so it runs on."""
+        launch = {"free_bytes": 6_000_000_000, "need_bytes": 5_000_000_000}
+        now = {"free_bytes": 3_000_000_000, "need_bytes": 5_000_000_000, "ok": False}
+>       got = D.disk_in_run(now, launch)
+              ^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.dispatch' has no attribute 'disk_in_run'
+
+tests/test_sel042_stopped_session_never_merges.py:122: AttributeError
+__ test_a_branch_whose_rebase_restores_reconciled_lines_merges_in_one_attempt __
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_a_branch_whose_rebase_res0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x16289d3d0>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_a_branch_whose_rebase_restores_reconciled_lines_merges_in_one_attempt(tmp_path, neo4j_driver, dc):
+        """hazbrief HB-189, reproduced. The session's own commit appended three event lines; its first finish was kept,
+        and the kept-events reconcile put those lines on main (AD-038-R25). Every rebase replays that commit, so the
+        branch holds each id twice until the round drops its copy. With a journal line waiting in main (what a station
+        wrote during the run), the round commits the journals, rebases over that housekeeping commit, drops again, and
+        fast-forwards. Before this task the drop's record was appended to main's store in between, so git refused the
+        fast-forward on every attempt (`ff_refused` after three). Now: one attempt, merged, each id once on main."""
+        p = make_project(tmp_path, dispatch_extra={"merge_attempts": 3})
+        add_task(p, "a")
+        tid = register(p, neo4j_driver, dc, "a", "2026-11-21T00:00:01Z")
+        lines = _session_lines(3)
+        ids = [json.loads(x)["event_id"] for x in lines.splitlines()]
+        write_stub(p, {"a": {"write": {"out/a.txt": "a\n", STORE: lines}, "worktree_name": "a", "exit": 1}})
+        _once(p)
+        kept = _finished(p, "a")[-1]
+        assert kept["outcome"] == "session_failed", kept
+        assert set(ids) <= K.reconciled_ids(p, STORE, tid), "the first finish reconciled the branch's lines into main"
+        # HB-189's second session, merged into the first's branch: lines of its own that main does not hold yet, so the
+        # fast-forward changes main's store (without them it would not touch the store, and git would not refuse).
+        wt = p / kept["worktree"]
+        second = _session_lines(2)
+        with (wt / STORE).open("a", encoding="utf-8") as fh:
+            fh.write(second)
+        git(wt, "commit", "-q", "-m", "the second session's work", "--", STORE)
+    
+        # A station's line in main's store, uncommitted, as the round finds it.
+        with (p / STORE).open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(make_event("stop_gate", "cc", "accepted", {"task_id": tid, "verdict": "pass"})) + "\n")
+        S.transition_task(project_dir=p, driver=neo4j_driver, database=NEO4J_DB, domain_config=dc, artifact_id=tid,
+                          current_state="blocked", new_state="in_progress", actor=S.ACTOR, authority="accepted")
+        extra = {"stem": "a", "branch": kept["branch"], "source_file": kept["source_file"],
+                 "worktree": kept["worktree"], "linked": kept.get("linked") or []}
+        config = load_project_config(p)
+        W._merge(p, config, neo4j_driver, NEO4J_DB, dc, None, D.load_dispatch_config(p, config), kept, "a", extra)
+    
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == "merged" and fin["merge"]["attempts"] == 1, fin.get("merge")
+E       AssertionError: {'attempts': 3, 'files': ['seldon_events.jsonl'], 'reason': 'ff_refused', 'stderr': 'error: Your local changes to the ...be overwritten by merge:
+E         \tseldon_events.jsonl
+E         Please commit your changes or stash them before you merge.
+E         Aborting'}
+E       assert ('merge_blocked' == 'merged'
+E         
+E         - merged
+E         + merge_blocked)
+
+tests/test_sel042_stopped_session_never_merges.py:247: AssertionError
+----------------------------- Captured stdout call -----------------------------
+record: record: stop_gate, artifact_updated, artifact_state_changed, kept_events_deduped f699be3f — 4 line(s) written by cc, dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> 1e77e85
+record: record: kept_events_deduped f699be3f — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> 9d82f61
+record: record: kept_events_deduped f699be3f — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> e937fe1
+reconcile: 2 event line(s) of kept .claude/worktrees/a union-merged into seldon_events.jsonl (merge_blocked; task blocked)
+record: record: kept_events_deduped, dispatch_finished, artifact_updated, artifact_state_changed, worktree_kept, note_recorded, kept_events_reconciled, artifact_created, link_created f699be3f, a3bbb41d — 11 line(s) written by dispatcher, cc; reconciled by the standing dispatcher (event_store, AD-038-R1) -> 15c35b4
+push: pushed 4 commit(s)
+----------------------------- Captured stderr call -----------------------------
+MERGE BLOCKED f699be3f (ff_refused): seldon_events.jsonl; worktree .claude/worktrees/a kept; issue a3bbb41d
+_ test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands[HB-198] _
+
+task = 'HB-198'
+
+    @pytest.mark.parametrize("task", ["HB-197", "HB-198"])
+    def test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands(task):
+        """Part B's measurement: HB-197 was admitted with 16.87 GB free against a need of 4.98 GB and stopped at 4.07 GB;
+        HB-198 with 14.12 GB against 4.99 GB and stopped at 4.56 GB. Each volume lost more than the run's allowance (its
+        need), so AD-034-R28 stops both as the station did."""
+        launch = _fixture(task, "dispatch_launched")["payload"]["criteria"]["c12"]
+        stop = _fixture(task, "session_stop")["payload"]["reading"]
+>       got = D.disk_in_run(stop, launch)
+              ^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.dispatch' has no attribute 'disk_in_run'
+
+tests/test_sel042_stopped_session_never_merges.py:112: AttributeError
+_ test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence[HB-197] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_the_hazbrief_stop_gates_p1')
+task = 'HB-197'
+
+    @pytest.mark.parametrize("task", ["HB-197", "HB-198"])
+    def test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence(tmp_path, task):
+        """HB-197's three Parts each had `checks: []`; HB-198 declared none. The finish read both as a pass, and nothing
+        else stood for a gate (`regated: false`, `gate: null`). A pass that ran no check is not evidence."""
+        p = tmp_path / "p"
+        p.mkdir()
+        gate_row = _fixture(task, "stop_gate")
+        (p / STORE).write_text(json.dumps({k: v for k, v in gate_row.items() if k != "task"} | {"authority": "accepted"})
+                               + "\n")
+        reading = S._gate_reading(p, gate_row["payload"]["task_id"], gate_row["payload"]["child_session_id"])
+>       assert reading["passed"] is True and reading["checks_run"] == 0, reading
+                                             ^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'checks_run'
+
+tests/test_sel042_stopped_session_never_merges.py:89: KeyError
+_ test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands[HB-197] _
+
+task = 'HB-197'
+
+    @pytest.mark.parametrize("task", ["HB-197", "HB-198"])
+    def test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands(task):
+        """Part B's measurement: HB-197 was admitted with 16.87 GB free against a need of 4.98 GB and stopped at 4.07 GB;
+        HB-198 with 14.12 GB against 4.99 GB and stopped at 4.56 GB. Each volume lost more than the run's allowance (its
+        need), so AD-034-R28 stops both as the station did."""
+        launch = _fixture(task, "dispatch_launched")["payload"]["criteria"]["c12"]
+        stop = _fixture(task, "session_stop")["payload"]["reading"]
+>       got = D.disk_in_run(stop, launch)
+              ^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.dispatch' has no attribute 'disk_in_run'
+
+tests/test_sel042_stopped_session_never_merges.py:112: AttributeError
+_ test_a_hard_stopped_session_is_blocked_with_the_stops_reason_and_never_merged _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_a_hard_stopped_session_is0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x16289d3d0>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_a_hard_stopped_session_is_blocked_with_the_stops_reason_and_never_merged(tmp_path, neo4j_driver, dc):
+        """HB-198 reproduced: the dispatcher's `disk_ceiling` stop lands in the store while the session runs; the session
+        still exits 0 with its RESULT committed, and its Stop gate (none declared) lets it go. Before this task the round
+        merged and completed it. Now: blocked `hard_stopped: disk_ceiling`, nothing on main, worktree kept."""
+        p = make_project(tmp_path)
+        add_task(p, "a")
+        tid = register(p, neo4j_driver, dc, "a", "2026-11-21T00:00:01Z")
+        write_stub(p, {"a": {"write": {"out/a.txt": "a\n"}, "worktree_name": "a",
+                             "primary_append": {STORE: _hard_stop_line(tid)}}})
+        _once(p)
+        fin = _finished(p, "a")[-1]
+>       assert fin["outcome"] == W.HARD_STOPPED and fin["ok"] is False, fin
+                                 ^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.commands.dispatch_worktree' has no attribute 'HARD_STOPPED'
+
+tests/test_sel042_stopped_session_never_merges.py:154: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_a_normal_green_finish_merges_on_the_rounds_own_gate
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence[HB-198]
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_a_branch_with_no_gate_evidence_in_a_project_with_no_gate_is_ungated
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_the_rounds_own_gate_red_keeps_the_branch_off_main
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_each_evidence_counts_in_its_order
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_a_run_inside_its_allowance_is_not_stopped_for_its_own_disk
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_a_branch_whose_rebase_restores_reconciled_lines_merges_in_one_attempt
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands[HB-198]
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_the_hazbrief_stop_gates_passed_with_no_check_run_and_are_not_evidence[HB-197]
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_both_hazbrief_runs_used_more_than_their_allowance_so_the_disk_stop_stands[HB-197]
+FAILED tests/test_sel042_stopped_session_never_merges.py::test_a_hard_stopped_session_is_blocked_with_the_stops_reason_and_never_merged
+11 failed in 137.31s (0:02:17)
+
+EXIT=1
+FFFFFFFFF                                                                [100%]
+=================================== FAILURES ===================================
+__________ test_verify_reports_the_pending_records_and_does_not_raise __________
+
+pending_tree = (PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_verify_reports_th...rivate/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_verify_reports_the_pendin0/wt'))
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x17f2dcf20>
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_verify_reports_the_pending_records_and_does_not_raise(pending_tree, neo4j_driver):
+        root, wt = pending_tree
+        with pytest.raises(KeyError, match="record_hash"):
+            # The defect, as the filing traced it: `Record.last_hash` of a record whose last event is pending.
+            dr.fold(dr.Register("proj", wt).events())["proj:R-1"].last_hash
+>       res = V.check_decisions(neo4j_driver, TEST_DATABASE, wt, _cfg(wt))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_sel042_verify_pending_and_name_limit.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+seldon/commands/verify.py:248: in check_decisions
+    if have.get(rec.id) != (rec.last_hash, rec.status):
+                            ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Record(id='proj:R-1', home='proj', data={'id': 'proj:R-1', 'date': '2026-11-21', 'decided_by': 'desktop', 'operator_st...n_by': 'seldon decision 0.1.0', 'provisional_id': 'f3bc02d3c458fed9742da3ce30e4b6dd727ce5c8198f0c2dbd94d61ced1657ab'}])
+
+    @property
+    def last_hash(self) -> str:
+>       return self.events[-1]["record_hash"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'record_hash'
+
+seldon/core/decisions.py:772: KeyError
+_ test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left[two_byte_utf8] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_at_the_limit_a_name_fits_0')
+ch = 'é'
+
+    @pytest.mark.parametrize("ch", ["x", "é"], ids=["ascii", "two_byte_utf8"])
+    def test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left(tmp_path, ch):
+        """Counted in bytes, as the file system counts them: `é` is two bytes in UTF-8, so the same character count can
+        be over the limit."""
+        prefix = f"{STEM_HB207}_ADDENDUM_01_"
+        room = 255 - len(prefix.encode()) - len(".md")
+>       assert room == F.addendum_slug_room(STEM_HB207, 255) == 86
+                       ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.filing' has no attribute 'addendum_slug_room'
+
+tests/test_sel042_verify_pending_and_name_limit.py:130: AttributeError
+___ test_registration_warns_when_the_stem_leaves_little_room_for_an_addendum ___
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_registration_warns_when_t0')
+
+    def test_registration_warns_when_the_stem_leaves_little_room_for_an_addendum(tmp_path):
+        (tmp_path / "cc_tasks").mkdir()
+>       assert CC.stem_room_warning(tmp_path, {}, STEM_HB207) is None                    # 86 bytes left
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.commands.cc' has no attribute 'stem_room_warning'
+
+tests/test_sel042_verify_pending_and_name_limit.py:164: AttributeError
+______________________ test_the_limit_is_the_file_systems ______________________
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_the_limit_is_the_file_sys0')
+
+    def test_the_limit_is_the_file_systems(tmp_path):
+>       assert F.name_limit(tmp_path) == 255 and F.name_limit(tmp_path / "not" / "made") == 255
+               ^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.filing' has no attribute 'name_limit'
+
+tests/test_sel042_verify_pending_and_name_limit.py:121: AttributeError
+___________ test_every_other_check_still_prints_with_pending_records ___________
+
+pending_tree = (PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_every_other_check...rivate/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_every_other_check_still_p0/wt'))
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x17f2dcf20>
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_every_other_check_still_prints_with_pending_records(pending_tree, neo4j_driver):
+        root, wt = pending_tree
+>       results = V._run_all_checks(neo4j_driver, TEST_DATABASE, _cfg(wt), wt)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_sel042_verify_pending_and_name_limit.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+seldon/commands/verify.py:2136: in _run_all_checks
+    check_decisions(driver, database, project_dir, config),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+seldon/commands/verify.py:248: in check_decisions
+    if have.get(rec.id) != (rec.last_hash, rec.status):
+                            ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Record(id='proj:R-1', home='proj', data={'id': 'proj:R-1', 'date': '2026-11-21', 'decided_by': 'desktop', 'operator_st...n_by': 'seldon decision 0.1.0', 'provisional_id': 'f3bc02d3c458fed9742da3ce30e4b6dd727ce5c8198f0c2dbd94d61ced1657ab'}])
+
+    @property
+    def last_hash(self) -> str:
+>       return self.events[-1]["record_hash"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'record_hash'
+
+seldon/core/decisions.py:772: KeyError
+_____________ test_with_no_pending_record_the_summary_is_unchanged _____________
+
+    def test_with_no_pending_record_the_summary_is_unchanged():
+>       assert V._pending_line([]) is None
+               ^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.commands.verify' has no attribute '_pending_line'
+
+tests/test_sel042_verify_pending_and_name_limit.py:111: AttributeError
+________ test_a_task_name_over_the_limit_names_the_room_after_the_date _________
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_a_task_name_over_the_limi0')
+
+    def test_a_task_name_over_the_limit_names_the_room_after_the_date(tmp_path):
+        name = "2026-11-21_" + "s" * 245 + ".md"
+>       msg = F.name_refusal(tmp_path, name)
+              ^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.filing' has no attribute 'name_refusal'
+
+tests/test_sel042_verify_pending_and_name_limit.py:149: AttributeError
+_ test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left[ascii] _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_at_the_limit_a_name_fits_1')
+ch = 'x'
+
+    @pytest.mark.parametrize("ch", ["x", "é"], ids=["ascii", "two_byte_utf8"])
+    def test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left(tmp_path, ch):
+        """Counted in bytes, as the file system counts them: `é` is two bytes in UTF-8, so the same character count can
+        be over the limit."""
+        prefix = f"{STEM_HB207}_ADDENDUM_01_"
+        room = 255 - len(prefix.encode()) - len(".md")
+>       assert room == F.addendum_slug_room(STEM_HB207, 255) == 86
+                       ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.filing' has no attribute 'addendum_slug_room'
+
+tests/test_sel042_verify_pending_and_name_limit.py:130: AttributeError
+_____ test_cc_file_refuses_an_addendum_name_over_the_limit_before_anything _____
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-338/test_cc_file_refuses_an_addend0')
+
+    def test_cc_file_refuses_an_addendum_name_over_the_limit_before_anything(tmp_path):
+        """`file_addendum` refuses before the lock, the base-task lookup or a write: a driver that is touched fails."""
+        name = f"{STEM_HB207}_ADDENDUM_01_{'s' * 87}.md"
+        (tmp_path / "cc_tasks").mkdir()
+>       with pytest.raises(F.FilingError, match=F.NAME_TOO_LONG):
+                                                ^^^^^^^^^^^^^^^
+E       AttributeError: module 'seldon.core.filing' has no attribute 'NAME_TOO_LONG'
+
+tests/test_sel042_verify_pending_and_name_limit.py:157: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_verify_reports_the_pending_records_and_does_not_raise
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left[two_byte_utf8]
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_registration_warns_when_the_stem_leaves_little_room_for_an_addendum
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_the_limit_is_the_file_systems
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_every_other_check_still_prints_with_pending_records
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_with_no_pending_record_the_summary_is_unchanged
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_a_task_name_over_the_limit_names_the_room_after_the_date
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_at_the_limit_a_name_fits_and_one_byte_over_is_refused_with_the_room_left[ascii]
+FAILED tests/test_sel042_verify_pending_and_name_limit.py::test_cc_file_refuses_an_addendum_name_over_the_limit_before_anything
+9 failed in 4.23s
+
+EXIT=1

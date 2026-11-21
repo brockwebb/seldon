@@ -1739,7 +1739,11 @@ def _gate_reading(project_dir: Path, task_id: str, child_session_id: str) -> dic
             declared = True
     if gates:
         last = gates[-1]
+        # SEL-042 (AD-034-R26): how many checks the last gate ran. A pass that ran none verified nothing, and the
+        # merge does not count it as evidence (`dispatch_worktree.gate_evidence`).
+        checks_run = sum(len(p.get("checks") or []) for p in (last.get("parts") or []) if isinstance(p, dict))
         return {"passed": last["verdict"] == "pass", "verdict": last["verdict"], "runs": len(gates),
+                "checks_run": checks_run,
                 "why": None if last["verdict"] == "pass" else f"{last['verdict']}: {', '.join(last['failed'])}"}
     if declared:
         return {"passed": False, "verdict": None, "runs": 0, "why": "Parts declared and no stop gate ran"}

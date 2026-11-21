@@ -85,7 +85,9 @@ def inspect_in_flight(project_dir: Path, cfg: dict, task_id: str, holder: bool, 
                 project_dir, task_id, events, _scfg(cfg), cfg["poll_interval_s"],
                 emit=lambda kind, payload: _emit(project_dir, kind, payload),
                 run=run, judge=lambda: models.resolve_judge(models.CHECKER_ROLE, role),
-                disk=lambda: D.disk_state(project_dir, cfg, worktree=False), now=now)
+                disk=lambda: D.disk_in_run(D.disk_state(project_dir, cfg, worktree=False),
+                                           (((launch or {}).get("payload") or {}).get("criteria") or {}).get("c12")),
+                now=now)
             out["holder"] = holder
             return out
         finally:

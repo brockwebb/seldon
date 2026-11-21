@@ -26,6 +26,7 @@ sides because both hold it for seconds. The draft-fix refusal is a lint over hea
 """
 from __future__ import annotations
 
+import os
 import re
 from contextlib import contextmanager
 from pathlib import Path
@@ -66,6 +67,57 @@ _LABEL_RE = re.compile(r"^\s*(?:[-*+]\s+)?\*\*(?P<text>[^*\n]+?):?\*\*")
 
 class FilingError(RuntimeError):
     """A filing that cannot be written or registered; the message names the cause and the fix."""
+
+
+# ------------------------------------------------------------ the file system's name limit (SEL-042 Part E)
+
+#: SEL-042 (AD-038-R30): a name longer than the file system takes, refused before anything is written.
+NAME_TOO_LONG = "name_too_long"
+#: The limit when `pathconf` cannot say: POSIX NAME_MAX on APFS, HFS+, ext4 and NTFS's UTF-16 units alike.
+NAME_MAX_FALLBACK = 255
+#: The fixed bytes an addendum adds to its task's stem: `_ADDENDUM_NN_` and `.md`.
+ADDENDUM_FIXED_BYTES = len("_ADDENDUM_01_") + len(".md")
+#: The slug room below which registration warns that the task's stem leaves too little for an addendum's slug. A
+#: FIRST VALUE, not a measurement: hazbrief HB-207's stem left 86 bytes and its filer saw "about 50" as tight; 60
+#: is room for a ten-word slug. Overridden by `filings.addendum_slug_warn_bytes`.
+ADDENDUM_SLUG_WARN_BYTES = 60
+
+
+def name_limit(directory: Path) -> int:
+    """The longest file name, in bytes, the file system holding `directory` takes (`pathconf(PC_NAME_MAX)`, on the
+    nearest existing ancestor). Falls back to `NAME_MAX_FALLBACK` where the platform cannot say."""
+    q = Path(directory)
+    while not q.exists() and q != q.parent:
+        q = q.parent
+    try:
+        return int(os.pathconf(q, "PC_NAME_MAX"))
+    except (OSError, ValueError, AttributeError):
+        return NAME_MAX_FALLBACK
+
+
+def addendum_slug_room(stem: str, limit: int) -> int:
+    """Bytes left for an addendum's slug under task stem `stem`: `limit` less the stem and `_ADDENDUM_NN_` + `.md`."""
+    return limit - len(stem.encode("utf-8")) - ADDENDUM_FIXED_BYTES
+
+
+def name_refusal(directory: Path, name: str) -> Optional[str]:
+    """`name_too_long: ...` when `name` (UTF-8 bytes, as the file system counts) exceeds the limit of the volume
+    holding `directory`, stating the limit and the bytes left for the slug; None when it fits."""
+    limit = name_limit(directory)
+    used = len(name.encode("utf-8"))
+    if used <= limit:
+        return None
+    stem = addendum_base_stem(name)
+    if stem is not None:
+        room = addendum_slug_room(stem, limit)
+        where = (f"its task's stem ({len(stem.encode('utf-8'))} bytes) leaves {max(room, 0)} byte(s) for the "
+                 f"addendum's slug after `_ADDENDUM_NN_` and `.md`")
+    else:
+        m = re.match(r"^(\d{4}-\d{2}-\d{2}_)", name)
+        fixed = len(m.group(1)) if m else 0
+        where = f"{max(limit - fixed - len('.md'), 0)} byte(s) are left for the slug after the date and `.md`"
+    return (f"{NAME_TOO_LONG}: {name!r} is {used} bytes and the file system takes at most {limit}; {where}. Shorten "
+            f"the slug by {used - limit} byte(s). Nothing was written.")
 
 
 def settings(config: Optional[dict]) -> dict:
@@ -208,6 +260,9 @@ def file_task(project_dir: Path, content: str, *, name: Optional[str] = None, ac
     name = name or default_name(content, datetime.now(timezone.utc).date().isoformat())
     if "/" in name or not name.endswith(".md") or name.startswith("."):
         raise FilingError(f"file name {name!r} must be a bare `<YYYY-MM-DD>_<slug>.md` (it is written into cc_tasks/)")
+    too_long = name_refusal(project_dir / "cc_tasks", name)
+    if too_long:
+        raise FilingError(too_long)
     path = project_dir / "cc_tasks" / name
     rel = f"cc_tasks/{name}"
     driver = get_neo4j_driver(config)
@@ -275,6 +330,9 @@ def file_addendum(project_dir: Path, config: dict, driver, database: str, conten
 
     rel = f"cc_tasks/{name}"
     path = Path(project_dir) / rel
+    too_long = name_refusal(path.parent, name)
+    if too_long:
+        raise FilingError(too_long)
     stem = addendum_base_stem(name)
     if stem is None:
         raise FilingError(f"{name!r} reads as an addendum but not as `<task stem>_ADDENDUM_<NN>[_<slug>].md`; name it "

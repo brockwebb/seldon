@@ -76,7 +76,11 @@ def make_project(tmp_path: Path, *, dispatch_extra: dict | None = None,
                 "standing_band_ref": "controls.yaml#spend.daily_tokens",
                 "poll_interval_s": 300, "permission_mode": "bypassPermissions",
                 "stop_file": ".seldon/DISPATCH_STOP", "log_dir": "logs/dispatch",
-                "lease_file": ".seldon/dispatch.lock"}
+                "lease_file": ".seldon/dispatch.lock",
+                # SEL-042 (AD-034-R26): nothing merges without recorded evidence that a gate passed, and the stub's
+                # sessions declare no check, so the scaffold's project declares a gate the round runs. A test of a
+                # project with no gate passes `gate_command: None`.
+                "gate_command": "true"}
     dispatch.update(dispatch_extra or {})
     # AD-035 R3: the dispatcher execs the lock's CLI, so the stub is named by a fixture lock,
     # not by a `dispatch.cli` key (which is now refused). Undone after the test by conftest's

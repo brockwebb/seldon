@@ -559,6 +559,11 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
                       result_rel=_rel(project_dir, result_path), commit=commit, where=where, answered=answered,
                       after=after, headers=headers, body=section["body"], date=date)
         rel = f"cc_tasks/{date}_{token}_{slug(title)}.md"
+        # SEL-042 Part E (AD-038-R30): refused before anything is written, the dry run included.
+        from seldon.core import filing as F
+        too_long = F.name_refusal(answered.root / "cc_tasks", Path(rel).name)
+        if too_long:
+            raise ReturnError(f"the return {rel} was not written: {too_long}")
         out = {"status": "dry_run", "rel_path": rel, "consumer": str(answered.root), "artifact_id": None,
                "token": token, "text": body}
         if dry_run:

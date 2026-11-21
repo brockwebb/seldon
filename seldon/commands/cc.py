@@ -1596,6 +1596,9 @@ def register_task_file(
     sequencing_warning = None if is_filing else sequencing_lint(text, Path(rel_path).stem)
     if sequencing_warning:
         say(sequencing_warning)
+    name_warning = None if is_filing else stem_room_warning(project_dir, config, Path(rel_path).stem)
+    if name_warning:
+        say(name_warning)
     for h in refiled:
         say(f"  re-files {h.token} ({h.artifact_id[:8]}, {h.state}): supersede it now with "
             f"`seldon task supersede {h.artifact_id[:8]} --superseded-by {artifact_id} --reason \"re-filed as "
@@ -1639,7 +1642,26 @@ def register_task_file(
             "edges_written": written, "warning": warning, "source_commit": source_commit,
             "after": predecessors, "after_edges": after_edges,
             "sequencing_warning": sequencing_warning, "holds": holds, "record_commit": record_commit,
-            "refiles": [h.artifact_id for h in refiled]}
+            "refiles": [h.artifact_id for h in refiled], "name_warning": name_warning}
+
+
+def stem_room_warning(project_dir: Path, config: dict, stem: str) -> str | None:
+    """SEL-042 Part E (AD-038-R30): a warning when a task's stem leaves fewer than `filings.addendum_slug_warn_bytes`
+    (default 60, a first value) bytes for an addendum's slug under the file system's name limit, or None. A warning,
+    not a refusal: the task's own name fits, and only its later addenda would be squeezed."""
+    from seldon.core import filing as F
+    warn_at = ((config or {}).get(F.CONFIG_BLOCK) or {}).get("addendum_slug_warn_bytes", F.ADDENDUM_SLUG_WARN_BYTES)
+    limit = F.name_limit(Path(project_dir) / "cc_tasks")
+    room = F.addendum_slug_room(stem, limit)
+    if room >= warn_at:
+        return None
+    return (f"Warning: {NAME_ROOM_WARNING}: this task's stem is {len(stem.encode('utf-8'))} bytes, which leaves "
+            f"{max(room, 0)} byte(s) for an addendum's slug under the file system's {limit}-byte name limit (warned "
+            f"below {warn_at}); an addendum whose name is longer is refused `{F.NAME_TOO_LONG}`")
+
+
+#: SEL-042 Part E: the registration warning's name.
+NAME_ROOM_WARNING = "addendum_slug_room"
 
 
 @cc_group.command("register")
