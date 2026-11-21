@@ -1,0 +1,43 @@
+event: accept
+id: seldon:AD-034-R29
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:78: AD-034-R29'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: 'A project''s gate shall have two tiers: a scoped gate of what the branch changed, run for every task, and the full gate command, run only on request, on the project''s cadence and whenever selection cannot be trusted.'
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 78
+  - 81
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R29. A project's gate has two tiers: a scoped gate, run for every task, of the tests and commands selected for what the branch changed against main; and a full gate, `dispatch.gate_command`, run only at declared points: `seldon gate run --full`, a task whose header says `**Gate:** full`, the project's cadence, and whenever selection cannot be trusted (R32).**
+      The cadence is `dispatch.gate.full_every_s` (default 86,400 s, nightly): when the project's newest passing full gate
+      is older than that, or there is none, the next gate is full and its record says `cadence_due`. It is a promotion of
+      the next gate, not a separate scheduled job: the full gate then runs on a real change set, and needs no new daemon.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R29
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 857aa7bd31dad42d06b9d4e4051174a7a94c281ca3dc2348bb3eb8a443f9fd58

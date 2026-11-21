@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-034-R37
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:110: AD-034-R37'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: The selection mechanism shall be seldon's; a consumer declares slices, a threshold and a cadence and writes no selection code, and a project with no slices behaves as before.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 110
+  - 110
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: '- **AD-034-R37. The selection mechanism is seldon''s: a consumer declares slices, a threshold and a cadence, and writes no selection code. A project that declares no slices behaves as it did before this addendum, AD-034-R26''s merge gate included, with R36''s warning.**'
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R37
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 53f53a335f211711d002a4297777207907671d3d6989906c2769a8c1833e01c9

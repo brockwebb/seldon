@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-034-R31
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:88: AD-034-R31'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: A scoped gate shall always run the test files the branch added or changed and the test files that failed in the project's last recorded gate.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 88
+  - 90
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R31. A scoped gate always runs the test files the branch added or changed, and the test files that failed in the project's last recorded gate, whatever the slices say.**
+      A test file is a changed path matching `dispatch.gate.test_globs`; a failed one is a file named in the last gate
+      record's `failed_files` that still exists in the tree.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R31
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 2c9eb99e39c385cc9d6b174b4174f93f65dfaa7188f99201cbf6d03c98b0a84a

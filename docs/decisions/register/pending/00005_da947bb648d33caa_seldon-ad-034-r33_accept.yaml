@@ -1,0 +1,44 @@
+event: accept
+id: seldon:AD-034-R33
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:94: AD-034-R33'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: Every gate run shall be one gate_run record (tier, reason, call site, tree, selected of total, tests run, seconds, outcome, failed files), and a full gate shall record as escapes the failed files the last scoped gate on the same change set did not select.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 94
+  - 98
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R33. Every gate run is one `gate_run` record in the project's event store: its tier, reason, call site, the commit and tree it tested, the test files selected of the total, the tests run, the wall seconds, the outcome and the files that failed. A full gate that fails a test file the last scoped gate on the same change set did not select records those files as `escapes` on the full gate's own record.**
+      The change set is the branch and the sorted paths it changed against main. Escapes per full gate is the measure of
+      whether a project's slices are safe; `seldon qc chart` counts them beside the seconds. The merge record's
+      `gate_evidence` names the `gate_run` record it merged on (ADDENDUM 01 item 4 of SEL-041: one record, not two).
+      A project with no slices gets the same record for its one tier (`tier: full`, `reason: no_slices`).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R33
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: da947bb648d33caab1c766757b109c5a72db057644e9693b740cac4854858cdc

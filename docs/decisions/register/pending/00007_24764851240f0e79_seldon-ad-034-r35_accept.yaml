@@ -1,0 +1,43 @@
+event: accept
+id: seldon:AD-034-R35
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:105: AD-034-R35'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: Where slices are declared the re-gate, the evidence gate and the Stop gate shall go through the planner; the Stop gate shall run scoped plans only and leave a full plan to the merge round.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 105
+  - 108
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R35. Where a project declares slices, the gate's three call sites go through the planner: the merge round's re-gate and its evidence gate (AD-034-R26's `merge_gate`) run the plan and record it, and the session's Stop gate runs a scoped plan before the session may end and blocks it on a red one as on a failing check. A full plan is not run in the Stop hook; it is left to the merge round, which has the gate's timeout.**
+      The Stop gate does not run a plan again for a tree that already has a passing record. Without slices every call
+      site behaves as before: the re-gate and the evidence gate run `gate_command`, and the Stop gate runs only the
+      declared Parts' checks.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R35
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 24764851240f0e7951a7cbef2884a61626867e9d0185798abb6d5a0efab99983

@@ -1,0 +1,45 @@
+event: accept
+id: seldon:AD-034-R34
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:99: AD-034-R34'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: A passing gate_run record for the clean tree the session left shall be merge evidence, scoped or full, including a scoped gate that selected nothing because every path matched a slice declared tests none.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 99
+  - 104
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R34. A passing `gate_run` record for the tree the session left is evidence under AD-034-R26, scoped or full, including a scoped gate that selected nothing because every changed path matched a slice declared `tests: none`; a record run on a dirty tree is not.**
+      The declaration is the permission R26's fail-safe default asks for, which is what a Stop gate with no check lacks:
+      a missing check is silence, a `tests: none` slice is a statement on the record that can be wrong and is then
+      measured (R33's escapes, the cadence's full gate). A plan with a path no slice matches is full under R32, so a
+      scoped record never stands for an unmatched path. The evidence order becomes: the declared pass record, the round's
+      re-gate, a kept branch's regate, a passing `gate_run` for the session's tree, a Stop gate that ran a check.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R34
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: ef1c64e29f69a0c90083f52c284de5dd6662f3ce2dbdf38295aed5d43adfc7d5

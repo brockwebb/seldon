@@ -1,0 +1,45 @@
+event: accept
+id: seldon:AD-034-R30
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:82: AD-034-R30'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: Selection shall be declared in slices (path globs and the tests and commands they require, or none) and may be extended by a shipped coverage map; the selected set is the union.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 82
+  - 87
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R30. Selection is declared first and measured second. A project declares slices in `dispatch.gate.slices`, each a name, path globs, and the tests (paths, or `marker:<expression>`) and other commands those paths require, or `tests: none`; where a project opts in, a coverage map adds the tests it links to changed code. The selected set is the union.**
+      A path matches a slice by glob (`*` within one directory, `**` across directories). Tests are run by
+      `dispatch.gate.test_command`, whose `{tests}` is replaced by the selected paths; a marker expression is run over
+      `dispatch.gate.test_root`. The coverage map is `dispatch.gate.coverage_map`, `none` unless an arm has been shipped
+      for it; an arm ships only on a measurement on a real suite (seeded changes whose covering test must be selected
+      every time, under the project's own xdist and subprocess use), and SEL-041's RESULT (Part C) reports testmon's.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R30
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 48f868cf97e36f657ea4136bd719b85ce56c0208f9f36f65e368188d632a1efd

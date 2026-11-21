@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-034-R32
+date: '2026-11-21'
+decided_by: cc:9d9caf94
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:91: AD-034-R32'
+reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
+kind: decision
+status: accepted
+statement: The gate shall be full, with its reason recorded, when a changed path matches no slice, when the gate configuration, a lock or project file or a conftest.py changes, or when a declared map is missing or stale.
+source:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  lines:
+  - 91
+  - 93
+  sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
+  text: |-
+    - **AD-034-R32. The gate is full, and its record says why, when a changed path matches no slice (and no coverage map knows it), when the change alters the gate's own configuration (`dispatch.gate_command` or `dispatch.gate`), a dependency lock or project file (`dispatch.gate.full_paths`), or any `conftest.py`, or when a declared coverage map is missing or stale.**
+      `reason` is the first cause found and `reasons` all of them, each naming its path. This is the fail-safe default:
+      skipping a test needs a declaration that permits it.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  anchor: AD-034-R32
+consumer:
+- cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+- seldon/core/gate_plan.py
+- seldon/commands/gate.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/stations.py
+- seldon/core/dispatch.py
+- seldon/commands/verify.py
+- seldon/commands/go.py
+- seldon/commands/qc.py
+- tests/test_sel041_gate_plan.py
+- tests/test_sel041_gate_call_sites.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: c4aaa2635a240e4b0ebee4a4ccd7aa783512497e58d1bbc97914000546d7a671
