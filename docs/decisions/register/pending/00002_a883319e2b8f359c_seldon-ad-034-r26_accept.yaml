@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-034-R26
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md:84: AD-034-R26'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: A branch shall merge only on recorded evidence that a gate passed for its tip (a declared pass record, the round's re-gate, a kept branch's regate, or a Stop gate that ran a check); with none the round shall run the project's gate command, and with no gate command the task shall be blocked ungated.
+source:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  lines:
+  - 84
+  - 88
+  sha256: 45605b3199cab113d0a0e4f3baee81569369de7b5d6d4f7e88ef758664137eed
+  text: |-
+    - **AD-034-R26. A branch merges only on recorded evidence that a gate passed for the tip being merged: the project's declared pass record, the round's re-gate, a kept branch's regate of its declared checks, or a Stop gate that passed after running at least one check. With none of these the round runs the project's `dispatch.gate_command` in the worktree and merges only if it passes; a project with no gate command blocks the task `ungated` and keeps its worktree.**
+      A Stop gate that passed with no check to run verified nothing and is not evidence (Saltzer and Schroeder's fail-safe
+      default). The merge record carries `gate_evidence` naming which evidence it merged on; a red gate run for want of
+      other evidence is `regate_red` with `evidence_gate: true`. `regated` keeps its meaning (re-gated because main changed
+      a file the branch changed).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  anchor: AD-034-R26
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/dispatch.py
+- seldon/commands/dispatch_stations.py
+- tests/test_sel042_stopped_session_never_merges.py
+- tests/dispatch_scaffold.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: a883319e2b8f359c2859a45ffe6e7d75030763d91cab89f7e81e6828940afe94

@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-034-R28
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md:92: AD-034-R28'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: During a run the disk station shall stop a session only when the volume has lost more than the run's launch allowance and free space is below the need; inside its allowance a run shall not be stopped.
+source:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  lines:
+  - 92
+  - 96
+  sha256: 45605b3199cab113d0a0e4f3baee81569369de7b5d6d4f7e88ef758664137eed
+  text: |-
+    - **AD-034-R28. During a run the disk station stops a session only when the volume has lost more than the run's allowance since launch (the `need_bytes` its launch was admitted with) and free space is below that need; inside its allowance a run is never stopped for disk it is using itself.**
+      The allowance is c12's measured need at launch (factor times the tree), and the loss is read on the volume
+      (`consumed_bytes`), an upper bound on the run's own use: anything else writing to the volume counts against it too.
+      A launch recorded without a c12 reading is read as before (`free >= need`). The reading carries
+      `launch_free_bytes`, `allowance_bytes`, `consumed_bytes` and `within_allowance`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  anchor: AD-034-R28
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/dispatch.py
+- seldon/commands/dispatch_stations.py
+- tests/test_sel042_stopped_session_never_merges.py
+- tests/dispatch_scaffold.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 7d2810282c9bfb2cf9d7b6e86293ead52bb2d9ea8ce01500ad5fb60274856e61

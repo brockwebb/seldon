@@ -1,0 +1,38 @@
+event: accept
+id: seldon:AD-034-R25
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md:80: AD-034-R25'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: A session that ended after a dispatcher hard stop of its launch shall never be merged or completed; its task shall be blocked with the stop's reason and no successor released from it.
+source:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  lines:
+  - 80
+  - 83
+  sha256: 45605b3199cab113d0a0e4f3baee81569369de7b5d6d4f7e88ef758664137eed
+  text: |-
+    - **AD-034-R25. A session that ended after a dispatcher hard stop of its launch is never merged or completed: the task is blocked `hard_stopped: <reason>` whatever its RESULT or its Stop gate says, its worktree is kept, and no successor is released from it.**
+      The stops read are the launch's `session_stop` records of kind `hard` (the spend and disk ceilings). A terminal task
+      is answered first by SEL-034's rule, as before. Nothing redrives a hard stop automatically: it is not one of
+      `AUTO_REDRIVE_REASONS`, so a person or Desktop redrives it (AD-038-R2).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md
+  anchor: AD-034-R25
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- seldon/core/dispatch.py
+- seldon/commands/dispatch_stations.py
+- tests/test_sel042_stopped_session_never_merges.py
+- tests/dispatch_scaffold.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: de9c6d91b47868588d41ec996a083d4ad1f1d4c20230fb199b5862e920d26147

@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R30
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md:57: AD-038-R30'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: A task file, addendum or return whose name exceeds the file system's limit in UTF-8 bytes shall be refused name_too_long before anything is written, and registration shall warn when a stem leaves under 60 bytes for an addendum's slug.
+source:
+  path: docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md
+  lines:
+  - 57
+  - 59
+  sha256: 52000a19cc5998a27eab5e5a819e5188c30fc13e159deb5add9046e995e7b00e
+  text: |-
+    - **AD-038-R30. A task file, an addendum or a return whose name is longer, in UTF-8 bytes, than the file system's limit for its directory (`pathconf(PC_NAME_MAX)`) is refused `name_too_long` before anything is written, the refusal stating the name's length, the limit and the bytes left for the slug; registration warns `addendum_slug_room` when a task's stem leaves fewer than `filings.addendum_slug_warn_bytes` (60, a first value) for an addendum's slug.**
+      The warning is not a refusal: the task's own name fits. 60 is a first value, not a measurement: room for a ten-word
+      slug, against HB-207's 86 bytes that its filer read as tight.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md
+  anchor: AD-038-R30
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/core/filing.py
+- seldon/core/returns.py
+- seldon/commands/cc.py
+- seldon/core/ooda.py
+- tests/test_sel042_verify_pending_and_name_limit.py
+- tests/test_sel042_ooda_boundary.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: d57a48b82b208ee6c0ee8c28eea02f86ef51f9d0fa1316e3c73292a38ea8f506

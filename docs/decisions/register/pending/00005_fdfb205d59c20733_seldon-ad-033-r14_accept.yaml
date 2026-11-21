@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-033-R14
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md:41: AD-033-R14'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: seldon verify shall run with a branch's pending register records present, comparing the graph with the numbered chain, reporting the pending records as numbered at merge, and running every other check.
+source:
+  path: docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md
+  lines:
+  - 41
+  - 44
+  sha256: e6ff952e9693d10bb8af9e65b7b2e263b648f4c8edc2628755690f3792724360
+  text: |-
+    - **AD-033-R14. `seldon verify` runs with a branch's pending register records present: it compares the graph with the numbered chain alone, reports the pending records as `N pending record(s), numbered at merge: <id> <event>, ...`, and runs every other check.**
+      The pending records' own checks (name, canonical bytes, provisional id, shape, no duplicate create) still run in
+      `Register.verify`, as AD-033-R12 made them. Verify is meant to run on a branch; moving `pending/` aside to make it
+      run is never needed and hides the records the merge will number.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md
+  anchor: AD-033-R14
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/commands/verify.py
+- tests/test_sel042_verify_pending_and_name_limit.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: fdfb205d59c2073321e58b9a0b1d2002e5bb3a955bdf684f100a263a12680f1c

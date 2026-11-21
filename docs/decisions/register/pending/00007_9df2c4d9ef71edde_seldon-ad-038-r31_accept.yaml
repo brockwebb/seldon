@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-038-R31
+date: '2026-11-21'
+decided_by: cc:3c39bd22
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md:60: AD-038-R31'
+reason: 'SEL-042: from hazbrief de40f402, 6a9c00fa and 1639fa20, squiddy 5b76278b, and the stray uv.lock of 2026-11-20; evidence in docs/evidence/sel042'
+kind: decision
+status: accepted
+statement: The OODA knowledge source shall run every command inside its own worktree, never change into another repository and never run a package manager against one.
+source:
+  path: docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md
+  lines:
+  - 60
+  - 64
+  sha256: 52000a19cc5998a27eab5e5a819e5188c30fc13e159deb5add9046e995e7b00e
+  text: |-
+    - **AD-038-R31. The OODA knowledge source runs every command inside its own worktree: it never changes into another repository and never runs a package manager (`uv`, `pip`) against one; it reads another repository's files only by reading them.**
+      The rule is stated in the session's prompt. The prompt is the only guard: the OODA session runs with the project's
+      permission mode, and a guard that refused such a command structurally would be a new hook, which this addendum does
+      not build. Whether a stray file in a checkout is dirt is unchanged (c7, AD-038-R1): the defect was the writer, and
+      that the dirt was invisible while the queue was empty is SEL-044's to carry.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md
+  anchor: AD-038-R31
+consumer:
+- cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+- seldon/core/filing.py
+- seldon/core/returns.py
+- seldon/commands/cc.py
+- seldon/core/ooda.py
+- tests/test_sel042_verify_pending_and_name_limit.py
+- tests/test_sel042_ooda_boundary.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9df2c4d9ef71edde20cbab8d000166c1e9481e813d9cd2c5f3169e25ad7e12ad
