@@ -211,6 +211,12 @@ dispatch:
   gate_command: >-
     python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
     -p no:cacheprovider
+  # SEL-041 Part D: the gate's wall-clock ceiling (the 3600 s default had no measured basis). Measured 2026-11-21:
+  # `seldon gate run --full` on SEL-041's branch ran `gate_command` above (serial) and was killed at 3,600 s with 73%
+  # of 3,482 tests done (load average 7 to 8), so about 82 minutes whole; the serial suite took 70 minutes on
+  # 2026-11-06 (3,232 tests, SEL-024). Since AD-034-R26 every check-less seldon task's merge runs this command, and
+  # under 3600 s each such merge is `regate_red` by timeout. 7200 s is hazbrief's value for its 76-to-89-minute gate.
+  gate_timeout_s: 7200
   # SEL-024 (AD-034-R16 to R18): the pass record the merge round requires for the tip it merges. seldon keeps no pass
   # ledger (its gate is `gate_command` above, re-run on overlap), so it declares none; squiddy declares its kit ledger.
   gate_record: none
