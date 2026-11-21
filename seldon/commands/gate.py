@@ -43,8 +43,8 @@ def _context(base: str | None, task: str | None, full: bool) -> dict:
     task_id, source = None, None
     if task:
         hit = [e for e in events if e.get("event_type") == D.EVENT_LAUNCHED
-               and task in ((e.get("payload") or {}).get("task_id") or "",
-                            Path((e.get("payload") or {}).get("source_file") or "").stem)]
+               and (((e.get("payload") or {}).get("task_id") or "").startswith(task)
+                    or Path((e.get("payload") or {}).get("source_file") or "").stem == task)]
         if not hit:
             raise click.ClickException(f"no dispatch launch names task {task!r} in {primary}'s event store")
         lp = hit[-1]["payload"]

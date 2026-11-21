@@ -430,3 +430,14 @@ def test_the_cli_plans_and_runs_and_records(repo, tmp_path, monkeypatch):
     assert [(r["tier"], r["outcome"], r["call_site"]) for r in runs] == [("full", "pass", "cli"),
                                                                        ("scoped", "pass", "cli")]
     assert runs[-1]["log_path"] == "logs/dispatch/feat.gate.log" and runs[-1]["tests_run"] == 1
+    # `--task` takes an id prefix, as every other seldon command does, and names the record's task and log.
+    launch = make_event("dispatch_launched", "dispatcher", "accepted",
+                        {"task_id": "abcdef12-0000-0000-0000-000000000000", "source_file": "cc_tasks/t9.md"})
+    with (repo / "seldon_events.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(launch) + "\n")
+    res = CliRunner().invoke(main, ["gate", "run", "--task", "abcdef12"], catch_exceptions=False)
+    assert res.exit_code == 0, res.output
+    last = [json.loads(x) for x in (repo / "seldon_events.jsonl").read_text().splitlines()][-1]["payload"]
+    assert last["task_id"].startswith("abcdef12") and last["log_path"] == "logs/dispatch/t9.gate.log"
+    res = CliRunner().invoke(main, ["gate", "plan", "--task", "nosuch"])
+    assert res.exit_code != 0 and "no dispatch launch names task 'nosuch'" in res.output
