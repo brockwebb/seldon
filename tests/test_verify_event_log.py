@@ -209,7 +209,8 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     # 17 since HOOK-001 added the commit-hook check; 18 since AD-039 (STD-001R) added the
     # tracked-dirs check; 19 since AD-038-R9 (SEL-008) added the blocks-and-waits check; 20 since
     # squiddy SQ-096 (DN-052 R-237) added the pass-ledger check; 21 since AD-013-R3 (SEL-033) added the
-    # requirements check; 22 since AD-036-R27 (SEL-039) added the prior-art own-graphs check.
+    # requirements check; 22 since AD-036-R27 (SEL-039) added the prior-art own-graphs check; 23 since AD-034-R36
+    # (SEL-041) added the gate check.
     assert "Binding constraints" in names
     assert "Prior-art own graphs" in names
     assert "Decision register" in names
@@ -219,4 +220,5 @@ def test_all_checks_include_the_two_new_ones(neo4j_driver, project_dir, clean_te
     assert "Blocks and waits" in names
     assert "Pass ledger" in names
     assert "Requirements" in names
-    assert len(results) == 22
+    assert "Gate" in names
+    assert len(results) == 23
