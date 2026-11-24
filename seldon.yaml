@@ -208,9 +208,13 @@ dispatch:
   # fast-forward. Without one such a task is blocked `regate_unavailable`. DISP-002 Part A step 2 needs it: DISP-001R's
   # branch is merged over main's later changes to the dispatcher, and the task orders the full suite on that merge.
   # The worktree's own code (PYTHONPATH=.) is what is tested, with the primary's credentials (.env is gitignored).
+  # SEL-045R Part B, Issue d6040ce8 (open): the one `--deselect` below. That test reads squiddy's live library, not
+  # this tree, and has failed on main in every recorded run since 2026-11-09, so with it in the command no full gate
+  # can be green. The test file stays and the Issue stays open; nothing else about which tests run changes.
   gate_command: >-
     python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
     -p no:cacheprovider
+    --deselect tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
   # SEL-041 Part D: the gate's wall-clock ceiling (the 3600 s default had no measured basis). Measured 2026-11-21:
   # `seldon gate run --full` on SEL-041's branch ran `gate_command` above (serial) and was killed at 3,600 s with 73%
   # of 3,482 tests done (load average 7 to 8), so about 82 minutes whole; the serial suite took 70 minutes on
