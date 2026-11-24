@@ -1375,10 +1375,31 @@ def _release_rows(graph, sha256: str, unavailable: str) -> dict:
     stage = ix.in_graph_stage(graph)
     wd = ix.work_dir(graph, cfg)
     try:
-        rows = list(ix.iter_rows(wd / CORPUS_ROWS, manifest, ix.meta_renderer(cfg), stage, None))
+        rows = checkpoint_rows(ix, graph, cfg, Path(wd), manifest, stage, commit)
     except SystemExit as exc:          # the kit's refusal: a unit of that release has no checkpointed rows
         raise PriorArtError(f"{unavailable}: {exc}") from exc
     return {"commit": commit, "cfg": cfg, "manifest": manifest, "stage": stage, "wd": Path(wd), "rows": rows}
+
+
+#: SEL-043 (AD-036-R30): the kit call seldon asks squiddy for, `release_rows(graph, manifest, *, commit) -> iterable
+#: of row dicts`: the rows of the release recorded at `commit` (whose corpus manifest is `manifest`), read from the
+#: corpus checkpoint under the row rule that release was cut under, refusing as `iter_rows` does (SystemExit naming
+#: the unit) when a unit has none. Until the kit has it, seldon reads as before.
+KIT_RELEASE_ROWS = "release_rows"
+
+
+def checkpoint_rows(ix, graph, cfg: dict, wd: Path, manifest: list, stage, commit: str) -> list:
+    """Step 2 of `rebuild_release`: an older release's rows from the corpus checkpoint.
+
+    Through the kit's `release_rows` when the installed kit has it (feature-checked by name: the kit's version
+    string is not a contract and its call is). Otherwise `iter_rows` with its default rule, `q003-corpus/1` (arm A's),
+    which is what seldon has read since AD-036 ADDENDUM 06. The known limit (AD-036-R30): for squiddy's library 3 of
+    2,261 units differ from the rows its releases served, and a graph whose checkpoint holds no arm A lines (a
+    `text_of_record: parsed` graph) cannot rebuild an older release at all; both end when the kit's call exists."""
+    call = getattr(ix, KIT_RELEASE_ROWS, None)
+    if callable(call):
+        return list(call(graph, manifest, commit=commit))
+    return list(ix.iter_rows(wd / CORPUS_ROWS, manifest, ix.meta_renderer(cfg), stage, None))
 
 
 def open_rebuilt(info: dict, query_encoder) -> object:
@@ -1395,7 +1416,17 @@ def open_rebuilt(info: dict, query_encoder) -> object:
     matrix = np.concatenate(parts, axis=0) if parts else np.zeros((0, dim), dtype="float32")
     man = {"rule": ix.INDEX_RULE, "release": {"sha256": info["release_sha256"], "rebuilt_from": info["commit"]},
            "rows": info["rows"]}
-    return ix.Index(Path(info["db"]), (ids, matrix), info["cfg"], query_encoder, man)
+    # SEL-043 (AD-036-R29): since squiddy SQ-139 the reader checks the index it is handed when it opens it and
+    # raises `IndexSchemaError` (`index_schema_mismatch: ...`). That is the release being unreadable, which verify
+    # answers by name (AD-036-R19), not a crash. Looked up by name so a kit from before SQ-139 still imports.
+    schema_error = getattr(ix, "IndexSchemaError", None)
+    try:
+        return ix.Index(Path(info["db"]), (ids, matrix), info["cfg"], query_encoder, man)
+    except Exception as exc:
+        if schema_error is not None and isinstance(exc, schema_error):
+            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release sha256:{info['release_sha256'][:12]}... was rebuilt "
+                                f"from commit {str(info['commit'])[:12]} and the kit's reader refuses it: {exc}") from exc
+        raise
 
 
 def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:

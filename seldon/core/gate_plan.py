@@ -504,8 +504,12 @@ def run(tree: Path, p: dict, gcfg: dict, *, gate_command: str | None, timeout_s:
     text = _read_from(log_path, offset)
     parsed = parse_output(text)
     ok = code == 0 and not timed_out
+    # SEL-043 (AD-037-R21): `seconds` is monotonic and leaves out sleep; the wall clock and the power log's sleep are
+    # recorded beside it, and wall time is what a person is shown.
+    from seldon.core import stations as Q
+    wall = Q.wall_fields(stamp, Q._iso_now(), seconds)
     return {"ok": ok, "outcome": OUTCOME_PASS if ok else (OUTCOME_TIMEOUT if timed_out else OUTCOME_FAIL),
-            "exit_code": code, "timed_out": timed_out, "seconds": seconds, "steps": done,
+            "exit_code": code, "timed_out": timed_out, "seconds": seconds, **wall, "steps": done,
             "tests_run": parsed["tests_run"], "failed_files": parsed["failed_files"],
             "tail": "" if ok else text[-TAIL_BYTES:], "log_path": str(log_path)}
 
@@ -536,6 +540,8 @@ def record_payload(p: dict, result: dict, *, call_site: str, events: list, task_
             "tests": p["tests"] if p["tier"] == TIER_SCOPED else [], "markers": p["markers"],
             "commands": p["commands"], "always": p["always"], "files_selected": p["files_selected"],
             "files_total": p["files_total"], "tests_run": result.get("tests_run"), "seconds": result["seconds"],
+            "started_at": result.get("started_at"), "ended_at": result.get("ended_at"),
+            "wall_seconds": result.get("wall_seconds"), "asleep_s": result.get("asleep_s"),
             "steps": result.get("steps") or [], "outcome": result["outcome"], "exit_code": result["exit_code"],
             "failed_files": result.get("failed_files") or [], "log_path": log_rel or result.get("log_path"),
             "escapes": escapes(events, p, result)}
@@ -570,6 +576,8 @@ def evidence(e: dict) -> dict:
 # ================================================================================================ R36: telling
 
 def scoped_seconds(events: list, n: int = WARN_WINDOW) -> list:
+    """Monotonic seconds of the last `n` scoped gates. Deliberately not wall time (SEL-043): the warning is about how
+    much the slices select, and a host that slept through a gate did not make the gate slow."""
     return [float((e.get("payload") or {}).get("seconds") or 0) for e in runs(events)
             if (e.get("payload") or {}).get("tier") == TIER_SCOPED][-n:]
 
@@ -604,7 +612,8 @@ def by_week(events: list) -> list:
         key = f"{y}-W{w:02d}"
         q = e.get("payload") or {}
         row = weeks.setdefault(key, {"week": key, TIER_SCOPED: [], TIER_FULL: [], "escapes": 0, "failed": 0})
-        row.setdefault(q.get("tier") or TIER_FULL, []).append(float(q.get("seconds") or 0))
+        # SEL-043 (AD-037-R21): a person is shown wall time; a record from before R21 has only monotonic seconds.
+        row.setdefault(q.get("tier") or TIER_FULL, []).append(float(q.get("wall_seconds") or q.get("seconds") or 0))
         row["escapes"] += len(q.get("escapes") or [])
         row["failed"] += q.get("outcome") != OUTCOME_PASS
     out = []

@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-037-R21
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: Every gate record shall carry its wall-clock start and end, its wall seconds and the seconds the host slept by its power log, and time shown to a person shall be wall time.
+source:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  lines:
+  - 122
+  - 126
+  sha256: 83b21fddfbccde0b55973010f55fddd569eb3c790528754181d7e7b1940cf49d
+  text: |-
+    - **AD-037-R21. Every gate record carries its wall-clock start and end, its wall seconds and the seconds the host slept, from its power log; time shown to a person is wall time.**
+      `seconds` stays monotonic (the work done). `asleep_s` comes from `pmset -g log`, read only when wall and monotonic
+      seconds differ by more than 2 s, and is null, never zero, where the host has no power log or it does not reach back
+      to the gate's start. `seldon qc chart`'s gate line uses wall seconds; the slow-gate warning (AD-034-R36) stays on
+      monotonic seconds, because a host that slept through a gate did not make the gate slow.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  anchor: AD-037-R21
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- seldon/core/dispatch.py
+- seldon/core/stations.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/gate_record.py
+- seldon/core/gate_plan.py
+- tests/test_sel043_environment_window.py
+- tests/test_sel043_running_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: b192fd7d961b23a2751f528484be2c1308727324bb47093cbbaae99125b3c24e

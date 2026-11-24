@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-037-R20
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: A running gate's output shall reach the dispatch log line by line while it runs, the declared pass record's included, and the lease shall name that log and where the run starts in it.
+source:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  lines:
+  - 117
+  - 121
+  sha256: 83b21fddfbccde0b55973010f55fddd569eb3c790528754181d7e7b1940cf49d
+  text: |-
+    - **AD-037-R20. A running gate's output reaches the dispatch log line by line while it runs: the declared pass record's too, in the task's gate log beside the gate command's, and the lease names that log and where this run starts in it.**
+      `run_check(stream_to=...)` appends each line as it is printed (stderr merged into stdout), between a `=== <time> |
+      gate record | <command>` line and an `EXIT=` line; the tail is still kept for the record. `gate_progress` reads
+      the log from the run's offset: wall seconds since start, lines, the last line, how long ago the log last grew, and
+      whether `EXIT=` is written. A log that stopped growing is what tells a hung gate from a running one.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  anchor: AD-037-R20
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- seldon/core/dispatch.py
+- seldon/core/stations.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/gate_record.py
+- seldon/core/gate_plan.py
+- tests/test_sel043_environment_window.py
+- tests/test_sel043_running_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 32bad5c84894044c024c4a0e7fa0502e0eac36e5feebe95dc88537f6afa0348c

@@ -1988,6 +1988,54 @@ class LeaseHeld(RuntimeError):
         super().__init__(f"lease held by {body.get('holder')!r}")
 
 
+#: SEL-043 (AD-037-R17): what the pass lease's holder is doing, recorded on the lease so another project's station (a)
+#: can tell a holder that is changing its primary checkout from one that is not. Part A measured where a producer's
+#: primary changes under its dispatcher: in a pass (journal commits, reconcile, the claim) and in the merge round
+#: outside its gate (rebase checks, the fast-forward, numbering, the finish's commits). The session works in its own
+#: worktree (AD-034) and the gate runs there too, so neither changes the primary, except where the session writes
+#: another repository by path (the lease's `writes`, from the task's Repo line, DISP-004R).
+PHASE_PASS = "pass"
+PHASE_SESSION = "session"
+PHASE_GATE = "gate"
+PHASE_MERGE = "merge"
+LEASE_PHASES = (PHASE_PASS, PHASE_SESSION, PHASE_GATE, PHASE_MERGE)
+
+
+def mark_phase(path: Path, phase: str, *, task: str | None = None, gate: dict | None = None,
+               writes: list | None = None) -> str | None:
+    """Record `phase` (and `phase_since`, now) on the pass lease at `path` when THIS process holds it; returns the
+    phase it replaced, or None when the lease is not this process's (a parallel supervisor that does not hold the pass
+    lease, a released lease). `gate` is the running gate (`{call_site, log, offset, started_at}`) and is cleared by
+    any mark that does not give one; `task` and `writes` are kept unless given.
+
+    Rewritten in place (same inode): the holder's flock is on the file. Readers take no lock (`read_lease`), so the
+    body is written whole in one `write`, as `Lease.write` does.
+
+    Raises:
+        ValueError: `phase` is not one of `LEASE_PHASES`.
+    """
+    if phase not in LEASE_PHASES:
+        raise ValueError(f"lease phase must be one of {LEASE_PHASES}, got {phase!r}")
+    path = Path(path)
+    body = read_lease(path)
+    if not body.get("holder") or body.get("pid") != os.getpid():
+        return None
+    prev = body.get("phase")
+    body.update({"phase": phase, "phase_since": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                 "gate": gate})
+    if task is not None:
+        body["task"] = task
+    if writes is not None:
+        body["writes"] = list(writes)
+    with path.open("r+", encoding="utf-8") as fh:
+        fh.seek(0)
+        fh.truncate()
+        fh.write(json.dumps(body, indent=1) + "\n")
+        fh.flush()
+        os.fsync(fh.fileno())
+    return prev
+
+
 class Lease:
     """`fcntl.flock` on `<project>/.seldon/dispatch.lock`, with an identified holder.
 
@@ -2016,8 +2064,9 @@ class Lease:
             self._fh = None
             raise LeaseHeld(read_lease(self.path)) from exc
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        # SEL-043 (AD-037-R17): a lease starts in the pass phase; the holder marks the others (`mark_phase`).
         self.write({"holder": holder_id(), "pid": os.getpid(), "acquired_at": now,
-                    "heartbeat_at": now, "task": None, **self.extra})
+                    "heartbeat_at": now, "task": None, "phase": PHASE_PASS, "phase_since": now, **self.extra})
         return self
 
     def write(self, body: dict) -> None:

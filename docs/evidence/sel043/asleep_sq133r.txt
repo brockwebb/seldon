@@ -1,0 +1,3 @@
+power log first line: 2026-11-17 17:55:31 -0500
+wall seconds: 10834.0 monotonic: 7734.619 wall - monotonic: 3099.4
+asleep by the power log: None

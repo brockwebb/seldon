@@ -1,0 +1,470 @@
+[
+ {
+  "consumer": "seldon",
+  "consumer_task": "becc7081",
+  "at": "2026-10-17T14:14:45.076428Z",
+  "producer": "squiddy",
+  "producer_task": "142cca54",
+  "until": "2026-10-17T16:20:01.541178+00:00",
+  "hours": 2.09
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "09255186",
+  "at": "2026-10-22T21:52:21.417486Z",
+  "producer": "squiddy",
+  "producer_task": "c67b7116",
+  "until": "2026-10-23T00:47:38.007185+00:00",
+  "hours": 2.92
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "09e3b92c",
+  "at": "2026-10-26T15:19:27.007446Z",
+  "producer": "squiddy",
+  "producer_task": "af6e5425",
+  "until": "2026-10-26T15:21:27.239687+00:00",
+  "hours": 0.03
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "2909ce0f",
+  "at": "2026-10-27T17:06:57.959001Z",
+  "producer": "squiddy",
+  "producer_task": "f8433f8c",
+  "until": "2026-10-27T18:08:03.934823+00:00",
+  "hours": 1.02
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "a3357104",
+  "at": "2026-10-28T13:13:15.217751Z",
+  "producer": "squiddy",
+  "producer_task": "af8cb46f",
+  "until": "2026-10-28T13:42:23.436291+00:00",
+  "hours": 0.49
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "915acf48",
+  "at": "2026-11-06T16:17:30.332593Z",
+  "producer": "squiddy",
+  "producer_task": "673d2f02",
+  "until": "2026-11-06T17:10:28.684781+00:00",
+  "hours": 0.88
+ },
+ {
+  "consumer": "seldon",
+  "consumer_task": "086d89ff",
+  "at": "2026-11-09T21:07:25.034877Z",
+  "producer": "squiddy",
+  "producer_task": "5fbcf75e",
+  "until": "2026-11-09T22:56:26.128524+00:00",
+  "hours": 1.82
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "174d0337",
+  "at": "2026-10-17T01:42:57.985921Z",
+  "producer": "seldon",
+  "producer_task": "3bb19003",
+  "until": "2026-10-17T02:07:42.192172+00:00",
+  "hours": 0.41
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "bbc5b083",
+  "at": "2026-10-17T12:15:18.651727Z",
+  "producer": "seldon",
+  "producer_task": "c48b3fd6",
+  "until": "2026-10-17T13:54:14.098638+00:00",
+  "hours": 1.65
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "9324622d",
+  "at": "2026-10-22T11:58:53.800468Z",
+  "producer": "seldon",
+  "producer_task": "1f4db4cc",
+  "until": "2026-10-22T12:50:23.840517+00:00",
+  "hours": 0.86
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "e0b80ce6",
+  "at": "2026-10-24T00:27:58.653904Z",
+  "producer": "seldon",
+  "producer_task": "01b36eac",
+  "until": "2026-10-24T01:27:48.659364+00:00",
+  "hours": 1.0
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "c48da049",
+  "at": "2026-10-27T00:25:27.885984Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-10-27T00:30:41.320885+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "bc667711",
+  "at": "2026-10-29T20:25:16.143121Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-10-29T20:30:26.771294+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "878dfe5a",
+  "at": "2026-11-05T21:38:54.384813Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-11-05T21:44:08.856321+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "da244cbe",
+  "at": "2026-11-06T13:53:49.263891Z",
+  "producer": "seldon",
+  "producer_task": "841bd7c7",
+  "until": "2026-11-06T14:18:06.862708+00:00",
+  "hours": 0.4
+ },
+ {
+  "consumer": "squiddy",
+  "consumer_task": "673d2f02",
+  "at": "2026-11-06T14:51:32.796404Z",
+  "producer": "seldon",
+  "producer_task": "0d115437",
+  "until": "2026-11-06T16:12:16.703960+00:00",
+  "hours": 1.35
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "fd1b07c7",
+  "at": "2026-10-29T12:49:09.767705Z",
+  "producer": "seldon",
+  "producer_task": "c4d813a9",
+  "until": "2026-10-29T12:50:59.983240+00:00",
+  "hours": 0.03
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "24cad248",
+  "at": "2026-10-30T10:58:13.720726Z",
+  "producer": "seldon",
+  "producer_task": "cc43d8c8",
+  "until": "2026-10-30T11:17:10.918214+00:00",
+  "hours": 0.32
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "36ccac6c",
+  "at": "2026-10-30T12:37:07.444810Z",
+  "producer": "squiddy",
+  "producer_task": "e7ad672e",
+  "until": "2026-10-30T14:24:08.386282+00:00",
+  "hours": 1.78
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "f3c90127",
+  "at": "2026-10-30T15:43:19.529376Z",
+  "producer": "squiddy",
+  "producer_task": "6e639ee8",
+  "until": "2026-10-30T16:31:14.930451+00:00",
+  "hours": 0.8
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "3522349a",
+  "at": "2026-10-30T17:07:04.587252Z",
+  "producer": "squiddy",
+  "producer_task": "b1e80f86",
+  "until": "2026-10-30T18:46:22.027080+00:00",
+  "hours": 1.65
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "4972aced",
+  "at": "2026-10-31T11:37:50.051587Z",
+  "producer": "squiddy",
+  "producer_task": "78bc148e",
+  "until": "2026-10-31T12:13:42.955618+00:00",
+  "hours": 0.6
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "4972aced",
+  "at": "2026-11-01T05:01:03.542555Z",
+  "producer": "seldon",
+  "producer_task": "905de0b4",
+  "until": "2026-11-01T05:59:11.817751+00:00",
+  "hours": 0.97
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "26051f0c",
+  "at": "2026-11-03T18:05:26.441708Z",
+  "producer": "squiddy",
+  "producer_task": "9a8e5403",
+  "until": "2026-11-03T19:11:37.903694+00:00",
+  "hours": 1.1
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "26051f0c",
+  "at": "2026-11-03T19:06:26.543396Z",
+  "producer": "squiddy",
+  "producer_task": "9a8e5403",
+  "until": "2026-11-03T19:11:37.903694+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "26051f0c",
+  "at": "2026-11-03T19:06:26.543396Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-11-03T19:16:44.678318+00:00",
+  "hours": 0.17
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "079189de",
+  "at": "2026-11-03T19:48:37.175734Z",
+  "producer": "squiddy",
+  "producer_task": "31db1921",
+  "until": "2026-11-03T20:31:18.526184+00:00",
+  "hours": 0.71
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "8eb7c862",
+  "at": "2026-11-04T00:24:02.408930Z",
+  "producer": "squiddy",
+  "producer_task": "85075746",
+  "until": "2026-11-04T01:34:58.255588+00:00",
+  "hours": 1.18
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "50ab5a90",
+  "at": "2026-11-06T15:15:58.688679Z",
+  "producer": "seldon",
+  "producer_task": "0d115437",
+  "until": "2026-11-06T16:12:16.703960+00:00",
+  "hours": 0.94
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "215d8e5e",
+  "at": "2026-11-07T03:11:21.964411Z",
+  "producer": "squiddy",
+  "producer_task": "21a164aa",
+  "until": "2026-11-07T05:47:21.745239+00:00",
+  "hours": 2.6
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "215d8e5e",
+  "at": "2026-11-07T03:26:53.094009Z",
+  "producer": "squiddy",
+  "producer_task": "21a164aa",
+  "until": "2026-11-07T05:47:21.745239+00:00",
+  "hours": 2.34
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "215d8e5e",
+  "at": "2026-11-07T03:26:53.094009Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-11-07T03:41:53.094009+00:00",
+  "hours": 0.25
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "6f92f078",
+  "at": "2026-11-07T09:20:40.670768Z",
+  "producer": "seldon",
+  "producer_task": "",
+  "until": "2026-11-07T09:25:53.777618+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "57d793d6",
+  "at": "2026-11-08T19:01:15.547677Z",
+  "producer": "seldon",
+  "producer_task": "c09de1a7",
+  "until": "2026-11-08T19:47:10.315688+00:00",
+  "hours": 0.77
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "5c03629b",
+  "at": "2026-11-09T12:02:59.404043Z",
+  "producer": "squiddy",
+  "producer_task": "",
+  "until": "2026-11-09T12:08:17.269833+00:00",
+  "hours": 0.09
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "6f405f6e",
+  "at": "2026-11-09T15:35:36.996402Z",
+  "producer": "seldon",
+  "producer_task": "0a8a6776",
+  "until": "2026-11-09T16:05:01.773107+00:00",
+  "hours": 0.49
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "1daf117b",
+  "at": "2026-11-09T22:10:41.199217Z",
+  "producer": "squiddy",
+  "producer_task": "5fbcf75e",
+  "until": "2026-11-09T22:56:26.128524+00:00",
+  "hours": 0.76
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "f0d4d910",
+  "at": "2026-11-09T23:41:51.639584Z",
+  "producer": "seldon",
+  "producer_task": "91998dc1",
+  "until": "2026-11-10T01:30:58.469275+00:00",
+  "hours": 1.82
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "f0d4d910",
+  "at": "2026-11-09T23:47:06.392649Z",
+  "producer": "squiddy",
+  "producer_task": "",
+  "until": "2026-11-10T00:02:06.392649+00:00",
+  "hours": 0.25
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "f0d4d910",
+  "at": "2026-11-09T23:47:06.392649Z",
+  "producer": "seldon",
+  "producer_task": "91998dc1",
+  "until": "2026-11-10T01:30:58.469275+00:00",
+  "hours": 1.73
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "24491e99",
+  "at": "2026-11-10T01:40:41.368558Z",
+  "producer": "seldon",
+  "producer_task": "086d89ff",
+  "until": "2026-11-10T03:14:21.148611+00:00",
+  "hours": 1.56
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "0066f737",
+  "at": "2026-11-10T19:00:08.953700Z",
+  "producer": "squiddy",
+  "producer_task": "f20a1074",
+  "until": "2026-11-10T20:47:52.428522+00:00",
+  "hours": 1.8
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "fdcd137c",
+  "at": "2026-11-12T05:56:17.429796Z",
+  "producer": "seldon",
+  "producer_task": "cefcfa29",
+  "until": "2026-11-12T07:41:34.579829+00:00",
+  "hours": 1.75
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "c77aabe3",
+  "at": "2026-11-13T12:02:15.149905Z",
+  "producer": "squiddy",
+  "producer_task": "b9fe7154",
+  "until": "2026-11-13T14:07:12.972980+00:00",
+  "hours": 2.08
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "8bbe7363",
+  "at": "2026-11-13T18:05:00.980389Z",
+  "producer": "squiddy",
+  "producer_task": "76d0cde1",
+  "until": "2026-11-13T20:39:02.381507+00:00",
+  "hours": 2.57
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "b63dae25",
+  "at": "2026-11-14T02:06:10.801829Z",
+  "producer": "squiddy",
+  "producer_task": "23a40bfc",
+  "until": "2026-11-14T04:52:47.330629+00:00",
+  "hours": 2.78
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "0aa1b496",
+  "at": "2026-11-15T12:19:53.040873Z",
+  "producer": "squiddy",
+  "producer_task": "a483ca4a",
+  "until": "2026-11-15T13:26:37.541070+00:00",
+  "hours": 1.11
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "f61999a7",
+  "at": "2026-11-16T04:40:03.869831Z",
+  "producer": "seldon",
+  "producer_task": "65889134",
+  "until": "2026-11-16T05:49:53.739011+00:00",
+  "hours": 1.16
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "cd44f1c9",
+  "at": "2026-11-18T04:23:10.094560Z",
+  "producer": "seldon",
+  "producer_task": "b4a94a6b",
+  "until": "2026-11-18T06:02:42.916801+00:00",
+  "hours": 1.66
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "084beda4",
+  "at": "2026-11-21T15:16:19.751218Z",
+  "producer": "seldon",
+  "producer_task": "3c39bd22",
+  "until": "2026-11-21T15:41:33.041502+00:00",
+  "hours": 0.42
+ },
+ {
+  "consumer": "hazbrief-mcp",
+  "consumer_task": "08fc3e57",
+  "at": "2026-11-24T15:34:02.008252Z",
+  "producer": "seldon",
+  "producer_task": "09520bb0",
+  "until": "2026-11-24T17:03:21.431087+00:00",
+  "hours": 1.49
+ },
+ {
+  "consumer": "factory",
+  "consumer_task": "0849ae4d",
+  "at": "2026-11-14T01:57:08.541416Z",
+  "producer": "squiddy",
+  "producer_task": "23a40bfc",
+  "until": "2026-11-14T04:52:47.330629+00:00",
+  "hours": 2.93
+ }
+]

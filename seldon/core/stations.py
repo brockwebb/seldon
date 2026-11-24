@@ -625,17 +625,135 @@ def output_fingerprint(exit_code, stdout: str, stderr: str, volatile: list | tup
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
+#: SEL-043 (AD-037-R21): the host's power log, read for the seconds a gate slept. macOS's `pmset -g log` lists every
+#: Sleep, DarkWake and Wake with its local time and offset; no other platform's is read (asleep is then unknown).
+POWER_LOG_ARGV = ("pmset", "-g", "log")
+#: Seconds `pmset -g log` is given (it printed about 33,000 lines in under two seconds on this host, 2026-11-24).
+POWER_LOG_TIMEOUT_S = 30
+#: The power log is read only when wall seconds exceed monotonic seconds by more than this: `time.monotonic()` stops
+#: while macOS sleeps, so a smaller gap is clock jitter, not sleep, and costs no read.
+ASLEEP_PROBE_MIN_S = 2.0
+_POWER_STAMP_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) ")
+_POWER_LINE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}) (Sleep|Wake|DarkWake)\s+\t")
+
+
+def _iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def power_log_text() -> str | None:
+    """The host's power log (`POWER_LOG_ARGV`), or None when this host has none or it cannot be read."""
+    if sys.platform != "darwin" or shutil.which(POWER_LOG_ARGV[0]) is None:
+        return None
+    try:
+        r = subprocess.run(list(POWER_LOG_ARGV), capture_output=True, text=True, timeout=POWER_LOG_TIMEOUT_S)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def asleep_seconds(start: str, end: str, log_text: str | None) -> float | None:
+    """Seconds between `start` and `end` (ISO times) the host spent asleep, by its power log: each `Sleep` line until
+    the next `Wake` or `DarkWake` (monotonic time runs again in a dark wake), clipped to the window. None when there is
+    no power log or it does not reach back to `start` (macOS rotates it: on this host it began 2026-11-17 when read on
+    2026-11-24), never a guessed zero."""
+    if log_text is None:
+        return None
+    a, b = _parse_ts(start), _parse_ts(end)
+    first = None
+    marks = []
+    for line in log_text.splitlines():
+        stamp = _POWER_STAMP_RE.match(line)
+        if stamp and first is None:
+            first = datetime.strptime(stamp.group(1), "%Y-%m-%d %H:%M:%S %z")
+        m = _POWER_LINE_RE.match(line)
+        if m:
+            marks.append((datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S %z"), m.group(2)))
+    if first is None or first > a:
+        return None
+    marks.sort(key=lambda x: x[0])
+    total, asleep_from = 0.0, None
+    for at, kind in marks:
+        if kind == "Sleep":
+            asleep_from = asleep_from or at
+        elif asleep_from is not None:
+            lo, hi = max(a, asleep_from), min(b, at)
+            total += max(0.0, (hi - lo).total_seconds())
+            asleep_from = None
+    if asleep_from is not None:
+        total += max(0.0, (b - max(a, asleep_from)).total_seconds())
+    return round(total, 1)
+
+
+def wall_fields(started_at: str, ended_at: str, monotonic_s: float) -> dict:
+    """What a gate record carries beside its monotonic `seconds` (AD-037-R21): wall-clock start and end, wall seconds,
+    and `asleep_s` from the power log, read only when the two clocks disagree by more than `ASLEEP_PROBE_MIN_S`."""
+    wall = round((_parse_ts(ended_at) - _parse_ts(started_at)).total_seconds(), 3)
+    asleep = 0.0 if wall - monotonic_s <= ASLEEP_PROBE_MIN_S else \
+        asleep_seconds(started_at, ended_at, power_log_text())
+    return {"started_at": started_at, "ended_at": ended_at, "wall_seconds": wall, "asleep_s": asleep}
+
+
+def _streamed(argv: list, cwd: Path, env: dict, timeout_s: float, log: Path, header: str, command: str):
+    """Run `argv`, appending each line it prints to `log` as it is printed (AD-037-R20), stderr merged into stdout.
+    Returns `(returncode or None when it timed out, text)`. The log gets a `=== <time> | <header> | <command>` line
+    first and an `EXIT=` line last, as the gate runner's log does (`gate_plan.run`)."""
+    import threading
+    log = Path(log)
+    log.parent.mkdir(parents=True, exist_ok=True)
+    chunks: list = []
+    with log.open("a", encoding="utf-8") as fh:
+        fh.write(f"=== {_iso_now()} | {header} | {command}\n")
+        fh.flush()
+        proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1,
+                                start_new_session=True)
+
+        def pump():
+            for line in proc.stdout:
+                chunks.append(line)
+                fh.write(line)
+                fh.flush()
+        t = threading.Thread(target=pump, daemon=True)
+        t.start()
+        try:
+            code = proc.wait(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            # The whole group: a gate is a shell, a pytest and its workers.
+            import signal
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            code = None
+        t.join(timeout=10)
+        fh.write(f"\nEXIT={code if code is not None else 'timeout'}\n")
+    return code, "".join(chunks)
+
+
 def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None,
-              output: str | None = None, volatile: list | tuple | None = None, interpreter: str | None = None) -> dict:
+              output: str | None = None, volatile: list | tuple | None = None, interpreter: str | None = None,
+              stream_to: Path | None = None, stream_header: str = "check") -> dict:
     """Run one `check:` command in `cwd`, with `cwd` first on `PYTHONPATH` (`tree_path`). `outcome` is `pass`
     (exit 0), `fail`, or `unrunnable` (no reading). The row names the interpreter and the path it ran with, and
     carries `output_sha256` (`output_fingerprint`, masking `volatile`; the configured default when None).
 
     `interpreter` is the project's declared python (AD-037-R15): the check's `pytest`, `seldon` and `python` run as
     it, its `bin` is first on `PATH` and `VIRTUAL_ENV` is set (`interpreter_env`), and the row records it and the
-    `pytest` that `PATH` now resolves. None is today's check: the dispatcher's interpreter, its PATH, today's row."""
+    `pytest` that `PATH` now resolves. None is today's check: the dispatcher's interpreter, its PATH, today's row.
+
+    SEL-043: `stream_to` appends the output to that log line by line while the command runs (AD-037-R20; stderr is
+    then merged into stdout, so the fingerprint is over the merged text), and every row carries its wall-clock
+    `started_at`, `ended_at`, `wall_seconds` and `asleep_s` (AD-037-R21) beside the monotonic `seconds`."""
     if volatile is None:
         volatile = STATIONS_DEFAULTS["no_progress_volatile"]
+    started_at = _iso_now()
+    row = _run_check(command, cwd, timeout_s, env, output, volatile, interpreter, stream_to, stream_header)
+    return {**row, **wall_fields(started_at, _iso_now(), row.get("seconds") or 0.0)}
+
+
+def _run_check(command, cwd, timeout_s, env, output, volatile, interpreter, stream_to, stream_header) -> dict:
     started = time.monotonic()
     run_env = dict(os.environ if env is None else env)
     run_env["PYTHONPATH"] = tree_path(Path(cwd), run_env)
@@ -652,23 +770,32 @@ def run_check(command: str, cwd: Path, timeout_s: float, env: dict | None = None
     if output:
         run_env["SELDON_FIRST_ARTICLE_OUTPUT"] = output
     try:
-        proc = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout_s, env=run_env)
+        if stream_to is not None:
+            code, merged = _streamed(argv, cwd, run_env, timeout_s, stream_to, stream_header, command)
+            if code is None:
+                return {**row, "outcome": "fail", "exit": None, "seconds": round(time.monotonic() - started, 3),
+                        "tail": f"timed out after {timeout_s}s; output so far in {stream_to}: "
+                                f"{merged[-_TAIL_CHARS // 2:]}"}
+            stdout, stderr = merged, ""
+        else:
+            proc = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout_s, env=run_env)
+            code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
     except FileNotFoundError as exc:
         return {**row, "outcome": "unrunnable", "exit": 127, "seconds": round(time.monotonic() - started, 3),
                 "tail": str(exc)}
     except subprocess.TimeoutExpired:
         return {**row, "outcome": "fail", "exit": None, "seconds": round(time.monotonic() - started, 3),
                 "tail": f"timed out after {timeout_s}s"}
-    text = (proc.stdout or "") + (proc.stderr or "")
-    if proc.returncode == 0:
+    text = (stdout or "") + (stderr or "")
+    if code == 0:
         outcome = "pass"
-    elif proc.returncode in UNRUNNABLE_EXITS or (proc.returncode in (2, 4) and _USAGE_LINE_RE.search(text)):
+    elif code in UNRUNNABLE_EXITS or (code in (2, 4) and _USAGE_LINE_RE.search(text)):
         outcome = "unrunnable"
     else:
         outcome = "fail"
-    return {**row, "outcome": outcome, "exit": proc.returncode, "seconds": round(time.monotonic() - started, 3),
+    return {**row, "outcome": outcome, "exit": code, "seconds": round(time.monotonic() - started, 3),
             "tail": text[-_TAIL_CHARS:],
-            "output_sha256": output_fingerprint(proc.returncode, proc.stdout, proc.stderr, volatile)}
+            "output_sha256": output_fingerprint(code, stdout, stderr, volatile)}
 
 
 #: A huddle's reason when a check names a file its tree lacks and the session's branch holds (AD-038-R4): the station
@@ -1233,21 +1360,112 @@ def environment_repositories(project_dir: Path, config: dict, scfg: dict) -> dic
     return {str(n): str((project_dir / p).resolve()) for n, p in repos.items()}
 
 
+#: SEL-043 (AD-037-R17): the pass-lease phases in which a producer's dispatcher writes its own primary checkout, which
+#: is what every consumer imports (Part A: each consumer's seldon and squiddy are editable installs of the producers'
+#: primary checkouts). A lease with no phase (a holder running code from before R17) is read as writing: fail-safe.
+HOLDING_PHASES = ("pass", "merge")
+
+
+def _holds(body: dict, consumer: Path, reads: dict) -> str | None:
+    """Why a producer's held lease holds this consumer now, or None when it does not (AD-037-R17).
+
+    It holds while the producer writes its primary checkout (`HOLDING_PHASES`, or no phase recorded), and, in any
+    phase, while its session writes by path into this consumer or into a repository this consumer reads (`writes`,
+    the task's Repo line, DISP-004R)."""
+    phase = body.get("phase")
+    if phase is None:
+        return "the holder records no phase (code from before AD-037-R17), so it may be writing its primary checkout"
+    if phase in HOLDING_PHASES:
+        return f"the holder is in its {phase} phase, in which it writes its primary checkout"
+    mine = {str(Path(consumer).resolve()): "this project"} | {str(Path(p).resolve()): n for n, p in reads.items()}
+    hit = sorted(mine[str(Path(w).resolve())] for w in body.get("writes") or [] if str(Path(w).resolve()) in mine)
+    if hit:
+        return f"the holder's task writes {', '.join(hit)} by path during its {phase}"
+    return None
+
+
+def environment_pin(repo: Path) -> dict:
+    """AD-037-R18: the revision of a producer's primary checkout a launch reads, `{head, branch, dirty}`; a path that
+    is not a git checkout pins `head: None`. A consumer imports the producer's working tree live, so this is the
+    version it ran against, and `dirty` says whether that tree was its commit."""
+    def git(*a):
+        return subprocess.run(["git", "-C", str(repo), *a], capture_output=True, text=True)
+    head = git("rev-parse", "HEAD")
+    if head.returncode != 0:
+        return {"head": None, "branch": None, "dirty": None}
+    status = git("status", "--porcelain", "--untracked-files=no")
+    return {"head": head.stdout.strip(), "branch": git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip() or None,
+            "dirty": bool(status.stdout.strip()) if status.returncode == 0 else None}
+
+
+def _lease_view(body: dict, path: str, why: str) -> dict:
+    """What a refusal record and `seldon dispatch status` say about a producer's lease (AD-037-R17)."""
+    return {"path": path, "holder": body.get("holder"), "task": body.get("task"), "acquired_at": body.get("acquired_at"),
+            "phase": body.get("phase"), "phase_since": body.get("phase_since"), "writes": body.get("writes") or [],
+            "gate": gate_progress(body.get("gate")) if body.get("gate") else None, "why": why}
+
+
 def environment_premise(project_dir: Path, config: dict, scfg: dict, lease_held: Callable[[Path], dict | None]) -> dict:
-    """The premise the dispatcher adds to every task (QC-002 Part B step 3, from SQ-015's kit pass): no other
-    project's dispatcher holds its lease on a repository this task's environment names. `lease_held(repo)` returns
-    the holding lease body or None."""
+    """The premise the dispatcher adds to every task (QC-002 Part B step 3, from SQ-015's kit pass), narrowed by
+    SEL-043 (AD-037-R17): no other project's dispatcher is changing what this task reads from a repository its
+    environment names. `lease_held(repo)` returns the holding lease body or None.
+
+    `held` names each lease that holds this task now (`_holds`), with its holder, task, phase, since when and its
+    gate's progress; `not_holding` names each held lease that does not, and why; `pins` is each producer's revision
+    as this review read it (AD-037-R18)."""
     from seldon.core import worktree as WT
-    held = {}
-    for name, path in environment_repositories(project_dir, config, scfg).items():
-        if Path(path).resolve() == WT.anchor(Path(project_dir)).resolve():
-            continue
+    here = WT.anchor(Path(project_dir)).resolve()
+    reads = {n: p for n, p in environment_repositories(project_dir, config, scfg).items()
+             if Path(p).resolve() != here}
+    held, not_holding, pins = {}, {}, {}
+    for name, path in reads.items():
+        pins[name] = environment_pin(Path(path))
         body = lease_held(Path(path))
-        if body:
-            held[name] = {"path": path, "holder": body.get("holder"), "task": body.get("task"),
-                          "acquired_at": body.get("acquired_at")}
-    return {"statement": "no other project's dispatcher holds a lease on a repository this task's environment names",
-            "kind": "check", "source": "dispatcher", "outcome": "false" if held else "true", "held": held}
+        if not body:
+            continue
+        why = _holds(body, here, reads)
+        if why:
+            held[name] = _lease_view(body, path, why)
+        else:
+            not_holding[name] = _lease_view(body, path, f"the holder is in its {body.get('phase')} phase, which "
+                                                         f"changes nothing this project reads (AD-037-R17)")
+    return {"statement": "no other project's dispatcher is changing what this task reads from a repository its "
+                         "environment names (AD-037-R17)",
+            "kind": "check", "source": "dispatcher", "outcome": "false" if held else "true", "held": held,
+            "not_holding": not_holding, "pins": pins}
+
+
+def gate_progress(gate: dict | None, now: str | None = None) -> dict | None:
+    """How far a running gate has got, read from its log (AD-037-R20): wall seconds since it started, the lines it
+    has written since `offset`, its last non-empty line, how long ago the log last grew, and whether it has written
+    its `EXIT=` line. A gate whose log is missing reads zero lines. `now` is an ISO time, for tests."""
+    if not gate:
+        return None
+    log = Path(gate.get("log") or "")
+    offset = int(gate.get("offset") or 0)
+    text, age = "", None
+    if log.is_file():
+        with log.open("rb") as fh:
+            fh.seek(offset)
+            text = fh.read().decode("utf-8", "replace")
+        age = round(max(0.0, time.time() - log.stat().st_mtime), 1)
+    lines = [x for x in text.splitlines() if x.strip()]
+    content = [x for x in lines if not x.startswith("=== ") and not x.startswith("EXIT=")]
+    started = _parse_ts(gate.get("started_at"))
+    at = _parse_ts(now) if now else datetime.now(timezone.utc)
+    return {"call_site": gate.get("call_site"), "log": str(log), "started_at": gate.get("started_at"),
+            "elapsed_wall_s": round((at - started).total_seconds(), 1) if started else None,
+            "lines": len(lines), "last_line": (content[-1][:200] if content else None),
+            "last_output_age_s": age, "finished": any(x.startswith("EXIT=") for x in lines)}
+
+
+def _parse_ts(s: str | None):
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def review_premises(project_dir: Path, text: str, scfg: dict, run: Callable[..., dict] = run_check,

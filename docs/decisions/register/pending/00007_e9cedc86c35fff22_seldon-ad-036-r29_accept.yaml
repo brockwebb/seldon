@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-036-R29
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: A rebuilt release that the kit's reader refuses when opened (IndexSchemaError) shall be release_unavailable, naming the release, the commit and the reader's message.
+source:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  lines:
+  - 71
+  - 72
+  sha256: 2740ffa14031bcc2c5eda6f0337eedbe61a456bd51af3daf1e8e55e2375d6280
+  text: |-
+    - **AD-036-R29. A rebuilt release that the kit's reader refuses when it opens it (`IndexSchemaError`) is `release_unavailable`, naming the release, the commit it was rebuilt from and the reader's message; any other error of the reader is raised as it was.**
+      The error class is looked up on the kit by name, so a kit from before SQ-139 still imports.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  anchor: AD-036-R29
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- tests/r9_shim.py
+- tests/conftest.py
+- tests/test_no_live_model_calls.py
+- seldon/core/prior_art.py
+- tests/test_sel043_release_rows.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: e9cedc86c35fff225d355f2915c5e8ce2a878516699f71772c6a98fb3fa85da2

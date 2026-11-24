@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-037-R18
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: A launch shall record, for each producer its environment names, the revision of the producer's primary checkout it read (head, branch, dirty).
+source:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  lines:
+  - 109
+  - 112
+  sha256: 83b21fddfbccde0b55973010f55fddd569eb3c790528754181d7e7b1940cf49d
+  text: |-
+    - **AD-037-R18. A launch records, for each producer its environment names, the revision of the producer's primary checkout it read: `pins` in the premise review, `{head, branch, dirty}`.**
+      A consumer imports the producer's working tree live (section 1 item 1), so the pin is a record of the version run
+      against, not an isolation. A producer that merges during the consumer's session changes the code under it, as it
+      always could; the pin says from which revision.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  anchor: AD-037-R18
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- seldon/core/dispatch.py
+- seldon/core/stations.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/gate_record.py
+- seldon/core/gate_plan.py
+- tests/test_sel043_environment_window.py
+- tests/test_sel043_running_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 8077f82b94821941921b68b929799497b7c7ec9eb892c8d4c7aae98986818d78

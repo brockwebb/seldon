@@ -1,0 +1,44 @@
+event: accept
+id: seldon:AD-037-R17
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: 'Station (a) shall hold a consumer on a producer''s lease only while the producer can be changing what the consumer reads: in the producer''s pass and merge phases, when the lease records no phase, and in any phase while the producer''s task writes, by path, the consumer or a repository the consumer reads.'
+source:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  lines:
+  - 102
+  - 108
+  sha256: 83b21fddfbccde0b55973010f55fddd569eb3c790528754181d7e7b1940cf49d
+  text: |-
+    - **AD-037-R17. Station (a) holds a consumer on a producer's lease only while the producer can be changing what the consumer reads: in the producer's pass and merge phases, when the lease records no phase, and in any phase while the producer's task writes, by path, the consumer or a repository the consumer reads.**
+      The pass lease records `phase` (`pass`, `session`, `gate`, `merge`) and `phase_since`; the holder marks them
+      (`mark_phase`). A lease starts in `pass`; the serial pass marks `session` before the CLI runs, with `writes` (the
+      Repo line's other repositories); a gate marks `gate` for its run and puts the previous phase back; the finish marks
+      `merge` when it starts and whenever it takes the lease. A lease with no phase is a holder running code from before
+      this ruling and holds, as before (fail-safe). A refusal is recorded once per holding window (`acquisitions` and
+      `windows`), so a serial producer's one lease can refuse in its pass and again in its merge.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  anchor: AD-037-R17
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- seldon/core/dispatch.py
+- seldon/core/stations.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/gate_record.py
+- seldon/core/gate_plan.py
+- tests/test_sel043_environment_window.py
+- tests/test_sel043_running_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: cc38aa4919d86b54b673016cea924f4b09045df145e8e4bad16ce1fd33063620

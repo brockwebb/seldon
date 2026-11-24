@@ -215,11 +215,14 @@ def coverage(repo: Path, tip: str, decl: dict, housekeeping, read: tuple | list 
 
 # ------------------------------------------------------------------------------------------------- the gate run
 
-def run(wt: Path, decl: dict, interpreter: Optional[str] = None, env: Optional[dict] = None) -> dict:
+def run(wt: Path, decl: dict, interpreter: Optional[str] = None, env: Optional[dict] = None,
+        log_path: Optional[Path] = None) -> dict:
     """Run the declared command in `wt` through the stations' runner (AD-037-R14's path, AD-037-R15's interpreter).
 
     The row is `run_check`'s, with `outcome` one of `pass`, `fail` or `unrunnable`, and `missing` naming the tools or
     modules an unrunnable gate lacked. Never raises for a gate that cannot start: that is a reading of its own.
+
+    SEL-043 (AD-037-R20): `log_path` gets the command's output line by line while it runs.
     """
     from seldon.core import stations as Q
     base = dict(os.environ if env is None else env)
@@ -229,7 +232,8 @@ def run(wt: Path, decl: dict, interpreter: Optional[str] = None, env: Optional[d
         return {"command": decl["command"], "interpreter": interpreter, "outcome": "unrunnable", "exit": None,
                 "seconds": 0.0, "missing": missing,
                 "tail": f"required tool(s) not on the gate's PATH: {', '.join(missing)}"}
-    row = Q.run_check(decl["command"], wt, decl["timeout_s"], env=base, interpreter=interpreter)
+    row = Q.run_check(decl["command"], wt, decl["timeout_s"], env=base, interpreter=interpreter,
+                      stream_to=log_path, stream_header="gate record")
     tail = row.get("tail") or ""
     if row["outcome"] == "fail" and row.get("exit") in decl["unrunnable_exits"]:
         row = {**row, "outcome": "unrunnable", "missing": [f"exit {row['exit']} (declared unrunnable)"]}
@@ -260,5 +264,7 @@ def commit_ledger(wt: Path, decl: dict, tip: str, outcome: str) -> dict:
 
 def summary(row: dict) -> dict:
     """What an event or a merge record keeps of a gate run."""
-    return {k: row.get(k) for k in ("command", "interpreter", "outcome", "exit", "seconds", "missing")
-            if row.get(k) is not None} | {"tail": (row.get("tail") or "")[-600:]}
+    # SEL-043 (AD-037-R21): the wall clock beside the monotonic `seconds`, which leave out sleep.
+    return {k: row.get(k) for k in ("command", "interpreter", "outcome", "exit", "seconds", "missing", "started_at",
+                                    "ended_at", "wall_seconds", "log_path")
+            if row.get(k) is not None} | {"asleep_s": row.get("asleep_s"), "tail": (row.get("tail") or "")[-600:]}

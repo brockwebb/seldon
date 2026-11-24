@@ -54,6 +54,11 @@ def _no_inherited_session_identity(monkeypatch):
 from tests.pytest_basetemp import _basetemp_removed_at_session_end  # noqa: E402,F401  (an autouse fixture)
 
 
+# ── Zero model calls by default (AD-036-R9, run on the session since SEL-043, AD-036-R28) ─────────────────────────
+
+from tests.r9_shim import pytest_configure, pytest_sessionfinish  # noqa: E402,F401  (hooks, registered by name)
+
+
 # ── Free-space isolation (SQ-010 ADDENDUM 02 D3.4; DN-043 R-184) ──────────────
 
 #: What every test's disk probe reports: a petabyte, so no test's outcome depends on how full this machine is.

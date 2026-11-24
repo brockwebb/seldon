@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-037-R19
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: Every environment_in_flight refusal and seldon dispatch status shall say, for each producer lease, who holds it, on which task, in which phase and since when, why it holds the project or not, and the progress of the gate it is running.
+source:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  lines:
+  - 113
+  - 116
+  sha256: 83b21fddfbccde0b55973010f55fddd569eb3c790528754181d7e7b1940cf49d
+  text: |-
+    - **AD-037-R19. Every `environment_in_flight` refusal and `seldon dispatch status` say, for each producer lease, who holds it, on which task, in which phase and since when, why it holds this project or not, and the progress of the gate it is running.**
+      The refusal's `held` carries the holder, task, `acquired_at`, `phase`, `phase_since`, `writes`, `why` and `gate`
+      (`gate_progress`); the dispatcher prints one line per lease. `status --json` adds `environment` (`held`,
+      `not_holding`, `pins`) and `lease_gate` for this project's own running gate; the text form prints each.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md
+  anchor: AD-037-R19
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- seldon/core/dispatch.py
+- seldon/core/stations.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch_stations.py
+- seldon/core/gate_record.py
+- seldon/core/gate_plan.py
+- tests/test_sel043_environment_window.py
+- tests/test_sel043_running_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: a0f3df26face1a020b94d51b97b834bc1ffe0c4bcf85ca91693a93b50af23d81

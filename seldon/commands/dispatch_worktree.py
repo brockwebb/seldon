@@ -663,6 +663,17 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
                    code, wall, log_path, offset, spec)
 
 
+def _merge_phased(project_dir: Path, cfg: dict, task_id: str, lease_cm):
+    """`lease_cm`, marking the pass lease `merge` once it is held (AD-037-R17): the supervisor's freshly taken lease
+    starts in `pass`, and a serial pass's comes back from a gate."""
+    @contextmanager
+    def phased():
+        with lease_cm() as held:
+            D.mark_phase(D.config_path(project_dir, cfg["lease_file"]), D.PHASE_MERGE, task=task_id)
+            yield held
+    return phased
+
+
 def finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
                    code, wall, log_path, offset, spec, name=None, lease_cm=None) -> None:
     """A worktree session has exited: merge on green, or block and keep its worktree (AD-034-R5, R6).
@@ -670,8 +681,12 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     Shared by the parallel supervisor and, since FRICTION-002, the serial pass. `lease_cm` is a zero-argument
     context manager factory for the pass lease; the supervisor takes it (the default), while a serial pass already
     holds it and passes `contextlib.nullcontext`.
+
+    SEL-043 (AD-037-R17): from here the round may write the primary checkout, so a pass lease this process holds is
+    marked `merge` now and whenever the lease is taken; a gate marks `gate` for its run (`_gate_phase`).
     """
-    lease_cm = lease_cm or (lambda: _pass_lease(project_dir, cfg))
+    lease_cm = _merge_phased(project_dir, cfg, task_id, lease_cm or (lambda: _pass_lease(project_dir, cfg)))
+    D.mark_phase(D.config_path(project_dir, cfg["lease_file"]), D.PHASE_MERGE, task=task_id)
     pending = extra.pop(NAMED_PENDING, None)
     if pending is not None:
         S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, pending)
@@ -973,6 +988,24 @@ def _task_name(driver, database, task_id):
 
 # ============================================================================== the merge
 
+@contextmanager
+def _gate_phase(project_dir: Path, cfg: dict, call_site: str, log: Path, task_id: str | None):
+    """SEL-043 (AD-037-R17, AD-037-R20): while a gate runs, the pass lease this process holds says so, with the gate's
+    log and where in it this run starts, so another project's station (a) lets its consumers launch and `seldon
+    dispatch status` shows the gate's progress. The phase before the gate is put back after it. A process that does
+    not hold the pass lease (the parallel supervisor) changes nothing."""
+    lease_path = D.config_path(project_dir, cfg["lease_file"])
+    log = Path(log)
+    gate = {"call_site": call_site, "log": str(log), "offset": log.stat().st_size if log.is_file() else 0,
+            "started_at": S._now()}
+    prev = D.mark_phase(lease_path, D.PHASE_GATE, task=task_id, gate=gate)
+    try:
+        yield
+    finally:
+        if prev is not None:
+            D.mark_phase(lease_path, prev)
+
+
 def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, base: str,
           task_id: str | None = None, branch: str | None = None, task_rel: str | None = None,
           linked=()) -> dict:
@@ -997,8 +1030,9 @@ def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, 
                        branch=branch, exclude=linked)
     except GP.GateConfigError as exc:
         plan = GP.unplanned(wt, base, str(exc), branch)
-    result = GP.run(wt, plan, gcfg, gate_command=cfg["gate_command"], timeout_s=cfg["gate_timeout_s"],
-                    log_path=log, primary=project_dir)
+    with _gate_phase(project_dir, cfg, call_site, log, task_id):
+        result = GP.run(wt, plan, gcfg, gate_command=cfg["gate_command"], timeout_s=cfg["gate_timeout_s"],
+                        log_path=log, primary=project_dir)
     rel = D.config_rel(project_dir, log)
     ev = GP.emit(project_dir, GP.record_payload(plan, result, call_site=call_site, events=events, task_id=task_id,
                                                 branch=branch, log_rel=rel), actor=S.ACTOR)
@@ -1132,7 +1166,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         gr = cfg.get(GR.CONFIG_KEY)
         record = None
         if gr:
-            got = _ensure_record(project_dir, cfg, wt, tip, gr, finish["task_id"], session_id, linked, run_record)
+            got = _ensure_record(project_dir, cfg, wt, tip, gr, finish["task_id"], session_id, linked, run_record,
+                                 stem=stem)
             if not got["ok"]:
                 return blocked(got["reason"], got["files"], attempt=attempt, **got["detail"])
             tip, record = got["tip"], got["record"]
@@ -1267,7 +1302,8 @@ def last_recorded(project_dir: Path, task_id: str, tree: str) -> dict | None:
     return hit
 
 
-def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id) -> dict:
+def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id,
+                stem: str | None = None) -> dict:
     """Run the declared gate command in the worktree and commit the line it appended (AD-034-R16), or, under
     `branch_line: discard`, read it into the event and restore the ledger.
 
@@ -1279,8 +1315,13 @@ def record_pass(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task
     from seldon.core import stations as Q
     scfg = Q.load_stations_config(cfg, project_dir)
     env = {**os.environ, WT.PRIMARY_CHECKOUT_ENV: str(project_dir)}
-    click.echo(f"gate record: running `{gr['command']}` in {wt.name} for {tip[:12]} (AD-034-R16)")
-    row = GR.run(wt, gr, interpreter=scfg.get("interpreter"), env=env)
+    # SEL-043 (AD-037-R20): the gate's output goes to the task's gate log in the dispatch log directory while it runs,
+    # the log the merge round's other gates write (`_gate`), and the lease names it for `status` and station (a).
+    log = D.config_path(project_dir, cfg["log_dir"]) / f"{stem or wt.name}.gate.log"
+    click.echo(f"gate record: running `{gr['command']}` in {wt.name} for {tip[:12]} (AD-034-R16); output: "
+               f"{D.config_rel(project_dir, log)}")
+    with _gate_phase(project_dir, cfg, "gate_record", log, task_id):
+        row = GR.run(wt, gr, interpreter=scfg.get("interpreter"), env=env, log_path=log)
     payload = {"task_id": task_id, "worktree": D.config_rel(project_dir, wt), "tip": tip, "tree": _tree_of(wt, tip),
                "ledger": gr["ledger"], "gate": GR.summary(row), "outcome": row["outcome"]}
     if row["outcome"] == "unrunnable":
@@ -1319,7 +1360,7 @@ def _refusal(reason: str, gr: dict, **detail) -> dict:
 
 
 def _ensure_record(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, task_id: str, session_id,
-                   linked: list, run_record: bool) -> dict:
+                   linked: list, run_record: bool, stem: str | None = None) -> dict:
     """The merge round's record step: `{ok, tip, record}` with the tip to merge, or `{ok: False, reason, files,
     detail}`, the block. Reads the ledger first; runs the command only when `run_record` and no line covers the tip."""
     cov = _coverage(project_dir, cfg, wt, tip, gr, task_id)
@@ -1331,7 +1372,7 @@ def _ensure_record(project_dir: Path, cfg: dict, wt: Path, tip: str, gr: dict, t
             return _refusal(GR.GATE_UNRUNNABLE, gr, record=cov, gate=last["gate"])
         return _refusal(GR.PASS_UNRECORDED, gr, record=cov, gate=(last or {}).get("gate"),
                         deferred=None if last else "filing_lock")
-    rec = record_pass(project_dir, cfg, wt, tip, gr, task_id, session_id)
+    rec = record_pass(project_dir, cfg, wt, tip, gr, task_id, session_id, stem=stem)
     if rec["outcome"] == "unrunnable":
         return _refusal(GR.GATE_UNRUNNABLE, gr, record=cov, gate=rec["gate"])
     dirt = WT.dirty_paths(wt, exclude=linked)

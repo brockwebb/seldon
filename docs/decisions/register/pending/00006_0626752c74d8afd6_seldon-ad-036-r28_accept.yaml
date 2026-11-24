@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-036-R28
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: AD-036-R9's recording shim may run on the outer test session itself, inherited by every worker and subprocess, failing a session in which it recorded a call, provided the suite carries its positive and negative controls.
+source:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  lines:
+  - 62
+  - 70
+  sha256: 2740ffa14031bcc2c5eda6f0337eedbe61a456bd51af3daf1e8e55e2375d6280
+  text: |-
+    - **AD-036-R28. R9's recording shim may run on the outer test session itself: the suite's controller puts it first on PATH for the whole session, every worker and subprocess inherits it, and a session in which it recorded a call fails, naming the calls.**
+      It is accepted by its controls, which the suite carries: a planted call fails a session with only the shim loaded,
+      serially and under xdist; a clean session passes; and the running session checks that `claude` resolves to its
+      shim. `LIVE_MODEL_CALLS=1` (R9's opt-in) turns it off. seldon replaces its nested run with it
+      (`tests/r9_shim.py`). What a consumer running the instrument may now do: (a) run the shim on its outer session in
+      place of a nested run, with the same three controls, which costs no run time and covers every test file; or (b)
+      keep a nested run and run it once per commit rather than once per run (once per kit pass in squiddy), since its
+      assertion is a property of the commit. Whether a kit pass may share one reading across its runs is squiddy's to rule
+      (its R-184); (a) needs no such ruling, because every run is then its own instrument.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  anchor: AD-036-R28
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- tests/r9_shim.py
+- tests/conftest.py
+- tests/test_no_live_model_calls.py
+- seldon/core/prior_art.py
+- tests/test_sel043_release_rows.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 0626752c74d8afd6ee3be115b37a4945cb09578968c7c6f678de8bc19aa0f1e3

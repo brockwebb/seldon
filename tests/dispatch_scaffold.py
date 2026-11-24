@@ -182,6 +182,10 @@ if spec.get("dump_env"):
         {{k: v for k, v in os.environ.items() if k.startswith("ANTHROPIC_DEFAULT_")}}))
 if spec.get("pidfile"):
     Path(spec["pidfile"]).write_text(str(os.getpid()))
+if spec.get("snapshot_lease"):
+    # SEL-043: the pass lease's body as the holder left it while this session runs (its phase, AD-037-R17).
+    Path(spec["snapshot_lease"]).write_text(
+        (Path(os.environ["SELDON_PRIMARY_CHECKOUT"]) / ".seldon" / "dispatch.lock").read_text())
 for rel, text in (spec.get("write") or {{}}).items():
     (cwd / rel).parent.mkdir(parents=True, exist_ok=True)
     with open(cwd / rel, "a") as fh:

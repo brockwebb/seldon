@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-036-R30
+date: '2026-11-24'
+decided_by: cc:bf0b7a06
+operator_stated: false
+receipts:
+- docs/evidence/sel043/refusals_table.md
+reason: 'SEL-043: from squiddy filings 44ba49df, 083863ef and 9fb2e0b8; evidence in docs/evidence/sel043'
+kind: decision
+status: accepted
+statement: seldon shall read an older release's rows through the kit's release_rows call when the installed kit has it, and otherwise as before, with arm A's rule recorded as a known limit beside AD-036-R19.
+source:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  lines:
+  - 73
+  - 78
+  sha256: 2740ffa14031bcc2c5eda6f0337eedbe61a456bd51af3daf1e8e55e2375d6280
+  text: |-
+    - **AD-036-R30. seldon reads an older release's rows through the kit's `release_rows(graph, manifest, *, commit)` when the installed kit has it, and otherwise as before; until then the rows come from arm A's rule, a known limit beside AD-036-R19.**
+      The call is asked of squiddy: it returns the rows of the release recorded at `commit` under the row rule that
+      release was cut under, and refuses as `iter_rows` does (SystemExit naming the unit) when a unit has none. It is
+      feature-checked by name (`KIT_RELEASE_ROWS`). The known limit until it exists: for the library, 3 of 2,261 units'
+      rows differ from what the releases served and rebuilt rows carry no `text_sha256`; for a `text_of_record: parsed`
+      graph, every older release is `release_unavailable`. No row read changes before the kit's call exists.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
+  anchor: AD-036-R30
+consumer:
+- cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md
+- tests/r9_shim.py
+- tests/conftest.py
+- tests/test_no_live_model_calls.py
+- seldon/core/prior_art.py
+- tests/test_sel043_release_rows.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 88b680743170544f88d7717a4c1ad0822833c057f1e94f73cbd1bda47f65e897

@@ -139,6 +139,13 @@ def premise_review(project_dir: Path, config: dict, cfg: dict, row: dict, run=S.
     return review
 
 
+def environment_now(project_dir: Path, config: dict, cfg: dict, lease_held=None) -> dict:
+    """Station (a)'s environment premise as it reads now, for `seldon dispatch status` (SEL-043, AD-037-R17): which
+    producers' leases hold this project, which are held and do not, each with its phase and gate progress, and the
+    pins. Reads only; records nothing."""
+    return S.environment_premise(project_dir, config, _scfg(cfg), lease_held or _sibling_lease)
+
+
 def last_premise_review(project_dir: Path, cfg: dict) -> dict | None:
     path = _lease_dir(project_dir, cfg) / PREMISE_REVIEW_FILE
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None

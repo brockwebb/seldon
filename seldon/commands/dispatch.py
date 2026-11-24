@@ -584,6 +584,8 @@ def dispatch_status(as_json):
     finally:
         driver.close()
     cadence_rows = _cadence_rows(project_dir, cfg)
+    # SEL-043 (AD-037-R17): the producers' leases as station (a) reads them now, with phase and gate progress.
+    environment = _stations_mod().environment_now(project_dir, config, cfg)
     # AD-034 ADDENDUM 05: a fact about the checkout, reported once at the top as well as per task (c16).
     union = D.union_state(project_dir)
     payload = {"enabled": cfg["enabled"], "branch": tree["branch"],
@@ -598,6 +600,8 @@ def dispatch_status(as_json):
                "standing_band": band, "standing_band_ref": cfg["standing_band_ref"],
                "permission_mode": cfg["permission_mode"],
                "lease": lease_body or None, "claim_in_flight": claim,
+               "lease_gate": QS.gate_progress((lease_body or {}).get("gate")),
+               "environment": environment,
                "open_tasks": len(rows),
                "candidates": sum(1 for r in rows if r["candidate"]),
                "eligible": [r["task_id"] for r in rows if r["eligible"]],
@@ -624,7 +628,17 @@ def dispatch_status(as_json):
     held = (lease_body or {}).get("holder")
     click.echo(f"  lease        : {held or 'free'}"
                + (f" (released {lease_body['released_at']})"
-                  if not held and (lease_body or {}).get("released_at") else ""))
+                  if not held and (lease_body or {}).get("released_at") else "")
+               + (f", phase {lease_body.get('phase') or 'unrecorded'} since {lease_body.get('phase_since')}"
+                  if held else ""))
+    if held and payload["lease_gate"]:
+        for line in environment_lines({"this project": {**lease_body, "gate": payload["lease_gate"],
+                                                        "why": "its own gate"}}, "holds"):
+            click.echo(f"                 {line}")
+    for line in environment_lines(environment["held"], "holds"):
+        click.echo(f"  environment  : HOLDS this project: {line}")
+    for line in environment_lines(environment["not_holding"], "holds"):
+        click.echo(f"  environment  : not holding: {line}")
     click.echo(f"  claim        : {claim['artifact_id'][:8] + ' by ' + claim['claimed_by'] if claim else 'none'}")
     click.echo(f"  max_parallel : {cfg['max_parallel']}  (every task in a worktree under "
                f"{D.CLI_WORKTREE_DIR}/, gate: {cfg['gate_command']})")
@@ -1672,6 +1686,10 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
              "linked": [], "model_spec": spec, "push_repos": push_repos, "resume": plan}
     click.echo(f"launching {chosen['task_id'][:8]} {rel} in a worktree the CLI names -> {log_rel}")
 
+    # SEL-043 (AD-037-R17): while the session runs, this pass writes nothing to its primary checkout, so the lease says
+    # so; another project's station (a) then holds its tasks only when this task writes, by path, a repository they
+    # read (`writes`: the Repo line's other repositories, DISP-004R).
+    D.mark_phase(lease.path, D.PHASE_SESSION, task=chosen["task_id"], writes=[x["repo"] for x in push_repos])
     started = time.monotonic()
     offset = _log_offset(log_path)
     # The CLI is started in the PRIMARY checkout: `--worktree <stem>` resolves `.claude/worktrees/<stem>` against
@@ -2395,6 +2413,26 @@ def _launch_holds(project_dir: Path) -> dict:
     return holds
 
 
+def environment_lines(leases: dict, verb: str) -> list:
+    """One line per producer lease for a person (SEL-043, AD-037-R17): who holds it, on which task, in which phase,
+    since when, why it holds this project or not, and the running gate's progress (wall time, AD-037-R21)."""
+    out = []
+    for name in sorted(leases):
+        h = leases[name]
+        line = (f"{name}: {h.get('holder')} {verb} it, task {str(h.get('task') or 'none')[:8]}, phase "
+                f"{h.get('phase') or 'unrecorded'} since {h.get('phase_since') or h.get('acquired_at')}; {h.get('why')}")
+        g = h.get("gate")
+        if g:
+            wall, age = g.get("elapsed_wall_s"), g.get("last_output_age_s")
+            ran = "?" if wall is None else f"{wall / 60:.0f} min"
+            last = "never" if age is None else f"{age:.0f} s ago"
+            state = "finished" if g.get("finished") else "running"
+            line += (f"; gate {g.get('call_site')} {state} {ran} (wall), {g.get('lines')} line(s) in {g.get('log')}, "
+                     f"last output {last}" + (f": {g['last_line']}" if g.get("last_line") else ""))
+        out.append(line)
+    return out
+
+
 def _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row, dry_run) -> dict:
     """Station (a) for one eligible task, with its refusal: `environment_in_flight` once per sibling lease
     acquisition (a standing condition, recorded where it begins), `premise_false` with an Issue naming the
@@ -2408,16 +2446,19 @@ def _premise_review(project_dir, config, driver, database, domain_config, sessio
     env = review["environment"]
     if env["outcome"] != "true":
         acquisitions = {n: h.get("acquired_at") for n, h in env["held"].items()}
+        # SEL-043 (AD-037-R17): once per holding WINDOW, not per acquisition: a serial producer's one lease holds in
+        # its pass and again in its merge, with its session and gate between, and each window is a refusal of its own.
+        windows = {n: h.get("phase_since") for n, h in env["held"].items()}
         seen = _last_payload(project_dir, D.EVENT_REFUSED,
                              where=lambda p: p.get("reason") == S.REFUSED_ENVIRONMENT_IN_FLIGHT
-                             and p.get("acquisitions") == acquisitions)
+                             and p.get("acquisitions") == acquisitions and p.get("windows") == windows)
         if seen is None:
             _emit(project_dir, session_id, D.EVENT_REFUSED,
                   {"task_id": row["task_id"], "reason": S.REFUSED_ENVIRONMENT_IN_FLIGHT, "held": env["held"],
-                   "acquisitions": acquisitions})
+                   "acquisitions": acquisitions, "windows": windows})
             _record_and_push(project_dir, config, cfg)
-        click.echo(f"refused: {S.REFUSED_ENVIRONMENT_IN_FLIGHT}: a dispatcher holds a lease on "
-                   f"{', '.join(sorted(env['held']))}, which this project's environment names", err=True)
+        for line in environment_lines(env["held"], "holds"):
+            click.echo(f"refused: {S.REFUSED_ENVIRONMENT_IN_FLIGHT}: {line}", err=True)
         return review
     false = review["false"]
     names = "; ".join(f"line {f.get('line')}: {f.get('statement')} ({f.get('outcome')})" for f in false)

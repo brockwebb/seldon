@@ -1,0 +1,4 @@
+52 refusals; 3 named a producer task that declared writes to other repositories
+('squiddy', 'seldon', '841bd7c7', ['squiddy'])
+('hazbrief-mcp', 'seldon', 'c4d813a9', ['hazbrief-mcp'])
+('hazbrief-mcp', 'seldon', '0a8a6776', ['hazbrief-mcp'])
