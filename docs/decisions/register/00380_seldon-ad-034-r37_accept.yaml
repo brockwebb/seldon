@@ -1,26 +1,27 @@
+seq: 380
 event: accept
-id: seldon:AD-034-R36
+id: seldon:AD-034-R37
 date: '2026-11-21'
 decided_by: cc:9d9caf94
 operator_stated: false
 receipts:
-- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:109: AD-034-R36'
+- 'docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md:110: AD-034-R37'
 reason: 'SEL-041: from hazbrief a844c156 and the operator''s order of 2026-11-21; evidence in docs/evidence/sel041'
 kind: decision
 status: accepted
-statement: seldon verify and seldon go shall warn when the median of the last ten scoped gates exceeds warn_seconds or a project has a gate command and no slices, and qc chart shall report gate seconds per week by tier with escapes.
+statement: The selection mechanism shall be seldon's; a consumer declares slices, a threshold and a cadence and writes no selection code, and a project with no slices behaves as before.
 source:
   path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
   lines:
-  - 109
-  - 109
+  - 110
+  - 110
   sha256: 22d32a9a4881f45374f4b2d26bdd1c141cc62dc12f3c85f8b1b860ffaae5e365
-  text: '- **AD-034-R36. A project is told: `seldon verify` and `seldon go` warn, never fail, when the median wall seconds of the project''s last ten scoped gates exceed `dispatch.gate.warn_seconds`, and when a project declares a `gate_command` and no slices; `seldon qc chart` reports gate seconds per week by tier, with escapes.**'
+  text: '- **AD-034-R37. The selection mechanism is seldon''s: a consumer declares slices, a threshold and a cadence, and writes no selection code. A project that declares no slices behaves as it did before this addendum, AD-034-R26''s merge gate included, with R36''s warning.**'
 scope:
 - seldon
 rationale:
   path: docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
-  anchor: AD-034-R36
+  anchor: AD-034-R37
 consumer:
 - cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
 - seldon/core/gate_plan.py
@@ -36,4 +37,6 @@ consumer:
 - tests/test_sel041_gate_call_sites.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: ad5b6f5c394313821cd2cda2dada0ca36d6c0fb6c4271a5b3dab5601efe9f689
+provisional_id: 53f53a335f211711d002a4297777207907671d3d6989906c2769a8c1833e01c9
+prev_hash: f1b5c0ebcd626b21dbedef15268bfd6ea232d71ce10d4c925e3ea4b6e68a4a03
+record_hash: 3d67556ec8cd995f129a6782e5c4505318e02025cd215890978b4e9de7b60040
