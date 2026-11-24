@@ -1,0 +1,46 @@
+SEL-045R landing evidence (task 8315cc7a), written 2026-11-24 by the dispatched session on branch
+worktree-logical-hatching-cocke. Round four, under ADDENDUM 02 (replayed commits, not a merge).
+
+== The kept branch, replayed (Part A item 2 as ADDENDUM 02 reads) ==
+launch tip (main at launch, step 1):  223eb088cf370175a85d86e166458c8b11398bd4
+kept branch reset to (step 2):        worktree-modular-knitting-hinton = 0feb86c36d2c5a83a483756f56efaea267bd3f4e
+rebase onto launch tip (step 3):      20 commits replayed; exactly one stop, at 9fbb780 (SEL-041 Parts C and E),
+                                      seldon/commands/dispatch_worktree.py, _merge(), the reconciled = KE.reconciled_ids(...) line
+resolution (step 4):                  both sides, SEL-041 first: its comment + session_tree = _tree_of(wt, "HEAD"),
+                                      then SEL-046's comment + reconciled = KE.reconciled_ids(project_dir, S._store_rel(config))
+                                      (two-argument call; the old three-argument call dropped). Same shape as
+                                      worktree-hashed-gathering-galaxy:docs/evidence/sel045r/conflict_resolution_tested.diff.
+                                      9fbb780 replayed as 3e4480c.
+replayed tip:                         35b4a020f0babcffa24efe749de2a0d44b78e21a  (SEL-045: RESULT; filing f478f2ea closed with the three facts)
+There is no merge commit: the kept branch came in as replayed commits (ADDENDUM 02 replaces the merge of item 2).
+
+git log --oneline --merges 223eb088..35b4a020   -> (prints nothing)
+git rev-list --count 223eb088..35b4a020         -> 20
+test -f seldon/core/gate_plan.py                -> present
+seldon.yaml dispatch.gate_timeout_s             -> 7200 (from the kept branch)
+
+ADDENDUM 01's five test files on the replayed tip:
+  python -m dotenv -f .env run -- env PYTHONPATH=. python -m pytest tests/test_sel041_gate_plan.py
+    tests/test_sel041_gate_call_sites.py tests/test_sel042_stopped_session_never_merges.py
+    tests/test_sel046_merged_kept_branch_dedupes.py tests/test_sel034_kept_worktree_events.py -q -p no:cacheprovider
+  -> 55 passed in 320.13s, exit 0
+
+The replayed branch carries duplicated event lines; this session did not remove them (ADDENDUM 02: the merge round
+drops them under SEL-046 and records it).
+
+== Criteria item 1 (what the dispatcher reads from the task file) ==
+seldon.core.criteria.acceptance_criteria(<task file>) ->
+  (34, '`check: test -f seldon/core/gate_plan.py` passes.')
+  (42, '`check: sh -c "python -m dotenv -f .env run -- env PYTHONPATH=. python -m pytest tests/test_sel041_gate_plan.py tests/test_sel041_gate_call_sites.py tests/test_sel042_stopped_session_never_merges.py -q -p no:cacheprovider"` passes.')
+  (43, '`check: grep -q d6040ce8 seldon.yaml` passes.')
+  (52, '`check: test -s docs/evidence/sel045r/landed.txt` passes.')
+Four criteria, each a check: item.
+
+== Part B ==
+first check, run by the session before the Stop gate: 48 passed in 242.07s, exit 0
+  (test_sel041_gate_plan.py, test_sel041_gate_call_sites.py, test_sel042_stopped_session_never_merges.py)
+gate_command as changed (commit 87b47f5), as YAML loads it:
+  python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q -p no:cacheprovider --deselect tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
+The comment above the key names Issue d6040ce8 and gives the reason. The test file stays and the Issue stays open.
+seldon.core.gate_plan.load_gate_config(dispatch.gate, dispatch.gate_command) loads without error.
+The full suite was not run (task: SEL-045 ran it on this tree).
