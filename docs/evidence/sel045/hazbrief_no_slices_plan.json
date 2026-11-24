@@ -1,0 +1,38 @@
+{
+ "clone_head": "01049510f8659b75de0df7cf61cf8f20d03124e2",
+ "gate_command_in_seldon_yaml": "uv run pytest tests/ -q -p no:cacheprovider -n auto --maxprocesses 6 --dist loadfile -m 'not slow and not load_sensitive' && uv run pytest tests/ -q -p no:cacheprovider -n 3 --dist loadgroup -m 'load_sensitive and not slow' && uv run ruff check . && uv run ruff format --check .",
+ "plan": {
+  "always": {
+   "changed_tests": [],
+   "last_failed": []
+  },
+  "base": "main",
+  "change_set": "0d6e4079e36703eb",
+  "changed": [],
+  "commands": [],
+  "commit": "01049510f8659b75de0df7cf61cf8f20d03124e2",
+  "dirty": false,
+  "files_selected": 197,
+  "files_total": 197,
+  "fork": "01049510f8659b75de0df7cf61cf8f20d03124e2",
+  "markers": [],
+  "reason": "no_slices",
+  "reasons": [
+   "no_slices"
+  ],
+  "slices": {},
+  "tests": [],
+  "tier": "full",
+  "tree": "83922ab08f64c2a8595c77feb88eca6933920896",
+  "unmatched": []
+ },
+ "repository": "hazbrief-mcp",
+ "slices_declared": false,
+ "steps": [
+  [
+   "full",
+   "uv run pytest tests/ -q -p no:cacheprovider -n auto --maxprocesses 6 --dist loadfile -m 'not slow and not load_sensitive' && uv run pytest tests/ -q -p no:cacheprovider -n 3 --dist loadgroup -m 'load_sensitive and not slow' && uv run ruff check . && uv run ruff format --check ."
+  ]
+ ],
+ "would_run_equals_gate_command_bytes": true
+}

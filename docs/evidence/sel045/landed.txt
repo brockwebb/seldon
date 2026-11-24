@@ -1,0 +1,38 @@
+SEL-045 (task 09520bb0): SEL-041's kept branch landed on this branch.
+
+merge commit: 7a49fd248b6772255d561661b61fb346213ce61d (Merge branch 'worktree-splendid-seeking-russell'; branch tip ff9aab8; no conflicts; ae6c38d, gate_timeout_s 7200, is an ancestor)
+suite (-n 6, this branch after the merge): 3509 passed, 3 failed, 7 skipped in 1740 s. Failed: test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index (fails on main); test_sel024_gate_record::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing and test_dispatch_parallel::test_union_merge_of_two_event_appends_is_valid (load flakes SEL-041's RESULT lists; both pass alone: 2 passed in 91 s)
+hazbrief plan: hazbrief-mcp main 01049510 (gate_command, no slices) plans tier full, reason no_slices, one step whose command equals its dispatch.gate_command byte for byte; not run (hazbrief_no_slices_plan.json)
+
+SEL-041 files now on this branch (56):
+  cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points_RESULT.md
+  docs/decisions/register/pending/00001_857aa7bd31dad42d_seldon-ad-034-r29_accept.yaml
+  docs/decisions/register/pending/00002_48f868cf97e36f65_seldon-ad-034-r30_accept.yaml
+  docs/decisions/register/pending/00003_2c9eb99e39c385cc_seldon-ad-034-r31_accept.yaml
+  docs/decisions/register/pending/00004_c4aaa2635a240e4b_seldon-ad-034-r32_accept.yaml
+  docs/decisions/register/pending/00005_da947bb648d33caa_seldon-ad-034-r33_accept.yaml
+  docs/decisions/register/pending/00006_ef1c64e29f69a0c9_seldon-ad-034-r34_accept.yaml
+  docs/decisions/register/pending/00007_24764851240f0e79_seldon-ad-034-r35_accept.yaml
+  docs/decisions/register/pending/00008_ad5b6f5c39431382_seldon-ad-034-r36_accept.yaml
+  docs/decisions/register/pending/00009_53f53a335f211711_seldon-ad-034-r37_accept.yaml
+  docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md
+  docs/evidence/sel041/ (README.md, gate_times.json, real_reads.json, records_slices.json, replay_*.json x4, testmon/ x8, tools/ x10, transcript_check.py: 26 files)
+  governed/ledger/events.jsonl
+  seldon.yaml
+  seldon/cli.py
+  seldon/commands/dispatch_stations.py
+  seldon/commands/dispatch_worktree.py
+  seldon/commands/gate.py
+  seldon/commands/go.py
+  seldon/commands/qc.py
+  seldon/commands/verify.py
+  seldon/core/dispatch.py
+  seldon/core/gate_plan.py
+  seldon/core/stations.py
+  seldon_events.jsonl
+  state/prior_art_queries.jsonl
+  tests/fixtures/dispatch_serial_transcript.txt
+  tests/test_dispatch_serial_transcript.py
+  tests/test_sel041_gate_call_sites.py
+  tests/test_sel041_gate_plan.py
+  tests/test_verify_event_log.py
