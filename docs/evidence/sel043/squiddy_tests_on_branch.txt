@@ -1,0 +1,6 @@
+    class Decision(Node):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+104 passed, 33 warnings in 37.32s
+ 
+EXIT 0

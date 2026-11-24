@@ -138,12 +138,17 @@ def test_a_declared_pytest_check_runs_the_declared_interpreter(tmp_path):
 
 def test_the_negative_control_undeclared_the_same_check_fails_and_the_row_is_todays(tmp_path):
     """AD-038-R6: without the declaration the fake-only check does not pass, and the row carries exactly today's
-    keys and the dispatcher's own interpreter."""
+    keys and the dispatcher's own interpreter.
+
+    Erratum, SEL-043 (AD-037-R21): every row now also carries its wall clock (`started_at`, `ended_at`,
+    `wall_seconds`, `asleep_s`), declared interpreter or not. What this test guards is unchanged: an undeclared
+    interpreter adds none of a declared one's keys (`pytest`)."""
     p, _ = _project(tmp_path, declare=False)
     r = S.run_check(UNDER_FAKE, p, 60)
     assert r["outcome"] == "fail", r
     assert r["interpreter"] == sys.executable
-    assert set(r) == {"command", "interpreter", "pythonpath", "outcome", "exit", "seconds", "tail", "output_sha256"}
+    assert set(r) == {"command", "interpreter", "pythonpath", "outcome", "exit", "seconds", "tail", "output_sha256",
+                      "started_at", "ended_at", "wall_seconds", "asleep_s"}
 
 
 # ---------------------------------------------------------------------------------------------- the stations

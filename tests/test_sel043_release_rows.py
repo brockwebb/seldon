@@ -34,7 +34,33 @@ def test_a_rebuilt_index_the_kits_reader_refuses_is_release_unavailable(tmp_path
     with pytest.raises(pa.PriorArtError) as exc:
         pa.open_rebuilt(info, None)
     msg = str(exc.value)
-    assert msg.startswith(pa.RELEASE_UNAVAILABLE) and "index_schema_mismatch" in msg and "abababababab" in msg
+    # The kit's own message first: squiddy's stage checks `refusal.startswith(ix.INDEX_SCHEMA_REFUSAL)`. seldon reads
+    # the refusal by its type (a PriorArtError is `release_unavailable` in verify), and names it after.
+    assert msg.startswith("index_schema_mismatch") and pa.RELEASE_UNAVAILABLE in msg and "abababababab" in msg
+    # It stays the kit's error too: squiddy's release-receipt control (`squiddy.release_receipt._planted`) catches
+    # `ix.IndexSchemaError` from `open_rebuilt` and must still fire.
+    assert isinstance(exc.value, ix.IndexSchemaError) and exc.value.missing == ("text_sha256",)
+
+
+def test_squiddys_release_receipt_control_still_fires_through_seldons_open_rebuilt(tmp_path):
+    """The kit's own positive control, run against this seldon: a rebuilt database with `text_sha256` dropped must be
+    refused by name when `open_rebuilt` opens it (squiddy SQ-139 stage 18, `--mutate`)."""
+    import sqlite3
+    from squiddy import index as ix
+    rr = pytest.importorskip("squiddy.release_receipt")
+    if not hasattr(rr, "_planted"):
+        pytest.skip("the installed kit has no release-receipt control")
+    db = tmp_path / "corpus.db"
+    con = sqlite3.connect(db)
+    con.execute("CREATE TABLE rows (" + ", ".join(ix.INDEX_ROW_COLUMNS) + ")")
+    con.commit()
+    con.close()
+    info = {"dense_dir": str(tmp_path), "shards": [], "cfg": {"encoder": {"dimension": 4}}, "db": str(db),
+            "release_sha256": "ab" * 32, "commit": "c0ffee", "rows": 0}
+    work = tmp_path / "work"
+    work.mkdir()
+    got = rr._planted(info, work, None, pa.open_rebuilt)
+    assert got["fired"] is True, got
 
 
 def test_any_other_error_of_the_reader_is_not_swallowed(monkeypatch, tmp_path):

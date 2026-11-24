@@ -12,9 +12,9 @@ statement: seldon shall read an older release's rows through the kit's release_r
 source:
   path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
   lines:
-  - 73
-  - 78
-  sha256: 2740ffa14031bcc2c5eda6f0337eedbe61a456bd51af3daf1e8e55e2375d6280
+  - 84
+  - 89
+  sha256: 2e5cd50fbdb0bdeab1ce5cf18627a8dabef55ffce455dbade221ec8e24f631ab
   text: |-
     - **AD-036-R30. seldon reads an older release's rows through the kit's `release_rows(graph, manifest, *, commit)` when the installed kit has it, and otherwise as before; until then the rows come from arm A's rule, a known limit beside AD-036-R19.**
       The call is asked of squiddy: it returns the rows of the release recorded at `commit` under the row rule that
@@ -36,4 +36,4 @@ consumer:
 - tests/test_sel043_release_rows.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: 88b680743170544f88d7717a4c1ad0822833c057f1e94f73cbd1bda47f65e897
+provisional_id: d22e295f464df18302104a9c6613c4e5f9c8262d1ffc221640a585d5ba20b330

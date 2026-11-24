@@ -1424,9 +1424,24 @@ def open_rebuilt(info: dict, query_encoder) -> object:
         return ix.Index(Path(info["db"]), (ids, matrix), info["cfg"], query_encoder, man)
     except Exception as exc:
         if schema_error is not None and isinstance(exc, schema_error):
-            raise PriorArtError(f"{RELEASE_UNAVAILABLE}: release sha256:{info['release_sha256'][:12]}... was rebuilt "
-                                f"from commit {str(info['commit'])[:12]} and the kit's reader refuses it: {exc}") from exc
+            # The kit's message first: squiddy's release-receipt stage reads `refusal.startswith(INDEX_SCHEMA_REFUSAL)`;
+            # seldon's verify reads the refusal by its type (`PriorArtError` is `release_unavailable`), not its prefix.
+            raise _rebuilt_index_refused(schema_error)(
+                f"{exc} ({RELEASE_UNAVAILABLE}: release sha256:{info['release_sha256'][:12]}... rebuilt from commit "
+                f"{str(info['commit'])[:12]})", exc) from exc
         raise
+
+
+def _rebuilt_index_refused(schema_error: type) -> type:
+    """The error `open_rebuilt` raises for a refused index (AD-036-R29): a `PriorArtError`, so verify answers
+    `release_unavailable`, and an instance of the kit's own `IndexSchemaError`, so a caller that catches the kit's
+    error still does. squiddy's release-receipt control (`squiddy.release_receipt._planted`, SQ-139 stage 18) catches
+    `IndexSchemaError` from this very call; converting the error alone would have crashed that stage."""
+    class RebuiltIndexRefused(PriorArtError, schema_error):
+        def __init__(self, message: str, cause):
+            Exception.__init__(self, message)
+            self.db, self.missing = getattr(cause, "db", None), tuple(getattr(cause, "missing", ()) or ())
+    return RebuiltIndexRefused
 
 
 def note_keys(s: Settings, paths: Iterable[Path]) -> frozenset:

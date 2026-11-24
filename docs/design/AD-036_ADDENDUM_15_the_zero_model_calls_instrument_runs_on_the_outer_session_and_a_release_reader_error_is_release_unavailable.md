@@ -51,11 +51,17 @@ that cannot be rebuilt is named `release_unavailable`). Three new rulings, AD-03
 - internal receipt: query "PATH shim that records invocations" | repo seldon@0d980545529e93b51a9a58fa2cd4156acb154496 | hits docs/design/AD-036_prior_art_receipts_gate.md:137, docs/decisions/register/00230_seldon-ad-036-r9_accept.yaml:1, docs/decisions/register/00247_seldon-ad-036-r9_amend.yaml:1, docs/decisions/REGISTER.md:9
 - internal receipt: query "release_unavailable" | repo seldon@0d980545529e93b51a9a58fa2cd4156acb154496 | hits docs/design/AD-036_ADDENDUM_06_receipts_resolve_the_named_release.md:113, docs/design/AD-036_ADDENDUM_01_self_test.md:33, docs/design/AD-036_ADDENDUM_06_receipts_resolve_the_named_release.md:3, docs/design/AD-036_ADDENDUM_06_receipts_resolve_the_named_release.md:11, docs/design/AD-036_prior_art_receipts_gate.md:80, docs/design/AD-036_ADDENDUM_07_self_citation_and_the_governing_header.md:9, docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md:64, docs/decisions/register/00333_seldon-ad-036-r19_accept.yaml:1, docs/decisions/register/00223_seldon-ad-036-r2_accept.yaml:1, docs/decisions/register/00240_seldon-ad-036-r2_amend.yaml:1, docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md:70, docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md:48, docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md:57, docs/decisions/register/00352_seldon-ad-036-r24_accept.yaml:1, docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md:18, docs/design/AD-036_ADDENDUM_06_receipts_resolve_the_named_release.md:26, docs/decisions/register/00342_seldon-ad-036-r21_accept.yaml:1, docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md:16, docs/decisions/REGISTER.md:9
 - internal receipt: query "zero model calls PATH shim recording claude invocations" | repo seldon@0d980545529e93b51a9a58fa2cd4156acb154496 | hits docs/decisions/REGISTER.md:9
+- internal receipt: query "the pass's own run is the measurement" | repo squiddy@0a00d72d79c1799fc095f5b2cd25904318aecad6 | hits docs/design/2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md:130, docs/decisions/register/01053_squiddy-r-262_accept.yaml:1, docs/design/2026-11-15_DN-062_the_no_unasked_model_call_check_reads_the_pass_s_own_run.md:3, docs/design/2026-11-14_DN-060_the_record_pass_runs_its_seeds_side_by_side_and_shows_a_pass_in_flight.md:124, docs/decisions/register/01045_squiddy-r-254_accept.yaml:22, docs/decisions/REGISTER.md:9
 
 AD-036 line 137 is R9 and register record 00247 its statement as amended by PA-001 ("a PATH shim that records
 invocations shall prove zero model calls by default"): R28 keeps that statement and changes where the shim runs. The
 `release_unavailable` hits are AD-036-R19's refusal and ADDENDUM 06's rebuild, which R29 and R30 extend. The register
-(`docs/decisions/REGISTER.md`) is the receipt outside this family.
+(`docs/decisions/REGISTER.md`) is the receipt outside this family. squiddy's DN-062 (SQ-142, 2026-11-15; R-262 to
+R-266) is the same instrument, built by squiddy after filing `083863ef`: every default session installs the shim at
+`pytest_configure`, also points `$SELDON_MODELS_HOME` at a lock naming it, appends a last verdict item, keeps the
+positive control as a session of its own, and drops the nested re-run. It read R9 as already allowing this. R28 is
+seldon's ruling that it does, adopted from DN-062; seldon's version leaves the lock alone, because seldon's conftest
+already installs a fixture lock naming `/nonexistent/claude`, so a launcher reading the lock fails loudly instead.
 
 ## 3. Rulings
 
@@ -67,9 +73,14 @@ invocations shall prove zero model calls by default"): R28 keeps that statement 
   place of a nested run, with the same three controls, which costs no run time and covers every test file; or (b)
   keep a nested run and run it once per commit rather than once per run (once per kit pass in squiddy), since its
   assertion is a property of the commit. Whether a kit pass may share one reading across its runs is squiddy's to rule
-  (its R-184); (a) needs no such ruling, because every run is then its own instrument.
+  (its R-184); (a) needs no such ruling, because every run is then its own instrument. squiddy took (a) in DN-062
+  (R-262 to R-266), which this ruling confirms is within R9.
 - **AD-036-R29. A rebuilt release that the kit's reader refuses when it opens it (`IndexSchemaError`) is `release_unavailable`, naming the release, the commit it was rebuilt from and the reader's message; any other error of the reader is raised as it was.**
-  The error class is looked up on the kit by name, so a kit from before SQ-139 still imports.
+  The error class is looked up on the kit by name, so a kit from before SQ-139 still imports. The error raised is
+  both a `PriorArtError` (verify reads a refusal by its type) and an instance of the kit's `IndexSchemaError`, and its
+  message begins with the kit's own: squiddy's release-receipt control (`squiddy.release_receipt._planted`, stage 18
+  `--mutate`) catches the kit's error from this very call and checks that prefix. Converting the error alone made
+  squiddy's `test_sq139_release_receipt_stage.py` fail on this branch; with both, its ten tests pass.
 - **AD-036-R30. seldon reads an older release's rows through the kit's `release_rows(graph, manifest, *, commit)` when the installed kit has it, and otherwise as before; until then the rows come from arm A's rule, a known limit beside AD-036-R19.**
   The call is asked of squiddy: it returns the rows of the release recorded at `commit` under the row rule that
   release was cut under, and refuses as `iter_rows` does (SystemExit naming the unit) when a unit has none. It is

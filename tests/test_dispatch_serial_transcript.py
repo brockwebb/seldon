@@ -95,6 +95,14 @@ wall seconds are masked as `<SECONDS>`. The gate log is the pre-change log, byte
 code; the re-recording equals the pre-change fixture once exactly the `gate_run` line and those four keys are removed,
 the journal commit that carries the record no longer names it (`, gate_run`, one line fewer), and UUID and HEX tokens
 are renumbered (`docs/evidence/sel041/transcript_check.py`, `True`). Every other line is unchanged.
+
+**Erratum, SEL-043 (AD-037-R17, R18, R21, 2026-11-24).** Station (a)'s premise is narrowed to the window in which a
+producer can change what this project reads, so each launch's `premises.environment` reads the new statement and gains
+`not_holding` and `pins` (both empty here: the scaffold names no sibling), and the `gate_run` record gains its wall
+clock (`started_at`, `ended_at`, `wall_seconds`, `asleep_s`; the last two masked as `<SECONDS>`). Re-recorded on the
+SEL-043 code; it equals the pre-change fixture once exactly those keys are removed and the old statement put back
+(`docs/evidence/sel043/transcript_check.py`, `True`; a planted change to one outcome reads `False`). Every other line
+is unchanged: the lease's phases are on the lease file, which the transcript does not read.
 """
 from __future__ import annotations
 
@@ -166,6 +174,8 @@ def _scenario(tmp_path, driver, dispatch_extra) -> str:
     text = re.sub(r'"instruction_context": \{[^{}]*\}', '"instruction_context": <READING>', text)
     # SEL-041 (AD-034-R33): a gate run's wall seconds, in its `gate_run` record and the merge's `gate`, are wall clock.
     text = re.sub(r'"seconds": [0-9.]+', '"seconds": <SECONDS>', text)
+    # SEL-043 (AD-037-R21): the record's wall seconds and the power log's sleep are wall clock too.
+    text = re.sub(r'"(wall_seconds|asleep_s)": (?:[0-9.]+|null)', r'"\1": <SECONDS>', text)
     return normalize(text, p) + "\n"
 
 

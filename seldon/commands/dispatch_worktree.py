@@ -669,7 +669,7 @@ def _merge_phased(project_dir: Path, cfg: dict, task_id: str, lease_cm):
     @contextmanager
     def phased():
         with lease_cm() as held:
-            D.mark_phase(D.config_path(project_dir, cfg["lease_file"]), D.PHASE_MERGE, task=task_id)
+            _mark(project_dir, cfg, D.PHASE_MERGE, task=task_id)
             yield held
     return phased
 
@@ -686,7 +686,7 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     marked `merge` now and whenever the lease is taken; a gate marks `gate` for its run (`_gate_phase`).
     """
     lease_cm = _merge_phased(project_dir, cfg, task_id, lease_cm or (lambda: _pass_lease(project_dir, cfg)))
-    D.mark_phase(D.config_path(project_dir, cfg["lease_file"]), D.PHASE_MERGE, task=task_id)
+    _mark(project_dir, cfg, D.PHASE_MERGE, task=task_id)
     pending = extra.pop(NAMED_PENDING, None)
     if pending is not None:
         S._emit(project_dir, session_id, EVENT_WORKTREE_NAMED, pending)
@@ -994,16 +994,24 @@ def _gate_phase(project_dir: Path, cfg: dict, call_site: str, log: Path, task_id
     log and where in it this run starts, so another project's station (a) lets its consumers launch and `seldon
     dispatch status` shows the gate's progress. The phase before the gate is put back after it. A process that does
     not hold the pass lease (the parallel supervisor) changes nothing."""
-    lease_path = D.config_path(project_dir, cfg["lease_file"])
     log = Path(log)
     gate = {"call_site": call_site, "log": str(log), "offset": log.stat().st_size if log.is_file() else 0,
             "started_at": S._now()}
-    prev = D.mark_phase(lease_path, D.PHASE_GATE, task=task_id, gate=gate)
+    prev = _mark(project_dir, cfg, D.PHASE_GATE, task=task_id, gate=gate)
     try:
         yield
     finally:
         if prev is not None:
-            D.mark_phase(lease_path, prev)
+            _mark(project_dir, cfg, prev)
+
+
+def _mark(project_dir: Path, cfg: dict, phase: str, **fields) -> str | None:
+    """`D.mark_phase` on this project's pass lease (AD-037-R17). A configuration that names no lease file (a caller
+    running a gate outside any dispatcher, as `seldon dispatch regate`'s helpers and their tests do) has no lease to
+    mark: None."""
+    if not cfg.get("lease_file"):
+        return None
+    return D.mark_phase(D.config_path(project_dir, cfg["lease_file"]), phase, **fields)
 
 
 def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, base: str,

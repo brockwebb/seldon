@@ -12,12 +12,16 @@ statement: A rebuilt release that the kit's reader refuses when opened (IndexSch
 source:
   path: docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md
   lines:
-  - 71
-  - 72
-  sha256: 2740ffa14031bcc2c5eda6f0337eedbe61a456bd51af3daf1e8e55e2375d6280
+  - 78
+  - 83
+  sha256: 2e5cd50fbdb0bdeab1ce5cf18627a8dabef55ffce455dbade221ec8e24f631ab
   text: |-
     - **AD-036-R29. A rebuilt release that the kit's reader refuses when it opens it (`IndexSchemaError`) is `release_unavailable`, naming the release, the commit it was rebuilt from and the reader's message; any other error of the reader is raised as it was.**
-      The error class is looked up on the kit by name, so a kit from before SQ-139 still imports.
+      The error class is looked up on the kit by name, so a kit from before SQ-139 still imports. The error raised is
+      both a `PriorArtError` (verify reads a refusal by its type) and an instance of the kit's `IndexSchemaError`, and its
+      message begins with the kit's own: squiddy's release-receipt control (`squiddy.release_receipt._planted`, stage 18
+      `--mutate`) catches the kit's error from this very call and checks that prefix. Converting the error alone made
+      squiddy's `test_sq139_release_receipt_stage.py` fail on this branch; with both, its ten tests pass.
 scope:
 - seldon
 rationale:
@@ -32,4 +36,4 @@ consumer:
 - tests/test_sel043_release_rows.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: e9cedc86c35fff225d355f2915c5e8ce2a878516699f71772c6a98fb3fa85da2
+provisional_id: 508d8d5235cffdfddd17d73252315f357f8fc6e606920ebc6586205f6b30e394
