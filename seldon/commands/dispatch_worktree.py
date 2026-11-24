@@ -1037,7 +1037,9 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                              "duplicate_ids": check["duplicates"]}
         return bad
 
-    reconciled = KE.reconciled_ids(project_dir, S._store_rel(config), finish["task_id"])
+    # SEL-046 (AD-038-R25): every task's reconciled ids, not only this task's. A branch that merged another task's
+    # kept branch carries lines main already holds under that task's `kept_events_reconciled` record.
+    reconciled = KE.reconciled_ids(project_dir, S._store_rel(config))
     # SEL-042 Part C (AD-034-R27): the `kept_events_deduped` records this round owes, written to main's store only
     # once nothing stands between it and its fast-forward any more (`flush_deduped`). Appended under the lease between
     # the journal commit and `git merge --ff-only`, the line made git refuse the fast-forward over main's own store

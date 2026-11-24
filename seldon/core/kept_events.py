@@ -272,8 +272,14 @@ def bridging_links(carried: list, created: list, live: dict) -> list:
     return out
 
 
-def reconciled_ids(project_dir: Path, store_rel: str, task_id: str) -> set:
-    """The event ids `kept_events_reconciled` already appended to main's store for `task_id`."""
+def reconciled_ids(project_dir: Path, store_rel: str, task_id: str | None = None) -> set:
+    """The event ids `kept_events_reconciled` already appended to main's store: for `task_id` when one is given, and
+    for EVERY task when it is None.
+
+    The merge round asks for every task (SEL-046, AD-038-R25): the rule is that main never holds an event id twice,
+    and that is a property of the id, not of the task the reconcile was written for. A task whose branch merged
+    another task's kept branch carries that task's lines, which main already holds under the other task's record
+    (SEL-045R merged SEL-045's kept branch and was refused `union_invalid` on 14 identical pairs)."""
     path = Path(project_dir) / store_rel
     out: set = set()
     if not path.is_file():
@@ -281,17 +287,22 @@ def reconciled_ids(project_dir: Path, store_rel: str, task_id: str) -> set:
     mark = f'"{EVENT_RECONCILED}"'
     with path.open("r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            if mark in line and task_id in line:
-                ev = _parse(line)
-                p = (ev or {}).get("payload") or {}
-                if (ev or {}).get("event_type") == EVENT_RECONCILED and p.get("task_id") == task_id:
-                    out.update(p.get("event_ids") or [])
+            # Cheap pre-filter: parse only lines that name the record (and the task, when one is asked for).
+            if mark not in line or (task_id is not None and task_id not in line):
+                continue
+            ev = _parse(line)
+            p = (ev or {}).get("payload") or {}
+            if (ev or {}).get("event_type") != EVENT_RECONCILED:
+                continue
+            if task_id is None or p.get("task_id") == task_id:
+                out.update(p.get("event_ids") or [])
     return out
 
 
 def drop_reconciled(wt: Path, store_rel: str, ids: set, task_label: str) -> dict:
-    """Before a kept branch whose lines were reconciled merges: after its rebase the store holds main's copy of each
-    reconciled line and the branch's own, and main may never hold an id twice. Drops the LATER copy of a reconciled
+    """Before a branch that carries lines already reconciled into main merges (its own, kept earlier, or another
+    task's, when this branch merged that task's kept branch: SEL-046): after its rebase the store holds main's copy
+    of each reconciled line and the branch's own, and main may never hold an id twice. Drops the LATER copy of a reconciled
     id when it is byte-identical to the first, commits that on the branch, and returns `{dropped, commit, stderr}`.
     A copy that differs is left for the union check to name: two different records under one id are a defect, not a
     duplicate."""
@@ -313,9 +324,10 @@ def drop_reconciled(wt: Path, store_rel: str, ids: set, task_label: str) -> dict
         return {"dropped": [], "commit": None, "stderr": ""}
     path.write_text("".join(r + "\n" for r in keep), encoding="utf-8")
     add = WT.git(Path(wt), "add", "--", store_rel)
-    msg = (f"dispatch: drop {len(dropped)} event line(s) of {task_label} already reconciled into main (SEL-034, "
-           f"AD-038-R25)\n\nkept_events_reconciled appended them to main's store when the branch was kept; the "
-           f"rebase brought the branch's copies beside main's.")
+    msg = (f"dispatch: drop {len(dropped)} event line(s) on {task_label}'s branch already reconciled into main "
+           f"(SEL-034, SEL-046, AD-038-R25)\n\nkept_events_reconciled appended them to main's store when a branch "
+           f"carrying them was kept (this task's, or another task's that this branch merged); the rebase brought "
+           f"the branch's copies beside main's.")
     c = WT.git(Path(wt), "commit", "-q", "-m", msg, "--", store_rel) if add.returncode == 0 else add
     if c.returncode != 0:
         return {"dropped": dropped, "commit": None, "stderr": (c.stderr or c.stdout).strip()[-500:]}

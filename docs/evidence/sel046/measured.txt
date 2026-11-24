@@ -1,0 +1,14 @@
+SEL-046 Part B: measured 2026-11-24, read-only, from this worktree.
+Inputs: `git show worktree-cached-noodling-minsky:seldon_events.jsonl` (tip 44a0d72b391287df17ca2e4fe87ca85a7c00b784)
+        `git show main:seldon_events.jsonl` (main 9b141b075585f233a4c514d1c2ab8a0cd98c46ab)
+Script: docs/evidence/sel046/measure.py (run: PYTHONPATH=. python docs/evidence/sel046/measure.py), with this
+branch's `seldon.core.kept_events.reconciled_ids`. No command ran in any other worktree; nothing was written there.
+
+ids held twice at worktree-cached-noodling-minsky tip: 14
+  of them on main already: 14
+  returned by the all-task lookup reconciled_ids(main, store): 14
+  not returned: 0
+  returned by the old per-finisher lookup (task 8315cc7a, SEL-045R): 0
+  kept_events_reconciled records holding them, by task_id: ['09520bb0-2e5b-4113-9918-2470a3ea836f']
+
+Expected 14, 14, 0. Measured 14, 14, 0. All 14 sit under one kept_events_reconciled record, SEL-045's (09520bb0).
