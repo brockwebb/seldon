@@ -166,11 +166,40 @@ was taken on the final text before anything was committed.
 
 ## Part F: the returns
 
-PENDING: filled once the returns are filed.
+Each was filed with `seldon cc return` (dry run first) from the sections below, and committed in its repository by
+its registration:
+
+- **squiddy:** SQ-143 (`627c92ed`), `squiddy/cc_tasks/2026-11-24_SQ-143_a_consumer_s_dispatcher_waits_on_a_producer_only_for_what_can_hurt_it.md`.
+  It is a report, plus the one thing asked (item 4: `release_rows`). It closed all three filings (proposed to
+  completed, AD-036-R17): `9fb2e0b8` when it was filed, then `44ba49df` and `083863ef` by re-running with their
+  `--answers`.
+- **hazbrief-mcp:** HB-229 (`489e1829`), one line, nothing to do, `--answers hazbrief-mcp:HB-177`. HB-177 is the task
+  refused on 2026-11-13. The return template says HB-177 "was filed into seldon", which is false; the section corrects
+  it.
+- **factory:** FAC-09 (`5d78e3b3`), one line, nothing to do, `--answers factory:FAC-04`. FAC-04 was refused on
+  2026-11-14. The same template correction applies.
+
+The task allowed the last two because Part C changed what both dispatchers do. Each is a dispatchable task of about
+0.1M tokens, because this return mechanism files a task.
 
 ## Tests
 
-PENDING: the full suite.
+- **New:** 25 tests in the three `test_sel043_*` files, plus the rewritten `test_no_live_model_calls.py` (4). All
+  pass. Each new behaviour's test was run red first: the station tests failed with `AttributeError`; the release
+  tests failed on the first version of the code before the dual-type fix; the power-log test failed on the real
+  `0.0`.
+- **Full suite**, `-n 6`, on `d3ff232` plus the RESULT, from 23:32Z to 00:05Z (32:49): **3,537 passed, 4 failed,
+  7 skipped**, load average 13 to 29, with hazbrief's gate running on the same host. All four failures are on SEL-041's
+  list of known ones:
+  - `test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index` is library drift,
+    known on main and deselected in seldon's `gate_command`.
+  - `test_dispatch_parallel::test_union_merge_of_two_event_appends_is_valid` and
+    `::test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones` both passed when re-run alone.
+  - `test_sel024_gate_record::test_fixture_a_regate_whose_gate_outlasts_lock_wait...` failed when re-run alone at load
+    12.8. It fails the same way on main's own code in a `/tmp` shared clone (`docs/evidence/sel043/tools/main_clone.py`,
+    run 19:12 local), so it is load, not this branch.
+- **squiddy's tests on this branch:** 104 passed, across the eight squiddy test files that touch the changed seldon
+  code (`squiddy_tests_on_branch.txt`).
 
 ## For squiddy
 
@@ -239,3 +268,9 @@ FAC-04 had on 2026-11-14; FAC-04 was not filed into seldon.
   under it, as it always could. Isolating that would mean installing producers by version per launch, which no
   consumer does today.
 - **A Desktop commit to a producer's primary is under no lease,** before and after this task.
+- **The holder also writes its primary during the session:** the inspector commits station records (event-store
+  lines) and pushes. AD-037 ADDENDUM 05 section 1 item 2 leaves this out. R17 still holds, because no consumer imports
+  a producer's event store (Part A (1)). A consumer that came to read a producer's store live would need the session
+  phase to hold it.
+- **A parallel supervisor's gate is not shown on the pass lease.** It holds only its worktree lease while gating, so
+  `mark_phase` does nothing there and `status` shows no gate progress for it. No repository runs parallel today.
