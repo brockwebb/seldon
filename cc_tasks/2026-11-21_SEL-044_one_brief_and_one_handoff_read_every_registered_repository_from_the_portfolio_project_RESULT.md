@@ -102,6 +102,20 @@ seldon, squiddy and hazbrief-mcp show `no wall-clock gate records` because their
    of the stations' `check_timeout_s`) and `first_window_days` 7 (the span of the factory's hand gatherings).
    `max_workers` 8 is a bound, not a measurement.
 
+## Return
+
+Filed 2026-11-25 by `seldon cc return ... --to factory --answers
+seldon:2026-11-13_filing_from_factory_the_operator_has_no_portfolio_entry_point` (after a `--dry-run`):
+- The return is factory **FAC-13** (`6b857695`),
+  `factory/cc_tasks/2026-11-25_FAC-13_one_brief_and_one_handoff_read_every_registered_repository_from_the_po.md`. It
+  was committed in factory at `785520b` and sequenced after FAC-12.
+- seldon's filing `6087e4d1` is closed by it (proposed to completed, AD-036-R17).
+- Registration warned `store_dirty_before_registration`: factory's in-flight session `a97d7381` had already appended
+  three uncommitted lines to factory's event store, so the return's two lines are uncommitted beside them. Factory's
+  standing dispatcher reconciles append-only event-store lines whoever wrote them (`seldon/core/reconcile.py`,
+  AD-038-R1), so its next pass commits all five. If it does not, the operator runs, in a shell in
+  `/Users/brock/GitHub/factory`, `seldon dispatch once`.
+
 ## Tests
 
 - `tests/test_sel044_portfolio.py`: 18 passed (26 s).
