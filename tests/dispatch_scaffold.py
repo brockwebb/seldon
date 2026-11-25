@@ -125,6 +125,11 @@ def add_task(p: Path, stem: str, extra: str = "", commit: bool = True) -> str:
 
 
 def register(p: Path, driver, domain_config, stem: str, created_at: str) -> str:
+    # SEL-043 ADDENDUM 01: the session's test database is shared by every test and every scenario registers the same
+    # few names at one `created_at`, so an earlier test's `a` was read by `task_states` and queued by the dispatcher
+    # in whichever order Neo4j scanned them. A scenario's name is its own: an earlier one's same-named task goes.
+    with driver.session(database=NEO4J_DB) as s:
+        s.run("MATCH (t:ResearchTask {name: $n}) DETACH DELETE t", n=stem)
     return create_artifact(
         project_dir=p, driver=driver, database=NEO4J_DB, domain_config=domain_config,
         artifact_type="ResearchTask",

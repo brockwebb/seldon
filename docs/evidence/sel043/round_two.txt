@@ -1,0 +1,94 @@
+SEL-043 ADDENDUM 01, round two: the two tests that went red in round one's merge-round full gate
+==================================================================================================
+2026-11-24. Task bf0b7a06. Worktree branch worktree-joyful-zooming-zebra.
+
+Replay
+------
+Branch tip before the replay: af8353d662ce8c5d448b9f1340eda9beaa86f1aa (main).
+git reset --hard worktree-iterative-moseying-clock (c29023a), git rebase af8353d: 29 of 29 commits, no stop.
+Replayed tip: 1f15a1a (the round-one RESULT commit).
+
+Step 1: the two files alone, on the replayed tip
+------------------------------------------------
+pytest tests/test_friction002_stop_hook_gate.py tests/test_friction002_worktree_only.py
+  -> 14 passed, 1 skipped (217 s). Both files pass alone.
+
+Step 2: after the files that sort before them, narrowing by halves
+------------------------------------------------------------------
+Runner: docs/evidence/sel043/bisect_run.sh <label> <lo> <hi> [tree]. The 69 files sorting before
+test_friction002_stop_hook_gate.py, a 1-based slice of them, then the two target files, serial, -p no:cacheprovider,
+gate_command's one --deselect. Each pytest process has its own test database (tests/testdb.py), so slices ran
+concurrently. The machine's load average was 18 to 116 throughout (other sessions' suites), which slowed every run
+and accounts for the unrelated failures named below.
+
+On the replayed tip (unfixed):
+  all  1-69  4 failed, 927 passed, 1 skipped (5,952 s)
+             the two targets did not fail in this run; test_friction002_worktree_only.py::
+             test_a_launched_task_runs_in_its_cli_worktree_and_merges_on_green did ('blocked' == 'completed'), and
+             so did test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid ({'a': 'blocked'} !=
+             {'a': 'completed'}) and ::test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones (the pass
+             reported another test's task 1dd5c90d, dirty_tree on cc_tasks/b.md, where its own wait was expected).
+             The fourth, test_disp004r_cross_repo_push.py::test_a_parallel_supervisor_carries_the_reading_to_its_
+             finish_and_pushes, timed out at its 90 s deadline under load: not this cause.
+  h1   1-35  1 failed, 487 passed, 1 skipped (1,647 s)
+             FAILED test_friction002_worktree_only.py::test_an_unmerged_task_keeps_its_worktree_and_branch_with_a_
+             worktree_kept_record: 'completed' == 'blocked' (round one's failure, line 120, reproduced)
+  h2  36-69  1 failed, 456 passed, 1 skipped (4,873 s). Both targets green. The failure,
+             test_friction001_registration_premises.py::test_an_outage_is_one_refusal_and_one_notification_not_a_
+             traceback, raised DatabaseNotFound for 'seldon-test-p43262', another session's pytest process's
+             database: not this cause.
+  q1   1-9   173 passed, 1 skipped
+  q2  10-17  121 passed, 1 skipped
+  q3  18-26  171 passed, 1 skipped
+  q4  27-35  2 failed, 63 passed, 1 skipped (1,568 s)
+             FAILED test_friction002_worktree_only.py::test_an_unmerged_task_... ('completed' == 'blocked')
+             FAILED test_friction002_stop_hook_gate.py::test_a_session_let_go_..._never_merged[failing]
+             ('completed' == 'blocked'; round one's red one was [passing], the same exchange the other way)
+  s27..s35   each of q4's nine files alone before the targets: all nine green (16 to 24 passed each)
+  e1  27-31  44 passed, 1 skipped   (on /tmp/sel043_tip, an export of the unfixed replayed tip)
+  e2  32-35  35 passed, 1 skipped   (same)
+  q4 again   65 passed, 1 skipped   (same tree as the red q4 run; so q4 does not reproduce every time)
+
+Control on main's tree (git archive af8353d):
+  q4  27-35  65 passed, 1 skipped (one run)
+
+Smallest set known to reproduce: q4, files 27-35 (test_desk002_registration_event_lines.py through
+test_disp003_governing_header.py), red once in two runs. No half of it and no single file of it reproduced. Read
+with the cause below, a smallest set is not a property worth narrowing further: what decides the outcome is the order
+in which Neo4j's scan returns same-named nodes, which depends on the store's id allocation and reuse history, not on
+any one earlier test.
+
+Cause
+-----
+tests/dispatch_scaffold.py: every dispatcher scenario writes ResearchTask nodes into the session's one shared test
+database (neo4j_driver is session-scoped; these tests take no clean_test_db), and they all use the same few names
+(a, b, ...) with one created_at, 2026-10-17T00:00:00Z. Nothing removed an earlier test's `a`. So:
+  - task_states() ({t.name: t.state}) returned the state of whichever `a` the scan returned last, and
+  - the dispatcher's own queue (seldon/commands/dispatch.py _tasks, ORDER BY t.created_at, a tie for every `a`) could
+    launch an earlier test's still-proposed `a`, whose file exists in every scratch project as cc_tasks/a.md.
+Each red test read the state another test expects ('completed' where 'blocked' and the reverse), which is the
+desktop session's observation in the addendum, confirmed: the second `a` was an earlier test's node.
+
+Whether this is this branch's: the cause is in code this branch did not touch (register() and task_states() are
+unchanged by it; its scaffold change is the snapshot_lease option). The branch changed which order the scan returns
+(its conftest change, the R9 shim on the session, and its added tests change the database's history), and main's
+tree passed the q4 set in its one control run; which of the branch's changes moved the order is not established and
+was not pursued, because the order was never something these tests could rely on.
+
+Fix (5 lines, under the addendum's twenty)
+------------------------------------------
+tests/dispatch_scaffold.py register(): before creating the scenario's task, MATCH (t:ResearchTask {name: $n})
+DETACH DELETE t. A scenario's task name is its own. No assertion of either test changed; nothing was deselected or
+skipped; gate_command is unchanged. A scan of tests/ (AST: one test function registering the same literal name twice)
+found no test that registers one name twice, so no test depended on two same-named tasks.
+
+Test that catches it, written first and red before the fix:
+tests/test_sel043_scaffold_task_names.py::test_registering_a_name_an_earlier_scenario_left_in_the_graph_leaves_only_
+this_scenarios_task: an earlier scenario's `a` set to completed, then this scenario's `a` registered; asserts one `a`
+and that it is this scenario's. Before the fix: 1 failed. After: 1 passed.
+
+After the fix
+-------------
+The two target files and the new test alone: 15 passed, 1 skipped (162 s).
+q4 27-35 + targets on the fixed worktree: 65 passed, 1 skipped (905 s).
+all 1-69 + targets on the fixed worktree: 931 passed, 1 skipped (2,812 s), against 4 failed on the unfixed tip.

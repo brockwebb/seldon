@@ -1,5 +1,31 @@
 # RESULT: SEL-043, a consumer waits on a producer only while what it reads can change, a running gate shows its progress and its wall time, and a release's rows will come from the kit
 
+## Round two (ADDENDUM 01), 2026-11-24
+
+The two red tests were caused by code this branch did not touch (`register` and `task_states` in
+`tests/dispatch_scaffold.py`); the fix is 5 lines, so it is made here. Every dispatcher scenario registers the same
+few task names (`a`, `b`) with one `created_at` into the session's single shared test database, and nothing removed
+an earlier test's `a`. `task_states` then reported whichever `a` Neo4j's scan returned last. The dispatcher's own queue,
+which breaks a `created_at` tie by scan order, could also launch an earlier test's `a`. This confirms the addendum's
+observation.
+
+- **Replay:** branch tip `af8353d`, reset to `worktree-iterative-moseying-clock`, then rebased: 29 of 29 commits, no
+  stop. The replayed tip is `1f15a1a`.
+- **Step 1:** the two files alone gave 14 passed, 1 skipped.
+- **Step 2:** the targets failed after the files sorting before them. They failed after files 1 to 35, and after
+  files 27 to 35 in one of two runs. No half of 27 to 35 and no single file of it reproduced the failure. The full
+  1 to 69 prefix failed two other tests in the same way, plus one in the queue (`test_dispatch_parallel.py`, and
+  `test_friction002_worktree_only.py`'s merge test). Main's tree passed 27 to 35 in its one control run. The order is
+  decided by the store's id history, not by any one earlier test, so the set was not narrowed further.
+- **Fix:** `register` deletes any earlier `ResearchTask` with the scenario's name before creating its own. No
+  assertion changed. Nothing was deselected or skipped, and `gate_command` is unchanged. The regression test is
+  `tests/test_sel043_scaffold_task_names.py`, written first; it was red before the fix and is green after.
+- **After the fix:** the two target files plus the new test gave 15 passed, 1 skipped. Files 27 to 35 plus the
+  targets gave 65 passed, 1 skipped. The full 1 to 69 prefix plus the targets gave 931 passed, 1 skipped, where the unfixed tip failed 4.
+- **Evidence:** `docs/evidence/sel043/round_two.txt` (every run, its count and the cause), with the runner
+  `docs/evidence/sel043/bisect_run.sh`. Round two used none of the recall hits.
+
+
 **Date:** 2026-11-24. **Task:** `bf0b7a06`. **Branch:** `worktree-iterative-moseying-clock` (not merged by this
 session; the dispatcher merges on green). **Addenda read:** none exist for this task.
 Recall used: none. Registration listed eight hits (SEL-005, SEL-004, SEL-013R, squiddy SQ-139, squiddy R-256, squiddy
