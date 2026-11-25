@@ -119,7 +119,19 @@ seldon:2026-11-13_filing_from_factory_the_operator_has_no_portfolio_entry_point`
 ## Tests
 
 - `tests/test_sel044_portfolio.py`: 18 passed (26 s).
-- Full suite: see "Full suite" below.
+- Full suite (`-n 6`, run detached on commit `a7cb804`): **3558 passed, 2 failed, 7 skipped in 30 min 48 s**
+  (`docs/evidence/sel044/full_suite_tail.txt`). Neither failure is this branch's:
+  - `test_pa002_release_resolve::test_rebuilding_the_served_release_reproduces_the_served_index` is the known
+    library-index drift. It fails on main too.
+  - `test_sel024_gate_record::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing`
+    is the known timing flake under load (load average 9 to 25 during this run). It also failed alone here. Run on
+    main's code (`af3b7df`, a shared clone under /tmp with `PYTHONPATH` set to the clone,
+    `tools/main_clone.py`), it fails with the same assertion at line 419 (`sel024_on_main.txt`). This branch changes
+    no filing, gate or dispatch code.
+- `seldon verify` in the worktree: every check passes but two, File hashes (two old notes,
+  `2026-09-15_standing_dispatcher.md` and `AD-036_ADDENDUM_01_self_test.md`) and Governed docs (209 never
+  catalogued). Both are main's existing state; this branch touches neither. The Decision register check passes with
+  the 4 pending records, numbered at merge.
 
 ## For factory
 

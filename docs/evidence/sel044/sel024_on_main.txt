@@ -1,0 +1,26 @@
+main af3b7df06007e6e0c557d81c9ad65d36c4924b8d
+ while not mark.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            seen["gate_running_at_start"] = mark.exists() and mark.read_text() == "started\n"
+            try:
+                seen["filed"] = F.file_task(p, HAND_TASK.format(stem="filed during the gate"),
+                                            name="2026-11-06_filed_during_the_gate.md")
+            except F.FilingError as exc:
+                seen["refused"] = str(exc)
+            seen["gate_running_at_end"] = mark.read_text() == "started\n"
+    
+        t = threading.Thread(target=filer)
+        t.start()
+        out = _once(p)                                      # the regate defers; the record step runs the gate unlocked
+        t.join(timeout=180)
+        assert "refused" not in seen, seen
+>       assert seen["gate_running_at_start"] and seen["gate_running_at_end"], (seen, "the filing landed mid-gate")
+E       AssertionError: ({'filed': {'after': [], 'after_edges': 0, 'artifact_id': '5ab8def4-e828-464a-8945-3250f6d8ffea', 'description': 'filed during the gate', ...}, 'gate_running_at_end': False, 'gate_running_at_start': True}, 'the filing landed mid-gate')
+E       assert (True and False)
+
+tests/test_sel024_gate_record.py:419: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sel024_gate_record.py::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing
+1 failed in 68.87s (0:01:08)
+
+EXIT=1
