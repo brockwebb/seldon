@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R35
+date: '2026-11-25'
+decided_by: cc:46540234
+operator_stated: false
+receipts:
+- docs/evidence/sel044/part_a_measure.md
+reason: 'SEL-044: from factory filing 6087e4d1; evidence in docs/evidence/sel044'
+kind: decision
+status: accepted
+statement: seldon handoff --portfolio shall write one handoff in the portfolio project with a section per repository and one resume line, whose time starts the next brief's completed-since window; the read shall run one reader per repository side by side, with no cache.
+source:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  lines:
+  - 78
+  - 81
+  sha256: 99598d2825183c0647a12b7cfec427fcbfe2fa55bd5a4bc2ab78225554cf8be9
+  text: |-
+    - **AD-038-R35. `seldon handoff --portfolio` writes one handoff in the portfolio project with a section per repository and one resume line, and the time it was generated is the start of the next brief's "completed since"; the read runs one reader per repository side by side, with no cache.**
+      The handoff carries a `**Portfolio handoff:**` line with its time, and the next brief finds the newest such file.
+      Before the first one, "completed since" reaches back `portfolio.first_window_days`. A cache would make the counts a
+      past moment's, which R34 forbids; the read's cost is measured instead (SEL-044 Part D).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  anchor: AD-038-R35
+consumer:
+- cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.md
+- seldon/core/portfolio.py
+- seldon/commands/go.py
+- seldon/commands/handoff.py
+- seldon/mcp_server.py
+- tests/test_sel044_portfolio.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: b29c0196d660a3606e1492b8442c0e860dcb512b32d57f1bae39ec1714542005

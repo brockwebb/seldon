@@ -54,6 +54,48 @@ def r9_refusal_text(violation: R9Violation) -> str:
     )
 
 
+def build_portfolio_handoff(project_dir: Path, config: dict, slug: str, summary: str, next_action: str) -> tuple:
+    """`(path, text, resume)` of the portfolio handoff (AD-038-R35): every listed repository read, nothing written.
+
+    Raises:
+        PortfolioConfigError: the project declares no usable portfolio (AD-038-R32).
+    """
+    from seldon.core import portfolio as PF
+
+    p = PF.read_portfolio(project_dir, config)
+    path = PF.handoff_path(project_dir, slug, PF._parse(p["generated_at"]))
+    text, resume = PF.render_handoff(p, path, summary, next_action)
+    return path, text, resume
+
+
+def _portfolio_handoff(project_dir: Path, config: dict, slug: str, summary: str, next_action: str, force: bool,
+                       dry_run: bool) -> None:
+    """`seldon handoff --portfolio`: write the portfolio handoff in this project and print its resume line. The
+    session file is left alone: a portfolio handoff sits beside the project's own, it does not close the session."""
+    from seldon.core import portfolio as PF
+
+    try:
+        path, text, resume = build_portfolio_handoff(project_dir, config, slug, summary, next_action)
+    except PF.PortfolioConfigError as exc:
+        click.echo(f"ERROR: {exc}", err=True)
+        raise SystemExit(1)
+    if dry_run:
+        click.echo(f"[dry-run] would write {path}")
+        click.echo("")
+        click.echo(text)
+    else:
+        try:
+            written = PF.write_handoff(path, text, force=force)
+        except FileExistsError as exc:
+            click.echo(f"ERROR: {exc}", err=True)
+            raise SystemExit(1)
+        click.echo(f"Wrote {written}")
+    click.echo("")
+    click.echo("## Resume line")
+    click.echo("")
+    click.echo(resume)
+
+
 @click.command("handoff")
 @click.option("--slug", required=True, help="Filename slug: handoffs/<date>_<slug>.md")
 @click.option("--summary", required=True, help="One line: what this session did.")
@@ -70,7 +112,14 @@ def r9_refusal_text(violation: R9Violation) -> str:
     default=False,
     help="Render and print without writing the file.",
 )
-def handoff_command(slug, summary, next_action, force, dry_run):
+@click.option(
+    "--portfolio",
+    is_flag=True,
+    default=False,
+    help="Write the portfolio handoff: a section per repository portfolio.repositories lists and one resume line "
+         "(AD-038-R35). Writes in this project only.",
+)
+def handoff_command(slug, summary, next_action, force, dry_run, portfolio):
     """Close a session: write the handoff, print the resume and dispatch blocks.
 
     The document is generated from the event log, the graph and the filesystem;
@@ -84,6 +133,9 @@ def handoff_command(slug, summary, next_action, force, dry_run):
     """
     project_dir = Path.cwd()
     config = load_project_config(project_dir)
+    if portfolio:
+        _portfolio_handoff(project_dir, config, slug, summary, next_action, force, dry_run)
+        return
     driver = get_neo4j_driver(config)
     database = config["neo4j"]["database"]
 

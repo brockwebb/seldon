@@ -1,0 +1,61 @@
+## Portfolio: portfolio-trial, 9 repositories
+
+Read 2026-11-25T06:33:26.486422Z in 1.9 s; 1 unreadable; 6 with something wrong. Done since 2026-11-18T06:33:26.486422Z (no portfolio handoff yet; the last 7 day(s) (portfolio.first_window_days)). Spend and the bank are not here; they are the factory's own.
+
+| repository | open | running (phase) | last pass | alarms | done since | filings | gate median |
+|---|---|---|---|---|---|---|---|
+| seldon | 22 (blocked 1, in_progress 1, proposed 20) | 46540234 session | 2026-11-25T06:16Z 1 cand, 0 refused | 3 | 13 | 4 | no wall-clock gate records |
+| squiddy | 15 (proposed 15) | - | 2026-11-25T06:32Z 1 cand, 0 refused | 1 | 0 | 4 | no wall-clock gate records |
+| hazbrief-mcp | 6 (blocked 1, proposed 5) | - | 2026-11-25T06:13Z 4 cand, 0 refused | 1 | 42 | 0 | no wall-clock gate records |
+| ai-readiness-kg | 17 (accepted 1, blocked 1, proposed 15) | - | 2026-11-22T10:06Z 0 cand, 0 refused | 2 | 0 | 0 | no wall-clock gate records |
+| icsp_notebook | 23 (accepted 2, proposed 21) | - | no dispatcher | - | 0 | 0 | no wall-clock gate records |
+| arnold | 10 (proposed 10) | - | no dispatcher | - | 0 | 0 | no wall-clock gate records |
+| aacps-ai-policy | 0 | - | 2026-11-25T06:31Z 0 cand, 0 refused | - | 0 | 0 | no wall-clock gate records |
+| authoring | UNREADABLE | | | 1 | | | |
+| factory | 5 (blocked 1, in_progress 1, proposed 3) | a97d7381 session | 2026-11-25T06:29Z 3 cand, 0 refused | 1 | 4 | 1 | 12 s wall (n=1) |
+
+### Something wrong
+
+### seldon
+
+`/Users/brock/GitHub/seldon`
+
+- blocked: 1581c3ec removal of the SI-09 units fallback waits on migrate-names in icsp_notebook (346), TickBiteRisk (61), brock-projects (2), sas2graph (1) unnamed Results; unblock by migrating them to zero, re-running seldon paper check-units-fallback, then deleting the fallback and the instrument in one commit (cc_tasks/2026-09-04_seldon_open_defect_closeout_RESULT.md §5)
+- open huddle ac19fab1 on defca7cc: CPI 0.5411 below 0.8 at Part A (earned 0.15, actual 0.277188)
+- open huddle 2cc7a4de on 04ab6448: check could not run at Part A: `! grep -n "command\[0\]).resolve()" seldon/core/desktop_commit.py` exit 127
+- pass lease: dispatcher:HexagonMBP.local:4800, task 46540234, session since 2026-11-25T06:17:01.589883Z
+
+### squiddy
+
+`/Users/brock/GitHub/squiddy`
+
+- open huddle b9e604b3 on a0e43099: CPI 0.5067 below 0.8 at Part A (earned 0.35, actual 0.690788)
+
+### hazbrief-mcp
+
+`/Users/brock/GitHub/hazbrief-mcp`
+
+- blocked: 3d4c3c8f dispatcher: hard_stopped: spend_ceiling (exit 0; log logs/dispatch/2026-11-21_HB-218_the_gate_runs_what_a_change_touched_the_whole_suite_runs_only_at_decla.log)
+
+### ai-readiness-kg
+
+`/Users/brock/GitHub/ai-readiness-kg`
+
+- stop file present: the dispatcher launches nothing
+- blocked: 98ed1dd1 no reason recorded
+
+### authoring
+
+`/Users/brock/GitHub/authoring`
+
+- UNREADABLE: no directory at /Users/brock/GitHub/authoring
+
+### factory
+
+`/Users/brock/GitHub/factory`
+
+- blocked: b62cd550 dispatcher: merge_blocked (exit 0; log logs/dispatch/2026-11-13_FAC-06_hold_the_hive_and_display_sources_and_check_the_hive_note_against_them.log)
+- pass lease: dispatcher:HexagonMBP.local:8909, task a97d7381, session since 2026-11-25T06:29:42.649986Z
+
+
+EXIT=0 wall=2.68s settings=default

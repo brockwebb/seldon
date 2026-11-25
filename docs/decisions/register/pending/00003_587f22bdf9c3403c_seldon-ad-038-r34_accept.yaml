@@ -1,0 +1,42 @@
+event: accept
+id: seldon:AD-038-R34
+date: '2026-11-25'
+decided_by: cc:46540234
+operator_stated: false
+receipts:
+- docs/evidence/sel044/part_a_measure.md
+reason: 'SEL-044: from factory filing 6087e4d1; evidence in docs/evidence/sel044'
+kind: decision
+status: accepted
+statement: 'The brief''s readings shall be each repository''s own: open tasks as its seldon task list shows them at the same moment, the running task''s phase from its pass lease (phase unknown when none), and the median gate time over wall seconds alone with its n.'
+source:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  lines:
+  - 69
+  - 77
+  sha256: 99598d2825183c0647a12b7cfec427fcbfe2fa55bd5a4bc2ab78225554cf8be9
+  text: |-
+    - **AD-038-R34. The brief's readings are each repository's own: open tasks are what its `seldon task list` shows at the same moment (the ResearchTasks in the open states of its own domain); the running task's phase is its pass lease's `phase` (AD-037-R17), `phase unknown` when the lease records none; the median gate time is over `wall_seconds` alone (AD-037-R21), printed with its n, and `no wall-clock gate records` where none carries it.**
+      Per repository the brief carries open tasks by state, the running task (the pass lease's task and every held
+      worktree lease) with its phase and, in `gate`, the gate's progress as `seldon dispatch status` prints it; the last
+      pass with its candidates and refusals; the alarms; the tasks completed since the last portfolio handoff; the open
+      filings in its graph (`task_kind: filing`); and the median gate time. The alarms are: a stop file present, a lease
+      whose holder is gone, a stuck streak the dispatcher notified, a blocked task (with its stored reason, which is where
+      `ungated` and `interrupted_thrice` show), an open huddle, a last pass that cannot be read, and a running gate whose
+      log has not grown for `portfolio.gate_silent_after_s` (AD-037-R20: output that stopped growing is how a hung gate
+      shows). One row per repository, then detail only for repositories with an alarm or a failed reading.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  anchor: AD-038-R34
+consumer:
+- cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.md
+- seldon/core/portfolio.py
+- seldon/commands/go.py
+- seldon/commands/handoff.py
+- seldon/mcp_server.py
+- tests/test_sel044_portfolio.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 587f22bdf9c3403c697fbb433f36c8ff8d34f939d5778c05bee07dd4ca181e5c

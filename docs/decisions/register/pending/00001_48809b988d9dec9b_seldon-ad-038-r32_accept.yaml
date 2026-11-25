@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-038-R32
+date: '2026-11-25'
+decided_by: cc:46540234
+operator_stated: false
+receipts:
+- docs/evidence/sel044/part_a_measure.md
+reason: 'SEL-044: from factory filing 6087e4d1; evidence in docs/evidence/sel044'
+kind: decision
+status: accepted
+statement: A project may declare portfolio.repositories in its seldon.yaml (name to path, relative to its primary checkout); there, seldon go --portfolio, seldon handoff --portfolio and the MCP tools' portfolio argument shall read every listed repository and write nothing to any of them.
+source:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  lines:
+  - 59
+  - 64
+  sha256: 99598d2825183c0647a12b7cfec427fcbfe2fa55bd5a4bc2ab78225554cf8be9
+  text: |-
+    - **AD-038-R32. A project may declare `portfolio.repositories` in its seldon.yaml, a mapping of name to path relative to its primary checkout; in such a project `seldon go --portfolio`, `seldon handoff --portfolio` and the MCP tools' `portfolio` argument read every listed repository and write nothing to any of them.**
+      Each repository is opened through its own `seldon.yaml` (its graph, its domain, its dispatch block), as AD-038-R8
+      opens a waits-on target. A portfolio command in a project that declares no `portfolio.repositories` refuses, naming
+      the key; it does not fall back to the side-by-side directories. `go --portfolio --brief` prints the portfolio brief
+      alone; `go --portfolio` puts it first in the project's own orientation. The only file written is the portfolio
+      handoff, in the portfolio project.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  anchor: AD-038-R32
+consumer:
+- cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.md
+- seldon/core/portfolio.py
+- seldon/commands/go.py
+- seldon/commands/handoff.py
+- seldon/mcp_server.py
+- tests/test_sel044_portfolio.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 48809b988d9dec9bb0da113cea24c1a3af649b3cfef38f1453d17688b8ce7eb7

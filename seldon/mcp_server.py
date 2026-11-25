@@ -369,7 +369,7 @@ def _mcp_terminal_transition(
 # ---------------------------------------------------------------------------
 
 @_tool()
-def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
+def seldon_go(project_dir: str = ".", brief: bool = False, portfolio: bool = False) -> str:
     """Orient to a Seldon-managed project. Returns engineering standards,
     project context, latest handoff, current state, and available commands.
 
@@ -378,7 +378,18 @@ def seldon_go(project_dir: str = ".", brief: bool = False) -> str:
             When left as ".", the SELDON_DEFAULT_PROJECT environment variable
             is used if set and contains a valid seldon.yaml.
         brief: If True, skip system CLAUDE.md for a shorter response
+        portfolio: If True, read every repository the project's
+            `portfolio.repositories` lists (AD-038-R32): one row each, then detail
+            for those with something wrong. With `brief`, the portfolio brief alone.
+            Writes nothing to any repository.
     """
+    if portfolio:
+        from seldon.commands.go import assemble_portfolio_context
+        from seldon.core.portfolio import PortfolioConfigError
+        try:
+            return assemble_portfolio_context(project_dir=project_dir, brief=brief)
+        except PortfolioConfigError as exc:
+            return f"Error: {exc}"
     from seldon.commands.go import assemble_go_context
     return assemble_go_context(project_dir=project_dir, brief=brief)
 
@@ -1716,6 +1727,7 @@ def seldon_handoff(
     next: str,
     project_dir: str = ".",
     force: bool = False,
+    portfolio: bool = False,
 ) -> str:
     """Close this session: write the handoff, return the resume and dispatch blocks.
 
@@ -1732,6 +1744,9 @@ def seldon_handoff(
         next: The first action for the next session
         project_dir: Path to project root
         force: Replace an existing handoff at the same path
+        portfolio: Write the portfolio handoff instead (AD-038-R35): a section per
+            repository the project's `portfolio.repositories` lists and one resume
+            line, written and committed in this project only.
     """
     from seldon.commands.handoff import r9_refusal_text
     from seldon.core.handoff import R9Violation, build_handoff, write_handoff
@@ -1740,6 +1755,10 @@ def seldon_handoff(
         config, driver, database, domain_config, resolved = _resolve_project(project_dir)
     except Exception as exc:
         return f"Error: cannot resolve project at {project_dir!r}: {exc}"
+
+    if portfolio:
+        driver.close()
+        return _portfolio_handoff(Path(resolved), config, slug, summary, next, force)
 
     try:
         document = build_handoff(
@@ -1780,6 +1799,23 @@ def seldon_handoff(
     lines.extend(["## Resume block", "", document.resume, ""])
     lines.extend(["## CC dispatch block", "", document.dispatch])
     return "\n".join(lines)
+
+
+def _portfolio_handoff(resolved: Path, config: dict, slug: str, summary: str, next_action: str, force: bool) -> str:
+    """`seldon_handoff(portfolio=True)`: the portfolio handoff, written and committed in the portfolio project only
+    (AD-038-R35), through the same commit path as the project's own handoff (DESK-001)."""
+    from seldon.commands.handoff import build_portfolio_handoff
+    from seldon.core import portfolio as PF
+    from seldon.core.handoff import commit_session_files
+
+    try:
+        path, text, resume = build_portfolio_handoff(resolved, config, slug, summary, next_action)
+        written = PF.write_handoff(path, text, force=force)
+    except (PF.PortfolioConfigError, FileExistsError) as exc:
+        return f"Error: {exc}"
+    commit_lines = commit_session_files(
+        resolved, config, [str(Path(written).resolve().relative_to(resolved.resolve()))])
+    return "\n".join([*commit_lines, f"Wrote {written}", "", "## Resume line", "", resume])
 
 
 # ---------------------------------------------------------------------------

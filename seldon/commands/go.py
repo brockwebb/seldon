@@ -1241,21 +1241,68 @@ def assemble_go_context_as_dict(
     }
 
 
+def portfolio_brief(project_dir: str) -> tuple:
+    """`(portfolio, text)`: every repository the project's `portfolio.repositories` lists, read and rendered
+    (AD-038-R32 to R35, SEL-044). Reads only; writes nothing anywhere.
+
+    Raises:
+        PortfolioConfigError: the project declares no usable portfolio.
+    """
+    from seldon.config import load_project_config
+    from seldon.core import portfolio as PF
+
+    project_dir = _resolve_project_dir(project_dir)
+    p = PF.read_portfolio(Path(project_dir), load_project_config(Path(project_dir)))
+    return p, PF.render_brief(p)
+
+
+def assemble_portfolio_context(project_dir: str = ".", brief: bool = False, handoff_path: Optional[str] = None,
+                               in_claude_code: Optional[bool] = None) -> str:
+    """`seldon go --portfolio`: with `brief`, the portfolio brief alone (one screen); without, the brief first and
+    then the portfolio project's own orientation (AD-038-R32)."""
+    _, text = portfolio_brief(project_dir)
+    if brief:
+        return text
+    return text + "\n---\n\n" + assemble_go_context(project_dir=project_dir, brief=False, handoff_path=handoff_path,
+                                                     in_claude_code=in_claude_code)
+
+
 @click.command("go")
 @click.argument("handoff_path", required=False, type=click.Path())
 @click.option("--brief", is_flag=True, default=False, help="Skip system CLAUDE.md.")
 @click.option("--json", "output_json", is_flag=True, default=False, help="JSON output.")
-def go_command(handoff_path, output_json, brief):
+@click.option("--portfolio", is_flag=True, default=False,
+              help="Read every repository this project's portfolio.repositories lists (AD-038-R32); with --brief, "
+                   "the portfolio brief alone.")
+def go_command(handoff_path, output_json, brief, portfolio):
     """Orient an AI agent: engineering standards, project context, open tasks, commands.
 
     HANDOFF_PATH optionally names the handoff to open on, instead of the newest
     one on disk. `seldon handoff` emits exactly this form in its resume block.
+
+    With --portfolio, the project's `portfolio.repositories` are each read (open tasks by state, the running task and
+    its phase, the last pass, alarms, completions since the last portfolio handoff, open filings, the median gate wall
+    time) and nothing is written to any of them.
     """
     project_dir = str(Path.cwd())
 
     if handoff_path is not None and not Path(handoff_path).is_file():
         click.echo(f"Error: handoff not found: {handoff_path}", err=True)
         raise SystemExit(1)
+
+    if portfolio:
+        from seldon.core.portfolio import PortfolioConfigError
+        try:
+            if output_json:
+                data, text = portfolio_brief(project_dir)
+                click.echo(json.dumps({**data, "brief": text}, indent=2, default=str))
+            else:
+                click.echo(assemble_portfolio_context(project_dir=project_dir, brief=brief,
+                                                      handoff_path=handoff_path))
+        except PortfolioConfigError as exc:
+            click.echo(f"Error: {exc}", err=True)
+            raise SystemExit(1)
+        return
 
     if output_json:
         data = assemble_go_context_as_dict(

@@ -1,0 +1,381 @@
+[
+ {
+  "repo": "TickBiteRisk",
+  "database": "seldon-tickbiterisk",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 255,
+  "last_event": "2026-09-04T19:09:03.087967Z",
+  "task_created_events": 37,
+  "cc_tasks_files": 4,
+  "tasks_by_state": {
+   "completed": 35,
+   "proposed": 2
+  }
+ },
+ {
+  "repo": "aacps-ai-policy",
+  "database": "seldon-aacps-ai-policy",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.aacps-ai-policy-dispatch.plist"
+  ],
+  "events": 12,
+  "last_event": "2026-11-01T11:38:41.111962Z",
+  "task_created_events": 2,
+  "cc_tasks_files": 4,
+  "last_pass_at": "2026-11-25T06:15:58.375939Z",
+  "tasks_by_state": {
+   "completed": 2
+  }
+ },
+ {
+  "repo": "ai-readiness-kg",
+  "database": "seldon-ai-readiness-kg",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.airkg-dispatch.plist"
+  ],
+  "events": 51022,
+  "last_event": "2026-11-24T10:26:22.862871Z",
+  "task_created_events": 342,
+  "cc_tasks_files": 486,
+  "last_pass_at": "2026-11-22T10:06:20.135958Z",
+  "tasks_by_state": {
+   "completed": 220,
+   "superseded": 67,
+   "withdrawn": 39,
+   "accepted": 1,
+   "proposed": 15,
+   "blocked": 1
+  }
+ },
+ {
+  "repo": "ai-workflow-design",
+  "database": "seldon-ai-workflow-design",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 764,
+  "last_event": "2026-09-04T19:08:52.960417Z",
+  "task_created_events": 81,
+  "cc_tasks_files": 144,
+  "tasks_by_state": {
+   "completed": 79,
+   "proposed": 1
+  }
+ },
+ {
+  "repo": "arnold",
+  "database": "seldon-arnold",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 11687,
+  "last_event": "2026-11-21T01:13:28.752481Z",
+  "task_created_events": 204,
+  "cc_tasks_files": 222,
+  "tasks_by_state": {
+   "completed": 176,
+   "superseded": 15,
+   "rejected": 3,
+   "proposed": 10
+  }
+ },
+ {
+  "repo": "book_responsible_ai",
+  "database": "seldon-book-responsible-ai",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 312,
+  "last_event": "2026-09-04T19:08:54.622971Z",
+  "task_created_events": 15,
+  "cc_tasks_files": 31,
+  "tasks_by_state": {
+   "completed": 15
+  }
+ },
+ {
+  "repo": "brock_projects",
+  "database": "seldon-brock-projects",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 3452,
+  "last_event": "2026-09-04T19:08:55.742258Z",
+  "task_created_events": 69,
+  "cc_tasks_files": 77,
+  "tasks_by_state": {
+   "completed": 68,
+   "proposed": 1
+  }
+ },
+ {
+  "repo": "census-web-concept-inventory",
+  "database": "seldon-census-web-concept-inventory",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 395,
+  "last_event": "2026-10-29T15:33:06.938540Z",
+  "task_created_events": 76,
+  "cc_tasks_files": 131,
+  "tasks_by_state": {
+   "completed": 72,
+   "superseded": 3,
+   "proposed": 1
+  }
+ },
+ {
+  "repo": "factory",
+  "database": "seldon-factory",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.factory-dispatch.plist"
+  ],
+  "events": 600,
+  "last_event": "2026-11-25T06:16:47.489364Z",
+  "task_created_events": 15,
+  "cc_tasks_files": 26,
+  "last_pass_at": "2026-11-25T06:14:23.318102Z",
+  "tasks_by_state": {
+   "completed": 8,
+   "blocked": 1,
+   "proposed": 5,
+   "superseded": 1
+  }
+ },
+ {
+  "repo": "federal-survey-concept-mapper",
+  "database": "seldon-federal-survey-concept-mapper",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 127,
+  "last_event": "2026-09-04T19:08:57.869495Z",
+  "task_created_events": 49,
+  "cc_tasks_files": 11,
+  "tasks_by_state": {
+   "rejected": 2,
+   "completed": 20,
+   "in_progress": 2,
+   "blocked": 1,
+   "proposed": 24
+  }
+ },
+ {
+  "repo": "hazbrief-mcp",
+  "database": "seldon-hazbrief-mcp",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.hazbrief-mcp-dispatch.plist"
+  ],
+  "events": 13738,
+  "last_event": "2026-11-25T06:13:42.255667Z",
+  "task_created_events": 265,
+  "cc_tasks_files": 697,
+  "last_pass_at": "2026-11-25T06:13:24.375600Z",
+  "tasks_by_state": {
+   "completed": 249,
+   "superseded": 3,
+   "withdrawn": 7,
+   "proposed": 5,
+   "in_progress": 1
+  }
+ },
+ {
+  "repo": "icsp_notebook",
+  "database": "seldon-icsp-notebook",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 2780,
+  "last_event": "2026-10-05T11:55:03.050522Z",
+  "task_created_events": 286,
+  "cc_tasks_files": 304,
+  "tasks_by_state": {
+   "completed": 258,
+   "withdrawn": 4,
+   "proposed": 21,
+   "accepted": 2,
+   "superseded": 1
+  }
+ },
+ {
+  "repo": "regs-comment-pipeline",
+  "database": "seldon-regs-comment-pipeline",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 428,
+  "last_event": "2026-09-29T02:06:04.329585Z",
+  "task_created_events": 7,
+  "cc_tasks_files": 14,
+  "tasks_by_state": {
+   "completed": 7
+  }
+ },
+ {
+  "repo": "sas_graph_code_conversion",
+  "database": "seldon-sas2graph",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 24,
+  "last_event": "2026-04-21T02:42:16.048537Z",
+  "task_created_events": 3,
+  "cc_tasks_files": 1,
+  "tasks_by_state": {
+   "completed": 3
+  }
+ },
+ {
+  "repo": "seldon",
+  "database": "seldon-seldon-self",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.seldon-dispatch.plist"
+  ],
+  "events": 14191,
+  "last_event": "2026-11-25T06:17:05.112127Z",
+  "task_created_events": 240,
+  "cc_tasks_files": 258,
+  "last_pass_at": "2026-11-25T06:16:49.021101Z",
+  "tasks_by_state": {
+   "proposed": 20,
+   "completed": 180,
+   "superseded": 22,
+   "rejected": 2,
+   "withdrawn": 12,
+   "blocked": 1,
+   "in_progress": 1
+  }
+ },
+ {
+  "repo": "slosh-pipe",
+  "database": "seldon-slosh-pipe",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 3156,
+  "last_event": "2026-10-22T13:40:23.527847Z",
+  "task_created_events": 37,
+  "cc_tasks_files": 84,
+  "tasks_by_state": {
+   "completed": 30,
+   "superseded": 5,
+   "proposed": 2
+  }
+ },
+ {
+  "repo": "slosh-pipe-wt-closed",
+  "database": "seldon-slosh-pipe",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 672,
+  "last_event": "2026-10-19T15:39:18.707340Z",
+  "task_created_events": 30,
+  "cc_tasks_files": 73,
+  "tasks_by_state": {
+   "completed": 30,
+   "superseded": 5,
+   "proposed": 2
+  }
+ },
+ {
+  "repo": "slosh-pipe-wt-control",
+  "database": "seldon-slosh-pipe",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 574,
+  "last_event": "2026-10-19T12:29:46.522615Z",
+  "task_created_events": 30,
+  "cc_tasks_files": 72,
+  "tasks_by_state": {
+   "completed": 30,
+   "superseded": 5,
+   "proposed": 2
+  }
+ },
+ {
+  "repo": "slosh-pipe-wt-metrics",
+  "database": "seldon-slosh-pipe",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 482,
+  "last_event": "2026-10-18T05:48:42.548869Z",
+  "task_created_events": 26,
+  "cc_tasks_files": 61,
+  "tasks_by_state": {
+   "completed": 30,
+   "superseded": 5,
+   "proposed": 2
+  }
+ },
+ {
+  "repo": "squiddy",
+  "database": "seldon-squiddy",
+  "db_online": "online",
+  "dispatch_block": true,
+  "dispatch_enabled": true,
+  "plist": [
+   "com.brock.squiddy-dispatch.plist"
+  ],
+  "events": 10613,
+  "last_event": "2026-11-24T23:34:43.558866Z",
+  "task_created_events": 205,
+  "cc_tasks_files": 364,
+  "last_pass_at": "2026-11-25T06:17:16.621385Z",
+  "tasks_by_state": {
+   "completed": 155,
+   "superseded": 34,
+   "withdrawn": 1,
+   "proposed": 15
+  }
+ },
+ {
+  "repo": "usai-harness",
+  "database": "seldon-usai-harness",
+  "db_online": "online",
+  "dispatch_block": false,
+  "dispatch_enabled": null,
+  "plist": [],
+  "events": 250,
+  "last_event": "2026-09-04T19:09:04.231743Z",
+  "task_created_events": 51,
+  "cc_tasks_files": 3,
+  "tasks_by_state": {
+   "rejected": 5,
+   "completed": 46
+  }
+ }
+]

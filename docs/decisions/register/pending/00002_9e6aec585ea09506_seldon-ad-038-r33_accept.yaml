@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-038-R33
+date: '2026-11-25'
+decided_by: cc:46540234
+operator_stated: false
+receipts:
+- docs/evidence/sel044/part_a_measure.md
+reason: 'SEL-044: from factory filing 6087e4d1; evidence in docs/evidence/sel044'
+kind: decision
+status: accepted
+statement: A listed repository that cannot be read shall be listed with the reason and never dropped, and a repository read in part shall show what was read and name each reading that failed.
+source:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  lines:
+  - 65
+  - 68
+  sha256: 99598d2825183c0647a12b7cfec427fcbfe2fa55bd5a4bc2ab78225554cf8be9
+  text: |-
+    - **AD-038-R33. A listed repository that cannot be read is listed with the reason and never dropped; a repository read in part shows what was read and names each reading that failed.**
+      No path, no `seldon.yaml`, an unreadable config, a graph that refuses or a corrupt event store is each a reason in
+      the repository's row, and the brief's header counts the unreadable ones. A failure in one repository's read never
+      stops another's.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md
+  anchor: AD-038-R33
+consumer:
+- cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.md
+- seldon/core/portfolio.py
+- seldon/commands/go.py
+- seldon/commands/handoff.py
+- seldon/mcp_server.py
+- tests/test_sel044_portfolio.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9e6aec585ea09506acc3e380cb3903424e5c08600ef6e1dd2191050c7d3e3b4d
