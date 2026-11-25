@@ -1,0 +1,64 @@
+# SEL-047 Part A item 1: `seldon gate plan` run with cwd /Users/brock/GitHub/seldon (HEAD e42c25bc82b56cd15740f8c2875860841f29bc66) at 2026-11-25T15:47:18+00:00
+
+$ seldon gate plan   (exit 0)
+gate plan against main (fork e42c25bc, tree 52849cfa, DIRTY): scoped: 0 of 205 test files; declared_none: every changed path matched a slice declared `tests: none`
+  slice event_store: 1 path(s): seldon_events.jsonl
+
+$ seldon gate plan --json   (exit 0)
+{
+ "always": {
+  "changed_tests": [],
+  "last_failed": []
+ },
+ "base": "main",
+ "change_set": "0d6e4079e36703eb",
+ "changed": [
+  "seldon_events.jsonl"
+ ],
+ "commands": [],
+ "commit": "e42c25bc82b56cd15740f8c2875860841f29bc66",
+ "dirty": true,
+ "files_selected": 0,
+ "files_total": 205,
+ "fork": "e42c25bc82b56cd15740f8c2875860841f29bc66",
+ "markers": [],
+ "reason": "declared_none: every changed path matched a slice declared `tests: none`",
+ "reasons": [],
+ "slices": {
+  "event_store": [
+   "seldon_events.jsonl"
+  ]
+ },
+ "tests": [],
+ "tier": "scoped",
+ "tree": "52849cfa6366aee629da1b7d0a30ea6feb5a2442",
+ "unmatched": []
+}
+
+# SEL-047 Part A item 2: `seldon gate plan --base main` in this task worktree after Part D files exist (2026-11-25T15:55:52Z, HEAD e42c25b, files uncommitted)
+$ seldon gate plan --base main   (exit 0)
+gate plan against main (fork e42c25bc, tree 52849cfa, DIRTY): scoped: 23 of 205 test files; scoped: documents
+  slice documents: 1 path(s): docs/evidence/sel047
+  test tests/test_attr001_union_attribute.py
+  test tests/test_cc_register_commits_note.py
+  test tests/test_decision_register.py
+  test tests/test_desk002_ruling_commits_with_record.py
+  test tests/test_dispatch_parallel_held.py
+  test tests/test_friction001_reconcile.py
+  test tests/test_friction001_registration_premises.py
+  test tests/test_friction002_worktree_only.py
+  test tests/test_governed.py
+  test tests/test_handoff.py
+  test tests/test_hooks.py
+  test tests/test_init.py
+  test tests/test_loop001_register_seq.py
+  test tests/test_prior_art.py
+  test tests/test_prior_art_caller.py
+  test tests/test_prior_art_ref.py
+  test tests/test_result_grammar.py
+  test tests/test_sec001_rewrite.py
+  test tests/test_sel014r_ooda_knowledge_source.py
+  test tests/test_sel020_project_new_state_and_commit_paths.py
+  test tests/test_sel036_biblio_bridge.py
+  test tests/test_sel038_journals_and_held_releases.py
+  test tests/test_sel039_own_graphs_first.py
