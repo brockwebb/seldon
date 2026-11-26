@@ -176,7 +176,10 @@ def _status_project(tmp_path, neo4j_driver):
     return p, wt
 
 
-def test_dispatch_status_reads_the_cap_from_a_worktree(tmp_path, neo4j_driver):
+def test_dispatch_status_reads_the_cap_from_a_worktree(tmp_path, neo4j_driver, clean_test_db):
+    # clean_test_db (SEL-048): `dispatch status` reads every task in the shared test database, and a task another
+    # test leaves behind with a cross-project `waits_on` edge made it print a warning ahead of the JSON parsed here
+    # (SEL-047 Part B: polluter test_sel008_...::test_task_show_prints_the_edge_with_the_other_tasks_state_...).
     from seldon.commands.dispatch import dispatch_group
     from tests.dispatch_scaffold import run_cli
     _sibling(tmp_path)

@@ -47,10 +47,21 @@ RECORDER = textwrap.dedent('''\
     ap.add_argument("--outcome", choices=["pass", "fail", "none"], default="pass")
     ap.add_argument("--sleep", type=float, default=0.0)
     ap.add_argument("--mark", default=None)
+    ap.add_argument("--wait-for", default=None)
+    ap.add_argument("--wait-ceiling", type=float, default=0.0)
     a = ap.parse_args()
     if a.mark:
         Path(a.mark).write_text("started\\n")
     time.sleep(a.sleep)
+    if a.wait_for:
+        # A synchronisation, not a window (SEL-048): the gate runs until the other side says it is done, so "it
+        # happened while the gate ran" holds by construction. The ceiling only stops a broken peer hanging the gate.
+        deadline = time.monotonic() + a.wait_ceiling
+        while not Path(a.wait_for).exists():
+            if time.monotonic() >= deadline:
+                print(f"recorder: {a.wait_for} did not appear within {a.wait_ceiling}s", flush=True)
+                break
+            time.sleep(0.05)
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     if a.outcome != "none":
         led = Path("ledger/passes.jsonl")
@@ -364,19 +375,24 @@ HAND_TASK = """# CC Task — {stem}
 
 ## 1. Do the thing.
 """
-#: The gate sleeps past the filer's wait: were it run under the pass's filing lock, the filer would be refused.
+#: The gate runs until the filer has finished, so it outlasts the filer's wait: were it run under the pass's filing
+#: lock, the filer would be refused after LOCK_WAIT_S. SEL-048 replaced a fixed 6 s gate, which a slow filing outlasted
+#: under load (SEL-047 Part B: 16 of 20 alone runs failed), with this synchronisation.
 LOCK_WAIT_S = 1
-GATE_SLEEP_S = 6
+#: The filer's own ceiling on waiting for the gate to start, reused as the gate's ceiling on waiting for the filing.
+FILER_CEILING_S = 120
 
 
 @pytest.mark.usefixtures("neo4j_available")
 def test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing(tmp_path, neo4j_driver,
                                                                                             dc):
     mark = tmp_path / "gate.mark"
+    filed_mark = tmp_path / "filed.mark"                # the filer writes it once F.file_task has returned
     # The pass covers the work's paths (squiddy's `tree_paths` shape): the task file the filer lands on main mid-gate
     # is outside them, so the record the gate makes still covers the tip the next pass merges.
     p = make_project(tmp_path, dispatch_extra={"gate_record": _decl(
-        _recorder(tmp_path, "--outcome", "pass", "--sleep", str(GATE_SLEEP_S), "--mark", str(mark)),
+        _recorder(tmp_path, "--outcome", "pass", "--mark", str(mark), "--wait-for", str(filed_mark),
+                  "--wait-ceiling", str(FILER_CEILING_S)),
         tree_paths=["out", "fix"])})
     cfg = yaml.safe_load((p / "seldon.yaml").read_text())
     cfg["filings"] = {"lock_wait_s": LOCK_WAIT_S}
@@ -400,16 +416,19 @@ def test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concur
     seen = {}
 
     def filer():
-        deadline = time.monotonic() + 120
-        while not mark.exists() and time.monotonic() < deadline:
-            time.sleep(0.05)
-        seen["gate_running_at_start"] = mark.exists() and mark.read_text() == "started\n"
         try:
-            seen["filed"] = F.file_task(p, HAND_TASK.format(stem="filed during the gate"),
-                                        name="2026-11-06_filed_during_the_gate.md")
-        except F.FilingError as exc:
-            seen["refused"] = str(exc)
-        seen["gate_running_at_end"] = mark.read_text() == "started\n"
+            deadline = time.monotonic() + FILER_CEILING_S
+            while not mark.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            seen["gate_running_at_start"] = mark.exists() and mark.read_text() == "started\n"
+            try:
+                seen["filed"] = F.file_task(p, HAND_TASK.format(stem="filed during the gate"),
+                                            name="2026-11-06_filed_during_the_gate.md")
+            except F.FilingError as exc:
+                seen["refused"] = str(exc)
+            seen["gate_running_at_end"] = mark.exists() and mark.read_text() == "started\n"
+        finally:
+            filed_mark.write_text("filed\n")           # releases the gate, whatever the filing did
 
     t = threading.Thread(target=filer)
     t.start()

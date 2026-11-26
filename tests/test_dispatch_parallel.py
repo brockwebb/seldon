@@ -232,7 +232,12 @@ def test_union_merge_of_two_event_appends_is_valid(tmp_path, neo4j_driver, clean
     assert _once(p).count("launching") == 2
     _wait_settled(p, neo4j_driver, ["a", "b"])
 
-    assert task_states(neo4j_driver) == {"a": "completed", "b": "completed"}
+    # SEL-047 saw this fail 2 of 20 alone with task a `blocked` and nothing else to read (SEL-048): the supervisors'
+    # logs and the finished outcomes go in the message, as `_wait_settled` gives on a timeout, so a failure says why.
+    states = task_states(neo4j_driver)
+    assert states == {"a": "completed", "b": "completed"}, (
+        f"states {states}\nfinished {_finished(p)}\n"
+        + "\n".join(f"--- {n}\n{_supervisor_log(p, n)}" for n in ("a", "b")))
     store = _show(p, "main", "seldon_events.jsonl")
     lines = [json.loads(ln) for ln in store.splitlines() if ln.strip()]
     ids = [e["event_id"] for e in lines]
