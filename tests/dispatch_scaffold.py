@@ -182,6 +182,26 @@ def mark(what):
         with open(spec["mark"], "a") as fh:
             fh.write(f"{{stem}} {{what}} {{time.time()}}\\n")
 mark("start")
+if spec.get("rendezvous"):
+    # SEL-049: overlap by a rendezvous, not by a `sleep` long enough to cover a peer's launch (SEL-047 saw that window
+    # missed under load: Luo et al. FSE 2014's "async wait"). Wait until every named peer has written its `start` mark
+    # (a test may be the peer: it writes `<name> start <t>` itself), up to `ceiling_s`; then go on and say which way it
+    # ended, as a mark the test can assert on. A missed ceiling never hangs the test: the session proceeds.
+    rv = spec["rendezvous"]
+    if not spec.get("mark") or not rv.get("peers") or "ceiling_s" not in rv:
+        print("stub rendezvous needs `mark`, `rendezvous.peers` and `rendezvous.ceiling_s`", file=sys.stderr)
+        sys.exit(2)
+    def started():
+        p = Path(spec["mark"])
+        return {{ln.split()[0] for ln in (p.read_text().splitlines() if p.exists() else [])
+                 if ln.split()[1:2] == ["start"]}}
+    deadline = time.monotonic() + rv["ceiling_s"]
+    while not set(rv["peers"]) <= started() and time.monotonic() < deadline:
+        time.sleep(0.05)
+    missing = sorted(set(rv["peers"]) - started())
+    if missing:
+        print("stub rendezvous: ceiling", rv["ceiling_s"], "s reached; not started:", " ".join(missing))
+    mark("rendezvous_missed" if missing else "rendezvous_met")
 if spec.get("dump_env"):
     Path(spec["dump_env"]).write_text(json.dumps(
         {{k: v for k, v in os.environ.items() if k.startswith("ANTHROPIC_DEFAULT_")}}))

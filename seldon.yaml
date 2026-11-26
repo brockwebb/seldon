@@ -211,10 +211,20 @@ dispatch:
   # SEL-045R Part B, Issue d6040ce8 (open): the one `--deselect` below. That test reads squiddy's live library, not
   # this tree, and has failed on main in every recorded run since 2026-11-09, so with it in the command no full gate
   # can be green. The test file stays and the Issue stays open; nothing else about which tests run changes.
+  # SEL-049: `-n 6` (pytest-xdist; the scoped tier's `test_command` below already runs at `-n 4`). Measured basis,
+  # SEL-047 (docs/evidence/sel047/README.md Part B), the same afternoon under the same neighbour's load: serial 7,463 s,
+  # over `gate_timeout_s`, against 2,193, 2,269 and 2,508 s at `-n 6`; on quiet nights `-n 6` took 25:40 and 25:51
+  # (SEL-042) where the serial merge gates took 81 to 96 minutes. SEL-049's own `-n 6` run: docs/evidence/sel049/.
+  # pytest-randomly is installed and this command does not pass `-p no:randomly`, so every gate run (and every xdist
+  # worker's share) is in a fresh random order: a test that passes here passes in an order nobody chose.
   gate_command: >-
     python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
-    -p no:cacheprovider
+    -p no:cacheprovider -n 6
     --deselect tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
+  # SEL-049: at `-n 6` the full tier measured 1,540 to 2,508 s (SEL-042 quiet, SEL-047 loaded), so 7,200 s is now about
+  # three times the worst measured run: generous on purpose, so a neighbour's load cannot time a green gate out. It is
+  # kept, not cut, because a timeout is a red gate (`regate_red`) and costs a second full run; the history below is
+  # why it was raised.
   # SEL-041 Part D: the gate's wall-clock ceiling (the 3600 s default had no measured basis). Measured 2026-11-21:
   # `seldon gate run --full` on SEL-041's branch ran `gate_command` above (serial) and was killed at 3,600 s with 73%
   # of 3,482 tests done (load average 7 to 8), so about 82 minutes whole; the serial suite took 70 minutes on

@@ -37,6 +37,14 @@ PARALLEL = {"max_parallel": 3, "gate_command": "test ! -e RED",
 
 NONEXCL = "**Exclusive:** no\n**Touches:** {touches}\n"
 
+# SEL-049: how long a stub waits at a rendezvous for its peer's `start` mark before it gives up and goes on (the
+# scaffold's `rendezvous`). A ceiling, not a window: a met rendezvous takes as long as the peer's launch does, and only
+# a lost peer costs the full ceiling. Under `_wait_settled`'s 90 s so a missed rendezvous fails as such, not as a
+# timeout. SEL-047 measured b's launch at up to about 8 s after a's under a 1-minute load of 99.
+RENDEZVOUS_CEILING_S = 60
+# SEL-049: how long the killed-supervisor test waits for the killed session's process to be gone.
+SESSION_GONE_CEILING_S = 20
+
 
 @pytest.fixture
 def dc():
@@ -121,8 +129,14 @@ def test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge(
     marks = tmp_path / "marks.txt"
     add_task(p, "a", NONEXCL.format(touches="out/a/"))
     add_task(p, "b", NONEXCL.format(touches="out/b/"))
-    write_stub(p, {"a": {"write": {"out/a/x.txt": "a\n"}, "sleep": 3, "mark": str(marks)},
-                   "b": {"write": {"out/b/x.txt": "b\n"}, "sleep": 3, "mark": str(marks)}})
+    # SEL-049: each session waits at a rendezvous for the other's start, so they overlap whatever b's launch costs.
+    # The `sleep: 3` this replaces had to cover b's launch, and under load did not (SEL-047: 3 of 20 alone, 3 of 3
+    # at -n 6). The dispatcher must still launch both in one pass: if it held b until a ended, a would miss the
+    # rendezvous and the assertions below fail.
+    def rv(peer):
+        return {"peers": [peer], "ceiling_s": RENDEZVOUS_CEILING_S}
+    write_stub(p, {"a": {"write": {"out/a/x.txt": "a\n"}, "rendezvous": rv("b"), "mark": str(marks)},
+                   "b": {"write": {"out/b/x.txt": "b\n"}, "rendezvous": rv("a"), "mark": str(marks)}})
     ta = register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
     tb = register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:02Z")
 
@@ -131,6 +145,7 @@ def test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge(
     _wait_settled(p, neo4j_driver, ["a", "b"])
 
     m = _marks(marks)
+    assert "rendezvous_met" in m["a"] and "rendezvous_met" in m["b"], m
     assert m["a"]["start"] < m["b"]["end"] and m["b"]["start"] < m["a"]["end"], m
     assert task_states(neo4j_driver) == {"a": "completed", "b": "completed"}
     assert _show(p, "main", "out/a/x.txt") == "a\n" and _show(p, "main", "out/b/x.txt") == "b\n"
@@ -188,7 +203,11 @@ def test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones(
     add_task(p, "r", NONEXCL.format(touches="out/r/"))
     add_task(p, "x")
     add_task(p, "b", NONEXCL.format(touches="out/b/"))
-    write_stub(p, {"r": {"write": {"out/r/1.txt": "r\n"}, "sleep": 3, "mark": str(marks)},
+    # SEL-049: r runs until this test releases it, by a rendezvous whose peer is the test itself (`checked`), so r is
+    # still running at the second pass whatever registering x and b costs. Its `sleep: 3` had to cover that, and
+    # under load did not: SEL-047's one failure found r's merge under way (`dirty_tree`), not `exclusive_waits`.
+    write_stub(p, {"r": {"write": {"out/r/1.txt": "r\n"}, "mark": str(marks),
+                         "rendezvous": {"peers": ["checked"], "ceiling_s": RENDEZVOUS_CEILING_S}},
                    "x": {"write": {"out/x.txt": "x\n"}, "complete": True, "mark": str(marks)},
                    "b": {"write": {"out/b/1.txt": "b\n"}, "mark": str(marks)}})
     tr = register(p, neo4j_driver, dc, "r", "2026-10-07T00:00:01Z")
@@ -196,11 +215,16 @@ def test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones(
     tx = register(p, neo4j_driver, dc, "x", "2026-10-07T00:00:02Z")
     register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:03Z")
 
-    out = _once(p)
+    try:
+        out = _once(p)
+    finally:
+        with open(marks, "a") as fh:   # release r even when the pass raised, so its supervisor does not linger
+            fh.write(f"checked start {time.time()}\n")
     assert "launching" not in out, out
     assert f"waits (exclusive_waits) on {tr[:8]}" in out
     assert f"waits (exclusive) on {tx[:8]}" in out
     _wait_settled(p, neo4j_driver, ["r"])
+    assert "rendezvous_met" in _marks(marks)["r"]
 
     out = _once(p)   # x runs in place, synchronously, and b waits behind it
     # FRICTION-002 Part B: an exclusive task runs alone, as before, but in its own worktree like every task.
@@ -359,16 +383,22 @@ def test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept(
     worktree, and keeps the lease for the operator's PID-gated reap."""
     p = _project(tmp_path)
     add_task(p, "a", NONEXCL.format(touches="out/a/"))
-    write_stub(p, {"a": {"write": {"out/a/1.txt": "partial\n"}, "sleep": 60}})
+    marks = tmp_path / "marks.txt"
+    pidfile = tmp_path / "session.pid"
+    write_stub(p, {"a": {"write": {"out/a/1.txt": "partial\n"}, "sleep": 60, "mark": str(marks),
+                         "pidfile": str(pidfile)}})
     ta = register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
-    started = time.monotonic()
     assert _once(p).count("launching") == 1
     log = p / "logs" / "dispatch" / "a.log"
     _wait(lambda: log.exists() and "stub cwd: worktree" in log.read_text()
           and _leases(p)["a"]["body"].get("supervising"), "session start", timeout=20)
+    _wait(pidfile.exists, "session pid", timeout=20)
+    session = int(pidfile.read_text())
     pid = _leases(p)["a"]["body"]["pid"]
     os.killpg(pid, signal.SIGKILL)
     os.waitpid(pid, 0)   # this test process is its parent; in production launchd reaps it
+    # SEL-049: the session runs in the supervisor's group, so the kill took it too. Wait for that, under a ceiling.
+    _wait(lambda: not D.pid_alive(session), "killed session to exit", timeout=SESSION_GONE_CEILING_S)
 
     out = run_cli(p, dispatch_group, ["once"]).output
     assert f"STALE: {ta[:8]} a" in out, out
@@ -379,8 +409,10 @@ def test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept(
     lease = _leases(p)["a"]
     assert lease["held"] and not lease["alive"]
     assert "STALE" not in run_cli(p, dispatch_group, ["once"]).output  # marked once
-    # Killed mid-session, not after it: the 60-second session never ran to its end.
-    assert time.monotonic() - started < 30
+    # Killed mid-session, not after it: the 60-second session started, is gone, and never ran to its end. SEL-049:
+    # read from the session's own marks, not from a `< 30` s budget on the test's clock (SEL-047: 31.0 s under load).
+    m = _marks(marks)
+    assert "start" in m["a"] and "end" not in m["a"], m
     assert "EXIT=" not in log.read_text()
     reap = run_cli(p, dispatch_group, ["lease", "reap", "--task", "a"])
     assert json.loads(reap.output)["reaped"] is True
