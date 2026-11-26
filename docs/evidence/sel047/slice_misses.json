@@ -1,0 +1,2660 @@
+[
+ {
+  "commit": "428c32b5274b33b1f9633d54f135f5f9553a7105",
+  "prev": "42601eccaa919d03a46cb82e4f79262a3c9b6391",
+  "branch": "worktree-glittery-churning-steele",
+  "merged_at": "2026-10-26T12:39:11-04:00",
+  "task_id": "09e3b92c-da98-4d2b-845a-d265221c7318",
+  "task": "cc_tasks/2026-10-26_SEL-010R2_dispatch_waits_for_the_desktop_ooda_between_chained_tasks.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-26_SEL-010R2_dispatch_waits_for_the_desktop_ooda_between_chained_tasks_RESULT.md",
+   "docs/conventions/desktop_ooda.md",
+   "docs/decisions/register/pending/00001_446f7a7430131700_seldon-ad-038-r10_accept.yaml",
+   "docs/decisions/register/pending/00002_aa436fa26ebd39b0_seldon-ad-038-r11_accept.yaml",
+   "docs/design/2026-09-15_standing_dispatcher.md",
+   "docs/design/AD-038_ADDENDUM_03_the_ooda_between_chained_tasks_and_adoption.md",
+   "scripts/jobs/seldon_dispatch.sh",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/adopt.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/reconcile.py",
+   "seldon/core/stations.py",
+   "seldon/mcp_server.py",
+   "tests/test_sel010r2_ooda_gate_and_adopt.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 158
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: scripts/jobs/seldon_dispatch.sh",
+   "reasons": [
+    "unmatched: scripts/jobs/seldon_dispatch.sh",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/adopt.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/reconcile.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "scripts/jobs/seldon_dispatch.sh",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/adopt.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/reconcile.py",
+    "seldon/core/stations.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 158,
+   "files_total": 158
+  }
+ },
+ {
+  "commit": "35f1b1d5e1a9f54aef0840652a48f97d9497cdb8",
+  "prev": "b7a81c21b140197bf59242844baec0dcbce14b42",
+  "branch": "worktree-calm-prancing-koala",
+  "merged_at": "2026-10-26T13:47:56-04:00",
+  "task_id": "bd5f26fb-ac31-4643-82e9-5d8982125bc3",
+  "task": "cc_tasks/2026-10-26_SEL-011_registration_refuses_what_dispatch_would_refuse_and_every_non_candidate_gets_a_reason.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-26_SEL-011_registration_refuses_what_dispatch_would_refuse_and_every_non_candidate_gets_a_reason_RESULT.md",
+   "docs/decisions/register/pending/00001_4061f5b941ba8d50_seldon-ad-038-r12_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_04_registration_runs_the_dispatchers_static_checks.md",
+   "seldon/commands/cc.py",
+   "seldon/commands/dispatch.py",
+   "seldon/core/dispatch.py",
+   "seldon_events.jsonl",
+   "tests/test_dispatch_launch.py",
+   "tests/test_sel011_registration_refuses_what_dispatch_would_refuse.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 159
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/cc.py",
+   "reasons": [
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/core/dispatch.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/cc.py",
+    "seldon/commands/dispatch.py",
+    "seldon/core/dispatch.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 159,
+   "files_total": 159
+  }
+ },
+ {
+  "commit": "4635958ab61b5eb0e19e0c7fe746a7e564f93591",
+  "prev": "8c774e8414f090b4d4cc11e6393320cd1cf39199",
+  "branch": "worktree-dynamic-imagining-rossum",
+  "merged_at": "2026-10-27T10:46:50-04:00",
+  "task_id": "bacacc4c-9ddc-45bb-b214-0747bd6d2c13",
+  "task": "cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-27_NUM-001R_task_numbers_allocated_and_headers_read_from_the_header_block_RESULT.md",
+   "docs/decisions/register/pending/00001_ec7d11215679f1f1_seldon-ad-038-r13_accept.yaml",
+   "docs/decisions/register/pending/00002_990645f9a749a2c1_seldon-ad-038-r14_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_05_task_numbers_allocated_and_headers_read_from_the_header_block.md",
+   "seldon/commands/cc.py",
+   "seldon/commands/task.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/numbering.py",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "tests/test_dispatch.py",
+   "tests/test_num001r_headers_read_from_the_header_block.py",
+   "tests/test_num001r_task_numbers_allocated.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 161
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/cc.py",
+   "reasons": [
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/task.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/numbering.py",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/cc.py",
+    "seldon/commands/task.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/numbering.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 161,
+   "files_total": 161
+  }
+ },
+ {
+  "commit": "cf8afdc99c9993567a5b26160d8f38f684726502",
+  "prev": "02f879c054a65547c16f8bc13ff2911c330a0483",
+  "branch": "worktree-glimmering-stirring-sunset",
+  "merged_at": "2026-10-27T11:41:09-04:00",
+  "task_id": "f7a1d2f0-f69b-48d0-87c7-a2187d7d1d03",
+  "task": "cc_tasks/2026-10-27_DESK-004R_every_file_the_machine_writes_is_committed_by_the_tool_that_wrote_it.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-27_DESK-004R_every_file_the_machine_writes_is_committed_by_the_tool_that_wrote_it_RESULT.md",
+   "docs/decisions/register/pending/00001_dcbff1adbf5168eb_seldon-ad-038-r15_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_06_the_hooks_installer_commits_what_it_writes.md",
+   "seldon/commands/hooks.py",
+   "seldon/core/hooks.py",
+   "seldon/core/reconcile.py",
+   "seldon_events.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/test_desk004r_tool_commits_what_it_writes.py",
+   "tests/test_hooks.py",
+   "tests/test_prior_art_ref.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 162
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/hooks.py",
+   "reasons": [
+    "unmatched: seldon/commands/hooks.py",
+    "unmatched: seldon/core/hooks.py",
+    "unmatched: seldon/core/reconcile.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/hooks.py",
+    "seldon/core/hooks.py",
+    "seldon/core/reconcile.py",
+    "tests/dispatch_scaffold.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 162,
+   "files_total": 162
+  }
+ },
+ {
+  "commit": "8bb4d2fbc704030ba5217cd208c7406ff8653762",
+  "prev": "de5d88571c144223d62e7c11e7508bcc7ba43758",
+  "branch": "worktree-fluttering-noodling-twilight",
+  "merged_at": "2026-10-27T14:58:05-04:00",
+  "task_id": "2909ce0f-ec55-4da7-8f9b-f2f393933264",
+  "task": "cc_tasks/2026-10-27_DISP-004R_a_cross_repo_task_is_pushed_in_every_repository_it_names.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-27_DISP-004R_a_cross_repo_task_is_pushed_in_every_repository_it_names_RESULT.md",
+   "docs/decisions/register/pending/00001_7edc8b0782d912dc_seldon-ad-034-r12_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_06_cross_repo_task_pushed_in_every_repo_it_names.md",
+   "governed/ledger/events.jsonl",
+   "seldon.yaml",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/dispatch.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/test_disp004r_cross_repo_push.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 163
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon.yaml",
+   "reasons": [
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel029_ledger_and_addendum_commit.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "tests/dispatch_scaffold.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 163,
+   "files_total": 163
+  }
+ },
+ {
+  "commit": "b07d1992ee89364102e264140d907d829aedb79d",
+  "prev": "0bbf6a84fb3b51c30bf338878f3eadc8d9fd088d",
+  "branch": "worktree-rippling-yawning-fox",
+  "merged_at": "2026-10-27T15:08:51-04:00",
+  "task_id": "ff3a4189-1943-4405-a30f-8d3344bb97ad",
+  "task": "cc_tasks/2026-10-27_RECALL-002R_recall_turned_on_in_squiddy_arnold_and_ai_readiness_kg.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-27_RECALL-002R_recall_turned_on_in_squiddy_arnold_and_ai_readiness_kg_RESULT.md",
+   "docs/evidence/recall002r/check.py",
+   "docs/evidence/recall002r/recall_check_output.txt",
+   "seldon_events.jsonl"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 163
+  },
+  "today": {
+   "tier": "full",
+   "reason": "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+   "reasons": [
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 163,
+   "files_total": 163
+  }
+ },
+ {
+  "commit": "37eef3943aff3443b72833a12faf24389907e2ab",
+  "prev": "af7de9175b72e568b936de7693f8279ea41c52f5",
+  "branch": "worktree-flickering-prancing-stream",
+  "merged_at": "2026-10-28T10:08:35-04:00",
+  "task_id": "a3357104-faa0-439a-b132-e9a4d3c4bf05",
+  "task": "cc_tasks/2026-10-28_SEL-012_the_pass_ledger_hook_lands_and_installs_in_every_governed_repository.md",
+  "recorded_gate": null,
+  "changed": [
+   ".githooks/prepare-commit-msg",
+   "cc_tasks/2026-10-28_SEL-012_the_pass_ledger_hook_lands_and_installs_in_every_governed_repository_RESULT.md",
+   "cc_tasks/2026-10-28_SEL-015_the_prepare_commit_msg_hook_installs_in_the_four_siblings_once_main_carries_it.md",
+   "docs/evidence/sel012/partc.py",
+   "docs/evidence/sel012/partc_transcript.txt",
+   "docs/evidence/sel012/rehearse_b.py",
+   "docs/evidence/sel012/rehearse_b_transcript.txt",
+   "docs/evidence/sel012/survey.py",
+   "seldon/commands/hooks.py",
+   "seldon/commands/verify.py",
+   "seldon/core/hooks.py",
+   "seldon/core/pass_ledger.py",
+   "seldon_events.jsonl",
+   "tests/test_desk004r_tool_commits_what_it_writes.py",
+   "tests/test_sq096_pass_ledger.py",
+   "tests/test_verify_event_log.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 164
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: .githooks/prepare-commit-msg",
+   "reasons": [
+    "unmatched: .githooks/prepare-commit-msg",
+    "unmatched: seldon/commands/hooks.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/hooks.py",
+    "unmatched: seldon/core/pass_ledger.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    ".githooks/prepare-commit-msg",
+    "seldon/commands/hooks.py",
+    "seldon/commands/verify.py",
+    "seldon/core/hooks.py",
+    "seldon/core/pass_ledger.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 164,
+   "files_total": 164
+  }
+ },
+ {
+  "commit": "9a0df9f40092eff4eca9f4f4a81145ebff2d94f4",
+  "prev": "2f2fa17c25a9f15fbc24defc796053243dbcf202",
+  "branch": "worktree-squishy-wondering-pascal",
+  "merged_at": "2026-10-28T11:47:46-04:00",
+  "task_id": "9d4a865e-b2bd-40d3-a001-f1aef5ad31d1",
+  "task": "cc_tasks/2026-10-28_SEL-013R_a_consumer_filings_answer_files_its_own_return.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-28_SEL-013R_a_consumer_filings_answer_files_its_own_return_RESULT.md",
+   "docs/conventions/dispatched_session_protocol.md",
+   "docs/decisions/register/pending/00001_2a52bf4721a0360b_seldon-ad-036-r16_accept.yaml",
+   "docs/design/AD-036_ADDENDUM_09_an_answer_files_its_own_return.md",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/cc.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/returns.py",
+   "seldon/domain/research.yaml",
+   "seldon/mcp_server.py",
+   "state/prior_art_queries.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/test_sel013r_answers_files_its_return.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 165
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/cc.py",
+   "reasons": [
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/returns.py",
+    "unmatched: seldon/domain/research.yaml",
+    "unmatched: seldon/mcp_server.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel014r_ooda_knowledge_source.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel029_ledger_and_addendum_commit.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "seldon/commands/cc.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/returns.py",
+    "seldon/domain/research.yaml",
+    "seldon/mcp_server.py",
+    "tests/dispatch_scaffold.py"
+   ],
+   "slices": [
+    "documents",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 165,
+   "files_total": 165
+  }
+ },
+ {
+  "commit": "db4a41309756ff06cce61d8c3f3e108fb6f27ed9",
+  "prev": "6f7690ceda4dfeeafbb9f98bfb87e47f0bfc23d9",
+  "branch": "worktree-cuddly-crunching-starfish",
+  "merged_at": "2026-10-28T13:24:45-04:00",
+  "task_id": "fe704e5e-e176-4c40-915e-52923cae564e",
+  "task": "cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-28_SEL-014R_the_ooda_is_a_knowledge_source_the_dispatcher_launches_RESULT.md",
+   "docs/conventions/desktop_ooda.md",
+   "docs/decisions/register/pending/00001_06d297c2b405df6b_seldon-ad-038-r16_accept.yaml",
+   "docs/decisions/register/pending/00002_95bb19c817574a12_seldon-ad-038-r17_accept.yaml",
+   "docs/decisions/register/pending/00003_547d9467c90a657a_seldon-ad-038-r18_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_07_the_ooda_as_a_knowledge_source.md",
+   "docs/evidence/sel014r/replay_with_the_model.jsonl",
+   "docs/evidence/sel014r/replay_with_the_model_progress.txt",
+   "docs/evidence/sel014r/replay_with_the_model_run1.jsonl",
+   "docs/evidence/sel014r/replay_with_the_model_run1_progress.txt",
+   "docs/evidence/sel014r/run1_unit3_addendum_recall002r.md",
+   "governed/ledger/events.jsonl",
+   "scripts/sel014r_replay_with_the_model.py",
+   "seldon.yaml",
+   "seldon/commands/cc.py",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_ooda.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/adopt.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/ooda.py",
+   "seldon/mcp_server.py",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel010r2_ooda_gate_and_adopt.py",
+   "tests/test_sel014r_ooda_knowledge_source.py",
+   "tests/test_sel014r_registration_retry.py",
+   "tests/test_sel014r_replay_overnight_chain.py",
+   "tests/test_sel014r_replay_script_checkpoint.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 169
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: scripts/sel014r_replay_with_the_model.py",
+   "reasons": [
+    "unmatched: scripts/sel014r_replay_with_the_model.py",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_ooda.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/adopt.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/ooda.py",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel029_ledger_and_addendum_commit.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "scripts/sel014r_replay_with_the_model.py",
+    "seldon.yaml",
+    "seldon/commands/cc.py",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_ooda.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/adopt.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/ooda.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 169,
+   "files_total": 169
+  }
+ },
+ {
+  "commit": "a82826fd11f18ae7f76ab03245e5b7424fd59d0d",
+  "prev": "ee980549f000168268a50eabdb76c750cece6434",
+  "branch": "worktree-dreamy-herding-axolotl",
+  "merged_at": "2026-10-28T13:34:16-04:00",
+  "task_id": "70d17196-2d24-4264-a00a-0f9553969c97",
+  "task": "cc_tasks/2026-10-28_SEL-015_the_prepare_commit_msg_hook_installs_in_the_four_siblings_once_main_carries_it.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-28_SEL-015_the_prepare_commit_msg_hook_installs_in_the_four_siblings_once_main_carries_it_RESULT.md",
+   "docs/evidence/sel015/ai-readiness-kg.before.txt",
+   "docs/evidence/sel015/ai-readiness-kg.install.txt",
+   "docs/evidence/sel015/arnold.before.txt",
+   "docs/evidence/sel015/arnold.install.txt",
+   "docs/evidence/sel015/checks.py",
+   "docs/evidence/sel015/hazbrief-mcp.before.txt",
+   "docs/evidence/sel015/hazbrief-mcp.install.txt",
+   "docs/evidence/sel015/run.py",
+   "docs/evidence/sel015/squiddy.before.txt",
+   "docs/evidence/sel015/squiddy.install.txt"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 169
+  },
+  "today": {
+   "tier": "full",
+   "reason": "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+   "reasons": [
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 169,
+   "files_total": 169
+  }
+ },
+ {
+  "commit": "c8c5228d0b3b3c28f8785aa40bce40404f2548e6",
+  "prev": "ae9284f11d9c0a1fddca63cda443e02cb8b1b931",
+  "branch": "worktree-twinkling-drifting-walrus",
+  "merged_at": "2026-10-29T08:50:59-04:00",
+  "task_id": "c4d813a9-2992-448d-b9ea-9e2c26451a9a",
+  "task": "cc_tasks/2026-10-29_SEL-016_hazbrief_adopts_the_standing_dispatcher_and_hb70s_paused_work_is_committed_so_it_launches.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-29_SEL-016_hazbrief_adopts_the_standing_dispatcher_and_hb70s_paused_work_is_committed_so_it_launches_RESULT.md"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 169
+  },
+  "today": {
+   "tier": "full",
+   "reason": "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+   "reasons": [
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+   ],
+   "unmatched": [],
+   "slices": [
+    "task_records"
+   ],
+   "files_selected": 169,
+   "files_total": 169
+  }
+ },
+ {
+  "commit": "209d1ee19307a0f9d300ff30aef8bf059e87160c",
+  "prev": "6f3025a02c0384d4c8a2e016d48503bc1cfce8c3",
+  "branch": "worktree-groovy-plotting-swing",
+  "merged_at": "2026-10-29T23:54:37-04:00",
+  "task_id": "dff55b9d-0d74-470a-8847-96d7240c4eb3",
+  "task": "cc_tasks/2026-10-29_SEL-017_a_linked_gitignored_directory_is_clean_the_worktree_hook_resolves_and_parts_defaults_to_one.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-29_SEL-017_a_linked_gitignored_directory_is_clean_the_worktree_hook_resolves_and_parts_defaults_to_one_RESULT.md",
+   "docs/decisions/register/pending/00001_c2759db0f72ff6fb_seldon-ad-034-r13_accept.yaml",
+   "docs/decisions/register/pending/00002_49c503e4b43b6390_seldon-ad-034-r14_accept.yaml",
+   "docs/decisions/register/pending/00003_ad1b764ace5a60c8_seldon-ad-034-r15_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_07_session_links_worktree_hook_default_part.md",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/hooks.py",
+   "seldon/core/stations.py",
+   "seldon/core/worktree.py",
+   "state/prior_art_queries.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/fixtures/dispatch_serial_transcript.txt",
+   "tests/test_dispatch_serial_transcript.py",
+   "tests/test_sel017_links_hook_parts.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 170
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch_stations.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/hooks.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: seldon/core/worktree.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel029_ledger_and_addendum_commit.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/hooks.py",
+    "seldon/core/stations.py",
+    "seldon/core/worktree.py",
+    "tests/dispatch_scaffold.py",
+    "tests/fixtures/dispatch_serial_transcript.txt"
+   ],
+   "slices": [
+    "documents",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 170,
+   "files_total": 170
+  }
+ },
+ {
+  "commit": "51f766730380efdf8828f4e93c16ffc78d9420f7",
+  "prev": "45a9767c2bef4fbc920c4a8afe3ef6e2c3ee2df0",
+  "branch": "worktree-breezy-popping-planet",
+  "merged_at": "2026-10-30T07:17:10-04:00",
+  "task_id": "cc43d8c8-f9b1-4741-9f33-8038641c0568",
+  "task": "cc_tasks/2026-10-30_SEL-018_relative_dispatch_paths_resolve_against_the_primary_checkout.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-10-30_SEL-018_relative_dispatch_paths_resolve_against_the_primary_checkout_RESULT.md",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_ooda.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/commands/go.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/prior_art.py",
+   "seldon/core/stations.py",
+   "seldon/core/worktree.py",
+   "tests/test_sel018_relative_dispatch_paths.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 171
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_ooda.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: seldon/core/worktree.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_ooda.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/go.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/prior_art.py",
+    "seldon/core/stations.py",
+    "seldon/core/worktree.py"
+   ],
+   "slices": [
+    "task_records"
+   ],
+   "files_selected": 171,
+   "files_total": 171
+  }
+ },
+ {
+  "commit": "cbfcf5eda6bdcb261a97f727492df28c19990a93",
+  "prev": "34312f9c975b2c89480f2da237f445e417584fee",
+  "branch": "worktree-optimized-skipping-codd",
+  "merged_at": "2026-11-01T01:59:11-04:00",
+  "task_id": "905de0b4-2368-4b26-b751-57c39234c8fd",
+  "task": "cc_tasks/2026-11-01_SEL-019_aacps_adopts_seldon_and_the_dispatcher_and_a_new_consumer_project_becomes_one_command.md",
+  "recorded_gate": null,
+  "changed": [
+   "CLAUDE.md",
+   "cc_tasks/2026-11-01_SEL-019_aacps_adopts_seldon_and_the_dispatcher_and_a_new_consumer_project_becomes_one_command_RESULT.md",
+   "docs/design/2026-09-15_standing_dispatcher.md",
+   "pyproject.toml",
+   "seldon.yaml",
+   "seldon/cli.py",
+   "seldon/commands/init.py",
+   "seldon/commands/project.py",
+   "seldon/core/project_new.py",
+   "seldon/templates/graph_spec/squiddy_graph.yaml",
+   "tests/test_sel019_project_new.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 172
+  },
+  "today": {
+   "tier": "full",
+   "reason": "full_path: pyproject.toml",
+   "reasons": [
+    "full_path: pyproject.toml",
+    "unmatched: CLAUDE.md",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/cli.py",
+    "unmatched: seldon/commands/init.py",
+    "unmatched: seldon/commands/project.py",
+    "unmatched: seldon/core/project_new.py",
+    "unmatched: seldon/templates/graph_spec/squiddy_graph.yaml",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel020_project_new_state_and_commit_paths.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "CLAUDE.md",
+    "seldon.yaml",
+    "seldon/cli.py",
+    "seldon/commands/init.py",
+    "seldon/commands/project.py",
+    "seldon/core/project_new.py",
+    "seldon/templates/graph_spec/squiddy_graph.yaml"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 172,
+   "files_total": 172
+  }
+ },
+ {
+  "commit": "218feec360d9dfb83fa94af2f5717a5831f12e76",
+  "prev": "d1e4397e8a9848125013d784aa6e3f47aea23345",
+  "branch": "worktree-ancient-leaping-bonbon",
+  "merged_at": "2026-11-01T07:29:47-05:00",
+  "task_id": "cd2bb27d-7b9d-44d2-9141-1e1eedbce11a",
+  "task": "cc_tasks/2026-11-01_SEL-020_project_new_ignores_its_state_governed_commit_paths_per_project_and_factory_adopts.md",
+  "recorded_gate": null,
+  "changed": [
+   "CLAUDE.md",
+   "cc_tasks/2026-11-01_SEL-020_project_new_ignores_its_state_governed_commit_paths_per_project_and_factory_adopts_RESULT.md",
+   "docs/design/2026-09-15_standing_dispatcher.md",
+   "seldon.yaml",
+   "seldon/commands/commit_governed.py",
+   "seldon/commands/init.py",
+   "seldon/commands/project.py",
+   "seldon/core/desktop_commit.py",
+   "seldon/core/project_new.py",
+   "seldon/mcp_server.py",
+   "tests/test_sel020_project_new_state_and_commit_paths.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 173
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: CLAUDE.md",
+   "reasons": [
+    "unmatched: CLAUDE.md",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/commit_governed.py",
+    "unmatched: seldon/commands/init.py",
+    "unmatched: seldon/commands/project.py",
+    "unmatched: seldon/core/desktop_commit.py",
+    "unmatched: seldon/core/project_new.py",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "CLAUDE.md",
+    "seldon.yaml",
+    "seldon/commands/commit_governed.py",
+    "seldon/commands/init.py",
+    "seldon/commands/project.py",
+    "seldon/core/desktop_commit.py",
+    "seldon/core/project_new.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 173,
+   "files_total": 173
+  }
+ },
+ {
+  "commit": "a317e232b43b1a7a64ceb75785d31880e194c845",
+  "prev": "a0c399ce41a64ab1b92e007f65140afe64c7f2fb",
+  "branch": "worktree-swirling-fluttering-clover",
+  "merged_at": "2026-11-01T08:29:43-05:00",
+  "task_id": "110feeac-896e-4392-902a-422b80ecca63",
+  "task": "cc_tasks/2026-11-01_SEL-022_the_dd007_refusal_rings_the_stuck_alarm_once_and_stops_dirtying_the_log.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-01_SEL-022_the_dd007_refusal_rings_the_stuck_alarm_once_and_stops_dirtying_the_log_RESULT.md",
+   "docs/design/2026-09-15_standing_dispatcher.md",
+   "seldon/commands/dispatch.py",
+   "seldon/core/dispatch.py",
+   "tests/test_sel022_standing_pre_lease_refusals.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 174
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/core/dispatch.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/core/dispatch.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 174,
+   "files_total": 174
+  }
+ },
+ {
+  "commit": "f5da6f02cff87ae7cbdde517f11e8f7b9536132f",
+  "prev": "47086d91096fd2c78d55c258e330023005b5cdfb",
+  "branch": "worktree-humming-napping-quasar",
+  "merged_at": "2026-11-01T09:19:57-05:00",
+  "task_id": "600ef89a-5e48-455b-9bb9-c2ac1d1c770b",
+  "task": "cc_tasks/2026-11-01_SEL-021_review_findings_are_issues_traced_to_fix_test_and_decision.md",
+  "recorded_gate": null,
+  "changed": [
+   "CLAUDE.md",
+   "cc_tasks/2026-11-01_SEL-021_review_findings_are_issues_traced_to_fix_test_and_decision_RESULT.md",
+   "docs/conventions/review_findings.md",
+   "seldon/commands/cc.py",
+   "seldon/commands/issue.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/issue_utils.py",
+   "seldon/core/review_findings.py",
+   "seldon/domain/research.yaml",
+   "seldon/mcp_server.py",
+   "tests/test_sel021_review_findings.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 175
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: CLAUDE.md",
+   "reasons": [
+    "unmatched: CLAUDE.md",
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/issue.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/issue_utils.py",
+    "unmatched: seldon/core/review_findings.py",
+    "unmatched: seldon/domain/research.yaml",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: task_records: tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "CLAUDE.md",
+    "seldon/commands/cc.py",
+    "seldon/commands/issue.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/issue_utils.py",
+    "seldon/core/review_findings.py",
+    "seldon/domain/research.yaml",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 175,
+   "files_total": 175
+  }
+ },
+ {
+  "commit": "422ef49dce98883d0f156650619e5c372719ab3c",
+  "prev": "7c41f6709fd0841328fb163d7a656256e353a5a0",
+  "branch": "worktree-delegated-honking-lighthouse",
+  "merged_at": "2026-11-06T09:18:00-05:00",
+  "task_id": "841bd7c7-5fd4-4bfc-b32f-de78f2f96b52",
+  "task": "cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-03_SEL-023_a_consumer_filing_is_a_kind_the_registrar_accepts_and_a_desktop_commit_reaches_origin_RESULT.md",
+   "cc_tasks/2026-11-03_consumer_filing_from_squiddy_a_consumer_filing_cannot_be_registered_and_consumer_threads_have_no_rule_against_designing_fixes.md",
+   "docs/decisions/register/pending/00001_d240d6db77f188f9_seldon-ad-036-r17_accept.yaml",
+   "docs/decisions/register/pending/00002_5d29c987cbe781b2_seldon-ad-036-r18_accept.yaml",
+   "docs/decisions/register/pending/00003_179381e7d6d767ec_seldon-ad-038-r19_accept.yaml",
+   "docs/decisions/register/pending/00004_905c37a1eb99f19a_seldon-ad-038-r20_accept.yaml",
+   "docs/decisions/register/pending/00005_f290e5a9e0bc2baa_seldon-ad-038-r21_accept.yaml",
+   "docs/design/AD-036_ADDENDUM_10_a_filing_is_a_kind_and_a_consumer_reports.md",
+   "docs/design/AD-038_ADDENDUM_08_hand_dispatch_one_call_filing_and_a_push_on_every_pass.md",
+   "seldon.yaml",
+   "seldon/commands/cc.py",
+   "seldon/commands/commit_governed.py",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/commands/go.py",
+   "seldon/commands/task.py",
+   "seldon/core/desktop_commit.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/filing.py",
+   "seldon/core/numbering.py",
+   "seldon/core/returns.py",
+   "seldon/domain/research.yaml",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 176
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon.yaml",
+   "reasons": [
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/commit_governed.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/task.py",
+    "unmatched: seldon/core/desktop_commit.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/filing.py",
+    "unmatched: seldon/core/numbering.py",
+    "unmatched: seldon/core/returns.py",
+    "unmatched: seldon/domain/research.yaml",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/commands/cc.py",
+    "seldon/commands/commit_governed.py",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/go.py",
+    "seldon/commands/task.py",
+    "seldon/core/desktop_commit.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/filing.py",
+    "seldon/core/numbering.py",
+    "seldon/core/returns.py",
+    "seldon/domain/research.yaml",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 176,
+   "files_total": 176
+  }
+ },
+ {
+  "commit": "96ffd900ddfa7d097712e4bc2853c92235433629",
+  "prev": "6ce098eaf079cc7a0fea826d510827e882391f50",
+  "branch": "worktree-prancy-crunching-eagle",
+  "merged_at": "2026-11-06T11:12:10-05:00",
+  "task_id": "0d115437-25c2-4b9c-8c09-63674315038f",
+  "task": "cc_tasks/2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-03_SEL-024_the_merge_gate_requires_the_projects_declared_pass_record_for_the_tip_it_merges_RESULT.md",
+   "docs/decisions/register/pending/00001_55f3a6d0ec98459b_seldon-ad-034-r17_accept.yaml",
+   "docs/decisions/register/pending/00002_d5a90bcc09aa3c86_seldon-ad-034-r18_accept.yaml",
+   "docs/decisions/register/pending/00003_f94e7f1211a97408_seldon-ad-034-r16_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_08_the_merge_requires_the_declared_pass_record.md",
+   "seldon.yaml",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/gate_record.py",
+   "tests/test_sel024_gate_record.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 177
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon.yaml",
+   "reasons": [
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/gate_record.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/gate_record.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 177,
+   "files_total": 177
+  }
+ },
+ {
+  "commit": "c0b121054136f10d55ccd915070ebe6a9aa51781",
+  "prev": "e4b452a19e494af79d58d4829efc8e2a0b23e1fd",
+  "branch": "worktree-linked-rolling-parasol",
+  "merged_at": "2026-11-06T12:49:26-05:00",
+  "task_id": "915acf48-b6a4-4cd2-b92e-3789e1b59e66",
+  "task": "cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked.md",
+  "recorded_gate": null,
+  "changed": [
+   ".gitignore",
+   "cc_tasks/2026-11-06_SEL-025_the_dispatcher_cannot_dirty_its_own_tree_log_rotation_and_a_filing_left_untracked_RESULT.md",
+   "docs/decisions/register/pending/00001_831f09e243c1b5cb_seldon-ad-038-r22_accept.yaml",
+   "docs/decisions/register/pending/00002_7f6cec6dff420dd9_seldon-ad-038-r23_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_09_the_dispatcher_cannot_dirty_its_own_tree.md",
+   "scripts/jobs/seldon_dispatch.sh",
+   "seldon/commands/dispatch.py",
+   "seldon/core/reconcile.py",
+   "tests/test_sel025_dispatcher_cannot_dirty_its_own_tree.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 178
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: .gitignore",
+   "reasons": [
+    "unmatched: .gitignore",
+    "unmatched: scripts/jobs/seldon_dispatch.sh",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/core/reconcile.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    ".gitignore",
+    "scripts/jobs/seldon_dispatch.sh",
+    "seldon/commands/dispatch.py",
+    "seldon/core/reconcile.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 178,
+   "files_total": 178
+  }
+ },
+ {
+  "commit": "12d522b067bd423ab3f5df49bc1364bbf4de3a95",
+  "prev": "3f6ef42034af89dede531c0bdda09444a4d85dad",
+  "branch": "worktree-witty-meandering-rivest",
+  "merged_at": "2026-11-08T14:47:01-05:00",
+  "task_id": "c09de1a7-9ffb-4eef-abff-dd265c58ffa6",
+  "task": "cc_tasks/2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-08_SEL-029_three_consumer_filings_answered_a_superseded_library_release_verifies_the_verdict_ledger_commits_beside_its_note_and_an_addendum_cannot_carry_spend_RESULT.md",
+   "docs/decisions/register/pending/00001_9943b2b9cc0e89bf_seldon-ad-036-r19_accept.yaml",
+   "docs/decisions/register/pending/00002_3892873822590e68_seldon-ad-036-r20_accept.yaml",
+   "docs/decisions/register/pending/00003_0a3611acb114a483_seldon-ad-038-r24_accept.yaml",
+   "docs/design/AD-036_ADDENDUM_11_a_superseded_release_verifies_and_the_ledger_commits_with_its_note.md",
+   "docs/design/AD-038_ADDENDUM_10_an_addendum_cannot_carry_a_candidacy_header.md",
+   "seldon.yaml",
+   "seldon/commands/cc.py",
+   "seldon/core/desktop_commit.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/prior_art.py",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "tests/test_prior_art.py",
+   "tests/test_sel029_ledger_and_addendum_commit.py",
+   "tests/test_sel029_superseded_release.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 180
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon.yaml",
+   "reasons": [
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/core/desktop_commit.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/commands/cc.py",
+    "seldon/core/desktop_commit.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/prior_art.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 180,
+   "files_total": 180
+  }
+ },
+ {
+  "commit": "16a29f0c1afc9383c50569a3a8b4dc5a1404393d",
+  "prev": "bc8bd1393a8ed4dbd1492c8146660b135cf764cd",
+  "branch": "worktree-zesty-cuddling-rain",
+  "merged_at": "2026-11-09T11:04:55-05:00",
+  "task_id": "0a8a6776-c138-4728-9c26-57fede154ac9",
+  "task": "cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-09_SEL-033_requirements_and_decisions_live_in_the_graph_and_the_rtm_is_a_projection_RESULT.md",
+   "docs/decisions/register/pending/00001_5fe7424065307bea_seldon-ad-013-r1_accept.yaml",
+   "docs/decisions/register/pending/00002_6f32224c483ac99d_seldon-ad-013-r2_accept.yaml",
+   "docs/decisions/register/pending/00003_a44d77f16ab6e514_seldon-ad-013-r3_accept.yaml",
+   "docs/decisions/register/pending/00004_af9443d685483318_seldon-ad-033-r13_accept.yaml",
+   "docs/design/AD-013_ADDENDUM_01_requirements_as_graph_content.md",
+   "governed/ledger/events.jsonl",
+   "seldon/cli.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/commands/docs.py",
+   "seldon/commands/go.py",
+   "seldon/commands/init.py",
+   "seldon/commands/project.py",
+   "seldon/commands/req.py",
+   "seldon/commands/verify.py",
+   "seldon/core/decisions.py",
+   "seldon/core/project_new.py",
+   "seldon/core/requirements.py",
+   "seldon/domain/research.yaml",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_go.py",
+   "tests/test_relationship_types.py",
+   "tests/test_sel021_review_findings.py",
+   "tests/test_sel033_register_warning.py",
+   "tests/test_sel033_requirements.py",
+   "tests/test_verify.py",
+   "tests/test_verify_event_log.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 182
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/cli.py",
+   "reasons": [
+    "unmatched: seldon/cli.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/docs.py",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/init.py",
+    "unmatched: seldon/commands/project.py",
+    "unmatched: seldon/commands/req.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/decisions.py",
+    "unmatched: seldon/core/project_new.py",
+    "unmatched: seldon/core/requirements.py",
+    "unmatched: seldon/domain/research.yaml",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "seldon/cli.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/docs.py",
+    "seldon/commands/go.py",
+    "seldon/commands/init.py",
+    "seldon/commands/project.py",
+    "seldon/commands/req.py",
+    "seldon/commands/verify.py",
+    "seldon/core/decisions.py",
+    "seldon/core/project_new.py",
+    "seldon/core/requirements.py",
+    "seldon/domain/research.yaml"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 182,
+   "files_total": 182
+  }
+ },
+ {
+  "commit": "8a2ebead6b79bce71cf1e75c9542872d24cb231d",
+  "prev": "9bf5b43aad2b276317d21c723fe665ae2656afa1",
+  "branch": "worktree-expressive-wobbling-fairy",
+  "merged_at": "2026-11-09T12:59:40-05:00",
+  "task_id": "e6a20ced-c30f-43e3-8d26-93baa0967f80",
+  "task": "cc_tasks/2026-11-09_SEL-034_a_terminal_task_stops_its_session_and_a_kept_worktrees_events_reach_mains_log_or_are_discarded_on_record.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-09_SEL-034_a_terminal_task_stops_its_session_and_a_kept_worktrees_events_reach_mains_log_or_are_discarded_on_record_RESULT.md",
+   "docs/decisions/register/pending/00001_00f5ddab5f089685_seldon-ad-037-r16_accept.yaml",
+   "docs/decisions/register/pending/00002_8d2ae069b8d73e20_seldon-ad-038-r25_accept.yaml",
+   "docs/design/AD-037_ADDENDUM_04_a_terminal_task_stops_its_session.md",
+   "docs/design/AD-038_ADDENDUM_11_a_kept_worktrees_events_reach_mains_log_or_are_discarded_on_record.md",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/artifacts.py",
+   "seldon/core/kept_events.py",
+   "seldon/core/stations.py",
+   "seldon_events.jsonl",
+   "tests/test_sel034_kept_worktree_events.py",
+   "tests/test_sel034_terminal_task_stops_session.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 184
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/artifacts.py",
+    "unmatched: seldon/core/kept_events.py",
+    "unmatched: seldon/core/stations.py",
+    "slice_tests_missing: documents: tests/test_sel036_biblio_bridge.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/artifacts.py",
+    "seldon/core/kept_events.py",
+    "seldon/core/stations.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "task_records"
+   ],
+   "files_selected": 184,
+   "files_total": 184
+  }
+ },
+ {
+  "commit": "a946afef82960ffdccc5e1947baef64de923b206",
+  "prev": "75c86b3ed5371aa25d27e1972835c3f1f1a2d54f",
+  "branch": "worktree-jaunty-nibbling-brook",
+  "merged_at": "2026-11-09T20:30:50-05:00",
+  "task_id": "91998dc1-95ed-4974-be38-5b08e0a450c2",
+  "task": "cc_tasks/2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_with_its_metadata_and_text.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-09_SEL-036_seldon_gets_a_bibliographic_graph_every_cited_source_is_a_resolved_work_with_its_metadata_and_text_RESULT.md",
+   "docs/decisions/register/pending/00001_55125c3fe8d4b8c7_seldon-ad-036-r21_accept.yaml",
+   "docs/decisions/register/pending/00002_f4ec4b38de69c3fa_seldon-ad-036-r22_accept.yaml",
+   "docs/design/AD-036_ADDENDUM_12_the_library_arm_searches_a_list_of_graphs_and_a_citation_resolves_to_its_work.md",
+   "governed/ledger/events.jsonl",
+   "graphs/seldon-biblio/.env.example",
+   "graphs/seldon-biblio/.gitignore",
+   "graphs/seldon-biblio/.squiddy_init.json",
+   "graphs/seldon-biblio/catalog_basis.jsonl",
+   "graphs/seldon-biblio/config.yaml",
+   "graphs/seldon-biblio/conformance.yaml",
+   "graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml",
+   "graphs/seldon-biblio/corpus/manifest.yaml",
+   "graphs/seldon-biblio/emit.py",
+   "graphs/seldon-biblio/evidence/20261109_sel036/anchors_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/anchors_by_id_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/assess.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/build_record.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/claims_reachable_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/conformance_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/dangling_gate_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/decisions_applied.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/halts_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/index_parity_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/presence_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/project_counts.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/run_summary.md",
+   "graphs/seldon-biblio/evidence/20261109_sel036/schema_gate_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_13_export.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_14_conform.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_anchors-by-id.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_anchors.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_claims-reachable.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_conformance.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_dangling.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_halts.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_index-parity.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_index.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_presence.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_15_text_held.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_16_diff.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_16_host-posture.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_17_registers.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/stage_18_seal.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/text_held_20261109_sel036.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036/write.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/anchors_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/anchors_by_id_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/assess.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/build_record.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/claims_reachable_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/conformance_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/dangling_gate_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/decisions_applied.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/halts_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/index_parity_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/presence_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/project_counts.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/run_summary.md",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/schema_gate_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_13_export.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_14_conform.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_anchors-by-id.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_anchors.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_claims-reachable.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_conformance.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_dangling.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_halts.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_index-parity.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_index.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_presence.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_15_text_held.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_16_diff.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_16_host-posture.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_17_registers.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/stage_18_seal.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/text_held_20261109_sel036b.json",
+   "graphs/seldon-biblio/evidence/20261109_sel036b/write.json",
+   "graphs/seldon-biblio/evidence/sel036/bridge.json",
+   "graphs/seldon-biblio/evidence/sel036/catalog_counts.json",
+   "graphs/seldon-biblio/evidence/sel036/part_d_counts.json",
+   "graphs/seldon-biblio/evidence/sel036/progress.txt",
+   "graphs/seldon-biblio/evidence/sel036/proof.json",
+   "graphs/seldon-biblio/evidence/sel036/units.jsonl",
+   "graphs/seldon-biblio/evidence/sel036/works_for_ruling.json",
+   "graphs/seldon-biblio/exports/EXPORT_VERSIONS.md",
+   "graphs/seldon-biblio/exports/diff_20261109_sel036_20261109_sel036b.md",
+   "graphs/seldon-biblio/exports/diff_none_20261109_sel036.md",
+   "graphs/seldon-biblio/exports/host_posture_20261109_sel036.md",
+   "graphs/seldon-biblio/exports/host_posture_20261109_sel036b.md",
+   "graphs/seldon-biblio/extract/control.yaml",
+   "graphs/seldon-biblio/extract/pin/encoder_pin.json",
+   "graphs/seldon-biblio/factory/control.yaml",
+   "graphs/seldon-biblio/graph.yaml",
+   "graphs/seldon-biblio/intake/inbox/.gitkeep",
+   "graphs/seldon-biblio/intake/seeds.yaml",
+   "graphs/seldon-biblio/ledger/20261109_sel036.jsonl",
+   "graphs/seldon-biblio/ledger/20261109_sel036b.jsonl",
+   "graphs/seldon-biblio/ledger/index.json",
+   "graphs/seldon-biblio/ledger/open.jsonl",
+   "graphs/seldon-biblio/schema/generated/seldon_biblio.schema.json",
+   "graphs/seldon-biblio/schema/generated/seldon_biblio_pydantic.py",
+   "graphs/seldon-biblio/schema/seldon_biblio.yaml",
+   "scripts/sel036/bridge.py",
+   "scripts/sel036/build_candidates.py",
+   "scripts/sel036/proof.py",
+   "scripts/sel036/resolve.py",
+   "scripts/sel036/sel036.yaml",
+   "seldon.yaml",
+   "seldon/commands/prior_art.py",
+   "seldon/core/biblio_bridge.py",
+   "seldon/core/governing_commit.py",
+   "seldon/core/prior_art.py",
+   "seldon/domain/research.yaml",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_docs.py",
+   "tests/test_domain.py",
+   "tests/test_sel036_biblio_bridge.py",
+   "tests/test_sel036_library_graphs.py",
+   "tests/test_sel036_resolve_checkpoint.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 187
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: scripts/sel036/bridge.py",
+   "reasons": [
+    "unmatched: scripts/sel036/bridge.py",
+    "unmatched: scripts/sel036/build_candidates.py",
+    "unmatched: scripts/sel036/proof.py",
+    "unmatched: scripts/sel036/resolve.py",
+    "unmatched: scripts/sel036/sel036.yaml",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/prior_art.py",
+    "unmatched: seldon/core/biblio_bridge.py",
+    "unmatched: seldon/core/governing_commit.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/domain/research.yaml",
+    "unmatched: seldon/mcp_server.py",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: graphs: tests/test_sel037_fetch_checkpoint.py",
+    "slice_tests_missing: graphs: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "scripts/sel036/bridge.py",
+    "scripts/sel036/build_candidates.py",
+    "scripts/sel036/proof.py",
+    "scripts/sel036/resolve.py",
+    "scripts/sel036/sel036.yaml",
+    "seldon.yaml",
+    "seldon/commands/prior_art.py",
+    "seldon/core/biblio_bridge.py",
+    "seldon/core/governing_commit.py",
+    "seldon/core/prior_art.py",
+    "seldon/domain/research.yaml",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "graphs",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 187,
+   "files_total": 187
+  }
+ },
+ {
+  "commit": "f14ea791f43d8dc863585b82f085a4398e1e3752",
+  "prev": "ac6b49deeb88806e72305f67a9cee3aaa3960601",
+  "branch": "worktree-gentle-chasing-minsky",
+  "merged_at": "2026-11-09T22:14:13-05:00",
+  "task_id": "086d89ff-0ef6-4333-a722-8bc4cd88f6db",
+  "task": "cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-09_SEL-035_a_requirement_is_authored_once_every_other_cell_is_computed_and_a_generated_block_is_never_a_second_source_RESULT.md",
+   "docs/decisions/register/pending/00001_f3d5641a4ec1bb0f_seldon-ad-013-r1_amend.yaml",
+   "docs/decisions/register/pending/00002_d8f1012c4857b68f_seldon-ad-013-r2_amend.yaml",
+   "docs/decisions/register/pending/00003_e6b524e53b9d67b0_seldon-ad-013-r4_accept.yaml",
+   "docs/decisions/register/pending/00004_9ed5cc4558aaa84e_seldon-ad-013-r5_accept.yaml",
+   "docs/decisions/register/pending/00005_b751010d9bb8e6e4_seldon-ad-013-r6_accept.yaml",
+   "docs/design/AD-013_ADDENDUM_02_authored_once_computed_everywhere_else.md",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/docs.py",
+   "seldon/commands/project.py",
+   "seldon/commands/req.py",
+   "seldon/commands/verify.py",
+   "seldon/core/project_new.py",
+   "seldon/core/req_load.py",
+   "seldon/core/req_migrate.py",
+   "seldon/core/req_trace.py",
+   "seldon/core/requirements.py",
+   "seldon/domain/research.yaml",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel021_review_findings.py",
+   "tests/test_sel033_requirements.py",
+   "tests/test_sel035_authored_once.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 188
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/docs.py",
+   "reasons": [
+    "unmatched: seldon/commands/docs.py",
+    "unmatched: seldon/commands/project.py",
+    "unmatched: seldon/commands/req.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/project_new.py",
+    "unmatched: seldon/core/req_load.py",
+    "unmatched: seldon/core/req_migrate.py",
+    "unmatched: seldon/core/req_trace.py",
+    "unmatched: seldon/core/requirements.py",
+    "unmatched: seldon/domain/research.yaml",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py"
+   ],
+   "unmatched": [
+    "seldon/commands/docs.py",
+    "seldon/commands/project.py",
+    "seldon/commands/req.py",
+    "seldon/commands/verify.py",
+    "seldon/core/project_new.py",
+    "seldon/core/req_load.py",
+    "seldon/core/req_migrate.py",
+    "seldon/core/req_trace.py",
+    "seldon/core/requirements.py",
+    "seldon/domain/research.yaml"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 188,
+   "files_total": 188
+  }
+ },
+ {
+  "commit": "0c1c0fb6832e3e0882d594be36fb635b52bf3115",
+  "prev": "7253322251c5ce2f8bab323688cca311f452dba9",
+  "branch": "worktree-curried-mixing-bubble",
+  "merged_at": "2026-11-12T00:38:52-05:00",
+  "task_id": "0e49ea54-481e-4f32-9bb1-8d1833aedd43",
+  "task": "cc_tasks/2026-11-11_SEL-037_seldon_biblio_is_served_in_the_primary_its_open_texts_are_fetched_and_the_notes_it_proved_wrong_get_errata.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-11_SEL-037_seldon_biblio_is_served_in_the_primary_its_open_texts_are_fetched_and_the_notes_it_proved_wrong_get_errata_RESULT.md",
+   "docs/design/evolution_burst_2026-04/cc5_sleep_function_architecture_erratum_01_misattributed_authors.md",
+   "docs/design/seldon_architectural_decisions_erratum_01_saga_doi.md",
+   "graphs/seldon-biblio/catalog_basis.jsonl",
+   "graphs/seldon-biblio/corpus/candidates/seldon_biblio_candidates.yaml",
+   "graphs/seldon-biblio/corpus/manifest.yaml",
+   "graphs/seldon-biblio/evidence/20261111_sel037/anchors_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/anchors_by_id_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/assess.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/build_record.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/claims_reachable_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/conformance_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/dangling_gate_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/decisions_applied.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/halts_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/index_parity_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/presence_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/project_counts.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/run_summary.md",
+   "graphs/seldon-biblio/evidence/20261111_sel037/schema_gate_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_13_export.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_14_conform.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_anchors-by-id.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_anchors.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_claims-reachable.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_conformance.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_dangling.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_halts.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_index-parity.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_index.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_presence.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_15_text_held.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_16_diff.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_16_host-posture.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_17_registers.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/stage_18_seal.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/text_held_20261111_sel037.json",
+   "graphs/seldon-biblio/evidence/20261111_sel037/write.json",
+   "graphs/seldon-biblio/evidence/sel036/catalog_counts.json",
+   "graphs/seldon-biblio/evidence/sel037/part_c_counts.json",
+   "graphs/seldon-biblio/evidence/sel037/progress.txt",
+   "graphs/seldon-biblio/evidence/sel037/proof.json",
+   "graphs/seldon-biblio/evidence/sel037/proof_primary_before_merge.json",
+   "graphs/seldon-biblio/evidence/sel037/units.jsonl",
+   "graphs/seldon-biblio/exports/EXPORT_VERSIONS.md",
+   "graphs/seldon-biblio/exports/diff_20261109_sel036_20261111_sel037.md",
+   "graphs/seldon-biblio/exports/host_posture_20261111_sel037.md",
+   "graphs/seldon-biblio/factory/control.yaml",
+   "graphs/seldon-biblio/ledger/20261111_sel037.jsonl",
+   "graphs/seldon-biblio/ledger/index.json",
+   "scripts/sel036/build_candidates.py",
+   "scripts/sel036/sel036.yaml",
+   "scripts/sel037/counts.py",
+   "scripts/sel037/fetch.py",
+   "scripts/sel037/overlay.py",
+   "scripts/sel037/proof.py",
+   "scripts/sel037/sel037.yaml",
+   "scripts/sel037/stage_release.sh",
+   "seldon.yaml",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel037_fetch_checkpoint.py",
+   "tests/test_sel037_worktree_links_exports.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 190
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: scripts/sel036/build_candidates.py",
+   "reasons": [
+    "unmatched: scripts/sel036/build_candidates.py",
+    "unmatched: scripts/sel036/sel036.yaml",
+    "unmatched: scripts/sel037/counts.py",
+    "unmatched: scripts/sel037/fetch.py",
+    "unmatched: scripts/sel037/overlay.py",
+    "unmatched: scripts/sel037/proof.py",
+    "unmatched: scripts/sel037/sel037.yaml",
+    "unmatched: scripts/sel037/stage_release.sh",
+    "unmatched: seldon.yaml",
+    "slice_tests_missing: documents: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py",
+    "slice_tests_missing: ledgers: tests/test_sel038_journals_and_held_releases.py",
+    "slice_tests_missing: graphs: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "scripts/sel036/build_candidates.py",
+    "scripts/sel036/sel036.yaml",
+    "scripts/sel037/counts.py",
+    "scripts/sel037/fetch.py",
+    "scripts/sel037/overlay.py",
+    "scripts/sel037/proof.py",
+    "scripts/sel037/sel037.yaml",
+    "scripts/sel037/stage_release.sh",
+    "seldon.yaml"
+   ],
+   "slices": [
+    "documents",
+    "graphs",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 190,
+   "files_total": 190
+  }
+ },
+ {
+  "commit": "9c2be85de90688ebd6062a8f43362d8f784ede5d",
+  "prev": "a165c2fea629f14d939fd11289098520e4666b7d",
+  "branch": "worktree-calm-riding-melody",
+  "merged_at": "2026-11-12T02:41:27-05:00",
+  "task_id": "cefcfa29-3a7d-4e1d-8eed-9645f5a2a610",
+  "task": "cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-11_SEL-038_a_system_written_journal_never_blocks_a_merge_and_a_held_library_release_is_read_through_squiddys_accessor_RESULT.md",
+   "docs/decisions/register/pending/00001_cff7f946abcd4908_seldon-ad-034-r19_accept.yaml",
+   "docs/decisions/register/pending/00002_18bb61973cf7aa2c_seldon-ad-034-r20_accept.yaml",
+   "docs/decisions/register/pending/00003_ddadbff3a3ba1caa_seldon-ad-036-r23_accept.yaml",
+   "docs/decisions/register/pending/00004_df268daa37fbcca1_seldon-ad-036-r24_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_09_every_journal_is_committed_before_the_fast_forward_and_a_block_names_the_files_git_named.md",
+   "docs/design/AD-036_ADDENDUM_13_the_verdict_ledger_merges_by_union_and_a_held_release_is_read_through_squiddys_accessor.md",
+   "docs/evidence/sel038/full_suite.txt",
+   "docs/evidence/sel038/held_release_tests_with_real_squiddy_exports.txt",
+   "docs/evidence/sel038/red_merge_round_before_fix.txt",
+   "docs/evidence/sel038/verdict_ledger_survey.txt",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/hooks.py",
+   "seldon/core/prior_art.py",
+   "seldon/core/reconcile.py",
+   "seldon/core/worktree.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel038_journals_and_held_releases.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 191
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/hooks.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/core/reconcile.py",
+    "unmatched: seldon/core/worktree.py",
+    "slice_tests_missing: documents: tests/test_sel039_own_graphs_first.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/hooks.py",
+    "seldon/core/prior_art.py",
+    "seldon/core/reconcile.py",
+    "seldon/core/worktree.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 191,
+   "files_total": 191
+  }
+ },
+ {
+  "commit": "bd112b7eb5f1699309fd69675f810b14228e0d63",
+  "prev": "159c9839105d1a9075b5d7c55908460067c2f575",
+  "branch": "worktree-fluffy-chasing-pond",
+  "merged_at": "2026-11-16T00:49:45-05:00",
+  "task_id": "65889134-75b6-4c46-85d3-4567a5fbde77",
+  "task": "cc_tasks/2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-15_SEL-039_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited_RESULT.md",
+   "docs/decisions/register/pending/00001_9e94042775a0d02d_seldon-ad-036-r25_accept.yaml",
+   "docs/decisions/register/pending/00002_2c7d799297034b3b_seldon-ad-036-r26_accept.yaml",
+   "docs/decisions/register/pending/00003_dd3c4fa7365f4e30_seldon-ad-036-r27_accept.yaml",
+   "docs/decisions/register/pending/00004_e19c40e6a89d408e_seldon-ad-036-r21_amend.yaml",
+   "docs/design/AD-036_ADDENDUM_14_the_library_arm_searches_the_projects_own_graphs_first_and_a_referenced_projects_bibliography_is_not_inherited.md",
+   "docs/evidence/sel039/plans.py",
+   "docs/evidence/sel039/plans.txt",
+   "docs/evidence/sel039/proof_c.json",
+   "docs/evidence/sel039/proof_c.py",
+   "docs/evidence/sel039/proof_r26.json",
+   "docs/evidence/sel039/proof_r26.py",
+   "docs/evidence/sel039/proof_r26.txt",
+   "docs/evidence/sel039/receipts.py",
+   "docs/evidence/sel039/receipts_by_graph.txt",
+   "docs/evidence/sel039/served_graphs.txt",
+   "docs/evidence/sel039/survey2.py",
+   "governed/ledger/events.jsonl",
+   "seldon.yaml",
+   "seldon/commands/go.py",
+   "seldon/commands/prior_art.py",
+   "seldon/commands/verify.py",
+   "seldon/core/prior_art.py",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel039_own_graphs_first.py",
+   "tests/test_verify_event_log.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 192
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon.yaml",
+   "reasons": [
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/prior_art.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/mcp_server.py"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/commands/go.py",
+    "seldon/commands/prior_art.py",
+    "seldon/commands/verify.py",
+    "seldon/core/prior_art.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 192,
+   "files_total": 192
+  }
+ },
+ {
+  "commit": "50d521188282a77c3d3bdfdbfef6341d3ba95b83",
+  "prev": "187df1a3892ef4eb6f52ab522c5b2981b0d4b596",
+  "branch": "worktree-vectorized-greeting-river",
+  "merged_at": "2026-11-18T01:02:33-05:00",
+  "task_id": "b4a94a6b-0238-4450-98cf-ca45bd54ef9e",
+  "task": "cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-16_SEL-040_a_session_lost_to_the_network_is_resumed_not_blocked_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch_RESULT.md",
+   "docs/decisions/register/pending/00001_94c86ee5ab97b411_seldon-ad-034-r21_accept.yaml",
+   "docs/decisions/register/pending/00002_06c7920462e27a2a_seldon-ad-034-r22_accept.yaml",
+   "docs/decisions/register/pending/00003_aa88490b0dc741dd_seldon-ad-034-r23_accept.yaml",
+   "docs/decisions/register/pending/00004_d832937d8143d25e_seldon-ad-034-r24_accept.yaml",
+   "docs/decisions/register/pending/00005_289d2dd5cffa6106_seldon-ad-038-r26_accept.yaml",
+   "docs/decisions/register/pending/00006_41de9890c395050d_seldon-ad-038-r27_accept.yaml",
+   "docs/decisions/register/pending/00007_09169c21a64664d5_seldon-ad-038-r28_accept.yaml",
+   "docs/decisions/register/pending/00008_b3d4397a85d4555a_seldon-ad-038-r29_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_10_a_session_its_transport_cut_off_is_resumed_and_the_merge_projects_what_it_numbers.md",
+   "docs/design/AD-038_ADDENDUM_12_an_addendum_files_in_one_call_and_a_premise_can_wait_for_launch.md",
+   "docs/evidence/sel040/cut_fixture.py",
+   "docs/evidence/sel040/part_e_findings.md",
+   "docs/evidence/sel040/reproduction.txt",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/cc.py",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/filing.py",
+   "seldon/core/interruption.py",
+   "seldon/core/redrive.py",
+   "seldon/core/stations.py",
+   "seldon/mcp_server.py",
+   "state/prior_art_queries.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/fixtures/sel040/hb189_log_tail.jsonl",
+   "tests/test_loop001_register_seq.py",
+   "tests/test_sel040_addendum_files_and_launch_premises.py",
+   "tests/test_sel040_interrupted_session_resumed.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 194
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/cc.py",
+   "reasons": [
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/filing.py",
+    "unmatched: seldon/core/interruption.py",
+    "unmatched: seldon/core/redrive.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: seldon/mcp_server.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "unmatched: tests/fixtures/sel040/hb189_log_tail.jsonl"
+   ],
+   "unmatched": [
+    "seldon/commands/cc.py",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/filing.py",
+    "seldon/core/interruption.py",
+    "seldon/core/redrive.py",
+    "seldon/core/stations.py",
+    "seldon/mcp_server.py",
+    "tests/dispatch_scaffold.py",
+    "tests/fixtures/sel040/hb189_log_tail.jsonl"
+   ],
+   "slices": [
+    "documents",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 194,
+   "files_total": 194
+  }
+ },
+ {
+  "commit": "26c124a518497814fc6d396a148e878346dd3eef",
+  "prev": "b3c0a98e443aa5ce8d25c4ab254b12bba473c8f2",
+  "branch": "worktree-iridescent-nibbling-ritchie",
+  "merged_at": "2026-11-21T10:41:23-05:00",
+  "task_id": "3c39bd22-c1ca-4222-9d23-eae828b21f65",
+  "task": "cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records_RESULT.md",
+   "docs/decisions/register/pending/00001_de9c6d91b4786858_seldon-ad-034-r25_accept.yaml",
+   "docs/decisions/register/pending/00002_a883319e2b8f359c_seldon-ad-034-r26_accept.yaml",
+   "docs/decisions/register/pending/00003_5a060f60144d1629_seldon-ad-034-r27_accept.yaml",
+   "docs/decisions/register/pending/00004_7d2810282c9bfb2c_seldon-ad-034-r28_accept.yaml",
+   "docs/decisions/register/pending/00006_d57a48b82b208ee6_seldon-ad-038-r30_accept.yaml",
+   "docs/decisions/register/pending/00007_2b12a26c4c74c01b_seldon-ad-033-r14_accept.yaml",
+   "docs/decisions/register/pending/00007_9df2c4d9ef71edde_seldon-ad-038-r31_accept.yaml",
+   "docs/design/AD-033_ADDENDUM_02_verify_reads_a_branchs_pending_records.md",
+   "docs/design/AD-034_ADDENDUM_11_a_stopped_session_is_never_merged_and_the_round_cannot_refuse_itself.md",
+   "docs/design/AD-038_ADDENDUM_13_a_name_too_long_is_a_refusal_and_the_ooda_runs_nothing_outside_its_worktree.md",
+   "docs/evidence/sel042/cut_fixture.py",
+   "docs/evidence/sel042/hb189_replay.py",
+   "docs/evidence/sel042/hb189_replay.txt",
+   "docs/evidence/sel042/reproduction_old_code.txt",
+   "docs/evidence/sel042/seldon_suite_free_disk.tsv",
+   "docs/evidence/sel042/uv_lock_writer.md",
+   "docs/evidence/sel042/verify_in_this_worktree.txt",
+   "docs/evidence/sel042/verify_on_main_primary.txt",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/cc.py",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/commands/verify.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/filing.py",
+   "seldon/core/ooda.py",
+   "seldon/core/returns.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/dispatch_scaffold.py",
+   "tests/fixtures/dispatch_serial_transcript.txt",
+   "tests/fixtures/sel042/hb197_hb198_events.jsonl",
+   "tests/test_dispatch_launch.py",
+   "tests/test_dispatch_parallel.py",
+   "tests/test_dispatch_serial_transcript.py",
+   "tests/test_sel042_ooda_boundary.py",
+   "tests/test_sel042_stopped_session_never_merges.py",
+   "tests/test_sel042_verify_pending_and_name_limit.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 197
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/cc.py",
+   "reasons": [
+    "unmatched: seldon/commands/cc.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/filing.py",
+    "unmatched: seldon/core/ooda.py",
+    "unmatched: seldon/core/returns.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt",
+    "unmatched: tests/fixtures/sel042/hb197_hb198_events.jsonl"
+   ],
+   "unmatched": [
+    "seldon/commands/cc.py",
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/verify.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/filing.py",
+    "seldon/core/ooda.py",
+    "seldon/core/returns.py",
+    "tests/dispatch_scaffold.py",
+    "tests/fixtures/dispatch_serial_transcript.txt",
+    "tests/fixtures/sel042/hb197_hb198_events.jsonl"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 197,
+   "files_total": 197
+  }
+ },
+ {
+  "commit": "83a637c1c70202f332d3da3b67f2f13d446c974c",
+  "prev": "e072dc2c43b73fc8b55ce3ce2db6e522fe852b32",
+  "branch": "worktree-immutable-sleeping-treehouse",
+  "merged_at": "2026-11-24T14:54:00-05:00",
+  "task_id": "fd77c705-baa0-4cda-b00a-827e12d64d0f",
+  "task": "cc_tasks/2026-11-24_SEL-046_the_merge_round_drops_a_line_main_already_holds_whichever_task_it_was_reconciled_for.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-24_SEL-046_the_merge_round_drops_a_line_main_already_holds_whichever_task_it_was_reconciled_for_RESULT.md",
+   "docs/evidence/sel046/measure.py",
+   "docs/evidence/sel046/measured.txt",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/kept_events.py",
+   "tests/test_sel046_merged_kept_branch_dedupes.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "no_slices",
+   "reasons": [
+    "no_slices"
+   ],
+   "unmatched": [],
+   "files_selected": 198
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/dispatch_worktree.py",
+   "reasons": [
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/kept_events.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/kept_events.py"
+   ],
+   "slices": [
+    "documents",
+    "task_records"
+   ],
+   "files_selected": 198,
+   "files_total": 198
+  }
+ },
+ {
+  "commit": "1a24540afea4611e56f2302bf3d840d3ef7503b5",
+  "prev": "e0a779d1edfb24893a1c262ce554b9a362b5379c",
+  "branch": "worktree-logical-hatching-cocke",
+  "merged_at": "2026-11-24T17:27:04-05:00",
+  "task_id": "8315cc7a-7516-4106-9f9c-a9b0acf3f60c",
+  "task": "cc_tasks/2026-11-24_SEL-045R_the_finished_gate_work_reaches_main_on_checks_the_stop_gate_reads.md",
+  "recorded_gate": null,
+  "changed": [
+   "cc_tasks/2026-11-21_SEL-041_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points_RESULT.md",
+   "cc_tasks/2026-11-24_SEL-045R_the_finished_gate_work_reaches_main_on_checks_the_stop_gate_reads_RESULT.md",
+   "cc_tasks/2026-11-24_SEL-045_sel041s_kept_branch_lands_on_main_with_no_task_filed_into_any_consumer_RESULT.md",
+   "docs/decisions/register/pending/00001_857aa7bd31dad42d_seldon-ad-034-r29_accept.yaml",
+   "docs/decisions/register/pending/00002_48f868cf97e36f65_seldon-ad-034-r30_accept.yaml",
+   "docs/decisions/register/pending/00003_2c9eb99e39c385cc_seldon-ad-034-r31_accept.yaml",
+   "docs/decisions/register/pending/00004_c4aaa2635a240e4b_seldon-ad-034-r32_accept.yaml",
+   "docs/decisions/register/pending/00005_da947bb648d33caa_seldon-ad-034-r33_accept.yaml",
+   "docs/decisions/register/pending/00006_ef1c64e29f69a0c9_seldon-ad-034-r34_accept.yaml",
+   "docs/decisions/register/pending/00007_24764851240f0e79_seldon-ad-034-r35_accept.yaml",
+   "docs/decisions/register/pending/00008_ad5b6f5c39431382_seldon-ad-034-r36_accept.yaml",
+   "docs/decisions/register/pending/00009_53f53a335f211711_seldon-ad-034-r37_accept.yaml",
+   "docs/design/AD-034_ADDENDUM_12_the_gate_runs_what_a_change_touched_and_the_whole_suite_only_at_declared_points.md",
+   "docs/evidence/sel041/README.md",
+   "docs/evidence/sel041/gate_times.json",
+   "docs/evidence/sel041/real_reads.json",
+   "docs/evidence/sel041/records_slices.json",
+   "docs/evidence/sel041/replay_hazbrief-mcp.json",
+   "docs/evidence/sel041/replay_hazbrief-mcp_code.json",
+   "docs/evidence/sel041/replay_seldon.json",
+   "docs/evidence/sel041/replay_seldon_code.json",
+   "docs/evidence/sel041/testmon/README.md",
+   "docs/evidence/sel041/testmon/tm_build.py",
+   "docs/evidence/sel041/testmon/tm_build_summary.txt",
+   "docs/evidence/sel041/testmon/tm_seeds.json",
+   "docs/evidence/sel041/testmon/tm_seeds.py",
+   "docs/evidence/sel041/testmon/tm_seeds.txt",
+   "docs/evidence/sel041/testmon/tm_sub.json",
+   "docs/evidence/sel041/testmon/tm_sub.py",
+   "docs/evidence/sel041/tools/collect.py",
+   "docs/evidence/sel041/tools/evidence_sources.py",
+   "docs/evidence/sel041/tools/gate_times.py",
+   "docs/evidence/sel041/tools/hub.py",
+   "docs/evidence/sel041/tools/real_reads.py",
+   "docs/evidence/sel041/tools/records_slice.py",
+   "docs/evidence/sel041/tools/replay.py",
+   "docs/evidence/sel041/tools/squiddy_ledger.py",
+   "docs/evidence/sel041/tools/survey_repos.py",
+   "docs/evidence/sel041/transcript_check.py",
+   "docs/evidence/sel045/hazbrief_no_slices_plan.json",
+   "docs/evidence/sel045/hazbrief_plan.py",
+   "docs/evidence/sel045/landed.txt",
+   "docs/evidence/sel045/recompensate_a844c156.py",
+   "docs/evidence/sel045r/landed.txt",
+   "governed/ledger/events.jsonl",
+   "seldon.yaml",
+   "seldon/cli.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/commands/gate.py",
+   "seldon/commands/go.py",
+   "seldon/commands/qc.py",
+   "seldon/commands/verify.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/gate_plan.py",
+   "seldon/core/stations.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/fixtures/dispatch_serial_transcript.txt",
+   "tests/test_dispatch_serial_transcript.py",
+   "tests/test_sel041_gate_call_sites.py",
+   "tests/test_sel041_gate_plan.py",
+   "tests/test_verify_event_log.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "gate_config_changed: seldon.yaml",
+   "reasons": [
+    "gate_config_changed: seldon.yaml",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/cli.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/gate.py",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/qc.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/gate_plan.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/cli.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/gate.py",
+    "seldon/commands/go.py",
+    "seldon/commands/qc.py",
+    "seldon/commands/verify.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/gate_plan.py",
+    "seldon/core/stations.py",
+    "tests/fixtures/dispatch_serial_transcript.txt"
+   ],
+   "files_selected": 200
+  },
+  "today": {
+   "tier": "full",
+   "reason": "gate_config_changed: seldon.yaml",
+   "reasons": [
+    "gate_config_changed: seldon.yaml",
+    "unmatched: seldon.yaml",
+    "unmatched: seldon/cli.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/commands/gate.py",
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/qc.py",
+    "unmatched: seldon/commands/verify.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/gate_plan.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt"
+   ],
+   "unmatched": [
+    "seldon.yaml",
+    "seldon/cli.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/commands/gate.py",
+    "seldon/commands/go.py",
+    "seldon/commands/qc.py",
+    "seldon/commands/verify.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/gate_plan.py",
+    "seldon/core/stations.py",
+    "tests/fixtures/dispatch_serial_transcript.txt"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 200,
+   "files_total": 200
+  }
+ },
+ {
+  "commit": "448fcfa29149a1c7178a57ae1f8b8f52375047fd",
+  "prev": "520c45de349f1f7f4a0845a6e51903cec71c8d5b",
+  "branch": "worktree-joyful-zooming-zebra",
+  "merged_at": "2026-11-25T01:10:02-05:00",
+  "task_id": "bf0b7a06-43ec-4c07-b121-58773a8ea831",
+  "task": "cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.md",
+  "recorded_gate": {
+   "ok": true,
+   "exit_code": 0,
+   "timed_out": false,
+   "log_path": "logs/dispatch/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time.gate.log",
+   "tier": "full",
+   "reason": "conftest: tests/conftest.py",
+   "seconds": 4853.826,
+   "gate_run": "0e6213c4-017e-4ef1-95e4-3c9c040d5972"
+  },
+  "changed": [
+   "cc_tasks/2026-11-21_SEL-043_a_consumer_waits_on_a_producer_only_for_what_can_hurt_it_and_a_running_gate_shows_its_progress_and_its_wall_time_RESULT.md",
+   "docs/decisions/register/pending/00001_cc38aa4919d86b54_seldon-ad-037-r17_accept.yaml",
+   "docs/decisions/register/pending/00002_8077f82b94821941_seldon-ad-037-r18_accept.yaml",
+   "docs/decisions/register/pending/00003_a0f3df26face1a02_seldon-ad-037-r19_accept.yaml",
+   "docs/decisions/register/pending/00004_32bad5c84894044c_seldon-ad-037-r20_accept.yaml",
+   "docs/decisions/register/pending/00005_b192fd7d961b23a2_seldon-ad-037-r21_accept.yaml",
+   "docs/decisions/register/pending/00006_2aff3330f34cee63_seldon-ad-036-r28_accept.yaml",
+   "docs/decisions/register/pending/00007_508d8d5235cffdfd_seldon-ad-036-r29_accept.yaml",
+   "docs/decisions/register/pending/00008_d22e295f464df183_seldon-ad-036-r30_accept.yaml",
+   "docs/design/AD-036_ADDENDUM_15_the_zero_model_calls_instrument_runs_on_the_outer_session_and_a_release_reader_error_is_release_unavailable.md",
+   "docs/design/AD-037_ADDENDUM_05_a_consumer_waits_on_a_producer_only_while_what_it_reads_can_change.md",
+   "docs/evidence/sel043/asleep_sq133r.txt",
+   "docs/evidence/sel043/bisect_run.sh",
+   "docs/evidence/sel043/full_suite.txt",
+   "docs/evidence/sel043/imports.json",
+   "docs/evidence/sel043/push_repos.txt",
+   "docs/evidence/sel043/r9_runs.txt",
+   "docs/evidence/sel043/refusals_detail.json",
+   "docs/evidence/sel043/refusals_table.md",
+   "docs/evidence/sel043/round_two.txt",
+   "docs/evidence/sel043/squiddy_tests_on_branch.txt",
+   "docs/evidence/sel043/tools/asleep_check.py",
+   "docs/evidence/sel043/tools/main_clone.py",
+   "docs/evidence/sel043/tools/pushrepos.py",
+   "docs/evidence/sel043/tools/r9_measure.sh",
+   "docs/evidence/sel043/tools/refusals2.py",
+   "docs/evidence/sel043/tools/squiddy_sq139.py",
+   "docs/evidence/sel043/tools/survey_cfg.py",
+   "docs/evidence/sel043/tools/survey_imports.py",
+   "docs/evidence/sel043/transcript_before.txt",
+   "docs/evidence/sel043/transcript_check.py",
+   "docs/evidence/sel043/transcript_check.txt",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/dispatch.py",
+   "seldon/commands/dispatch_stations.py",
+   "seldon/commands/dispatch_worktree.py",
+   "seldon/core/dispatch.py",
+   "seldon/core/gate_plan.py",
+   "seldon/core/gate_record.py",
+   "seldon/core/prior_art.py",
+   "seldon/core/stations.py",
+   "state/prior_art_queries.jsonl",
+   "tests/conftest.py",
+   "tests/dispatch_scaffold.py",
+   "tests/fixtures/dispatch_serial_transcript.txt",
+   "tests/r9_shim.py",
+   "tests/test_dispatch_serial_transcript.py",
+   "tests/test_no_live_model_calls.py",
+   "tests/test_sel043_environment_window.py",
+   "tests/test_sel043_release_rows.py",
+   "tests/test_sel043_running_gate.py",
+   "tests/test_sel043_scaffold_task_names.py",
+   "tests/test_station001_project_interpreter.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "conftest: tests/conftest.py",
+   "reasons": [
+    "conftest: tests/conftest.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/gate_plan.py",
+    "unmatched: seldon/core/gate_record.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt",
+    "unmatched: tests/r9_shim.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/gate_plan.py",
+    "seldon/core/gate_record.py",
+    "seldon/core/prior_art.py",
+    "seldon/core/stations.py",
+    "tests/dispatch_scaffold.py",
+    "tests/fixtures/dispatch_serial_transcript.txt",
+    "tests/r9_shim.py"
+   ],
+   "files_selected": 204
+  },
+  "today": {
+   "tier": "full",
+   "reason": "conftest: tests/conftest.py",
+   "reasons": [
+    "conftest: tests/conftest.py",
+    "unmatched: seldon/commands/dispatch.py",
+    "unmatched: seldon/commands/dispatch_stations.py",
+    "unmatched: seldon/commands/dispatch_worktree.py",
+    "unmatched: seldon/core/dispatch.py",
+    "unmatched: seldon/core/gate_plan.py",
+    "unmatched: seldon/core/gate_record.py",
+    "unmatched: seldon/core/prior_art.py",
+    "unmatched: seldon/core/stations.py",
+    "unmatched: tests/dispatch_scaffold.py",
+    "unmatched: tests/fixtures/dispatch_serial_transcript.txt",
+    "unmatched: tests/r9_shim.py"
+   ],
+   "unmatched": [
+    "seldon/commands/dispatch.py",
+    "seldon/commands/dispatch_stations.py",
+    "seldon/commands/dispatch_worktree.py",
+    "seldon/core/dispatch.py",
+    "seldon/core/gate_plan.py",
+    "seldon/core/gate_record.py",
+    "seldon/core/prior_art.py",
+    "seldon/core/stations.py",
+    "tests/dispatch_scaffold.py",
+    "tests/fixtures/dispatch_serial_transcript.txt",
+    "tests/r9_shim.py"
+   ],
+   "slices": [
+    "documents",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 204,
+   "files_total": 204
+  }
+ },
+ {
+  "commit": "1a018cd9735912a45f9070d1439fbd35ff9140fa",
+  "prev": "51a1b54f9fdc490feb6842e3f3c1acd63bd5ad98",
+  "branch": "worktree-enchanted-cuddling-cake",
+  "merged_at": "2026-11-25T03:51:38-05:00",
+  "task_id": "46540234-8b1e-4503-bec9-57f791e4ab08",
+  "task": "cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.md",
+  "recorded_gate": {
+   "ok": true,
+   "exit_code": 0,
+   "timed_out": false,
+   "log_path": "logs/dispatch/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project.gate.log",
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/go.py",
+   "seconds": 5788.333,
+   "gate_run": "3a1f7fd2-d1a3-4e1e-9cbc-acd9a8c4c518"
+  },
+  "changed": [
+   "cc_tasks/2026-11-21_SEL-044_one_brief_and_one_handoff_read_every_registered_repository_from_the_portfolio_project_RESULT.md",
+   "docs/decisions/register/pending/00001_48809b988d9dec9b_seldon-ad-038-r32_accept.yaml",
+   "docs/decisions/register/pending/00002_9e6aec585ea09506_seldon-ad-038-r33_accept.yaml",
+   "docs/decisions/register/pending/00003_587f22bdf9c3403c_seldon-ad-038-r34_accept.yaml",
+   "docs/decisions/register/pending/00004_b29c0196d660a360_seldon-ad-038-r35_accept.yaml",
+   "docs/design/AD-038_ADDENDUM_14_one_brief_and_one_handoff_read_every_repository_the_portfolio_project_declares.md",
+   "docs/evidence/sel044/full_suite_tail.txt",
+   "docs/evidence/sel044/part_a_measure.md",
+   "docs/evidence/sel044/part_a_survey.json",
+   "docs/evidence/sel044/part_d_brief_real_nine.txt",
+   "docs/evidence/sel044/part_d_counts_vs_task_list.txt",
+   "docs/evidence/sel044/part_d_timing.md",
+   "docs/evidence/sel044/sel024_on_main.txt",
+   "docs/evidence/sel044/tools/main_clone.py",
+   "docs/evidence/sel044/tools/real_all.py",
+   "docs/evidence/sel044/tools/real_counts.py",
+   "docs/evidence/sel044/tools/real_nine.py",
+   "docs/evidence/sel044/tools/survey.py",
+   "docs/evidence/sel044/tools/table.py",
+   "governed/ledger/events.jsonl",
+   "seldon/commands/go.py",
+   "seldon/commands/handoff.py",
+   "seldon/core/portfolio.py",
+   "seldon/mcp_server.py",
+   "seldon_events.jsonl",
+   "state/prior_art_queries.jsonl",
+   "tests/test_sel044_portfolio.py"
+  ],
+  "literal": {
+   "exit": 0,
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/go.py",
+   "reasons": [
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/handoff.py",
+    "unmatched: seldon/core/portfolio.py",
+    "unmatched: seldon/mcp_server.py"
+   ],
+   "unmatched": [
+    "seldon/commands/go.py",
+    "seldon/commands/handoff.py",
+    "seldon/core/portfolio.py",
+    "seldon/mcp_server.py"
+   ],
+   "files_selected": 205
+  },
+  "today": {
+   "tier": "full",
+   "reason": "unmatched: seldon/commands/go.py",
+   "reasons": [
+    "unmatched: seldon/commands/go.py",
+    "unmatched: seldon/commands/handoff.py",
+    "unmatched: seldon/core/portfolio.py",
+    "unmatched: seldon/mcp_server.py"
+   ],
+   "unmatched": [
+    "seldon/commands/go.py",
+    "seldon/commands/handoff.py",
+    "seldon/core/portfolio.py",
+    "seldon/mcp_server.py"
+   ],
+   "slices": [
+    "documents",
+    "event_store",
+    "ledgers",
+    "task_records"
+   ],
+   "files_selected": 205,
+   "files_total": 205
+  }
+ }
+]

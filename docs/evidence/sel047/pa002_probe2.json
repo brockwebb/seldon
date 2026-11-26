@@ -1,0 +1,12 @@
+{
+ "built_utc": "2026-11-13T17:15:57Z",
+ "manifest_db": {
+  "file": "corpus.db",
+  "sha256": "b5862f75f7f3e3d8152356ea7dec21136808c63947880a548dc8488d9755be5a"
+ },
+ "manifest_row_fingerprint": "b81037645b271589da5174d05ea172cb3c22972548477bc9105045970f727009",
+ "/Users/brock/GitHub/squiddy/graphs/library/work/index/corpus.db": {
+  "row_fingerprint_now": "b81037645b271589da5174d05ea172cb3c22972548477bc9105045970f727009",
+  "mtime": 1793966529.8347087
+ }
+}

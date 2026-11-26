@@ -1,0 +1,38 @@
+{
+ "library_graph": "/Users/brock/GitHub/squiddy/graphs/library",
+ "served_release": {
+  "export": "exports/library_graph_20261110_sq133r_b.r1_2026-11-13.json",
+  "sha256": "c38db2b4106bbc762c984d545e044a60ac0a91923254ba2e4de8cf8a3964d784"
+ },
+ "served_rows": 416365,
+ "rebuilt_rows": 416365,
+ "served_row_fingerprint": "b81037645b271589da5174d05ea172cb3c22972548477bc9105045970f727009",
+ "rebuilt_row_fingerprint": "7a774aec1104047a0eb255f89d1e0c40a0baa55b896b0ba5f4d40fca2dceb9b0",
+ "served_shard_set_sha256": "ed4bbfa9925e35c239b08476600f43cf1cd0b3e0931a0d7a871dd4e0da7f62ba",
+ "rebuilt_shard_set_sha256": "6e8b1533b3e7c5c91dd69980258a22e58253532e167cf9fdd4915c45062e57fd",
+ "release_commit": "b88ca875fa0c862698eeea7d3051e35a6167dff4",
+ "rebuilt_shards": 1404,
+ "served_manifest_keys": [
+  "built_utc",
+  "config",
+  "corpus",
+  "db",
+  "dense",
+  "documents",
+  "encoder_pin",
+  "graph",
+  "manifest",
+  "metadata_rows",
+  "paragraph_rows",
+  "params",
+  "pilot",
+  "reader",
+  "release",
+  "row_fingerprint",
+  "rows",
+  "rule",
+  "text_of_record",
+  "units",
+  "wall_seconds"
+ ]
+}

@@ -1,0 +1,34 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-9.0.2, pluggy-1.6.0 -- /opt/anaconda3/bin/python
+rootdir: /Users/brock/GitHub/seldon/.claude/worktrees/fluffy-dancing-clock
+configfile: pyproject.toml
+plugins: httpx-0.36.0, anyio-4.9.0, xdist-3.8.0, Faker-40.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 24 items
+
+tests/test_sel024_gate_record.py::test_absent_or_none_asks_for_no_record PASSED [  4%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[yes-mapping] PASSED [  8%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad1-missing] PASSED [ 12%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad2-repository-relative] PASSED [ 16%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad3-positive] PASSED [ 20%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad4-requires] PASSED [ 25%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad5-unrunnable_exits] PASSED [ 29%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad6-unknown] PASSED [ 33%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad7-branch_line] PASSED [ 37%]
+tests/test_sel024_gate_record.py::test_a_declaration_loads_and_parses_again_unchanged PASSED [ 41%]
+tests/test_sel024_gate_record.py::test_a_pass_line_covers_the_commit_it_names_and_the_ledger_commit_on_top PASSED [ 45%]
+tests/test_sel024_gate_record.py::test_a_code_change_after_the_record_is_a_tree_nobody_recorded PASSED [ 50%]
+tests/test_sel024_gate_record.py::test_declared_tree_paths_scope_what_a_pass_covers PASSED [ 54%]
+tests/test_sel024_gate_record.py::test_a_newer_fail_for_the_same_tree_is_not_a_pass PASSED [ 58%]
+tests/test_sel024_gate_record.py::test_a_line_naming_an_unknown_commit_covers_nothing PASSED [ 62%]
+tests/test_sel024_gate_record.py::test_a_gate_with_ruff_absent_is_unrunnable_and_names_it PASSED [ 66%]
+tests/test_sel024_gate_record.py::test_a_missing_module_and_a_declared_exit_are_unrunnable PASSED [ 70%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_with_a_record_merges PASSED [ 75%]
+tests/test_sel024_gate_record.py::test_fixture_branch_line_discard_merges_the_recorded_commit_and_no_line PASSED [ 79%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_without_a_record_is_refused[fail-recorded_fail] PASSED [ 83%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_without_a_record_is_refused[none-no_line] PASSED [ 87%]
+tests/test_sel024_gate_record.py::test_fixture_a_gate_with_ruff_absent_is_gate_unrunnable_and_opens_a_huddle PASSED [ 91%]
+tests/test_sel024_gate_record.py::test_no_declaration_merges_as_today PASSED [ 95%]
+tests/test_sel024_gate_record.py::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing PASSED [100%]
+
+======================== 24 passed in 208.40s (0:03:28) ========================

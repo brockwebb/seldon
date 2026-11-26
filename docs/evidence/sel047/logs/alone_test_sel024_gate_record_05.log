@@ -1,0 +1,95 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-9.0.2, pluggy-1.6.0 -- /opt/anaconda3/bin/python
+rootdir: /Users/brock/GitHub/seldon/.claude/worktrees/fluffy-dancing-clock
+configfile: pyproject.toml
+plugins: httpx-0.36.0, anyio-4.9.0, xdist-3.8.0, Faker-40.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 24 items
+
+tests/test_sel024_gate_record.py::test_absent_or_none_asks_for_no_record PASSED [  4%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[yes-mapping] PASSED [  8%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad1-missing] PASSED [ 12%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad2-repository-relative] PASSED [ 16%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad3-positive] PASSED [ 20%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad4-requires] PASSED [ 25%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad5-unrunnable_exits] PASSED [ 29%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad6-unknown] PASSED [ 33%]
+tests/test_sel024_gate_record.py::test_a_malformed_declaration_refuses_at_load[bad7-branch_line] PASSED [ 37%]
+tests/test_sel024_gate_record.py::test_a_declaration_loads_and_parses_again_unchanged PASSED [ 41%]
+tests/test_sel024_gate_record.py::test_a_pass_line_covers_the_commit_it_names_and_the_ledger_commit_on_top PASSED [ 45%]
+tests/test_sel024_gate_record.py::test_a_code_change_after_the_record_is_a_tree_nobody_recorded PASSED [ 50%]
+tests/test_sel024_gate_record.py::test_declared_tree_paths_scope_what_a_pass_covers PASSED [ 54%]
+tests/test_sel024_gate_record.py::test_a_newer_fail_for_the_same_tree_is_not_a_pass PASSED [ 58%]
+tests/test_sel024_gate_record.py::test_a_line_naming_an_unknown_commit_covers_nothing PASSED [ 62%]
+tests/test_sel024_gate_record.py::test_a_gate_with_ruff_absent_is_unrunnable_and_names_it PASSED [ 66%]
+tests/test_sel024_gate_record.py::test_a_missing_module_and_a_declared_exit_are_unrunnable PASSED [ 70%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_with_a_record_merges PASSED [ 75%]
+tests/test_sel024_gate_record.py::test_fixture_branch_line_discard_merges_the_recorded_commit_and_no_line PASSED [ 79%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_without_a_record_is_refused[fail-recorded_fail] PASSED [ 83%]
+tests/test_sel024_gate_record.py::test_fixture_a_tip_without_a_record_is_refused[none-no_line] PASSED [ 87%]
+tests/test_sel024_gate_record.py::test_fixture_a_gate_with_ruff_absent_is_gate_unrunnable_and_opens_a_huddle PASSED [ 91%]
+tests/test_sel024_gate_record.py::test_no_declaration_merges_as_today PASSED [ 95%]
+tests/test_sel024_gate_record.py::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing FAILED [100%]
+
+=================================== FAILURES ===================================
+_ test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing _
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-644/test_fixture_a_regate_whose_ga0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x134123560>
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    @pytest.mark.usefixtures("neo4j_available")
+    def test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing(tmp_path, neo4j_driver,
+                                                                                                dc):
+        mark = tmp_path / "gate.mark"
+        # The pass covers the work's paths (squiddy's `tree_paths` shape): the task file the filer lands on main mid-gate
+        # is outside them, so the record the gate makes still covers the tip the next pass merges.
+        p = make_project(tmp_path, dispatch_extra={"gate_record": _decl(
+            _recorder(tmp_path, "--outcome", "pass", "--sleep", str(GATE_SLEEP_S), "--mark", str(mark)),
+            tree_paths=["out", "fix"])})
+        cfg = yaml.safe_load((p / "seldon.yaml").read_text())
+        cfg["filings"] = {"lock_wait_s": LOCK_WAIT_S}
+        (p / "seldon.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+        git(p, "commit", "-q", "-am", f"filings wait {LOCK_WAIT_S}s")
+    
+        # A task blocked `stop_gate_unpassed` with its work kept (DISP-003R's case), whose check a later main fix passes.
+        stem = "sel024_regate_lock"
+        add_task(p, stem, PARTS)
+        tid = register(p, neo4j_driver, dc, stem, "2026-11-06T00:00:00Z")
+        write_stub(p, {stem: {"write": {"out/work.txt": "work\n"}, "part_complete": ["A"], "stop_hook": True,
+                              "exit": 0, "worktree_name": stem}})
+        _once(p)
+        assert _payloads(p, D.EVENT_FINISHED)[-1]["outcome"] == "stop_gate_unpassed"
+        assert not mark.exists(), "the post-session path never reached the merge round"
+        (p / "fix").mkdir()
+        (p / "fix" / "landed.txt").write_text("fixed\n")
+        git(p, "add", "fix/landed.txt")
+        git(p, "commit", "-q", "-m", "fix lands on main", "--", "fix/landed.txt")
+    
+        seen = {}
+    
+        def filer():
+            deadline = time.monotonic() + 120
+            while not mark.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            seen["gate_running_at_start"] = mark.exists() and mark.read_text() == "started\n"
+            try:
+                seen["filed"] = F.file_task(p, HAND_TASK.format(stem="filed during the gate"),
+                                            name="2026-11-06_filed_during_the_gate.md")
+            except F.FilingError as exc:
+                seen["refused"] = str(exc)
+            seen["gate_running_at_end"] = mark.read_text() == "started\n"
+    
+        t = threading.Thread(target=filer)
+        t.start()
+        out = _once(p)                                      # the regate defers; the record step runs the gate unlocked
+        t.join(timeout=180)
+        assert "refused" not in seen, seen
+>       assert seen["gate_running_at_start"] and seen["gate_running_at_end"], (seen, "the filing landed mid-gate")
+E       AssertionError: ({'filed': {'after': [], 'after_edges': 0, 'artifact_id': '82fffd3c-24d1-44d3-b901-af1ce1343d9a', 'description': 'filed during the gate', ...}, 'gate_running_at_end': False, 'gate_running_at_start': True}, 'the filing landed mid-gate')
+E       assert (True and False)
+
+tests/test_sel024_gate_record.py:419: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sel024_gate_record.py::test_fixture_a_regate_whose_gate_outlasts_lock_wait_does_not_refuse_a_concurrent_filing
+=================== 1 failed, 23 passed in 452.56s (0:07:32) ===================
