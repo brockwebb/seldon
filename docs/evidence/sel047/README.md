@@ -419,3 +419,91 @@ appeared in) are listed by design below, so a reader can see that none of them w
 `seldon/` and are full by design. Of the remaining 4, today's slices already scope 3. Naming every nameable path
 above would have scoped one more merge (SEL-037) in a month: 1 of 34. The time a seldon task spends holding the
 lease is set by how long the full tier takes, not by how often the planner chooses it.
+
+## Part E
+
+What the change task should be, from Parts B to D. Each point names its evidence.
+
+1. **`gate_command` should run at `-n 6`, but only together with the test fixes in point 2, or after them.**
+   - Measured the same afternoon under the same neighbour: serial took 7,463 s, `-n 6` took 2,193, 2,269 and
+     2,508 s (Part B, "Full suite"), 3.0 to 3.4 times less. That cuts the time every other repository's dispatcher
+     waits on seldon's lease from about 2 hours to about 40 minutes under today's load. It is about 26 minutes on
+     quiet nights (SEL-042's 25:40 and 25:51).
+   - The serial gate is the riskier of the two today. Its 7,463 s exceeds `gate_timeout_s` 7,200 (Part B,
+     item 4).
+   - `-n 6` alone does not make the gate green. Every `-n 6` run had 2 to 4 failures. Both timing tests failed in all
+     three: `two_disjoint` 3 of 3 and `lock_wait` 3 of 3. The serial run failed `lock_wait` too, so neither form
+     is green today.
+   - Moving to `-n 6` without the fixes adds four ids the serial run did not fail: `two_disjoint`, the `sel018`
+     victim, and the two gw5 timing budgets.
+
+2. **What each test needs.**
+   - **`test_sel024_gate_record::..._lock_wait_...`** (non-order-dependent, 16 of 20 alone): replace the fixed
+     window with a synchronisation. `RECORDER` should block until a file the filer thread writes after
+     `F.file_task` returns, with a ceiling such as the filer's own 120 s, not `time.sleep(6)`. Then "the filing
+     lands while the gate runs" holds by construction. The recorder script lives in the test file (`RECORDER`,
+     `_recorder`), so this is a **test-file-only** change.
+   - **`test_dispatch_parallel::test_two_disjoint_...`** (non-order-dependent, 3 of 20 alone, 3 of 3 at `-n 6`):
+     the stubs' `sleep: 3` must cover the second launch. Overlap should come from a rendezvous: each stub writes its
+     `start` mark and waits, with a ceiling, until both marks exist. The stub interpreter is in
+     `tests/dispatch_scaffold.py` (`spec.get("sleep")`), so this needs the scaffold. That is an unmatched path:
+     **full**.
+   - **`test_dispatch_parallel::test_union_merge_...`** (non-order-dependent, 2 of 20 alone): **cause not
+     determined.** Its post-settle assertion should carry the supervisors' logs in its message, as `_wait_settled`
+     already does on a timeout, so its next failure says why task a ended `blocked`. A test-file-only change.
+   - **`test_dispatch_parallel::test_a_killed_supervisor_...` and `::test_an_exclusive_task_waits_...`** (1 of 3 `-n 6`
+     runs, 0 of 20 alone, 0 of 3 prefix replays): explicit wall-clock budgets (`< 30` s) and pass timing under a
+     5-minute load above 70. They are the same class as the two above, at a lower rate. The budget should be a
+     ceiling on a condition that is waited for, not a race.
+   - **`test_sel018_relative_dispatch_paths::test_dispatch_status_reads_the_cap_from_a_worktree`** (order-dependent;
+     polluter `test_sel008_...::test_task_show_prints_the_edge_with_the_other_tasks_state_and_the_precedes_edges`):
+     add the `clean_test_db` fixture to the victim, a **test-file-only** change. A deeper defect showed in passing:
+     `dispatch status --json` writes a warning line into the same output stream as its JSON. A JSON command's
+     warnings belong on stderr. That is a code change under `seldon/` (full), and it should be filed separately, not
+     folded in.
+   - Portfolio prior art for running load-sensitive tests apart: hazbrief's run that was visible in `ps` during
+     Part B, `pytest tests/ -n 3 --dist loadgroup -m load_sensitive`, is a marker lane for exactly these tests. It was
+     only observed here, not read. If the fixes above are not wanted, it is the other way to keep timing tests out
+     of a parallel gate.
+
+3. **pa002 takes the first exit: the test owns a fixture** (Part C). No squiddy check asserts that a rebuilt release
+   reproduces the served index. Stage 18's `release-receipt` checks a receipt re-run on the superseded release and
+   passes seldon's `release_unavailable`, so there is nowhere for the second exit to send it. A fixture built inside
+   the test file with the kit's calls keeps the change test-file-only. Committed fixture files under
+   `tests/fixtures/` would be unmatched, so full.
+   - Separately, the live comparison is red for a real reason: same 416,365 rows, different row fingerprint and
+     shard set, served `corpus.db` still matching its manifest. Factory may want that filed. This task files
+     nothing.
+
+4. **Paths a slice could name** (Part D):
+   - `tests/fixtures/<file>`, each to the one test that reads it;
+   - `scripts/sel0NN/**` and `scripts/sel014r_*.py`, to the tests that run them;
+   - `CLAUDE.md`, to `test_go.py`, `test_init.py` and `test_prune002_go_generated.py`;
+   - optionally `tests/dispatch_scaffold.py`, to its 44 importers.
+
+   In this history that buys **1 of 34** merges (SEL-037). 30 of 34 changed `seldon/` and are full by design.
+   Slices are worth naming for tidiness, not for queue time.
+
+5. **The change task's own gate.** Any change to `gate_command` or the slices changes `seldon.yaml`'s gate keys, so it
+   plans **full** (`gate_config_changed`). The merge round reads `dispatch.gate_command` and `gate_timeout_s` from
+   the primary's `seldon.yaml` (`seldon/commands/dispatch_worktree.py`, `_gate`, `GP.run(..., timeout_s=cfg["gate_timeout_s"])`).
+   So that merge runs **main's serial command under main's 7,200 s ceiling**.
+   - The one serial run measured here took **7,463 s** (Part B). Under this afternoon's neighbour load that merge
+     gate would time out (`regate_red`). The three merge gates of 2026-11-25 took 81 to 96 minutes, at night.
+   - So the full-gated change should merge when no other repository's suite runs. It will hold the lease about 81
+     to 124 minutes (measured range), once.
+   - The cadence is a second source of full gates. The last passing full gate was 2026-11-25T08:51:20Z
+     (`full_every_s` 86,400), so any seldon gate after 2026-11-26T08:51Z plans full until a full gate passes.
+
+6. **What can land first, on a scoped gate.** Three of the fixes touch only one test file each:
+   - the `lock_wait` recorder,
+   - the `sel018` victim's `clean_test_db`,
+   - the `union_merge` diagnostic message,
+   - and pa002's fixture if it is built inside its test file.
+
+   A changed test file matches `test_globs` and always runs as a changed test (R31). With only `cc_tasks/`,
+   `docs/`, `state/` and the event store beside it, each plans scoped: about 1 to 30 test files at `-n 4`. That is
+   true unless the cadence is due, so it should land before 2026-11-26T08:51Z, or right after a full gate passes.
+   - These should not wait for the full-gated change.
+   - The full-gated change carries the scaffold rendezvous for `two_disjoint`, `gate_command -n 6`, and any slices.
+     It should land after them, so its single serial gate runs against tests that can pass.
