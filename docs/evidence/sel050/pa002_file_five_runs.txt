@@ -1,0 +1,5 @@
+run 1: 10 passed, 1 skipped in 4.28s | pytest exit 0
+run 2: 10 passed, 1 skipped in 4.31s | pytest exit 0
+run 3: 10 passed, 1 skipped in 4.33s | pytest exit 0
+run 4: 10 passed, 1 skipped in 4.27s | pytest exit 0
+run 5: 10 passed, 1 skipped in 4.46s | pytest exit 0

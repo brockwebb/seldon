@@ -12,18 +12,22 @@ library receipt with the release the index serves now, so a new release failed e
 * the query log records the release each verification ran against.
 
 The unit tests stub the squiddy side (the served search and the rebuilt index) and use a scratch exports directory
-and a scratch git repository. The last test runs on the operator's real library when it is on disk: it rebuilds the
-SERVED release through the older-release path and checks the rebuild reproduces the served index's rows and dense
-shard set exactly, which is what makes a rebuilt older release the same instrument the receipt ran on.
+and a scratch git repository. The rebuild test (SEL-050) builds a small served release in `tmp_path` with the kit's
+own calls, rebuilds that SERVED release through the older-release path and checks the rebuild reproduces the served
+index's rows and dense shard set exactly, which is what makes a rebuilt older release the same instrument the receipt
+ran on. The same comparison against the operator's real library is kept, off by default (`LIVE_SWITCH`): it reads
+another repository's state, so it cannot gate this one (Issue d6040ce8).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 from seldon.core import prior_art as pa
 from tests.test_prior_art import _note, _repo, proj  # noqa: F401 (fixture)
@@ -230,7 +234,138 @@ def test_a_worktree_resolves_its_corpus_beside_the_primary_checkout(proj):
     assert pa.corpus_anchor(proj["tmp"] / "loose") == (proj["tmp"] / "loose").resolve()   # not a git work tree
 
 
-# ------------------------------------------------------------------------- the real library, when it is on disk
+# ------------------------------------------------------------------------- the rebuild reproduces the served index
+
+#: SEL-050: set this environment variable to `1` to also run the rebuild comparison on the operator's real library
+#: (`prior_art.library.graph` in this checkout's config). Off by default: it reads squiddy's live library, so its
+#: outcome is another repository's state, and it was red for a real reason when SEL-047 ran it (the same 416,365 rows
+#: with another row fingerprint and shard set; docs/evidence/sel047/README.md Part C). Issue d6040ce8.
+LIVE_SWITCH = "SELDON_PA002_LIVE"
+
+#: The fixture library's texts: two acquired entries (one of two pages) and one entry with no text, so the release
+#: holds paragraph rows and metadata rows. Pages are separated by form feeds, as the kit's page reader returns them.
+_TEXTS = {
+    "work_a": ["Record linkage matches records\nacross two files.\n\nThe Fellegi Sunter model weighs agreement.",
+               "Blocking reduces the candidate pairs.\n"],
+    "work_b": ["Knowledge graphs store entities\nand relations between them.\n"],
+}
+
+#: A stub encoder's identity in the `index:` block: four dimensions, so a shard is a few hundred bytes. Values follow
+#: squiddy's own index fixture (tests/test_s016_index.py `ENC`); no model is loaded or called.
+_ENCODER = {"model_id": "stub", "revision": "stub", "trust_remote_repo": "stub", "trust_remote_revision": "stub",
+            "dimension": 4, "query_prefix": "q: ", "document_prefix": "d: ", "device": "cpu", "normalize": True,
+            "max_seq_length": 64, "batch_size": 2}
+
+
+def _stub_encoder(texts):
+    import numpy as np
+    return np.array([[len(t), sum(map(ord, t)) % 97, 1.0, 0.0] for t in texts], dtype="float32")
+
+
+def _read_pages(path) -> list[str]:
+    return Path(path).read_text(encoding="utf-8").split("\f")
+
+
+def _served_fixture_release(tmp: Path):
+    """A small library, served, built in `tmp` by the kit's own calls: `(graph, served index manifest)`.
+
+    The steps are the ones the library's release takes, at fixture size:
+
+    1. the graph's config and empty manifest rendered by `squiddy init`'s renderers (`render_config`,
+       `render_manifest`; `write_graph` itself also generates LinkML artifacts, which the index never reads);
+    2. three manifest entries in the graph's in-graph stage, two with texts, and an `index:` block;
+    3. a git repository, and the release: an export file and its register row, committed (what the release's
+       export stages leave for `release_commit` to find);
+    4. `squiddy.index.build` with a stub encoder for that release, which writes the corpus checkpoint, the database,
+       the keyed dense shards and the served `index_manifest.json`;
+    5. the same units' checkpoint lines under arm A's rule (`build_corpus_rows`' default rule, as arm A writes
+       them). The library's checkpoint holds them (squiddy SQ-139: 2,357 lines on 2026-11-13), and they are what
+       `checkpoint_rows` reads while the kit has no `release_rows` call (AD-036-R30). When it has one, these lines
+       are not read.
+    """
+    from squiddy import index as ix
+    from squiddy import init as ini
+    from squiddy.config import load_graph
+    spec = {"name": "pa002fixture", "title": "the PA-002 rebuild fixture", "description": "SEL-050",
+            "scope": {"topic": "the rows of a release seldon rebuilds"},
+            "classes": [{"Work": "Node"}, {"AuthoredBy": "Edge"}],
+            "emit": [{"metadata_document": {"fields": {"common": ["id", "kind", "title"]},
+                                            "citation_lines": False}}]}
+    root = tmp / "library"
+    root.mkdir()
+    rendered = ini.render_config_data(spec)
+    (root / "config.yaml").write_text(ini.render_config(spec, ini.sha256_text(yaml.safe_dump(spec)), "graph.yaml"),
+                                      encoding="utf-8")
+    man_path = root / rendered["engine"]["paths"]["manifest"]
+    man_path.parent.mkdir(parents=True, exist_ok=True)
+    man_path.write_text(ini.render_manifest(spec, rendered), encoding="utf-8")
+    graph = load_graph(root)
+    stage = ix.in_graph_stage(graph)
+
+    man = yaml.safe_load(man_path.read_text(encoding="utf-8"))
+    man["documents"] = []
+    for doc_id, pages in _TEXTS.items():
+        p = root / "texts" / f"{doc_id}.txt"
+        p.parent.mkdir(exist_ok=True)
+        p.write_text("\f".join(pages), encoding="utf-8")
+        man["documents"].append({"id": doc_id, "kind": "work", "stage": stage, "title": f"The text of {doc_id}",
+                                 "text_path": str(p), "text_sha256": ix.sha256_file(p)})
+    man["documents"].append({"id": "work_c", "kind": "work", "stage": stage, "title": "A work with no text"})
+    man_path.write_text(yaml.safe_dump(man, sort_keys=False), encoding="utf-8")
+    block = {"work_dir": "work/index", "encoder": dict(_ENCODER),
+             "encoder_pin": {"file": "pin.json", "sha256": "0" * 64},
+             "dense": {"pad_to": "longest", "progress_rows": 2, "progress_seconds": 60, "pilot_rows": 2,
+                       "pilot_seed": 1, "wall_seconds_max": 3600, "retries_per_unit": 1},
+             "fusion": {"rrf_k": 60, "candidates_per_subarm": 200, "tuned": False},
+             "top_k_documents": 3, "rows_per_document": 2, "text_max_chars": 30, "corpus_progress_every": 50}
+    control = Path(ix.control_path(graph))
+    control.parent.mkdir(parents=True, exist_ok=True)
+    control.write_text(yaml.safe_dump({"index": block}), encoding="utf-8")
+
+    _git(root, "init", "-q")
+    exports = Path(graph.path("exports_dir"))
+    exports.mkdir(parents=True, exist_ok=True)
+    export = exports / "pa002fixture_v1.json"
+    export.write_text('{"release": "v1"}', encoding="utf-8")
+    sha = hashlib.sha256(export.read_bytes()).hexdigest()
+    (exports / pa.EXPORT_REGISTER).write_text(
+        "| version | file | date | sha256 | note |\n|---|---|---|---|---|\n"
+        f"| **v1** | `{export.name}` | 2026-11-26 | `{sha[:16]}` | SEL-050 fixture |\n", encoding="utf-8")
+    _git(root, "add", "-A")
+    _git(root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "release v1")
+
+    served = ix.build(graph, encoder=_stub_encoder, read_pages=_read_pages, release=export, repo=root,
+                      reader={"reader": "stub page reader"})
+    cfg = ix.load_config(graph)
+    wd = Path(ix.work_dir(graph, cfg))
+    arm_a = ix.build_corpus_rows(ix._manifest_entries(graph), root, wd / pa.CORPUS_ROWS, wd / "build.log",
+                                 ix.meta_renderer(cfg), _read_pages, int(cfg["corpus_progress_every"]), stage)
+    assert arm_a["rule"] == ix.CORPUS_RULE and not arm_a["failures"], arm_a
+    return graph, served
+
+
+def _assert_rebuild_reproduces(graph, served: dict, work: Path) -> dict:
+    info = pa.rebuild_release(graph, served["release"]["sha256"], work)
+    assert info["row_fingerprint"] == served["row_fingerprint"]
+    assert info["shard_set_sha256"] == served["dense"]["shard_set_sha256"]
+    assert info["rows"] == served["rows"]
+    return info
+
+
+def test_rebuilding_the_served_release_reproduces_the_served_index(tmp_path):
+    """The rebuild path, run on the release the index serves, yields the served index's rows and dense shard set
+    byte for byte: the rebuild rule (manifest as committed with the release; the library's append-only corpus rows
+    and keyed shards) reproduces the instrument, so a rebuilt OLDER release is the index its receipts ran on. The
+    library is a fixture the kit builds in `tmp_path` (SEL-050), so the outcome is this tree's code and the
+    installed kit's, not the state of squiddy's live library."""
+    pytest.importorskip("squiddy.index")
+    graph, served = _served_fixture_release(tmp_path)
+    assert served["release"]["export"] == "exports/pa002fixture_v1.json"
+    assert served["rows"] == 7 and served["dense"]["shards"] == 3     # 4 paragraph rows + 3 metadata rows
+    info = _assert_rebuild_reproduces(graph, served, tmp_path / "rebuild")
+    assert info["commit"] == _git(graph.root, "rev-parse", "HEAD")
+    assert len(info["shards"]) == served["dense"]["shards"]
+
 
 def _real_library():
     """`(Settings, Library)` on this checkout's configured library, or a skip reason."""
@@ -250,10 +385,10 @@ def _real_library():
     return (s, pa.Library(s)), None
 
 
-def test_rebuilding_the_served_release_reproduces_the_served_index(tmp_path):
-    """The rebuild path, run on the release the index serves, yields the served index's rows and dense shard set
-    byte for byte: the rebuild rule (manifest as committed with the release; the library's append-only corpus rows
-    and keyed shards) reproduces the instrument, so a rebuilt OLDER release is the index its receipts ran on."""
+@pytest.mark.skipif(os.environ.get(LIVE_SWITCH) != "1",
+                    reason=f"the live-library comparison runs by hand: {LIVE_SWITCH}=1 (SEL-050, Issue d6040ce8)")
+def test_rebuilding_the_live_served_release_reproduces_the_live_served_index(tmp_path):
+    """The same comparison on the operator's real library, when it is on disk and the switch is on."""
     got, why = _real_library()
     if got is None:
         pytest.skip(why)
@@ -262,7 +397,4 @@ def test_rebuilding_the_served_release_reproduces_the_served_index(tmp_path):
     export = s.library_graph / served["release"]["export"]
     if not export.is_file():
         pytest.skip(f"the served export is not on disk ({export})")
-    info = pa.rebuild_release(lib.graph(), served["release"]["sha256"], tmp_path)
-    assert info["row_fingerprint"] == served["row_fingerprint"]
-    assert info["shard_set_sha256"] == served["dense"]["shard_set_sha256"]
-    assert info["rows"] == served["rows"]
+    _assert_rebuild_reproduces(lib.graph(), served, tmp_path)

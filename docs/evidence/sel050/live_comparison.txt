@@ -1,0 +1,16 @@
+SEL-050 Part B step 3: the live-library comparison run once by hand, 2026-11-26, in this task's worktree:
+SELDON_PA002_LIVE=1 python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/test_pa002_release_resolve.py -q -p no:cacheprovider -k live
+Tail:
+
+    def _assert_rebuild_reproduces(graph, served: dict, work: Path) -> dict:
+        info = pa.rebuild_release(graph, served["release"]["sha256"], work)
+>       assert info["row_fingerprint"] == served["row_fingerprint"]
+E       AssertionError: assert '7a774aec1104...40fca2dceb9b0' == 'b81037645b27...045970f727009'
+E         
+E         - b81037645b271589da5174d05ea172cb3c22972548477bc9105045970f727009
+E         + 7a774aec1104047a0eb255f89d1e0c40a0baa55b896b0ba5f4d40fca2dceb9b0
+
+tests/test_pa002_release_resolve.py:349: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_pa002_release_resolve.py::test_rebuilding_the_live_served_release_reproduces_the_live_served_index
+1 failed, 10 deselected in 21.41s
