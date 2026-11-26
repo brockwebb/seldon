@@ -208,9 +208,7 @@ dispatch:
   # fast-forward. Without one such a task is blocked `regate_unavailable`. DISP-002 Part A step 2 needs it: DISP-001R's
   # branch is merged over main's later changes to the dispatcher, and the task orders the full suite on that merge.
   # The worktree's own code (PYTHONPATH=.) is what is tested, with the primary's credentials (.env is gitignored).
-  # SEL-045R Part B, Issue d6040ce8 (open): the one `--deselect` below. That test reads squiddy's live library, not
-  # this tree, and has failed on main in every recorded run since 2026-11-09, so with it in the command no full gate
-  # can be green. The test file stays and the Issue stays open; nothing else about which tests run changes.
+  # SEL-050, Issue d6040ce8: nothing is deselected; the pa002 rebuild test builds its own library (live run by hand).
   # SEL-049: `-n 6` (pytest-xdist; the scoped tier's `test_command` below already runs at `-n 4`). Measured basis,
   # SEL-047 (docs/evidence/sel047/README.md Part B), the same afternoon under the same neighbour's load: serial 7,463 s,
   # over `gate_timeout_s`, against 2,193, 2,269 and 2,508 s at `-n 6`; on quiet nights `-n 6` took 25:40 and 25:51
@@ -220,7 +218,6 @@ dispatch:
   gate_command: >-
     python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q
     -p no:cacheprovider -n 6
-    --deselect tests/test_pa002_release_resolve.py::test_rebuilding_the_served_release_reproduces_the_served_index
   # SEL-049: at `-n 6` the full tier measured 1,540 to 2,508 s (SEL-042 quiet, SEL-047 loaded), so 7,200 s is now about
   # three times the worst measured run: generous on purpose, so a neighbour's load cannot time a green gate out. It is
   # kept, not cut, because a timeout is a red gate (`regate_red`) and costs a second full run; the history below is

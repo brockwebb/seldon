@@ -1,0 +1,17 @@
+SEL-050 Part B step 2: `dispatch.gate_command` exactly as seldon.yaml reads it after Part B step 1, run once, detached
+under `caffeinate -i` by docs/evidence/sel050/run_gate_command.sh, from worktree zazzy-marinating-goblet at commit
+736a6eb plus the (then uncommitted) seldon.yaml edit that removes the deselect. Load averages during the run: about
+15 to 25. The whole log (full_run.log) is gitignored (*.log); its head and tail:
+
+command: python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest tests/ -q -p no:cacheprovider -n 6
+start: 2026-11-26 02:44:43 EST
+...
+...................................ssssss............................... [ 78%]
+..................s..................................................... [ 86%]
+........................................                                 [100%]
+3560 passed, 8 skipped in 1540.46s (0:25:40)
+EXIT 0 after 1542 s, end 2026-11-26 03:10:25 EST
+
+No failing id. `tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid` passed in this run.
+The 8 skips are SEL-049's 7 plus `test_rebuilding_the_live_served_release_reproduces_the_live_served_index`, which is
+off unless SELDON_PA002_LIVE=1.
