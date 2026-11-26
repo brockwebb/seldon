@@ -35,8 +35,11 @@ The three changed test files are on its R31 "always run" line. Planned at 04:28Z
   - this branch's test: **3 of 3** (`stress20_new_*`), 115 to 134 s.
   
   That confirms Part E's mechanism (a fixed window, Luo et al.'s async wait) and the fix, in 6 runs.
-- The acceptance check (three runs of the file) was not run as a separate command. The ten alone runs are a
-  superset of it, and `part-complete` runs it again.
+- The acceptance check (three runs of the file, verbatim) was run after the RESULT's first commit and **passed**:
+  24 passed in 221 s, 208 s and 214 s, exit 0 at 04:41Z. It is not a `runs.jsonl` row, because it is the check's
+  own command and not `run.py`.
+- `seldon dispatch part-complete` was run for A, B, C and D. Each returned exit 0 in about 1 s, so the station
+  recorded the Parts without running their checks in that time.
 
 ## Part B: `test_sel018_relative_dispatch_paths::test_dispatch_status_reads_the_cap_from_a_worktree`
 
