@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-9.0.2, pluggy-1.6.0 -- /opt/anaconda3/bin/python
+Using --randomly-seed=3823684566
+rootdir: /Users/brock/GitHub/seldon/.claude/worktrees/dazzling-yawning-oasis
+configfile: pyproject.toml
+plugins: randomly-3.16.0, httpx-0.36.0, anyio-4.9.0, xdist-3.8.0, Faker-40.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 14 items
+
+tests/test_dispatch_parallel.py::test_a_supervisor_killed_alone_has_its_orphaned_session_terminated PASSED [  7%]
+tests/test_dispatch_parallel.py::test_a_conflicting_rebase_ends_merge_blocked_with_an_issue PASSED [ 14%]
+tests/test_dispatch_parallel.py::test_status_shows_a_running_worktree_and_why_the_next_task_waits PASSED [ 21%]
+tests/test_dispatch_parallel.py::test_a_duplicate_event_id_in_a_union_file_is_merge_blocked PASSED [ 28%]
+tests/test_dispatch_parallel.py::test_an_exclusive_task_waits_for_running_ones_and_blocks_new_ones PASSED [ 35%]
+tests/test_dispatch_parallel.py::test_an_unparseable_declaration_refuses_with_the_grammar_and_status_shows_waits PASSED [ 42%]
+tests/test_dispatch_parallel.py::test_a_busy_shared_ledger_does_not_cost_a_merge_attempt PASSED [ 50%]
+tests/test_dispatch_parallel.py::test_main_moving_under_the_write_set_reruns_the_gate[red] PASSED [ 57%]
+tests/test_dispatch_parallel.py::test_a_killed_supervisor_is_marked_by_the_next_pass_and_its_worktree_kept PASSED [ 64%]
+tests/test_dispatch_parallel.py::test_overlapping_tasks_serialize[overlapping_paths] PASSED [ 71%]
+tests/test_dispatch_parallel.py::test_main_moving_under_the_write_set_reruns_the_gate[green] PASSED [ 78%]
+tests/test_dispatch_parallel.py::test_two_disjoint_non_exclusive_tasks_run_concurrently_and_both_merge PASSED [ 85%]
+tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid PASSED [ 92%]
+tests/test_dispatch_parallel.py::test_overlapping_tasks_serialize[two_neo4j_tasks] PASSED [100%]
+
+======================== 14 passed in 430.14s (0:07:10) ========================

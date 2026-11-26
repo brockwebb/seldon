@@ -1,0 +1,112 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 26%]
+........................................................................ [ 28%]
+........................................................................ [ 30%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 48%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+...........................ssssss....................................... [ 78%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+..........................................................F............. [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+.......................................s................................ [ 96%]
+........................................................................ [ 98%]
+......................................                                   [100%]
+=================================== FAILURES ===================================
+________________ test_union_merge_of_two_event_appends_is_valid ________________
+[gw3] darwin -- Python 3.12.4 /opt/anaconda3/bin/python
+
+tmp_path = PosixPath('/private/var/folders/s1/yqb3d76d7053f7dyy9fwtkzw0000gp/T/pytest-of-brock/pytest-881/popen-gw3/test_union_merge_of_two_event_0')
+neo4j_driver = <neo4j._sync.driver.BoltDriver object at 0x1772f3140>
+clean_test_db = None
+dc = DomainConfig(domain='research', version='0.4', artifact_types={'Script': ArtifactTypeConfig(properties={'name': Proper... 'AuditFinding': {'proposed': ['open'], 'open': ['resolved', 'wont_fix'], 'resolved': ['open'], 'wont_fix': ['open']}})
+
+    def test_union_merge_of_two_event_appends_is_valid(tmp_path, neo4j_driver, clean_test_db, dc):
+        """Decision 4: both sessions append to the tracked event store in their own worktrees;
+        `merge=union` merges them, and the merged store is valid JSONL with unique event ids and
+        both appends in it."""
+        p = _project(tmp_path)
+        add_task(p, "a", NONEXCL.format(touches="out/a/"))
+        add_task(p, "b", NONEXCL.format(touches="out/b/"))
+        write_stub(p, {"a": {"append_event": True, "sleep": 1},
+                       "b": {"append_event": True, "sleep": 2}})
+        register(p, neo4j_driver, dc, "a", "2026-10-07T00:00:01Z")
+        register(p, neo4j_driver, dc, "b", "2026-10-07T00:00:02Z")
+        assert _once(p).count("launching") == 2
+        _wait_settled(p, neo4j_driver, ["a", "b"])
+    
+        # SEL-047 saw this fail 2 of 20 alone with task a `blocked` and nothing else to read (SEL-048): the supervisors'
+        # logs and the finished outcomes go in the message, as `_wait_settled` gives on a timeout, so a failure says why.
+        states = task_states(neo4j_driver)
+>       assert states == {"a": "completed", "b": "completed"}, (
+            f"states {states}\nfinished {_finished(p)}\n"
+            + "\n".join(f"--- {n}\n{_supervisor_log(p, n)}" for n in ("a", "b")))
+E       AssertionError: states {'a': 'blocked', 'b': 'completed'}
+E         finished [{'task_id': '956d8d2c-0035-4d29-a5ab-0f163f65952a', 'source_file': 'cc_tasks/b.md', 'child_session_id': '186cb195-63ff-4d44-b79b-364b533f2bf0', 'exit_code': 0, 'wall_clock_s': 8.268, 'result_present': True, 'result_path': 'cc_tasks/b_RESULT.md', 'graph_state_observed': 'completed', 'log_path': 'logs/dispatch/b.log', 'mode': 'worktree', 'worktree': '.claude/worktrees/b', 'branch': 'worktree-b', 'base': '9d8fee3aa5a18b8c0e2578030a31f4dd00fd7dfe', 'linked': [], 'model_receipt': {'requested': 'claude-opus-5-5', 'served': 'claude-opus-5-5', 'side_models': [], 'ok': True, 'effort': 'medium', 'role': 'primary', 'cli_version': '9.9.9', 'lock_resolved_on': '2026-10-09'}, 'classifier_blocks': 0, 'stop_gate': {'passed': True, 'verdict': None, 'runs': 0, 'why': None}, 'ok': True, 'outcome': 'merged', 'merge': {'commit': '438b507ce81df6fd403bc376ab8242ddeb782edc', 'attempts': 1, 'regated': False, 'gate': {'ok': True, 'exit_code': 0, 'timed_out': False, 'log_path': 'logs/dispatch/b.gate.log', 'tier': 'full', 'reason': 'no_slices', 'seconds': 0.029, 'gate_run': '54b545f5-169c-4b96-8ced-a7362bd39bda'}, 'undeclared_writes': [], 'linked_by_session': [], 'gate_evidence': {'source': 'merge_gate', 'gate': {'ok': True, 'exit_code': 0, 'timed_out': False, 'log_path': 'logs/dispatch/b.gate.log', 'tier': 'full', 'reason': 'no_slices', 'seconds': 0.029, 'gate_run': '54b545f5-169c-4b96-8ced-a7362bd39bda'}}, 'discarded_ignored': []}}, {'task_id': '95de4e87-a53d-4fbc-981f-233fb1d0360b', 'source_file': 'cc_tasks/a.md', 'child_session_id': 'd3fcf8e8-9d82-47b3-ae81-439b49ca8564', 'exit_code': 0, 'wall_clock_s': 7.975, 'result_present': True, 'result_path': 'cc_tasks/a_RESULT.md', 'graph_state_observed': 'in_progress', 'log_path': 'logs/dispatch/a.log', 'mode': 'worktree', 'worktree': '.claude/worktrees/a', 'branch': 'worktree-a', 'base': '934c6ca812104272c7bf2de80d02e199e4b6e206', 'linked': [], 'model_receipt': {'requested': 'claude-opus-5-5', 'served': 'claude-opus-5-5', 'side_models': [], 'ok': True, 'effort': 'medium', 'role': 'primary', 'cli_version': '9.9.9', 'lock_resolved_on': '2026-10-09'}, 'classifier_blocks': 0, 'stop_gate': {'passed': True, 'verdict': None, 'runs': 0, 'why': None}, 'ok': False, 'outcome': 'merge_blocked', 'merge': {'reason': 'main_kept_moving', 'files': [], 'attempts': 3}}]
+E         --- a
+E         session exit=0 result_committed=True graph=in_progress model=claude-opus-5-5 (requested claude-opus-5-5) classifier_blocks=0
+E         record: record: dispatch_worktree_named, gate_run 95de4e87 — 2 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> cd07c6d
+E         record: record: dispatch_worktree_named 956d8d2c — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> 4d75f25
+E         reconcile: 1 event line(s) of kept .claude/worktrees/a union-merged into seldon_events.jsonl (merge_blocked; task blocked)
+E         MERGE BLOCKED 95de4e87 (main_kept_moving): -; worktree .claude/worktrees/a kept; issue 409b0b8d
+E         record: record: dispatch_finished, artifact_updated, artifact_state_changed, worktree_kept, note_recorded, kept_events_reconciled, artifact_created, link_created 95de4e87, 409b0b8d — 9 line(s) written by dispatcher, cc; reconciled by the standing dispatcher (event_store, AD-038-R1) -> e65fcb9
+E         push: pushed 1 commit(s)
+E         
+E         --- b
+E         session exit=0 result_committed=True graph=in_progress model=claude-opus-5-5 (requested claude-opus-5-5) classifier_blocks=0
+E         record: record: gate_run 956d8d2c — 1 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> b6ffc9d
+E         merged 956d8d2c worktree-b at 438b507c (attempt 1, regated=False)
+E         sweep: removed .claude/worktrees/b (branch worktree-b kept)
+E         record: record: artifact_updated, artifact_state_changed, dispatch_finished, worktree_removed 956d8d2c — 4 line(s) written by dispatcher; reconciled by the standing dispatcher (event_store, AD-038-R1) -> 17045df
+E         push: pushed 5 commit(s)
+E         
+E       assert {'a': 'blocke...: 'completed'} == {'a': 'comple...: 'completed'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'a': 'blocked'} != {'a': 'completed'}
+E         Use -v to get more diff
+
+tests/test_dispatch_parallel.py:262: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid
+1 failed, 3558 passed, 7 skipped in 1572.01s (0:26:12)

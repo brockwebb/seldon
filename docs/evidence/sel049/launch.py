@@ -13,10 +13,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
+    # Default: sequence.py. `launch.py stress.py <args>` starts the stress comparison the same way, to stress.out.
+    script_name, args = (argv[0], argv[1:]) if argv else ("sequence.py", [])
     (HERE / "logs").mkdir(exist_ok=True)
-    out = HERE / "logs" / "sequence.out"
-    script = (f'caffeinate -i "{sys.executable}" "{HERE / "sequence.py"}" > "{out}" 2>&1; '
+    out = HERE / "logs" / f"{Path(script_name).stem}.out"
+    quoted = " ".join(f'"{a}"' for a in args)
+    script = (f'caffeinate -i "{sys.executable}" "{HERE / script_name}" {quoted} > "{out}" 2>&1; '
               f'echo "EXIT=$?" >> "{out}"')
     proc = subprocess.Popen(["/bin/sh", "-c", script], cwd=HERE.parents[2], stdin=subprocess.DEVNULL,
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -25,4 +28,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))
