@@ -103,7 +103,18 @@ New, all passing on the branch:
 Changed for the new hook layout: `tests/test_hooks.py` (unhooking now clears both scopes) and the
 `tests/test_sel017_links_hook_parts.py` fixture (it plants the pre-SEL-052 install).
 
-Full suite: {{SUITE}}
+Full suite on the branch at `38c675a` (`-n 6`, 2026-11-27T02:47Z, 2,131 s): 3,597 passed, 8 skipped, 5 failed.
+- Four of the five failures came from this branch's hook layout, as intended:
+  - `test_dispatch_serial_transcript` (both parametrizations) had a golden transcript in which the two
+    `hooks_path.changed` values now read `false`. I re-recorded it with an erratum; nothing else differs.
+  - `test_sel019_project_new::test_a_temp_directory_becomes_a_project_...` read the `--local` scope.
+  - `test_cc_register_commits_note::test_a_commit_the_hook_refuses_...` planted its refusing hook in the shared
+    scope, which the checkout's own scope now overrides.
+
+  I updated all four at `e9805a2`, and they pass on a rerun.
+- The fifth, `test_sel019_project_new::test_the_real_squiddy_initializes_a_filled_skeleton`, is squiddy's own
+  `init` refusing its spec ("the emitter builds ['AffiliatedWith', ...] ... the spec does not declare them"). It
+  fails identically on seldon main's code in a `/tmp` shared clone with squiddy beside it, so it is not this branch's.
 
 ## Not done, and why
 
