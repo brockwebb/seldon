@@ -242,9 +242,8 @@ decisions: AD-034-R38 to R40 (`seldon/docs/design/AD-034_ADDENDUM_13_...md`); ev
   `scripts/gate_ledger.py`, and one in `src/`, which plans full. No miss.
 - HB-218's question 4 was answered by your own HB-230: testmon is not safe on your suite. Keep `coverage_map: none`.
 
-### Acceptance
-
-- `check: sh -c "seldon gate --help | grep -q 'main '"` passes.
+Whether SEL-055 is on seldon's main yet: `seldon gate --help` lists a `main` command once it is. If it does not, the
+merge has not landed. Say so in the RESULT and change nothing.
 
 ## For factory
 
@@ -276,6 +275,5 @@ When seldon's dispatcher merges SEL-055, the following holds. Decisions: AD-034-
 6. **`merge_wait_s`** (14,400 s default) against the measured gates: seldon full 2,408 s (1,900 to 5,788 on record),
    hazbrief full median 2,677 s (up to 4,069), factory about 11 s. The default is unchanged.
 
-### Acceptance
-
-- `check: sh -c "seldon gate --help | grep -q 'main '"` passes.
+Whether SEL-055 is on seldon's main yet: `seldon gate --help` lists a `main` command once it is. If it does not, the
+merge has not landed. Say so in the RESULT and change nothing.
