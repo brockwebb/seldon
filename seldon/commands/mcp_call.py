@@ -54,6 +54,26 @@ def without_code_line(answer: str) -> str:
     return body if sep and tail.startswith("code: ") and "\n" not in tail else answer
 
 
+def stale_schema_note(tool: str, fn, kwargs: dict) -> str | None:
+    """SEL-052 (factory's 2026-11-26 filing, item 3): the parameters this checkout's tool takes that the server did
+    not send, said in the answer, or None.
+
+    The child runs the checkout's code, but the SCHEMA a client sees is the one the long-lived server registered when
+    it started (`_runs_head` binds every argument of the signature it started with, defaults included). So a
+    parameter added since the server started is one the client cannot pass: factory's Desktop called
+    `seldon_go(portfolio=true)` on 2026-11-26 and was answered as if it had not, with nothing saying why."""
+    import inspect
+    have = [n for n, p in inspect.signature(fn).parameters.items()
+            if p.kind in (p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY)]
+    missing = [n for n in have if n not in kwargs]
+    if not missing:
+        return None
+    return (f"note: this seldon-mcp server was started on older code. `{tool}` here takes "
+            f"{', '.join(missing)}, which the schema it serves lacks, so a client cannot pass "
+            f"{'it' if len(missing) == 1 else 'them'} and the default answered. Restart the seldon-mcp server "
+            f"(quit and reopen Claude Desktop) to serve the current schema (SEL-052).")
+
+
 @click.command("mcp-call", hidden=True)
 @click.argument("tool")
 def mcp_call_command(tool):
@@ -72,5 +92,8 @@ def mcp_call_command(tool):
         raise click.ClickException("the arguments on stdin must be a JSON object")
     answer = fn(**kwargs)
     if isinstance(answer, str):
+        note = stale_schema_note(tool, fn, kwargs)
+        if note:
+            answer = f"{answer}{CODE_LINE_SEPARATOR}{note}"
         answer = f"{answer}{CODE_LINE_SEPARATOR}{code_line(Path(mcp_server.__file__).resolve().parent.parent)}"
     click.echo(RESULT_PREFIX + json.dumps(answer))
