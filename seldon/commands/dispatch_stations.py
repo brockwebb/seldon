@@ -468,6 +468,32 @@ def _stop_gate_plan(project_dir: Path, cfg: dict, scfg: dict, tree: dict, lp: di
             "tail": (result["tail"] or "")[-300:], "gate_run": ev["event_id"]}
 
 
+def _session_dirt(project_dir: Path, cfg: dict, tree: dict, lp: dict, events: list) -> list | None:
+    """SEL-052: what the merge round would refuse as `uncommitted_changes` in the session's worktree, read with the
+    merge round's own predicate (`worktree.dirty_paths`, minus the paths the launch linked), so the Stop gate hands it
+    back to the session that can fix it. critical-thinking-ai CTAI-006R ended with one untracked directory holding a
+    `.gitkeep`; the merge refused it and a person redrove it twenty minutes later to delete it.
+
+    None (not judged) outside a dispatched branch worktree, or when git cannot read the tree."""
+    from seldon.core import worktree as WT
+    cwd = Path(tree.get("cwd") or "")
+    if not tree.get("branch") or not cwd.is_dir() or cwd.resolve() == Path(project_dir).resolve():
+        return None
+    linked = None
+    for e in events:
+        p = e.get("payload") or {}
+        if e.get("event_type") == "dispatch_worktree_named" and p.get("child_session_id") == lp.get("child_session_id"):
+            linked = p.get("linked")
+    if linked is None:
+        # The named record is held until the finish (`NAMED_PENDING`): the declared links are what it linked at most.
+        linked = list(cfg.get("worktree_links") or ())
+    try:
+        return WT.dirty_paths(cwd, exclude=linked)
+    except Exception as exc:                                        # noqa: BLE001
+        click.echo(f"stop gate: the tree's dirt was not read ({exc}); the merge round still judges it", err=True)
+        return None
+
+
 @dispatch_group.command("stop-gate", hidden=True)
 @click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
               help="the primary checkout, whose event store the dispatcher reads")
@@ -497,7 +523,8 @@ def stop_gate_command(project):
                           exclude_session=launch["payload"].get("child_session_id"))
     gate = _stop_gate_plan(project_dir, cfg, scfg, tree, lp, events)
     out = S.stop_gate(project_dir, launch, events, scfg, tree["cwd"], tree["branch"],
-                      stop_hook_active=bool(hook.get("stop_hook_active")), floor=floor, gate=gate)
+                      stop_hook_active=bool(hook.get("stop_hook_active")), floor=floor, gate=gate,
+                      dirt=_session_dirt(project_dir, cfg, tree, lp, events))
     gate = _emit(project_dir, S.EVENT_STOP_GATE, out["record"], actor=resolve_cli_actor())
     if out["hard_stop"]:
         stop = _emit(project_dir, S.EVENT_SESSION_STOP, {**out["hard_stop"], "stop_gate_event_id": gate["event_id"]})

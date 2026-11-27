@@ -1054,7 +1054,7 @@ def round_fingerprint(parts: list) -> str:
 
 def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Path, branch: str | None, *,
               run: Callable[..., dict] = run_check, stop_hook_active: bool = False,
-              floor: dict | None = None, gate: dict | None = None) -> dict:
+              floor: dict | None = None, gate: dict | None = None, dirt: list | None = None) -> dict:
     """FRICTION-002 Part C: the Stop hook's decision for a dispatched session that is trying to end.
 
     Runs the `check:` criteria of every Part the session has declared complete (`part_complete` since its launch)
@@ -1083,6 +1083,11 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
     SEL-041 (AD-034-R35): `gate` is the project's scoped gate for the session's tree, when the project declares
     slices (`dispatch_stations._stop_gate_plan`): a red or timed-out one is a failure like a failing check, under the
     same ceiling and no-progress rules, and the record carries it as `gate`. A full plan is not run here (`deferred`).
+
+    SEL-052: `dirt` is what the merge round would refuse as `uncommitted_changes` in the session's tree
+    (`dispatch_stations._session_dirt`); a non-empty one is a failure like a failing check, under the same ceiling and
+    no-progress rules, so the session that left a stray path removes or commits it instead of a person after the
+    merge refused it. Judged whether or not a Part was declared: the merge refuses dirt either way. None: not judged.
 
     Returns ``{"record": <stop_gate payload>, "block": bool, "reason": str | None, "hard_stop": payload | None}``.
     """
@@ -1113,6 +1118,12 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
         rounds.append({"part": "gate", "checks": [row]})
         if row["outcome"] == "fail":
             failed.append({"part": "gate", **row})
+    if dirt:
+        shown = ", ".join(sorted(dirt)[:10]) + (f" (+{len(dirt) - 10} more)" if len(dirt) > 10 else "")
+        row = {"command": "git status --porcelain (the merge round refuses uncommitted_changes)", "exit": 1,
+               "outcome": "fail", "tail": f"commit or remove before ending: {shown}"}
+        rounds.append({"part": "tree", "checks": [row]})
+        failed.append({"part": "tree", **row})
     estimate = spend_tokens(parse_headers(text)[HEADER_SPEND]) if text else None
     log = Path(project_dir) / lp["log_path"] if lp.get("log_path") else None
     tokens = launch_tokens(log, lp) if log and log.is_file() else None
@@ -1141,11 +1152,14 @@ def stop_gate(project_dir: Path, launch: dict, events: list, scfg: dict, cwd: Pa
               "round": rnd, "fingerprint": fingerprint}
     if gate is not None:
         record["gate"] = gate
+    if dirt is not None:
+        record["dirt"] = sorted(dirt)[:20]
     if no_progress:
         record["no_progress"] = no_progress
     reason, hard = None, None
     if verdict == "block":
-        reason = ("FRICTION-002 stop gate: this session may not end while a declared Part's check fails. "
+        reason = ("FRICTION-002 stop gate: this session may not end while a declared Part's check fails"
+                  + (" or its tree holds what the merge round refuses" if dirt else "") + ". "
                   + " ".join(f"Part {f['part']}: `{f['command']}` exit {f['exit']}"
                              + (f" ({f['tail'][-300:].strip()})" if f.get("tail") else "") + "."
                              for f in failed)
