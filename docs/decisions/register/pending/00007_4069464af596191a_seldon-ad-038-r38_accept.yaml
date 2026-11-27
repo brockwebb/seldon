@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-038-R38
+date: '2026-11-26'
+decided_by: cc:ad161bd6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+reason: 'SEL-052: from factory''s filings of 2026-11-24 to 26 and the coordinator''s CTAI-006R and CTAI-008 observations'
+kind: decision
+status: accepted
+statement: A declared worktree_links entry that is not linked because the worktree already has the path is recorded on dispatch_worktree_named as links_skipped with its reason, and when the repository tracks something at or under it (tracked_in_checkout) the launch prints the remedy
+source:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  lines:
+  - 71
+  - 74
+  sha256: 2fafeec6dcc9dc82f0fc4118888b86f6b93c11ceae1b34556db6d4f9622a5406
+  text: |-
+    - **AD-038-R38. A declared `worktree_links` entry that is not linked because the worktree already has the path is recorded on `dispatch_worktree_named` as `links_skipped` with its reason, and when the repository tracks something at or under it (`tracked_in_checkout`) the launch prints the remedy.**
+      The remedy for a local directory shared with every worktree: untrack it and gitignore it as `/<path>` with no
+      trailing slash, since a `dir/` pattern does not match the link and git would list its parent untracked. A path the
+      primary lacks is the documented skip and is not recorded.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  anchor: AD-038-R38
+consumer:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+- seldon/core/worktree.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel052_worktree_link_skip.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 4069464af596191a6f39868bc3233c0e5b1b8c923837293cc11747150da01733

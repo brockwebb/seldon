@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-038-R36
+date: '2026-11-26'
+decided_by: cc:ad161bd6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+reason: 'SEL-052: from factory''s filings of 2026-11-24 to 26 and the coordinator''s CTAI-006R and CTAI-008 observations'
+kind: decision
+status: accepted
+statement: A task in blocked rings notify (outcome held) with its stored block reason, its age since it was blocked and the command that clears it, once it has been blocked dispatch.held_alarm_after_s (default 900 s), and again every dispatch.held_repeat_s (default 86400 s; 0 rings once) while it stays blocked; each ring is one dispatch_held event
+source:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  lines:
+  - 64
+  - 67
+  sha256: 2fafeec6dcc9dc82f0fc4118888b86f6b93c11ceae1b34556db6d4f9622a5406
+  text: |-
+    - **AD-038-R36. A task in `blocked` rings `notify` (outcome `held`) with its stored block reason, its age since it was blocked and the command that clears it, once it has been blocked `dispatch.held_alarm_after_s` (default 900 s), and again every `dispatch.held_repeat_s` (default 86400 s; 0 rings once) while it stays blocked; each ring is one `dispatch_held` event.**
+      Read every pass after the auto-redrive (AD-038-R2), so what is still blocked waits on a person; independent of a
+      claim in flight. The age runs from the task's last move into `blocked` in the event store. Both defaults have no
+      measured basis and say so in `seldon.yaml`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  anchor: AD-038-R36
+consumer:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+- seldon/core/dispatch.py
+- seldon/commands/dispatch.py
+- seldon.yaml
+- tests/test_sel052_held_alarm.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: f503d53410eb4a0dd55d13a59487865013741e33d4acb0922ad2febed8a0884e

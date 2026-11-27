@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-036-R32
+date: '2026-11-26'
+decided_by: cc:ad161bd6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+reason: 'SEL-052: from factory''s filings of 2026-11-24 to 26 and the coordinator''s CTAI-006R and CTAI-008 observations'
+kind: decision
+status: accepted
+statement: 'The internal arm''s roots are internal_roots and, when internal_roots_from names a {name: path} map in another seldon.yaml, every repository that map lists which no internal_roots row already names or points at; internal.default_include carries the requirement projections, docs/se/** and docs/requirements/**'
+source:
+  path: docs/design/AD-036_ADDENDUM_16_the_commit_hooks_path_survives_the_cli_worktree_step_the_search_reads_every_registered_repository_and_a_return_never_waits_on_a_filing.md
+  lines:
+  - 73
+  - 77
+  sha256: bc24e366fe7b4bcc7c0e75391d6a875bb8b11fa398feef997b9bc96091672d07
+  text: |-
+    - **AD-036-R32. The internal arm's roots are `internal_roots` and, when `internal_roots_from` names a `{name: path}` map in another seldon.yaml, every repository that map lists which no `internal_roots` row already names or points at; `internal.default_include` carries the requirement projections, `docs/se/**` and `docs/requirements/**`.**
+      The portfolio list (factory's `portfolio.repositories`) is the one list of registered repositories; a second copy
+      here would drift as this one did. A listed repository not on disk is a root, so its receipt fails loudly. Widening
+      the include re-scores nothing an old receipt rests on: verification is membership in the hits at the receipt's
+      commit.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_16_the_commit_hooks_path_survives_the_cli_worktree_step_the_search_reads_every_registered_repository_and_a_return_never_waits_on_a_filing.md
+  anchor: AD-036-R32
+consumer:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+- seldon/core/prior_art.py
+- seldon.yaml
+- tests/test_sel052_prior_art_reach.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: df2fec7dfd8073d1191a0c51c03d640728ea9f7e8bb9c3c08e9345a78a45aa93

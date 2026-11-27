@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-036-R31
+date: '2026-11-26'
+decided_by: cc:ad161bd6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+reason: 'SEL-052: from factory''s filings of 2026-11-24 to 26 and the coordinator''s CTAI-006R and CTAI-008 observations'
+kind: decision
+status: accepted
+statement: seldon hooks install writes the shared core.hooksPath as the main worktree's .githooks, absolute, and the checkout's own config.worktree as the relative .githooks, with extensions.worktreeConfig on; a relative value left in the shared config is reported as not installed
+source:
+  path: docs/design/AD-036_ADDENDUM_16_the_commit_hooks_path_survives_the_cli_worktree_step_the_search_reads_every_registered_repository_and_a_return_never_waits_on_a_filing.md
+  lines:
+  - 66
+  - 72
+  sha256: bc24e366fe7b4bcc7c0e75391d6a875bb8b11fa398feef997b9bc96091672d07
+  text: |-
+    - **AD-036-R31. `seldon hooks install` writes the shared `core.hooksPath` as the main worktree's `.githooks`, absolute, and the checkout's own `config.worktree` as the relative `.githooks`, with `extensions.worktreeConfig` on; a relative value left in the shared config is reported as not installed.**
+      The absolute shared value is the one the Claude Code CLI writes over a relative one, so its worktree step finds
+      nothing to change. Every checkout seldon installs or points reads its own `config.worktree`, which wins, so each runs
+      the hook its own checkout carries; a worktree no one pointed reads the copy git made at `worktree add`, or on a git
+      that makes none, the absolute fallback, which runs the primary's tracked hook rather than none. The installer
+      refuses a shared `core.worktree` or `core.bare = true`, as AD-034-R14's pointing does. The dispatcher's
+      `ensure_installed` moves an old relative install on its next pass.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-036_ADDENDUM_16_the_commit_hooks_path_survives_the_cli_worktree_step_the_search_reads_every_registered_repository_and_a_return_never_waits_on_a_filing.md
+  anchor: AD-036-R31
+consumer:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+- seldon/core/hooks.py
+- tests/test_sel052_hook_path.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: f24c9cb761f11a321859491933384946682524e9e0fd901a72dc53839ce95ed1

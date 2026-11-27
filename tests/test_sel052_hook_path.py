@@ -97,8 +97,8 @@ def test_the_cli_step_has_nothing_to_write_after_install(primary):
 
 
 def test_a_new_worktree_runs_its_own_checkouts_hook_before_anyone_points_it(primary):
-    """`git worktree add` copies the main worktree's `config.worktree` into the new one (git 2.39 and later,
-    `copy_filtered_worktree_config`; measured here on the installed git), so a worktree nobody pointed (a launch
+    """`git worktree add` copies the main worktree's `config.worktree` into the new one (measured on git
+    2.50.1, 2026-11-26; `copy_filtered_worktree_config` in builtin/worktree.c, from memory and not dated here), so a worktree nobody pointed (a launch
     before the dispatcher names it, or a bare `git worktree add`) resolves `.githooks` against its own top: HOOK-001's
     property, restored. On a git that does not copy it, the absolute shared value still runs the primary's tracked
     hook, never none."""

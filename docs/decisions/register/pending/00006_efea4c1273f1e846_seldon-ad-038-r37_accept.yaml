@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-038-R37
+date: '2026-11-26'
+decided_by: cc:ad161bd6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+reason: 'SEL-052: from factory''s filings of 2026-11-24 to 26 and the coordinator''s CTAI-006R and CTAI-008 observations'
+kind: decision
+status: accepted
+statement: 'The Stop gate reads the merge round''s own refusal in the session''s worktree: a path worktree.dirty_paths returns (minus the launch''s links) fails the gate as a check would, under the same ceiling and no-progress rules, whether or not a Part was declared'
+source:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  lines:
+  - 68
+  - 70
+  sha256: 2fafeec6dcc9dc82f0fc4118888b86f6b93c11ceae1b34556db6d4f9622a5406
+  text: |-
+    - **AD-038-R37. The Stop gate reads the merge round's own refusal in the session's worktree: a path `worktree.dirty_paths` returns (minus the launch's links) fails the gate as a check would, under the same ceiling and no-progress rules, whether or not a Part was declared.**
+      So the session that left a stray path commits or removes it, and the merge round's `uncommitted_changes` is left
+      for what a session could not have fixed. Not judged outside a branch worktree.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_15_a_blocked_task_rings_with_its_age_a_session_cannot_end_with_what_the_merge_refuses_and_a_stale_schema_says_so.md
+  anchor: AD-038-R37
+consumer:
+- cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+- seldon/core/stations.py
+- seldon/commands/dispatch_stations.py
+- tests/test_sel052_stop_gate_dirt.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: efea4c1273f1e8464404dd5fdda78279c93769995acec1a9df8ec447c5b45f06
