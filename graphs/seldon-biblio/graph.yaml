@@ -74,6 +74,20 @@ classes:
   - SupportsDecision: Edge           # (Work | Standard | Software)-[:SUPPORTS_DECISION]->(Decision)
   - Cites: Edge
   - ExpressionOf: Edge
+  # ---- a cited passage, promoted word for word (SEL-056; squiddy DN-050 ADDENDUM 02 R-295) ----
+  # Written by `squiddy passage promote`, not by the emitter: located once by the W3C TextQuoteSelector in the
+  # entry's parsed text, cut from there, hashed, with the citation that asked for it.
+  - Passage: Node                    # the passage's text verbatim, its span and hashes, promoted_for, promoted_by
+  - PassageOf: Edge                  # (Passage)-[:PASSAGE_OF]->(Work | Standard | Software)
+# SEL-056 (squiddy SQ-151, R-295; the operator's statement of 2026-11-12 in seldon's filing 750348cb): every held
+# text here is a reference document, a source a ruling cites, so `active` (the disposition of an entry whose text is
+# held) is the coarse tier: held, parsed and indexed for located lookups, never extracted whole. `metadata_only`
+# holds no text and needs no tier. Squiddy's example writes `[reference]`; this graph has no such disposition and
+# every held entry is one, so naming `active` states the same rule without re-dispositioning 84 entries. Full
+# extraction stays available for any one entry by changing its disposition, a recorded manifest edit (R-295 item 3);
+# `engine.extract.enabled: false` still closes extraction for the whole graph (squiddy CONOPS R-106, header above).
+tiers:
+  coarse: [active]
 domain:
   decision_id_patterns:              # how `cited_in` text names a decision (squiddy templates/emit.py decision_ids)
     - {pattern: "\\bAD-\\d{3}-R\\d+\\b", kind: R, source_document: docs/design/}

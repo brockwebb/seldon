@@ -91,7 +91,7 @@ linkml_meta = LinkMLMeta({'default_prefix': 'seldonbib',
                                 'prefix_reference': 'https://github.com/brockwebb/squiddy/graphs/seldon_biblio/'},
                   'squiddy': {'prefix_prefix': 'squiddy',
                               'prefix_reference': 'https://github.com/brockwebb/squiddy/schema/core/'}},
-     'source_file': '/Users/brock/GitHub/seldon/.claude/worktrees/jaunty-nibbling-brook/graphs/seldon-biblio/schema/seldon_biblio.yaml',
+     'source_file': '/Users/brock/GitHub/seldon/.claude/worktrees/compiled-sprouting-squirrel/graphs/seldon-biblio/schema/seldon_biblio.yaml',
      'title': "Seldon's bibliographic graph"} )
 
 class AssertionStatus(str, Enum):
@@ -674,6 +674,56 @@ class ExpressionOf(Edge):
     grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
 
 
+class Passage(Node):
+    """
+    A passage of a held text, promoted into the graph word for word because something cited it (R-295). Named by the W3C Web Annotation TextQuoteSelector (`text` is the exact quote, with `prefix` and `suffix` to choose among copies), located by the harness in the parsed intermediate exactly once and cut from it, never typed by the caller; the span is the node's `grounding_span`. `id` is `passage:<entry>:<sha256 of the text, first 12>`.
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/squiddy/graphs/seldon_biblio/schema',
+         'slot_usage': {'text': {'name': 'text', 'required': True}}})
+
+    text: str = Field(default=..., description="""The located text, verbatim from the parsed intermediate.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    prefix: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    suffix: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    locator: Optional[str] = Field(default=None, description="""Where the citation that asked for it says it is (a page or section), as that citation wrote it.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    promoted_for: str = Field(default=..., description="""The citation that asked for the passage.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    promoted_by: str = Field(default=..., description="""Who promoted it (the operator, or a task id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Passage']} })
+    id: str = Field(default=..., description="""The readable, source-scoped key the graph minted at admission. It never changes and is never reused; a name is a property (DI-060, DI-062, OD-4 §3.1).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'ManifestEntry']} })
+    prov_wasGeneratedBy: Optional[str] = Field(default=None, description="""Run id of the activity that made the assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasGeneratedBy'} })
+    prov_wasDerivedFrom: Optional[str] = Field(default=None, description="""The manifest entry or source the assertion was derived from.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasDerivedFrom'} })
+    method: Optional[str] = Field(default=None, description="""How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    ruling_id: Optional[str] = Field(default=None, description="""The event id of the human ruling that authorized this assertion, when one did.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+
+
+class PassageOf(Edge):
+    """
+    (Passage)-[:PASSAGE_OF]->(Work), the work whose held text the passage was cut from.
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://github.com/brockwebb/squiddy/graphs/seldon_biblio/schema'})
+
+    subject: str = Field(default=..., description="""The id of the source node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
+    object: str = Field(default=..., description="""The id of the target node.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Edge']} })
+    prov_wasGeneratedBy: Optional[str] = Field(default=None, description="""Run id of the activity that made the assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasGeneratedBy'} })
+    prov_wasDerivedFrom: Optional[str] = Field(default=None, description="""The manifest entry or source the assertion was derived from.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge'], 'slot_uri': 'prov:wasDerivedFrom'} })
+    method: Optional[str] = Field(default=None, description="""How the assertion was made (manifest, crossref, openalex, github, human_ruling, ...).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    ruling_id: Optional[str] = Field(default=None, description="""The event id of the human ruling that authorized this assertion, when one did.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    asserted_at: Optional[str] = Field(default=None, description="""When the assertion was made, ISO 8601 UTC.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    status: Optional[AssertionStatus] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    superseded_by: Optional[str] = Field(default=None, description="""The event id of the assertion that replaced this one. Never a deletion (DI-053, DI-064).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor: Optional[str] = Field(default=None, description="""The instrument that made an extracted assertion, as `<provider>:<alias asked for>` (`claude_cli_max_oauth:sonnet`). Absent on a deterministic assertion, and that absence is itself the signal.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_extractor_version: Optional[str] = Field(default=None, description="""The model id the client ACTUALLY RESOLVED the alias to, read from the CLI envelope of the call that made the assertion; never the alias (DI-023: recording an alias as the model is citing a document that quotes a statute as if it were the statute).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_prompt_sha256: Optional[str] = Field(default=None, description="""The sha256 of the prompt template the extraction ran under; a prompt change is a new extractor.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    prov_run_id: Optional[str] = Field(default=None, description="""The run id of the extraction that proposed this assertion (also the envelope's run_id).""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+    grounding_span: Optional[GroundingSpan] = Field(default=None, description="""Where in the source the harness located the text behind this assertion. Located and cut by the harness from the parsed intermediate, never quoted by the model (ai-readiness-kg's anchor contract, S-001 finding 2). A span the harness cannot locate is a failed extraction, never a stored assertion.""", json_schema_extra = { "linkml_meta": {'domain_of': ['Node', 'Edge']} })
+
+
 class SeldonBiblioGraph(ConfiguredBaseModel):
     """
     The graph as two lists, the shape of the node-link export.
@@ -704,4 +754,6 @@ AffiliatedWith.model_rebuild()
 SupportsDecision.model_rebuild()
 Cites.model_rebuild()
 ExpressionOf.model_rebuild()
+Passage.model_rebuild()
+PassageOf.model_rebuild()
 SeldonBiblioGraph.model_rebuild()

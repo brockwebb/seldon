@@ -1,8 +1,8 @@
 {
  "tool": "squiddy init",
  "spec": "graph.yaml",
- "spec_sha256": "bf00d480f5642f78a1d0901b3e59424e722450153cf69e5bb60a89c1f43fba8c",
- "base_schema_sha256": "53ed585f57aae21706a8295862219654991c5105f3e3b1e8736bca0ef7b07d34",
+ "spec_sha256": "9a27037c29a5bb561e3aa9e03dd86b5f876b977ee73603968c99f273a6dd8187",
+ "base_schema_sha256": "2912be3cf805df7fd9f45de74174ab6e24b8f20ae8ae89258e1bf982f3978d94",
  "defaults_sha256": "1f615958bbe20dfc49cf4dcc08cd9a7b59c4c8939e14fb7e1ea1f83e082e7bc0",
  "emitter_template_sha256": "9b84e1388d6e6d0b2513b40f0e884991b7e4603bcd77cd1208b9fbf669c04437",
  "graph": "seldon_biblio",
@@ -10,16 +10,16 @@
  "serve_backend": "export",
  "schema_epoch": "0.1.0+de21b9c7ec65",
  "generated": {
-  "schema": "de21b9c7ec65bbf79e998ec2cdc1a6a4c579ecfc8bf6e61beed99d0cb1f64c2c",
-  "config.yaml": "0bd1123c61e0a3492e4773d7d9528a5a69bb1e0704840c061a589dc8697ad10b",
-  "env_example": "ad3a15158939ba09486e784e223caba725a212b2690864e176a131c37ad70dc9",
-  "generated_module": "82b14a6a96625537d3af51fc640029516b418c198a7618b852a1dbfab20f6e02",
-  "generated_json_schema": "4dce240ce1aba5d7234f884bed0d686815f34a76f74efe90ddd4690ade281d9e",
+  "schema": "57282dee675bab1780c017ff7d918d23bc31207e3dbbc0308637666e57143467",
+  "config.yaml": "67f3ec6bddff355145e8d646bc2f2e205c5570da96c98dd9174fbda09953f2c5",
+  "env_example": "cc99af17e5e2a95cf8e3cd7fa9916187a61417e65bfeb02f02e3875144467913",
+  "generated_module": "0795d396a427b24f1ddfbfc3f9dd7f8c4058229df6496c9752766657a9a7e5cd",
+  "generated_json_schema": "5812daa554793ec3706193f51d58293278e46cb295279a086c868930e8cbba43",
   "ledger_index": "f4f32b9f0244e7c28ada6b3cc5cd0aabc12cc23bd6ba44c1ac06a1ac022cf2d1"
  },
  "generated_body": {
-  "schema": "f0100c6dea9f8383e52f2647492a65e90ddefd163cc0344a13736cadb26f7b84",
-  "config.yaml": "60e47a5ac814b747328053a6deaaa3176729a6b323fedcec41df8c5c89594b50",
+  "schema": "329681ec9fbbf16f364d96301b10cf160f91f203da4867a3fb2410d6aa778c06",
+  "config.yaml": "8207c3f04af601271abf6068917f4a99bf2774a8fc470c80e322b441d8ad1361",
   "env_example": "7e220abebf2f1611ce2395be59ab953e22152ded922dc7cfa2518d58a484745c",
   "generated_module": "82b14a6a96625537d3af51fc640029516b418c198a7618b852a1dbfab20f6e02"
  },
@@ -44,12 +44,15 @@
   "ledger_index": "ledger/index.json",
   "events": "ledger/open.jsonl"
  },
- "schema_changed": false,
+ "schema_changed": true,
  "rendered": {
-  "at": "2026-11-10T01:17:37.221987+00:00",
+  "at": "2026-11-27T15:00:22.569094+00:00",
   "artifacts": {
+   "schema": "schema/seldon_biblio.yaml",
    "config.yaml": "config.yaml",
-   "env_example": ".env.example"
+   "env_example": ".env.example",
+   "generated_module": "schema/generated/seldon_biblio_pydantic.py",
+   "generated_json_schema": "schema/generated/seldon_biblio.schema.json"
   }
  }
 }

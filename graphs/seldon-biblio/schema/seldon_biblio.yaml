@@ -1,4 +1,4 @@
-# squiddy-generated: LinkML schema | spec sha256 8593298b3e7b1a84f978d0fdb5e86d9f88594461b0841e600a24612d4bfee8a7
+# squiddy-generated: LinkML schema | spec sha256 9a27037c29a5bb561e3aa9e03dd86b5f876b977ee73603968c99f273a6dd8187
 # Do not edit. Edit the spec and re-run `squiddy init`; `squiddy init --check` reports drift.
 id: https://github.com/brockwebb/squiddy/graphs/seldon_biblio/schema
 name: seldon_biblio
@@ -98,6 +98,9 @@ enums:
       design_note: {}
       cc_task: {}
       other: {}
+
+  # ---- SQ-151 (DN-050 ADDENDUM 02, R-290 to R-295): referenced only by the classes it adds, so a graph that names
+  # none of them renders none of these, and no existing graph's schema changes (R-290) ----
 
 slots:
   text:
@@ -305,6 +308,34 @@ classes:
     attributes:
       relation:
         range: ExpressionRelation
+
+  # ---- node classes ----
+  Passage:
+    is_a: Node
+    description: >-
+      A passage of a held text, promoted into the graph word for word because something cited it (R-295). Named by
+      the W3C Web Annotation TextQuoteSelector (`text` is the exact quote, with `prefix` and `suffix` to choose among
+      copies), located by the harness in the parsed intermediate exactly once and cut from it, never typed by the
+      caller; the span is the node's `grounding_span`. `id` is `passage:<entry>:<sha256 of the text, first 12>`.
+    slots: [text]
+    slot_usage:
+      text: {required: true}
+    attributes:
+      prefix:
+      suffix:
+      locator:
+        description: Where the citation that asked for it says it is (a page or section), as that citation wrote it.
+      promoted_for:
+        required: true
+        description: The citation that asked for the passage.
+      promoted_by:
+        required: true
+        description: Who promoted it (the operator, or a task id).
+
+  # ---- edge classes ----
+  PassageOf:
+    is_a: Edge
+    description: (Passage)-[:PASSAGE_OF]->(Work), the work whose held text the passage was cut from.
 
   # ---- the container the export validates ----
   Seldon_biblioGraph:
