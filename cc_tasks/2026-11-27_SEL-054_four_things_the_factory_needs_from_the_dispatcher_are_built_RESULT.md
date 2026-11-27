@@ -122,7 +122,11 @@ Live readings on 2026-11-27:
 
 One return goes to factory and answers all four filings. It is written from the next section and filed with
 `seldon cc return` once for each filing.
-RETURN_LINE
+The return is factory FAC-48 (`afc7586b`,
+`factory/cc_tasks/2026-11-27_FAC-48_what_seldon_built_for_the_four_dispatcher_filings_of_2026_11_26_and_27.md`), and
+its registration committed it in factory. All four filings are completed in seldon's graph (AD-036-R17): `82f9d4f1`
+(lane), `81e09bae` (project premise), `654bdd98` (Hive identity) and `925f4577` (planted controls). Filing `3619898e`
+(seldon main's full gate red on two tests) arrived beside this task and is not answered here.
 
 ## For factory
 
