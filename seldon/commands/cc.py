@@ -345,6 +345,8 @@ def _warn_if_description_suspicious(
 PRIOR_ART_REFUSAL = "AD-036-R4"
 #: The dispatcher's word too since SEL-011, so it is defined once, beside the grammar.
 AFTER_UNRESOLVED = _D_AFTER_UNRESOLVED
+#: SEL-052: an After ref that resolves to a filing, which never runs (`resolve_after_refs`).
+AFTER_UNRUNNABLE = "after_unrunnable"
 
 #: Decision 4: SEQUENCING stays prose, and this catches the sentence in it that is trying to
 #: be an edge. A WARNING and never a refusal — Seldon does not guess an edge from a sentence,
@@ -397,15 +399,17 @@ def resolve_after_refs(driver, database: str, refs) -> list:
                 "MATCH (t:Artifact:ResearchTask) "
                 "WHERE t.source_file = $md OR t.source_file = $stem "
                 "   OR t.source_file ENDS WITH $suffix "
-                "RETURN DISTINCT t.artifact_id AS id, t.source_file AS src",
+                "RETURN DISTINCT t.artifact_id AS id, t.source_file AS src, t.task_kind AS kind",
                 md=f"cc_tasks/{ref}.md", stem=ref, suffix=f"/{ref}.md",
             ).data()
             ids = {r["id"]: r["src"] for r in rows}
+            kinds = {r["id"]: r["kind"] for r in rows}
             if after_ref_is_id(ref):
                 by_id = session.run(
                     "MATCH (t:Artifact:ResearchTask) WHERE t.artifact_id STARTS WITH $p "
-                    "RETURN t.artifact_id AS id, t.source_file AS src", p=ref).data()
+                    "RETURN t.artifact_id AS id, t.source_file AS src, t.task_kind AS kind", p=ref).data()
                 ids.update({r["id"]: r["src"] for r in by_id})
+                kinds.update({r["id"]: r["kind"] for r in by_id})
             if not ids:
                 raise ValueError(
                     f"{AFTER_UNRESOLVED}: After ref {ref!r} names no registered ResearchTask. "
@@ -416,7 +420,16 @@ def resolve_after_refs(driver, database: str, refs) -> list:
                     f"{AFTER_UNRESOLVED}: After ref {ref!r} is ambiguous — it names "
                     f"{len(ids)} tasks: {shown}. Grammar: {AFTER_GRAMMAR}. "
                     f"Nothing was written.")
-            resolved.append(next(iter(ids)))
+            only = next(iter(ids))
+            if kinds.get(only) == "filing":
+                # SEL-052 (factory's 2026-11-26 filing, item 1): a filing is never a candidate and completes only when
+                # another task's return closes it (AD-036-R17), so a wait on it holds this task with nothing saying
+                # why (squiddy SQ-143 sat two days behind 750348cb). Wait on the task that answers it instead.
+                raise ValueError(
+                    f"{AFTER_UNRUNNABLE}: After ref {ref!r} names a filing ({only[:8]}, {ids[only]}), which is never "
+                    f"dispatched and completes only when its answer is returned; name the task that answers it. "
+                    f"Nothing was written.")
+            resolved.append(only)
     return resolved
 
 

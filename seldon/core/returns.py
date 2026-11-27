@@ -63,6 +63,11 @@ DEFAULT_HEADERS = {
     "Parts": "A 1.00.",
 }
 
+#: SEL-052: a `For <consumer>` section header saying the consumer has nothing to build, with the reason. The return
+#: is still written and registered (it is the record that the answer reached the consumer), then walked to
+#: `completed` at filing, so no session is launched to read it and say so (critical-thinking-ai CTAI-008's class).
+HEADER_NOTHING = "Nothing to build"
+
 #: Headers the writer owns. A section that sets one is refused: these say who wrote the return and what it answers.
 OWNED_HEADERS = ("Status", "Author", HEADER_RETURNS, HEADER_ANSWERS)
 
@@ -385,12 +390,22 @@ def slug(title: str) -> str:
 
 
 def latest_open(driver, database: str) -> Optional[str]:
-    """The stem of the consumer's most recently registered open task with a file, or None."""
+    """The stem of the consumer's most recently registered open task with a file that the dispatcher can run, or None.
+
+    SEL-052 (factory's 2026-11-26 filing, item 1): a filing (`task_kind` filing) and a parked FUTURE task are open but
+    never run, so a return written `After:` one waited with nothing saying it would (squiddy SQ-143 behind consumer
+    filing 750348cb, 2026-11-24 to 26). Neither is a predecessor a return can wait on; registration now refuses an
+    After that names a filing (`after_unrunnable`)."""
+    from seldon.core.moving import is_future
     with driver.session(database=database) as s:
-        row = s.run("MATCH (t:Artifact:ResearchTask) WHERE t.state IN $open AND t.source_file IS NOT NULL "
-                    "AND t.source_file STARTS WITH 'cc_tasks/' "
-                    "RETURN t.source_file AS f ORDER BY t.created_at DESC LIMIT 1", open=list(OPEN_STATES)).single()
-    return Path(row["f"]).stem if row else None
+        rows = s.run("MATCH (t:Artifact:ResearchTask) WHERE t.state IN $open AND t.source_file IS NOT NULL "
+                     "AND t.source_file STARTS WITH 'cc_tasks/' AND coalesce(t.task_kind, 'task') <> 'filing' "
+                     "RETURN t.source_file AS f, t.description AS d ORDER BY t.created_at DESC",
+                     open=list(OPEN_STATES)).data()
+    for row in rows:
+        if not is_future(row.get("d")):
+            return Path(row["f"]).stem
+    return None
 
 
 def _prefix_for(answered: Answered, prefix: Optional[str], driver=None, database: Optional[str] = None) -> str:
@@ -447,8 +462,8 @@ def close_filing(project_dir: Path, config: Optional[dict], answered: Answered, 
 
 def render(*, token: str, title: str, producer: str, task_id: str, task_token: Optional[str], task_rel: str,
            result_rel: str, commit: Optional[str], where: str, answered: Answered, after: Optional[str],
-           headers: dict, body: str, date: str) -> str:
-    """The return task file's text."""
+           headers: dict, body: str, date: str, task_file_stem: str = "") -> str:
+    """The return task file's text. `task_file_stem` is the return's own file stem, which its check names."""
     named = task_token or task_id[:8]
     out = [f"# {token}: {title}", "",
            "**Status:** proposed",
@@ -466,7 +481,43 @@ def render(*, token: str, title: str, producer: str, task_id: str, task_token: O
             f"- The commit: {producer}@{commit or 'unknown'} ({where}).", "",
             f"## What {answered.project} does with it", "",
             body, ""]
+    if HEADER_NOTHING not in headers:
+        # SEL-052: CTAI-008 finished green and was `merge_blocked: ungated`: the template declared a Part with no
+        # check, critical-thinking-ai declares no gate command, and a Stop gate that ran no check is no evidence
+        # (AD-034-R26). The RESULT is what a return's session owes; its presence is the check.
+        out += ["## Part A: apply it", "", "Acceptance:",
+                f"- `check: test -f cc_tasks/{task_file_stem}_RESULT.md` (the RESULT says what was applied, and what "
+                f"was not)", ""]
     return "\n".join(out)
+
+
+def _complete_at_filing(consumer: Path, ccfg: dict, driver, database: str, artifact_id: str, actor: str, say,
+                        reason: str) -> dict:
+    """SEL-052: walk a nothing-to-build return to `completed` in the consumer's graph, and record the walk's lines
+    there path-scoped as registration records its own (`cc._commit_registration_lines`, DESK-002 Part B): only when
+    every line appended since the registration's commit is this writer's; anything else is left for the consumer's
+    next pass (AD-038-R1). Under the consumer's filing lock, so its dispatcher never reads the return open."""
+    from seldon.commands.cc import _get_domain_config
+    from seldon.core import dispatch as D
+    from seldon.core.artifacts import walk_to_completed
+
+    with driver.session(database=database) as s:
+        row = s.run("MATCH (t:Artifact:ResearchTask {artifact_id: $id}) RETURN t.state AS st", id=artifact_id).single()
+    walk_to_completed(project_dir=consumer, driver=driver, database=database, domain_config=_get_domain_config(ccfg),
+                      artifact_id=artifact_id, current_state=row["st"] if row else "proposed", actor=actor,
+                      session_id=None)
+    store = (ccfg or {}).get("event_store", {}).get("path", "seldon_events.jsonl")
+    appended = D.appended_events(consumer, store)
+    if not appended["ok"]:
+        done = {"committed": False, "reason": appended["reason"]}
+    elif {str(e.get("actor")) for e in appended["events"]} - {actor}:
+        done = {"committed": False, "reason": "foreign_lines"}
+    else:
+        done = D.commit_paths(consumer, [store], f"return: {artifact_id[:8]} completed at filing, nothing to build "
+                                                 f"({len(appended['events'])} line(s), SEL-052)")
+    say(f"return {artifact_id[:8]} completed at filing: nothing to build ({reason}); its lines "
+        + ("recorded" if done.get("committed") else f"left for the next pass ({done.get('reason')})"))
+    return {"completed": True, "reason": reason, "committed": bool(done.get("committed"))}
 
 
 def write_return(project_dir: Path, config: Optional[dict], task_path: Path, task_id: str, *,
@@ -554,11 +605,17 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
         token = alloc["token"]
         after = latest_open(driver, database)
         date = datetime.now(timezone.utc).date().isoformat()
+        rel = f"cc_tasks/{date}_{token}_{slug(title)}.md"
+        nothing = str(headers.get(HEADER_NOTHING) or "").strip() or None
+        if HEADER_NOTHING in headers and not nothing:
+            raise ReturnError(f"the `For {answered.project}` section's `**{HEADER_NOTHING}:**` header has no reason; "
+                              f"say why {answered.project} has nothing to build")
+        if nothing:
+            after = None            # completed at filing: it waits on nothing
         body = render(token=token, title=title, producer=producer, task_id=task_id,
                       task_token=str(task_token) if task_token else None, task_rel=task_rel,
                       result_rel=_rel(project_dir, result_path), commit=commit, where=where, answered=answered,
-                      after=after, headers=headers, body=section["body"], date=date)
-        rel = f"cc_tasks/{date}_{token}_{slug(title)}.md"
+                      after=after, headers=headers, body=section["body"], date=date, task_file_stem=Path(rel).stem)
         # SEL-042 Part E (AD-038-R30): refused before anything is written, the dry run included.
         from seldon.core import filing as F
         too_long = F.name_refusal(answered.root / "cc_tasks", Path(rel).name)
@@ -589,6 +646,9 @@ def write_return(project_dir: Path, config: Optional[dict], task_path: Path, tas
                     # refuse c7.
                     path.unlink(missing_ok=True)
                     raise ReturnError(f"{answered.project} refused the return {rel}: {exc}") from exc
+                if nothing:
+                    out["completed_at_filing"] = _complete_at_filing(answered.root, ccfg, driver, database,
+                                                                     reg["artifact_id"], actor, say, nothing)
         except F.FilingError as exc:
             raise ReturnError(f"the return {rel} was not written: {exc}") from exc
     finally:
