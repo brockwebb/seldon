@@ -1,0 +1,37 @@
+event: accept
+id: seldon:AD-034-R40
+date: '2026-11-27'
+decided_by: cc:67b23ffd
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+reason: 'SEL-055 Part A: answering hazbrief a844c156 and factory''s filings of 2026-11-24 and 2026-11-27; evidence in AD-034 ADDENDUM 13 section 1'
+kind: decision
+status: accepted
+statement: 'A lane branch (AD-038-R40, R41) is planned like any other branch: R41 confines its paths to the lane''s `writes`, and the slices classify them. A lane''s `writes` are not a declaration that no test reads those paths. A project that runs a lane declares slices for its writes, and `seldon verify` warns when a lane''s writes are not covered by a slice. The merge record and the `gate_run` record name the lane'
+source:
+  path: docs/design/AD-034_ADDENDUM_13_the_full_suite_runs_on_main_on_a_schedule_and_its_red_closes_the_merges_that_can_change_a_test.md
+  lines:
+  - 103
+  - 107
+  sha256: d1edeeb7f7b015222564ebe846ea0a213e56113bd9a8f487ba8d4b70a4a6c9e3
+  text: |-
+    - **AD-034-R40. A lane branch (AD-038-R40, R41) is planned like any other branch: R41 confines its paths to the lane's `writes`, and the slices classify them. A lane's `writes` are not a declaration that no test reads those paths. A project that runs a lane declares slices for its writes, and `seldon verify` warns when a lane's writes are not covered by a slice. The merge record and the `gate_run` record name the lane.**
+      Evidence 5 is why the lane's `writes` are not treated as `tests: none`. A lane task whose writes match a slice
+      declared `tests: none` merges with nothing run beyond the record (R34's `declared_none`). One whose writes select
+      tests runs those tests. One whose writes match no slice runs the full tier, and the warning says why. Since R38 no
+      lane branch pays a cadence-promoted full gate.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_13_the_full_suite_runs_on_main_on_a_schedule_and_its_red_closes_the_merges_that_can_change_a_test.md
+  anchor: AD-034-R40
+consumer:
+- cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+- seldon/core/gate_plan.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/verify.py
+- tests/test_sel055_scheduled_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 636c7fbb8661b5b85b5ec946b24d90738d7eaf2d4f9a4ae73dcbe3ec35c01399

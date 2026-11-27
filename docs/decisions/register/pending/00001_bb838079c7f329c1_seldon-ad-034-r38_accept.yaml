@@ -1,0 +1,39 @@
+event: accept
+id: seldon:AD-034-R38
+date: '2026-11-27'
+decided_by: cc:67b23ffd
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+reason: 'SEL-055 Part A: answering hazbrief a844c156 and factory''s filings of 2026-11-24 and 2026-11-27; evidence in AD-034 ADDENDUM 13 section 1'
+kind: decision
+status: accepted
+statement: 'Where a project declares slices, its full suite runs on main on a schedule, not on a task''s change: the dispatcher''s pass runs `dispatch.gate_command` in a detached checkout of main''s head (call site `scheduled`, one `gate_run` record) when `dispatch.gate.full_every_s` has passed since the newest full gate on record, on a pass with no session in flight and nothing eligible to launch, and before a launch once `dispatch.gate.full_overdue_s` has passed; `seldon gate main` runs it by hand. The cadence never promotes a task''s gate'
+source:
+  path: docs/design/AD-034_ADDENDUM_13_the_full_suite_runs_on_main_on_a_schedule_and_its_red_closes_the_merges_that_can_change_a_test.md
+  lines:
+  - 90
+  - 95
+  sha256: d1edeeb7f7b015222564ebe846ea0a213e56113bd9a8f487ba8d4b70a4a6c9e3
+  text: |-
+    - **AD-034-R38. Where a project declares slices, its full suite runs on main on a schedule, not on a task's change: the dispatcher's pass runs `dispatch.gate_command` in a detached checkout of main's head (call site `scheduled`, one `gate_run` record) when `dispatch.gate.full_every_s` has passed since the newest full gate on record, on a pass with no session in flight and nothing eligible to launch, and before a launch once `dispatch.gate.full_overdue_s` has passed; `seldon gate main` runs it by hand. The cadence never promotes a task's gate.**
+      Amends R29. The checkout is `dispatch.gate.scheduled_worktree`, made fresh for each run and removed after it, with
+      `dispatch.worktree_links` linked in. A plan's reasons no longer include `cadence_due`, so a branch whose paths are
+      all declared is scoped at the Stop gate and at merge, whatever the day. The overdue bound keeps a queue that is
+      never empty from starving the schedule; its default (two cadences) has no measured basis. A project with no slices
+      has no scheduled run: every one of its gates is already full (R37).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_13_the_full_suite_runs_on_main_on_a_schedule_and_its_red_closes_the_merges_that_can_change_a_test.md
+  anchor: AD-034-R38
+consumer:
+- cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+- seldon/core/gate_plan.py
+- seldon/commands/dispatch_gate.py
+- seldon/commands/dispatch.py
+- seldon/commands/gate.py
+- tests/test_sel055_scheduled_gate.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: bb838079c7f329c1e0ecedc344757cdac5a6f6af2a5a048072ee6423e0e7571e
