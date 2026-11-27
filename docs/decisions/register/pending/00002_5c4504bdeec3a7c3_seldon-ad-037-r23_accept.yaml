@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-037-R23
+date: '2026-11-27'
+decided_by: cc:987aff52
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+reason: 'SEL-058 Part A: answering hazbrief 1e367024 items 1 and 3; evidence in AD-037 ADDENDUM 06 section 1'
+kind: decision
+status: accepted
+statement: 'A consumer''s wait on a producer''s lease is a standing condition in the stuck streak, under `dispatcher:environment_in_flight`, one streak per holding window: it rings `dispatch_stuck` and `notify` once when a window has refused `dispatch.stuck_after_passes_by_criterion.environment_in_flight` reviewed passes (default 12, one hour at a 300 s poll), and the first reviewed pass the leases allow clears it. The task streak keeps every `dispatcher:` streak it does not own'
+source:
+  path: docs/design/AD-037_ADDENDUM_06_a_parts_own_check_line_is_read_and_a_wait_on_a_producer_rings.md
+  lines:
+  - 74
+  - 77
+  sha256: 83b3640090e6e76ea0f9a6c645a2799fa7f8ed1f53a8e5491aa317c2cf71e90b
+  text: |-
+    - **AD-037-R23. A consumer's wait on a producer's lease is a standing condition in the stuck streak, under `dispatcher:environment_in_flight`, one streak per holding window: it rings `dispatch_stuck` and `notify` once when a window has refused `dispatch.stuck_after_passes_by_criterion.environment_in_flight` reviewed passes (default 12, one hour at a 300 s poll), and the first reviewed pass the leases allow clears it. The task streak keeps every `dispatcher:` streak it does not own.**
+      The default is above the task streak's three because a merge window ends by itself (section 1, evidence 2). It is
+      in passes, so a project with another poll interval sets its own. The notification names the holder, task, phase and
+      gate progress (R19's lines).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_06_a_parts_own_check_line_is_read_and_a_wait_on_a_producer_rings.md
+  anchor: AD-037-R23
+consumer:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+- seldon/core/dispatch.py
+- seldon/commands/dispatch.py
+- tests/test_sel058_hazbrief_filings.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 5c4504bdeec3a7c302d185a36897c0e8bd098a4e80e228db3cd4af0942f3f1a7

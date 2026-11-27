@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-034-R41
+date: '2026-11-27'
+decided_by: cc:987aff52
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+reason: 'SEL-058 Part A: answering hazbrief 1e367024 item 2; evidence in AD-034 ADDENDUM 14 section 1'
+kind: decision
+status: accepted
+statement: '`seldon cc complete` completes a task in `blocked` only on a passing, clean `gate_run` record of the tree the dispatch branch holds at that moment (a scheduled run, `seldon gate main`, or a full `seldon gate run` there), and records that record''s id on the task as `completion_gate`; otherwise it refuses as `blocked_ungated` and writes nothing. The operator''s `--ungated "<reason>"` completes it anyway and records the reason on the task as `completed_ungated`. A project with no dispatch block has no gate to require'
+source:
+  path: docs/design/AD-034_ADDENDUM_14_a_blocked_task_completes_on_a_gate_of_mains_tree.md
+  lines:
+  - 52
+  - 54
+  sha256: 2b240dcd76cab8a09ff44b12b2f4bd54035065829b217a1ab0ac3fdad4d49bfc
+  text: |-
+    - **AD-034-R41. `seldon cc complete` completes a task in `blocked` only on a passing, clean `gate_run` record of the tree the dispatch branch holds at that moment (a scheduled run, `seldon gate main`, or a full `seldon gate run` there), and records that record's id on the task as `completion_gate`; otherwise it refuses as `blocked_ungated` and writes nothing. The operator's `--ungated "<reason>"` completes it anyway and records the reason on the task as `completed_ungated`. A project with no dispatch block has no gate to require.**
+      The tree is main's current one, not the hand merge's, because a successor released on the completion runs on what
+      main holds now. A run on a dirty tree is not evidence (R34). The machine never passes `--ungated`.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-034_ADDENDUM_14_a_blocked_task_completes_on_a_gate_of_mains_tree.md
+  anchor: AD-034-R41
+consumer:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+- seldon/core/gate_plan.py
+- seldon/commands/cc.py
+- seldon/domain/research.yaml
+- tests/test_sel058_hazbrief_filings.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 8c080a6d9b7454ce4f578f44e108d23cb7302ed92b06bb98a65371b55697b6f2

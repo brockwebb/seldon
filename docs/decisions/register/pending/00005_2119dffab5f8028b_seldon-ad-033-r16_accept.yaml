@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-033-R16
+date: '2026-11-27'
+decided_by: cc:987aff52
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+reason: 'SEL-058 Part A: answering hazbrief''s 2026-11-27 worktree-register filing; evidence in AD-033 ADDENDUM 03 section 1'
+kind: decision
+status: accepted
+statement: '`seldon verify --fix` ends each `constrained_by` edge to a Decision that is not `accepted`, after re-projecting, as a `link_removed` event; the finding names the fix'
+source:
+  path: docs/design/AD-033_ADDENDUM_03_an_importers_graph_follows_its_imports_and_a_dead_binding_is_ended_by_fix.md
+  lines:
+  - 60
+  - 63
+  sha256: dc8ccf202fe8870379aee9668359c0ef299e752ab378b9d9c273178dd45456de
+  text: |-
+    - **AD-033-R16. `seldon verify --fix` ends each `constrained_by` edge to a Decision that is not `accepted`, after re-projecting, as a `link_removed` event; the finding names the fix.**
+      It ends the edge and does not move it to the superseding record. Binding a task to a record is registration's
+      matching (R4, `cc register`), and a repair that re-bound would be making that judgment. The removal is on the record,
+      so the next reader can tell a repair from a gap (AD-030's reason).
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-033_ADDENDUM_03_an_importers_graph_follows_its_imports_and_a_dead_binding_is_ended_by_fix.md
+  anchor: AD-033-R16
+consumer:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+- seldon/core/decisions.py
+- seldon/commands/verify.py
+- tests/test_sel058_hazbrief_filings.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 2119dffab5f8028bc80e708ae8789e4f5a80aa1600afdc7b751c3e409de2e11b

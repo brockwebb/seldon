@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-033-R15
+date: '2026-11-27'
+decided_by: cc:987aff52
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+reason: 'SEL-058 Part A: answering hazbrief''s 2026-11-27 worktree-register filing; evidence in AD-033 ADDENDUM 03 section 1'
+kind: decision
+status: accepted
+statement: 'The dispatcher''s pass, with no session in flight, projects the register when an imported repository''s numbered register files differ from those it last projected: a sha256 per import over its numbered files (pending ones excluded), kept beside the lease. A projection that changes or fails writes one `register_projected` record (a failure once per distinct error) and its lines are committed by the pass; a failure keeps the old fingerprint, so the next pass retries'
+source:
+  path: docs/design/AD-033_ADDENDUM_03_an_importers_graph_follows_its_imports_and_a_dead_binding_is_ended_by_fix.md
+  lines:
+  - 57
+  - 59
+  sha256: dc8ccf202fe8870379aee9668359c0ef299e752ab378b9d9c273178dd45456de
+  text: |-
+    - **AD-033-R15. The dispatcher's pass, with no session in flight, projects the register when an imported repository's numbered register files differ from those it last projected: a sha256 per import over its numbered files (pending ones excluded), kept beside the lease. A projection that changes or fails writes one `register_projected` record (a failure once per distinct error) and its lines are committed by the pass; a failure keeps the old fingerprint, so the next pass retries.**
+      A project that imports nothing is unchanged. The projection is the same call the merge round makes, idempotent, so
+      the first pass after this merges does a full projection once, and later passes do nothing until an import changes.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-033_ADDENDUM_03_an_importers_graph_follows_its_imports_and_a_dead_binding_is_ended_by_fix.md
+  anchor: AD-033-R15
+consumer:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+- seldon/core/decisions.py
+- seldon/commands/dispatch_worktree.py
+- seldon/commands/dispatch.py
+- tests/test_sel058_hazbrief_filings.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 21d80e6c71dce7d07a28c1856d5cbbf2c8e3b15a71c3331569af9520ef2adc1b

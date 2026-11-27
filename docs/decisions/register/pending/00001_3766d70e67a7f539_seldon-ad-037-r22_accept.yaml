@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-037-R22
+date: '2026-11-27'
+decided_by: cc:987aff52
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+reason: 'SEL-058 Part A: answering hazbrief 1e367024 items 1 and 3; evidence in AD-037 ADDENDUM 06 section 1'
+kind: decision
+status: accepted
+statement: 'A Part''s criteria are read in both marked forms, each command once and in order: the items under an Acceptance label (R1), and a `check:` or `judgment:` line standing on its own at the start of a line in the Part, outside a fenced block; the Stop gate, the finish''s `checks_run` and the regate all read through `stations.part_criteria`'
+source:
+  path: docs/design/AD-037_ADDENDUM_06_a_parts_own_check_line_is_read_and_a_wait_on_a_producer_rings.md
+  lines:
+  - 71
+  - 73
+  sha256: 83b3640090e6e76ea0f9a6c645a2799fa7f8ed1f53a8e5491aa317c2cf71e90b
+  text: |-
+    - **AD-037-R22. A Part's criteria are read in both marked forms, each command once and in order: the items under an Acceptance label (R1), and a `check:` or `judgment:` line standing on its own at the start of a line in the Part, outside a fenced block; the Stop gate, the finish's `checks_run` and the regate all read through `stations.part_criteria`.**
+      The relayed form (SEL-042's return) now works, and the Acceptance form works as before. Registration still checks
+      only Acceptance criteria for marks (`criterion_unmarked`), because a bare marked line is marked by its form.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-037_ADDENDUM_06_a_parts_own_check_line_is_read_and_a_wait_on_a_producer_rings.md
+  anchor: AD-037-R22
+consumer:
+- cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+- seldon/core/stations.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel058_hazbrief_filings.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 3766d70e67a7f53928a7821b4843bcaa41b54bc652e5d2c392cf7aede80ae072
