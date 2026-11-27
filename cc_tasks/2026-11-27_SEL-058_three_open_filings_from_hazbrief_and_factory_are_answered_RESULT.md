@@ -137,6 +137,15 @@ this branch.
 - hazbrief-mcp: answers `1e367024` (2026-11-24) and the 2026-11-27 worktree-register filing.
 - factory: answers `cd079f2d` (declare the Hive).
 
+Filed, and committed in each consumer by its registration; both returns were completed at filing as `Nothing to build`:
+
+- **hazbrief-mcp HB-242** (`faf43d08`,
+  `hazbrief-mcp/cc_tasks/2026-11-27_HB-242_what_seldon_changed_for_hazbrief_s_check_line_blocked_completion_lease.md`).
+  It closed `1e367024` (proposed to completed, AD-036-R17). Run again for the register filing, the command reported
+  "return already filed", and that filing (`bb868ba6`) is also completed.
+- **factory FAC-52** (`e104f0d0`, `factory/cc_tasks/2026-11-27_FAC-52_seldon_declares_the_hive_in_its_dispatch_block.md`).
+  It closed `cd079f2d`. Its event lines in factory were left for factory's next pass (`foreign_lines`).
+
 ## For hazbrief-mcp
 
 **Title:** what seldon changed for hazbrief's check-line, blocked-completion, lease-wait and worktree-register filings
