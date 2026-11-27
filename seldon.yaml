@@ -329,6 +329,11 @@ dispatch:
   # Desktop writes left uncommitted stalled it 3, 36 and 14 hours), so it alarms on its first pass.
   stuck_after_passes_by_criterion:
     dirty_tree: 1
+  # SEL-052: a BLOCKED task is no candidate, so the stuck alarm never counts it; it rings `notify` (outcome `held`,
+  # with its reason, age and remedy) once it has waited this long, and again every `held_repeat_s` (0: once).
+  # NO MEASURED BASIS: the stuck alarm's fifteen minutes; one day between rings.
+  held_alarm_after_s: 900
+  held_repeat_s: 86400
   # DISP-004R (AD-034-R12): a task whose `**Repo:**` L4 clause names other repositories has their main pushed at its
   # merged finish. A bare name in that line is a checkout under this directory (relative to the project); the
   # governed repositories are seldon's siblings, as `prior_art.internal_roots` reads them. A repository not on

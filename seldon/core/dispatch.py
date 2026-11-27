@@ -735,6 +735,25 @@ STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1, "api_key_present": 1
 #: existed, so without this the consumer that motivated it would alarm after three passes, not one. Only the new key:
 #: a map that leaves out `dirty_tree` (an empty map, as several tests write) keeps the meaning it had.
 STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED = {"api_key_present": 1}
+#: SEL-052 (factory's 2026-11-24 filing "a hold that waits on a person tells nobody"): a task in `blocked` is not a
+#: candidate, so the stuck alarm above never counts it, and the one banner its finish raised is dismissed and gone.
+#: FAC-06 sat `merge_blocked` for ten days; critical-thinking-ai CTAI-006R twenty minutes. A blocked task waits on a
+#: person (the dispatcher's own defects are redriven by AD-038-R2 before this is read), so once it has waited
+#: `held_alarm_after_s` it rings `notify` with its reason, its age and what clears it, and again every
+#: `held_repeat_s` while it stays blocked. Prior art: alert on a symptom a person must act on, with its age (Google
+#: SRE book ch. 6, "Monitoring Distributed Systems"); an unacknowledged page is re-sent on a fixed interval (the
+#: re-notification interval of Nagios `notification_interval` and Alertmanager `repeat_interval`).
+EVENT_HELD = "dispatch_held"
+#: Seconds a task stays blocked before the first ring. NO MEASURED BASIS: the stuck alarm's own grace at the standing
+#: 300 s poll (three passes); the one observation, CTAI-006R, sat 1,200 s before a person looked.
+HELD_ALARM_AFTER_S_DEFAULT = 900
+#: Seconds between rings while the task stays blocked; 0 rings once. NO MEASURED BASIS: one day, so FAC-06's ten
+#: days would have rung ten times rather than once at its finish (Alertmanager's own `repeat_interval` default is 4 h).
+HELD_REPEAT_S_DEFAULT = 86400
+#: Where the held rings are remembered, beside the streak file (gitignored local state; the EVENT is the record).
+HELD_STATE_FILE = "dispatch_held.json"
+#: Test override of the held-state path, as `STUCK_STATE_ENV` is for the streak file.
+HELD_STATE_ENV = "SELDON_DISPATCH_HELD_STATE"
 #: The last pass's refusals, for `seldon go` (DESK-001 Part B step 5). Beside the streak file,
 #: under the gitignored lease directory: what the last pass saw is local state, not a record.
 LAST_PASS_FILE = "dispatch_last_pass.json"
@@ -915,6 +934,12 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
             f"dispatch.stuck_after_passes_by_criterion must map refusal reasons to positive whole "
             f"numbers of passes, got {by!r}")
     block["stuck_after_passes_by_criterion"] = {**STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED, **by}
+    # SEL-052: the held alarm. Optional with defaults, so installing this build changes no config file.
+    for key, default in (("held_alarm_after_s", HELD_ALARM_AFTER_S_DEFAULT), ("held_repeat_s", HELD_REPEAT_S_DEFAULT)):
+        value = block.get(key, default)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+            raise DispatchConfigError(f"dispatch.{key} must be a number of seconds, 0 or more, got {value!r}")
+        block[key] = value
     # SQ-010 ADDENDUM 02 D3.4. Optional with a default, so installing this build changes no config file.
     factor = block.get("disk_need_factor", DISK_NEED_FACTOR_DEFAULT)
     if isinstance(factor, bool) or not isinstance(factor, (int, float)) or factor < 1:
@@ -1879,6 +1904,102 @@ def write_stuck_state(project_dir: Path, cfg: dict, state: dict) -> None:
     path = stuck_state_path(project_dir, cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def held_state_path(project_dir: Path, cfg: dict) -> Path:
+    """Where the held rings are kept (SEL-052): `$SELDON_DISPATCH_HELD_STATE` when set, else beside the lease."""
+    override = os.environ.get(HELD_STATE_ENV)
+    if override:
+        return Path(override).expanduser()
+    return config_path(project_dir, cfg["lease_file"]).parent / HELD_STATE_FILE
+
+
+def read_held_state(project_dir: Path, cfg: dict) -> dict:
+    """The held rings so far. A missing or corrupt file is empty: like the streak file, the failure direction is
+    "tell them again", never "stay quiet"."""
+    path = held_state_path(project_dir, cfg)
+    if not path.is_file():
+        return {}
+    try:
+        body = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
+def write_held_state(project_dir: Path, cfg: dict, state: dict) -> None:
+    path = held_state_path(project_dir, cfg)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _parse_ts(ts: str | None) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        out = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return out if out.tzinfo else out.replace(tzinfo=timezone.utc)
+
+
+def advance_held(previous: dict, blocked: dict, now: datetime, after_s: float, repeat_s: float) -> tuple:
+    """One pass's blocked tasks against the rings so far: `(state, rings)` (SEL-052). Pure, like `advance_stuck`.
+
+    Args:
+        previous: The held-state file's contents, `{task_id: {"blocked_at", "reason", "rings", "last_rung_at"}}`.
+        blocked: `{task_id: {"blocked_at": ISO timestamp, "reason": str}}` for every task blocked now.
+        now: The pass's clock.
+        after_s: `dispatch.held_alarm_after_s`.
+        repeat_s: `dispatch.held_repeat_s`; 0 rings once per block.
+
+    Returns:
+        The state to persist, and `[(task_id, age_s)]` to ring for in this pass.
+
+    A block is identified by its `blocked_at`: a task unblocked and blocked again is a new block and rings again; a
+    task no longer blocked drops out. A block whose time is unknown is aged from the first pass that saw it.
+    """
+    state, rings = {}, []
+    stamp = now.isoformat().replace("+00:00", "Z")
+    for task_id, row in blocked.items():
+        prior = previous.get(task_id) or {}
+        at = row.get("blocked_at") or prior.get("blocked_at") or stamp
+        same = prior.get("blocked_at") == at
+        entry = {"blocked_at": at, "reason": row.get("reason"),
+                 "rings": prior.get("rings", 0) if same else 0,
+                 "last_rung_at": prior.get("last_rung_at") if same else None}
+        started = _parse_ts(at) or now
+        age = max(0.0, (now - started).total_seconds())
+        last = _parse_ts(entry["last_rung_at"])
+        due = (age >= after_s) if entry["rings"] == 0 else (
+            bool(repeat_s) and last is not None and (now - last).total_seconds() >= repeat_s)
+        if due:
+            entry["rings"] += 1
+            entry["last_rung_at"] = stamp
+            rings.append((task_id, age))
+        state[task_id] = entry
+    return state, rings
+
+
+def held_remedy(task_id: str, reason: str | None) -> str:
+    """What clears a block, said in the ring itself so the banner alone is enough to act on (SEL-052)."""
+    short = str(task_id)[:8]
+    r = reason or ""
+    if r.startswith("merge_blocked"):
+        return (f"resolve what its merge_blocked Issue names in the kept worktree, then "
+                f"`seldon dispatch redrive {short}`")
+    if r.startswith("stop_gate_unpassed"):
+        return f"make the RESULT and its checks pass in the kept worktree, then `seldon dispatch regate {short}`"
+    return f"clear the cause, then `seldon dispatch redrive {short}` (`seldon dispatch status` shows the block)"
+
+
+def human_age(seconds: float) -> str:
+    s = int(seconds)
+    if s >= 86400:
+        return f"{s // 86400}d{(s % 86400) // 3600}h"
+    if s >= 3600:
+        return f"{s // 3600}h{(s % 3600) // 60}m"
+    return f"{s // 60}m"
 
 
 def stuck_threshold(cfg: dict, criterion: str) -> int:

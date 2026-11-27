@@ -1536,6 +1536,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # refused for hours is heard about whether or not some OTHER task launched this pass.
     _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
     _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
+    # SEL-052: a blocked task is not a candidate, so the stuck alarm never counts it; this rings for it.
+    _held(project_dir, session_id, cfg, driver, database, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now. Nothing below reads the tree for candidacy.
     _release_filing(filing)
     if claim is None and not dry_run:
@@ -1963,6 +1965,75 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
             "SELDON_NOTIFY_WALL_SECONDS": "0",
         }, task_id=task_id, label="stuck")
     return alarms
+
+
+def _blocked_tasks(project_dir, driver, database) -> dict:
+    """`{task_id: {"blocked_at", "reason", "name", "source_file"}}` for every `blocked` ResearchTask (SEL-052).
+
+    `blocked_at` is the timestamp of the task's last move into `blocked` in the event store (the record), and None
+    when the store has none (a block written before the store existed); `advance_held` then ages it from the pass
+    that first saw it."""
+    from seldon.core.events import read_events
+    q = ("MATCH (t:ResearchTask {state: 'blocked'}) "
+         "RETURN t.artifact_id AS id, t.name AS name, t.source_file AS source_file, t.block_reason AS reason")
+    with driver.session(database=database) as s:
+        rows = {r["id"]: dict(r) for r in s.run(q)}
+    if not rows:
+        return {}
+    at = {}
+    for ev in read_events(project_dir):
+        p = ev.get("payload") or {}
+        if ev.get("event_type") == "artifact_state_changed" and p.get("to_state") == "blocked" \
+                and p.get("artifact_id") in rows:
+            at[p["artifact_id"]] = ev.get("timestamp")
+    return {tid: {"blocked_at": at.get(tid), "reason": r.get("reason"), "name": r.get("name"),
+                  "source_file": r.get("source_file")} for tid, r in rows.items()}
+
+
+def _held(project_dir, session_id, cfg, driver, database, dry_run) -> list:
+    """SEL-052: a task blocked on something only a person can do rings `notify` with its reason, its age and what
+    clears it, once it has waited `held_alarm_after_s`, and again every `held_repeat_s` while it waits.
+
+    Read after `_auto_redrive`, so the dispatcher's own defects (AD-038-R2) are already back on the queue and what is
+    still blocked is waiting on a person. Independent of the tree and of a claim in flight: a block does not stop
+    waiting because another task is running. One `dispatch_held` per ring, never one per pass (DN-006 decision 7).
+    Nothing on a dry run. A failure to read the graph is printed and the pass goes on: this is an alarm, not a gate.
+    """
+    if dry_run:
+        return []
+    try:
+        blocked = _blocked_tasks(project_dir, driver, database)
+    except Exception as exc:                                        # noqa: BLE001
+        click.echo(f"held: not read; the blocked tasks could not be listed ({exc})", err=True)
+        return []
+    now = _utcnow()
+    after_s = cfg.get("held_alarm_after_s", D.HELD_ALARM_AFTER_S_DEFAULT)
+    repeat_s = cfg.get("held_repeat_s", D.HELD_REPEAT_S_DEFAULT)
+    state, rings = D.advance_held(D.read_held_state(project_dir, cfg), blocked, now, after_s, repeat_s)
+    D.write_held_state(project_dir, cfg, state)
+    for task_id, age in rings:
+        row, entry = blocked[task_id], state[task_id]
+        remedy = D.held_remedy(task_id, row.get("reason"))
+        payload = {"task_id": task_id, "name": row.get("name"), "source_file": row.get("source_file"),
+                   "reason": row.get("reason"), "blocked_at": entry["blocked_at"], "age_s": int(age),
+                   "ring": entry["rings"], "remedy": remedy,
+                   "held_alarm_after_s": after_s, "held_repeat_s": repeat_s}
+        _emit(project_dir, session_id, D.EVENT_HELD, payload)
+        message = f"held {D.human_age(age)}: {row.get('reason') or 'blocked'}; clears when: {remedy}"
+        click.echo(f"HELD: {str(task_id)[:8]} {message}", err=True)
+        _run_notifier(project_dir, session_id, cfg, {
+            "SELDON_NOTIFY_TASK_ID": str(task_id),
+            "SELDON_NOTIFY_TASK_NAME": str(row.get("name") or row.get("source_file") or "?"),
+            "SELDON_NOTIFY_OK": "false",
+            "SELDON_NOTIFY_OUTCOME": "held",
+            "SELDON_NOTIFY_CRITERION": str(row.get("reason") or ""),
+            "SELDON_NOTIFY_AGE_SECONDS": str(int(age)),
+            "SELDON_NOTIFY_MESSAGE": message,
+            "SELDON_NOTIFY_RESULT_PATH": "",
+            "SELDON_NOTIFY_LOG_PATH": "",
+            "SELDON_NOTIFY_WALL_SECONDS": "0",
+        }, task_id=task_id, label="held")
+    return [t for t, _ in rings]
 
 
 def _stuck_refusals(rows: list) -> dict:
