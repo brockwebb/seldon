@@ -1169,6 +1169,80 @@ def seldon_issue_create(
         driver.close()
 
 
+def _req_write(project_dir: str, requirement_id: str, create: bool, fields: dict, state: str,
+               evidence: str) -> str:
+    """Shared body of `seldon_req_add` and `seldon_req_update`: `seldon req add|update` exactly, one core call
+    (`requirements.write_one`), so the fields and refusals are the CLI's (SEL-052, factory's filing item 2)."""
+    from seldon.core import requirements as RQ
+
+    asked = project_dir
+    config, driver, database, domain_config, project_dir = _resolve_project(project_dir)
+    given = {k: (v if v.strip() else None) for k, v in fields.items()}
+    ids = [e.strip() for e in (evidence or "").replace(",", "\n").split("\n") if e.strip()]
+    try:
+        plan = RQ.write_one(Path(project_dir), driver, database, domain_config, config, requirement_id,
+                            create=create, fields=given, state=state.strip() or None, evidence=ids)
+    except (RQ.RequirementsError, ValueError) as exc:
+        return f"Error: {exc} Nothing was written."
+    finally:
+        driver.close()
+    verb = "Created" if plan.created else ("Updated" if plan.updated else "Unchanged")
+    return (f"{verb} requirement {requirement_id}\n" + _written_to(asked, project_dir)
+            + f"  {len(plan.writes)} event(s); {plan.links_added} link(s) added; state "
+            + ", ".join(f"{s}" for s in sorted(plan.states)))
+
+
+@_tool()
+@_commits_its_append
+def seldon_req_add(requirement_id: str, statement: str, project_dir: str = ".", set_by: str = "",
+                   section: str = "", document: str = "", method: str = "", note: str = "", state: str = "",
+                   evidence: str = "", disposition: str = "", disposition_reason: str = "",
+                   disposition_ends_when: str = "", disposition_task: str = "") -> str:
+    """Create one requirement (SRS_Requirement), as `seldon req add` does (SEL-052).
+
+    So a need stated in a Desktop thread enters the graph in that turn (factory F-020, F-034).
+
+    Args:
+        requirement_id: Its identifier, unique in the project (e.g. SN-57).
+        statement: The requirement, one testable sentence (required).
+        project_dir: Project root.
+        set_by: Its source, verbatim (e.g. `operator 2026-11-26 08:54`).
+        section: The heading it sits under in its document.
+        document: The projection file it belongs to.
+        method: test, inspection, analysis or demonstration (default test).
+        note: Free text; the Status cell is the state's label, then this.
+        state: A state to walk it to on the SRS_Requirement machine.
+        evidence: Result or Issue ids recording a non-test method's evidence, comma- or line-separated.
+        disposition: built, planned, deferred, declined or undecided.
+        disposition_reason: Why deferred or declined (required for both).
+        disposition_ends_when: The condition that ends a deferral (required for deferred).
+        disposition_task: The task carrying a planned requirement (required for planned).
+    """
+    return _req_write(project_dir, requirement_id, True, {
+        "description": statement, "set_by": set_by, "section": section, "document": document,
+        "verification_method": method, "note": note, "disposition": disposition,
+        "disposition_reason": disposition_reason, "disposition_ends_when": disposition_ends_when,
+        "disposition_task": disposition_task}, state, evidence)
+
+
+@_tool()
+@_commits_its_append
+def seldon_req_update(requirement_id: str, project_dir: str = ".", statement: str = "", set_by: str = "",
+                      section: str = "", document: str = "", method: str = "", note: str = "", state: str = "",
+                      evidence: str = "", disposition: str = "", disposition_reason: str = "",
+                      disposition_ends_when: str = "", disposition_task: str = "") -> str:
+    """Change one requirement's authored fields, state or evidence, as `seldon req update` does (SEL-052).
+    An argument left empty keeps the requirement's value.
+
+    Args: as `seldon_req_add`, every field optional.
+    """
+    return _req_write(project_dir, requirement_id, False, {
+        "description": statement, "set_by": set_by, "section": section, "document": document,
+        "verification_method": method, "note": note, "disposition": disposition,
+        "disposition_reason": disposition_reason, "disposition_ends_when": disposition_ends_when,
+        "disposition_task": disposition_task}, state, evidence)
+
+
 @_tool()
 def seldon_issue_orphans(project_dir: str = ".") -> str:
     """List review findings that are traced to neither a finished fix with a test nor an evidenced disposition.

@@ -46,7 +46,16 @@ REL_SATISFIES = "satisfies"
 ACTOR = "seldon-req"
 
 #: AD-013-R1: the fields a person authors. Every other projection cell is computed (AD-013-R4).
-AUTHORED = ("requirement_id", "description", "set_by", "document", "section", "verification_method", "note")
+AUTHORED = ("requirement_id", "description", "set_by", "document", "section", "verification_method", "note",
+            "disposition", "disposition_reason", "disposition_ends_when", "disposition_task")
+#: SEL-052 (factory's 2026-11-26 filing, item 3; factory F-034): what was decided about a stated need, first-class
+#: rather than a clause a project parses out of `note`. The Issue type's `disposition` (SEL-021) is the precedent;
+#: the values are F-034's. Each value's required companions are `DISPOSITION_NEEDS`.
+DISPOSITIONS = ("built", "planned", "deferred", "declined", "undecided")
+#: A disposition is a decision with its grounds (factory F-034: "never had reasons why we didn't do something"):
+#: planned names the task, deferred its reason and the condition that ends it, declined its reason.
+DISPOSITION_NEEDS = {"planned": ("disposition_task",), "deferred": ("disposition_reason", "disposition_ends_when"),
+                     "declined": ("disposition_reason",), "built": (), "undecided": ()}
 #: The verification methods of ISO/IEC/IEEE 15288 and INCOSE; `test` is the default (AD-013-R1, R6).
 METHODS = ("test", "inspection", "analysis", "demonstration")
 DEFAULT_METHOD = "test"
@@ -368,6 +377,9 @@ def write_one(project_dir: Path, driver, database: str, domain_config, config: d
     method = fields.get("verification_method")
     if method is not None and method not in METHODS:
         raise RequirementsError(f"verification method {method!r}: one of {list(METHODS)}")
+    disposition = fields.get("disposition")
+    if disposition is not None and disposition not in DISPOSITIONS:
+        raise RequirementsError(f"disposition {disposition!r}: one of {list(DISPOSITIONS)} (SEL-052)")
     machine = domain_config.state_machines.get(REQ_TYPE, {})
     if state is not None and state not in machine:
         raise RequirementsError(f"state {state!r} is not a {REQ_TYPE} state ({sorted(machine)})")
@@ -381,6 +393,7 @@ def write_one(project_dir: Path, driver, database: str, domain_config, config: d
         if create and not (fields.get("description") or "").strip():
             raise RequirementsError(f"{rid} is a new requirement; give its statement (--statement)")
         props = {k: v for k, v in fields.items() if v is not None}
+        check_disposition(rid, {**(existing or {}), **props})
         if existing is None:
             props["requirement_id"] = rid
             aid, creation = plan_artifact(project_dir=project_dir, domain_config=domain_config, artifact_type=REQ_TYPE,
@@ -453,7 +466,42 @@ def load_requirements(driver, database: str) -> List[dict]:
     return out
 
 
+def check_disposition(rid: str, node: dict) -> None:
+    """Refuse a disposition without its grounds (`DISPOSITION_NEEDS`), read over the node as it would stand.
+
+    Raises:
+        RequirementsError: Naming the disposition and every companion field it lacks.
+    """
+    d = node.get("disposition")
+    if not d:
+        return
+    missing = [k for k in DISPOSITION_NEEDS.get(d, ()) if not str(node.get(k) or "").strip()]
+    if missing:
+        flags = ", ".join("--" + k.replace("_", "-") for k in missing)
+        raise RequirementsError(f"{rid}: disposition {d} needs {', '.join(missing)} ({flags}); a disposition is a "
+                                f"decision with its grounds (SEL-052, factory F-034)")
+
+
+def disposition_text(node: dict) -> str:
+    """The disposition as the Status cell shows it, or "" when none is recorded (SEL-052)."""
+    d = node.get("disposition")
+    if not d:
+        return ""
+    parts = [str(node[k]).strip() for k in ("disposition_task", "disposition_reason") if node.get(k)]
+    if node.get("disposition_ends_when"):
+        parts.append(f"ends when: {str(node['disposition_ends_when']).strip()}")
+    return f"disposition: {d}" + (f" ({'; '.join(parts)})" if parts else "")
+
+
 def status_cell(node: dict, labels: Dict[str, str], status_map: Dict[str, str]) -> str:
+    """The state's cell (`_state_cell`), then the disposition when one is recorded (SEL-052). A requirement with no
+    disposition renders exactly as it did, so no projection goes stale by this build."""
+    cell = _state_cell(node, labels, status_map)
+    disp = disposition_text(node)
+    return f"{cell}; {disp}" if disp else cell
+
+
+def _state_cell(node: dict, labels: Dict[str, str], status_map: Dict[str, str]) -> str:
     """AD-013-R4: the state's label, then `: ` and the note. A note that opens with a status word mapped to the
     current state, and delimited (followed by the end, `:`, `;`, `,`, `.` or ` (`), is the project's finer name for
     it (`changed`, `partial (HB-95)`) and is shown alone; once the state moves, the word no longer maps to it and the

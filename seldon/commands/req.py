@@ -90,9 +90,12 @@ def req_import(source, id_column, statement_column, set_by_column, verified_by_c
             click.echo(f"{source}: already marked")
 
 
-def _authored(statement, set_by, section, document, method, note) -> dict:
+def _authored(statement, set_by, section, document, method, note, disposition=None, disposition_reason=None,
+              disposition_ends_when=None, disposition_task=None) -> dict:
     return {"description": statement, "set_by": set_by, "section": section, "document": document,
-            "verification_method": method, "note": note}
+            "verification_method": method, "note": note, "disposition": disposition,
+            "disposition_reason": disposition_reason, "disposition_ends_when": disposition_ends_when,
+            "disposition_task": disposition_task}
 
 
 _FIELD_OPTIONS = [
@@ -107,6 +110,13 @@ _FIELD_OPTIONS = [
                                                 "qualifying verified_by edge)."),
     click.option("--evidence", multiple=True, help="A Result or Issue id that records the evidence of a "
                                                     "non-test method (repeatable; AD-013-R6)."),
+    # SEL-052 (factory F-034): what was decided about it, with its grounds (`seldon.core.requirements.DISPOSITION_NEEDS`).
+    click.option("--disposition", default=None, type=click.Choice(RQ.DISPOSITIONS),
+                 help="What was decided: planned needs --disposition-task, deferred --disposition-reason and "
+                      "--disposition-ends-when, declined --disposition-reason."),
+    click.option("--disposition-reason", default=None, help="Why it was deferred or declined."),
+    click.option("--disposition-ends-when", default=None, help="The condition that ends a deferral."),
+    click.option("--disposition-task", default=None, help="The task that carries a planned requirement."),
     click.option("--dry-run", is_flag=True, default=False),
 ]
 
@@ -120,23 +130,27 @@ def _with_fields(fn):
 @req_group.command("add")
 @click.argument("requirement_id")
 @_with_fields
-def req_add(requirement_id, statement, set_by, section, document, method, note, state, evidence, dry_run):
+def req_add(requirement_id, statement, set_by, section, document, method, note, state, evidence, disposition,
+            disposition_reason, disposition_ends_when, disposition_task, dry_run):
     """Create one requirement (its statement is required). A test declares that it verifies it with
     `@pytest.mark.verifies("<id>")` and `seldon req trace`."""
     plan = _run(lambda p, c, d, db: RQ.write_one(
         p, d, db, _domain(c), c, requirement_id, create=True, state=state, evidence=evidence, dry_run=dry_run,
-        fields=_authored(statement, set_by, section, document, method, note)))
+        fields=_authored(statement, set_by, section, document, method, note, disposition, disposition_reason,
+                         disposition_ends_when, disposition_task)))
     _report(plan, dry_run)
 
 
 @req_group.command("update")
 @click.argument("requirement_id")
 @_with_fields
-def req_update(requirement_id, statement, set_by, section, document, method, note, state, evidence, dry_run):
+def req_update(requirement_id, statement, set_by, section, document, method, note, state, evidence, disposition,
+            disposition_reason, disposition_ends_when, disposition_task, dry_run):
     """Change one requirement's authored fields, its state or its evidence; options not given keep its values."""
     plan = _run(lambda p, c, d, db: RQ.write_one(
         p, d, db, _domain(c), c, requirement_id, create=False, state=state, evidence=evidence, dry_run=dry_run,
-        fields=_authored(statement, set_by, section, document, method, note)))
+        fields=_authored(statement, set_by, section, document, method, note, disposition, disposition_reason,
+                         disposition_ends_when, disposition_task)))
     _report(plan, dry_run)
 
 

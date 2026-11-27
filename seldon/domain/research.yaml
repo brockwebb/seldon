@@ -573,6 +573,19 @@ artifact_types:
       note:
         category: trace
         description: "Free text the author keeps on it; the projection's Status cell is the state's label followed by it (AD-013-R4)"
+      # SEL-052 (factory's 2026-11-26 filing, item 3; factory F-034): what was decided about it, with its grounds.
+      disposition:
+        category: trace
+        description: "What was decided about it: built, planned (needs disposition_task), deferred (needs disposition_reason and disposition_ends_when), declined (needs disposition_reason) or undecided; shown after the Status cell's state"
+      disposition_reason:
+        category: trace
+        description: "Why it was deferred or declined"
+      disposition_ends_when:
+        category: trace
+        description: "The condition that ends a deferral"
+      disposition_task:
+        category: trace
+        description: "The task that carries a planned requirement (its number or id)"
 
   AgentRole:
     properties:

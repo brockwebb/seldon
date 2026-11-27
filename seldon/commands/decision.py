@@ -344,5 +344,7 @@ def project_cmd():
                f"skipped (endpoint outside this graph) {rep.edges_skipped or 0}; "
                f"positional rulings demoted {rep.rulings_demoted}")
     click.echo(f"by status: {rep.by_status}")
+    if rep.pending:
+        click.echo(f"{rep.pending} pending record(s) not projected: the merge numbers them, then they are (SEL-052)")
     if rep.rendered:
         click.echo(f"rendered {rep.rendered}")

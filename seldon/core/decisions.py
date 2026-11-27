@@ -1053,6 +1053,13 @@ def create(u: Universe, event: str, record: dict, *, date: str, decided_by: str,
         raise RegisterError("supersede of a new record names what it supersedes")
     if event != "supersede" and data.get("supersedes"):
         raise RegisterError("only `seldon decision supersede` may name `supersedes`")
+    if _blank(data.get("source")):
+        # SEL-052 (factory's 2026-11-26 filing, item 4): `event_form` reads an accept with no source as a transition
+        # of an existing record, so without this the shape check judged it a Transition, the file was written, and
+        # every later `decision check` died on "names <id>, which no earlier file created" until it was deleted by
+        # hand. Every new record carries the note's own bytes (AD-033-R3; the schema requires `source`).
+        raise RegisterError(f"{qid} is a new record and has no `source`: give source.path, source.lines and "
+                            f"source.text, the note's own lines (AD-033-R3); nothing was written")
     if "source" in data:
         data["source"] = checked_source(u, qid, data["source"])
     _check_shape_or_refuse(data)
@@ -1737,6 +1744,8 @@ class ProjectionReport:
     edges_created: dict[str, int] = field(default_factory=dict)
     edges_skipped: dict[str, int] = field(default_factory=dict)
     rulings_demoted: int = 0
+    #: Pending records (a worktree's, unnumbered) left out of the projection (SEL-052).
+    pending: int = 0
     rendered: Optional[str] = None
     by_status: dict[str, int] = field(default_factory=dict)
 
@@ -1761,7 +1770,13 @@ def project(*, project_dir: Path, config: dict, driver, database: str, domain_co
     ids: dict[str, str] = {}
     records: list[Record] = []
     for repo in u.scope_repos():
-        for rec in u.records(repo).values():
+        # SEL-052 (factory's spec-check filing; AD-033-R14 as SEL-042 applied it to verify): the graph is projected
+        # from NUMBERED records only. A branch's pending record carries no record_hash until the merge numbers it, so
+        # folding it in raised `KeyError: 'record_hash'` after the numbered records had been projected (factory
+        # FAC-15). It is counted in the report and projected once the merge has numbered it.
+        reg = u.register(repo)
+        rep.pending += len(reg.pending_files())
+        for rec in fold(reg.events(include_pending=False)).values():
             records.append(rec)
             imported = repo != u.s.repository
             rep.by_status[rec.status] = rep.by_status.get(rec.status, 0) + 1
