@@ -211,6 +211,17 @@ Two returns, one per consumer, each written from its section below and filed wit
 hazbrief's filing `1e367024` (a Part's bare check line, a blocked merge completed ungated, a lease wait) is not
 answered here. Only its third item touches the gate's time, and its first two are other work.
 
+Filed, and committed in each consumer by its registration:
+
+- **hazbrief-mcp HB-241** (`17aa446f`,
+  `hazbrief-mcp/cc_tasks/2026-11-27_HB-241_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a.md`).
+  It answers `a844c156`, which the return re-closed (already completed). For `f478f2ea` the command reported "return
+  already filed" and the filing stays completed.
+- **factory FAC-50** (`3038b082`,
+  `factory/cc_tasks/2026-11-27_FAC-50_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a.md`,
+  After FAC-49). It closed `3619898e` (proposed to completed, AD-036-R17). For `a8863e12` (already completed) the
+  command reported "return already filed".
+
 ## For hazbrief-mcp
 
 When seldon's dispatcher merges SEL-055, hazbrief's gate changes in three ways with no edit to hazbrief. Seldon
