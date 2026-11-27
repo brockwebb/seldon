@@ -100,14 +100,25 @@ prior_art:
     - name: workbench-audit
       path: ../workbench/2026-10-03_audit_and_decision_probe
       include: ['**']
+  # SEL-052 (factory's 2026-11-26 filing, item 1): every registered repository, from the ONE list of them, factory's
+  # `portfolio.repositories` (paths relative to factory's seldon.yaml), never a second hand-kept copy here. A
+  # repository it lists that a row above already names (or points at) keeps that row; the rest (factory,
+  # hazbrief-mcp, aacps-ai-policy, critical-thinking-ai on 2026-11-26) search `internal.default_include`.
+  internal_roots_from: ../factory/seldon.yaml#portfolio.repositories
   internal:
     # R3's list, plus each repository's top-level docs/*.md. Added before the recall control ran
     # (PA-001 Part C pre-registration): a repository's governing specification and decision log
     # live there (squiddy docs/EXTRACTION_DESIGN_SPEC.md, docs/DECISIONS_INHERITED.md;
     # ai-readiness-kg docs/design_decisions.md), and an internal search that skips the decision
     # log is not an internal search. Recorded in AD-036 ADDENDUM 01.
+    # SEL-052 (factory's 2026-11-26 filing, item 1): and the requirement projections (`docs/se/*.md`, factory's
+    # systems-engineering set; `docs/requirements/**`), rendered from each repository's `SRS_Requirement` nodes and held
+    # to them by `seldon docs check`, so a stated need is found by the search that exists to stop rediscovery. A
+    # receipt cites a file line, which the event store's JSON lines are not; the projection is that node's citable
+    # text. Widening the include re-scores nothing an old receipt rests on: verification is membership in the hits
+    # at the receipt's commit (`_verify_internal`), and a paragraph that held every term still does.
     default_include: ['docs/design/**', 'docs/research/**', 'docs/decisions/**', 'handoffs/**',
-                      CLAUDE.md, DECISIONS_INHERITED.md, 'docs/*.md']
+                      CLAUDE.md, DECISIONS_INHERITED.md, 'docs/*.md', 'docs/se/**', 'docs/requirements/**']
     suffixes: [.md, .markdown, .txt, .yaml, .yml]
     # How many hits a printed receipt cites per repository, and R5's "top 20".
     top_n: 20

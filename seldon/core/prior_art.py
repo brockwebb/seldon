@@ -336,6 +336,7 @@ def settings(project_dir: Path, config: dict) -> Settings:
     names = [r.name for r in roots]
     if len(set(names)) != len(names):
         raise PriorArtError(f"prior_art.internal_roots names are not unique: {names}")
+    roots += portfolio_roots(block, corpus_dir, internal, roots, where)
     graphs = library_graphs_of(library["graph"], lambda p: at(corpus_dir, p), where)
     # AD-036-R25: the project's own graphs live in ITS repository, at the primary checkout like every corpus path
     # (ADDENDUM 06: a worktree holds no served export, which is gitignored).
@@ -358,6 +359,49 @@ def settings(project_dir: Path, config: dict) -> Settings:
                                                        gate["verdict_ledger_without_governed"]),
                     defined_in=defined_in, own_graphs=own, own_repo=own_repo,
                     referenced_repo=corpus_dir if defined_in else None)
+
+
+#: SEL-052 (factory's 2026-11-26 filing, item 1): the registered repositories come from ONE list, the portfolio's,
+#: never a second hand-kept copy in `internal_roots`. `<file>#<dotted.key>` naming a `{name: path}` map, paths relative
+#: to that file's directory, the `standing_band_ref` form.
+ROOTS_FROM_KEY = "internal_roots_from"
+def portfolio_roots(block: dict, corpus_dir: Path, internal: dict, explicit: list, where: str) -> list:
+    """The roots `internal_roots_from` adds: every repository the portfolio lists that `internal_roots` does not
+    already name or point at (an explicit row keeps its own name and include). `[]` when the key is absent.
+
+    Raises:
+        PriorArtError: A malformed reference, a missing file or key, or a value that is not a `{name: path}` map. A
+            listed repository that is not on disk is a root like any other: its receipt would fail, so it is
+            reported by the search, not dropped here.
+    """
+    ref = block.get(ROOTS_FROM_KEY)
+    if ref is None:
+        return []
+    if not isinstance(ref, str) or "#" not in ref:
+        raise PriorArtError(f"{where}.{ROOTS_FROM_KEY} {ref!r} is not a reference: expected `<file>#<dotted.key>`")
+    rel, dotted = ref.split("#", 1)
+    written = Path(os.path.expanduser(rel))
+    target = (written if written.is_absolute() else corpus_dir / written).resolve()
+    if not target.is_file():
+        raise PriorArtError(f"{where}.{ROOTS_FROM_KEY} {ref!r} names {target}, which does not exist")
+    node = yaml.safe_load(target.read_text(encoding="utf-8"))
+    for part in dotted.split("."):
+        if not isinstance(node, dict) or part not in node:
+            raise PriorArtError(f"{where}.{ROOTS_FROM_KEY} {ref!r}: {target} has no {dotted!r}")
+        node = node[part]
+    if not isinstance(node, dict) or not all(isinstance(k, str) and isinstance(v, str) and v.strip()
+                                             for k, v in node.items()):
+        raise PriorArtError(f"{where}.{ROOTS_FROM_KEY} {ref!r} resolves to {node!r}, not a {{name: path}} map")
+    include = tuple(internal["default_include"])
+    names, paths = {r.name for r in explicit}, {Path(r.path).resolve() for r in explicit}
+    out = []
+    for name, path in node.items():
+        q = Path(os.path.expanduser(path))
+        q = q if q.is_absolute() else (target.parent / q).resolve()
+        if name in names or q in paths:
+            continue
+        out.append(Root(name=name, path=q, include=include))
+    return out
 
 
 def library_graphs_of(value, resolve, where: str = "seldon.yaml prior_art", key: str = "library.graph") -> tuple:
