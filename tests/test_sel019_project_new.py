@@ -233,6 +233,50 @@ def test_the_graph_step_converges_skeleton_then_init_then_ok(tmp_path, kit):
     assert PN.graph_step(proj, "g-1", cmd).status == "ok"
 
 
+#: SEL-053: a squiddy that refuses a FILLED spec for a reason that is not an unfilled field, as SQ-146's emitter
+#: check does, with its message on the last line of stderr after a line that is not the reason.
+REFUSING_SQUIDDY = """#!{python}
+import sys
+print("squiddy init: checking the spec", file=sys.stderr)
+print("FATAL: graph.yaml: the emitter (emit.py) builds ['Person'] for an entry of kind ['work'].", file=sys.stderr)
+sys.exit(2)
+"""
+
+
+def _fill(spec: Path) -> None:
+    text = spec.read_text().replace("title:\n", "title: the demo graph\n")
+    spec.write_text(text.replace("description:\n", "description: a demo\n").replace("  topic:\n", "  topic: demo things\n"))
+
+
+def test_a_refusal_of_a_filled_spec_is_squiddys_own_line_with_no_fill_advice(tmp_path):
+    """SEL-053 step 3: once title, description and scope.topic are filled, a refusal is not about them; the step
+    reports squiddy's last line as it is, and does not tell the operator to fill what is filled."""
+    stub = tmp_path / "squiddy"
+    stub.write_text(REFUSING_SQUIDDY.format(python=sys.executable), encoding="utf-8")
+    stub.chmod(0o755)
+    proj = tmp_path / "p"
+    proj.mkdir()
+    PN.graph_step(proj, "demo", [str(stub)])
+    _fill(proj / "graphs" / "demo" / "graph.yaml")
+    step = PN.graph_step(proj, "demo", [str(stub)])
+    assert step.status == "refused"
+    assert "the emitter (emit.py) builds ['Person'] for an entry of kind ['work']" in step.detail
+    assert "Fill" not in step.detail and "title, description" not in step.detail, step.detail
+
+
+def test_a_refusal_of_an_unfilled_spec_names_only_the_fields_still_blank(tmp_path, kit):
+    """The fill advice names what is blank, read from the spec, not a fixed list."""
+    proj = tmp_path / "p"
+    proj.mkdir()
+    cmd = PN.squiddy_command(PN.project_new_config(kit), kit)
+    first = PN.graph_step(proj, "g-1", cmd)
+    assert "Fill graphs/g-1/graph.yaml (title, description, scope.topic" in first.detail, first.detail
+    spec = proj / "graphs" / "g-1" / "graph.yaml"
+    spec.write_text(spec.read_text().replace("description:\n", "description: d\n"))
+    second = PN.graph_step(proj, "g-1", cmd)
+    assert "Fill graphs/g-1/graph.yaml (title, scope.topic" in second.detail, second.detail
+
+
 #: The kit's own squiddy (the primary checkout's sibling), which `project_new.squiddy_command` names.
 _SQUIDDY = A.KIT_DIR.parent / "squiddy" / ".venv" / "bin" / "squiddy"
 REAL_SQUIDDY = _SQUIDDY if _SQUIDDY.is_file() else None
@@ -243,10 +287,7 @@ def test_the_real_squiddy_initializes_a_filled_skeleton(tmp_path):
     proj = tmp_path / "p"
     proj.mkdir()
     assert PN.graph_step(proj, "demo", [str(REAL_SQUIDDY)]).status == "refused"
-    spec = proj / "graphs" / "demo" / "graph.yaml"
-    text = spec.read_text().replace("title:\n", "title: the demo graph\n")
-    text = text.replace("description:\n", "description: a demo\n").replace("  topic:\n", "  topic: demo things\n")
-    spec.write_text(text)
+    _fill(proj / "graphs" / "demo" / "graph.yaml")
     step = PN.graph_step(proj, "demo", [str(REAL_SQUIDDY)])
     assert step.status == "changed", step.detail
     assert (proj / "graphs" / "demo" / PN.SQUIDDY_INIT_RECORD).is_file()

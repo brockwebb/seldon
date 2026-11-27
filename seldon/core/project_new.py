@@ -53,6 +53,12 @@ GRAPHS_DIR = "graphs"
 #: state the graph step converges to.
 SQUIDDY_INIT_RECORD = ".squiddy_init.json"
 
+#: The skeleton's blank fields, each the operator's to write (the template's "Required" comments; squiddy's
+#: `SPEC_REQUIRED` title and description, and F-001c's scope topic), as dotted paths into the spec. A refusal while
+#: one is blank is reported as "fill these"; a refusal once all are filled is squiddy's own and is reported as such
+#: (SEL-053: SQ-146's emitter refusal was reported as "fill title, description, scope.topic" on a filled spec).
+GRAPH_SPEC_OPERATOR_FIELDS = ("title", "description", "scope.topic")
+
 #: The commit `project new` makes of everything it wrote.
 COMMIT_MESSAGE = "project: `seldon project new` (SEL-019)\n\n{body}\n"
 ENABLE_COMMIT_MESSAGE = "dispatch: enabled by `seldon project new --enable` once its plist is loaded (SEL-019)\n"
@@ -469,8 +475,30 @@ def graph_step(project_dir: Path, graph: str, command: list) -> Step:
                               f"project_new.squiddy_command") from exc
     if out.returncode != 0:
         why = (out.stderr or out.stdout).strip().splitlines()
-        return Step("graph", "refused",
-                    f"squiddy init refused: {why[-1].rstrip('.') if why else f'exit {out.returncode}'}. Fill "
-                    f"{spec.relative_to(project_dir)} (title, description, scope.topic in the operator's words) and "
-                    f"re-run `seldon project new`.", wrote)
+        line = why[-1].rstrip('.') if why else f"exit {out.returncode}"
+        blank = blank_operator_fields(spec)
+        if blank:
+            return Step("graph", "refused",
+                        f"squiddy init refused: {line}. Fill {spec.relative_to(project_dir)} ({', '.join(blank)} in "
+                        f"the operator's words) and re-run `seldon project new`.", wrote)
+        return Step("graph", "refused", f"squiddy init refused {spec.relative_to(project_dir)}: {line}.", wrote)
     return Step("graph", "changed", f"squiddy init {rel} --spec {spec.relative_to(project_dir)}", wrote)
+
+
+def blank_operator_fields(spec: Path) -> list[str]:
+    """The `GRAPH_SPEC_OPERATOR_FIELDS` the spec leaves blank, in that order. A spec that does not parse as a mapping
+    is not the skeleton anymore; squiddy's refusal of it is reported as squiddy wrote it, so nothing is blank here."""
+    try:
+        data = yaml.safe_load(spec.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return []
+    if not isinstance(data, dict):
+        return []
+    blank = []
+    for path in GRAPH_SPEC_OPERATOR_FIELDS:
+        node = data
+        for key in path.split("."):
+            node = node.get(key) if isinstance(node, dict) else None
+        if node is None or (isinstance(node, str) and not node.strip()):
+            blank.append(path)
+    return blank

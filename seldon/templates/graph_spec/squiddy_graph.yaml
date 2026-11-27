@@ -22,6 +22,13 @@ store: ledger
 serve:
   backend: export
 # Classes from squiddy's base schema, each with its parent, in declaration order. Work is one admitted
-# source document; add the rest the scope needs.
+# source document. The four after it are what squiddy's seeded emitter builds when it writes a Work (a Person
+# and an AuthoredBy per author, an Organization and an AffiliatedWith per institution the resolver names);
+# `squiddy init` refuses a spec that writes Works without them (squiddy SQ-146). seldon SEL-053 keeps them
+# here, pinned by seldon's test that runs the real squiddy on this skeleton. Add the rest the scope needs.
 classes:
   - Work: Node
+  - Person: Node
+  - Organization: Node
+  - AuthoredBy: Edge
+  - AffiliatedWith: Edge
