@@ -1,3 +1,4 @@
+seq: 393
 event: accept
 id: seldon:AD-036-R31
 date: '2026-11-26'
@@ -35,3 +36,5 @@ consumer:
 review_only: none
 written_by: seldon decision 0.1.0
 provisional_id: f24c9cb761f11a321859491933384946682524e9e0fd901a72dc53839ce95ed1
+prev_hash: 694690975b2ace62a983c0af5b8cb3b3dd50939efd54a3653ed5cabc3243db40
+record_hash: aebcbc47a9b5eccf62472b2a57dfae03a71b51d51f48c72a818ee2cbb06f620d
