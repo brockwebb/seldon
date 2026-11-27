@@ -10,7 +10,7 @@
   writes their marked files, rendered from the project's graph. It writes no requirement.
 - **Tests:** `tests/test_sel057_project_new_worktree_prior_art_projections.py` has 17 tests, all failing before
   the fix (17 failed). After it, the four project-new test files pass (62 passed), and the adopt, prior-art-ref and
-  hook files pass (79 passed). Full suite: see "Gate" below.
+  hook files pass (79 passed). The full suite passes (3681 passed, 8 skipped; "Gate" below).
 
 **Date:** 2026-11-27. **Branch:** `worktree-majestic-meandering-newt`, from main `3f5fc76`. The code is commit
 `b99d35b`; this RESULT is in the commit after it. This session did not merge, push or run `seldon cc complete`.
@@ -123,7 +123,8 @@ then `ok`; all four files re-rendered with no change.
 
 ## Gate
 
-GATE_PLACEHOLDER
+Full suite on this branch at `b99d35b`: `python -m dotenv -f .env run -- python -m pytest tests/ -q -n 6`, **3681 passed, 8 skipped in 3209 s (53 min), EXIT=0**,
+run at a load average of 60 to 80. No failures and no known flakes in this run.
 
 ## Not done
 
@@ -138,6 +139,9 @@ GATE_PLACEHOLDER
 One return goes to aacps-ai-policy, answering the filing
 `cc_tasks/2026-11-27_filing_from_aacps_ai_policy_seldon_project_new_in_a_dispatched_worktre.md` (b0966092). It is
 written from the next section by `seldon cc return --to aacps-ai-policy --answers seldon:<that filing>`.
+Filed as aacps-ai-policy **AP-04** (`60d60ed3`), registered and committed in aacps by the return (event lines
+`3818ff9`). The filing b0966092 is completed in seldon's graph (AD-036-R17). The return's step 0 holds the
+work until this branch is on seldon's main.
 
 ## For aacps-ai-policy
 
