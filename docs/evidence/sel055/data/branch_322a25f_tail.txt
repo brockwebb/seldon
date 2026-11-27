@@ -1,0 +1,3 @@
+FAILED tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid
+1 failed, 3668 passed, 2 skipped in 3054.75s (0:50:54)
+EXIT=1

@@ -934,6 +934,15 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
                else "; no gate run recorded yet"))
         for w in GP.warnings(gcfg, cfg["gate_command"], gate_events, lane=cfg.get("coordination_lane")):
             lines.append(f"**Gate warning:** {w}")
+        # SEL-055 (AD-034-R39): a red scheduled run on main closes the merges that can change a test; say so here.
+        red = GP.main_red(gate_events) if GP.declared(gcfg) else None
+        if red is not None:
+            rp = red.get("payload") or {}
+            lines.append(f"**Main is RED:** the scheduled full gate at {red.get('timestamp')} on "
+                         f"{str(rp.get('commit'))[:12]} was {rp.get('outcome')}"
+                         + (f" ({', '.join((rp.get('failed_files') or [])[:5])})" if rp.get("failed_files") else "")
+                         + "; merges that select a test run these files until a fix passes them (AD-034-R39); "
+                           "`seldon gate main` re-runs it")
 
         # DESK-001 Part B step 5: what the LAST pass refused, by candidate and criterion, with the
         # dirt it named. `Lease: free` alone said nothing while one untracked note held the queue

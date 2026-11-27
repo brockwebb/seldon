@@ -1,0 +1,4 @@
+FAILED tests/test_sel052_held_alarm.py::test_a_merge_blocked_task_rings_notify_with_its_reason_and_age
+FAILED tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid
+2 failed, 3646 passed, 2 skipped in 2408.43s (0:40:08)
+EXIT=1

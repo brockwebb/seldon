@@ -1,0 +1,305 @@
+{
+ "full_s": 2676.529,
+ "rows": [
+  {
+   "task": "HB-213_public_package_build",
+   "tier": "full",
+   "files": 185,
+   "of": 185,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-214_benchmark_table_and_camera_layer",
+   "tier": "full",
+   "files": 186,
+   "of": 186,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-215_three_minute_demo_sources_view_problem_sli",
+   "tier": "full",
+   "files": 189,
+   "of": 189,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-216_benefit_slide_planning_uses",
+   "tier": "full",
+   "files": 191,
+   "of": 191,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-219_deck_plain_words",
+   "tier": "full",
+   "files": 193,
+   "of": 193,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-220_accepted_pitch_deck_lands_in_the_repositor",
+   "tier": "full",
+   "files": 194,
+   "of": 194,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-222_animate_leaves_the_roads_image_alone_and_t",
+   "tier": "full",
+   "files": 196,
+   "of": 196,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-225_dn030_addendum_03_is_in_the_register_and_m",
+   "tier": "full",
+   "files": 196,
+   "of": 196,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-223_a_committed_brief_is_replayed_once_in_a_ga",
+   "tier": "full",
+   "files": 197,
+   "of": 197,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-224_where_the_hours_of_hb221_and_hb222_went",
+   "tier": "full",
+   "files": 197,
+   "of": 197,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-226_the_parallel_steps_worker_count_is_measure",
+   "tier": "full",
+   "files": 197,
+   "of": 197,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-227_the_modelled_population_layer_counts_censu",
+   "tier": "full",
+   "files": 198,
+   "of": 198,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-217_a_session_the_dispatcher_stopped_is_never_",
+   "tier": "full",
+   "files": 199,
+   "of": 199,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "no_slices",
+    "gate_seconds": 4003.514
+   }
+  },
+  {
+   "task": "HB-228_the_fifteen_live_page_chrome_launches_that",
+   "tier": "full",
+   "files": 200,
+   "of": 200,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "no_slices",
+    "gate_seconds": 2557.617
+   }
+  },
+  {
+   "task": "HB-229_a_consumer_s_dispatcher_waits_on_a_produce",
+   "tier": "scoped",
+   "files": 39,
+   "of": 200,
+   "share": 0.0996,
+   "est_s": 267,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "no_slices",
+    "gate_seconds": 2333.059
+   }
+  },
+  {
+   "task": "HB-218R_the_declared_slices_reach_main_and_the_ga",
+   "tier": "full",
+   "files": 201,
+   "of": 201,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "no_slices",
+    "gate_seconds": 2173.625
+   }
+  },
+  {
+   "task": "HB-230_can_a_code_changes_blast_radius_be_measure",
+   "tier": "full",
+   "files": 201,
+   "of": 201,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "unmatched: docs/evidence/hb229/README.md",
+    "gate_seconds": 3339.711
+   }
+  },
+  {
+   "task": "HB-231_squiddy_sq_149_hazbrief_corpus_gets_an_inb",
+   "tier": "full",
+   "files": 202,
+   "of": 202,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-232_hazbrief_corpus_spec_declares_what_its_emi",
+   "tier": "full",
+   "files": 203,
+   "of": 203,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "HB-240_the_project_and_its_graph_are_brought_to_t",
+   "tier": "full",
+   "files": 203,
+   "of": 203,
+   "share": 1.0,
+   "est_s": 2677,
+   "full_s": 2677,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  }
+ ]
+}

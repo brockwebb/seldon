@@ -450,3 +450,13 @@ def test_a_lane_branch_with_no_evidence_merges_on_its_selected_gate_and_the_reco
     (run,) = [e["payload"] for e in read_events(p) if e["event_type"] == GP.EVENT_GATE_RUN
               and e["payload"].get("call_site") == "merge_gate"]
     assert run["lane"] is True and run["steps"] == [] and run["outcome"] == "pass", run
+
+
+def test_seldon_go_says_main_is_red_while_the_closure_holds(tmp_path):
+    """R39's "and the dispatcher says so": orientation shows the closure, its run and its failed files."""
+    from seldon.commands import go
+    p = _sliced(tmp_path)
+    assert "Main is RED" not in (go._get_dispatch_section(str(p)) or "")
+    _seed_red(p)
+    section = go._get_dispatch_section(str(p))
+    assert "**Main is RED:**" in section and "tests/test_broken.py" in section and "AD-034-R39" in section, section

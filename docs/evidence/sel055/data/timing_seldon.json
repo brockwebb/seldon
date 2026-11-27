@@ -1,0 +1,305 @@
+{
+ "full_s": 2408.0,
+ "rows": [
+  {
+   "task": "SEL-033_requirements_and_decisions_live_in_the_gr",
+   "tier": "full",
+   "files": 182,
+   "of": 182,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-034_a_terminal_task_stops_its_session_and_a_k",
+   "tier": "full",
+   "files": 184,
+   "of": 184,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-036_seldon_gets_a_bibliographic_graph_every_c",
+   "tier": "full",
+   "files": 187,
+   "of": 187,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-035_a_requirement_is_authored_once_every_othe",
+   "tier": "full",
+   "files": 188,
+   "of": 188,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-037_seldon_biblio_is_served_in_the_primary_it",
+   "tier": "full",
+   "files": 190,
+   "of": 190,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-038_a_system_written_journal_never_blocks_a_m",
+   "tier": "full",
+   "files": 191,
+   "of": 191,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-039_the_library_arm_searches_the_projects_own",
+   "tier": "full",
+   "files": 192,
+   "of": 192,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-040_a_session_lost_to_the_network_is_resumed_",
+   "tier": "full",
+   "files": 194,
+   "of": 194,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-042_a_stopped_session_is_never_merged_or_comp",
+   "tier": "full",
+   "files": 197,
+   "of": 197,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": null,
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-046_the_merge_round_drops_a_line_main_already",
+   "tier": "full",
+   "files": 198,
+   "of": 198,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-045R_the_finished_gate_work_reaches_main_on_c",
+   "tier": "full",
+   "files": 200,
+   "of": 200,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-043_a_consumer_waits_on_a_producer_only_for_w",
+   "tier": "full",
+   "files": 204,
+   "of": 204,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "conftest: tests/conftest.py",
+    "gate_seconds": 4853.826
+   }
+  },
+  {
+   "task": "SEL-044_one_brief_and_one_handoff_read_every_regi",
+   "tier": "full",
+   "files": 205,
+   "of": 205,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "merge_gate",
+    "gate_tier": "full",
+    "gate_reason": "unmatched: seldon/commands/go.py",
+    "gate_seconds": 5788.333
+   }
+  },
+  {
+   "task": "SEL-047_the_gate_time_measured_before_anything_ch",
+   "tier": "scoped",
+   "files": 26,
+   "of": 205,
+   "share": 0.1919,
+   "est_s": 462,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "gate_run",
+    "gate_tier": "scoped",
+    "gate_reason": "scoped: documents, task_records",
+    "gate_seconds": 430.42
+   }
+  },
+  {
+   "task": "SEL-048_three_timing_and_order_tests_are_fixed_in",
+   "tier": "scoped",
+   "files": 29,
+   "of": 205,
+   "share": 0.3054,
+   "est_s": 735,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "gate_run",
+    "gate_tier": "scoped",
+    "gate_reason": "scoped: documents, task_records",
+    "gate_seconds": 638.058
+   }
+  },
+  {
+   "task": "SEL-049_the_gate_runs_in_parallel_and_the_dispatc",
+   "tier": "full",
+   "files": 205,
+   "of": 205,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-050_the_pa002_rebuild_test_owns_its_fixture_a",
+   "tier": "full",
+   "files": 205,
+   "of": 205,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-052_what_factory_reported_this_week_is_answer",
+   "tier": "full",
+   "files": 214,
+   "of": 214,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-053_the_graph_spec_seldon_project_new_writes_",
+   "tier": "full",
+   "files": 214,
+   "of": 214,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "stop_gate",
+    "gate_tier": null,
+    "gate_reason": null,
+    "gate_seconds": null
+   }
+  },
+  {
+   "task": "SEL-054_four_things_the_factory_needs_from_the_di",
+   "tier": "full",
+   "files": 216,
+   "of": 216,
+   "share": 1.0,
+   "est_s": 2408,
+   "full_s": 2408,
+   "recorded": {
+    "evidence": "gate_run",
+    "gate_tier": "full",
+    "gate_reason": "requested: --full",
+    "gate_seconds": 2449.252
+   }
+  }
+ ]
+}

@@ -1,0 +1,63 @@
+[
+ {
+  "id": "H4",
+  "kind": "declared script (scripts/gate_ledger.py)",
+  "what": "scripts/gate_ledger.py's upper bound defaults to 90% confidence, not the declared 95%",
+  "reader": "tests/test_gate_ledger.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 8.2,
+   "tail": "11 passed in 2.29s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 6.6,
+   "tail": "6 failed, 5 passed in 1.33s"
+  },
+  "changed": [
+   "scripts/gate_ledger.py"
+  ],
+  "tier": "scoped",
+  "reason": "scoped: gate_ledger",
+  "selected": [
+   "tests/test_gate_ledger.py",
+   "tests/test_hb196_submission.py",
+   "tests/test_hb216_review_section.py",
+   "tests/test_hb217_clean_copy_disk.py",
+   "tests/test_hb219_review_table.py",
+   "tests/test_hb221_rain_does_not_refuse.py",
+   "tests/test_package_manifest.py",
+   "tests/test_public_tree.py"
+  ],
+  "commands": [
+   "/tmp/hb230/root/hazbrief-mcp/.venv/bin/ruff check scripts/ && /tmp/hb230/root/hazbrief-mcp/.venv/bin/ruff format --check scripts/"
+  ],
+  "reader_selected": true,
+  "verdict": "CAUGHT (scoped: the failing reader is selected)"
+ },
+ {
+  "id": "H5",
+  "kind": "package code (src/)",
+  "what": "src/hazbrief/geo.py adds a polygon's holes to its area instead of subtracting them",
+  "reader": "tests/test_geo.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 6.4,
+   "tail": "7 passed in 0.51s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 6.3,
+   "tail": "1 failed, 6 passed in 0.77s"
+  },
+  "changed": [
+   "src/hazbrief/geo.py"
+  ],
+  "tier": "full",
+  "reason": "unmatched: src/hazbrief/geo.py",
+  "selected": [],
+  "commands": [],
+  "reader_selected": false,
+  "verdict": "CAUGHT (full)"
+ }
+]

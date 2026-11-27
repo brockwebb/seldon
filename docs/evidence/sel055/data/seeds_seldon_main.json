@@ -1,0 +1,211 @@
+[
+ {
+  "id": "S1",
+  "kind": "task file (cc_tasks)",
+  "what": "one `check:` criterion removed from QC-001's task file",
+  "reader": "tests/test_criteria_marked.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 4.2,
+   "tail": "5 passed in 2.23s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 2.2,
+   "tail": "1 failed, 2 passed in 0.28s"
+  },
+  "changed": [
+   "cc_tasks/2026-10-11_QC-001_ad037_receipts_records_judge_calibration_mechanism_filing.md"
+  ],
+  "tier": "scoped",
+  "reason": "scoped: task_records",
+  "selected": [
+   "tests/test_dispatch_concurrency.py",
+   "tests/test_dispatch_milestone.py",
+   "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+  ],
+  "commands": [],
+  "reader_selected": false,
+  "scoped_gate": {
+   "outcome": "pass",
+   "seconds": 136.839,
+   "tests_run": 98,
+   "failed_files": []
+  },
+  "verdict": "MISS"
+ },
+ {
+  "id": "S2",
+  "kind": "evidence data (docs)",
+  "what": "one measured actual changed in docs/evidence/qc002/cpi_first_reading.yaml (SQ-010's ratio moves)",
+  "reader": "tests/test_qc_chart.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 11.6,
+   "tail": "6 passed in 8.83s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 5.3,
+   "tail": "1 failed, 2 passed in 2.76s"
+  },
+  "changed": [
+   "docs/evidence/qc002/cpi_first_reading.yaml"
+  ],
+  "tier": "scoped",
+  "reason": "scoped: documents",
+  "selected": [
+   "tests/test_attr001_union_attribute.py",
+   "tests/test_cc_register_commits_note.py",
+   "tests/test_decision_register.py",
+   "tests/test_desk002_ruling_commits_with_record.py",
+   "tests/test_dispatch_parallel_held.py",
+   "tests/test_friction001_reconcile.py",
+   "tests/test_friction001_registration_premises.py",
+   "tests/test_friction002_worktree_only.py",
+   "tests/test_governed.py",
+   "tests/test_handoff.py",
+   "tests/test_hooks.py",
+   "tests/test_init.py",
+   "tests/test_loop001_register_seq.py",
+   "tests/test_prior_art.py",
+   "tests/test_prior_art_caller.py",
+   "tests/test_prior_art_ref.py",
+   "tests/test_result_grammar.py",
+   "tests/test_sec001_rewrite.py",
+   "tests/test_sel014r_ooda_knowledge_source.py",
+   "tests/test_sel020_project_new_state_and_commit_paths.py",
+   "tests/test_sel036_biblio_bridge.py",
+   "tests/test_sel038_journals_and_held_releases.py",
+   "tests/test_sel039_own_graphs_first.py"
+  ],
+  "commands": [],
+  "reader_selected": false,
+  "scoped_gate": {
+   "outcome": "pass",
+   "seconds": 941.665,
+   "tests_run": 555,
+   "failed_files": []
+  },
+  "verdict": "MISS"
+ },
+ {
+  "id": "S3",
+  "kind": "task file header (cc_tasks)",
+  "what": "SEL-004's task file gains an `**Exclusive:** yes` header",
+  "reader": "tests/test_dispatch_concurrency.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 7.5,
+   "tail": "50 passed in 0.29s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 2.4,
+   "tail": "1 failed, 48 passed in 0.43s"
+  },
+  "changed": [
+   "cc_tasks/2026-10-07_SEL-004_worktree_per_task_dispatch.md"
+  ],
+  "tier": "scoped",
+  "reason": "scoped: task_records",
+  "selected": [
+   "tests/test_dispatch_concurrency.py",
+   "tests/test_dispatch_milestone.py",
+   "tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py"
+  ],
+  "commands": [],
+  "reader_selected": true,
+  "scoped_gate": {
+   "outcome": "fail",
+   "seconds": 156.768,
+   "tests_run": 98,
+   "failed_files": [
+    "tests/test_dispatch_concurrency.py"
+   ]
+  },
+  "verdict": "CAUGHT (scoped)"
+ },
+ {
+  "id": "S4",
+  "kind": "convention document (docs)",
+  "what": "the result-units convention stops naming RESULT_NAME_PATTERN",
+  "reader": "tests/test_result_grammar.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 4.4,
+   "tail": "6 passed in 2.63s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 4.7,
+   "tail": "1 failed, 2 passed in 2.72s"
+  },
+  "changed": [
+   "docs/conventions/result_units_vocabulary.md"
+  ],
+  "tier": "scoped",
+  "reason": "scoped: documents",
+  "selected": [
+   "tests/test_attr001_union_attribute.py",
+   "tests/test_cc_register_commits_note.py",
+   "tests/test_decision_register.py",
+   "tests/test_desk002_ruling_commits_with_record.py",
+   "tests/test_dispatch_parallel_held.py",
+   "tests/test_friction001_reconcile.py",
+   "tests/test_friction001_registration_premises.py",
+   "tests/test_friction002_worktree_only.py",
+   "tests/test_governed.py",
+   "tests/test_handoff.py",
+   "tests/test_hooks.py",
+   "tests/test_init.py",
+   "tests/test_loop001_register_seq.py",
+   "tests/test_prior_art.py",
+   "tests/test_prior_art_caller.py",
+   "tests/test_prior_art_ref.py",
+   "tests/test_result_grammar.py",
+   "tests/test_sec001_rewrite.py",
+   "tests/test_sel014r_ooda_knowledge_source.py",
+   "tests/test_sel020_project_new_state_and_commit_paths.py",
+   "tests/test_sel036_biblio_bridge.py",
+   "tests/test_sel038_journals_and_held_releases.py",
+   "tests/test_sel039_own_graphs_first.py"
+  ],
+  "commands": [],
+  "reader_selected": true,
+  "scoped_gate": {
+   "outcome": "fail",
+   "seconds": 896.456,
+   "tests_run": 555,
+   "failed_files": [
+    "tests/test_result_grammar.py"
+   ]
+  },
+  "verdict": "CAUGHT (scoped)"
+ },
+ {
+  "id": "S5",
+  "kind": "package code (seldon/)",
+  "what": "the planner's `**/` glob stops matching zero directories",
+  "reader": "tests/test_sel041_gate_plan.py",
+  "reader_before": {
+   "rc": 0,
+   "seconds": 43.5,
+   "tail": "32 passed in 36.50s"
+  },
+  "reader_after": {
+   "rc": 1,
+   "seconds": 30.1,
+   "tail": "1 failed, 29 passed in 28.14s"
+  },
+  "changed": [
+   "seldon/core/gate_plan.py"
+  ],
+  "tier": "full",
+  "reason": "unmatched: seldon/core/gate_plan.py",
+  "selected": [],
+  "commands": [],
+  "reader_selected": false,
+  "verdict": "CAUGHT (full)"
+ }
+]

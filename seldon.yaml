@@ -259,12 +259,16 @@ dispatch:
         tests: none
       - name: task_records
         paths: ["cc_tasks/**", "handoffs/**"]
+        # SEL-055 Part B: test_criteria_marked.py reads QC-001's task file; seed S1 (one `check:` line removed) was a MISS
+        # without it (docs/evidence/sel055/README.md).
         tests:
+          - tests/test_criteria_marked.py
           - tests/test_dispatch_concurrency.py
           - tests/test_dispatch_milestone.py
           - tests/test_sel023_filing_kind_hand_dispatch_file_and_push.py
       - name: documents
         paths: ["docs/**"]
+        # SEL-055 Part B: test_qc_chart.py reads docs/evidence/qc002/cpi_first_reading.yaml; seed S2 was a MISS without it.
         tests:
           - tests/test_attr001_union_attribute.py
           - tests/test_cc_register_commits_note.py
@@ -282,6 +286,7 @@ dispatch:
           - tests/test_prior_art.py
           - tests/test_prior_art_caller.py
           - tests/test_prior_art_ref.py
+          - tests/test_qc_chart.py
           - tests/test_result_grammar.py
           - tests/test_sec001_rewrite.py
           - tests/test_sel014r_ooda_knowledge_source.py
@@ -315,7 +320,10 @@ dispatch:
     test_command: >-
       python -m dotenv -f "$SELDON_PRIMARY_CHECKOUT/.env" run -- env PYTHONPATH=. python -m pytest -q
       -p no:cacheprovider -n 4 {tests}
-    # Nightly, the task's default (R29): the first gate after a day without a passing full gate is full.
+    # Nightly, SEL-041's default. Since SEL-055 (AD-034-R38) it is the schedule of the full suite ON MAIN: an idle pass
+    # runs `gate_command` in a fresh checkout of main once a day has passed since the newest full gate, and a task's own
+    # gate is never promoted by it (SEL-051's one-file RESULT paid two full gates, 1,900 s and 3,094 s, both red on
+    # main's own failures). `full_overdue_s` (default two days, no measured basis) runs it before a launch.
     full_every_s: 86400
     # R36. Basis: the full suite's median over its last 19 recorded runs is 1,680 s (Part A). A scoped gate over 600 s
     # (about a third of that) means the slices select too much for the scoped tier to be worth having.
