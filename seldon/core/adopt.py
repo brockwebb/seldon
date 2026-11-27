@@ -28,13 +28,13 @@ from pathlib import Path
 import yaml
 
 from seldon.core import dispatch as D
+from seldon.core import worktree as WT
 
 def _kit_dir() -> Path:
     """The kit: the PRIMARY checkout of the seldon tree this module runs from, whose `seldon.yaml` holds the block the
     machine-wide values are copied from and whose `scripts/jobs/seldon_dispatch.sh` is the wrapper every plist runs.
     The primary, not a worktree: the kit's relative references (`../squiddy/...`) resolve from it, and a plist must
     not name a wrapper inside a worktree the sweep will remove (`seldon.core.worktree.primary_checkout`)."""
-    from seldon.core import worktree as WT
     here = Path(__file__).resolve().parents[2]
     try:
         return WT.primary_checkout(here)
@@ -72,6 +72,13 @@ def kit_config(kit_dir: Path = KIT_DIR) -> dict:
         raise AdoptError(f"the kit's {path} cannot be read: {exc}") from exc
 
 
+def repository(project_dir: Path) -> Path:
+    """The primary checkout of the repository `project_dir` is (`worktree.anchor`): what a value written into its
+    `seldon.yaml` is relative to and what its plist names, so an adoption from a dispatched worktree writes what one
+    from the primary writes (SEL-057). Outside a git work tree, or in the primary, `project_dir` itself."""
+    return WT.anchor(Path(project_dir).resolve()).resolve()
+
+
 def rerooted_ref(ref: str, from_dir: Path, to_dir: Path) -> str:
     """A `<file>#<key path>` reference written relative to `from_dir`, rewritten relative to `to_dir`."""
     file, _, frag = ref.partition("#")
@@ -87,7 +94,7 @@ def current_branch(project_dir: Path) -> str | None:
 
 def default_label(project_config: dict, project_dir: Path) -> str:
     """`com.<user>.<project slug>-dispatch`, the shape of seldon's and ai-readiness-kg's labels."""
-    slug = ((project_config.get("project") or {}).get("slug") or Path(project_dir).resolve().name)
+    slug = ((project_config.get("project") or {}).get("slug") or repository(project_dir).name)
     return f"com.{getpass.getuser()}.{re.sub(r'[^A-Za-z0-9.-]', '-', slug)}-dispatch"
 
 
@@ -98,7 +105,9 @@ def questions(project_dir: Path, project_config: dict, kit: dict, kit_dir: Path 
     kit_block = kit.get("dispatch") or {}
     qs = []
     if "standing_band_ref" not in have:
-        default = (rerooted_ref(kit_block["standing_band_ref"], kit_dir, project_dir)
+        # Re-rooted at the repository, where `resolve_standing_band` reads it (SEL-018), not at a dispatched
+        # worktree, from which `../../../../seldon/controls.yaml` would be written (SEL-057).
+        default = (rerooted_ref(kit_block["standing_band_ref"], kit_dir, repository(project_dir))
                    if kit_block.get("standing_band_ref") else None)
         qs.append(("standing_band_ref", "standing band reference (<file>#<key path>, the machine's token cap)",
                    default))
@@ -292,7 +301,9 @@ def adoption(project_dir: Path, answers: dict, kit_dir: Path = KIT_DIR) -> dict:
     plist_path = project_dir / PLIST_DIR / f"{label}.plist" if label else None
     return {"seldon_yaml": new_text if new_text != text else None, "added": added, "block": block,
             "plist_path": plist_path,
-            "plist": (render_plist(label, project_dir, plist_path, block["poll_interval_s"], kit_dir)
+            # The job runs in the repository and reads its tracked plist there, never in a worktree the sweep removes.
+            "plist": (render_plist(label, repository(project_dir), repository(project_dir) / plist_path.relative_to(
+                project_dir), block["poll_interval_s"], kit_dir)
                       if plist_path and not plist_path.exists() else None),
             "gitignore_add": ignore_lines(project_dir, block)}
 

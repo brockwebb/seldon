@@ -463,6 +463,60 @@ project_new:
   squiddy_command: [../squiddy/.venv/bin/squiddy]
   # Where the launchd job is symlinked (macOS per-user agents; launchd.plist(5)).
   launch_agents_dir: ~/Library/LaunchAgents
+  # SEL-057 (aacps AP-03's filing, item 3): the project's own AD-036-R4 baseline, the one path a referencing
+  # `prior_art:` block sets (AD-036 ADDENDUM 03's form; hazbrief-mcp, squiddy, factory and aacps all use this path).
+  # The `ref` itself is not configured: it is this file's `prior_art`, re-rooted at the project.
+  prior_art_baseline: docs/design/AD-036_baseline.txt
+  # SEL-057 (item 4; AD-013-R2): the standard projections `project new` declares in `docs.projections` and writes as
+  # marked files rendered from the graph, never with a requirement in them (requirements are the operator's needs).
+  # The set and the columns are factory's systems-engineering documents (factory F-014: ISO/IEC/IEEE 29148:2011's
+  # StRS and SyRS, an interface control document, and the RTM as the verification plan; factory seldon.yaml
+  # `docs.projections`), the form the operator's "all projects require systems engineering documents" (factory
+  # 2026-11-26 dictation, item A) was first met in. OpsCon is prose, not a projection, and is not written. `title`
+  # and `documents` (whose requirements the file's first blocks show; default: the file itself) are this block's;
+  # the rest of each entry is declared as it is.
+  projections:
+  - title: Stakeholder requirements specification (StRS)
+    path: docs/se/strs.md
+    kind: requirements
+    columns:
+    - {header: ID, source: requirement_id}
+    - {header: Need, source: description}
+    - {header: Source, source: set_by}
+    - {header: Status, source: '@status'}
+  - title: System requirements specification (SyRS)
+    path: docs/se/syrs.md
+    kind: requirements
+    columns:
+    - {header: ID, source: requirement_id}
+    - {header: Requirement, source: description}
+    - {header: Source, source: set_by}
+    - {header: Derived from, source: '@derived_from'}
+    - {header: Method, source: verification_method}
+    - {header: Verified by, source: '@verified_by'}
+    - {header: Status, source: '@status'}
+  - title: Interface control document (ICD)
+    path: docs/se/icd.md
+    kind: requirements
+    columns:
+    - {header: ID, source: requirement_id}
+    - {header: Interface, source: description}
+    - {header: Source, source: set_by}
+    - {header: Derived from, source: '@derived_from'}
+    - {header: Method, source: verification_method}
+    - {header: Verified by, source: '@verified_by'}
+    - {header: Status, source: '@status'}
+  - title: Requirements traceability matrix (RTM)
+    path: docs/se/rtm.md
+    kind: rtm
+    documents: [docs/se/syrs.md, docs/se/icd.md]
+    columns:
+    - {header: ID, source: requirement_id}
+    - {header: Requirement, source: description}
+    - {header: Derived from, source: '@derived_from'}
+    - {header: Method, source: verification_method}
+    - {header: Verified by, source: '@verified_by'}
+    - {header: Status and verification, source: '@status'}
 
 jobs:
   # The launchd wrapper's log caps (scripts/jobs/seldon_dispatch.sh), ai-readiness-kg's

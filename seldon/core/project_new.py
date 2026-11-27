@@ -26,6 +26,14 @@ command does not template anything squiddy or seldon already generate.
 environment packages, the squiddy command and the LaunchAgents directory; `desktop_commit.scan` for the secret scan;
 `dispatch:` and `jobs.dispatch` through `adopt` as before. A key the project already has is never rewritten (adopt's
 rule, kept for every block this module adds).
+
+**SEL-057 (aacps AP-03's filing).** Two more steps a project at the factory's spec needs and no command wrote: the
+`prior_art:` block by reference with the project's own baseline (AD-036 ADDENDUM 03), and `docs.projections` with
+its marked files (AD-013-R2), from the kit's `project_new.prior_art_baseline` and `project_new.projections`. They
+are steps here, not a subcommand of their own, because this is the command that converges a repository to spec and
+is already re-run on existing projects (aacps, factory); a second command would be a second place to look. And the
+command is right in a dispatched worktree: every value it writes is the primary checkout's (`repository_dir`), and
+the launchd job is never loaded from the transient tree.
 """
 from __future__ import annotations
 
@@ -84,7 +92,7 @@ def project_new_config(kit_dir: Path = KIT_DIR) -> dict:
     block = kit.get("project_new")
     if not isinstance(block, dict):
         raise ProjectNewError(f"{kit_dir / 'seldon.yaml'} has no `project_new:` block")
-    need = ("environment_packages", "squiddy_command", "launch_agents_dir")
+    need = ("environment_packages", "squiddy_command", "launch_agents_dir", "prior_art_baseline", "projections")
     missing = [k for k in need if k not in block]
     if missing:
         raise ProjectNewError(f"{kit_dir / 'seldon.yaml'} project_new lacks {missing}")
@@ -92,7 +100,33 @@ def project_new_config(kit_dir: Path = KIT_DIR) -> dict:
         raise ProjectNewError("project_new.environment_packages must be a non-empty list of sibling repository names")
     if not (isinstance(block["squiddy_command"], list) and block["squiddy_command"]):
         raise ProjectNewError("project_new.squiddy_command must be a non-empty list")
+    if not (isinstance(block["prior_art_baseline"], str) and block["prior_art_baseline"].strip()):
+        raise ProjectNewError("project_new.prior_art_baseline must be a project-relative path")
+    projections = block["projections"]
+    if not (isinstance(projections, list) and projections
+            and all(isinstance(p, dict) and p.get("title") and p.get("path") for p in projections)):
+        raise ProjectNewError("project_new.projections must be a non-empty list of docs.projections entries, each "
+                              "with a `title` and a `path`")
     return {**block, "_kit": kit}
+
+
+# ───────────────────────────────────────────────────────────────── the repository, not the worktree
+
+def repository_dir(project_dir: Path) -> Path:
+    """The directory every value `project new` writes into `seldon.yaml` is relative to, and whose name is the
+    project's: the PRIMARY checkout (`worktree.anchor`), so a run from a dispatched worktree
+    (`<primary>/.claude/worktrees/<name>`) writes what a run from the primary writes (SEL-057).
+
+    The rule is SEL-018's for reading: a relative path in `seldon.yaml` is joined to the primary checkout
+    (`dispatch.config_path`, `prior_art.corpus_anchor`), because it is written for the checkout the operator works in,
+    and a worktree has no siblings. Writing must agree with reading. git's own model names the primary from a linked
+    worktree: `git rev-parse --git-common-dir` is the main repository's `.git`, `--show-toplevel` the worktree.
+    Outside a git work tree, or in the primary itself, it is `project_dir`."""
+    return A.repository(project_dir)
+
+
+def in_linked_worktree(project_dir: Path) -> bool:
+    return repository_dir(project_dir) != Path(project_dir).resolve()
 
 
 def kit_relative(value: str, kit_dir: Path) -> str:
@@ -257,8 +291,9 @@ def environment_text(project_dir: Path, cfg: dict, kit_dir: Path, dispatch: bool
         if command and "/" in command[0] and not os.path.isabs(command[0]):
             # Lexically, never resolve() on the program: a venv's `bin/python` is a symlink to a bare CPython that
             # runs outside the venv and cannot import the scanner (DESK-003; found again adopting factory, SEL-020).
+            # Relative to the repository, where it is read (SEL-057), never to a dispatched worktree.
             command[0] = os.path.relpath(os.path.normpath(Path(kit_dir).resolve() / command[0]),
-                                         project_dir.resolve())
+                                         repository_dir(project_dir))
         text = A.insert_into_block(text, ("desktop_commit", "scan"),
                                    _block_lines({"roots": list(scan.get("roots") or []), "command": command},
                                                 "    ", {"roots": SCAN_COMMENT}))
@@ -292,14 +327,17 @@ DECISIONS_COMMENT = (
 
 
 def decisions_text(project_dir: Path) -> tuple:
-    """The `seldon.yaml` text with a `decisions:` block (`repository: <the directory's name>`) when it has none
-    (AD-033-R13). Returns `(new_text or None, repository or None)`."""
+    """The `seldon.yaml` text with a `decisions:` block (`repository: <the repository's name>`) when it has none
+    (AD-033-R13). Returns `(new_text or None, repository or None)`.
+
+    The name is the primary checkout's (`repository_dir`): from a dispatched worktree the directory's own name is
+    the worktree's (`cozy-inventing-diffie`, aacps AP-03, SEL-057 item 1)."""
     text, config = _load(project_dir)
     if config.get("decisions"):
         return None, None
     if "decisions" in config:
         raise ProjectNewError("seldon.yaml has an empty `decisions:` key; give it `repository: <name>` or remove it")
-    name = Path(project_dir).resolve().name
+    name = repository_dir(project_dir).name
     block = "\n".join(f"# {c}" for c in DECISIONS_COMMENT.splitlines()) + "\n" + "\n".join(
         _block_lines({"decisions": {"repository": name}}, "", {}))
     new = text.rstrip("\n") + "\n" + block + "\n"
@@ -308,6 +346,170 @@ def decisions_text(project_dir: Path) -> tuple:
     except yaml.YAMLError as exc:
         raise ProjectNewError(f"the seldon.yaml `project new` would write does not parse; nothing written: {exc}")
     return new, name
+
+
+PRIOR_ART_COMMENT = (
+    "AD-036 (seldon): the prior-art receipts gate, by REFERENCE to seldon's one definition, never a copy (SQ-010\n"
+    "Part 0; seldon docs/design/AD-036_ADDENDUM_03_prior_art_by_reference.md). The corpus paths resolve from seldon's\n"
+    "file; the log, the design directory, the baseline and the verdict ledger resolve from this repository. Only the\n"
+    "baseline is this repository's own: the notes on its branch when the gate reached it, grandfathered. Written by\n"
+    "`seldon project new` (SEL-057).")
+
+BASELINE_HEADER = (
+    "# AD-036-R4 baseline for {repo}: every gated design note this repository tracked when the prior-art gate reached\n"
+    "# it ({where}; read from `git ls-files {design_dir}`, so an untracked note is not baseline). Written by `seldon\n"
+    "# project new` (SEL-057). These are grandfathered, not re-litigated: the gate (the commit hook, `seldon verify`,\n"
+    "# `seldon cc register`) applies to a note NOT listed here. Addenda and errata are exempt by the definition's\n"
+    "# `prior_art.gate.exempt_globs` and not listed. Never extended: a note added after this list needs a passing\n"
+    "# `seldon prior-art verify`.\n")
+
+
+def prior_art_step(project_dir: Path, cfg: dict, kit_dir: Path) -> Step:
+    """AD-036 ADDENDUM 03's block, `prior_art: {ref: <the kit's seldon.yaml>#prior_art, gate: {baseline: ...}}`,
+    when the project has no `prior_art:` key; then the baseline file the block names, when it is absent.
+
+    The ref is the kit's file re-rooted at the repository (`../seldon/seldon.yaml#prior_art` for a sibling), as
+    `resolve_block` reads it. The baseline lists the gated notes the branch TRACKS (`git ls-files`; AP-03's and
+    factory's rule), judged by the definition's own `is_gated`, so addenda and errata are left out as the gate leaves
+    them out. A project that defines its own block (seldon) or already references one is left alone; only a missing
+    baseline file is written for it. Nothing is ever overwritten.
+
+    Raises:
+        ProjectNewError: the kit defines no `prior_art:` block, or the block written would not resolve.
+    """
+    from seldon.core import prior_art as PA
+
+    text, config = _load(project_dir)
+    wrote = []
+    new_block = "prior_art" not in config
+    if new_block:
+        kit_block = cfg["_kit"].get("prior_art")
+        if not isinstance(kit_block, dict) or PA.REF_KEY in kit_block:
+            raise ProjectNewError(f"the kit's {Path(kit_dir) / 'seldon.yaml'} has no `prior_art:` definition to "
+                                  f"reference (AD-036 ADDENDUM 03)")
+        ref = A.rerooted_ref("seldon.yaml#prior_art", kit_dir, repository_dir(project_dir))
+        block = {"prior_art": {PA.REF_KEY: ref, "gate": {"baseline": str(cfg["prior_art_baseline"])}}}
+        text = (text.rstrip("\n") + "\n\n" + "\n".join(f"# {c}" for c in PRIOR_ART_COMMENT.splitlines()) + "\n"
+                + "\n".join(_block_lines(block, "", {})) + "\n")
+        try:
+            config = yaml.safe_load(text) or {}
+        except yaml.YAMLError as exc:
+            raise ProjectNewError(f"the seldon.yaml `project new` would write does not parse; nothing written: {exc}")
+    elif not isinstance(config["prior_art"], dict):
+        raise ProjectNewError("seldon.yaml has a `prior_art:` key that is not a mapping; give it AD-036 ADDENDUM 03's "
+                              "`ref` and `gate.baseline`, or remove it")
+    try:
+        s = PA.settings(project_dir, config)
+    except PA.PriorArtError as exc:
+        raise ProjectNewError(f"the prior_art block would not resolve; nothing written: {exc}") from exc
+    if new_block:
+        (project_dir / "seldon.yaml").write_text(text, encoding="utf-8")
+        wrote.append("seldon.yaml")
+    if not s.baseline.is_file():
+        listed = _git(project_dir, "ls-files", "-z", "--", s.design_dir).stdout.split("\0")
+        notes = sorted(p for p in listed if p and PA.is_gated(s, p))
+        head = _git(project_dir, "rev-parse", "--short", "HEAD", check=False)
+        where = f"HEAD {head.stdout.strip()}" if head.returncode == 0 else "before its first commit"
+        s.baseline.parent.mkdir(parents=True, exist_ok=True)
+        s.baseline.write_text(BASELINE_HEADER.format(repo=repository_dir(project_dir).name, where=where,
+                                                     design_dir=s.design_dir)
+                              + "".join(f"{n}\n" for n in notes), encoding="utf-8")
+        wrote.append(s.baseline.relative_to(Path(project_dir).resolve()).as_posix())
+    if not wrote:
+        return Step("prior_art", "ok", "prior_art block and its baseline present")
+    return Step("prior_art", "changed", f"{' + '.join(wrote)}", wrote)
+
+
+#: Keys of a kit `project_new.projections` entry that are the kit's, not `docs.projections`': the file's title and
+#: the documents whose requirements its first blocks show (default: the file itself).
+PROJECTION_KIT_KEYS = ("title", "documents")
+
+PROJECTIONS_COMMENT = (
+    "AD-013-R2: the systems-engineering documents, projections of this project's SRS_Requirement nodes, rendered by\n"
+    "`seldon docs generate requirements|rtm` between seldon:projection markers. Declared by `seldon project new`\n"
+    "(SEL-057) from the kit's `project_new.projections`. The requirements are the operator's needs, authored with\n"
+    "`seldon req add --document <path>`; the command writes none.")
+
+SKELETON = """# {title}
+
+The tables below are generated. Each row is an `SRS_Requirement` in this project's Seldon graph, authored once with
+`seldon req add --document {doc}` and changed only with `seldon req update` (seldon AD-013-R1 to R6); `seldon docs
+generate {kind}` renders the blocks between the `seldon:projection` markers, and an edit inside them is refused at the
+next render. The prose outside the markers is authored. Written by `seldon project new` (SEL-057), which authors no
+requirement: they are the operator's needs.
+{blocks}"""
+
+
+def _skeleton(entry: dict, kit_entry: dict | None) -> str:
+    """A new projection file: a title, the authored note, and for each document it shows a counts block and a
+    table block, so the renderer has markers to fill (a file rendered whole with no requirement has none, and
+    could not be re-rendered)."""
+    path, kind = entry["path"], entry.get("kind", "requirements")
+    title = (kit_entry or {}).get("title") or ("Requirements" if kind == "requirements"
+                                               else "Requirements traceability matrix")
+    docs = list((kit_entry or {}).get("documents") or [path])
+    blocks = []
+    for doc in docs:
+        attr = "" if doc == path else f' document="{doc}"'
+        heading = "" if doc == path else f"\n## {doc}\n"
+        blocks.append(f"{heading}\n<!-- seldon:projection view=\"counts\"{attr} -->\n<!-- /seldon:projection -->\n\n"
+                      f"<!-- seldon:projection view=\"table\"{attr} -->\n<!-- /seldon:projection -->\n")
+    doc = path if docs == [path] else "<the document its section names>"
+    return SKELETON.format(title=title, doc=doc, kind=kind, blocks="".join(blocks))
+
+
+def projections_step(project_dir: Path, cfg: dict, load_nodes) -> Step:
+    """`docs.projections` declared from the kit's `project_new.projections` when the project declares none, then
+    every declared projection whose file is absent written: its skeleton, rendered from the graph by the same
+    renderer `seldon docs generate` runs, so a fresh render changes nothing (AD-013-R3).
+
+    `load_nodes()` returns the project's requirements (`requirements.load_requirements`); it is called only when a
+    file must be written, and a failure to read the graph refuses the step with its cause and writes nothing. An
+    existing file, marked or not, is never touched: it is the operator's, or `seldon docs generate`'s to render. An
+    existing declaration is never rewritten. No requirement is authored here (the operator's needs, F-014)."""
+    from seldon.core import requirements as RQ
+
+    text, config = _load(project_dir)
+    docs = config.get("docs")
+    if docs is not None and not isinstance(docs, dict):
+        raise ProjectNewError("seldon.yaml `docs:` is not a mapping; `project new` cannot declare docs.projections")
+    wrote = []
+    if "projections" not in (docs or {}):
+        entries = [{k: v for k, v in e.items() if k not in PROJECTION_KIT_KEYS} for e in cfg["projections"]]
+        text = A.insert_into_block(text, ("docs",), _block_lines({"projections": entries}, "  ",
+                                                                  {"projections": PROJECTIONS_COMMENT}))
+        try:
+            config = yaml.safe_load(text) or {}
+        except yaml.YAMLError as exc:
+            raise ProjectNewError(f"the seldon.yaml `project new` would write does not parse; nothing written: {exc}")
+        wrote.append("seldon.yaml")
+    try:
+        s = RQ.settings(config)
+    except RQ.RequirementsError as exc:
+        raise ProjectNewError(f"docs.projections would not validate; nothing written: {exc}") from exc
+    missing = [p for p in s.projections if not (Path(project_dir) / p["path"]).exists()]
+    nodes = []
+    if missing:
+        from neo4j.exceptions import DriverError, Neo4jError
+        try:
+            nodes = load_nodes()
+        except (DriverError, Neo4jError, OSError) as exc:
+            return Step("projections", "refused",
+                        f"the graph could not be read to render {', '.join(p['path'] for p in missing)} "
+                        f"({type(exc).__name__}: {exc}); nothing written. Start Neo4j and re-run `seldon project "
+                        f"new`.")
+    if wrote:
+        (project_dir / "seldon.yaml").write_text(text, encoding="utf-8")
+    kit_by_path = {e["path"]: e for e in cfg["projections"]}
+    for p in missing:
+        f = Path(project_dir) / p["path"]
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(_skeleton(p, kit_by_path.get(p["path"])), encoding="utf-8")
+        f.write_text(RQ.render_projection(project_dir, p, nodes, s).text, encoding="utf-8")
+        wrote.append(p["path"])
+    if not wrote:
+        return Step("projections", "ok", "docs.projections declared and their files present")
+    return Step("projections", "changed", f"{' + '.join(wrote)}", wrote)
 
 
 def marker_step(project_dir: Path) -> Step:
@@ -386,8 +588,9 @@ def check_interpreter(interpreter: str) -> None:
 
 
 def missing_siblings(project_dir: Path, packages: list) -> list:
-    """Environment packages with no sibling directory: the premise would name a repository that is not there."""
-    return [p for p in packages if not (Path(project_dir).resolve().parent / str(p)).is_dir()]
+    """Environment packages with no sibling directory: the premise would name a repository that is not there.
+    Siblings sit beside the primary checkout, never beside a dispatched worktree (SEL-057 item 2)."""
+    return [p for p in packages if not (repository_dir(project_dir).parent / str(p)).is_dir()]
 
 
 _ENABLED_RE = re.compile(r"^(  enabled:[ \t]*)false\b", re.MULTILINE)

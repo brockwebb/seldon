@@ -16,6 +16,19 @@ from seldon.core import hooks as H
 from seldon.core import project_new as PN
 
 
+def _requirements(project_dir: Path) -> list:
+    """The project's requirements from its own graph (`seldon.yaml` `neo4j`), for rendering a projection file."""
+    from seldon.config import get_neo4j_driver
+    from seldon.core import requirements as RQ
+
+    config = yaml.safe_load((project_dir / "seldon.yaml").read_text(encoding="utf-8")) or {}
+    driver = get_neo4j_driver(config)
+    try:
+        return RQ.load_requirements(driver, config["neo4j"]["database"])
+    finally:
+        driver.close()
+
+
 @click.group("project")
 def project_group():
     """Make a consumer project (SEL-019)."""
@@ -41,8 +54,10 @@ def project_group():
 @click.option("--enable", is_flag=True, help="with --dispatch: set dispatch.enabled true once the plist is loaded")
 def project_new(path, project_name, template_name, database, force_init, graph, dispatch, standing_band_ref, branch,
                 launchd_label, gate_command, interpreter, no_load, enable):
-    """Turn PATH into a seldon project: git, `seldon init`, the environment, `seldon hooks install`, and with
-    --dispatch `seldon dispatch adopt` and its plist loaded; with --graph, `squiddy init` for graphs/<name>/.
+    """Turn PATH into a seldon project: git, `seldon init`, the prior-art block and its baseline, `seldon hooks
+    install`, the environment, the decision register, the `verifies` marker and the systems-engineering projections,
+    and with --dispatch `seldon dispatch adopt` and its plist loaded; with --graph, `squiddy init` for graphs/<name>/.
+    In a linked worktree every value is the primary checkout's, and the plist is left for the primary to load.
 
     Each step acts only where the project lacks what it produces, so a second run changes nothing and says so.
     Everything written is committed through the hooks. Registers nothing: it prints what to register next.
@@ -69,19 +84,27 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
     steps = []
     try:
         steps.append(PN.ensure_repo(project_dir, branch or "main"))
+        # A dispatched session runs this in `<primary>/.claude/worktrees/<name>`: every value written is the
+        # repository's (SEL-057), and nothing machine-wide (the launchd job) is acted on from the transient tree.
+        repo_dir = PN.repository_dir(project_dir)
+        linked = PN.in_linked_worktree(project_dir)
         before = PN.dirty_paths(project_dir)
 
         # 1. `seldon init`
         if (project_dir / "seldon.yaml").is_file():
             steps.append(PN.Step("init", "ok", "seldon.yaml present"))
         else:
-            initialize_project(project_dir, project_name or project_dir.name, template_name, template,
+            initialize_project(project_dir, project_name or repo_dir.name, template_name, template,
                                force=force_init, database=database)
-            steps.append(PN.Step("init", "changed", f"seldon init {project_name or project_dir.name}"))
+            steps.append(PN.Step("init", "changed", f"seldon init {project_name or repo_dir.name}"))
 
         # 1b. `.seldon/` in the tracked .gitignore (SEL-020): an existing project may lack it, or carry it only in
         #     .git/info/exclude, which no worktree or clone inherits.
         steps.append(PN.ignore_step(project_dir))
+
+        # 1c. the prior-art gate by reference, and this project's baseline (AD-036 ADDENDUM 03, SEL-057). Before the
+        #     hooks, so `declare_union` sees the query log and the verdict ledger the block names.
+        steps.append(PN.prior_art_step(project_dir, cfg, kit_dir))
 
         # 2. `seldon hooks install` (core.hooksPath, the recorded interpreter, the union declaration)
         st = H.status(project_dir)
@@ -130,10 +153,13 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
             steps.append(PN.Step("decisions", "ok", "decision register declared"))
         # 4c. the `verifies` pytest marker (AD-013-R5, SEL-035): a test declares the requirements it verifies
         steps.append(PN.marker_step(project_dir))
+        # 4d. the systems-engineering projections (AD-013-R2, SEL-057): declared, and their files rendered from the
+        #     graph; no requirement is authored
+        steps.append(PN.projections_step(project_dir, cfg, lambda: _requirements(project_dir)))
         absent = PN.missing_siblings(project_dir, cfg["environment_packages"])
         if absent:
             steps.append(PN.Step("environment", "refused",
-                                 f"no sibling directory for {absent} beside {project_dir}: the environment premise "
+                                 f"no sibling directory for {absent} beside {repo_dir}: the environment premise "
                                  f"names repositories that are not there. Clone them beside it, or edit "
                                  f"environment.packages."))
 
@@ -162,9 +188,15 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
             plist = project_dir / A.PLIST_DIR / f"{label}.plist"
             if no_load:
                 steps.append(PN.Step("plist", "skipped", f"--no-load; {plist} written, not loaded"))
+            elif linked:
+                # launchd would run the job from a tree the sweep removes; the primary loads it after the merge.
+                steps.append(PN.Step("plist", "skipped", f"in a linked worktree; after the merge run: seldon project "
+                                                          f"new {repo_dir} --dispatch --enable"))
             else:
                 steps.append(PN.load_plist(plist, label, Path(str(cfg["launch_agents_dir"]))))
-            if enable:
+            if enable and linked:
+                steps.append(PN.Step("enable", "skipped", "the plist is loaded from the primary checkout first"))
+            elif enable:
                 flipped = PN.enabled_text((project_dir / "seldon.yaml").read_text(encoding="utf-8"))
                 if flipped is None:
                     steps.append(PN.Step("enable", "ok", f"dispatch.enabled is {block['enabled']}"))
@@ -186,7 +218,9 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
     click.echo("next:")
     click.echo(f"  register the first task (it commits the file): seldon cc register --project {project_dir} "
                f"cc_tasks/<YYYY-MM-DD_slug>.md")
-    if dispatch and block is not None and not block.get("enabled"):
+    if dispatch and linked:
+        click.echo(f"  after the merge, from the primary checkout: seldon project new {repo_dir} --dispatch --enable")
+    elif dispatch and block is not None and not block.get("enabled"):
         click.echo(f"  then: seldon project new {project_dir} --dispatch --enable   (dispatch.enabled is false)")
     if graph and any(s.name == "graph" and s.status == "refused" for s in steps):
         click.echo(f"  fill graphs/{graph}/graph.yaml, then: seldon project new {project_dir} --graph {graph}")

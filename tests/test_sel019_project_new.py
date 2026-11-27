@@ -43,10 +43,40 @@ desktop_commit:
   scan:
     roots: [handoffs/]
     command: [../scanner/.venv/bin/python, -m, scanner.secret_scan]
+prior_art:
+  log: state/prior_art_queries.jsonl
+  internal_roots: []
+  internal:
+    default_include: ['docs/design/**']
+    suffixes: [.md]
+    top_n: 20
+    max_file_bytes: 2000000
+    bm25: {{k1: 1.2, b: 0.75}}
+  library:
+    graph: graphs/kit-biblio
+    k: 20
+  gate:
+    design_dir: docs/design
+    baseline: docs/design/AD-036_baseline.txt
+    exempt_globs: ['*_ADDENDUM_*.md']
+    verdict_ledger_without_governed: state/prior_art_verdicts.jsonl
 project_new:
   environment_packages: [kit]
   squiddy_command: [bin/squiddy]
   launch_agents_dir: {agents}
+  prior_art_baseline: docs/design/AD-036_baseline.txt
+  projections:
+  - title: Stakeholder requirements specification (StRS)
+    path: docs/se/strs.md
+    kind: requirements
+    columns:
+    - {{header: ID, source: requirement_id}}
+    - {{header: Need, source: description}}
+    - {{header: Status, source: '@status'}}
+  - title: Requirements traceability matrix (RTM)
+    path: docs/se/rtm.md
+    kind: rtm
+    documents: [docs/se/strs.md]
 jobs:
   dispatch:
     log_max_line_chars: 2000
