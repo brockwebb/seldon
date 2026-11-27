@@ -381,8 +381,11 @@ def sequencing_lint(text: str, own_stem: str) -> str | None:
     return None
 
 
-def resolve_after_refs(driver, database: str, refs) -> list:
+def resolve_after_refs(driver, database: str, refs, *, refuse_filings: bool = False) -> list:
     """Each ref to exactly one ResearchTask id, in the order given.
+
+    `refuse_filings` (SEL-052, AD-036-R33): set by the `**After:**` readers, never by the `**Answers:**` resolver,
+    whose ref must name a filing.
 
     A ref is tried BOTH ways when it could be either — a stem and an id prefix — and the union
     must be one artifact. Trying one interpretation first would make the answer depend on the
@@ -421,7 +424,7 @@ def resolve_after_refs(driver, database: str, refs) -> list:
                     f"{len(ids)} tasks: {shown}. Grammar: {AFTER_GRAMMAR}. "
                     f"Nothing was written.")
             only = next(iter(ids))
-            if kinds.get(only) == "filing":
+            if refuse_filings and kinds.get(only) == "filing":
                 # SEL-052 (factory's 2026-11-26 filing, item 1): a filing is never a candidate and completes only when
                 # another task's return closes it (AD-036-R17), so a wait on it holds this task with nothing saying
                 # why (squiddy SQ-143 sat two days behind 750348cb). Wait on the task that answers it instead.
@@ -445,7 +448,7 @@ def read_after(text: str, driver, database: str) -> list:
     local = [r for r in parsed["refs"] if ":" not in r]
     if not local:
         return []
-    return resolve_after_refs(driver, database, local)
+    return resolve_after_refs(driver, database, local, refuse_filings=True)
 
 
 def read_after_waits(text: str, project_dir: Path, config: dict) -> list:

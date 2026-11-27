@@ -218,7 +218,8 @@ def resolve_after_ref(ref: str, project_dir: Path, config: Optional[dict]) -> st
     target = parse_target(ref)
     driver, database, root = _open(target.project, project_dir, config)
     try:
-        (full,) = resolve_after_refs(driver, database, [target.ref])
+        # SEL-052 (AD-036-R33): an After wait on another graph's filing is refused as a local one is.
+        (full,) = resolve_after_refs(driver, database, [target.ref], refuse_filings=True)
     finally:
         driver.close()
     return f"{target.project}{QUALIFIER}{full}"

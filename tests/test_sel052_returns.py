@@ -71,6 +71,19 @@ def test_registration_refuses_an_after_that_names_a_filing(neo4j_driver, consume
                            allow_untracked=True)
 
 
+@neo4j_tests
+def test_an_answers_header_still_names_a_filing(neo4j_driver, producer, consumer, domain_config):
+    """The refusal is the After readers' alone: `**Answers:**` resolves through the same ref rule and must name a
+    filing (the first cut of R33 refused it there too, and `cc return` could not answer a real filing)."""
+    _kind_filing(consumer, neo4j_driver, domain_config)
+    _answering_task(producer, neo4j_driver, domain_config, answers=f"consumer:{KIND_FILING_STEM}")
+    _result(producer)
+    filed = _invoke("return", f"cc_tasks/{TASK_STEM}.md", "--to", "consumer", "--prefix", "HB")
+    assert filed.exit_code == 0, filed.output
+    assert KIND_FILING_STEM not in (consumer / _return_rel(filed.output)).read_text(encoding="utf-8").split(
+        "**After:**", 1)[1].splitlines()[0]
+
+
 NOTHING_RESULT = """# RESULT: SEL-900
 
 Landed the fix in the kit; the consumer's code path is unchanged.
