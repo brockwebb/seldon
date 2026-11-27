@@ -14,6 +14,12 @@ tests run, wall seconds, outcome, the files that failed, and the escapes a full 
 gate on the same change set. A passing record for a clean tree is merge evidence under AD-034-R26 (R34). `seldon
 verify`, `seldon go` and `seldon qc chart` read the same records (R36).
 
+SEL-055 (AD-034 ADDENDUM 13, R38 to R40). The cadence no longer promotes a task's gate: the full suite runs on main on
+a schedule (`scheduled_due`, run by `seldon.commands.dispatch_gate`, call site `scheduled`). While the newest scheduled
+run is red (`main_red`), the merge round's plans are closed (`plan(..., closure=...)`): a plan that selects anything
+also runs the red run's failed files, or goes full when it named none; a plan whose every path is declared
+`tests: none` is inert and is not closed. A lane branch is planned like any other (R40); its record says `lane`.
+
 Prior art (the addendum's section 2): test impact analysis as Fowler's page reports it (new and previously failing
 tests always run; resources listed by hand; periodic full runs against a reference build), the build systems' declared
 dependencies (Bazel, Buck, Pants), and fail-safe defaults (Saltzer and Schroeder): a test is skipped only where a
@@ -44,7 +50,9 @@ EVENT_GATE_RUN = "gate_run"
 TIER_SCOPED, TIER_FULL = "scoped", "full"
 OUTCOME_PASS, OUTCOME_FAIL, OUTCOME_TIMEOUT = "pass", "fail", "timeout"
 #: The call sites a record names (R35). `cli` is `seldon gate run` by hand or from a session.
-CALL_SITES = ("cli", "stop_gate", "regate", "merge_gate")
+#: SEL-055 (AD-034-R38): `scheduled` is the full suite on main's head, run by the dispatcher's pass or `seldon gate main`.
+CALL_SITES = ("cli", "stop_gate", "regate", "merge_gate", "scheduled")
+CALL_SITE_SCHEDULED = "scheduled"
 #: The coverage-map values a project may declare (R30). SEL-041 Part C measured testmon on seldon's suite and did not
 #: ship the arm (the RESULT, Part C), so `none` is the only value; a later task that ships an arm adds its name here.
 COVERAGE_MAPS = ("none",)
@@ -69,9 +77,16 @@ DEFAULTS = {
     # environment. A project adds its own here; `conftest.py` anywhere is always full and not listed.
     "full_paths": ["pyproject.toml", "uv.lock", "poetry.lock", "Pipfile", "Pipfile.lock", "requirements*.txt",
                    "setup.py", "setup.cfg", "pytest.ini", "tox.ini", "package.json", "package-lock.json"],
-    # R29's cadence. Fowler's page: the map (here, the slices) is checked against a periodic full run. Nightly is the
-    # task's own default ("nightly by default where a dispatcher runs").
+    # R29's cadence, R38's schedule. Fowler's page: the map (here, the slices) is checked against a periodic full run.
+    # Nightly is SEL-041's own default ("nightly by default where a dispatcher runs"). Since SEL-055 (R38) it is how long
+    # after the newest full gate the dispatcher's idle pass runs the full suite on main; it never promotes a task's gate.
     "full_every_s": 86400,
+    # R38's starvation bound: past this age the scheduled run goes before a launch, not only on an idle pass. NO
+    # MEASURED BASIS: two cadences, so a queue that is never empty still gets one full run on main every two days.
+    "full_overdue_s": 172800,
+    # R38: where the scheduled run checks out main's head (repository-relative, under the ignored `.seldon/`), made fresh
+    # for each run and removed after it.
+    "scheduled_worktree": ".seldon/gate_main",
     # R36: warn when the median of the last ten scoped gates exceeds this. None: no time warning.
     "warn_seconds": None,
     "coverage_map": "none",
@@ -167,10 +182,14 @@ def load_gate_config(block, gate_command: str | None) -> dict:
     tc = out["test_command"]
     if tc is not None and (not isinstance(tc, str) or "{tests}" not in tc):
         raise GateConfigError(f"dispatch.gate.test_command must be a shell command containing `{{tests}}`, got {tc!r}")
-    for key in ("full_every_s",):
+    for key in ("full_every_s", "full_overdue_s"):
         v = out[key]
         if isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
             raise GateConfigError(f"dispatch.gate.{key} must be a positive number of seconds, got {v!r}")
+    sw = out["scheduled_worktree"]
+    if not isinstance(sw, str) or not sw.strip():
+        raise GateConfigError(f"dispatch.gate.scheduled_worktree must be a non-empty repository-relative path, got {sw!r}")
+    _relative([sw], "dispatch.gate.scheduled_worktree")
     w = out["warn_seconds"]
     if w is not None and (isinstance(w, bool) or not isinstance(w, (int, float)) or w <= 0):
         raise GateConfigError(f"dispatch.gate.warn_seconds must be a positive number of seconds or absent, got {w!r}")
@@ -291,12 +310,130 @@ def last_full_pass(events: list) -> dict | None:
 
 
 def last_failed_files(events: list) -> list:
-    """R31: the files that failed in the project's last recorded gate (empty when it passed)."""
-    rr = runs(events)
+    """R31: the files that failed in the project's last recorded gate of a change (empty when it passed). SEL-055
+    (AD-034-R39): a scheduled run on main is not a change's gate; its failures are the closure's, which the merge round
+    applies and the Stop gate does not."""
+    rr = [e for e in runs(events) if (e.get("payload") or {}).get("call_site") != CALL_SITE_SCHEDULED]
     if not rr:
         return []
     p = rr[-1].get("payload") or {}
     return list(p.get("failed_files") or []) if p.get("outcome") != OUTCOME_PASS else []
+
+
+# ================================================================================ SEL-055: the schedule and the closure
+
+#: The dispatcher's merged finish (`dispatch.EVENT_FINISHED`), named here so this module imports no dispatcher module.
+_EVENT_FINISHED = "dispatch_finished"
+
+
+def _scheduled(e: dict) -> bool:
+    return e.get("event_type") == EVENT_GATE_RUN and (e.get("payload") or {}).get("call_site") == CALL_SITE_SCHEDULED
+
+
+def last_scheduled(events: list) -> dict | None:
+    """The newest scheduled run's event (R38), whatever its outcome, or None."""
+    for e in reversed(events):
+        if _scheduled(e):
+            return e
+    return None
+
+
+def _merged_on_full_pass(e: dict) -> bool:
+    """A merged finish whose gate evidence is a passing full gate of the tip that became main (R39's second exit): the
+    round's own full re-gate or evidence gate, a full `gate_run` record, or a declared pass record (a kit's full run)."""
+    p = e.get("payload") or {}
+    if e.get("event_type") != _EVENT_FINISHED or p.get("outcome") != "merged":
+        return False
+    ev = (p.get("merge") or {}).get("gate_evidence") or {}
+    src = ev.get("source")
+    if src in ("merge_gate", "regate"):
+        g = ev.get("gate") or {}
+        return g.get("tier") == TIER_FULL and bool(g.get("ok"))
+    if src == "gate_run":
+        return ev.get("tier") == TIER_FULL
+    return src == "gate_record"
+
+
+def main_red(events: list) -> dict | None:
+    """R39: the red scheduled run whose closure holds, or None. It holds from a scheduled run that did not pass until a
+    later scheduled run passes or a branch merges on a passing full gate of its tip."""
+    red = None
+    for e in events:
+        if _scheduled(e):
+            red = None if (e.get("payload") or {}).get("outcome") == OUTCOME_PASS else e
+        elif red is not None and _merged_on_full_pass(e):
+            red = None
+    return red
+
+
+def merged_after(events: list, event: dict) -> bool:
+    """Whether any task merged after `event` (R39: after a merge under closure the schedule is due at once)."""
+    seen = False
+    for e in events:
+        if e is event or (event.get("event_id") and e.get("event_id") == event.get("event_id")):
+            seen = True
+            continue
+        if seen and e.get("event_type") == _EVENT_FINISHED and (e.get("payload") or {}).get("outcome") == "merged":
+            return True
+    return False
+
+
+def scheduled_due(events: list, gcfg: dict | None, *, idle: bool, now: datetime | None = None) -> str | None:
+    """R38: why the scheduled run on main is due on this pass, or None.
+
+    Only where slices are declared (without them every gate is already full, R37). The anchor is the newest full gate
+    on record: the newest scheduled run, whatever its outcome, or the newest passing full gate at any call site (a
+    task's full gate tested main with the task's change on top). Due on an idle pass (nothing eligible to launch) once
+    `full_every_s` has passed since the anchor, or when no full gate is recorded at all; due on any pass once
+    `full_overdue_s` has passed, or when main is red and a task merged after the red run (R39)."""
+    if not declared(gcfg):
+        return None
+    now = now or datetime.now(timezone.utc)
+    red = main_red(events)
+    if red is not None and merged_after(events, red):
+        return (f"main_red_merged: a task merged after the red scheduled run {str(red.get('event_id'))[:8]} "
+                f"({red.get('timestamp')})")
+    stamps = [x for x in (_ts(last_scheduled(events) or {}), _ts(last_full_pass(events) or {})) if x is not None]
+    if not stamps:
+        return "never: no full gate is recorded" if idle else None
+    anchor = max(stamps)
+    age = (now - anchor).total_seconds()
+    if age > gcfg["full_overdue_s"]:
+        return (f"overdue: the newest full gate was at {anchor.isoformat()}, {age:.0f} s ago, past "
+                f"full_overdue_s {gcfg['full_overdue_s']:g}")
+    if idle and age > gcfg["full_every_s"]:
+        return (f"due: the newest full gate was at {anchor.isoformat()}, {age:.0f} s ago, past "
+                f"full_every_s {gcfg['full_every_s']:g}")
+    return None
+
+
+def scheduled_plan(tree: Path, gcfg: dict, why: str, branch: str | None) -> dict:
+    """The full plan of a scheduled run (R38): main's head in `tree`, every test file, the reason `scheduled: <why>`."""
+    tree = Path(tree)
+    head = WT.rev(tree, "HEAD")
+    tree_hash = WT.git(tree, "rev-parse", "HEAD^{tree}").stdout.strip() or None
+    total = len([f for f in _files(tree) if _any(f, gcfg["test_globs"])])
+    reason = f"scheduled: {why}"
+    return {"base": branch, "fork": head, "commit": head, "tree": tree_hash, "dirty": False, "changed": [],
+            "change_set": _change_set(branch, []), "slices": {}, "unmatched": [], "tests": [], "markers": [],
+            "commands": [], "always": {"changed_tests": [], "last_failed": []}, "files_total": total,
+            "files_selected": total, "reasons": [reason], "tier": TIER_FULL, "reason": reason}
+
+
+def closure_admits(evidence: dict | None, red: dict | None) -> bool:
+    """R39: whether merge evidence found by `gate_evidence` stands while `red` (a `main_red` event) holds. A declared
+    pass record and the round's own re-gate stand (the round's gates apply the closure); a `gate_run` record stands when
+    it was full, declared inert, or planned under this same closure; a kept regate's and a Stop gate's checks do not."""
+    if red is None or evidence is None:
+        return True
+    src = evidence.get("source")
+    if src in ("gate_record", "regate", "merge_gate"):
+        return True
+    if src == "gate_run":
+        if evidence.get("tier") == TIER_FULL or str(evidence.get("reason") or "").startswith("declared_none"):
+            return True
+        return evidence.get("main_red") == red.get("event_id")
+    return False
 
 
 def task_requests_full(task_text: str | None) -> bool:
@@ -309,8 +446,13 @@ def task_requests_full(task_text: str | None) -> bool:
 
 
 def plan(tree: Path, gcfg: dict, *, base: str, gate_command: str | None, events: list, full: bool = False,
-         task_text: str | None = None, branch: str | None = None, exclude=(), now: datetime | None = None) -> dict:
+         task_text: str | None = None, branch: str | None = None, exclude=(), now: datetime | None = None,
+         closure: dict | None = None) -> dict:
     """What the gate runs for `tree` (a checkout of the branch) against `base` (main), and why.
+
+    `closure` (SEL-055, AD-034-R39) is `main_red(events)` where the caller applies it (the merge round and `seldon gate
+    run`; never the Stop gate): the red scheduled run whose failed files the plan must also run. `now` is kept for
+    callers that pass it; since R38 the plan reads no clock.
 
     The changed paths are the branch's commits since its fork from `base` plus the tree's uncommitted paths (`dirty`
     is recorded, and a dirty run is never merge evidence, R34). Returns the plan the runner and the record read:
@@ -391,16 +533,37 @@ def plan(tree: Path, gcfg: dict, *, base: str, gate_command: str | None, events:
         for c in s["commands"]:
             if c not in commands:
                 commands.append(c)
+    # R39: whether the branch's own paths select anything, before R31's last-failed files are added: a branch whose
+    # every path is declared `tests: none` is inert, whatever another branch's gate left failing.
+    own = bool(selected or markers or commands)
     for f in last_failed_files(events):
         if (tree / f).is_file():
             selected.add(f)
             out["always"]["last_failed"].append(f)
-    if declared(gcfg) and not reasons:
-        last = last_full_pass(events)
-        at = _ts(last) if last else None
-        if at is None or (now - at).total_seconds() > gcfg["full_every_s"]:
-            reasons.append("cadence_due: " + (f"the last passing full gate was at {last['timestamp']}" if last
-                                              else "no passing full gate is recorded"))
+    # SEL-055 (AD-034-R38): no cadence here. The full suite's schedule runs on main (`scheduled_due`), so a task's gate
+    # is never promoted to full by the day it happens to merge on (SEL-051 paid two full gates for one RESULT file).
+    if closure is not None and not reasons:
+        # R39: main's newest scheduled run is red. A plan that selects anything also runs the files that run failed,
+        # so only a change that leaves them passing merges; a red run that named none closes such a plan in full. A
+        # plan that selects nothing (every path declared `tests: none`) is inert by the project's declarations and is
+        # not closed.
+        rp = closure.get("payload") or {}
+        red = {"event_id": closure.get("event_id"), "timestamp": closure.get("timestamp"),
+               "commit": rp.get("commit"), "outcome": rp.get("outcome")}
+        if not own:
+            red["applied"] = "inert"
+        elif not rp.get("failed_files"):
+            red["applied"] = "full"
+            reasons.append(f"main_red: the scheduled run {str(closure.get('event_id'))[:8]} on main is "
+                           f"{rp.get('outcome')} and named no failed file")
+        else:
+            red["applied"] = "failed_files"
+            out["always"]["main_red"] = []
+            for f in rp["failed_files"]:
+                if (tree / f).is_file():
+                    selected.add(f)
+                    out["always"]["main_red"].append(f)
+        out["main_red"] = red
     out["tests"], out["markers"], out["commands"] = sorted(selected), markers, commands
     out["files_selected"] = len(out["tests"])
     if reasons:
@@ -529,10 +692,17 @@ def escapes(events: list, p: dict, result: dict) -> list:
 
 
 def record_payload(p: dict, result: dict, *, call_site: str, events: list, task_id: str | None = None,
-                   branch: str | None = None, log_rel: str | None = None) -> dict:
+                   branch: str | None = None, log_rel: str | None = None, lane: bool = False) -> dict:
+    """The `gate_run` payload (R33). SEL-055: `main_red` (R39, the closure the plan applied) and `lane` (R40) are
+    written only when they hold, so a record of a project that uses neither is unchanged."""
     if call_site not in CALL_SITES:
         raise ValueError(f"call_site must be one of {CALL_SITES}, got {call_site!r}")
-    return {"task_id": task_id, "branch": branch, "call_site": call_site, "tier": p["tier"], "reason": p["reason"],
+    extra = {}
+    if p.get("main_red"):
+        extra["main_red"] = p["main_red"]
+    if lane:
+        extra["lane"] = True
+    return {**extra, "task_id": task_id, "branch": branch, "call_site": call_site, "tier": p["tier"], "reason": p["reason"],
             "reasons": p["reasons"][:RECORD_LIST_CAP], "commit": p["commit"], "tree": p["tree"], "dirty": p["dirty"],
             "base": p["base"], "fork": p["fork"], "change_set": p["change_set"], "changed": len(p["changed"]),
             "slices": sorted(p["slices"]), "unmatched": p["unmatched"][:RECORD_LIST_CAP],
@@ -569,8 +739,12 @@ def passing_record(events: list, tree_hash: str) -> dict | None:
 def evidence(e: dict) -> dict:
     """What a merge record's `gate_evidence` says of the `gate_run` it merged on."""
     q = e.get("payload") or {}
-    return {"source": "gate_run", "event_id": e.get("event_id"), "tier": q.get("tier"), "reason": q.get("reason"),
-            "call_site": q.get("call_site"), "seconds": q.get("seconds")}
+    out = {"source": "gate_run", "event_id": e.get("event_id"), "tier": q.get("tier"), "reason": q.get("reason"),
+           "call_site": q.get("call_site"), "seconds": q.get("seconds")}
+    if (q.get("main_red") or {}).get("event_id"):
+        # SEL-055 (R39): the closure the record was planned under, which `closure_admits` compares.
+        out["main_red"] = q["main_red"]["event_id"]
+    return out
 
 
 # ================================================================================================ R36: telling
@@ -582,10 +756,33 @@ def scoped_seconds(events: list, n: int = WARN_WINDOW) -> list:
             if (e.get("payload") or {}).get("tier") == TIER_SCOPED][-n:]
 
 
-def warnings(gcfg: dict | None, gate_command: str | None, events: list) -> list:
-    """R36's warnings, never failures: a gate command with no slices, and a median scoped gate over the threshold."""
+def _sample_path(glob: str) -> str:
+    """A path a glob matches, to ask whether another set of globs covers it (R40's warning): `**` as one directory,
+    `*` and `?` as one letter, a trailing `/` as a file in the directory."""
+    if glob.endswith("/"):
+        glob += "x"
+    return re.sub(r"\*\*/?", "x/", glob).replace("*", "x").replace("?", "x").rstrip("/") or "x"
+
+
+def lane_uncovered(gcfg: dict | None, lane: dict | None) -> list:
+    """R40: the lane's `writes` globs no declared slice covers (a merge of a lane branch that writes there is full)."""
+    if not lane:
+        return []
+    slices = (gcfg or {}).get("slices") or []
+    return [w for w in lane.get("writes") or []
+            if not any(_any(_sample_path(w), s["paths"]) for s in slices)]
+
+
+def warnings(gcfg: dict | None, gate_command: str | None, events: list, lane: dict | None = None) -> list:
+    """R36's warnings, never failures: a gate command with no slices, and a median scoped gate over the threshold.
+    SEL-055 (R40): a coordination lane whose `writes` no slice covers, where the project has a gate command."""
     out = []
     gcfg = gcfg or DEFAULTS
+    uncovered = lane_uncovered(gcfg, lane) if gate_command else []
+    if uncovered:
+        out.append(f"dispatch.coordination_lane.writes {uncovered} match no dispatch.gate.slices entry: a lane branch "
+                   f"that writes there is gated in full at merge. Declare a slice for them (`tests: none`, or the "
+                   f"tests that read them) (AD-034-R40).")
     if gate_command and not declared(gcfg):
         out.append("dispatch.gate_command is declared and dispatch.gate.slices is not: every task runs the whole "
                    "suite. Declare `dispatch.gate.slices` and `dispatch.gate.test_command` (AD-034-R30, AD-034 "

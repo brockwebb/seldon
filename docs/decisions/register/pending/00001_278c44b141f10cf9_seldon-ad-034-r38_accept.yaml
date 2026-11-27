@@ -14,7 +14,7 @@ source:
   lines:
   - 90
   - 95
-  sha256: d1edeeb7f7b015222564ebe846ea0a213e56113bd9a8f487ba8d4b70a4a6c9e3
+  sha256: 3694b0afe9a56b398813dff9c60cc5780462e5968f2e91e5d1e2740a922fa4a8
   text: |-
     - **AD-034-R38. Where a project declares slices, its full suite runs on main on a schedule, not on a task's change: the dispatcher's pass runs `dispatch.gate_command` in a detached checkout of main's head (call site `scheduled`, one `gate_run` record) when `dispatch.gate.full_every_s` has passed since the newest full gate on record, on a pass with no session in flight and nothing eligible to launch, and before a launch once `dispatch.gate.full_overdue_s` has passed; `seldon gate main` runs it by hand. The cadence never promotes a task's gate.**
       Amends R29. The checkout is `dispatch.gate.scheduled_worktree`, made fresh for each run and removed after it, with
@@ -36,4 +36,4 @@ consumer:
 - tests/test_sel055_scheduled_gate.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: bb838079c7f329c1e0ecedc344757cdac5a6f6af2a5a048072ee6423e0e7571e
+provisional_id: 278c44b141f10cf9870a6ebf522c6536ec1cc625a7b375a5dfdbce767192c398

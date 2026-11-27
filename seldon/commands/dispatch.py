@@ -1558,6 +1558,14 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         _record_pending(project_dir, config, driver, database, session_id, cfg)
 
     eligible = [r for r in rows if r["eligible"]]
+    if claim is None and not dry_run:
+        # SEL-055 (AD-034-R38): the full suite runs on main on a schedule, here, under the pass lease with no session in
+        # flight: on an idle pass once it is due, before a launch once it is overdue. A project with no slices has no
+        # schedule (every gate it runs is already full), so this is a no-op for it.
+        from seldon.commands import dispatch_gate as GATE
+        if GATE.maybe_run(project_dir, cfg, idle=not eligible, session_id=session_id, driver=driver,
+                          database=database, domain_config=domain_config) is not None:
+            _record_and_push(project_dir, config, cfg)
     if not eligible:
         # DN-006 decision 7, taken literally: **a pass in which nothing is eligible writes NO
         # event.** The log records assertions, and "nothing to do" is not one.

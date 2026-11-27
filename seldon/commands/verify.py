@@ -436,7 +436,8 @@ def check_gate(project_dir: Path, config: dict) -> CheckResult:
         cfg = D.load_dispatch_config(project_dir, config)
     except D.DispatchConfigError as exc:
         return CheckResult(name=name, symbol="warn", summary=f"not checked: the dispatch block: {str(exc)[:200]}")
-    warns = GP.warnings(cfg[GP.CONFIG_KEY], cfg["gate_command"], read_events(project_dir))
+    warns = GP.warnings(cfg[GP.CONFIG_KEY], cfg["gate_command"], read_events(project_dir),
+                        lane=cfg.get("coordination_lane"))  # SEL-055 (AD-034-R40)
     if warns:
         return CheckResult(name=name, symbol="warn", summary=f"{len(warns)} gate warning(s) (AD-034-R36): "
                                                              f"{warns[0][:200]}", details=warns)

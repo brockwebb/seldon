@@ -80,6 +80,12 @@ def test_a_bad_held_setting_is_refused_at_load(project, bad):
 
 
 # --------------------------------------------------------------------------------------------- through the pass
+#
+# SEL-055 (factory's filing of 2026-11-27, item 1): the pass reads every open task in the worker's test database, and
+# this module imports `project` without the `clean_test_db` mark its source module applies. A `t1` an earlier test on
+# the same xdist worker left blocked (`dispatcher: session_failed`) rang first: main's full gate went red on it on
+# 2026-11-27 (worker gw5), and again in SEL-055's own baseline. Reproduced in one process by running
+# tests/test_dispatch_stuck_and_journal.py first.
 
 def _block(project, driver, domain_config, tid, reason):
     for a, b in (("proposed", "accepted"), ("accepted", "in_progress")):
@@ -90,6 +96,7 @@ def _block(project, driver, domain_config, tid, reason):
                     authority="accepted", block_reason=reason)
 
 
+@pytest.mark.usefixtures("clean_test_db")
 def test_a_merge_blocked_task_rings_notify_with_its_reason_and_age(project, neo4j_driver, domain_config,
                                                                    monkeypatch):
     tid = _register(project, neo4j_driver, domain_config)

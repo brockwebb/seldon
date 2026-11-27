@@ -13,6 +13,8 @@ ISSUE_ENUMS = {
         "merge_blocked",
         # SEL-021 (factory F-010): a finding of a code or design review, traced to its fix, test and decision.
         "review_finding",
+        # SEL-055 (AD-034-R39): the scheduled full gate on main is red, and merges that can change a test are closed.
+        "main_red",
     ],
     "importance": ["high", "medium", "low"],
     "urgency": ["high", "medium", "low"],

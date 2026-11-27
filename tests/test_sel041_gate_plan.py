@@ -201,12 +201,14 @@ def test_markers_and_commands_run_as_declared(repo, tmp_path):
     assert "lint-ran" in (tmp_path / "gate.log").read_text()
 
 
-def test_the_cadence_promotes_the_next_gate_to_full(repo):
+def test_the_cadence_never_promotes_a_tasks_gate(repo):
+    """Amended by SEL-055 (AD-034-R38, amending R29): the cadence was a promotion of the next gate, so SEL-051's one
+    RESULT file paid two full gates for main's drift. The full suite now runs on main on a schedule
+    (`test_sel055_scheduled_gate.py`), and a plan's tier no longer depends on when the last full gate ran."""
     change(repo, {"src/a.py": "def a():\n    return 5\n"})
-    assert plan(repo, events=[])["reason"] == "cadence_due: no passing full gate is recorded"
-    old = plan(repo, events=[full_pass_event(age_s=90000)])
-    assert old["tier"] == "full" and old["reason"].startswith("cadence_due: the last passing full gate was at")
-    assert plan(repo, events=[full_pass_event(age_s=60)])["tier"] == "scoped"
+    for events in ([], [full_pass_event(age_s=90000)], [full_pass_event(age_s=60)]):
+        p = plan(repo, events=events)
+        assert p["tier"] == "scoped" and not any(r.startswith("cadence_due") for r in p["reasons"]), p
 
 
 def test_a_requested_full_gate(repo):
@@ -417,12 +419,13 @@ def test_the_cli_plans_and_runs_and_records(repo, tmp_path, monkeypatch):
     monkeypatch.chdir(repo)
     monkeypatch.delenv("SELDON_SESSION_ID", raising=False)
     res = CliRunner().invoke(main, ["gate", "plan"], catch_exceptions=False)
-    assert res.exit_code == 0 and "full: cadence_due" in res.output, res.output
+    # SEL-055 (AD-034-R38): no cadence promotion, so the first plan is already scoped.
+    assert res.exit_code == 0 and "scoped: 1 of" in res.output, res.output
     res = CliRunner().invoke(main, ["gate", "run", "--full"], catch_exceptions=False)
     assert res.exit_code == 0 and "gate full pass" in res.output, res.output
     res = CliRunner().invoke(main, ["gate", "plan", "--json"], catch_exceptions=False)
     p = json.loads(res.output)
-    assert p["tier"] == "scoped" and p["tests"] == ["tests/test_b.py"], ("the full pass satisfied the cadence", p)
+    assert p["tier"] == "scoped" and p["tests"] == ["tests/test_b.py"], p
     res = CliRunner().invoke(main, ["gate", "run"], catch_exceptions=False)
     assert res.exit_code == 0 and "gate scoped pass" in res.output, res.output
     stored = [json.loads(x) for x in (repo / "seldon_events.jsonl").read_text().splitlines()]

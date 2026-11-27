@@ -4,10 +4,15 @@
                                                        tests and commands (reads only)
     seldon gate run  [--base main] [--full]            run them and write the `gate_run` record (R33); exit 0 on a
                                                        pass, 1 on a red or timed-out gate
+    seldon gate main                                   SEL-055 (R38): the scheduled full gate on main's head, now, in
+                                                       a fresh checkout; exit 0 on a pass, 1 on a red or timed-out gate
 
 Run from the checkout to gate (a task's worktree, or the primary). The record goes to the primary checkout's event
 store, where the merge round reads it as evidence (R34). The full tier is `dispatch.gate_command`; `--full` asks for it
 (R29). A project with no `dispatch.gate.slices` plans full (`no_slices`), as every gate ran before this addendum.
+
+SEL-055 (AD-034-R39): while main's newest scheduled run is red, `plan` and `run` apply the closure the merge round
+applies (the red run's failed files run too), so a record a session makes with `seldon gate run` stands as evidence.
 """
 from __future__ import annotations
 
@@ -61,7 +66,8 @@ def _context(base: str | None, task: str | None, full: bool) -> dict:
     gcfg = cfg[GP.CONFIG_KEY]
     try:
         plan = GP.plan(tree, gcfg, base=base or cfg["branch"], gate_command=cfg["gate_command"], events=events,
-                       full=full, task_text=text, branch=branch, exclude=cfg.get("worktree_links") or ())
+                       full=full, task_text=text, branch=branch, exclude=cfg.get("worktree_links") or (),
+                       closure=GP.main_red(events) if GP.declared(gcfg) else None)
     except GP.GateConfigError as exc:
         raise click.ClickException(str(exc)) from exc
     stem = Path(source).stem if source else (branch or "gate").replace("/", "_")
@@ -88,6 +94,11 @@ def _print_plan(plan: dict) -> None:
         always = plan["always"]
         if always["changed_tests"] or always["last_failed"]:
             click.echo(f"  always run (R31): changed {always['changed_tests']}, last failed {always['last_failed']}")
+    red = plan.get("main_red")
+    if red:
+        click.echo(f"  main is red (scheduled run {str(red['event_id'])[:8]}, {red['outcome']}): closure applied as "
+                   f"{red['applied']}" + (f": {', '.join(plan['always'].get('main_red') or [])}"
+                                         if red["applied"] == "failed_files" else "") + " (AD-034-R39)")
 
 
 @gate_group.command("plan")
@@ -130,4 +141,38 @@ def run_command(base, full, task):
     if not result["ok"]:
         if result["failed_files"]:
             click.echo(f"  failed: {', '.join(result['failed_files'])}")
+        sys.exit(1)
+
+
+@gate_group.command("main")
+def main_command():
+    """SEL-055 (AD-034-R38): run the scheduled full gate on main's head now, in a fresh detached checkout, and record it
+    (call site `scheduled`). The dispatcher's pass runs the same thing when it is due. A red run opens the closure of
+    R39 (notify, an Issue); a pass after a red run lifts it. Exit 0 on a pass, 1 on a red or timed-out gate."""
+    from seldon.commands import dispatch_gate as GATE
+
+    primary = WT.anchor(Path.cwd().resolve())
+    config = load_project_config()
+    if not config.get("dispatch"):
+        raise click.ClickException("seldon.yaml has no `dispatch:` block: there is no gate_command to run")
+    try:
+        cfg = D.load_dispatch_config(primary, config)
+    except D.DispatchConfigError as exc:
+        raise click.ClickException(f"the dispatch block does not load: {exc}") from exc
+    driver = database = domain_config = None
+    try:
+        from seldon.commands.dispatch import _open_project
+        _, _, driver, database, domain_config, _ = _open_project()
+    except Exception as exc:  # noqa: BLE001 -- said, never swallowed: the run and its record do not need the graph
+        click.echo(f"gate main: the graph is not open ({type(exc).__name__}: {exc}); a red run opens no Issue",
+                   err=True)
+    try:
+        out = GATE.run_scheduled(primary, cfg, "requested: seldon gate main", driver=driver, database=database,
+                                 domain_config=domain_config, actor=resolve_cli_actor())
+    except (GATE.ScheduledBusy, GP.GateConfigError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    finally:
+        if driver is not None:
+            driver.close()
+    if not out["ok"]:
         sys.exit(1)

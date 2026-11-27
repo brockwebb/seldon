@@ -932,7 +932,7 @@ def _get_dispatch_section(project_dir: str) -> Optional[str]:
             + (f"; last run {last_gate.get('tier')} {last_gate.get('outcome')} in "
                f"{float(last_gate.get('seconds') or 0):.0f} s ({last_gate.get('reason')})" if last_gate
                else "; no gate run recorded yet"))
-        for w in GP.warnings(gcfg, cfg["gate_command"], gate_events):
+        for w in GP.warnings(gcfg, cfg["gate_command"], gate_events, lane=cfg.get("coordination_lane")):
             lines.append(f"**Gate warning:** {w}")
 
         # DESK-001 Part B step 5: what the LAST pass refused, by candidate and criterion, with the

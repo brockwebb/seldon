@@ -285,6 +285,13 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         S._record_pending(project_dir, config, driver, database, session_id, cfg)
 
     ready = [r for r in rows if r["eligible"]]
+    if inplace_claim is None and not running and not dry_run:
+        # SEL-055 (AD-034-R38): the scheduled full gate on main, as the serial pass runs it, only with no session in
+        # flight (a worktree session's merge would otherwise race the closure it opens).
+        from seldon.commands import dispatch_gate as GATE
+        if GATE.maybe_run(project_dir, cfg, idle=not ready, session_id=session_id, driver=driver, database=database,
+                          domain_config=domain_config) is not None:
+            S._record_and_push(project_dir, config, cfg)
     plan = D.plan_launches(
         [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in ready],
         [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": r["lane"]} for r in running],
@@ -1054,14 +1061,17 @@ def _mark(project_dir: Path, cfg: dict, phase: str, **fields) -> str | None:
 
 def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, base: str,
           task_id: str | None = None, branch: str | None = None, task_rel: str | None = None,
-          linked=()) -> dict:
+          linked=(), closure: dict | None = None, lane: bool = False) -> dict:
     """Run the project's gate in the worktree and record it. `{ok, exit_code, log_path, timed_out, tier, reason,
     seconds, gate_run}`.
 
     SEL-041 (AD-034-R35): the plan comes from the planner (`gate_plan.plan`) against `base`: with slices declared it
     is scoped or full by R29 to R32; without, it is full (`no_slices`) and runs `dispatch.gate_command` exactly as
     before. Either way the run is one `gate_run` record (R33), which the merge record's `gate_evidence` names by
-    `gate_run`. A tree the planner cannot read is gated in full (`plan_failed`), never skipped."""
+    `gate_run`. A tree the planner cannot read is gated in full (`plan_failed`), never skipped.
+
+    SEL-055: `closure` (AD-034-R39) is the red scheduled run the plan must answer to (`gate_plan.main_red`); `lane`
+    (R40) marks the record of a coordination-lane branch."""
     from seldon.core import gate_plan as GP
     from seldon.core.events import read_events
 
@@ -1073,7 +1083,7 @@ def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, 
         text = (wt / task_rel).read_text(encoding="utf-8", errors="surrogateescape")
     try:
         plan = GP.plan(wt, gcfg, base=base, gate_command=cfg["gate_command"], events=events, task_text=text,
-                       branch=branch, exclude=linked)
+                       branch=branch, exclude=linked, closure=closure)
     except GP.GateConfigError as exc:
         plan = GP.unplanned(wt, base, str(exc), branch)
     with _gate_phase(project_dir, cfg, call_site, log, task_id):
@@ -1081,10 +1091,13 @@ def _gate(project_dir: Path, cfg: dict, wt: Path, stem: str, *, call_site: str, 
                         log_path=log, primary=project_dir)
     rel = D.config_rel(project_dir, log)
     ev = GP.emit(project_dir, GP.record_payload(plan, result, call_site=call_site, events=events, task_id=task_id,
-                                                branch=branch, log_rel=rel), actor=S.ACTOR)
-    return {"ok": result["ok"], "exit_code": result["exit_code"], "timed_out": result["timed_out"], "log_path": rel,
-            "tier": plan["tier"], "reason": plan["reason"], "seconds": result["seconds"],
-            "gate_run": ev["event_id"]}
+                                                branch=branch, log_rel=rel, lane=lane), actor=S.ACTOR)
+    out = {"ok": result["ok"], "exit_code": result["exit_code"], "timed_out": result["timed_out"], "log_path": rel,
+           "tier": plan["tier"], "reason": plan["reason"], "seconds": result["seconds"],
+           "gate_run": ev["event_id"]}
+    if plan.get("main_red"):
+        out["main_red"] = plan["main_red"]
+    return out
 
 
 def _spec_modified(driver, database, task_id: str, path: Path) -> bool:
@@ -1122,6 +1135,12 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
     wt = project_dir / extra["worktree"]
     linked = extra.get("linked") or []
     regated, gate, last, evidence = False, None, ("main_kept_moving", [], {}), None
+    # SEL-055 (AD-034-R39, R40): the closure a red scheduled run on main holds, read once for the round (only a pass
+    # writes scheduled runs, and no pass runs one while a session is in flight), and whether this is a lane branch.
+    from seldon.core import gate_plan as GP
+    from seldon.core.events import read_events as _read_events
+    red = GP.main_red(_read_events(project_dir)) if GP.declared(cfg.get(GP.CONFIG_KEY)) else None
+    is_lane = bool(extra.get("lane") and cfg.get("coordination_lane"))
 
     def unmerged(reason, files, **detail):
         flush_deduped()
@@ -1200,7 +1219,8 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
                 return blocked("regate_unavailable", overlap, attempt=attempt)
             if overlap:
                 regated, gate = True, _gate(project_dir, cfg, wt, stem, call_site="regate", base=main_sha,
-                                            task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked)
+                                            task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked,
+                                            closure=red, lane=is_lane)
                 if not gate["ok"]:
                     return blocked("regate_red", overlap, gate=gate, attempt=attempt)
         tip = dedupe() or WT.rev(wt, "HEAD")
@@ -1237,13 +1257,18 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         # change outside the branch's write set re-gates on overlap as before, and needs nothing new here.
         evidence = evidence or gate_evidence(finish, gate if regated else None, record,
                                              _gate_run_for(project_dir, session_tree))
+        if not GP.closure_admits(evidence, red):
+            # R39: main is red, and this evidence was made without the closure (a session's checks, a kept regate, a
+            # scoped record planned before main went red). The round runs its own evidence gate under the closure.
+            evidence = None
         if evidence is None:
             if not cfg.get("gate_command"):
                 return blocked(UNGATED, [], attempt=attempt,
                                why="no Stop gate check ran, no re-gate ran and no pass record is declared, and the "
                                    "project declares no `dispatch.gate_command` to run")
             gate = _gate(project_dir, cfg, wt, stem, call_site="merge_gate", base=main_sha,
-                         task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked)
+                         task_id=finish["task_id"], branch=branch, task_rel=rel, linked=linked, closure=red,
+                         lane=is_lane)
             if not gate["ok"]:
                 return blocked("regate_red", [], gate=gate, attempt=attempt, evidence_gate=True)
             evidence = {"source": "merge_gate", "gate": gate}
@@ -1298,6 +1323,10 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
             if record is not None:
                 merge["gate_record"] = record
             merge["gate_evidence"] = evidence
+            if red is not None:
+                merge["main_red"] = red.get("event_id")
+            if is_lane:
+                merge["lane"] = True
             flush_deduped()
             numbered = number_merged_register(project_dir, config, session_id, finish["task_id"], branch,
                                               driver=driver, database=database, domain_config=domain_config)

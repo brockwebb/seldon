@@ -95,9 +95,13 @@ repository.
   has no scheduled run: every one of its gates is already full (R37).
 - **AD-034-R39. While the newest scheduled run is red, the project's merges are closed to every change that can change a test's outcome, and the dispatcher says so: the red run rings `dispatch.notify` once and opens one Issue (`main_red`). Under closure the merge round's plans (re-gate and evidence gate) also run the test files the red run failed, and a red run that named none (a timeout, unparsed output) makes them full; a plan that selects nothing, because every changed path matched a slice declared `tests: none`, is not closed. Evidence that skipped the closure is not evidence under R26 while it holds. The closure ends when a later scheduled run passes, or when a branch merges on a passing full gate of its tip; after any merge under closure the scheduled run is due on the next pass.**
   Extends R31: the red run's failed files stay selected for as long as the closure holds, not only until the next
-  gate of any branch. The Stop gate does not apply the closure, because a session cannot be required to fix main
-  before it may end. The merge round applies it, and refuses evidence a session or a `seldon gate run` made without
-  it: a scoped `gate_run`, a Stop gate's checks, or a kept regate. It then runs its own evidence gate. A fix merges
+  gate of any branch. In turn R31's "last recorded gate" is a change's gate, never a scheduled run, and whether a plan
+  selects anything is judged on the branch's own paths before R31's files are added; otherwise a red scheduled run
+  would close the inert branches too (SEL-055's tests found this). The Stop gate does not apply the closure, because
+  a session cannot be required to fix main before it may end. The merge round applies it, and refuses evidence a
+  session or a `seldon gate run` made without it: a scoped `gate_run`, a Stop gate's checks, or a kept regate. It
+  then runs its own evidence gate. `seldon gate plan|run` apply the closure too, so a session's record made while it
+  holds stands. A fix merges
   when the failing files pass on its tree. A declared-inert branch (SEL-051's case once `cc_tasks/**` is so declared)
   merges, because by the project's declarations it cannot change main's result.
 - **AD-034-R40. A lane branch (AD-038-R40, R41) is planned like any other branch: R41 confines its paths to the lane's `writes`, and the slices classify them. A lane's `writes` are not a declaration that no test reads those paths. A project that runs a lane declares slices for its writes, and `seldon verify` warns when a lane's writes are not covered by a slice. The merge record and the `gate_run` record name the lane.**
