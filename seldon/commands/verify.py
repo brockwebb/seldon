@@ -260,15 +260,11 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
         if stale:
             findings.append(f"projection: {len(stale)} record(s) not projected as the register "
                             f"says (first: {', '.join(stale[:5])}); run `seldon decision project`")
-        with driver.session(database=database) as session:
-            bad = session.run(
-                "MATCH (t:Artifact)-[:CONSTRAINED_BY]->(d:Artifact:Decision) "
-                "WHERE d.state <> 'accepted' RETURN t.name AS t, d.decision_id AS d, d.state AS st"
-            ).data()
-        for row in bad:
-            findings.append(f"binding: {row['t']} is bound to {row['d']}, which is {row['st']} "
-                            f"(only accepted records bind, AD-033-R4)")
-            fixable_only = False
+        # SEL-058 (AD-033-R16): fixable. `--fix` projects first, then ends each edge that still binds nothing as a
+        # `link_removed` event, as it does a Ruling's (`Binding constraints`).
+        for row in dr.non_binding_decision_edges(driver, database):
+            findings.append(f"binding: {row['task_name']} is bound to {row['decision_id']}, which is {row['state']} "
+                            f"(only accepted records bind, AD-033-R4; `seldon verify --fix` ends the edge)")
     pending_line = _pending_line(pending)
     if not findings:
         return CheckResult(name="Decision register", symbol="pass",
@@ -471,6 +467,21 @@ def _fix_decisions(project_dir: Path, quiet: bool = False) -> None:
                                             result.stderr)
     if not quiet:
         click.echo("    " + result.stdout.strip().replace("\n", "\n    "))
+    # SEL-058 (AD-033-R16): after the projection, so an edge to a record the register still holds accepted stays.
+    from seldon.config import get_current_session, get_neo4j_driver, load_project_config
+    from seldon.core import decisions as dr
+
+    config = load_project_config(project_dir)
+    driver = get_neo4j_driver(config)
+    try:
+        removed = dr.prune_non_binding_decision_edges(project_dir=project_dir, driver=driver,
+                                                      database=config["neo4j"]["database"],
+                                                      session_id=get_current_session(project_dir))
+    finally:
+        driver.close()
+    if not quiet:
+        for row in removed:
+            click.echo(f"    ended {(row['task_name'] or row['task'])[:50]} → {row['decision_id']} [{row['state']}]")
 
 
 def _fix_governed(project_dir: Path, quiet: bool = False) -> None:

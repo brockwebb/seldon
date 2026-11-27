@@ -339,14 +339,43 @@ def judgment_criterion(criterion: str) -> str | None:
     return None
 
 
+#: SEL-058 (AD-037-R22): a marked line standing on its own at the start of a line in a Part, outside an Acceptance list.
+_BARE_MARK_RE = re.compile(r"^`?(?:check|judgment):")
+
+
+def bare_marked_lines(section: str) -> list[str]:
+    """The Part's marked lines written on their own (`check: CMD`, `` `check: CMD` ``, `judgment: why`) at column 0,
+    outside a fenced block: HB-221's form, directly under `## Part A:`. A list item is the Acceptance reader's."""
+    out, fenced = [], False
+    for line in section.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and _BARE_MARK_RE.match(line):
+            out.append(line.strip())
+    return out
+
+
 def part_criteria(text: str, name: str) -> dict:
-    """A Part's marked criteria: `{checks: [command], judgments: [why], section_found}`."""
+    """A Part's marked criteria: `{checks: [command], judgments: [why], section_found}`.
+
+    SEL-058 (AD-037-R22): both forms are read, each command once, in order: the criteria under an Acceptance label
+    (AD-037-R1) and a marked line standing on its own in the Part. hazbrief HB-221 and HB-222 wrote the second form
+    under every Part, as SEL-042's return told them to ("give each Part a `check:` line"), and the Stop gate recorded
+    `checks: []`, so the merge round ran the full gate as their evidence."""
     section = part_section(text, name)
     if section is None:
         return {"checks": [], "judgments": [], "section_found": False}
-    found = [c for _, c in criteria.acceptance_criteria(section)]
-    return {"checks": [cmd for cmd in (check_command(c) for c in found) if cmd],
-            "judgments": [j for j in (judgment_criterion(c) for c in found) if j],
+    found = [c for _, c in criteria.acceptance_criteria(section)] + bare_marked_lines(section)
+
+    def once(items):
+        seen = []
+        for item in items:
+            if item and item not in seen:
+                seen.append(item)
+        return seen
+    return {"checks": once(check_command(c) for c in found),
+            "judgments": once(judgment_criterion(c) for c in found),
             "section_found": True}
 
 

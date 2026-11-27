@@ -79,10 +79,12 @@ def test_a_copied_project_map_still_rings_api_key_present_on_its_first_pass(tmp_
             block["stuck_after_passes_by_criterion"] = by
         return D.load_dispatch_config(tmp_path, {"dispatch": block})["stuck_after_passes_by_criterion"]
 
-    assert load({"dirty_tree": 1}) == {"dirty_tree": 1, "api_key_present": 1}
-    assert load({}) == {"api_key_present": 1}                 # dirty_tree keeps the meaning an empty map gave it
-    assert load({"api_key_present": 4}) == {"api_key_present": 4}
-    assert load(None) == D.STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT
+    # SEL-058 (AD-037-R23): `environment_in_flight` joined the keys a copied map cannot leave out, at its own default.
+    wait = {"environment_in_flight": D.ENVIRONMENT_WAIT_PASSES_DEFAULT}
+    assert load({"dirty_tree": 1}) == {"dirty_tree": 1, "api_key_present": 1, **wait}
+    assert load({}) == {"api_key_present": 1, **wait}         # dirty_tree keeps the meaning an empty map gave it
+    assert load({"api_key_present": 4}) == {"api_key_present": 4, **wait}
+    assert load(None) == {**D.STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT, **wait}
 
 
 def test_a_planted_key_rings_once_writes_nothing_more_and_clears_when_removed(proj, tmp_path):

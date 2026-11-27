@@ -753,7 +753,14 @@ STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1, "api_key_present": 1
 #: copied the kit's `{dirty_tree: 1}` map into every consumer (hazbrief-mcp, factory, aacps-ai-policy) before this key
 #: existed, so without this the consumer that motivated it would alarm after three passes, not one. Only the new key:
 #: a map that leaves out `dirty_tree` (an empty map, as several tests write) keeps the meaning it had.
-STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED = {"api_key_present": 1}
+#: SEL-058 (AD-037-R23, hazbrief's 2026-11-24 filing item 3): a consumer's wait on a producer's lease rings once it has
+#: held one holding window for this many passes. A producer's merge window is normal and clears by itself, so the
+#: default is not the task streak's three. Basis: seldon's full gate took 2,408 s at `-n 6` (SEL-055's baseline), the
+#: longest window a producer holds in normal running; twelve passes at the standing `poll_interval_s: 300` is one hour,
+#: past that. hazbrief waited about 100 minutes on 2026-11-24 and nothing rang. Not measured as a distribution.
+ENVIRONMENT_WAIT_PASSES_DEFAULT = 12
+STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED = {"api_key_present": 1,
+                                                "environment_in_flight": ENVIRONMENT_WAIT_PASSES_DEFAULT}
 #: SEL-052 (factory's 2026-11-24 filing "a hold that waits on a person tells nobody"): a task in `blocked` is not a
 #: candidate, so the stuck alarm above never counts it, and the one banner its finish raised is dismissed and gone.
 #: FAC-06 sat `merge_blocked` for ten days; critical-thinking-ai CTAI-006R twenty minutes. A blocked task waits on a

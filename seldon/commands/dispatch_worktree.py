@@ -292,6 +292,10 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         if GATE.maybe_run(project_dir, cfg, idle=not ready, session_id=session_id, driver=driver, database=database,
                           domain_config=domain_config) is not None:
             S._record_and_push(project_dir, config, cfg)
+        # SEL-058 (AD-033-R15): an imported register's new records reach this project's graph on the pass.
+        if project_imports(project_dir, config, cfg, driver=driver, database=database, domain_config=domain_config,
+                           session_id=session_id) is not None:
+            S._record_and_push(project_dir, config, cfg)
     plan = D.plan_launches(
         [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in ready],
         [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": r["lane"]} for r in running],
@@ -1617,6 +1621,50 @@ def _project_register(project_dir: Path, config: dict, driver, database: str, do
     click.echo(f"register: projected {rep.created} created, {rep.updated} updated, {rep.unchanged} unchanged")
     return {"error": None, "created": rep.created, "updated": rep.updated, "unchanged": rep.unchanged,
             "transitions": rep.transitions}
+
+
+#: SEL-058 (AD-033-R15): the pass projected the register because an imported repository's numbered records changed.
+EVENT_REGISTER_PROJECTED = "register_projected"
+#: Beside the lease (runtime state, ignored with it): the imports fingerprint last projected, and the last error.
+REGISTER_IMPORTS_STATE_FILE = "register_imports.json"
+
+
+def project_imports(project_dir: Path, config: dict, cfg: dict, *, driver, database: str, domain_config,
+                    session_id) -> dict | None:
+    """SEL-058 (AD-033-R15), on the pass, in the primary, with no session in flight: project the register when an
+    imported repository's numbered records differ from those last projected here. None when nothing changed (or the
+    project imports nothing).
+
+    Before this only the merge round projected, and only when the merged branch brought the importer's own pending
+    records; a record seldon or squiddy added left hazbrief's `seldon verify` CRITICAL on the primary until a person ran
+    `seldon decision project` there (hazbrief's 2026-11-27 filing). The projection is idempotent by record hash
+    (AD-033-R11). A failed projection keeps the old fingerprint, so the next pass retries; its `register_projected`
+    record is written once per distinct error. Never raises."""
+    from seldon.core import decisions as dr
+    try:
+        now = dr.imports_fingerprint(project_dir, config)
+    except (dr.RegisterError, OSError) as exc:
+        click.echo(f"register: imports not read ({type(exc).__name__}: {exc})", err=True)
+        return None
+    if not now:
+        return None
+    path = D.config_path(project_dir, cfg["lease_file"]).parent / REGISTER_IMPORTS_STATE_FILE
+    try:
+        prior = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except json.JSONDecodeError:
+        prior = {}                          # a corrupt state file projects again: idempotent, never silent
+    last = prior.get("fingerprint") or {}
+    changed = sorted(r for r in now if last.get(r) != now[r])
+    if not changed:
+        return None
+    out = _project_register(project_dir, config, driver, database, domain_config, session_id)
+    payload = {"reason": "imports_changed", "changed": changed, **out}
+    state = {"fingerprint": last if out.get("error") else now, "error": out.get("error")}
+    if not out.get("error") or out.get("error") != prior.get("error"):
+        S._emit(project_dir, session_id, EVENT_REGISTER_PROJECTED, payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return payload
 
 
 def commit_register(project_dir: Path, paths: list, message: str) -> dict:

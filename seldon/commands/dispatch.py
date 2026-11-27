@@ -1566,6 +1566,11 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         if GATE.maybe_run(project_dir, cfg, idle=not eligible, session_id=session_id, driver=driver,
                           database=database, domain_config=domain_config) is not None:
             _record_and_push(project_dir, config, cfg)
+        # SEL-058 (AD-033-R15): an imported register's new records reach this project's graph on the pass.
+        from seldon.commands import dispatch_worktree as W
+        if W.project_imports(project_dir, config, cfg, driver=driver, database=database,
+                             domain_config=domain_config, session_id=session_id) is not None:
+            _record_and_push(project_dir, config, cfg)
     if not eligible:
         # DN-006 decision 7, taken literally: **a pass in which nothing is eligible writes NO
         # event.** The log records assertions, and "nothing to do" is not one.
@@ -1967,6 +1972,9 @@ def _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run) -> list:
     state, alarms = D.advance_stuck(
         previous, {k: {"criterion": v["criterion"]} for k, v in refusals.items()},
         lambda criterion: D.stuck_threshold(cfg, criterion), _now())
+    # SEL-058: the standing streaks (`dispatcher:<reason>`) are counted and cleared by their own conditions, after
+    # this runs; rewriting the file from task refusals alone restarted them every pass, so none above 1 ever rang.
+    state = {**{k: v for k, v in previous.items() if str(k).startswith(D.STANDING_KEY_PREFIX)}, **state}
     D.write_stuck_state(project_dir, cfg, state)
     for task_id in alarms:
         row = refusals[task_id]["row"]
@@ -2563,6 +2571,8 @@ def _premise_review(project_dir, config, driver, database, domain_config, sessio
     premise. A dry run reviews and records nothing."""
     from seldon.core import stations as S
     review = _stations_mod().premise_review(project_dir, config, cfg, row)
+    if not dry_run and (review.get("environment") or {}).get("outcome") == "true":
+        _environment_cleared(project_dir, cfg)
     if review["ok"] or dry_run:
         if not review["ok"]:
             click.echo(f"dry run: {row['task_id'][:8]} would be refused on its premises", err=True)
@@ -2583,6 +2593,7 @@ def _premise_review(project_dir, config, driver, database, domain_config, sessio
             _record_and_push(project_dir, config, cfg)
         for line in environment_lines(env["held"], "holds"):
             click.echo(f"refused: {S.REFUSED_ENVIRONMENT_IN_FLIGHT}: {line}", err=True)
+        _environment_wait(project_dir, session_id, cfg, env["held"])
         return review
     false = review["false"]
     names = "; ".join(f"line {f.get('line')}: {f.get('statement')} ({f.get('outcome')})" for f in false)
@@ -2594,6 +2605,27 @@ def _premise_review(project_dir, config, driver, database, domain_config, sessio
     click.echo(f"refused {row['task_id'][:8]}: {S.REFUSED_PREMISE_FALSE}: {names} (Issue {str(issue_id)[:8]})",
                err=True)
     return review
+
+
+def _environment_wait(project_dir, session_id, cfg, held: dict) -> bool:
+    """SEL-058 (AD-037-R23): count one pass of a wait on producer leases in the stuck streak, as a standing condition
+    of the project (`dispatcher:environment_in_flight`), one streak per holding window. At its threshold
+    (`ENVIRONMENT_WAIT_PASSES_DEFAULT` unless the project names the criterion) it writes one `dispatch_stuck` and runs
+    `notify` once. hazbrief's queue waited about 100 minutes on seldon's lease on 2026-11-24 and nothing told a person;
+    the one `dispatch_refused` per window is a record, not a bell."""
+    windows = {n: h.get("phase_since") or h.get("acquired_at") for n, h in held.items()}
+    detail = {"held": {n: {k: h.get(k) for k in ("holder", "task", "phase", "phase_since", "acquired_at")}
+                       for n, h in held.items()}}
+    lines = "; ".join(environment_lines(held, "holds"))
+    return _standing_streak(project_dir, session_id, cfg, QS.REFUSED_ENVIRONMENT_IN_FLIGHT,
+                            json.dumps(windows, sort_keys=True), detail,
+                            remedy=f"this project's launches wait on {lines}. It clears when the holder's window "
+                                   f"ends; a holder that is stuck is that project's to clear")
+
+
+def _environment_cleared(project_dir, cfg) -> None:
+    """The first reviewed pass with no producer lease in its way ends the wait's streak (AD-037-R23)."""
+    _standing_cleared(project_dir, cfg, QS.REFUSED_ENVIRONMENT_IN_FLIGHT)
 
 
 def _file_premise_issue(project_dir, driver, database, domain_config, session_id, row, names) -> str | None:

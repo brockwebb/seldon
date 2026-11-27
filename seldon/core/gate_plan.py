@@ -736,6 +736,19 @@ def passing_record(events: list, tree_hash: str) -> dict | None:
     return None
 
 
+def completion_evidence(primary: Path, branch: str, events: list) -> dict | None:
+    """SEL-058 (AD-034-R41): the passing, clean `gate_run` of `branch`'s tip tree in `primary`, or None.
+
+    What `seldon cc complete` needs before it completes a task the dispatcher blocked: whatever reached main by hand,
+    the tree main holds now has passed a gate (a scheduled run, `seldon gate main`, or a full `seldon gate run`).
+    None when the branch cannot be read: no evidence is not evidence."""
+    out = subprocess.run(["git", "-C", str(primary), "rev-parse", f"{branch}^{{tree}}"], capture_output=True,
+                         text=True)
+    if out.returncode != 0:
+        return None
+    return passing_record(events, out.stdout.strip())
+
+
 def evidence(e: dict) -> dict:
     """What a merge record's `gate_evidence` says of the `gate_run` it merged on."""
     q = e.get("payload") or {}

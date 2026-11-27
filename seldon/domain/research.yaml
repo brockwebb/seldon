@@ -252,6 +252,12 @@ artifact_types:
       redate_reason:
         category: system
         description: "One line: why the prune kept this FUTURE proposal (its trigger is still plausible, or an open task points at it)."
+      completion_gate:
+        category: system
+        description: "The `gate_run` event a blocked task was completed on by `seldon cc complete`: a passing, clean gate of the tree the dispatch branch held then. See AD-034-R41."
+      completed_ungated:
+        category: system
+        description: "The operator's reason for completing a blocked task with no passing gate on the dispatch branch's tip (`seldon cc complete --ungated`). See AD-034-R41."
       claimed_by:
         category: system
         description: "Agent identifier that took the task in_progress ('desktop', 'cc', or a caller-supplied id). Set on the accepted -> in_progress transition. See AD-028."

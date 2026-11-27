@@ -1011,6 +1011,38 @@ def render_rulings(matches: list, written: int) -> str:
     return "\n".join(lines)
 
 
+def _blocked_completion(project_dir: Path, config: dict, ungated: str | None) -> tuple[dict, str | None]:
+    """AD-034-R41 for one blocked task: `(properties to record, refusal or None)`.
+
+    Evidence is a passing, clean `gate_run` of the dispatch branch's tip tree in the primary checkout's store
+    (`gate_plan.completion_evidence`). A project that declares no dispatch block has no gate to require. The operator's
+    `--ungated REASON` completes it anyway, and the reason is recorded on the task (AD-034-R26: a gate that ran nothing
+    is not evidence, so the override says so on its face instead of passing for one)."""
+    from seldon.core import gate_plan as GP
+    from seldon.core import worktree as WT
+    from seldon.core.dispatch import DispatchConfigError, load_dispatch_config
+    from seldon.core.events import read_events
+
+    if ungated is not None:
+        if not ungated.strip():
+            return {}, "--ungated needs a reason: it is recorded on the task as the override's grounding"
+        return {"completed_ungated": ungated.strip()}, None
+    if not config.get("dispatch"):
+        return {}, None
+    try:
+        cfg = load_dispatch_config(project_dir, config)
+    except DispatchConfigError as exc:
+        return {}, f"blocked_ungated: the dispatch block does not load, so no gate evidence can be read: {exc}"
+    primary = WT.anchor(Path(project_dir).resolve())
+    found = GP.completion_evidence(primary, cfg["branch"], read_events(primary))
+    if found is not None:
+        return {"completion_gate": found.get("event_id")}, None
+    return {}, (f"blocked_ungated: this task is blocked, so the dispatcher did not merge it, and no passing gate is "
+                f"recorded for the tree `{cfg['branch']}` holds now (AD-034-R41). Run `seldon gate main` (or "
+                f"`seldon gate run --full` on {cfg['branch']}) and complete it once that passes, or complete it with "
+                f"`--ungated \"<reason>\"`, which records the override on the task.")
+
+
 @click.group("cc")
 def cc_group():
     """CC task lifecycle commands."""
@@ -1027,7 +1059,14 @@ def cc_group():
     help="Commit what registration verified: the untracked task file, and any governing design note "
          "(with its addenda and ruling records) git does not hold, in one commit (SEL-006).",
 )
-def cc_complete(filepath, note, allow_untracked):
+@click.option(
+    "--ungated",
+    default=None,
+    metavar="REASON",
+    help="Complete a task the dispatcher blocked with no passing gate on the dispatch branch's tip, recording "
+         "REASON on the task (AD-034-R41). The operator's override; the machine never passes it.",
+)
+def cc_complete(filepath, note, allow_untracked, ungated):
     """Record a CC task as completed in the graph.
 
     Creates a ResearchTask artifact in 'completed' state linked to the task file.
@@ -1149,6 +1188,18 @@ def cc_complete(filepath, note, allow_untracked):
             driver.close()
             raise SystemExit(1)
 
+        # SEL-058 (AD-034-R41): a task the dispatcher blocked reached main, if it did, by hand. It completes on a
+        # passing gate of the tree the dispatch branch holds now, or on the operator's recorded override; never on
+        # nothing (hazbrief HB-221: blocked `regate_red`, merged by hand, completed, and its successor released onto a
+        # red main). Refused before anything is written.
+        gate_props: dict = {}
+        if current_state == "blocked":
+            gate_props, gate_refusal = _blocked_completion(project_dir, config, ungated)
+            if gate_refusal:
+                click.echo(f"ERROR: {gate_refusal}\n  File: {rel_path}", err=True)
+                driver.close()
+                raise SystemExit(1)
+
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
         click.echo(
@@ -1165,7 +1216,7 @@ def cc_complete(filepath, note, allow_untracked):
                 driver=driver,
                 database=database,
                 artifact_id=existing_id,
-                properties={"completed_at": completed_at},
+                properties={"completed_at": completed_at, **gate_props},
                 actor="cc",
                 authority="accepted",
                 session_id=session_id,

@@ -875,19 +875,27 @@ def settings(project_dir: Path, config: dict) -> Optional[Settings]:
         raise RegisterError("seldon.yaml decisions.repository is required: the qualifier of this "
                             "repository's ids (`squiddy`, `seldon`, `arnold`)")
     repos: dict[str, Path] = {block["repository"]: root}
+    # SEL-058 (AD-034-R8, as SEL-018 applied it to the dispatch paths): another repository's path is written for the
+    # checkout the operator works in, so it resolves against the primary checkout. From a linked worktree
+    # (`<repo>/.claude/worktrees/<name>`) `../seldon` named `<repo>/.claude/worktrees/seldon`, which does not exist,
+    # and the register read zero imported records with no error (hazbrief HB-240). This repository's own register
+    # stays the worktree's: its pending records are the branch's.
+    from seldon.core.worktree import anchor
+    home = Path(anchor(root)).resolve()
     for name, rel in (block.get("repositories") or {}).items():
-        repos[name] = (root / rel).resolve()
+        if name != block["repository"]:
+            repos[name] = (home / rel).resolve()
     imports: list[str] = []
     for entry in block.get("import") or []:
         if isinstance(entry, dict):
             name = entry["repository"]
             if entry.get("path"):
-                repos[name] = (root / entry["path"]).resolve()
+                repos[name] = (home / entry["path"]).resolve()
         else:
             name = str(entry)
         imports.append(name)
         # Convention: repositories sit side by side (~/GitHub/<name>). Configured paths win.
-        repos.setdefault(name, (root.parent / name).resolve())
+        repos.setdefault(name, (home.parent / name).resolve())
     base = block.get("baseline") or {}
     return Settings(
         repository=block["repository"], root=root,
@@ -901,6 +909,31 @@ def settings(project_dir: Path, config: dict) -> Optional[Settings]:
         probe_findings=(root / block["probe"]["findings"]).resolve() if (block.get("probe") or {}).get("findings") else None,
         probe_exclusions=(root / block["probe"]["exclusions"]).resolve() if (block.get("probe") or {}).get("exclusions") else None,
     )
+
+
+def imports_fingerprint(project_dir: Path, config: dict) -> dict[str, str]:
+    """SEL-058 (AD-033-R15): `{imported repository: sha256 of its numbered register files}`, empty when the project
+    imports nothing (or declares no register). Pending files are left out: the projection reads numbered records only
+    (SEL-052). The dispatcher's pass compares this with the fingerprint it last projected, so an import's new records
+    reach the importer's graph without a merge of the importer's own."""
+    s = settings(project_dir, config)
+    if s is None:
+        return {}
+    u = Universe(s)
+    out: dict[str, str] = {}
+    for repo in s.imports:
+        if repo == s.repository:
+            continue
+        h = hashlib.sha256()
+        reg = u.register(repo).path
+        if reg.is_dir():
+            for f in sorted(reg.rglob("*")):
+                rel = f.relative_to(reg)
+                if not f.is_file() or rel.parts[0] == PENDING_DIR:
+                    continue
+                h.update(str(rel).encode("utf-8") + b"\0" + f.read_bytes() + b"\0")
+        out[repo] = h.hexdigest()           # an absent register hashes as an empty one: no records either way
+    return out
 
 
 class Universe:
@@ -1842,6 +1875,32 @@ def project(*, project_dir: Path, config: dict, driver, database: str, domain_co
         if render:
             rep.rendered = str(write_rendered(u).relative_to(u.s.root))
     return rep
+
+
+def non_binding_decision_edges(driver, database: str) -> list[dict]:
+    """`constrained_by` edges to a Decision that is not `accepted` (AD-033-R4: only accepted records bind), as
+    `{task, task_name, decision, decision_id, state}`. What `seldon verify` reports as `binding:`."""
+    with driver.session(database=database) as session:
+        return session.run(
+            "MATCH (t:Artifact)-[:CONSTRAINED_BY]->(d:Artifact:Decision) WHERE d.state <> 'accepted' "
+            "RETURN t.artifact_id AS task, t.name AS task_name, d.artifact_id AS decision, "
+            "d.decision_id AS decision_id, d.state AS state ORDER BY t.name, d.decision_id").data()
+
+
+def prune_non_binding_decision_edges(*, project_dir: Path, driver, database: str,
+                                     session_id: Optional[str] = None) -> list[dict]:
+    """SEL-058 (AD-033-R16): end every edge `non_binding_decision_edges` finds, each as a `link_removed` event, the
+    way `governed.prune_non_binding_constraints` ends a Ruling's (`seldon verify --fix`). A supersession never moved or
+    ended these edges and `seldon link` has no removal, so hazbrief HB-240 ended HB-214's edge to the superseded
+    `hazbrief-mcp:HBD-474` with a script. Whether a task is bound to the superseding record is registration's
+    matching, not this repair's."""
+    from seldon.core.artifacts import remove_link
+    rows = non_binding_decision_edges(driver, database)
+    for row in rows:
+        remove_link(project_dir=project_dir, driver=driver, database=database, from_id=row["task"],
+                    to_id=row["decision"], rel_type="constrained_by", actor=ACTOR, authority="accepted",
+                    session_id=session_id)
+    return rows
 
 
 def demote_positional_rulings(*, project_dir: Path, driver, database: str,
