@@ -204,7 +204,7 @@ if spec.get("rendezvous"):
     mark("rendezvous_missed" if missing else "rendezvous_met")
 if spec.get("dump_env"):
     Path(spec["dump_env"]).write_text(json.dumps(
-        {{k: v for k, v in os.environ.items() if k.startswith("ANTHROPIC_DEFAULT_")}}))
+        {{k: v for k, v in os.environ.items() if k.startswith(spec.get("dump_env_prefix", "ANTHROPIC_DEFAULT_"))}}))
 if spec.get("pidfile"):
     Path(spec["pidfile"]).write_text(str(os.getpid()))
 if spec.get("snapshot_lease"):
