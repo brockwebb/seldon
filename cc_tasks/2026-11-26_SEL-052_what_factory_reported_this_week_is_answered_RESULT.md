@@ -137,6 +137,10 @@ Full suite on the branch at `38c675a` (`-n 6`, 2026-11-27T02:47Z, 2,131 s): 3,59
 ## For the consumer
 
 One return goes to factory, covering all five filings and the two observations. It is written from the next section.
+Filed as factory FAC-34 (`15f2cdde`), committed in factory at `2f53656` by its registration. All five filings are
+completed in seldon's graph: `61cafca4`, `6544f067`, `6530b579`, `179b57bc` and `706c40a2` (AD-036-R17). SEL-051's
+predecessor, `61cafca4`, is completed, so SEL-051 no longer waits. Filing `81e09bae` ("a project needs a premise the
+dispatcher evaluates") arrived during this session and is not answered here.
 
 ## For factory
 
