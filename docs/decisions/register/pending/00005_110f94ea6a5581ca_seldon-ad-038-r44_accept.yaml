@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-038-R44
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: 'The session guard: the PreToolUse tool gate refuses any tool call that names a path under `dispatch.guard.deny_paths` or `dispatch.hive.secrets_dir`, by a file tool''s path argument (resolved) or by a Bash command''s or a search''s text (resolved, `~`, `$HOME` and `/private` spellings), before it reads the event store; the paths ride on the hook''s own command line (`--deny-path`)'
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 101
+  - 103
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R44. The session guard: the PreToolUse tool gate refuses any tool call that names a path under `dispatch.guard.deny_paths` or `dispatch.hive.secrets_dir`, by a file tool's path argument (resolved) or by a Bash command's or a search's text (resolved, `~`, `$HOME` and `/private` spellings), before it reads the event store; the paths ride on the hook's own command line (`--deny-path`).**
+      It stops a session's ordinary reach and is not a wall: a session runs as the operator's Unix user, so a determined
+      process can still read the file. The board's own mint ledger stays factory's second check.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R44
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/controls.py
+- seldon/commands/dispatch_stations.py
+- tests/test_sel054_identity_and_controls.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 110f94ea6a5581cab9099d3b6e8beb41d73a5c6688162a565027f1eaff6f3382

@@ -1488,7 +1488,19 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         return W.pass_parallel(project_dir, config, driver, database, domain_config,
                                session_id, cfg, lease, dry_run, filing=filing)
     band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
-    claim = _claim_in_flight(driver, database)
+    # SEL-054 (AD-038-R40): with a coordination lane, a lane task running under its own supervisor is not the claim in
+    # flight (c6 is the in-place claim's), and one whose supervisor died is blocked here as a worktree task's is.
+    from seldon.commands import dispatch_lane as LANE
+    lane = LANE.lane_of(cfg)
+    lane_running = []
+    if lane:
+        lane_running, inplace = LANE.split_claims(project_dir, cfg, _claims_in_flight(driver, database))
+        if not dry_run and lane_running:
+            from seldon.commands import dispatch_worktree as W
+            lane_running = W._reap_stale(project_dir, driver, database, domain_config, session_id, cfg, lane_running)
+        claim = ({k: inplace[0].get(k) for k in ("artifact_id", "claimed_by", "claimed_at")} if inplace else None)
+    else:
+        claim = _claim_in_flight(driver, database)
     # AD-038-R1: reconcile FIRST, before anything reads the tree. Every dirty path of machine-written
     # governed state (the event store, the prior-art logs, the decision register, the cadence's
     # write-back, registered task files and their addenda) is committed, one commit per class,
@@ -1531,7 +1543,8 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     ooda = _ooda_waits(project_dir, cfg, tasks)
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
                               launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda)
-                   for t in tasks])
+                   for t in tasks], lane)
+    LANE.mark_lane_rows(rows, lane_running, lane)
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
     _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
@@ -1577,6 +1590,11 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
     # AD-037-R6 (a): premise review, BEFORE the claim, over the eligible tasks in FIFO order. A false premise
     # refuses that task (an Issue names it) and the next eligible task is reviewed; a sibling's lease on this
     # project's environment refuses the pass, since it holds for every task here alike.
+    # SEL-054 (AD-038-R42, R45): first the project's own conditions, which hold for every task here alike.
+    if not _launch_gates(project_dir, config, session_id, cfg, dry_run):
+        if not dry_run:
+            _push(project_dir, cfg)
+        return
     chosen = None
     for row in eligible:
         review = _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row,
@@ -1599,6 +1617,10 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
                                "source_file": chosen["source_file"],
                                "criteria": chosen["criteria"],
                                "premises": chosen["premises"]}, indent=1, default=str))
+        return
+    if chosen.get("lane"):
+        # AD-038-R40: a lane task runs under its own supervisor, so this pass ends and the next may launch a build.
+        LANE.launch(project_dir, config, driver, database, domain_config, session_id, cfg, chosen)
         return
     _launch_inplace(project_dir, config, driver, database, domain_config, session_id, cfg,
                     lease, chosen)
@@ -1694,12 +1716,22 @@ def _launch_inplace(project_dir, config, driver, database, domain_config, sessio
     D.mark_phase(lease.path, D.PHASE_SESSION, task=chosen["task_id"], writes=[x["repo"] for x in push_repos])
     started = time.monotonic()
     offset = _log_offset(log_path)
+    # SEL-054 (AD-038-R43): the session's board identity, minted by this process, in the session's environment only.
+    hive_env = _hive_env(project_dir, config, cfg, session_id, chosen["task_id"], chosen.get("name"),
+                         child_session_id)
+    inspector = _pushing(ST.holder_inspector(project_dir, cfg, chosen["task_id"]), project_dir, cfg)
+    from seldon.commands import dispatch_lane as LANE
+    if LANE.lane_of(cfg):
+        # SEL-054 (AD-038-R40): this holder is the only pass awake while its session runs; each tick it looks for a
+        # lane task to launch beside it.
+        inspector = LANE.beside(inspector, project_dir, config, driver, database, domain_config, session_id, cfg,
+                                lease, chosen["task_id"])
     # The CLI is started in the PRIMARY checkout: `--worktree <stem>` resolves `.claude/worktrees/<stem>` against
     # the repository it starts in, and enters it.
     code = _run(cmd, project_dir, log_path, child_session_id,
                 network_allowlist=chosen["criteria"]["c5"]["network_allowlist"],
-                extra_env=_worktree_env(project_dir, spec, cfg),
-                inspector=_pushing(ST.holder_inspector(project_dir, cfg, chosen["task_id"]), project_dir, cfg),
+                extra_env={**_worktree_env(project_dir, spec, cfg), **hive_env},
+                inspector=inspector,
                 inspect_every_s=cfg["poll_interval_s"],
                 on_reap=lambda reap, pid, sig: ST.record_reap(project_dir, chosen["task_id"], reap, pid, sig),
                 on_init=lambda init: W.name_worktree(project_dir, session_id, extra, init, cfg["worktree_links"]))
@@ -2173,17 +2205,27 @@ def _session_settings(project_dir: Path, cfg: dict) -> dict:
     """
     scfg = QS.load_stations_config(cfg)
 
-    def hook(sub: str, timeout: int | None = None) -> dict:
+    def hook(sub: str, timeout: int | None = None, extra: tuple = ()) -> dict:
         h = {"type": "command", "command": " ".join(shlex.quote(a) for a in (
-            sys.executable, "-P", "-m", "seldon", "dispatch", sub, "--project", str(Path(project_dir).resolve())))}
+            sys.executable, "-P", "-m", "seldon", "dispatch", sub, "--project", str(Path(project_dir).resolve()),
+            *extra))}
         if timeout:
             h["timeout"] = timeout
         return h
-    return {"worktree": {"baseRef": "head"},
-            "hooks": {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
-                      "PermissionDenied": [{"hooks": [hook("classifier-denied")]}],
-                      # DISP-001R Part B step 2: a hard stop is delivered at the session's next tool boundary.
-                      "PreToolUse": [{"matcher": "*", "hooks": [hook("tool-gate")]}]}}
+    # SEL-054 (AD-038-R44): the session guard's paths ride on the tool gate's own command line, so the launch line says
+    # what it guards and the planted controls (`try_limits`) try exactly the command a session runs.
+    from seldon.core import controls as CT
+    guard = tuple(a for path in CT.guard_paths(cfg) for a in ("--deny-path", path))
+    hooks = {"Stop": [{"hooks": [hook("stop-gate", int(scfg["stop_gate_timeout_s"]))]}],
+             "PermissionDenied": [{"hooks": [hook("classifier-denied")]}],
+             # DISP-001R Part B step 2: a hard stop is delivered at the session's next tool boundary.
+             "PreToolUse": [{"matcher": "*", "hooks": [hook("tool-gate", extra=guard)]}]}
+    notices = (cfg.get("hive") or {}).get("notices_hook")
+    if notices:
+        # SEL-054 (AD-038-R43): the board's notices hook on every project's sessions, from the one launch line,
+        # rather than in each repository's own settings. The command is the board's; seldon only places it.
+        hooks["PostToolUse"] = [{"matcher": "*", "hooks": [{"type": "command", "command": notices}]}]
+    return {"worktree": {"baseRef": "head"}, "hooks": hooks}
 
 
 def _launch_cmd(cfg: dict, prompt: str, spec: dict, worktree: bool | str = False,
@@ -2288,8 +2330,11 @@ def _run(cmd: list, project_dir: Path, log_path: Path, child_session_id: str,
     whenever the task declared no allowlist, so an inherited list can never license a `none`
     task's fetches: the helper that reads it refuses to run when it is unset.
     """
+    # SEL-054 (AD-038-R43): a board token in the dispatcher's own environment is no session's identity; a session gets
+    # only the one minted for it (`extra_env`).
+    from seldon.core import hive as HV
     env = {k: v for k, v in os.environ.items()
-           if k not in D.API_KEY_VARS and k != D.NETWORK_ALLOWLIST_ENV}
+           if k not in D.API_KEY_VARS and k != D.NETWORK_ALLOWLIST_ENV and k not in HV.INHERITED_STRIP}
     env.update(HEADLESS_ENV)
     env["SELDON_SESSION_ID"] = child_session_id
     if network_allowlist:
@@ -2600,3 +2645,148 @@ def lease_show():
 from seldon.commands import dispatch_worktree as _dispatch_worktree  # noqa: E402,F401
 # The stations' commands (QC-002, AD-037-R6), for the same reason.
 from seldon.commands import dispatch_stations as _dispatch_stations  # noqa: E402,F401
+
+
+# =============================================================================== SEL-054: gates before every launch
+
+#: The project-premise episode's state, beside the lease as the other standing conditions' are (gitignored).
+PROJECT_PREMISE_STATE_FILE = "dispatch_project_premise.json"
+
+
+def _limits_spec(project_dir: Path, cfg: dict) -> tuple:
+    """The limits this project's launch line sets, as the controls try them, and the stations config they read."""
+    from seldon.core import controls as CT
+    scfg = QS.load_stations_config(cfg)
+    hook = _session_settings(project_dir, cfg)["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    return CT.limits_spec(hook, CT.guard_paths(cfg), scfg), scfg
+
+
+def try_limits(project_dir: Path, cfg: dict) -> dict:
+    """Every limit this project's launch line sets, tried by its planted request (AD-038-R45)."""
+    from seldon.core import controls as CT
+    spec, scfg = _limits_spec(project_dir, cfg)
+    return CT.try_limits(spec, scfg, Path(project_dir))
+
+
+def _controls_gate(project_dir, config, session_id, cfg, dry_run) -> bool:
+    """AD-038-R45: the limits are tried when their fingerprint is new; a failed control refuses every launch.
+
+    One `limits_tried` per fingerprint (a standing condition is recorded where it begins), and the failure joins the
+    stuck streak (`limit_control_failed`) so it rings once. A dry run reads the last result and writes nothing."""
+    from seldon.core import controls as CT
+    spec, scfg = _limits_spec(project_dir, cfg)
+    fp = CT.spec_fingerprint(spec)
+    path = D.config_path(project_dir, cfg["lease_file"]).parent / CT.STATE_FILE
+    state = _read_state(path)
+    if state.get("fingerprint") != fp:
+        if dry_run:
+            click.echo(f"dry run: the launch line's limits ({fp}) have not been tried; a pass tries them first")
+            return True
+        out = CT.try_limits(spec, scfg, Path(project_dir))
+        state = {"fingerprint": fp, "ok": out["ok"], "tried_at": _now(), "failed": out["failed"]}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state, indent=1, default=str) + "\n", encoding="utf-8")
+        _emit(project_dir, session_id, CT.EVENT_LIMITS_TRIED,
+              {"fingerprint": fp, "ok": out["ok"], "rows": out["rows"], "spec": spec})
+        if not out["ok"]:
+            # Nothing launches, so nothing else commits it. A pass whose limits held commits the line with its launch.
+            _record_and_push(project_dir, config, cfg)
+    if state.get("ok"):
+        if not dry_run:
+            _standing_cleared(project_dir, cfg, CT.REFUSED_CONTROL_FAILED)
+        return True
+    names = "; ".join(f"{r.get('limit')} {json.dumps(r.get('request'), default=str)[:120]}: "
+                      f"{r.get('error') or r.get('output') or 'went through'}" for r in state.get("failed") or [])
+    click.echo(f"refused: {CT.REFUSED_CONTROL_FAILED}: a limit the launch line sets let its planted request "
+               f"through ({names}); nothing launches until the limits change and hold (AD-038-R45; "
+               f"`seldon dispatch controls` tries them now)", err=True)
+    if not dry_run:
+        _standing_streak(project_dir, session_id, cfg, CT.REFUSED_CONTROL_FAILED, identity=fp,
+                         detail={"fingerprint": fp, "failed": state.get("failed")},
+                         remedy="fix the limit named and run `seldon dispatch controls`")
+    return False
+
+
+def _project_premise_gate(project_dir, config, session_id, cfg, dry_run) -> bool:
+    """AD-038-R42: `dispatch.premises`, evaluated before any launch. A false one refuses this pass's launches and names
+    itself and its check's output; one `dispatch_refused` per episode (the same premises false), the stuck streak, no
+    Issue; the first pass on which every premise holds ends the episode. Nothing here touches a running session, a
+    merge or a redrive: they ran earlier in the pass."""
+    from seldon.core import lane as LN
+    premises = cfg.get(LN.PREMISES_KEY) or []
+    if not premises:
+        return True
+    scfg = QS.load_stations_config(cfg)
+    review = LN.review_project_premises(premises, QS.run_check, Path(project_dir), scfg["check_timeout_s"],
+                                        **QS.interpreter_kw(scfg))
+    path = D.config_path(project_dir, cfg["lease_file"]).parent / PROJECT_PREMISE_STATE_FILE
+    if review["outcome"] == "true":
+        if not dry_run:
+            _standing_cleared(project_dir, cfg, LN.REFUSED_PROJECT_PREMISE, path)
+        return True
+    identity = LN.episode_identity(review)
+    for f in review["false"]:
+        click.echo(f"refused: {LN.REFUSED_PROJECT_PREMISE}: {f['statement']} ({f['outcome']}, exit "
+                   f"{f['exit_code']}): `{f['command']}`: {f['output']}", err=True)
+    if dry_run:
+        return False
+    state = _read_state(path)
+    if state.get("identity") != identity:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"identity": identity, "first_seen": _now(), "passes": 1}, indent=1) + "\n",
+                        encoding="utf-8")
+        _emit(project_dir, session_id, D.EVENT_REFUSED,
+              {"task_id": None, "reason": LN.REFUSED_PROJECT_PREMISE, "false": review["false"]})
+        _record_and_push(project_dir, config, cfg)
+    else:
+        state["passes"] = int(state.get("passes", 0)) + 1
+        path.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    _standing_streak(project_dir, session_id, cfg, LN.REFUSED_PROJECT_PREMISE, identity=identity,
+                     detail={"false": review["false"]},
+                     remedy="the project's premise is false (seldon.yaml dispatch.premises); launches resume when "
+                            "its check passes")
+    return False
+
+
+def _launch_gates(project_dir, config, session_id, cfg, dry_run) -> bool:
+    """SEL-054: the project's own conditions on any launch, before a claim. Both are standing conditions."""
+    return (_project_premise_gate(project_dir, config, session_id, cfg, dry_run)
+            and _controls_gate(project_dir, config, session_id, cfg, dry_run))
+
+
+def _hive_env(project_dir: Path, config: dict, cfg: dict, session_id, task_id: str, name: str | None,
+              child_session_id: str) -> dict:
+    """AD-038-R43: mint the session's board identity, record its name and fingerprint, return the env it adds."""
+    from seldon.core import hive as HV
+    project = ((config or {}).get("project") or {}).get("name") or Path(project_dir).resolve().name
+    minted = HV.mint(cfg.get("hive"), project=project, task_id=task_id, task_name=name,
+                     session_id=child_session_id, cwd=Path(project_dir))
+    if minted is None:
+        return {}
+    _emit(project_dir, session_id, HV.EVENT_SESSION_IDENTITY,
+          HV.record(minted, task_id=task_id, child_session_id=child_session_id))
+    if not minted["ok"]:
+        click.echo(f"session identity not minted for {task_id[:8]}: {minted['error']}; it launches without "
+                   f"{HV.ENV_TOKEN} (a board is context, never a gate: AD-038-R43)", err=True)
+    return HV.session_env(minted, project=project, task_id=task_id)
+
+
+@dispatch_group.command("controls")
+def dispatch_controls():
+    """Try every limit the launch line sets with its planted request (AD-038-R45); exit 2 if one goes through."""
+    project_dir = Path.cwd().resolve()
+    while not (project_dir / "seldon.yaml").is_file() and project_dir != project_dir.parent:
+        project_dir = project_dir.parent
+    if not (project_dir / "seldon.yaml").is_file():
+        raise click.ClickException("no seldon.yaml at or above the working directory")
+    cfg = D.load_dispatch_config(project_dir)
+    out = try_limits(project_dir, cfg)
+    for r in out["rows"]:
+        verdict = "untried" if r.get("refused") is None else ("held" if r["refused"] else "FAILED")
+        req = r.get("request")
+        why = r.get("error") or r.get("why")
+        click.echo(f"{verdict:8} {r['limit']:14} {json.dumps(req, default=str)[:140] if req else ''}"
+                   + (f"  ({why})" if why else ""))
+    click.echo(f"limits fingerprint {out['fingerprint']}: {'every tried limit held' if out['ok'] else 'FAILED'}")
+    if not out["ok"]:
+        sys.exit(2)

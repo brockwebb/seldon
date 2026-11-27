@@ -630,7 +630,8 @@ def touches_overlap(a: dict, b: dict, resources: dict) -> list:
     return shared
 
 
-def plan_launches(candidates: list, running: list, max_parallel: int, resources: dict) -> dict:
+def plan_launches(candidates: list, running: list, max_parallel: int, resources: dict,
+                  lane: dict | None = None) -> dict:
     """Which of the otherwise-eligible candidates launch this pass, and why the rest wait.
 
     Args:
@@ -652,12 +653,30 @@ def plan_launches(candidates: list, running: list, max_parallel: int, resources:
     candidate reserves everything, so later candidates wait behind it rather than starve it:
     writer preference, the second readers-writers problem (Courtois, Heymans and Parnas,
     CACM 1971).
+
+    **The coordination lane (SEL-054, AD-038-R40).** With `lane` given, a row marked `lane: True` (its name matches
+    the lane's pattern) takes one of `lane["slots"]` reserved slots and nothing else: it is not held by an exclusive
+    task, running or waiting, and it holds nothing, because what a lane task may change is declared and the merge
+    refuses the rest (R41). A full lane defers it as `lane_slots`. Running lane tasks take no `max_parallel` slot.
+    Without `lane` the flag is ignored and every row is planned as before.
     """
+    from seldon.core import lane as LN
+    if lane:
+        lane_running = [r["task_id"] for r in running if r.get("lane")]
+        running = [r for r in running if not r.get("lane")]
     held = [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in running]
     slots = max_parallel - len(running)
     launch, deferred = [], {}
     for cand in candidates:
         c = cand["concurrency"]
+        if lane and cand.get("lane"):
+            if len(lane_running) < lane["slots"]:
+                launch.append(cand["task_id"])
+                lane_running.append(cand["task_id"])
+            else:
+                deferred[cand["task_id"]] = {"reason": LN.DEFERRED_LANE_SLOTS, "with": list(lane_running),
+                                             "overlap": []}
+            continue
         if c["exclusive"]:
             if held:
                 deferred[cand["task_id"]] = {"reason": "exclusive_waits",
@@ -808,7 +827,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "ooda_pending", "ooda_blocked",
                    # SEL-011 (AD-038-R12): a Spend header that names neither `zero` nor a token count. c4 used to
                    # report it as `above_band`, which sent its reader to the band for a header that does not parse.
-                   "spend_unreadable")
+                   "spend_unreadable",
+                   # SEL-054 (AD-038-R42, R45): a false project premise (`dispatch.premises`), and a limit the launch line
+                   # sets whose planted control went through. Both standing conditions of the project, not of a task.
+                   "project_premise_false", "limit_control_failed")
 
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
@@ -971,6 +993,18 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     if not isinstance(xbranch, str) or not xbranch.strip():
         raise DispatchConfigError(f"dispatch.cross_repo_branch must be a branch name, got {xbranch!r}")
     block["cross_repo_branch"] = xbranch
+    # SEL-054 (AD-038-R40 to R44): the coordination lane, the project's own premises, the session's board identity and
+    # the session guard. Each optional; absent changes nothing, and a malformed one refuses here, not at a launch.
+    from seldon.core import controls as CT
+    from seldon.core import hive as HV
+    from seldon.core import lane as LN
+    try:
+        block[LN.LANE_KEY] = LN.load_lane(block.get(LN.LANE_KEY))
+        block[LN.PREMISES_KEY] = LN.load_premises(block.get(LN.PREMISES_KEY))
+        block[HV.HIVE_KEY] = HV.load_hive(block.get(HV.HIVE_KEY))
+        block[CT.GUARD_KEY] = CT.load_guard(block.get(CT.GUARD_KEY))
+    except (LN.LaneConfigError, HV.HiveConfigError, CT.GuardConfigError) as exc:
+        raise DispatchConfigError(str(exc)) from exc
     block["candidacy_headers"] = load_candidacy_headers(block.get("candidacy_headers"))
     block["allow"] = _load_allow(block.get("allow"))
     _load_parallel_config(block)
@@ -2883,11 +2917,15 @@ def c7_reason(c7: dict) -> str:
     return "wrong_branch"
 
 
-def fifo(rows: list) -> list:
+def fifo(rows: list, lane: dict | None = None) -> list:
     """DN-006 decision 9: FIFO by `created_at` among eligible tasks, and nothing else. The
     Desktop orders work with `precedes` edges; a priority field would be a value nobody
-    measured."""
-    return sorted(rows, key=lambda r: (r.get("created_at") or "", r.get("task_id") or ""))
+    measured.
+
+    SEL-054 (AD-038-R40): with a `dispatch.coordination_lane`, the tasks its pattern names go first, FIFO among
+    themselves. A class named once in configuration, not a value an author sets per task."""
+    from seldon.core import lane as LN
+    return LN.order(sorted(rows, key=lambda r: (r.get("created_at") or "", r.get("task_id") or "")), lane)
 
 
 def api_key_present(env: dict | None = None) -> str | None:

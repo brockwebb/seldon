@@ -74,7 +74,10 @@ WORKTREE_CLAUSE = (
 LEASE_EXTRA_KEYS = ("worktree_task", "stem", "source_file", "worktree", "branch", "base",
                     "child_session_id", "linked", "model_spec", "push_repos",
                     # SEL-040 (AD-034-R21): the kept worktree a resumed launch reopens, carried to the supervisor.
-                    "resume")
+                    "resume",
+                    # SEL-054 (AD-038-R40): a coordination-lane task, whose finish waits longer for the pass lease and
+                    # whose merge refuses what its lane does not declare (R41).
+                    "lane")
 
 #: `dispatch_finished.outcome` values this module writes, beside the serial `ok` boolean.
 OUTCOMES = ("merged", "session_failed", "merge_blocked", "worktree_add_failed",
@@ -262,8 +265,17 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     tasks = S._tasks(driver, database)
     cross = S._cross_waits(project_dir, tasks)
     ooda = S._ooda_waits(project_dir, cfg, tasks)
+    from seldon.commands import dispatch_lane as LANE
+    from seldon.core import lane as LN
+    lane = LANE.lane_of(cfg)
+    for r in running:
+        r["lane"] = LN.is_lane(r.get("name"), lane)
+    if lane:
+        # A live lane supervisor whose session moved its own task still holds its slot until its merge.
+        running = running + LANE.unclaimed_lane_leases(project_dir, cfg, {r["task_id"] for r in running})
     rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,
-                              running=ids, union=union, cross_waits=cross, ooda=ooda) for t in tasks])
+                              running=ids, union=union, cross_waits=cross, ooda=ooda) for t in tasks], lane)
+    LANE.mark_lane_rows(rows, [r for r in running if r["lane"]], lane)
     S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
     S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now, before any launch.
@@ -274,11 +286,16 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
 
     ready = [r for r in rows if r["eligible"]]
     plan = D.plan_launches(
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in ready],
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in running],
-        cfg["max_parallel"], cfg["resources"])
+        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in ready],
+        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": r["lane"]} for r in running],
+        cfg["max_parallel"], cfg["resources"], lane=lane)
     _apply_plan(ready, plan)
     chosen = [r for r in ready if r["eligible"]]
+    # SEL-054 (AD-038-R42, R45): the project's own conditions on any launch, before a claim.
+    if chosen and not S._launch_gates(project_dir, config, session_id, cfg, dry_run):
+        if not dry_run and inplace_claim is None:
+            S._push(project_dir, cfg)
+        return
 
     if not chosen:
         click.echo(f"nothing launched ({len(rows)} open, "
@@ -305,7 +322,7 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                               indent=1, default=str))
         return
     for n, r in enumerate(chosen):
-        if r["concurrency"]["exclusive"]:
+        if r["concurrency"]["exclusive"] and not r.get("lane"):
             # `plan_launches` launches an exclusive task only when nothing runs, and alone.
             S._launch_inplace(project_dir, config, driver, database, domain_config,
                               session_id, cfg, lease, r)
@@ -555,6 +572,7 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
              "permission_mode": cfg["permission_mode"], "launched_at": S._now(),
              "mode": "worktree", "worktree": None, "branch": None, "worktree_named_by": "cli", "stem": stem,
              "touches": {"resources": conc["resources"], "paths": conc["paths"]}, **({"push_repos": push_repos} if push_repos else {}),
+             **({"lane": True} if chosen.get("lane") else {}),
              **({"resume": plan} if plan else {}),
              **S._model_fields(spec, refresh_note)})
     # Committed and pushed BEFORE the CLI cuts the worktree, so the task's branch starts from a
@@ -564,7 +582,8 @@ def _start_claimed(project_dir, config, driver, database, domain_config, session
     # `worktree`, `branch` and `linked` are filled by the supervisor at the session's `init` (`name_worktree`).
     extra = {"worktree_task": tid, "stem": stem, "source_file": rel, "worktree": None,
              "branch": None, "base": plan["base"] if plan else base, "child_session_id": child_session_id,
-             "linked": [], "model_spec": spec, "push_repos": push_repos, "resume": plan}
+             "linked": [], "model_spec": spec, "push_repos": push_repos, "resume": plan,
+             **({"lane": True} if chosen.get("lane") else {})}
     lease_path = D.worktree_lease_path(project_dir, cfg, stem)
     lease_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "seldon", "dispatch", "supervise", tid,
@@ -635,8 +654,8 @@ def dispatch_supervise(task_id, extra_json):
 
 
 @contextmanager
-def _pass_lease(project_dir: Path, cfg: dict):
-    lease = D.acquire_waiting(D.config_path(project_dir, cfg["lease_file"]), cfg["merge_lock_timeout_s"])
+def _pass_lease(project_dir: Path, cfg: dict, timeout_s: float | None = None):
+    lease = D.acquire_waiting(D.config_path(project_dir, cfg["lease_file"]), timeout_s or cfg["merge_lock_timeout_s"])
     try:
         yield lease
     finally:
@@ -669,7 +688,11 @@ def _supervise(project_dir, config, driver, database, domain_config, session_id,
             fh.write(json.dumps(body, indent=1) + "\n")
     # Started in the PRIMARY checkout: the CLI cuts its worktree in the repository it starts in.
     code = S._run(cmd, project_dir, log_path, extra["child_session_id"], network_allowlist=allow,
-                  extra_env=S._worktree_env(project_dir, spec, cfg), on_init=named)
+                  extra_env={**S._worktree_env(project_dir, spec, cfg),
+                             # SEL-054 (AD-038-R43): minted here, by the supervisor, never by the session.
+                             **S._hive_env(project_dir, config, cfg, session_id, task_id, None,
+                                           extra["child_session_id"])},
+                  on_init=named)
     wall = round(time.monotonic() - started, 3)
     finish_session(project_dir, config, driver, database, domain_config, session_id, cfg, task_id, extra,
                    code, wall, log_path, offset, spec)
@@ -697,7 +720,10 @@ def finish_session(project_dir, config, driver, database, domain_config, session
     SEL-043 (AD-037-R17): from here the round may write the primary checkout, so a pass lease this process holds is
     marked `merge` now and whenever the lease is taken; a gate marks `gate` for its run (`_gate_phase`).
     """
-    lease_cm = _merge_phased(project_dir, cfg, task_id, lease_cm or (lambda: _pass_lease(project_dir, cfg)))
+    # SEL-054 (AD-038-R40): a lane task may finish while an exclusive task's holder keeps the pass lease for its whole
+    # session, so it waits up to the lane's `merge_wait_s`, not a pass's `merge_lock_timeout_s`.
+    wait = (cfg.get("coordination_lane") or {}).get("merge_wait_s") if extra.get("lane") else None
+    lease_cm = _merge_phased(project_dir, cfg, task_id, lease_cm or (lambda: _pass_lease(project_dir, cfg, wait)))
     _mark(project_dir, cfg, D.PHASE_MERGE, task=task_id)
     pending = extra.pop(NAMED_PENDING, None)
     if pending is not None:
@@ -1181,6 +1207,18 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         bad = union_bad(tip, main_sha, writes)
         if bad:
             return blocked("union_invalid", sorted(bad), union=bad)
+        if extra.get("lane") and cfg.get("coordination_lane"):
+            # SEL-054 (AD-038-R41): a lane task ran beside an exclusive build because it declared what it may change;
+            # anything else it changed is refused here, by name. Its RESULT, the append-only files and the gate
+            # record's ledger are exempt, as `_undeclared`'s audit exempts them.
+            from seldon.core import lane as LN
+            exempt = set(union) | set(WT.union_files(wt, writes)) | {f"cc_tasks/{stem}_RESULT.md"}
+            gr_cfg = cfg.get(GR.CONFIG_KEY)
+            if gr_cfg:
+                exempt.add(gr_cfg["ledger"])
+            outside = LN.outside_writes(writes, cfg["coordination_lane"], exempt)
+            if outside:
+                return blocked(LN.MERGE_LANE_WROTE_OUTSIDE, outside, writes=cfg["coordination_lane"]["writes"])
         if _spec_modified(driver, database, finish["task_id"], wt / rel):
             return blocked("spec_modified", [rel])
         gr = cfg.get(GR.CONFIG_KEY)

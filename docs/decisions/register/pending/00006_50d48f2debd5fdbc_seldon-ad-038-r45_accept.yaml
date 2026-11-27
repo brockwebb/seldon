@@ -1,0 +1,36 @@
+event: accept
+id: seldon:AD-038-R45
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: 'Every limit the launch line sets is tried by a planted request whenever the limits'' fingerprint is new, before any launch, and by `seldon dispatch controls`: each guarded path by a planted `Read` and a planted `Bash cat` fed to the installed hook command, the spend ceiling by the inspector over a planted session at twice its ceiling; one `limits_tried` per fingerprint; a limit that lets its plant through refuses every launch (`limit_control_failed`, a standing condition in the stuck streak) until the limits change and hold'
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 104
+  - 108
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R45. Every limit the launch line sets is tried by a planted request whenever the limits' fingerprint is new, before any launch, and by `seldon dispatch controls`: each guarded path by a planted `Read` and a planted `Bash cat` fed to the installed hook command, the spend ceiling by the inspector over a planted session at twice its ceiling; one `limits_tried` per fingerprint; a limit that lets its plant through refuses every launch (`limit_control_failed`, a standing condition in the stuck streak) until the limits change and hold.**
+      The Network line is recorded as untried, with why: it reaches a session only as `SELDON_NETWORK_ALLOWLIST`, which a
+      consumer's fetch helper reads, and seldon enforces no host rule of its own. FAC-31's path-syntax failure cannot
+      occur in a rule seldon's launch line writes: its only permission rules are `dispatch.allow`, which refuses anything
+      but `Bash(<pattern>)` at load, so the guard is its one path limit, and it is tried, not read.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R45
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/controls.py
+- seldon/commands/dispatch.py
+- tests/test_sel054_identity_and_controls.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 50d48f2debd5fdbc452cf562df8d4516119b9eaf3f51d4fbb3d67d42b23028e6

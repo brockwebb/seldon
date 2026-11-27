@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-038-R41
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: A lane task's branch may change only the paths its lane's `writes` declares, with its own RESULT, the `merge=union` files and the gate record's ledger exempt; the merge round refuses anything else as `merge_blocked` with reason `lane_wrote_outside`, naming the paths, and keeps the worktree
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 91
+  - 94
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R41. A lane task's branch may change only the paths its lane's `writes` declares, with its own RESULT, the `merge=union` files and the gate record's ledger exempt; the merge round refuses anything else as `merge_blocked` with reason `lane_wrote_outside`, naming the paths, and keeps the worktree.**
+      `writes` is required: a lane with no declaration would be a second exclusive task that nothing holds back. What a
+      lane task writes in other repositories (`seldon cc file`, by path) is outside this repository's merge, as for any
+      task.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R41
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/lane.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel054_launch_path.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 6e0497cc67adf1c2b352d590862519638aea25bfe8e1494c874aaa3b80121e1d

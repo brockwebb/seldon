@@ -1,0 +1,34 @@
+event: accept
+id: seldon:AD-038-R42
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: 'A project may declare premises, `dispatch.premises: [{statement, check}]`, that the dispatcher evaluates before every launch (serial, parallel and the lane''s), each `check` an opaque command; a false one refuses the launch and prints the premise and its check''s output; it is a standing condition: one `dispatch_refused` (reason `project_premise_false`) per episode of the same premises false, the stuck streak, no Issue, and it clears itself on the first pass on which every premise holds'
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 95
+  - 97
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R42. A project may declare premises, `dispatch.premises: [{statement, check}]`, that the dispatcher evaluates before every launch (serial, parallel and the lane's), each `check` an opaque command; a false one refuses the launch and prints the premise and its check's output; it is a standing condition: one `dispatch_refused` (reason `project_premise_false`) per episode of the same premises false, the stuck streak, no Issue, and it clears itself on the first pass on which every premise holds.**
+      It never touches a running session, and the merge round, redrives and the stuck alarm run earlier in the pass, as
+      before. seldon reads no grant: factory's cost manager is the check.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R42
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/lane.py
+- seldon/commands/dispatch.py
+- tests/test_sel054_launch_path.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: ddaf047d1b8a76c20ea2ca450066c89675d8e5cf07d39c2fee47cf9c84cf9fd7

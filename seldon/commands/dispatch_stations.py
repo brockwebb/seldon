@@ -623,14 +623,24 @@ def _terminal_gate(project_dir: Path, hook: dict, launch: dict, events: list, st
 @dispatch_group.command("tool-gate", hidden=True)
 @click.option("--project", "project", required=True, type=click.Path(exists=True, file_okay=False),
               help="the primary checkout, whose event store the dispatcher reads")
-def tool_gate_command(project):
+@click.option("--deny-path", "deny_paths", multiple=True,
+              help="a directory the session guard refuses (repeatable; the launch line writes them, AD-038-R44)")
+def tool_gate_command(project, deny_paths):
     """DISP-001R Part B step 2: the PreToolUse hook each dispatched session is launched with. Not for operators.
 
     A hard stop on the ledger for this session's task, not yet answered, is delivered here: the tool call is
     refused with the stop's reason (the CLI's `permissionDecision: deny`, whose reason the model reads), and the
     session records `andon_halted` itself, so it halts at a tool boundary instead of being killed inside a call.
-    Every other call, and every call of a session the dispatcher did not launch, proceeds untouched."""
+    Every other call, and every call of a session the dispatcher did not launch, proceeds untouched.
+
+    SEL-054 (AD-038-R44): first, the session guard. A call that names a path under a `--deny-path` is refused, before
+    the event store is read, so the guard holds whatever the store says and the planted controls can try it alone."""
     hook = _hook_input()
+    from seldon.core import controls as CT
+    why = CT.refusal(hook, list(deny_paths))
+    if why:
+        _deny(why)
+        return
     project_dir = Path(project).resolve()
     events, state_lines = _tool_gate_read(project_dir)
     launch = _hook_launch(project_dir, events)

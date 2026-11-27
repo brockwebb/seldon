@@ -109,7 +109,7 @@ def test_a_running_lane_task_neither_holds_an_exclusive_task_nor_takes_its_slot(
 def test_without_a_lane_the_flag_changes_nothing():
     running = [{"task_id": "build", "concurrency": conc(), "lane": False}]
     plan = D.plan_launches([_cand("ooda", lane=True)], running, 1, {})
-    assert plan["launch"] == [] and plan["deferred"]["ooda"]["reason"] == "exclusive"
+    assert plan["launch"] == [] and plan["deferred"]["ooda"]["reason"] == "exclusive_waits"
 
 
 def test_a_lane_rows_c6_is_its_slot_not_the_in_place_claim():
@@ -215,14 +215,18 @@ def test_an_ooda_filed_beside_an_exclusive_build_launches_during_the_build_and_m
     assert res.exit_code == 0, res.output
     lines = {ln.split()[0] + " " + ln.split()[1] for ln in marks.read_text().splitlines()}
     assert "FAC-31-build rendezvous_met" in lines, (res.output, _supervisor_log(p, "OODA-001"))
-    _wait(lambda: task_states(neo4j_driver).get("OODA-001") == "completed", "OODA-001 to merge")
+    def ooda_finish():
+        return [e["payload"] for e in _events(p, D.EVENT_FINISHED)
+                if e["payload"].get("source_file") == "cc_tasks/OODA-001.md"]
+    _wait(lambda: ooda_finish(), "OODA-001's finish")
+    assert ooda_finish()[-1]["outcome"] == "merged", (ooda_finish()[-1], _supervisor_log(p, "OODA-001"))
     launched = {e["payload"]["source_file"]: e for e in _events(p, D.EVENT_LAUNCHED)}
     assert "cc_tasks/OODA-001.md" in launched
     assert launched["cc_tasks/OODA-001.md"]["payload"]["lane"] is True
     # The second OODA did not launch beside the first (one lane slot): it is still queued after this pass.
     assert "cc_tasks/OODA-002.md" not in launched
     assert task_states(neo4j_driver)["FAC-31-build"] == "completed"
-    assert (p / "notes" / "ooda1.md").exists() or git(p, "show", "main:notes/ooda1.md", check=False).returncode == 0
+    assert git(p, "show", "main:notes/ooda1.md", check=False).returncode == 0
 
 
 @pytest.mark.usefixtures("neo4j_available")
@@ -233,10 +237,11 @@ def test_a_lane_branch_that_writes_outside_its_lane_is_not_merged(tmp_path, neo4
     write_stub(p, {"OODA-003": {"write": {"notes/ok.md": "o\n", "src/build.txt": "not mine\n"}, "complete": True}})
     res = run_cli(p, dispatch_group, ["once"])
     assert res.exit_code == 0, res.output
-    _wait(lambda: task_states(neo4j_driver).get("OODA-003") not in ("in_progress", "accepted", "proposed"),
-          "OODA-003 to finish")
-    fin = [e["payload"] for e in _events(p, D.EVENT_FINISHED)
-           if e["payload"].get("source_file") == "cc_tasks/OODA-003.md"]
+    def finished():
+        return [e["payload"] for e in _events(p, D.EVENT_FINISHED)
+                if e["payload"].get("source_file") == "cc_tasks/OODA-003.md"]
+    _wait(finished, "OODA-003's finish")
+    fin = finished()
     assert fin and fin[-1]["outcome"] == "merge_blocked", _supervisor_log(p, "OODA-003")
     assert fin[-1]["merge"]["reason"] == L.MERGE_LANE_WROTE_OUTSIDE
     assert fin[-1]["merge"]["files"] == ["src/build.txt"]

@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-038-R43
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: With `dispatch.hive.mint_command`, the dispatcher (the pass in place, the supervisor for a worktree task) runs it once per launch, outside the session, and puts the token it prints only in the session's environment as `HIVE_TOKEN` with `HIVE_PROJECT` and `HIVE_TASK`; `session_identity` records the identity's name and a 12-character sha256 prefix of the token, never the token; a failed mint is recorded and the session launches without a token; `dispatch.hive.notices_hook` is placed on every launch line as a PostToolUse hook; an inherited `HIVE_TOKEN` never reaches a session
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 98
+  - 100
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R43. With `dispatch.hive.mint_command`, the dispatcher (the pass in place, the supervisor for a worktree task) runs it once per launch, outside the session, and puts the token it prints only in the session's environment as `HIVE_TOKEN` with `HIVE_PROJECT` and `HIVE_TASK`; `session_identity` records the identity's name and a 12-character sha256 prefix of the token, never the token; a failed mint is recorded and the session launches without a token; `dispatch.hive.notices_hook` is placed on every launch line as a PostToolUse hook; an inherited `HIVE_TOKEN` never reaches a session.**
+      A failed mint does not refuse the launch: a post is context and never read by a gate (factory DN-005 decision 3).
+      The board, its tokens and its protocol stay factory's; the mint command is factory's client.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R43
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/hive.py
+- seldon/commands/dispatch.py
+- seldon/commands/dispatch_worktree.py
+- tests/test_sel054_identity_and_controls.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 1e5c3a5adb62b412503a534bcf5e14687a0f2ec6595c7f2579487485ec787321

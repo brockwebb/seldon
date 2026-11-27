@@ -1,0 +1,41 @@
+event: accept
+id: seldon:AD-038-R40
+date: '2026-11-27'
+decided_by: cc:5ef8838d
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+reason: 'SEL-054: from factory''s filings of 2026-11-26 and 27 (coordination lane, project premise, Hive identity, planted controls)'
+kind: decision
+status: accepted
+statement: 'A project may declare one coordination lane, `dispatch.coordination_lane: {name_pattern, slots, writes, merge_wait_s}`: a task whose graph name matches `name_pattern` goes first among eligible candidates, always runs in its own worktree under its own supervisor, takes one of `slots` reserved slots and no `max_parallel` slot, and is neither held back by an exclusive task, running or waiting, nor holds one back; while an exclusive task runs, its holder looks for a lane task at each inspection tick and launches it under the pass lease it already holds'
+source:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  lines:
+  - 82
+  - 90
+  sha256: 4b6ae47f6b9fd281de358f2b562c92d8512c59a0759c5a6be8a41e0721377d81
+  text: |-
+    - **AD-038-R40. A project may declare one coordination lane, `dispatch.coordination_lane: {name_pattern, slots, writes, merge_wait_s}`: a task whose graph name matches `name_pattern` goes first among eligible candidates, always runs in its own worktree under its own supervisor, takes one of `slots` reserved slots and no `max_parallel` slot, and is neither held back by an exclusive task, running or waiting, nor holds one back; while an exclusive task runs, its holder looks for a lane task at each inspection tick and launches it under the pass lease it already holds.**
+      Every other gate stands for a lane task: candidacy, band, Spend ceiling, station (a), the project's launch gates
+      (R42, R45), the stop gate, the merge lock and the re-gate. c6 for a lane task is a free lane slot, held while its
+      supervisor's worktree lease is held, whatever the graph says meanwhile. The holder's look marks the lease `pass`
+      while it writes main and `session` after (AD-037-R17); a failed look is recorded (`dispatch_lane_error`) and never
+      reaches the build it runs beside. A lane supervisor waits for the pass lease at its finish up to `merge_wait_s`
+      (default 14,400 s, no measured basis: above FAC-31's ninety minutes), because a build's holder keeps it for the
+      build's whole session. AD-037-R9's condition for a second session (stations and the disk preflight live) holds: the
+      lane's launch runs c12 and station (a) like any other.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-038_ADDENDUM_16_a_coordination_lane_project_premises_a_minted_session_identity_and_tried_limits.md
+  anchor: AD-038-R40
+consumer:
+- cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+- seldon/core/lane.py
+- seldon/commands/dispatch_lane.py
+- seldon/core/dispatch.py
+- tests/test_sel054_launch_path.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9309077ac550450fba56059f6418310fe4833b189a0e4646f7c5d018724310e8
