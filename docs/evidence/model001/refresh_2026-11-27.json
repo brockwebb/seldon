@@ -1,0 +1,805 @@
+{
+ "cli_path": "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+ "cli_version": "2.1.332",
+ "cli_version_reported": "2.1.332",
+ "date": "2026-11-27",
+ "installed_now": false,
+ "lock": {
+  "cli": {
+   "npm_package": "@anthropic-ai/claude-code",
+   "path": "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+   "version": "2.1.332"
+  },
+  "documented_default_effort": {
+   "families": {
+    "fable": {
+     "current": false,
+     "documented_for": "claude-fable-5-1",
+     "effort": "high"
+    },
+    "haiku": {
+     "current": true,
+     "documented_for": "claude-haiku-5-5",
+     "effort": "medium"
+    },
+    "opus": {
+     "current": true,
+     "documented_for": "claude-opus-5-5",
+     "effort": "medium"
+    },
+    "sonnet": {
+     "current": true,
+     "documented_for": "claude-sonnet-5-5",
+     "effort": "medium"
+    }
+   },
+   "retrieved": "2026-10-09",
+   "source": "https://code.claude.com/docs/en/model-config"
+  },
+  "evidence": "docs/evidence/model001/refresh_2026-11-27.json",
+  "families": {
+   "fable": {
+    "alias": "fable",
+    "model": "claude-fable-5-2"
+   },
+   "haiku": {
+    "alias": "haiku",
+    "model": "claude-haiku-5-5"
+   },
+   "opus": {
+    "alias": "opus",
+    "model": "claude-opus-5-5"
+   },
+   "sonnet": {
+    "alias": "sonnet",
+    "model": "claude-sonnet-5-5"
+   }
+  },
+  "models": {
+   "claude-opus-4-8": {
+    "available": true,
+    "evidence": "docs/evidence/model001/refresh_2026-11-27.json",
+    "served": "claude-opus-4-8"
+   }
+  },
+  "resolved_at": "2026-11-27T00:41:05.876714Z",
+  "resolved_on": "2026-11-27",
+  "schema": 1
+ },
+ "model_probes": {
+  "claude-opus-4-8": {
+   "argv": [
+    "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+    "-p",
+    "Reply with the single word OK.",
+    "--model",
+    "claude-opus-4-8",
+    "--output-format",
+    "json",
+    "--tools",
+    "",
+    "--max-turns",
+    "1",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--settings",
+    "{\"switchModelsOnFlag\":false}"
+   ],
+   "available": true,
+   "envelope": {
+    "api_error_status": null,
+    "credential_expires_at": "2026-12-10T14:47:27.740Z",
+    "duration_api_ms": 427,
+    "duration_ms": 485,
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "fast_mode_state": "off",
+    "first_content_frame_ms": 415,
+    "is_error": false,
+    "modelUsage": {
+     "claude-opus-4-8": {
+      "cacheCreationEphemeral1hInputTokens": 2895,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationInputTokens": 2895,
+      "cacheReadInputTokens": 0,
+      "canonicalModel": "claude-opus-4-8",
+      "contextWindow": 1000000,
+      "costBasis": "list",
+      "costUSD": 0.02906,
+      "inputTokens": 2,
+      "maxOutputTokens": 64000,
+      "outputTokens": 4,
+      "provider": "firstParty",
+      "thinkingTokens": 0,
+      "webSearchRequests": 0
+     }
+    },
+    "num_turns": 1,
+    "permission_denials": [],
+    "queued_turn_count": 0,
+    "result": "OK",
+    "result_index": 0,
+    "safety_stops": 0,
+    "session_id": "209d833b-ffcd-4204-90ee-4d85b916ce72",
+    "stop_reason": "end_turn",
+    "subagent_stats": {
+     "by_type": {},
+     "completed": 0,
+     "failed": 0,
+     "killed": {
+      "parent": 0,
+      "system": 0,
+      "user": 0
+     },
+     "max_depth": 0,
+     "refused": {
+      "budget": 0,
+      "concurrency_limit": 0,
+      "depth_limit": 0
+     },
+     "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+     },
+     "spawned": 0,
+     "spawned_by_subagents": 0,
+     "started_in_background": 0
+    },
+    "subtype": "success",
+    "terminal_reason": "completed",
+    "time_to_request_ms": 56,
+    "total_cost_usd": 0.02906,
+    "ttft_ms": 469,
+    "ttft_stream_ms": 414,
+    "type": "result",
+    "usage": {
+     "cache_creation": {
+      "ephemeral_1h_input_tokens": 2895,
+      "ephemeral_5m_input_tokens": 0
+     },
+     "cache_creation_input_tokens": 2895,
+     "cache_read_input_tokens": 0,
+     "fallback_credit": null,
+     "inference_geo": "global",
+     "input_tokens": 2,
+     "iterations": [
+      {
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 2895,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "cache_creation_input_tokens": 2895,
+       "cache_read_input_tokens": 0,
+       "input_tokens": 2,
+       "output_tokens": 4,
+       "type": "message"
+      }
+     ],
+     "output_tokens": 4,
+     "output_tokens_details": {
+      "thinking_tokens": 0
+     },
+     "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+     },
+     "service_tier": "standard",
+     "speed": "standard"
+    },
+    "uuid": "f0e2bdc5-92be-48f2-b083-c480052ddc80"
+   },
+   "error": null,
+   "exit_code": 0,
+   "model": "claude-opus-4-8",
+   "model_usage_keys": [
+    "claude-opus-4-8"
+   ],
+   "seconds": 1.353,
+   "served": "claude-opus-4-8",
+   "stderr_tail": ""
+  }
+ },
+ "npm_package": "@anthropic-ai/claude-code",
+ "previous_lock": {
+  "cli": {
+   "npm_package": "@anthropic-ai/claude-code",
+   "path": "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+   "version": "2.1.332"
+  },
+  "documented_default_effort": {
+   "families": {
+    "fable": {
+     "current": false,
+     "documented_for": "claude-fable-5-1",
+     "effort": "high"
+    },
+    "haiku": {
+     "current": true,
+     "documented_for": "claude-haiku-5-5",
+     "effort": "medium"
+    },
+    "opus": {
+     "current": true,
+     "documented_for": "claude-opus-5-5",
+     "effort": "medium"
+    },
+    "sonnet": {
+     "current": true,
+     "documented_for": "claude-sonnet-5-5",
+     "effort": "medium"
+    }
+   },
+   "retrieved": "2026-10-09",
+   "source": "https://code.claude.com/docs/en/model-config"
+  },
+  "evidence": "docs/evidence/model001/refresh_2026-11-26.json",
+  "families": {
+   "fable": {
+    "alias": "fable",
+    "model": "claude-fable-5-2"
+   },
+   "haiku": {
+    "alias": "haiku",
+    "model": "claude-haiku-5-5"
+   },
+   "opus": {
+    "alias": "opus",
+    "model": "claude-opus-5-5"
+   },
+   "sonnet": {
+    "alias": "sonnet",
+    "model": "claude-sonnet-5-5"
+   }
+  },
+  "models": {
+   "claude-opus-4-8": {
+    "available": true,
+    "evidence": "docs/evidence/model001/refresh_2026-11-26.json",
+    "served": "claude-opus-4-8"
+   }
+  },
+  "resolved_at": "2026-11-26T03:24:27.527579Z",
+  "resolved_on": "2026-11-26",
+  "schema": 1
+ },
+ "probe_cwd": "/tmp/seldon-models-probe-4zrwmvi1",
+ "probes": {
+  "fable": {
+   "alias": "fable",
+   "argv": [
+    "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+    "-p",
+    "Reply with the single word OK.",
+    "--model",
+    "fable",
+    "--output-format",
+    "json",
+    "--tools",
+    "",
+    "--max-turns",
+    "1",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--settings",
+    "{\"switchModelsOnFlag\":false}"
+   ],
+   "envelope": {
+    "api_error_status": null,
+    "credential_expires_at": "2026-12-10T14:47:27.740Z",
+    "duration_api_ms": 663,
+    "duration_ms": 736,
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "fast_mode_state": "off",
+    "first_content_frame_ms": 713,
+    "is_error": false,
+    "modelUsage": {
+     "claude-fable-5-2": {
+      "cacheCreationEphemeral1hInputTokens": 3648,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationInputTokens": 3648,
+      "cacheReadInputTokens": 649,
+      "canonicalModel": "claude-fable-5-2",
+      "contextWindow": 1000000,
+      "costBasis": "list",
+      "costUSD": 0.058673800000000005,
+      "inputTokens": 2,
+      "maxOutputTokens": 128000,
+      "outputTokens": 4,
+      "provider": "firstParty",
+      "thinkingTokens": 0,
+      "webSearchRequests": 0
+     }
+    },
+    "num_turns": 1,
+    "permission_denials": [],
+    "queued_turn_count": 0,
+    "result": "OK",
+    "result_index": 0,
+    "safety_stops": 0,
+    "session_id": "75bf87af-b22d-435b-af32-8ee71765f443",
+    "stop_reason": "end_turn",
+    "subagent_stats": {
+     "by_type": {},
+     "completed": 0,
+     "failed": 0,
+     "killed": {
+      "parent": 0,
+      "system": 0,
+      "user": 0
+     },
+     "max_depth": 0,
+     "refused": {
+      "budget": 0,
+      "concurrency_limit": 0,
+      "depth_limit": 0
+     },
+     "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+     },
+     "spawned": 0,
+     "spawned_by_subagents": 0,
+     "started_in_background": 0
+    },
+    "subtype": "success",
+    "terminal_reason": "completed",
+    "time_to_request_ms": 68,
+    "total_cost_usd": 0.058673800000000005,
+    "ttft_ms": 715,
+    "ttft_stream_ms": 713,
+    "type": "result",
+    "usage": {
+     "cache_creation": {
+      "ephemeral_1h_input_tokens": 3648,
+      "ephemeral_5m_input_tokens": 0
+     },
+     "cache_creation_input_tokens": 3648,
+     "cache_read_input_tokens": 649,
+     "fallback_credit": null,
+     "inference_geo": "global",
+     "input_tokens": 2,
+     "iterations": [
+      {
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 3648,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "cache_creation_input_tokens": 3648,
+       "cache_read_input_tokens": 649,
+       "input_tokens": 2,
+       "output_tokens": 4,
+       "type": "message"
+      }
+     ],
+     "output_tokens": 4,
+     "output_tokens_details": {
+      "thinking_tokens": 0
+     },
+     "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+     },
+     "service_tier": "standard",
+     "speed": "standard"
+    },
+    "uuid": "7671d4c4-de27-4056-8fc5-290f8229cec7"
+   },
+   "exit_code": 0,
+   "model_usage_keys": [
+    "claude-fable-5-2"
+   ],
+   "seconds": 2.389,
+   "served": "claude-fable-5-2",
+   "stderr_tail": ""
+  },
+  "haiku": {
+   "alias": "haiku",
+   "argv": [
+    "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+    "-p",
+    "Reply with the single word OK.",
+    "--model",
+    "haiku",
+    "--output-format",
+    "json",
+    "--tools",
+    "",
+    "--max-turns",
+    "1",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--settings",
+    "{\"switchModelsOnFlag\":false}"
+   ],
+   "envelope": {
+    "api_error_status": null,
+    "credential_expires_at": "2026-12-10T14:47:27.740Z",
+    "duration_api_ms": 900,
+    "duration_ms": 984,
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "fast_mode_state": "off",
+    "first_content_frame_ms": 959,
+    "is_error": false,
+    "modelUsage": {
+     "claude-haiku-5-5": {
+      "cacheCreationEphemeral1hInputTokens": 3042,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationInputTokens": 3042,
+      "cacheReadInputTokens": 649,
+      "canonicalModel": "claude-haiku-5-5",
+      "contextWindow": 1000000,
+      "costBasis": "list",
+      "costUSD": 0.00061709,
+      "inputTokens": 2,
+      "maxOutputTokens": 128000,
+      "outputTokens": 4,
+      "provider": "firstParty",
+      "thinkingTokens": 0,
+      "webSearchRequests": 0
+     }
+    },
+    "num_turns": 1,
+    "permission_denials": [],
+    "queued_turn_count": 0,
+    "result": "OK",
+    "result_index": 0,
+    "safety_stops": 0,
+    "session_id": "bc38185a-3468-4e64-bdeb-2515a8460aa2",
+    "stop_reason": "end_turn",
+    "subagent_stats": {
+     "by_type": {},
+     "completed": 0,
+     "failed": 0,
+     "killed": {
+      "parent": 0,
+      "system": 0,
+      "user": 0
+     },
+     "max_depth": 0,
+     "refused": {
+      "budget": 0,
+      "concurrency_limit": 0,
+      "depth_limit": 0
+     },
+     "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+     },
+     "spawned": 0,
+     "spawned_by_subagents": 0,
+     "started_in_background": 0
+    },
+    "subtype": "success",
+    "terminal_reason": "completed",
+    "time_to_request_ms": 78,
+    "total_cost_usd": 0.00061709,
+    "ttft_ms": 960,
+    "ttft_stream_ms": 958,
+    "type": "result",
+    "usage": {
+     "cache_creation": {
+      "ephemeral_1h_input_tokens": 3042,
+      "ephemeral_5m_input_tokens": 0
+     },
+     "cache_creation_input_tokens": 3042,
+     "cache_read_input_tokens": 649,
+     "fallback_credit": null,
+     "inference_geo": "global",
+     "input_tokens": 2,
+     "iterations": [
+      {
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 3042,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "cache_creation_input_tokens": 3042,
+       "cache_read_input_tokens": 649,
+       "input_tokens": 2,
+       "output_tokens": 4,
+       "type": "message"
+      }
+     ],
+     "output_tokens": 4,
+     "output_tokens_details": {
+      "thinking_tokens": 0
+     },
+     "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+     },
+     "service_tier": "standard",
+     "speed": "standard"
+    },
+    "uuid": "d27be7cc-8a77-44bf-8104-bff5148aacd5"
+   },
+   "exit_code": 0,
+   "model_usage_keys": [
+    "claude-haiku-5-5"
+   ],
+   "seconds": 1.69,
+   "served": "claude-haiku-5-5",
+   "stderr_tail": ""
+  },
+  "opus": {
+   "alias": "opus",
+   "argv": [
+    "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+    "-p",
+    "Reply with the single word OK.",
+    "--model",
+    "opus",
+    "--output-format",
+    "json",
+    "--tools",
+    "",
+    "--max-turns",
+    "1",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--settings",
+    "{\"switchModelsOnFlag\":false}"
+   ],
+   "envelope": {
+    "api_error_status": null,
+    "credential_expires_at": "2026-12-10T14:47:27.740Z",
+    "duration_api_ms": 549,
+    "duration_ms": 626,
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "fast_mode_state": "off",
+    "first_content_frame_ms": 607,
+    "is_error": false,
+    "modelUsage": {
+     "claude-opus-5-5": {
+      "cacheCreationEphemeral1hInputTokens": 2290,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationInputTokens": 2290,
+      "cacheReadInputTokens": 649,
+      "canonicalModel": "claude-opus-5-5",
+      "contextWindow": 1000000,
+      "costBasis": "list",
+      "costUSD": 0.0185378,
+      "inputTokens": 2,
+      "maxOutputTokens": 128000,
+      "outputTokens": 4,
+      "provider": "firstParty",
+      "thinkingTokens": 0,
+      "webSearchRequests": 0
+     }
+    },
+    "num_turns": 1,
+    "permission_denials": [],
+    "queued_turn_count": 0,
+    "result": "OK",
+    "result_index": 0,
+    "safety_stops": 0,
+    "session_id": "d4f993fe-f49c-42a3-9675-ad42de0b538d",
+    "stop_reason": "end_turn",
+    "subagent_stats": {
+     "by_type": {},
+     "completed": 0,
+     "failed": 0,
+     "killed": {
+      "parent": 0,
+      "system": 0,
+      "user": 0
+     },
+     "max_depth": 0,
+     "refused": {
+      "budget": 0,
+      "concurrency_limit": 0,
+      "depth_limit": 0
+     },
+     "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+     },
+     "spawned": 0,
+     "spawned_by_subagents": 0,
+     "started_in_background": 0
+    },
+    "subtype": "success",
+    "terminal_reason": "completed",
+    "time_to_request_ms": 75,
+    "total_cost_usd": 0.0185378,
+    "ttft_ms": 608,
+    "ttft_stream_ms": 607,
+    "type": "result",
+    "usage": {
+     "cache_creation": {
+      "ephemeral_1h_input_tokens": 2290,
+      "ephemeral_5m_input_tokens": 0
+     },
+     "cache_creation_input_tokens": 2290,
+     "cache_read_input_tokens": 649,
+     "fallback_credit": null,
+     "inference_geo": "global",
+     "input_tokens": 2,
+     "iterations": [
+      {
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 2290,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "cache_creation_input_tokens": 2290,
+       "cache_read_input_tokens": 649,
+       "input_tokens": 2,
+       "output_tokens": 4,
+       "type": "message"
+      }
+     ],
+     "output_tokens": 4,
+     "output_tokens_details": {
+      "thinking_tokens": 0
+     },
+     "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+     },
+     "service_tier": "standard",
+     "speed": "standard"
+    },
+    "uuid": "89e3f345-829f-44cb-8a6a-9713b1e74d03"
+   },
+   "exit_code": 0,
+   "model_usage_keys": [
+    "claude-opus-5-5"
+   ],
+   "seconds": 1.525,
+   "served": "claude-opus-5-5",
+   "stderr_tail": ""
+  },
+  "sonnet": {
+   "alias": "sonnet",
+   "argv": [
+    "/Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude",
+    "-p",
+    "Reply with the single word OK.",
+    "--model",
+    "sonnet",
+    "--output-format",
+    "json",
+    "--tools",
+    "",
+    "--max-turns",
+    "1",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--settings",
+    "{\"switchModelsOnFlag\":false}"
+   ],
+   "envelope": {
+    "api_error_status": null,
+    "credential_expires_at": "2026-12-10T14:47:27.740Z",
+    "duration_api_ms": 1130,
+    "duration_ms": 1194,
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "fast_mode_state": "off",
+    "first_content_frame_ms": 1171,
+    "is_error": false,
+    "modelUsage": {
+     "claude-sonnet-5-5": {
+      "cacheCreationEphemeral1hInputTokens": 2218,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationInputTokens": 2218,
+      "cacheReadInputTokens": 649,
+      "canonicalModel": "claude-sonnet-5-5",
+      "contextWindow": 1000000,
+      "costBasis": "list",
+      "costUSD": 0.0089809,
+      "inputTokens": 2,
+      "maxOutputTokens": 128000,
+      "outputTokens": 4,
+      "provider": "firstParty",
+      "thinkingTokens": 0,
+      "webSearchRequests": 0
+     }
+    },
+    "num_turns": 1,
+    "permission_denials": [],
+    "queued_turn_count": 0,
+    "result": "OK",
+    "result_index": 0,
+    "safety_stops": 0,
+    "session_id": "9f9ea077-1cbf-4989-995a-317595e81c53",
+    "stop_reason": "end_turn",
+    "subagent_stats": {
+     "by_type": {},
+     "completed": 0,
+     "failed": 0,
+     "killed": {
+      "parent": 0,
+      "system": 0,
+      "user": 0
+     },
+     "max_depth": 0,
+     "refused": {
+      "budget": 0,
+      "concurrency_limit": 0,
+      "depth_limit": 0
+     },
+     "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+     },
+     "spawned": 0,
+     "spawned_by_subagents": 0,
+     "started_in_background": 0
+    },
+    "subtype": "success",
+    "terminal_reason": "completed",
+    "time_to_request_ms": 59,
+    "total_cost_usd": 0.0089809,
+    "ttft_ms": 1172,
+    "ttft_stream_ms": 1170,
+    "type": "result",
+    "usage": {
+     "cache_creation": {
+      "ephemeral_1h_input_tokens": 2218,
+      "ephemeral_5m_input_tokens": 0
+     },
+     "cache_creation_input_tokens": 2218,
+     "cache_read_input_tokens": 649,
+     "fallback_credit": null,
+     "inference_geo": "global",
+     "input_tokens": 2,
+     "iterations": [
+      {
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 2218,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "cache_creation_input_tokens": 2218,
+       "cache_read_input_tokens": 649,
+       "input_tokens": 2,
+       "output_tokens": 4,
+       "type": "message"
+      }
+     ],
+     "output_tokens": 4,
+     "output_tokens_details": {
+      "thinking_tokens": 0
+     },
+     "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0
+     },
+     "service_tier": "standard",
+     "speed": "standard"
+    },
+    "uuid": "82b1a3ff-92d2-4bd7-b478-f429c661c8bd"
+   },
+   "exit_code": 0,
+   "model_usage_keys": [
+    "claude-sonnet-5-5"
+   ],
+   "seconds": 2.075,
+   "served": "claude-sonnet-5-5",
+   "stderr_tail": ""
+  }
+ },
+ "refreshed_at": "2026-11-27T00:41:05.876714Z"
+}
