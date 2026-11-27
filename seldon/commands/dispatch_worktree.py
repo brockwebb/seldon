@@ -190,9 +190,21 @@ def name_worktree(project_dir: Path, session_id, extra: dict, init: dict, links:
         # SEL-040: a resumed tree's HEAD is the interrupted session's last commit, not the commit it was cut from; its
         # base stays the one the first launch recorded.
         base = extra.get("base") if extra.get("resume") else (WT.rev(wt, "HEAD") or extra.get("base"))
-        extra.update({"worktree": rel, "branch": branch, "base": base,
-                      "linked": WT.link(project_dir, wt, links)})
+        linked, skipped = WT.link_report(project_dir, wt, links)
+        extra.update({"worktree": rel, "branch": branch, "base": base, "linked": linked})
         record.update({k: extra[k] for k in ("worktree", "branch", "base", "linked")})
+        # SEL-052 (factory's 2026-11-25 filing): a declared link that was not made is recorded and, when the checkout
+        # itself made the path, said aloud with the remedy, every launch, not found by reading worktree.py.
+        # A path the primary lacks (`.env` in a repository without one) is the documented skip, and is not recorded.
+        skipped = [x for x in skipped if x["reason"] != WT.LINK_ABSENT]
+        if skipped:
+            record["links_skipped"] = skipped
+        for s in skipped:
+            if s["reason"] == WT.LINK_TRACKED:
+                click.echo(f"LINK SKIPPED {s['path']}: the repository tracks a file at or under it, so every "
+                           f"checkout creates it and dispatch.worktree_links cannot link it; untrack it (`git rm "
+                           f"--cached`) and gitignore it as `/{s['path']}` with no trailing slash (a `dir/` pattern "
+                           f"does not match the link), or link the files inside it instead (SEL-052)", err=True)
         # SEL-017 Part B (AD-034-R14): the worktree's own config points at its own `.githooks`, so HOOK-001's gate
         # resolves there whatever the shared config's value is. A failure is recorded, never a launch refusal.
         from seldon.core import hooks as H

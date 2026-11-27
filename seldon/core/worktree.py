@@ -139,15 +139,36 @@ def remove(primary: Path, worktree: Path) -> dict:
 def link(primary: Path, worktree: Path, rels: list) -> list:
     """Symlink each existing `rel` from the primary checkout into the worktree. Returns the
     paths linked; a path absent from the primary is skipped, not invented."""
-    done = []
+    return link_report(primary, worktree, rels)[0]
+
+
+#: Why a declared `worktree_links` entry was not linked (SEL-052, factory's 2026-11-25 filing).
+LINK_ABSENT = "absent_in_primary"
+#: The checkout itself made the path, because the repository tracks something at or under it (factory's
+#: `corpus/inbox/.gitkeep`; seldon's `graphs/seldon-biblio/exports/`, SEL-037): a link can never take its place.
+LINK_TRACKED = "tracked_in_checkout"
+LINK_EXISTS = "exists_in_worktree"
+
+
+def link_report(primary: Path, worktree: Path, rels: list) -> tuple:
+    """`link`, saying what it did not link and why: `(linked, [{"path", "reason"}])`.
+
+    Before SEL-052 a skip was silent: factory declared `corpus/inbox` and twice found an empty real directory where
+    its sessions expected the link, because the repository tracks `corpus/inbox/.gitkeep`."""
+    done, skipped = [], []
     for rel in rels:
         src, dst = Path(primary) / rel, Path(worktree) / rel
-        if not src.exists() or dst.exists() or dst.is_symlink():
+        if not src.exists():
+            skipped.append({"path": rel, "reason": LINK_ABSENT})
+            continue
+        if dst.exists() or dst.is_symlink():
+            tracked = bool(git(Path(worktree), "ls-files", "--", rel).stdout.strip())
+            skipped.append({"path": rel, "reason": LINK_TRACKED if tracked else LINK_EXISTS})
             continue
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.symlink_to(src)
         done.append(rel)
-    return done
+    return done, skipped
 
 
 def _porcelain(repo: Path, *flags: str) -> list:
