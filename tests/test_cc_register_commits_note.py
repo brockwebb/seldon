@@ -279,6 +279,8 @@ def test_a_commit_the_hook_refuses_puts_the_tree_back_and_registers_nothing(repo
     (hooks / "pre-commit").write_text("#!/bin/sh\necho refused by hook >&2\nexit 1\n")
     (hooks / "pre-commit").chmod(0o755)
     _git(repo["dir"], "config", "core.hooksPath", str(hooks))
+    # SEL-052 (AD-036-R31): the checkout's own config.worktree value wins over the shared one, so the plant goes there.
+    _git(repo["dir"], "config", "--worktree", "core.hooksPath", str(hooks))
     _write(repo, NOTE, _good(repo, RULING))
     _task(repo)
     before = _head(repo)

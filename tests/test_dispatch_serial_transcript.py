@@ -103,6 +103,12 @@ clock (`started_at`, `ended_at`, `wall_seconds`, `asleep_s`; the last two masked
 SEL-043 code; it equals the pre-change fixture once exactly those keys are removed and the old statement put back
 (`docs/evidence/sel043/transcript_check.py`, `True`; a planted change to one outcome reads `False`). Every other line
 is unchanged: the lease's phases are on the lease file, which the transcript does not read.
+
+**Erratum, SEL-052 (AD-036-R31, 2026-11-26).** `seldon hooks install` now writes the relative `.githooks` into the
+checkout's own `config.worktree`, and `git worktree add` copies that file into each new worktree (git 2.50.1), so
+pointing a dispatched worktree finds it already pointed: both `dispatch_worktree_named` records' `hooks_path.changed`
+read `false` where they read `true`. Re-recorded on the SEL-052 code; it equals the pre-change fixture once exactly
+those two values are put back (string replace, `True`). Every other line is unchanged.
 """
 from __future__ import annotations
 

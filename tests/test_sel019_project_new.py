@@ -155,7 +155,8 @@ def test_a_temp_directory_becomes_a_project_with_a_dispatch_block_and_a_loaded_p
     # Committed through the hooks: a clean tree on main, the hooks installed.
     assert _git(target, "status", "--porcelain") == ""
     assert _git(target, "symbolic-ref", "--short", "HEAD").strip() == "main"
-    assert _git(target, "config", "--local", "core.hooksPath").strip() == ".githooks"
+    # SEL-052 (AD-036-R31): the relative value is the checkout's own; the shared one is the absolute fallback.
+    assert _git(target, "config", "--worktree", "core.hooksPath").strip() == ".githooks"
     tracked = _git(target, "ls-files").split()
     assert {"seldon.yaml", "seldon_events.jsonl", ".gitignore", str(plist_path.relative_to(target.resolve())),
             ".githooks/pre-commit"} <= set(tracked)
