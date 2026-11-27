@@ -404,6 +404,16 @@ dispatch:
     reap_after_intervals: 1
     # Inherited from every QC/SQ task's stop condition: the estimate plus 20 percent.
     spend_ceiling_factor: 1.2
+  # SEL-058 Part B, answering factory's filing cd079f2d
+  # (cc_tasks/2026-11-27_filing_from_factory_declare_the_hive_in_seldon_s_dispatch_block_so_its.md; factory DN-005
+  # decision 2, FAC-41). AD-038-R43: the dispatcher mints one Hive identity per session at launch and puts it in the
+  # session's environment as HIVE_TOKEN, and places `notices_hook` on the launch line as a PostToolUse hook; a failed
+  # mint never stops a launch. AD-038-R44: the tool gate refuses any call naming `secrets_dir`. The client and the
+  # secrets are factory's; nothing of them is copied here.
+  hive:
+    mint_command: /opt/anaconda3/bin/python /Users/brock/GitHub/factory/scripts/hive.py mint
+    notices_hook: /opt/anaconda3/bin/python /Users/brock/GitHub/factory/scripts/hive.py notices --hook
+    secrets_dir: ~/.factory/hive/secrets
 
 # DESK-001: `seldon commit-governed` / the `seldon_commit_governed` MCP tool, the commit path for
 # what a Desktop session writes (seldon/core/desktop_commit.py). `roots` maps each directory the
