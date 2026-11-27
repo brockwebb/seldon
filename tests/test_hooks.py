@@ -105,6 +105,13 @@ def repo(tmp_path):
     return {"dir": proj, "config": config, "sib_sha": sib_sha, "hook_commit": hook_commit}
 
 
+def _unhook(d: Path) -> None:
+    """Take git's pointer to the hook away: since SEL-052 it is in two scopes (the checkout's config.worktree and
+    the shared fallback)."""
+    _git(d, "config", "--worktree", "--unset", "core.hooksPath", check=False)
+    _git(d, "config", "--local", "--unset", "core.hooksPath", check=False)
+
+
 def _good(repo) -> str:
     return (f"# AD-099 a note\n\n## 2. Prior art\n\n### External\n\n"
             f'- library receipt: query "unit of extraction" | release lib.json sha256:{LIB_SHA} '
@@ -245,7 +252,10 @@ def test_commits_before_the_hook_existed_are_not_audited(repo):
 
 def test_the_hook_is_installed_by_path_not_copied(repo):
     d = repo["dir"]
-    assert _git(d, "config", "--local", "--get", "core.hooksPath").stdout.strip() == ".githooks"
+    # SEL-052: the relative value is this checkout's own (config.worktree); the shared config holds the absolute
+    # path Claude Code's worktree creation would otherwise write over a relative one.
+    assert _git(d, "config", "--worktree", "--get", "core.hooksPath").stdout.strip() == ".githooks"
+    assert _git(d, "config", "--local", "--get", "core.hooksPath").stdout.strip() == str(d / ".githooks")
     assert _git(d, "rev-parse", "--git-path", "hooks").stdout.strip() == ".githooks"
     assert _git(d, "ls-files", ".githooks/pre-commit").stdout.strip() == ".githooks/pre-commit"
     assert not (d / ".git" / "hooks" / "pre-commit").exists()
@@ -266,7 +276,7 @@ def test_install_never_writes_global_config_and_reports_the_old_value(repo, tmp_
     res = H.install(other, python=sys.executable)
     assert res.old_hooks_path == "/nonexistent/old/.git/hooks"
     scope = _git(other, "config", "--show-scope", "--get", "core.hooksPath").stdout
-    assert scope.startswith("local\t.githooks")
+    assert scope.startswith("worktree\t.githooks")          # SEL-052
     assert H.install(other, python=sys.executable).changed is False      # idempotent
 
 
@@ -282,7 +292,7 @@ def test_install_refuses_to_overwrite_a_different_hook(tmp_path):
 
 def test_the_dispatcher_points_git_at_the_tracked_hook_and_refuses_without_it(repo, tmp_path):
     d = repo["dir"]
-    _git(d, "config", "--local", "--unset", "core.hooksPath")
+    _unhook(d)
     assert not H.status(d)["installed"]
     got = H.ensure_installed(d)
     assert got["ok"] and got["changed"] and H.status(d)["installed"]
@@ -310,7 +320,7 @@ def test_removing_the_hook_lets_the_planted_note_through(repo, removal):
     """Without the hook the same planted note commits: the refusal above is the hook's doing."""
     d = repo["dir"]
     if removal == "unset_hooks_path":
-        _git(d, "config", "--local", "--unset", "core.hooksPath")
+        _unhook(d)
     else:
         # DESK-001: the prior-art half runs in commit-msg where it is installed; the gate is both.
         (d / ".githooks" / "pre-commit").unlink()
@@ -323,7 +333,7 @@ def test_removing_the_hook_lets_the_planted_note_through(repo, removal):
 
 def test_the_refusal_test_fails_when_the_hook_is_removed(repo):
     """The planted-refusal test's own assertion, run with the hook removed, does not hold."""
-    _git(repo["dir"], "config", "--local", "--unset", "core.hooksPath")
+    _unhook(repo["dir"])
     with pytest.raises(AssertionError):
         test_git_commit_itself_refuses_a_planted_note_without_prior_art(repo)
 

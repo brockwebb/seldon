@@ -13,9 +13,12 @@ an agent might follow, which is the failure AD-036 exists to end (its section 2:
 decay inside an agent's session; enforcement is refusal, not reminder).
 
 **Installed by path, never copied.** The hook lives in a TRACKED `.githooks/` directory and
-`core.hooksPath` is set to that relative path in the repository's own config (never `--global`,
+`core.hooksPath` is set to that relative path in the checkout's own `config.worktree` (never `--global`,
 never `--system`). Git resolves a relative hooks path against the top of the working tree, so a
-fresh worktree runs the hook its own checkout carries, and a moved clone keeps a working hook.
+pointed worktree runs the hook its own checkout carries, and a moved clone keeps a working hook.
+SEL-052: the relative value lives in `config.worktree`, not the shared config, because the Claude Code CLI
+rewrites a relative SHARED value to an absolute one on every `claude --worktree`; the shared config holds that
+absolute value itself (the main worktree's `.githooks`), so the CLI finds nothing to change.
 The interpreter is recorded in the same local config (`seldon.python`), because a hook run by a
 launchd-started session may not have seldon on PATH; it is machine state, so it never enters a
 tracked file.
@@ -314,18 +317,66 @@ def install(repo: Path, python: str | None = None, commit: bool = True) -> Insta
     wrote = _write_hook(commit_msg_file(repo), COMMIT_MSG_SCRIPT) or wrote
     # squiddy SQ-096: the pass-ledger check where git's sequencer commits (rebase, cherry-pick).
     wrote = _write_hook(prepare_commit_msg_file(repo), PREPARE_COMMIT_MSG_SCRIPT) or wrote
-    old = _git(repo, "config", "--local", "--get", "core.hooksPath", check=False).stdout.strip()
+    old = _git(repo, "config", "--get", "core.hooksPath", check=False).stdout.strip()
     old_py = _git(repo, "config", "--local", "--get", PYTHON_KEY, check=False).stdout.strip()
-    if old != HOOKS_DIR:
-        _git(repo, "config", "--local", "core.hooksPath", HOOKS_DIR)
+    pointed = _point_both(repo)
     if old_py != python:
         _git(repo, "config", "--local", PYTHON_KEY, python)
     # After core.hooksPath is set, so the commit runs the hooks it commits.
     committed, sha = commit_hooks(repo) if commit else ([], None)
     return InstallResult(repo=str(repo), old_hooks_path=old or None, hooks_path=HOOKS_DIR,
                          python=python, wrote_hook=wrote,
-                         changed=wrote or old != HOOKS_DIR or old_py != python or bool(committed),
+                         changed=wrote or pointed or old_py != python or bool(committed),
                          committed=tuple(committed), commit=sha)
+
+
+def main_worktree(repo: Path) -> Path:
+    """The repository's main working tree: the first entry of `git worktree list` (git-worktree(1): "the main
+    worktree is listed first"), whichever checkout `repo` is."""
+    out = _git(Path(repo), "worktree", "list", "--porcelain").stdout
+    for line in out.splitlines():
+        if line.startswith("worktree "):
+            return Path(line[len("worktree "):])
+    raise HookError(f"{repo}: git worktree list named no worktree")
+
+
+def shared_hooks_path(repo: Path) -> str:
+    """The value the repository's SHARED config holds (SEL-052): the main worktree's `.githooks`, absolute.
+
+    Absolute because the Claude Code CLI rewrites a relative one to exactly this on every `claude --worktree` launch
+    (`tests/test_sel052_hook_path.py`); holding its fixed point leaves it nothing to write, so the value has one
+    writer. It is only the fallback a linked worktree nobody pointed reads; every checkout seldon installs or points
+    reads its own `config.worktree`, which wins."""
+    return str(main_worktree(repo) / HOOKS_DIR)
+
+
+def _point_both(repo: Path) -> bool:
+    """SEL-052: the shared value absolute (`shared_hooks_path`), and this checkout's own `config.worktree` relative,
+    with `extensions.worktreeConfig` on. Returns whether anything changed.
+
+    Raises:
+        HookError: The shared config sets `core.worktree` or `core.bare = true`, which git-worktree(1) says must move
+            to the main worktree's `config.worktree` before the extension is turned on; that move is not this
+            installer's to make.
+    """
+    shared_wt = _git(repo, "config", "--local", "--get", "core.worktree", check=False).stdout.strip()
+    shared_bare = _git(repo, "config", "--local", "--bool", "--get", "core.bare", check=False).stdout.strip()
+    if shared_wt or shared_bare == "true":
+        raise HookError(f"{repo}: the shared config sets core.worktree or core.bare = true; git-worktree(1) "
+                        f"requires moving it to the main worktree's config.worktree before "
+                        f"extensions.worktreeConfig, and `seldon hooks install` does not make that move")
+    changed = False
+    want = {("--local", "extensions.worktreeConfig"): "true",
+            ("--local", "core.hooksPath"): shared_hooks_path(repo)}
+    for (scope, key), value in want.items():
+        if _git(repo, "config", scope, "--get", key, check=False).stdout.strip() != value:
+            _git(repo, "config", scope, key, value)
+            changed = True
+    # After the extension is on: `--worktree` without it writes the shared config.
+    if _git(repo, "config", "--worktree", "--get", "core.hooksPath", check=False).stdout.strip() != HOOKS_DIR:
+        _git(repo, "config", "--worktree", "core.hooksPath", HOOKS_DIR)
+        changed = True
+    return changed
 
 
 def status(repo: Path) -> dict:
@@ -342,6 +393,12 @@ def status(repo: Path) -> dict:
         problems.append(f"core.hooksPath is {hp or 'unset'!r}, not {HOOKS_DIR!r}")
     elif scope and scope not in ("local", "worktree"):
         problems.append(f"core.hooksPath is set in {scope} config; it belongs to the repository")
+    elif scope == "local":
+        # SEL-052: correct today, broken by the next `claude --worktree`, which rewrites a relative shared value to
+        # an absolute one. `install` (and the dispatcher's `ensure_installed`) moves it to this checkout's own
+        # config.worktree.
+        problems.append(f"core.hooksPath {HOOKS_DIR!r} is in the shared config, where Claude Code's worktree "
+                        f"creation rewrites it to an absolute path (SEL-052); run `seldon hooks install`")
     hf = hook_file(repo)
     if not hf.is_file():
         problems.append(f"{HOOKS_DIR}/{PRE_COMMIT} is missing from this checkout")
@@ -375,7 +432,7 @@ def point_worktree(worktree: Path) -> dict:
 
     A linked worktree reads the repository's shared config, so it inherits whatever the primary checkout's
     `core.hooksPath` is at that moment; an absolute value (seen in seldon's and squiddy's, SEL-012's RESULT; written
-    by something outside seldon) resolves to the PRIMARY's `.githooks` and HOOK-001's relative path never resolves
+    by the Claude Code CLI on every `claude --worktree`, SEL-052, `tests/test_sel052_hook_path.py`) resolves to the PRIMARY's `.githooks` and HOOK-001's relative path never resolves
     in the worktree, so `seldon verify` there prints "not installed". git's per-worktree config is the mechanism for
     exactly this (git-worktree(1), CONFIGURATION FILE; git-config(1) `--worktree`): with
     `extensions.worktreeConfig` on, `config.worktree` is read after the shared config and wins, so the worktree

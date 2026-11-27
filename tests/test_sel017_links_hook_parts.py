@@ -166,6 +166,8 @@ def hooked(tmp_path):
     _git(p, "add", "README.md")
     _git(p, "commit", "-q", "-m", "init")
     H.install(p, python=sys.executable)
+    # The pre-SEL-052 install: nothing in the main worktree's config.worktree for `git worktree add` to copy.
+    _git(p, "config", "--worktree", "--unset", "core.hooksPath")
     _git(p, "config", "--local", "core.hooksPath", str(p / H.HOOKS_DIR))
     wt = tmp_path / "hwt"
     assert _git(p, "worktree", "add", "-q", "-b", "worktree-h", str(wt)).returncode == 0
