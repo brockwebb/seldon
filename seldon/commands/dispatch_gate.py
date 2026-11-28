@@ -45,14 +45,35 @@ def _lock_path(wt: Path) -> Path:
     return wt.parent / f"{wt.name}.lock"
 
 
+def _marker_path(wt: Path) -> Path:
+    """The ownership marker `run_scheduled` writes before it checks out `wt` and `_clear` removes after it: beside the
+    checkout, as the lock is, so nothing the gate command does inside the checkout can forge or remove it."""
+    return wt.parent / f"{wt.name}.scheduled"
+
+
 def _clear(project_dir: Path, wt: Path) -> None:
-    """Remove a scheduled checkout a killed run left: as a worktree first, then the directory itself (it is this
-    module's own scratch path, never a task's), then git's record of it."""
+    """Remove a scheduled checkout a killed run left: as a worktree first, then the directory itself, then git's record
+    of it, then the ownership marker.
+
+    REVIEW-001 F-01: a path is removed only when the marker this module writes before each checkout claims it.
+    `dispatch.gate.scheduled_worktree` is configuration, so a typo or a merged edit can point it at a tracked directory
+    or an in-flight task's worktree, and the removal is `git worktree remove --force` and `rmtree`. A path the marker
+    does not claim is refused (GateConfigError, which `maybe_run` reports) and left as it is."""
+    marker = _marker_path(wt)
     if wt.exists() or wt.is_symlink():
+        claimed = (marker.is_file() and
+                   Path(marker.read_text(encoding="utf-8").strip()).resolve() == wt.resolve())
+        if not claimed:
+            raise GP.GateConfigError(
+                f"dispatch.gate.scheduled_worktree names {wt}, which exists and which the scheduled run did not "
+                f"create (no ownership marker {marker}); refusing to remove it. Point the key at a scratch path such "
+                f"as the default {GP.DEFAULTS['scheduled_worktree']!r}, or remove the path by hand if it is a "
+                f"scheduled checkout a run older than REVIEW-001 left")
         WT.remove(project_dir, wt)
-    if wt.exists():
-        shutil.rmtree(wt)
+        if wt.exists():
+            shutil.rmtree(wt)
     WT.git(project_dir, "worktree", "prune")
+    marker.unlink(missing_ok=True)
 
 
 def run_scheduled(project_dir: Path, cfg: dict, why: str, *, session_id: str | None = None, driver=None,
@@ -79,6 +100,7 @@ def run_scheduled(project_dir: Path, cfg: dict, why: str, *, session_id: str | N
         if not main_sha:
             raise GP.GateConfigError(f"no commit for branch {cfg['branch']!r} in {project_dir}")
         _clear(project_dir, wt)
+        _marker_path(wt).write_text(f"{wt}\n", encoding="utf-8")
         r = WT.git(project_dir, "worktree", "add", "-q", "--detach", str(wt), main_sha)
         if r.returncode != 0:
             raise GP.GateConfigError(f"git worktree add --detach {wt} {main_sha[:12]} failed: "

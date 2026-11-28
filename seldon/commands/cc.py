@@ -1037,10 +1037,48 @@ def _blocked_completion(project_dir: Path, config: dict, ungated: str | None) ->
     found = GP.completion_evidence(primary, cfg["branch"], read_events(primary))
     if found is not None:
         return {"completion_gate": found.get("event_id")}, None
-    return {}, (f"blocked_ungated: this task is blocked, so the dispatcher did not merge it, and no passing gate is "
-                f"recorded for the tree `{cfg['branch']}` holds now (AD-034-R41). Run `seldon gate main` (or "
+    return {}, (f"blocked_ungated: this task is blocked, so the dispatcher did not merge it, and no passing full gate "
+                f"is recorded for the tree `{cfg['branch']}` holds now (AD-034-R41). Run `seldon gate main` (or "
                 f"`seldon gate run --full` on {cfg['branch']}) and complete it once that passes, or complete it with "
-                f"`--ungated \"<reason>\"`, which records the override on the task.")
+                f"`seldon cc complete <file> --ungated \"<reason>\"`, which records the override on the task.")
+
+
+def blocked_since_launch(events: list, artifact_id: str) -> bool:
+    """REVIEW-001 F-04: whether the task's newest move INTO `blocked` comes after its newest `dispatch_launched`.
+
+    R41 is about a task the dispatcher blocked and did not merge: whatever reached main did so by hand. Its state at
+    completion is not the test, because `seldon task update --state in_progress` steps a task out of `blocked` and
+    `cc complete` would then never see it. A redrive the dispatcher launched again is not held: that launch's own finish
+    gates and merges it (AD-034-R26). The event store is append-only, so file order is the order of record."""
+    blocked_at = launched_at = -1
+    for i, e in enumerate(events):
+        q = e.get("payload") or {}
+        if e.get("event_type") == "artifact_state_changed" and q.get("artifact_id") == artifact_id \
+                and q.get("to_state") == "blocked":
+            blocked_at = i
+        elif e.get("event_type") == "dispatch_launched" and q.get("task_id") == artifact_id:
+            launched_at = i
+    return blocked_at > launched_at
+
+
+def r41_completion(project_dir: Path, config: dict, artifact_id: str, current_state: str | None,
+                   ungated: str | None) -> tuple[dict, str | None]:
+    """AD-034-R41 for every completion entry point (`seldon cc complete` and the MCP `seldon_cc_complete`):
+    `(properties to record, refusal or None)`. REVIEW-001 F-02: the MCP tool completed a blocked task with neither
+    evidence nor the operator's override, because the check lived in the CLI command alone.
+
+    Held when the task is `blocked` now, or was blocked after its newest launch (F-04). A project with no dispatch block
+    has no dispatcher to have blocked anything, so nothing is read."""
+    if not config.get("dispatch"):
+        return {}, None
+    held = current_state == "blocked"
+    if not held and artifact_id:
+        from seldon.core import worktree as WT
+        from seldon.core.events import read_events
+        held = blocked_since_launch(read_events(WT.anchor(Path(project_dir).resolve())), artifact_id)
+    if not held:
+        return {}, None
+    return _blocked_completion(project_dir, config, ungated)
 
 
 @click.group("cc")
@@ -1192,13 +1230,12 @@ def cc_complete(filepath, note, allow_untracked, ungated):
         # passing gate of the tree the dispatch branch holds now, or on the operator's recorded override; never on
         # nothing (hazbrief HB-221: blocked `regate_red`, merged by hand, completed, and its successor released onto a
         # red main). Refused before anything is written.
-        gate_props: dict = {}
-        if current_state == "blocked":
-            gate_props, gate_refusal = _blocked_completion(project_dir, config, ungated)
-            if gate_refusal:
-                click.echo(f"ERROR: {gate_refusal}\n  File: {rel_path}", err=True)
-                driver.close()
-                raise SystemExit(1)
+        # REVIEW-001 F-04: held by the record of the block, not only by the state at call time.
+        gate_props, gate_refusal = r41_completion(project_dir, config, existing_id, current_state, ungated)
+        if gate_refusal:
+            click.echo(f"ERROR: {gate_refusal}\n  File: {rel_path}", err=True)
+            driver.close()
+            raise SystemExit(1)
 
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)

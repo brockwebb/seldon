@@ -32,6 +32,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shlex
 import signal
@@ -190,6 +191,12 @@ def load_gate_config(block, gate_command: str | None) -> dict:
     if not isinstance(sw, str) or not sw.strip():
         raise GateConfigError(f"dispatch.gate.scheduled_worktree must be a non-empty repository-relative path, got {sw!r}")
     _relative([sw], "dispatch.gate.scheduled_worktree")
+    if posixpath.normpath(sw.strip()) == ".":
+        # REVIEW-001 F-01: the scheduled run removes its checkout before and after each run, so a value naming the
+        # checkout itself would name the primary for removal. `dispatch_gate._clear` also refuses any path the run's
+        # own marker does not claim; this refuses the one value no project can mean.
+        raise GateConfigError(f"dispatch.gate.scheduled_worktree {sw!r} names the checkout itself; it must name a "
+                              f"scratch path inside it, such as the default {DEFAULTS['scheduled_worktree']!r}")
     w = out["warn_seconds"]
     if w is not None and (isinstance(w, bool) or not isinstance(w, (int, float)) or w <= 0):
         raise GateConfigError(f"dispatch.gate.warn_seconds must be a positive number of seconds or absent, got {w!r}")
@@ -741,12 +748,17 @@ def completion_evidence(primary: Path, branch: str, events: list) -> dict | None
 
     What `seldon cc complete` needs before it completes a task the dispatcher blocked: whatever reached main by hand,
     the tree main holds now has passed a gate (a scheduled run, `seldon gate main`, or a full `seldon gate run`).
-    None when the branch cannot be read: no evidence is not evidence."""
+    None when the branch cannot be read: no evidence is not evidence.
+
+    REVIEW-001 F-03: only a FULL gate counts, as R41 names (the scheduled run is full). A scoped `seldon gate run` of
+    main's clean tree selects nothing (its change set is empty, `declared_none`) and passes at once, and R26 says a gate
+    that ran nothing is not evidence."""
     out = subprocess.run(["git", "-C", str(primary), "rev-parse", f"{branch}^{{tree}}"], capture_output=True,
                          text=True)
     if out.returncode != 0:
         return None
-    return passing_record(events, out.stdout.strip())
+    full = [e for e in events if (e.get("payload") or {}).get("tier") == TIER_FULL]
+    return passing_record(full, out.stdout.strip())
 
 
 def evidence(e: dict) -> dict:

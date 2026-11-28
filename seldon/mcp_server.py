@@ -1489,6 +1489,13 @@ def seldon_cc_complete(
         return f"Error: {return_refusal}\n  File: {rel_path}"
 
     if existing_id:
+        # REVIEW-001 F-02 (AD-034-R41): the CLI's gate, by the same function. A task the dispatcher blocked completes
+        # here only on a passing full gate of the branch's tip; the operator's `--ungated` override is the CLI's alone.
+        from seldon.commands.cc import r41_completion
+        gate_props, gate_refusal = r41_completion(p, config, existing_id, current_state, None)
+        if gate_refusal:
+            driver.close()
+            return f"Error: {gate_refusal}\n  File: {rel_path}"
         # Pre-registered task — walk it to completed
         name = _name_from_filepath(rel_path)
         completed_at = datetime.now(timezone.utc).isoformat()
@@ -1499,7 +1506,7 @@ def seldon_cc_complete(
             stamp = plan_update_artifact(
                 project_dir=p, driver=driver, database=database,
                 artifact_id=existing_id,
-                properties={"completed_at": completed_at},
+                properties={"completed_at": completed_at, **gate_props},
                 actor="desktop", authority="accepted",
             )
             try:
