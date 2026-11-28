@@ -95,20 +95,22 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
                                  "origin": origin, "error": res["error"][:300]})
                 continue
             searched.append({"graph": res["graph"], "origin": origin, "release": res["release"],
-                             "sha256": res["sha256"], "total_hits": len(res["rows"]),
+                             "sha256": res["sha256"], "release_sealed": res.get("release_sealed"),
+                             "total_hits": len(res["rows"]),
                              "receipt": pa.Library.receipt(res),
                              "top": [{"doc_id": h["doc_id"], "rows": [r["receipt"]["row_id"] for r in h["rows"]],
                                       "text": h["rows"][0]["text"][:200] if h["rows"] else ""}
                                      for h in res["hits"]]})
             pa.log_query(s, {"arm": "library", "purpose": "search", "query": query, "graph": res["graph"],
                              "origin": origin, "release": res["release"], "sha256": res["sha256"],
-                             "rows": len(res["rows"])})
+                             "release_sealed": res.get("release_sealed"), "rows": len(res["rows"])})
         first = answered[0]
         # `release`, `sha256`, `total_hits` and `top` stay the FIRST answering graph's, as every caller before R21 read
         # them (since R25, the project's own graph when it answers); `graphs` carries each graph's, and `receipts` one
         # line per answering graph.
         out = {"arm": arm, "query": query, "receipts": [g["receipt"] for g in searched if "receipt" in g],
-               "release": first["release"], "sha256": first["sha256"], "total_hits": len(first["rows"]),
+               "release": first["release"], "sha256": first["sha256"],
+               "release_sealed": first.get("release_sealed"), "total_hits": len(first["rows"]),
                "top": next(g["top"] for g in searched if "receipt" in g), "graphs": searched,
                "not_searched": [{"graph": g["name"], "why": g["why"]} for g in tool.not_searched]}
     else:
@@ -204,8 +206,14 @@ def search_command(query, arm, graphs, roots, top, note, project, as_json):
             if g.get("error"):
                 click.echo(f"  graph {g['graph']}{origin}: unavailable: {g['error']}")
                 continue
+            # SEL-064 (squiddy R-318): `is False` only; None is a ledger that seals nothing, not an unsealed release.
+            unsealed = g.get("release_sealed") is False
             click.echo(f"  graph {g['graph']}{origin}: release {g['release']} sha256:{str(g['sha256'])[:12]}..., "
-                       f"{g['total_hits']} row(s)")
+                       f"{g['total_hits']} row(s)" + (", NOT SEALED" if unsealed else ""))
+            if unsealed:
+                click.echo(f"prior-art: graph {g['graph']} answered from release {g['release']} with "
+                           f"release_sealed false: squiddy has not sealed it (built before its gates, or a gate killed "
+                           f"it); its receipt verifies while the export is on disk (squiddy R-306)", err=True)
             for h in g["top"]:
                 click.echo(f"    {h['doc_id']}  {h['text'][:120]!r}")
         for g in out.get("not_searched") or []:

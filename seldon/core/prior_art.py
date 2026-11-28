@@ -957,10 +957,15 @@ class Library:
             raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library graph {self.name} has no served index: {exc}") from exc
         if res.get("error"):
             raise PriorArtError(f"{RELEASE_UNAVAILABLE}: library search failed: {res['error']}")
-        rel = (res.get("index") or {}).get("release") or {}
+        index = res.get("index") or {}
+        rel = index.get("release") or {}
+        # SEL-064 (squiddy SQ-156, DN-063 ADDENDUM 02 R-318; seldon's filing c923eb5a): squiddy serves the index from
+        # release stage 15, before the seal, so say whether this release is sealed: True, False (before the seal, or a
+        # release a later gate killed), None (a ledger that seals nothing, or a squiddy before SQ-156). Reported, not
+        # refused: the receipt names the export by sha256 and verification rebuilds it (SEL-064 RESULT).
         return {"query": query, "graph": self.name, "release": Path(str(rel.get("export"))).name,
-                "sha256": rel.get("sha256"), "rows": self._rows(res["hits"]), "hits": res["hits"],
-                "index": "served"}
+                "sha256": rel.get("sha256"), "release_sealed": index.get("release_sealed"),
+                "rows": self._rows(res["hits"]), "hits": res["hits"], "index": "served"}
 
     def exports_dir(self) -> Path:
         """Where the library keeps its release exports (the graph's `exports_dir`)."""
