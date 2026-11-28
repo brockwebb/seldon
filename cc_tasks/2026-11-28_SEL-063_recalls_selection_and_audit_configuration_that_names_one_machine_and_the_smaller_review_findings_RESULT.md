@@ -92,7 +92,8 @@ Earlier, the related suites ran at each Part's commit:
 ## Spend
 
 - Part A's boundary: 271,211 tokens against a 0.5 share of the 800K estimate (400K).
-- Part B's boundary: recorded by `seldon dispatch part-complete --part B` after this file was written, and added below.
+- Part B's boundary: 313,561 tokens cumulative (wall 4,546 s) against the 800K estimate. The estimate was about 2.5
+  times what the work took.
 - The final figure is the dispatcher's.
 
 ## Open, for the operator or a later task
