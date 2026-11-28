@@ -148,7 +148,8 @@ SELECTION = {"mode": "touch", "noise_paths": ["cc_tasks/*"], "max_citing_share":
              "lexical_min_shared_terms": {"result": None}}
 
 
-def _replay_repo(tmp_path: Path, n: int) -> Path:
+def _replay_repo(tmp_path: Path, n: int, result_date: str = "2026-01-02T12:00:00Z") -> Path:
+    """SEL-063 (REVIEW-001 F-25): the RESULT's landing is its commit's time, so the commit is dated."""
     root = tmp_path / "demo"
     (root / "cc_tasks").mkdir(parents=True)
     (root / "seldon.yaml").write_text(yaml.safe_dump({"project": {"name": "demo"},
@@ -164,7 +165,8 @@ def _replay_repo(tmp_path: Path, n: int) -> Path:
         _log(root / "logs" / "dispatch" / f"{stem}.log", f"2026-02-{i + 1:02d}T10:00:00Z", [],
              [_tool("Read", {"file_path": "/x/cc_tasks/2026-01-02_TASK-002_beta_RESULT.md"})])
     subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
-    subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True, capture_output=True,
+                   env={**os.environ, "GIT_AUTHOR_DATE": result_date, "GIT_COMMITTER_DATE": result_date})
     return root
 
 
@@ -179,8 +181,8 @@ def test_replay_reports_both_selections(tmp_path: Path):
 
 
 def test_a_result_that_landed_after_the_launch_is_not_found(tmp_path: Path):
-    root = _replay_repo(tmp_path, 1)
-    os.utime(root / "cc_tasks" / "2026-01-02_TASK-002_beta_RESULT.md", None)  # now: after the 2026-02 launch
+    # Committed after the 2026-02 launch (SEL-063: the commit, not the mtime, says when it landed).
+    root = _replay_repo(tmp_path, 1, result_date="2026-03-01T12:00:00Z")
     rows = A.replay_repository("demo", root, BLOCK, SELECTION, 30, tmp_path / "ck.jsonl", progress=lambda m: None)
     assert rows[0]["new"] == []
 

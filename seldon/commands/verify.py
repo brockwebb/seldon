@@ -262,7 +262,16 @@ def check_decisions(driver, database: str, project_dir: Path, config: dict) -> C
                             f"says (first: {', '.join(stale[:5])}); run `seldon decision project`")
         # SEL-058 (AD-033-R16): fixable. `--fix` projects first, then ends each edge that still binds nothing as a
         # `link_removed` event, as it does a Ruling's (`Binding constraints`).
-        for row in dr.non_binding_decision_edges(driver, database):
+        # SEL-063 (AD-033 ADDENDUM 04): only an open artifact's edge, and not one to a record a pending record of this
+        # checkout accepts.
+        try:
+            pending_accepted = dr.pending_acceptances(project_dir, config)
+        except (dr.RegisterError, dr.BrokenRegister) as exc:
+            findings.append(f"binding: pending records not read: {exc}")
+            fixable_only = False
+            pending_accepted = set()
+        for row in dr.non_binding_decision_edges(driver, database, domain_config=_get_domain_config(config),
+                                                 pending_accepted=pending_accepted):
             findings.append(f"binding: {row['task_name']} is bound to {row['decision_id']}, which is {row['state']} "
                             f"(only accepted records bind, AD-033-R4; `seldon verify --fix` ends the edge)")
     pending_line = _pending_line(pending)
@@ -476,6 +485,8 @@ def _fix_decisions(project_dir: Path, quiet: bool = False) -> None:
     try:
         removed = dr.prune_non_binding_decision_edges(project_dir=project_dir, driver=driver,
                                                       database=config["neo4j"]["database"],
+                                                      domain_config=_get_domain_config(config),
+                                                      pending_accepted=dr.pending_acceptances(project_dir, config),
                                                       session_id=get_current_session(project_dir))
     finally:
         driver.close()

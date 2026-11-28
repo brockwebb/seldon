@@ -1877,25 +1877,82 @@ def project(*, project_dir: Path, config: dict, driver, database: str, domain_co
     return rep
 
 
-def non_binding_decision_edges(driver, database: str) -> list[dict]:
-    """`constrained_by` edges to a Decision that is not `accepted` (AD-033-R4: only accepted records bind), as
-    `{task, task_name, decision, decision_id, state}`. What `seldon verify` reports as `binding:`."""
+def pending_acceptances(project_dir: Path, config: dict) -> set[str]:
+    """The records a pending (unnumbered) record of this checkout's registers makes `accepted`: their status with the
+    pending records folded in is `accepted` and without them is not (SEL-063, AD-033-R16 as amended). Empty for a
+    project with no register, and in a primary checkout, which holds no pending record.
+
+    The projection writes numbered records only (SEL-052), so until the merge numbers it such a record is not
+    `accepted` in the graph, and an edge to it is not a dead binding.
+
+    Raises:
+        RegisterError: A register that is configured cannot be read.
+    """
+    s = settings(project_dir, config)
+    if s is None:
+        return set()
+    u = Universe(s)
+    out: set[str] = set()
+    for repo in u.scope_repos():
+        reg = u.register(repo)
+        if not reg.pending_files():
+            continue
+        numbered = fold(reg.events(include_pending=False))
+        for qid, rec in fold(reg.events(include_pending=True)).items():
+            before = numbered.get(qid)
+            if rec.status == "accepted" and (before is None or before.status != "accepted"):
+                out.add(qid)
+    return out
+
+
+def non_binding_decision_edges(driver, database: str, *, domain_config,
+                               pending_accepted: Iterable[str] = ()) -> list[dict]:
+    """`constrained_by` edges that bind nothing now, as `{task, task_name, decision, decision_id, state}`: what
+    `seldon verify` reports as `binding:` and `--fix` ends (AD-033-R16 as amended by ADDENDUM 04).
+
+    An edge is one when its Decision is not `accepted` (R4: only accepted records bind), no pending record accepts it
+    (`pending_acceptances`), and its source is in an open state of its type (`artifacts.open_states`, from the domain's
+    state machines). An edge from an artifact that has left its open states (a completed or verified task) is the
+    record of what bound it when it ran, and is not returned (SEL-063, REVIEW-001 F-27).
+    """
+    from seldon.core.artifacts import open_states
+
+    pending = set(pending_accepted)
     with driver.session(database=database) as session:
-        return session.run(
+        rows = session.run(
             "MATCH (t:Artifact)-[:CONSTRAINED_BY]->(d:Artifact:Decision) WHERE d.state <> 'accepted' "
-            "RETURN t.artifact_id AS task, t.name AS task_name, d.artifact_id AS decision, "
-            "d.decision_id AS decision_id, d.state AS state ORDER BY t.name, d.decision_id").data()
+            "RETURN t.artifact_id AS task, t.name AS task_name, labels(t) AS labels, t.state AS task_state, "
+            "d.artifact_id AS decision, d.decision_id AS decision_id, d.state AS state "
+            "ORDER BY t.name, d.decision_id").data()
+    open_by_type: dict[str, set] = {}
+
+    def is_open(labels: list, state) -> bool:
+        for label in labels:
+            if label == "Artifact" or label not in domain_config.state_machines:
+                continue
+            if label not in open_by_type:
+                open_by_type[label] = set(open_states(domain_config, label))
+            return state in open_by_type[label]
+        # A type with no state machine has no state to leave: its edge is held to R4 alone, as before.
+        return True
+
+    keys = ("task", "task_name", "decision", "decision_id", "state")
+    return [{k: r[k] for k in keys} for r in rows
+            if r["decision_id"] not in pending and is_open(r["labels"], r["task_state"])]
 
 
-def prune_non_binding_decision_edges(*, project_dir: Path, driver, database: str,
+def prune_non_binding_decision_edges(*, project_dir: Path, driver, database: str, domain_config,
+                                     pending_accepted: Iterable[str] = (),
                                      session_id: Optional[str] = None) -> list[dict]:
     """SEL-058 (AD-033-R16): end every edge `non_binding_decision_edges` finds, each as a `link_removed` event, the
     way `governed.prune_non_binding_constraints` ends a Ruling's (`seldon verify --fix`). A supersession never moved or
     ended these edges and `seldon link` has no removal, so hazbrief HB-240 ended HB-214's edge to the superseded
     `hazbrief-mcp:HBD-474` with a script. Whether a task is bound to the superseding record is registration's
-    matching, not this repair's."""
+    matching, not this repair's. Since SEL-063 (ADDENDUM 04) an edge from a finished artifact, or to a record a pending
+    record accepts, is left in place."""
     from seldon.core.artifacts import remove_link
-    rows = non_binding_decision_edges(driver, database)
+    rows = non_binding_decision_edges(driver, database, domain_config=domain_config,
+                                      pending_accepted=pending_accepted)
     for row in rows:
         remove_link(project_dir=project_dir, driver=driver, database=database, from_id=row["task"],
                     to_id=row["decision"], rel_type="constrained_by", actor=ACTOR, authority="accepted",

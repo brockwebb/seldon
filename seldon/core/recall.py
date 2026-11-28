@@ -852,7 +852,8 @@ def _touch_hits(root: Path, own_repo: str, task_text: str, task_stem: str, query
             if not code or code.split("-", 1)[0] != prefix:
                 continue
             shares_file = bool(changes.get(code, set()) & specific) or any(f in c.text for f in specific)
-            need = sel["lexical_min_shared_terms"].get("issue")
+            # Its own kind's threshold (SEL-063, REVIEW-001 F-24): `null` there means shared words are no reason.
+            need = sel["lexical_min_shared_terms"].get(c.kind)
             if shares_file or (need and len(lexical.get(i, [])) >= need):
                 what = "was kept" if c.kind == "worktree_kept" else "was superseded"
                 take(i, 1.0, "dead_end", f"{code} {what} on {c.date}: {_clip(c.reason or 'no reason recorded', 80)}")

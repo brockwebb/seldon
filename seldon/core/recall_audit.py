@@ -517,6 +517,45 @@ def _append(path: Path, row: dict) -> None:
         os.fsync(fh.fileno())
 
 
+def landed_times(root: Path, rels: Iterable[str]) -> dict:
+    """`{path: epoch seconds}`: when each file reached this checkout's history, as the committer time of the first
+    commit that added it (`git log --diff-filter=A`; the record of when a file landed, SEL-063, REVIEW-001 F-25).
+
+    Committer time, because the dispatcher rebases a branch onto main just before it merges, so a commit's committer time
+    is when it reached main; `--no-renames` so a file renamed into place counts as added there. A path git has never
+    recorded (an uncommitted RESULT) has only the file's own time; a path not on disk is 0.0, as before.
+
+    Raises:
+        AuditError: git cannot read the repository's history.
+    """
+    import subprocess
+
+    wanted = sorted(set(rels))
+    out = {}
+    # A tree that is not a git repository has no history to read: every file's own time is all there is.
+    in_git = subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True,
+                            text=True).stdout.strip() == "true"
+    if wanted and in_git:
+        dirs = sorted({str(Path(r).parent) for r in wanted})
+        proc = subprocess.run(["git", "-C", str(root), "log", "--no-renames", "--diff-filter=A", "--format=%x00%ct",
+                               "--name-only", "--", *dirs], capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise AuditError(f"git log in {root} failed: {proc.stderr.strip()[:300]}")
+        want = set(wanted)
+        when = None
+        # Newest first, so the last addition seen for a path is its first.
+        for line in proc.stdout.splitlines():
+            if line.startswith("\x00"):
+                when = float(line[1:])
+            elif line in want and when is not None:
+                out[line] = when
+    for rel in wanted:
+        if rel not in out:
+            f = Path(root) / rel
+            out[rel] = f.stat().st_mtime if f.is_file() else 0.0
+    return out
+
+
 def replay_repository(name: str, root: Path, recall_block: dict, new_selection: dict, n: int, checkpoint: Path,
                       progress=print) -> list:
     """Re-run registration's recall for the last `n` dispatched tasks of one repository, under the old selection and
@@ -535,7 +574,10 @@ def replay_repository(name: str, root: Path, recall_block: dict, new_selection: 
     cfg_path = root / "seldon.yaml"
     config = (yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}) if cfg_path.is_file() else {}
     config = {**config, "recall": recall_block}
-    digest = hashlib.sha256(json.dumps(new_selection, sort_keys=True).encode()).hexdigest()[:12]
+    # SEL-063 (REVIEW-001 F-26; constitution section 15.2): the key is derived from every input that decides a row.
+    # The recall block decides both sides (its `top_n`, `bm25` and thresholds), so it is hashed with the selection.
+    digest = hashlib.sha256(json.dumps({"recall": recall_block, "selection": new_selection}, sort_keys=True,
+                                       default=str).encode()).hexdigest()[:12]
     done = checkpoint_rows(checkpoint)
     events = read_events(root) if (root / "seldon_events.jsonl").is_file() else []
     listed = _listed_by_stem(events)
@@ -545,11 +587,15 @@ def replay_repository(name: str, root: Path, recall_block: dict, new_selection: 
     universe = task_file_names(repos.values())
     # When each RESULT reached this checkout: a same-day RESULT written after the task launched was not there to be
     # recalled (the first replay "found" OODA-024 for OODA-011).
-    landed = {}
+    # SEL-063 (REVIEW-001 F-25): when it reached the history, not the file's mtime, which a clone or rebase resets.
+    by_repo: dict = {}
     for c in pool:
         if c.kind == "result" and c.path and c.repo in repos:
-            f = Path(repos[c.repo]) / c.path
-            landed[c.id] = f.stat().st_mtime if f.is_file() else 0.0
+            by_repo.setdefault(c.repo, []).append(c)
+    landed = {}
+    for repo, cs in by_repo.items():
+        times = landed_times(Path(repos[repo]), [c.path for c in cs])
+        landed.update({c.id: times[c.path] for c in cs})
     rows = []
     sessions = recent_sessions(root, n)
     for k, sess in enumerate(sessions, 1):

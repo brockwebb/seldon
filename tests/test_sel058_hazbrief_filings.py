@@ -336,11 +336,12 @@ def test_verify_fix_ends_a_binding_to_a_decision_no_longer_accepted(tmp_path, ne
         create_link(project_dir=root, driver=neo4j_driver, database=NEO4J_DB, domain_config=domain, from_id=task,
                     to_id=d, from_type="ResearchTask", to_type="Decision", rel_type="constrained_by",
                     actor="human", authority="accepted")
-    rows = dr.non_binding_decision_edges(neo4j_driver, NEO4J_DB)
+    rows = dr.non_binding_decision_edges(neo4j_driver, NEO4J_DB, domain_config=domain)
     assert [(r["task"], r["decision"]) for r in rows] == [(task, old)]
-    removed = dr.prune_non_binding_decision_edges(project_dir=root, driver=neo4j_driver, database=NEO4J_DB)
+    removed = dr.prune_non_binding_decision_edges(project_dir=root, driver=neo4j_driver, database=NEO4J_DB,
+                                                  domain_config=domain)
     assert [r["decision_id"] for r in removed] == ["hazbrief-mcp:HBD-474"]
-    assert dr.non_binding_decision_edges(neo4j_driver, NEO4J_DB) == []
+    assert dr.non_binding_decision_edges(neo4j_driver, NEO4J_DB, domain_config=domain) == []
     with neo4j_driver.session(database=NEO4J_DB) as s:
         left = s.run("MATCH (:ResearchTask {artifact_id: $t})-[:CONSTRAINED_BY]->(d:Decision) "
                      "RETURN d.decision_id AS q", t=task).data()

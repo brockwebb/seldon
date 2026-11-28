@@ -13,7 +13,7 @@ import click
 from seldon import models
 from seldon.config import load_project_config, get_neo4j_driver, get_current_session
 from seldon.core.artifacts import (
-    create_artifact, ledger_only, plan_artifact, plan_update_artifact, walk_to_completed,
+    create_artifact, ledger_only, plan_artifact, plan_update_artifact, update_artifact, walk_to_completed,
 )
 from seldon.core.events import make_event
 from seldon.core.dispatch import (
