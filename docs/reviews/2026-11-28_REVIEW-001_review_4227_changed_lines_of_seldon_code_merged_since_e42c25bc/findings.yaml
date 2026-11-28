@@ -1,0 +1,428 @@
+review:
+  repo: seldon
+  task: 2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc
+  review_file: docs/reviews/2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc/review.md
+findings:
+- id: F-01
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/commands/dispatch_gate.py:48
+  summary: The scheduled run's _clear removed whatever dispatch.gate.scheduled_worktree named (git worktree remove --force,
+    then rmtree), and the key was checked only for a leading / and ..; `.`, a tracked directory or a task worktree was deleted
+  sources:
+  - part1:L2-3
+  - part2:L2-1
+  - part1:L4-3
+  - part2:L4-1
+  class: data_loss
+  disposition: fixed
+  task: 2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc
+  test: tests/test_review001_fixes.py::test_a_scheduled_run_does_not_delete_a_tracked_directory_its_config_names
+- id: F-02
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/mcp_server.py:1506
+  summary: The MCP seldon_cc_complete completed a blocked task with neither gate evidence nor the operator's --ungated override;
+    AD-034-R41 was checked only in the CLI command
+  sources:
+  - part1:L1-1
+  - part1:L4-1
+  class: operator_authority
+  disposition: fixed
+  task: 2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc
+  test: tests/test_review001_fixes.py::test_the_mcp_completion_refuses_a_blocked_task_with_no_gate_on_main
+- id: F-03
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/core/gate_plan.py:739
+  summary: completion_evidence accepted any passing clean gate_run of main's tree, including a scoped declared_none run that
+    ran nothing, as R41 evidence
+  sources:
+  - part1:L2-1
+  - part2:L1-4
+  - part1:L5-1
+  class: operator_authority
+  disposition: fixed
+  task: 2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc
+  test: tests/test_review001_fixes.py::test_a_scoped_gate_of_the_branch_tip_is_not_completion_evidence
+- id: F-04
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/commands/cc.py:1196
+  summary: R41 keyed on the state at call time, so a blocked task stepped to in_progress by `seldon task update` before `cc
+    complete` completed with no evidence and no override
+  sources:
+  - part1:L1-1
+  class: operator_authority
+  disposition: fixed
+  task: 2026-11-28_REVIEW-001_review_4227_changed_lines_of_seldon_code_merged_since_e42c25bc
+  test: tests/test_review001_fixes.py::test_a_blocked_task_moved_out_of_blocked_by_hand_is_still_held_to_r41
+- id: F-05
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/core/controls.py:164
+  summary: 'A harness error in a planted control is recorded as a limit that did not refuse, controls re-run only on a changed
+    fingerprint, `seldon dispatch controls` writes no state, and the fingerprint omits the enforcing code: one slow hook call
+    refuses every launch until seldon.yaml changes'
+  sources:
+  - part1:L2-2
+  - part2:L3-2
+  - part1:L4-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-06
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/core/controls.py:112
+  summary: The session guard is a substring test; a cd plus relative path, a quote-split spelling and a Grep of the parent
+    directory all pass it (probe in review.md), against R44's 'ordinary reach'
+  sources:
+  - part1:L3-1
+  - part2:L3-1
+  - part2:L4-1
+  - part2:L7-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-07
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/commands/dispatch.py:1488
+  summary: The held alarm (_held) runs only in the serial pass; pass_parallel returns before it, so held_alarm_after_s never
+    acts in a parallel project
+  sources:
+  - part1:L1-2
+  - part1:L4-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-08
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/core/returns.py:484
+  summary: 'Every return carries `check: test -f <its own RESULT>`, which the finish already requires, and gate_evidence counts
+    a Stop gate with one passing check as merge evidence (R26)'
+  sources:
+  - part2:L1-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-09
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/lane.py:86
+  summary: Lane membership matches the task file's own name, so any filer joins the coordination lane by naming the file
+  sources:
+  - part1:L1-4
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-10
+  severity: minor
+  verdict: CONFIRMED
+  location: seldon/core/dispatch.py:663
+  summary: plan_launches skips the resource-overlap check for lane candidates and drops running lane rows from what is held;
+    R40 exempts lane tasks from exclusive holds only
+  sources:
+  - part2:L1-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-11
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/commands/dispatch.py:1497
+  summary: In a serial lane project a running lane session is not the claim, so the scheduled full gate can run while it is
+    in flight
+  sources:
+  - part1:L1-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-12
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/commands/dispatch_gate.py:174
+  summary: maybe_run says it never raises but catches only ScheduledBusy and GateConfigError; an OSError crashes each pass
+  sources:
+  - part1:L2-4
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-13
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/commands/dispatch.py:246
+  summary: dispatch status and survey plan without the lane, so they show an order the pass does not apply
+  sources:
+  - part1:L2-5
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-14
+  severity: note
+  verdict: CONFIRMED
+  location: seldon/commands/dispatch_worktree.py:337
+  summary: A comment says an exclusive task launches only when nothing runs; the lane removed that invariant
+  sources:
+  - part1:L2-6
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-15
+  severity: major
+  verdict: PLAUSIBLE
+  location: seldon/commands/dispatch.py:1483
+  summary: 'Two hand-maintained pass implementations plus the lane''s launch: each new station is added to some and missed
+    in others (the root of F-07 and F-13)'
+  sources:
+  - part1:L7-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-16
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/commands/cc.py:1196
+  summary: R41 is enforced at completion entry points, not as a guard on the blocked transitions; R45 keeps its own standing-condition
+    file
+  sources:
+  - part1:L7-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-17
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/commands/dispatch.py:2018
+  summary: The event store (about 20 MB) is parsed in full several times per pass, and the diff adds more scans
+  sources:
+  - part1:L7-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-18
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/gate_plan.py:543
+  summary: Since SEL-055 only a dispatcher pass runs the full suite; with no pass nothing reports the newest full gate's age
+  sources:
+  - part2:L1-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-19
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/gate_plan.py:341
+  summary: A declared gate_record is admitted under the closure and clears a red main even when scoped by tree_paths
+  sources:
+  - part2:L1-5
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-20
+  severity: note
+  verdict: PLAUSIBLE
+  location: seldon/core/dispatch.py:761
+  summary: The environment_in_flight alarm went from 3 passes to 12 for consumers that do not name it, with no measured basis
+  sources:
+  - part2:L7-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-21
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/gate_plan.py:739
+  summary: R41's evidence is a full gate of main's tree; nothing checks that the blocked task's branch reached main
+  sources:
+  - part2:L1-4
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-22
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/hive.py:101
+  summary: A failed mint's stderr tail is written into the session_identity event, which is committed and pushed
+  sources:
+  - part2:L3-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-062, which carries it with its location and sources
+- id: F-23
+  severity: minor
+  verdict: CONFIRMED
+  location: seldon/commands/cc.py:2191
+  summary: 'Pre-existing: cc rederive-description calls update_artifact, which cc.py never imports (NameError past --dry-run)'
+  sources:
+  - part1:L2-7
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-24
+  severity: minor
+  verdict: CONFIRMED
+  location: seldon/core/recall.py:855
+  summary: Recall stage 4 reads the Issue threshold for dead ends instead of the dead end's own kind, which seldon.yaml sets
+    to null
+  sources:
+  - part2:L2-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-25
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/recall_audit.py:552
+  summary: recall_audit dates a RESULT's landing by file mtime, which a clone or rebase resets
+  sources:
+  - part2:L2-3
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-26
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/recall_audit.py:556
+  summary: recall_audit's checkpoint key omits the recall block, so a changed block resumes stale rows (section 15.2)
+  sources:
+  - part2:L2-4
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-27
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon/core/decisions.py:1880
+  summary: verify --fix ends constrained_by edges from completed tasks and reads projected state without pending acceptances;
+    removals are recorded as link_removed, so nothing is lost
+  sources:
+  - part2:L5-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-28
+  severity: major
+  verdict: CONFIRMED
+  location: seldon/core/prior_art.py:385
+  summary: prior_art.internal_roots_from names ../factory/seldon.yaml and raises when no sibling factory checkout exists,
+    on the commit hook, verify and cc register paths
+  sources:
+  - part2:L6-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-29
+  severity: minor
+  verdict: PLAUSIBLE
+  location: seldon.yaml:414
+  summary: dispatch.hive.mint_command names one machine's interpreter and checkout
+  sources:
+  - part2:L6-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-30
+  severity: minor
+  verdict: CONFIRMED
+  location: scripts/sel056/trial.sh:8
+  summary: The sel056 scripts rm -rf an unchecked argument and hardcode one machine's squiddy interpreter
+  sources:
+  - part1:L3-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-31
+  severity: minor
+  verdict: CONFIRMED
+  location: pyproject.toml:23
+  summary: The shipped gate_command needs pytest-xdist (-n 6) and relies on pytest-randomly; neither is in the dev extras,
+    and the README has no install section
+  sources:
+  - part1:L6-1
+  - part1:L8-1
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-32
+  severity: note
+  verdict: PLAUSIBLE
+  location: seldon/core/hooks.py:353
+  summary: The hooks-path repair rests on the Claude Code CLI's rewrite of core.hooksPath
+  sources:
+  - part2:L7-2
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
+- id: F-33
+  severity: note
+  verdict: PLAUSIBLE
+  location: tests/test_pa002_release_resolve.py:361
+  summary: The pa002 test that left the --deselect list still skips through importorskip(squiddy.index), so a gate without
+    squiddy passes it unrun
+  sources:
+  - part1:deletion-table
+  class: other
+  disposition: queued
+  task: 2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings
+  evidence: Not of a class REVIEW-001 may fix (it fixes data_loss, unbounded_spend and operator_authority only); queued to
+    SEL-063, which carries it with its location and sources
