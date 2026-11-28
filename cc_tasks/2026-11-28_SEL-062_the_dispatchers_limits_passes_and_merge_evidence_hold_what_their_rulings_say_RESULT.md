@@ -152,6 +152,8 @@ B's commit. Two failed, and both were answered:
 
 - Part A's boundary: 341,339 tokens against a 0.4 share of 1.5M (600K).
 - Part B's boundary: 421,926 cumulative.
+- Part C's boundary: 445,973 cumulative against the 1.5M estimate. The estimate's 1.5M was about three times what
+  the work took.
 - The final figure is the dispatcher's.
 
 ## Open, for the operator or a later task
