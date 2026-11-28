@@ -65,6 +65,61 @@ def calibrate_judge_command(verdicts_path, judge_role, generator_role, set_path,
     click.echo(f"report -> {out}")
 
 
+@qc_group.command("recall-audit")
+@click.option("--repo", "only", multiple=True, help="Only this registered repository (repeatable).")
+@click.option("--out", "out_path", default=None, help="Write the tables as Markdown here.")
+@click.option("--json", "as_json", is_flag=True, help="machine-readable, every session's hits")
+def recall_audit_command(only, out_path, as_json):
+    """SEL-060 Part A: is recall used? Hits handed, opened and used, counted from every registered repository's
+    dispatch logs since recall was turned on there (`recall.audit.repositories_from`). Zero model calls."""
+    from seldon.config import load_project_config
+    from seldon.core import recall_audit as RA
+
+    try:
+        out = RA.run(Path.cwd(), load_project_config(), list(only) or None)
+    except RA.AuditError as exc:
+        raise click.ClickException(str(exc))
+    md = RA.render_markdown(out["tables"], out["repositories"])
+    if out_path:
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_path).write_text(md, encoding="utf-8")
+    click.echo(json.dumps(out, indent=1, default=str) if as_json else md)
+
+
+@qc_group.command("recall-replay")
+@click.option("--repo", "repos", multiple=True, required=True, help="A registered repository to replay (repeatable).")
+@click.option("--last", "last", default=30, show_default=True, help="How many of its latest dispatched tasks.")
+@click.option("--checkpoint", "checkpoint", required=True,
+              help="JSONL checkpoint: one row per task as it completes; re-running the command resumes from it.")
+@click.option("--json", "as_json", is_flag=True, help="machine-readable, every task's rows")
+def recall_replay_command(repos, last, checkpoint, as_json):
+    """SEL-060 Part C: registration's recall re-run for a repository's latest dispatched tasks under the old selection
+    (the recorded list, else RECALL-001's lexical one) and this project's `recall.selection`, as of each launch, with
+    what each session opened and which earlier RESULTs it consulted. Zero model calls."""
+    from seldon.config import load_project_config
+    from seldon.core import recall as RC
+    from seldon.core import recall_audit as RA
+
+    config = load_project_config()
+    try:
+        block = RC.resolve_block(config.get("recall") or {}, Path.cwd())
+        selection = block.get("selection")
+        if not selection or (RC.selection_of(selection) or {}).get("mode") != "touch":
+            raise click.ClickException("seldon.yaml recall.selection is not `mode: touch`; there is nothing new to replay")
+        old_block = {k: v for k, v in block.items() if k not in ("selection", "audit")}
+        known = RA.registered_repositories(Path.cwd(), config)
+    except (RC.RecallError, RA.AuditError) as exc:
+        raise click.ClickException(str(exc))
+    rows = []
+    for name in repos:
+        if name not in known:
+            raise click.ClickException(f"{name} is not a registered repository ({', '.join(known)})")
+        rows += RA.replay_repository(name, known[name], old_block, selection, last, Path(checkpoint),
+                                     progress=lambda m: click.echo(m, err=True))
+    summary = RA.replay_summary(rows)
+    click.echo(json.dumps({"summary": summary, "rows": rows} if as_json else summary, indent=1, default=str))
+
+
 @qc_group.command("chart")
 @click.option("--json", "as_json", is_flag=True, help="machine-readable")
 def chart_command(as_json):
