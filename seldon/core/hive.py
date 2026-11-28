@@ -16,7 +16,8 @@ every premise `check:` is; it is run with `HIVE_PROJECT`, `HIVE_TASK`, `HIVE_TAS
 prints the token, either alone or as JSON `{"token": ..., "identity": ...}`.
 
 A failed mint never refuses the launch: a post is context and never read by a gate (factory DN-005 decision 3), so a
-board that is down must not stop the line. It is recorded (`session_identity`, `minted: false`, the error) and the
+board that is down must not stop the line. It is recorded (`session_identity`, `minted: false`, the exit and the
+stderr's length and fingerprint, never its text: SEL-062, F-22) and the
 session launches without `HIVE_TOKEN`, which the client's notices hook reads as "no identity" and stays silent.
 Prior art: workload identity attested by the platform at launch, never by the workload (SPIFFE/SPIRE: the agent
 attests the workload and issues its SVID; Kubernetes projected service-account tokens, mounted by the kubelet).
@@ -98,9 +99,11 @@ def mint(hive: dict | None, *, project: str, task_id: str, task_name: str | None
     except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
         return {"ok": False, "token": None, "identity": None, "error": f"{type(exc).__name__}: {exc}"}
     if proc.returncode != 0:
-        # stderr only, and its tail: a mint command's stdout is where a token would be.
-        return {"ok": False, "token": None, "identity": None,
-                "error": f"exit {proc.returncode}: {(proc.stderr or '').strip()[-300:]}"}
+        # stderr only, and its tail: a mint command's stdout is where a token would be. The tail is for the dispatcher's
+        # own stderr; `record` keeps only its length and fingerprint (SEL-062, REVIEW-001 F-22).
+        stderr = (proc.stderr or "").strip()
+        return {"ok": False, "token": None, "identity": None, "exit": proc.returncode, "stderr": stderr,
+                "error": f"exit {proc.returncode}: {stderr[-300:]}"}
     token, identity = _parse(proc.stdout)
     if not token:
         return {"ok": False, "token": None, "identity": None, "error": "the mint command printed no token"}
@@ -133,8 +136,17 @@ def session_env(minted: dict | None, *, project: str, task_id: str) -> dict:
 
 
 def record(minted: dict, *, task_id: str, child_session_id: str) -> dict:
-    """The `session_identity` payload: never the token."""
+    """The `session_identity` payload: never the token, and never a failed mint's stderr text.
+
+    AD-038-R43 as amended by ADDENDUM 17 (REVIEW-001 F-22): the event is in the event store, which travels with the
+    repository, and a mint command that echoes its minter token on failure would publish it. The stderr is dropped
+    rather than scanned, because the token format is factory's and a pattern misses some format. Its length and
+    12-character sha256 prefix match a failure to the dispatcher's own log line, which carries the text."""
+    stderr = minted.get("stderr")
+    error = f"exit {minted.get('exit')}" if stderr is not None else minted.get("error")
     return {"task_id": task_id, "child_session_id": child_session_id, "minted": bool(minted.get("ok")),
             "identity": minted.get("identity"),
             "token_sha256": fingerprint(minted["token"]) if minted.get("token") else None,
-            "error": minted.get("error")}
+            "error": error,
+            "stderr_chars": len(stderr) if stderr is not None else None,
+            "stderr_sha256": fingerprint(stderr) if stderr else None}

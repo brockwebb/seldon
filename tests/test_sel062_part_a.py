@@ -28,6 +28,7 @@ from seldon.commands.dispatch import dispatch_group
 from seldon.core import controls as C
 from seldon.core import dispatch as D
 from seldon.core import hive as H
+from seldon.core import stations as Q
 from seldon.core.events import read_events
 from tests.dispatch_scaffold import SELDON_REPO, make_project, run_cli
 
@@ -69,7 +70,7 @@ def test_part_a_a_harness_error_is_an_untried_control_not_a_limit_that_went_thro
     assert rows and all(r["refused"] is None and r["tried"] is False and r["harness_error"] for r in rows), rows
     out = C.try_limits({"hook_command": "python -m seldon dispatch tool-gate", "deny_paths": [str(tmp_path / "s")],
                         "spend_ceiling_factor": 1.2, "code": "x"},
-                       {"spend_ceiling_factor": 1.2}, tmp_path, run=timeout)
+                       Q.load_stations_config({}), tmp_path, run=timeout)
     assert out["failed"] == [] and out["untried"] and out["ok"] is False and out["retry"] is True
 
 

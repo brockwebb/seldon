@@ -42,6 +42,13 @@ BLOCKED_STATE = "blocked"
 BLOCK_REASON_PROPERTY = "block_reason"
 
 
+class R41Refused(ValueError):
+    """AD-034-R41 as amended by ADDENDUM 15 (SEL-062, REVIEW-001 F-16): a ResearchTask the dispatcher blocked may not
+    move into `completed` without gate evidence of main's tree and its own branch on main. The guard is on the
+    transition (`plan_task_transition`), so every path that walks a task to `completed` meets it. A ValueError, so a
+    caller that already reports a refused walk ("Nothing was written") reports this one the same way."""
+
+
 def _now_iso() -> str:
     """ISO-8601 UTC timestamp for updated_at."""
     return datetime.now(timezone.utc).isoformat()

@@ -2708,33 +2708,66 @@ def try_limits(project_dir: Path, cfg: dict) -> dict:
     return CT.try_limits(spec, scfg, Path(project_dir))
 
 
-def _controls_gate(project_dir, config, session_id, cfg, dry_run) -> bool:
-    """AD-038-R45: the limits are tried when their fingerprint is new; a failed control refuses every launch.
+def _controls_state_path(project_dir, cfg) -> Path:
+    from seldon.core import controls as CT
+    return D.config_path(project_dir, cfg["lease_file"]).parent / CT.STATE_FILE
 
-    One `limits_tried` per fingerprint (a standing condition is recorded where it begins), and the failure joins the
-    stuck streak (`limit_control_failed`) so it rings once. A dry run reads the last result and writes nothing."""
+
+def _record_limits(project_dir, session_id, cfg, spec: dict, out: dict, by: str) -> dict:
+    """Write the controls' state a pass reads, and one `limits_tried` per fingerprint and outcome (AD-038-R45 as amended
+    by ADDENDUM 17). Shared by the pass's gate and `seldon dispatch controls`, so the command's result is the state the
+    next pass reads (REVIEW-001 F-05: the command wrote nothing, so running it cleared nothing)."""
+    from seldon.core import controls as CT
+    path = _controls_state_path(project_dir, cfg)
+    prior = _read_state(path)
+    state = {"fingerprint": out["fingerprint"], "ok": out["ok"], "retry": out["retry"], "tried_at": _now(),
+             "by": by, "failed": out["failed"], "untried": out["untried"]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=1, default=str) + "\n", encoding="utf-8")
+    if (prior.get("fingerprint"), prior.get("ok"), bool(prior.get("retry"))) != \
+            (out["fingerprint"], out["ok"], out["retry"]):
+        _emit(project_dir, session_id, CT.EVENT_LIMITS_TRIED,
+              {"fingerprint": out["fingerprint"], "ok": out["ok"], "retry": out["retry"], "by": by,
+               "rows": out["rows"], "spec": spec})
+    return state
+
+
+def _controls_gate(project_dir, config, session_id, cfg, dry_run) -> bool:
+    """AD-038-R45 (amended by ADDENDUM 17): the limits are tried when their fingerprint is new or the last try could
+    not run; a failed control refuses every launch, an untried one refuses this pass only.
+
+    One `limits_tried` per fingerprint and outcome (a standing condition is recorded where it begins), and each
+    refusal joins the stuck streak under its own reason so it rings once. A dry run reads the last result and writes
+    nothing."""
     from seldon.core import controls as CT
     spec, scfg = _limits_spec(project_dir, cfg)
     fp = CT.spec_fingerprint(spec)
-    path = D.config_path(project_dir, cfg["lease_file"]).parent / CT.STATE_FILE
-    state = _read_state(path)
-    if state.get("fingerprint") != fp:
+    state = _read_state(_controls_state_path(project_dir, cfg))
+    if state.get("fingerprint") != fp or state.get("retry"):
         if dry_run:
             click.echo(f"dry run: the launch line's limits ({fp}) have not been tried; a pass tries them first")
             return True
         out = CT.try_limits(spec, scfg, Path(project_dir))
-        state = {"fingerprint": fp, "ok": out["ok"], "tried_at": _now(), "failed": out["failed"]}
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(state, indent=1, default=str) + "\n", encoding="utf-8")
-        _emit(project_dir, session_id, CT.EVENT_LIMITS_TRIED,
-              {"fingerprint": fp, "ok": out["ok"], "rows": out["rows"], "spec": spec})
+        state = _record_limits(project_dir, session_id, cfg, spec, out, by="pass")
         if not out["ok"]:
             # Nothing launches, so nothing else commits it. A pass whose limits held commits the line with its launch.
             _record_and_push(project_dir, config, cfg)
     if state.get("ok"):
         if not dry_run:
             _standing_cleared(project_dir, cfg, CT.REFUSED_CONTROL_FAILED)
+            _standing_cleared(project_dir, cfg, CT.REFUSED_CONTROL_UNTRIED)
         return True
+    if state.get("retry"):
+        names = "; ".join(f"{r.get('limit')} {r.get('spelling') or ''}: {r.get('error')}"
+                          for r in state.get("untried") or [])
+        click.echo(f"refused: {CT.REFUSED_CONTROL_UNTRIED}: a planted control could not be run ({names}); this pass "
+                   f"launches nothing and the next tries again (AD-038-R45 as amended by ADDENDUM 17)", err=True)
+        if not dry_run:
+            _standing_streak(project_dir, session_id, cfg, CT.REFUSED_CONTROL_UNTRIED, identity=fp,
+                             detail={"fingerprint": fp, "untried": state.get("untried")},
+                             remedy="the controls' harness failed, not a limit: see the error named; "
+                                    "`seldon dispatch controls` tries them now")
+        return False
     names = "; ".join(f"{r.get('limit')} {json.dumps(r.get('request'), default=str)[:120]}: "
                       f"{r.get('error') or r.get('output') or 'went through'}" for r in state.get("failed") or [])
     click.echo(f"refused: {CT.REFUSED_CONTROL_FAILED}: a limit the launch line sets let its planted request "
@@ -2813,20 +2846,29 @@ def _hive_env(project_dir: Path, config: dict, cfg: dict, session_id, task_id: s
 
 @dispatch_group.command("controls")
 def dispatch_controls():
-    """Try every limit the launch line sets with its planted request (AD-038-R45); exit 2 if one goes through."""
+    """Try every limit the launch line sets with its planted requests (AD-038-R45) and write the state the next pass
+    reads; exit 2 if one goes through, 3 if a plant could not be run."""
+    from seldon.core import controls as CT
     project_dir = Path.cwd().resolve()
     while not (project_dir / "seldon.yaml").is_file() and project_dir != project_dir.parent:
         project_dir = project_dir.parent
     if not (project_dir / "seldon.yaml").is_file():
         raise click.ClickException("no seldon.yaml at or above the working directory")
     cfg = D.load_dispatch_config(project_dir)
-    out = try_limits(project_dir, cfg)
+    spec, scfg = _limits_spec(project_dir, cfg)
+    out = CT.try_limits(spec, scfg, Path(project_dir))
+    # SEL-062 (F-05): the command's result is the state a pass reads, so a fixed limit clears here, not at the next
+    # change to seldon.yaml.
+    _record_limits(project_dir, None, cfg, spec, out, by="controls")
     for r in out["rows"]:
-        verdict = "untried" if r.get("refused") is None else ("held" if r["refused"] else "FAILED")
+        verdict = ("untried" if r.get("refused") is None else ("held" if r["refused"] else "FAILED"))
         req = r.get("request")
         why = r.get("error") or r.get("why")
-        click.echo(f"{verdict:8} {r['limit']:14} {json.dumps(req, default=str)[:140] if req else ''}"
+        label = f"{r['limit']}{'/' + r['spelling'] if r.get('spelling') else ''}"
+        click.echo(f"{verdict:8} {label:28} {json.dumps(req, default=str)[:140] if req else ''}"
                    + (f"  ({why})" if why else ""))
-    click.echo(f"limits fingerprint {out['fingerprint']}: {'every tried limit held' if out['ok'] else 'FAILED'}")
+    summary = ("every tried limit held" if out["ok"] else
+               ("UNTRIED: a plant could not be run" if out["retry"] else "FAILED"))
+    click.echo(f"limits fingerprint {out['fingerprint']}: {summary}")
     if not out["ok"]:
-        sys.exit(2)
+        sys.exit(3 if out["retry"] else 2)

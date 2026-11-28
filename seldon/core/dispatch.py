@@ -837,7 +837,10 @@ REFUSAL_REASONS = ("lease_held", "stop_file", "disabled", "dirty_tree", "above_b
                    "spend_unreadable",
                    # SEL-054 (AD-038-R42, R45): a false project premise (`dispatch.premises`), and a limit the launch line
                    # sets whose planted control went through. Both standing conditions of the project, not of a task.
-                   "project_premise_false", "limit_control_failed")
+                   "project_premise_false", "limit_control_failed",
+                   # SEL-062 (AD-038-R45 amended, REVIEW-001 F-05): a planted control the harness could not run. It
+                   # refuses its pass and is tried again on the next; it is not a limit that let its plant through.
+                   "limit_control_untried")
 
 #: The outage file, beside the lease: `{first_seen, passes, error}` while the database is unreachable,
 #: removed by the first pass that reaches it. Runtime state, gitignored with the lease.
