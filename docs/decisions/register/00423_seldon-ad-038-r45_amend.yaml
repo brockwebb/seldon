@@ -1,3 +1,4 @@
+seq: 423
 event: amend
 id: seldon:AD-038-R45
 date: '2026-11-28'
@@ -18,3 +19,5 @@ changes:
   - tests/test_sel062_part_a.py
 written_by: seldon decision 0.1.0
 provisional_id: f998749e002eb62b4c72069e53f090f73f4460ed1f149fda07bc7b7d448c70cb
+prev_hash: b58c42a8d4ea572755007a533efa810f430317f7972d193824e565e81a7ad38f
+record_hash: 5e658a2eb343bb56e06ae794344dec84bbc25d323172c481b723e866134b00ec
