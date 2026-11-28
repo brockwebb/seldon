@@ -188,7 +188,7 @@ def test_part_c_r41_refuses_a_blocked_task_whose_branch_did_not_reach_main(tmp_p
     config = load_project_config(p)
     props, refusal = CC.r41_completion(p, config, tid, "blocked", None)
     assert refusal and "branch_not_on_main" in refusal and "worktree-r41" in refusal
-    git(p, "cherry-pick", "-q", "worktree-r41")
+    git(p, "cherry-pick", "worktree-r41")
     _full_gate_of_main(p)
     props, refusal = CC.r41_completion(p, config, tid, "blocked", None)
     assert refusal is None and props.get("completion_gate"), refusal

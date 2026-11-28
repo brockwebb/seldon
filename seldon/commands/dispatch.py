@@ -1875,21 +1875,27 @@ def _gate_reading(project_dir: Path, task_id: str, child_session_id: str) -> dic
     consecutive refused rounds with the same check output, LOOP-001), `block` (the CLI's own block cap ended the
     session over the hook, observed at 9 consecutive refusals on CLI 2.1.302; now only the backstop) or `ceiling`, and
     when the session declared a Part but no gate ran (a hook that never ran is not a pass)."""
+    from seldon.commands import dispatch_worktree as W
     from seldon.core.events import read_events
-    gates, declared = [], False
+    gates, declared, task_rel = [], False, None
     for e in read_events(project_dir):
         p = e.get("payload") or {}
         if e.get("event_type") == QS.EVENT_STOP_GATE and p.get("child_session_id") == child_session_id:
             gates.append(p)
         elif e.get("event_type") == QS.EVENT_PART_COMPLETE and p.get("task_id") == task_id:
             declared = True
+        elif e.get("event_type") == D.EVENT_LAUNCHED and p.get("child_session_id") == child_session_id:
+            task_rel = p.get("source_file")
     if gates:
         last = gates[-1]
         # SEL-042 (AD-034-R26): how many checks the last gate ran. A pass that ran none verified nothing, and the
-        # merge does not count it as evidence (`dispatch_worktree.gate_evidence`).
-        checks_run = sum(len(p.get("checks") or []) for p in (last.get("parts") or []) if isinstance(p, dict))
+        # merge does not count it as evidence (`dispatch_worktree.gate_evidence`). SEL-062 (F-08): nor does one whose
+        # only check is that the task's own RESULT exists, which the finish already requires.
+        checks = [c for p in (last.get("parts") or []) if isinstance(p, dict) for c in (p.get("checks") or [])]
+        checks_run = len(checks)
+        evidential = sum(1 for c in checks if W.evidential_check(str((c or {}).get("command") or ""), task_rel))
         return {"passed": last["verdict"] == "pass", "verdict": last["verdict"], "runs": len(gates),
-                "checks_run": checks_run,
+                "checks_run": checks_run, "checks_evidential": evidential,
                 "why": None if last["verdict"] == "pass" else f"{last['verdict']}: {', '.join(last['failed'])}"}
     if declared:
         return {"passed": False, "verdict": None, "runs": 0, "why": "Parts declared and no stop gate ran"}

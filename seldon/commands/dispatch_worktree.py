@@ -915,8 +915,29 @@ def launch_hard_stops(project_dir: Path, task_id: str, child_session_id: str) ->
             and (e.get("payload") or {}).get("kind") == "hard" and str(e.get("timestamp") or "") >= since]
 
 
+def evidential_check(command: str, task_rel: str | None) -> bool:
+    """SEL-062 (AD-034-R26 as amended by ADDENDUM 15, REVIEW-001 F-08): whether a passing check proves anything the
+    finish does not already require. A check whose whole command is a test that the task's own RESULT exists
+    (`test -f|-e|-s|-r <stem>_RESULT.md`, or the same in `[ ... ]`) cannot fail on a branch the round would merge, so it
+    is not evidence. Any other command, a compound one included, is."""
+    import shlex
+    if not task_rel:
+        return True
+    own = (task_rel[:-3] if task_rel.endswith(".md") else task_rel) + "_RESULT.md"
+    try:
+        words = shlex.split(command)
+    except ValueError:
+        return True
+    if words[:1] == ["["] and words[-1:] == ["]"]:
+        words = ["test"] + words[1:-1]
+    if len(words) != 3 or words[0] != "test" or words[1] not in ("-f", "-e", "-s", "-r"):
+        return True
+    path = words[2][2:] if words[2].startswith("./") else words[2]
+    return path != own
+
+
 def gate_evidence(finish: dict, regate: dict | None, record: dict | None,
-                  gate_run: dict | None = None) -> dict | None:
+                  gate_run: dict | None = None, gate_record_decl: dict | None = None) -> dict | None:
     """SEL-042 Part B (AD-034-R26): the recorded evidence that a gate passed for the tip being merged, or None.
 
     In order: the project's declared pass record for the tip (SEL-024), the round's own re-gate, a kept branch's
@@ -927,7 +948,10 @@ def gate_evidence(finish: dict, regate: dict | None, record: dict | None,
     evidence: fail-safe defaults, an absent check denies. A `tests: none` slice is not an absent check: it is a
     declaration on the record that permits the skip, and the cadence's full gate measures it (R33)."""
     if record is not None:
-        return {"source": "gate_record", "record": record}
+        # SEL-062 (AD-034-R39 as amended, REVIEW-001 F-19): a record scoped by `tree_paths` is not a full gate of the
+        # tip; the closure reads `scoped`.
+        return {"source": "gate_record", "record": record,
+                "scoped": list((gate_record_decl or {}).get("tree_paths") or []) or None}
     if regate is not None and regate.get("ok"):
         return {"source": "regate", "gate": regate}
     kept = finish.get("regate") or {}
@@ -937,8 +961,11 @@ def gate_evidence(finish: dict, regate: dict | None, record: dict | None,
         from seldon.core import gate_plan as GP
         return GP.evidence(gate_run)
     sg = finish.get("stop_gate") or {}
-    if sg.get("verdict") == "pass" and (sg.get("checks_run") or 0) > 0:
-        return {"source": "stop_gate", "checks_run": sg["checks_run"]}
+    # SEL-062 (F-08): only checks that could have failed count. A reading recorded before SEL-062 has no
+    # `checks_evidential` and is read as it was, by `checks_run`.
+    evidential = sg.get("checks_evidential", sg.get("checks_run")) or 0
+    if sg.get("verdict") == "pass" and evidential > 0:
+        return {"source": "stop_gate", "checks_run": sg["checks_run"], "checks_evidential": evidential}
     return None
 
 
@@ -1284,7 +1311,7 @@ def _merge(project_dir, config, driver, database, domain_config, session_id, cfg
         # gate command either, the task is blocked `ungated`. Kept across attempts: an attempt that rebases over a
         # change outside the branch's write set re-gates on overlap as before, and needs nothing new here.
         evidence = evidence or gate_evidence(finish, gate if regated else None, record,
-                                             _gate_run_for(project_dir, session_tree))
+                                             _gate_run_for(project_dir, session_tree), gate_record_decl=gr)
         if not GP.closure_admits(evidence, red):
             # R39: main is red, and this evidence was made without the closure (a session's checks, a kept regate, a
             # scoped record planned before main went red). The round runs its own evidence gate under the closure.
@@ -1737,9 +1764,12 @@ def _finish_merged(project_dir, config, driver, database, domain_config, session
                         artifact_id=task_id,
                         properties={"completed_at": S._now(), MERGE_PROPERTY: "merged"},
                         actor=S.ACTOR, authority="accepted", session_id=session_id)
+        # AD-034-R41 as amended (SEL-062): the dispatcher's own completion passes the guard on the merge it made on R26's
+        # evidence, which the merge record carries.
         walk_to_completed(project_dir=project_dir, driver=driver, database=database,
                           domain_config=domain_config, artifact_id=task_id,
-                          current_state="in_progress", actor=S.ACTOR, session_id=session_id)
+                          current_state="in_progress", actor=S.ACTOR, session_id=session_id,
+                          completion={"by": "merge", "evidence": (merge or {}).get("gate_evidence")})
     # RECALL-001 Part B: the dispatcher completes a worktree task, so it reads the merged RESULT's `Recall used:`
     # line for the chart. Recorded, never a merge refusal: a missing or refused line is counted as such.
     from seldon.core import recall as RC

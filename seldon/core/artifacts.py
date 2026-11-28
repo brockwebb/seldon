@@ -676,6 +676,7 @@ def plan_task_transition(
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
     block_reason: Optional[str] = None,
+    completion: Optional[Dict[str, Any]] = None,
 ) -> Tuple[List[PlannedWrite], List[str]]:
     """Plan a ResearchTask transition, applying the AD-028 lifecycle side effects.
 
@@ -715,6 +716,10 @@ def plan_task_transition(
             that overtook this task. Only valid when ``new_state`` is 'superseded'.
         block_reason: Why the task is blocked. Required for 'blocked', refused for
             every other target state.
+        completion: How a move into 'completed' is made, for AD-034-R41's guard
+            (`seldon.core.completion_gate.guard`): None, ``{"by": "merge", ...}``
+            (the dispatcher's own completion after a merge) or ``{"by": "ungated",
+            "reason": ...}`` (the operator's override). Refused on any other move.
 
     Returns:
         Tuple of (the planned writes, nothing appended yet; advisory warning lines
@@ -729,6 +734,8 @@ def plan_task_transition(
             ``superseded_by`` target does not exist, or if the ``superseded_by`` edge
             endpoints are not permitted by the domain config.
         InvalidStateTransition: If the transition is not permitted by the state machine.
+        R41Refused: A move into 'completed' of a task the dispatcher blocked, without
+            the evidence AD-034-R41 (as amended by ADDENDUM 15) asks for.
     """
     artifact_type = "ResearchTask"
     is_claim = (current_state, new_state) == CLAIM_TRANSITION
@@ -789,6 +796,16 @@ def plan_task_transition(
 
     validate_transition(domain_config, artifact_type, current_state, new_state)
 
+    # AD-034-R41 as amended by ADDENDUM 15 (SEL-062, REVIEW-001 F-16): the guard on the move into `completed` sits on
+    # the transition, so `task close`, `task update`, `cc complete`, the MCP tools and any walk all meet it. It raises
+    # before any write; what it returns (the evidence's id, or the override's reason) is written with the move.
+    completion_props: Dict[str, Any] = {}
+    if new_state == "completed":
+        from seldon.core import completion_gate
+        completion_props = completion_gate.guard(project_dir, artifact_id, current_state, completion)
+    elif completion is not None:
+        raise ValueError(f"A completion is only recorded on a move into 'completed', not to '{new_state}'.")
+
     # Read before the writes: the question is whether it was legitimate to start
     # this task, which is a fact about the graph as it stood beforehand.
     warnings = precedence.transition_warnings(
@@ -798,7 +815,7 @@ def plan_task_transition(
     # --- Writes: property event first, then the state event, then the edge.
     # Planned here, appended by the caller in one ledger write (SEL-007).
     writes: List[PlannedWrite] = []
-    properties: Dict[str, Any] = {}
+    properties: Dict[str, Any] = dict(completion_props)
     if new_state in REASON_REQUIRED_STATES:
         properties["terminal_reason"] = terminal_reason.strip()
     if is_claim:
@@ -903,6 +920,7 @@ def transition_task(
     terminal_reason: Optional[str] = None,
     superseded_by: Optional[str] = None,
     block_reason: Optional[str] = None,
+    completion: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """Transition a ResearchTask and append its events in one ledger write.
 
@@ -920,7 +938,7 @@ def transition_task(
         current_state=current_state, new_state=new_state, actor=actor,
         authority=authority, session_id=session_id, claimed_by=claimed_by,
         terminal_reason=terminal_reason, superseded_by=superseded_by,
-        block_reason=block_reason,
+        block_reason=block_reason, completion=completion,
     )
     commit_writes(project_dir, driver, database, writes)
     if current_state == "in_progress":
@@ -945,6 +963,7 @@ def walk_to_completed(
     on_warning: Optional[Callable[[str], None]] = None,
     before: Sequence[PlannedWrite] = (),
     after: Sequence[PlannedWrite] = (),
+    completion: Optional[Dict[str, Any]] = None,
 ) -> list[str]:
     """Walk a ResearchTask from current_state to completed.
 
@@ -974,6 +993,8 @@ def walk_to_completed(
             append ahead of the walk (`cc complete`'s ``completed_at``).
         after: Writes that go into the same append after it (`cc complete`'s
             ``recall_used`` record).
+        completion: Passed to the walk's last step, the move into 'completed', for
+            AD-034-R41's guard (see :func:`plan_task_transition`).
 
     Returns:
         List of 'from → to' transition strings performed.
@@ -1015,6 +1036,7 @@ def walk_to_completed(
             authority="accepted",
             session_id=session_id,
             claimed_by=claimed_by if (state, next_state) == CLAIM_TRANSITION else None,
+            completion=completion if next_state == "completed" else None,
         )
         writes.extend(step_writes)
         warnings.extend(step_warnings)

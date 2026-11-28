@@ -54,9 +54,10 @@ def test_a_return_never_waits_on_a_filing(neo4j_driver, producer, consumer, doma
     assert filed.exit_code == 0, filed.output
     text = (consumer / _return_rel(filed.output)).read_text(encoding="utf-8")
     assert f"**After:** {FILING_STEM}" in text and KIND_FILING_STEM not in text
-    # The template's check: a gateless consumer's merge has evidence (AD-034-R26).
+    # SEL-062 (AD-034-R26 as amended by ADDENDUM 15, REVIEW-001 F-08): no check of the return's own RESULT, which
+    # the finish already requires; a return is gated by the consumer's own gate like any task.
     stem = _return_rel(filed.output)[len("cc_tasks/"):-len(".md")]
-    assert f"- `check: test -f cc_tasks/{stem}_RESULT.md`" in text
+    assert f"check: test -f cc_tasks/{stem}_RESULT.md" not in text and "## Part A: apply it" in text
 
 
 @neo4j_tests

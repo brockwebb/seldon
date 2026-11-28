@@ -1011,74 +1011,9 @@ def render_rulings(matches: list, written: int) -> str:
     return "\n".join(lines)
 
 
-def _blocked_completion(project_dir: Path, config: dict, ungated: str | None) -> tuple[dict, str | None]:
-    """AD-034-R41 for one blocked task: `(properties to record, refusal or None)`.
-
-    Evidence is a passing, clean `gate_run` of the dispatch branch's tip tree in the primary checkout's store
-    (`gate_plan.completion_evidence`). A project that declares no dispatch block has no gate to require. The operator's
-    `--ungated REASON` completes it anyway, and the reason is recorded on the task (AD-034-R26: a gate that ran nothing
-    is not evidence, so the override says so on its face instead of passing for one)."""
-    from seldon.core import gate_plan as GP
-    from seldon.core import worktree as WT
-    from seldon.core.dispatch import DispatchConfigError, load_dispatch_config
-    from seldon.core.events import read_events
-
-    if ungated is not None:
-        if not ungated.strip():
-            return {}, "--ungated needs a reason: it is recorded on the task as the override's grounding"
-        return {"completed_ungated": ungated.strip()}, None
-    if not config.get("dispatch"):
-        return {}, None
-    try:
-        cfg = load_dispatch_config(project_dir, config)
-    except DispatchConfigError as exc:
-        return {}, f"blocked_ungated: the dispatch block does not load, so no gate evidence can be read: {exc}"
-    primary = WT.anchor(Path(project_dir).resolve())
-    found = GP.completion_evidence(primary, cfg["branch"], read_events(primary))
-    if found is not None:
-        return {"completion_gate": found.get("event_id")}, None
-    return {}, (f"blocked_ungated: this task is blocked, so the dispatcher did not merge it, and no passing full gate "
-                f"is recorded for the tree `{cfg['branch']}` holds now (AD-034-R41). Run `seldon gate main` (or "
-                f"`seldon gate run --full` on {cfg['branch']}) and complete it once that passes, or complete it with "
-                f"`seldon cc complete <file> --ungated \"<reason>\"`, which records the override on the task.")
-
-
-def blocked_since_launch(events: list, artifact_id: str) -> bool:
-    """REVIEW-001 F-04: whether the task's newest move INTO `blocked` comes after its newest `dispatch_launched`.
-
-    R41 is about a task the dispatcher blocked and did not merge: whatever reached main did so by hand. Its state at
-    completion is not the test, because `seldon task update --state in_progress` steps a task out of `blocked` and
-    `cc complete` would then never see it. A redrive the dispatcher launched again is not held: that launch's own finish
-    gates and merges it (AD-034-R26). The event store is append-only, so file order is the order of record."""
-    blocked_at = launched_at = -1
-    for i, e in enumerate(events):
-        q = e.get("payload") or {}
-        if e.get("event_type") == "artifact_state_changed" and q.get("artifact_id") == artifact_id \
-                and q.get("to_state") == "blocked":
-            blocked_at = i
-        elif e.get("event_type") == "dispatch_launched" and q.get("task_id") == artifact_id:
-            launched_at = i
-    return blocked_at > launched_at
-
-
-def r41_completion(project_dir: Path, config: dict, artifact_id: str, current_state: str | None,
-                   ungated: str | None) -> tuple[dict, str | None]:
-    """AD-034-R41 for every completion entry point (`seldon cc complete` and the MCP `seldon_cc_complete`):
-    `(properties to record, refusal or None)`. REVIEW-001 F-02: the MCP tool completed a blocked task with neither
-    evidence nor the operator's override, because the check lived in the CLI command alone.
-
-    Held when the task is `blocked` now, or was blocked after its newest launch (F-04). A project with no dispatch block
-    has no dispatcher to have blocked anything, so nothing is read."""
-    if not config.get("dispatch"):
-        return {}, None
-    held = current_state == "blocked"
-    if not held and artifact_id:
-        from seldon.core import worktree as WT
-        from seldon.core.events import read_events
-        held = blocked_since_launch(read_events(WT.anchor(Path(project_dir).resolve())), artifact_id)
-    if not held:
-        return {}, None
-    return _blocked_completion(project_dir, config, ungated)
+# AD-034-R41 (SEL-058; REVIEW-001 F-02 to F-04; SEL-062 F-16 and F-21) lives in `seldon.core.completion_gate`, where the
+# transition's guard calls it. These names stay for the CLI, the MCP tool and the tests that call them here.
+from seldon.core.completion_gate import blocked_since_launch, r41_completion  # noqa: E402,F401
 
 
 @click.group("cc")
@@ -1231,7 +1166,9 @@ def cc_complete(filepath, note, allow_untracked, ungated):
         # nothing (hazbrief HB-221: blocked `regate_red`, merged by hand, completed, and its successor released onto a
         # red main). Refused before anything is written.
         # REVIEW-001 F-04: held by the record of the block, not only by the state at call time.
-        gate_props, gate_refusal = r41_completion(project_dir, config, existing_id, current_state, ungated)
+        # SEL-062 (AD-034-R41 as amended): checked here for the early, named refusal; the transition's guard checks
+        # again and records what it found.
+        _gate_props, gate_refusal = r41_completion(project_dir, config, existing_id, current_state, ungated)
         if gate_refusal:
             click.echo(f"ERROR: {gate_refusal}\n  File: {rel_path}", err=True)
             driver.close()
@@ -1253,7 +1190,7 @@ def cc_complete(filepath, note, allow_untracked, ungated):
                 driver=driver,
                 database=database,
                 artifact_id=existing_id,
-                properties={"completed_at": completed_at, **gate_props},
+                properties={"completed_at": completed_at},
                 actor="cc",
                 authority="accepted",
                 session_id=session_id,
@@ -1273,6 +1210,8 @@ def cc_complete(filepath, note, allow_untracked, ungated):
                     session_id=session_id,
                     before=[stamp],
                     after=reading,
+                    # The guard on the move records the evidence's id (`completion_gate`) or the override's reason.
+                    completion={"by": "ungated", "reason": ungated} if ungated is not None else None,
                 )
             except ValueError as exc:
                 click.echo(f"Error: {exc} Nothing was written.", err=True)

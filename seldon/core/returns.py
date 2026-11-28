@@ -482,12 +482,13 @@ def render(*, token: str, title: str, producer: str, task_id: str, task_token: O
             f"## What {answered.project} does with it", "",
             body, ""]
     if HEADER_NOTHING not in headers:
-        # SEL-052: CTAI-008 finished green and was `merge_blocked: ungated`: the template declared a Part with no
-        # check, critical-thinking-ai declares no gate command, and a Stop gate that ran no check is no evidence
-        # (AD-034-R26). The RESULT is what a return's session owes; its presence is the check.
-        out += ["## Part A: apply it", "", "Acceptance:",
-                f"- `check: test -f cc_tasks/{task_file_stem}_RESULT.md` (the RESULT says what was applied, and what "
-                f"was not)", ""]
+        # SEL-052 wrote `check: test -f <this return's own RESULT>` here so a return in a project with no gate command
+        # would merge. SEL-062 (AD-034-R26 as amended by ADDENDUM 15, REVIEW-001 F-08): the finish already requires the
+        # RESULT, so that check could not fail and proved nothing. A return is gated like any task: by the consumer's
+        # own `dispatch.gate_command`, or blocked `ungated` where there is none.
+        out += ["## Part A: apply it", "",
+                "The RESULT says what was applied, and what was not. The merge's evidence is this project's own gate "
+                "(AD-034-R26), not a check of the RESULT's presence.", ""]
     return "\n".join(out)
 
 

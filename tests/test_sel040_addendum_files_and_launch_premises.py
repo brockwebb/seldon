@@ -218,12 +218,14 @@ def test_a_launch_premise_is_evaluated_by_station_a_before_the_session_starts(pr
 
 def test_the_dispatcher_re_checks_every_premise_at_launch_today():
     """Part D's measurement, kept as a test: station (a) runs `review_premises` over the whole block for every eligible
-    task in the serial pass (`dispatch._pass` -> `_premise_review` -> `dispatch_stations.premise_review`), so a launch
-    premise needs no new evaluation point, only registration's deferral."""
+    task in the serial pass (`dispatch._pass` -> `review_launches` -> `_premise_review` ->
+    `dispatch_stations.premise_review`; SEL-062's AD-038-R46 put the review in a stage the parallel pass and the lane
+    share), so a launch premise needs no new evaluation point, only registration's deferral."""
     import inspect
     from seldon.commands import dispatch as S
     from seldon.commands import dispatch_stations as ST
-    assert "_premise_review(" in inspect.getsource(S._pass)
+    assert "review_launches(" in inspect.getsource(S._pass)
+    assert "_premise_review(" in inspect.getsource(S.review_launches)
     assert "review_premises(" in inspect.getsource(ST.premise_review)
     assert "stage=" not in inspect.getsource(ST.premise_review), "station (a) evaluates every premise"
 

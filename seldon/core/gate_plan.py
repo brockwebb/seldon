@@ -358,7 +358,8 @@ def _merged_on_full_pass(e: dict) -> bool:
         return g.get("tier") == TIER_FULL and bool(g.get("ok"))
     if src == "gate_run":
         return ev.get("tier") == TIER_FULL
-    return src == "gate_record"
+    # SEL-062 (AD-034-R39 as amended, REVIEW-001 F-19): a pass record counts only when it covers the whole tree.
+    return src == "gate_record" and not ev.get("scoped")
 
 
 def main_red(events: list) -> dict | None:
@@ -453,7 +454,10 @@ def closure_admits(evidence: dict | None, red: dict | None) -> bool:
     if red is None or evidence is None:
         return True
     src = evidence.get("source")
-    if src in ("gate_record", "regate", "merge_gate"):
+    if src == "gate_record":
+        # SEL-062 (F-19): a record scoped by `tree_paths` never ran the red run's failed files outside its scope.
+        return not evidence.get("scoped")
+    if src in ("regate", "merge_gate"):
         return True
     if src == "gate_run":
         if evidence.get("tier") == TIER_FULL or str(evidence.get("reason") or "").startswith("declared_none"):
