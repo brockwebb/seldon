@@ -110,6 +110,21 @@ repositories come from factory's `portfolio.repositories`. Evidence: `docs/evide
 - TDD order: the selection was written before its tests, against Part A's numbers, and the tests were written after.
   The tests fail on main, where the functions do not exist.
 
+## Returns filed
+
+Each return was filed with `seldon cc return <this task> --to <repo> --answers <repo>:<task>` and registered in that
+repository, which committed it.
+
+| repository | return | task id | answers (named so it can be filed) |
+|---|---|---|---|
+| factory | FAC-66 | a7d2ec72 | FAC-41 |
+| critical-thinking-ai | CTAI-021 | f5cef002 | CTAI-010 |
+| hazbrief-mcp | HB-244 | 0677488f | HB-73 |
+| aacps-ai-policy | AP-08 | 55ab8037 | AP-03 |
+
+Each return's template line says that the named task "was filed into seldon", which is false. Its section's first
+sentence says so. Each return carries a step 0 that checks for the merged code by function name.
+
 ## For the consumer
 
 Each section below is a return task, filed with `seldon cc return`. None of the four consumers has to write code.
