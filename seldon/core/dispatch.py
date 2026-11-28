@@ -1028,7 +1028,9 @@ def load_dispatch_config(project_dir: Path, config: dict | None = None) -> dict:
     try:
         block[LN.LANE_KEY] = LN.load_lane(block.get(LN.LANE_KEY))
         block[LN.PREMISES_KEY] = LN.load_premises(block.get(LN.PREMISES_KEY))
-        block[HV.HIVE_KEY] = HV.load_hive(block.get(HV.HIVE_KEY))
+        # SEL-063 (F-29): `{python}` and kit-relative words resolve here, against the primary checkout.
+        hive_block = block.get(HV.HIVE_KEY)
+        block[HV.HIVE_KEY] = HV.load_hive(hive_block, base=WT.anchor(Path(project_dir)) if hive_block else None)
         block[CT.GUARD_KEY] = CT.load_guard(block.get(CT.GUARD_KEY))
     except (LN.LaneConfigError, HV.HiveConfigError, CT.GuardConfigError) as exc:
         raise DispatchConfigError(str(exc)) from exc

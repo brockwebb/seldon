@@ -4,8 +4,10 @@
 set -uo pipefail
 here="$(cd "$(dirname "$0")/../.." && pwd)"
 sq="$here/scripts/sel056/sq.sh"
+source "$here/scripts/sel056/lib.sh"
 scratch="${1:?usage: trial.sh <scratch dir>}"
-rm -rf "$scratch" && mkdir -p "$scratch"
+# SEL-063 (F-30): only a directory under /tmp or $TMPDIR that these scripts made (lib.sh).
+sel056_fresh_scratch "$scratch" || exit 2
 cp -R "$here/graphs/seldon-biblio" "$scratch/"
 g="$scratch/seldon-biblio"
 python3 - "$g/graph.yaml" <<'EOF'

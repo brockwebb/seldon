@@ -12,6 +12,29 @@ Individual agents — Claude Code sessions, subagents, automated scripts — are
 
 **The graph is the mind. The agents are the hands.**
 
+## Install
+
+Python 3.10 or later and a running Neo4j 5. From a clone:
+
+```bash
+pip install -e ".[dev]"
+```
+
+The `dev` extras carry what the test suite and the dispatcher's gate command (`dispatch.gate_command` in
+`seldon.yaml`) need: pytest, pytest-asyncio, pytest-xdist (the gate runs `-n 6`) and pytest-randomly (every run is in a
+fresh random order).
+
+Put the Neo4j credentials in a `.env` at the repository root (gitignored; `NEO4J_USERNAME` and `NEO4J_PASSWORD`, or `NEO4J_USER` and `NEO4J_PASS`, with
+`NEO4J_URI` when it is not `bolt://localhost:7687`), then run the suite through python-dotenv:
+
+```bash
+python -m dotenv -f .env run -- python -m pytest tests/ -q -n 6
+```
+
+Do not `source .env` first: it does not source cleanly in zsh, and the Neo4j tests then fail rather than run. Some
+tests read sibling checkouts (squiddy beside this one, and factory for the prior-art portfolio); see `CLAUDE.md`.
+`seldon go` lists every command.
+
 ## What Seldon Guarantees
 
 These are the architectural properties — the -ilities — that Seldon enforces for any project it manages. Features change. These don't.

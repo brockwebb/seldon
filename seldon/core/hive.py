@@ -29,6 +29,7 @@ import json
 import os
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 HIVE_KEY = "hive"
@@ -51,8 +52,38 @@ class HiveConfigError(ValueError):
     """`dispatch.hive` is malformed."""
 
 
-def load_hive(value) -> dict | None:
-    """`dispatch.hive`, validated; None when absent (nothing changes)."""
+#: SEL-063 (REVIEW-001 F-29): a command word that means the interpreter running seldon, so a tracked `seldon.yaml`
+#: names no one machine's Python.
+PYTHON_WORD = "{python}"
+
+
+def resolve_command(command: str, base: Path | None) -> str:
+    """A `mint_command` or `notices_hook` as it runs on this machine: `{python}` is `sys.executable`, `~` is expanded,
+    and a relative path-shaped word (one with a `/` and no leading `-`) is made absolute against `base`, the project's
+    primary checkout, as `project_new.kit_relative` does for the kit's commands. Without `base` a relative word is kept.
+
+    Raises:
+        HiveConfigError: The command does not split as shell words.
+    """
+    try:
+        words = shlex.split(command)
+    except ValueError as exc:
+        raise HiveConfigError(f"dispatch.{HIVE_KEY} command {command!r} does not split: {exc}") from exc
+    out = []
+    for w in words:
+        if w == PYTHON_WORD:
+            w = sys.executable
+        elif w.startswith("~"):
+            w = os.path.expanduser(w)
+        elif base is not None and "/" in w and not w.startswith("-") and not os.path.isabs(w):
+            w = str((Path(base) / w).resolve())
+        out.append(w)
+    return shlex.join(out)
+
+
+def load_hive(value, base: Path | None = None) -> dict | None:
+    """`dispatch.hive`, validated, its commands resolved against `base` (`resolve_command`); None when absent
+    (nothing changes)."""
     if value is None:
         return None
     if not isinstance(value, dict):
@@ -67,6 +98,9 @@ def load_hive(value) -> dict | None:
         if v is not None and (not isinstance(v, str) or not v.strip()):
             raise HiveConfigError(f"dispatch.{HIVE_KEY}.{key} must be a non-empty string, got {v!r}")
         out[key] = v.strip() if v else None
+    for key in ("mint_command", "notices_hook"):
+        if out[key]:
+            out[key] = resolve_command(out[key], base)
     if out["secrets_dir"] and not os.path.isabs(os.path.expanduser(out["secrets_dir"])):
         raise HiveConfigError(f"dispatch.{HIVE_KEY}.secrets_dir must be an absolute path (or start with ~), got "
                               f"{out['secrets_dir']!r}")

@@ -6,10 +6,13 @@
 set -uo pipefail
 here="$(cd "$(dirname "$0")/../.." && pwd)"
 sq="$here/scripts/sel056/sq.sh"
-py=/Users/brock/GitHub/squiddy/.venv/bin/python
+source "$here/scripts/sel056/lib.sh"
+py="$(sel056_squiddy_root)/.venv/bin/python" || exit 2
 primary="${SELDON_PRIMARY_CHECKOUT:?SELDON_PRIMARY_CHECKOUT is not set}"
 scratch="${1:?usage: conformance_pair.sh <scratch dir>}"
-rm -rf "$scratch" && mkdir -p "$scratch/base" "$scratch/adopt"
+# SEL-063 (F-30): only a directory under /tmp or $TMPDIR that these scripts made (lib.sh).
+sel056_fresh_scratch "$scratch" || exit 2
+mkdir -p "$scratch/base" "$scratch/adopt"
 cp -R "$primary/graphs/seldon-biblio" "$scratch/base/"
 cp -R "$primary/graphs/seldon-biblio" "$scratch/adopt/"
 # the adopted copy takes this branch's tracked spec and rendered files

@@ -5,7 +5,8 @@
 set -uo pipefail
 here="$(cd "$(dirname "$0")/../.." && pwd)"
 sq="$here/scripts/sel056/sq.sh"
-py=/Users/brock/GitHub/squiddy/.venv/bin/python
+source "$here/scripts/sel056/lib.sh"
+py="$(sel056_squiddy_root)/.venv/bin/python" || exit 2
 scratch="${1:?usage: promote_trial.sh <scratch dir>}"
 cd "$scratch/adopt" || exit 2
 quote="an objective function that is too expensive to evaluate frequently"

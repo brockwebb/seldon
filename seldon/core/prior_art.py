@@ -169,6 +169,9 @@ class Settings:
     #: The repository of the block a `ref` names (AD-036 ADDENDUM 03), at its primary checkout; None when the project
     #: defines its block itself. A listed graph inside it is that project's own, not this one's (AD-036-R25).
     referenced_repo: Optional[Path] = None
+    #: SEL-063 (AD-036-R32 as amended by ADDENDUM 17): what this machine narrowed, said in every search's output and
+    #: log line. A portfolio file not on disk is one; the search is then `internal_roots` alone.
+    notes: tuple = ()
 
 
 _REQUIRED = ("log", "internal_roots", "internal", "library", "gate")
@@ -336,7 +339,8 @@ def settings(project_dir: Path, config: dict) -> Settings:
     names = [r.name for r in roots]
     if len(set(names)) != len(names):
         raise PriorArtError(f"prior_art.internal_roots names are not unique: {names}")
-    roots += portfolio_roots(block, corpus_dir, internal, roots, where)
+    notes: list = []
+    roots += portfolio_roots(block, corpus_dir, internal, roots, where, notes)
     graphs = library_graphs_of(library["graph"], lambda p: at(corpus_dir, p), where)
     # AD-036-R25: the project's own graphs live in ITS repository, at the primary checkout like every corpus path
     # (ADDENDUM 06: a worktree holds no served export, which is gitignored).
@@ -358,21 +362,26 @@ def settings(project_dir: Path, config: dict) -> Settings:
                     verdict_ledger_without_governed=at(project_dir,
                                                        gate["verdict_ledger_without_governed"]),
                     defined_in=defined_in, own_graphs=own, own_repo=own_repo,
-                    referenced_repo=corpus_dir if defined_in else None)
+                    referenced_repo=corpus_dir if defined_in else None, notes=tuple(notes))
 
 
 #: SEL-052 (factory's 2026-11-26 filing, item 1): the registered repositories come from ONE list, the portfolio's,
 #: never a second hand-kept copy in `internal_roots`. `<file>#<dotted.key>` naming a `{name: path}` map, paths relative
 #: to that file's directory, the `standing_band_ref` form.
 ROOTS_FROM_KEY = "internal_roots_from"
-def portfolio_roots(block: dict, corpus_dir: Path, internal: dict, explicit: list, where: str) -> list:
+def portfolio_roots(block: dict, corpus_dir: Path, internal: dict, explicit: list, where: str,
+                    notes: Optional[list] = None) -> list:
     """The roots `internal_roots_from` adds: every repository the portfolio lists that `internal_roots` does not
     already name or point at (an explicit row keeps its own name and include). `[]` when the key is absent.
 
+    A portfolio file not on this machine (no sibling factory checkout) adds nothing and appends why to `notes`, which
+    the search prints and logs (SEL-063, REVIEW-001 F-28; AD-036-R32 as amended by ADDENDUM 17): one machine's
+    checkout layout does not stop the commit hook, `verify` or `cc register` judging a note.
+
     Raises:
-        PriorArtError: A malformed reference, a missing file or key, or a value that is not a `{name: path}` map. A
-            listed repository that is not on disk is a root like any other: its receipt would fail, so it is
-            reported by the search, not dropped here.
+        PriorArtError: A malformed reference, a key the file does not hold, or a value that is not a `{name: path}`
+            map: defects in the file, not absences on this machine. A listed repository that is not on disk is a root
+            like any other: its receipt would fail, so it is reported by the search, not dropped here.
     """
     ref = block.get(ROOTS_FROM_KEY)
     if ref is None:
@@ -383,6 +392,10 @@ def portfolio_roots(block: dict, corpus_dir: Path, internal: dict, explicit: lis
     written = Path(os.path.expanduser(rel))
     target = (written if written.is_absolute() else corpus_dir / written).resolve()
     if not target.is_file():
+        if notes is not None:
+            notes.append(f"{where}.{ROOTS_FROM_KEY} {ref!r} names {target}, which does not exist on this machine: "
+                         f"searched internal_roots only")
+            return []
         raise PriorArtError(f"{where}.{ROOTS_FROM_KEY} {ref!r} names {target}, which does not exist")
     node = yaml.safe_load(target.read_text(encoding="utf-8"))
     for part in dotted.split("."):

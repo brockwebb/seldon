@@ -23,6 +23,10 @@ seldon-mcp = "seldon.mcp_server:main"
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    # SEL-063 (REVIEW-001 F-31): `dispatch.gate_command` in seldon.yaml runs `-n 6` (pytest-xdist), and its comment
+    # relies on pytest-randomly reordering every run. Floors are the majors that measured gate ran on (3.8, 3.16).
+    "pytest-xdist>=3.0",
+    "pytest-randomly>=3.12",
 ]
 
 [tool.setuptools.packages.find]

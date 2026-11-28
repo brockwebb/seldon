@@ -358,7 +358,9 @@ def test_rebuilding_the_served_release_reproduces_the_served_index(tmp_path):
     and keyed shards) reproduces the instrument, so a rebuilt OLDER release is the index its receipts ran on. The
     library is a fixture the kit builds in `tmp_path` (SEL-050), so the outcome is this tree's code and the
     installed kit's, not the state of squiddy's live library."""
-    pytest.importorskip("squiddy.index")
+    # SEL-063 (REVIEW-001 F-33): squiddy is the gate's premise; without it this fails rather than skips.
+    from tests.squiddy_premise import require
+    require("squiddy.index")
     graph, served = _served_fixture_release(tmp_path)
     assert served["release"]["export"] == "exports/pa002fixture_v1.json"
     assert served["rows"] == 7 and served["dense"]["shards"] == 3     # 4 paragraph rows + 3 metadata rows

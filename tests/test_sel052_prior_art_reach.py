@@ -85,7 +85,8 @@ def test_a_need_in_a_registered_repository_is_found_by_the_search(ws):
 
 @pytest.mark.parametrize("ref, needle", [
     ("no-hash", "not a reference"),
-    ("../nowhere.yaml#portfolio.repositories", "does not exist"),
+    # A portfolio file not on this machine is no longer refused: SEL-063 (AD-036-R32 as amended by ADDENDUM 17) makes
+    # it a noted, narrowed search (tests/test_sel063_part_b.py).
     ("../fac/seldon.yaml#portfolio.missing", "has no"),
     ("../fac/seldon.yaml#portfolio", "not a {name: path} map"),
 ])

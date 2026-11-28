@@ -410,9 +410,12 @@ dispatch:
   # session's environment as HIVE_TOKEN, and places `notices_hook` on the launch line as a PostToolUse hook; a failed
   # mint never stops a launch. AD-038-R44: the tool gate refuses any call naming `secrets_dir`. The client and the
   # secrets are factory's; nothing of them is copied here.
+  # SEL-063 (REVIEW-001 F-29): no one machine's paths. `{python}` is the interpreter running seldon (the dispatcher's),
+  # and a relative path is resolved against this project's primary checkout, so `../factory` is the factory checkout
+  # beside it (`hive.resolve_command`, the kit_relative rule of `project_new`).
   hive:
-    mint_command: /opt/anaconda3/bin/python /Users/brock/GitHub/factory/scripts/hive.py mint
-    notices_hook: /opt/anaconda3/bin/python /Users/brock/GitHub/factory/scripts/hive.py notices --hook
+    mint_command: "{python} ../factory/scripts/hive.py mint"
+    notices_hook: "{python} ../factory/scripts/hive.py notices --hook"
     secrets_dir: ~/.factory/hive/secrets
 
 # DESK-001: `seldon commit-governed` / the `seldon_commit_governed` MCP tool, the commit path for

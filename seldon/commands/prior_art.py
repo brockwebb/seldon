@@ -72,7 +72,8 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
         pa.log_query(s, {"arm": "internal", "purpose": "search", "query": query,
                          "corpora": {k: v["identity"] for k, v in res["corpora"].items()},
                          "hits": len(res["hits"]),
-                         "top": [f"{h.root}:{h.cite()}" for h in res["hits"][:n]]})
+                         "top": [f"{h.root}:{h.cite()}" for h in res["hits"][:n]],
+                         **({"notes": list(s.notes)} if s.notes else {})})
     elif arm == "library":
         # AD-036-R21 (SEL-036): one receipt per graph that answered. AD-036-R25 (SEL-039): the project's own graphs
         # first, then the shared list less the referenced project's own; or exactly the graphs the call names.
@@ -114,6 +115,8 @@ def run_search(arm: str, query: str, roots: tuple = (), top: int | None = None,
         raise pa.PriorArtError(f"unknown arm {arm!r}")
     out["seconds"] = round(time.monotonic() - started, 3)
     out["project"] = str(project_dir)
+    # SEL-063 (AD-036-R32 as amended): what this machine narrowed, e.g. a portfolio file not on disk.
+    out["notes"] = list(s.notes)
     out["commit"] = _commit(project_dir, config, before, f"{arm} search {query!r}")
     return out
 
@@ -183,6 +186,8 @@ def search_command(query, arm, graphs, roots, top, note, project, as_json):
         click.echo(json.dumps(out, indent=1, default=str))
         return
     click.echo(f"{arm} search: {query!r}  ({out['total_hits']} hit(s), {out['seconds']} s)")
+    for n in out.get("notes") or []:
+        click.echo(f"  (note: {n})", err=True)
     if arm == "internal":
         for name, meta in out["corpora"].items():
             note = f", {meta['untracked']} untracked read from disk" if meta["untracked"] else ""

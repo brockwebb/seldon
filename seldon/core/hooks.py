@@ -380,25 +380,43 @@ def _point_both(repo: Path) -> bool:
 
 
 def status(repo: Path) -> dict:
-    """{installed, problems, hooks_path, effective, python}. `installed` is True only when git
-    will run the tracked seldon hook in this checkout, with an interpreter that exists."""
+    """{installed, problems, advisories, hooks_path, scope, shared_hooks_path, effective, python, ...}. `installed` is
+    True only when git will run the tracked seldon hook in this checkout, with an interpreter that exists.
+
+    AD-036-R31 as amended by ADDENDUM 17 (SEL-063, REVIEW-001 F-32): a checkout is judged by its OWN `config.worktree`
+    alone (`extensions.worktreeConfig` on and `core.hooksPath` there `.githooks`), which git reads after the shared
+    config and which wins (git-worktree(1)). The shared value is the fallback a worktree nobody pointed reads; one other
+    than the `shared_hooks_path` install writes (the Claude Code CLI's fixed point, SEL-052) is an advisory, so whatever
+    another tool writes there cannot make a pointed checkout read not installed."""
     repo = toplevel(Path(repo))
     hp = _git(repo, "config", "--get", "core.hooksPath", check=False).stdout.strip()
     scope = _git(repo, "config", "--show-scope", "--get", "core.hooksPath",
                  check=False).stdout.split("\t")[0].strip()
     py = _git(repo, "config", "--get", PYTHON_KEY, check=False).stdout.strip()
     effective = _git(repo, "rev-parse", "--git-path", "hooks").stdout.strip()
-    problems = []
-    if hp != HOOKS_DIR:
-        problems.append(f"core.hooksPath is {hp or 'unset'!r}, not {HOOKS_DIR!r}")
-    elif scope and scope not in ("local", "worktree"):
-        problems.append(f"core.hooksPath is set in {scope} config; it belongs to the repository")
-    elif scope == "local":
-        # SEL-052: correct today, broken by the next `claude --worktree`, which rewrites a relative shared value to
-        # an absolute one. `install` (and the dispatcher's `ensure_installed`) moves it to this checkout's own
-        # config.worktree.
-        problems.append(f"core.hooksPath {HOOKS_DIR!r} is in the shared config, where Claude Code's worktree "
-                        f"creation rewrites it to an absolute path (SEL-052); run `seldon hooks install`")
+    extension = _git(repo, "config", "--get", "extensions.worktreeConfig", check=False).stdout.strip() == "true"
+    own = (_git(repo, "config", "--worktree", "--get", "core.hooksPath", check=False).stdout.strip()
+           if extension else "")
+    shared = _git(repo, "config", "--local", "--get", "core.hooksPath", check=False).stdout.strip()
+    problems, advisories = [], []
+    if own == HOOKS_DIR:
+        try:
+            want = shared_hooks_path(repo)
+        except HookError as exc:
+            want = None
+            advisories.append(f"the shared core.hooksPath was not checked: {exc}")
+        if want is not None and shared != want:
+            advisories.append(f"the shared core.hooksPath is {shared or 'unset'!r}, not {want!r}: only a worktree "
+                              f"nobody pointed reads it; `seldon hooks install` writes it")
+    elif own:
+        problems.append(f"this checkout's own config.worktree sets core.hooksPath {own!r}, not {HOOKS_DIR!r}; "
+                        f"run `seldon hooks install`")
+    else:
+        # SEL-052: a value only in the shared config is rewritten to an absolute path by the next `claude --worktree`.
+        # `install` (and the dispatcher's `ensure_installed`) points this checkout's own config.worktree.
+        problems.append(f"this checkout's own config.worktree does not set core.hooksPath {HOOKS_DIR!r} (git reads "
+                        f"{hp or 'no value'!r} from {scope or 'no'} config, and a relative value in the shared "
+                        f"config is rewritten by Claude Code's worktree creation, SEL-052); run `seldon hooks install`")
     hf = hook_file(repo)
     if not hf.is_file():
         problems.append(f"{HOOKS_DIR}/{PRE_COMMIT} is missing from this checkout")
@@ -418,8 +436,8 @@ def status(repo: Path) -> dict:
         problems.append(f"{PYTHON_KEY} {py!r} is not executable")
     # DESK-001: not a problem when absent (a checkout without it refuses unverified notes in
     # pre-commit, as before), but reported, so `install` is the visible fix.
-    return {"installed": not problems, "problems": problems, "hooks_path": hp or None,
-            "scope": scope or None, "effective": effective, "python": py or None,
+    return {"installed": not problems, "problems": problems, "advisories": advisories, "hooks_path": hp or None,
+            "scope": scope or None, "shared_hooks_path": shared or None, "effective": effective, "python": py or None,
             "drafts": drafts_enabled(repo),
             # squiddy SQ-096: like commit-msg, not a problem when absent (pre-commit still judges every
             # `git commit`), but reported, so `install` is the visible fix for rebases.
