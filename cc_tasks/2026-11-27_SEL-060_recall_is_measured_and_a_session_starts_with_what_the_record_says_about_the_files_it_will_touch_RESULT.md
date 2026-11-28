@@ -2,7 +2,8 @@
 
 **Date:** 2026-11-27. **Session:** Claude Code (headless), worktree `worktree-lively-weaving-cascade`, task 4bf74fa6.
 **Addenda:** none (globbed `*SEL-060*ADDENDUM*` and, as the task says, `*SEL-059*ADDENDUM*`: no match).
-**Model calls:** zero in the code built; the measurement and the replay read files only. **Network:** none.
+**Tokens** (`part_complete`, cumulative): A 241,122; B 299,937; C 361,876. That is about 0.36M against the 1.6M
+estimate. **Model calls:** zero in the code built; the measurement and the replay read files only. **Network:** none.
 **Commits:** `498ee79` (Part A), `ae26b98` and `9ced980` (Part B), `ee85dee` (Part C evidence), `07b4c8c`/`5dac929`
 (SEL-061 filed), this RESULT and the returns after them. Not merged, not completed: the dispatcher's.
 
