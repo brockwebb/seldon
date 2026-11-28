@@ -29,9 +29,10 @@ own, so this is the note its R-records extend). Four new rulings, AD-031-R4 to R
    every registration.
 5. **Three repositories got no list at all.** factory, critical-thinking-ai and aacps-ai-policy have no `recall:`
    block (101 dispatched sessions), and nothing writes one: RECALL-002R copied the block by hand into three others.
-6. **A replay of the new selection** on seldon's and factory's last thirty dispatched tasks (Part C, section 5 of
+6. **A replay of the new selection** on seldon's and factory's last thirty dispatched tasks (Part C,
    `docs/evidence/sel060/replay.md`): the sessions opened 53 of the 233 new hits against 23 of the 240 they were
-   handed in seldon, and 21 of 189 against 20 of 240 in factory.
+   handed in seldon, and 21 of 190 against 21 of 240 replayed in factory. The file-history stage was opened once in
+   53 hits; it is kept at one hit per task until hits actually handed are counted (R7).
 
 ## 2. Prior art
 

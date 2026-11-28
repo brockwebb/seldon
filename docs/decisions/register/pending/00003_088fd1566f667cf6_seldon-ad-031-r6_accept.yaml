@@ -12,9 +12,9 @@ statement: 'A `recall:` block may be `ref: <file>#<dotted.key>`, resolved from t
 source:
   path: docs/design/AD-031_ADDENDUM_01_recall_is_chosen_by_what_the_task_cites_and_touches_and_its_use_is_counted_from_the_log.md
   lines:
-  - 108
-  - 111
-  sha256: 74c651058638eb1d03269b24df6b8f480aa96c4f04a097515ffbacef61bab916
+  - 109
+  - 112
+  sha256: e9d30157f6ec89d33a6862dc9cb0cd00c2577a39e72dbe899b2134d3cda0b545
   text: |-
     - **AD-031-R6. A `recall:` block may be `ref: <file>#<dotted.key>`, resolved from the primary checkout, with the project's own keys laid over the referenced block's; `seldon project new` writes `recall: {ref: <the kit's seldon.yaml>#recall, served: {enabled: false, ...}}` for a repository that has no `recall:` key, and leaves one that has.**
       The served arm is off in the written block because the kit's `served.graphs` names the kit's siblings, not the
@@ -33,4 +33,4 @@ consumer:
 - tests/test_sel060_recall_selection.py
 review_only: none
 written_by: seldon decision 0.1.0
-provisional_id: 6ebc84bc4ecd510b54f12de5ea902d16c7a971f1411bee01868e95a489afe434
+provisional_id: 088fd1566f667cf6975af71ff845e3a5726bc98c49e8d70b1706350d197d9aae
