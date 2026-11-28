@@ -1,0 +1,21 @@
+event: amend
+id: seldon:AD-036-R32
+date: '2026-11-28'
+decided_by: cc:481d2c09
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_17_a_missing_portfolio_narrows_the_search_and_hooks_are_judged_by_the_checkouts_own_config.md:61: AD-036-R32'
+- cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+reason: 'SEL-063 (REVIEW-001 F-28): a portfolio file not on this machine narrows the search and is said, not raised'
+changes:
+  statement: 'The internal arm''s roots are `internal_roots` and, when `internal_roots_from` names a `{name: path}` map in another seldon.yaml, every repository that map lists which no `internal_roots` row already names or points at; `internal.default_include` carries the requirement projections, `docs/se/**` and `docs/requirements/**`. When the file `internal_roots_from` names is not on this machine, the roots are `internal_roots` alone and every search says so in its output and its log line; a reference that is malformed, or names a key the file does not hold, is refused'
+  consumer:
+  - cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+  - seldon/core/prior_art.py
+  - seldon.yaml
+  - tests/test_sel052_prior_art_reach.py
+  - cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+  - seldon/commands/prior_art.py
+  - tests/test_sel063_part_b.py
+written_by: seldon decision 0.1.0
+provisional_id: 475b29600df15262110e84a2929633613dff833ca4fca0956f4b9b5936b021c7

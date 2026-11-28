@@ -1,0 +1,19 @@
+event: amend
+id: seldon:AD-036-R31
+date: '2026-11-28'
+decided_by: cc:481d2c09
+operator_stated: false
+receipts:
+- 'docs/design/AD-036_ADDENDUM_17_a_missing_portfolio_narrows_the_search_and_hooks_are_judged_by_the_checkouts_own_config.md:65: AD-036-R31'
+- cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+reason: 'SEL-063 (REVIEW-001 F-32): hooks status judges a checkout by its own config.worktree; the shared value is advisory'
+changes:
+  statement: '`seldon hooks install` writes the shared `core.hooksPath` as the main worktree''s `.githooks`, absolute, and the checkout''s own `config.worktree` as the relative `.githooks`, with `extensions.worktreeConfig` on; `seldon hooks status` calls a checkout installed by its own `config.worktree` alone, and reports a shared value other than the one install writes as an advisory, never as not installed; a checkout whose own `config.worktree` does not name `.githooks` is reported as not installed'
+  consumer:
+  - cc_tasks/2026-11-26_SEL-052_what_factory_reported_this_week_is_answered.md
+  - seldon/core/hooks.py
+  - tests/test_sel052_hook_path.py
+  - cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+  - tests/test_sel063_part_b.py
+written_by: seldon decision 0.1.0
+provisional_id: 5346e9e55fa68c18eac5cef7e4c9674f0ad6d3ab937a6de4dd3cedb841282719

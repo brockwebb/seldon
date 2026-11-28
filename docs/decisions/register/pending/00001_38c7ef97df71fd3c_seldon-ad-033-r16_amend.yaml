@@ -1,0 +1,20 @@
+event: amend
+id: seldon:AD-033-R16
+date: '2026-11-28'
+decided_by: cc:481d2c09
+operator_stated: false
+receipts:
+- 'docs/design/AD-033_ADDENDUM_04_a_finished_task_keeps_what_bound_it_and_a_pending_acceptance_binds.md:58: AD-033-R16'
+- cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+reason: 'SEL-063 (REVIEW-001 F-27): verify --fix ends only open artifacts'' edges, and a pending acceptance binds'
+changes:
+  statement: '`seldon verify` reports, and `seldon verify --fix` ends after re-projecting, as a `link_removed` event, each `constrained_by` edge from an artifact in an open state of its type to a Decision that is not `accepted` and that no pending record of the register accepts; an edge from an artifact that has left its open states (a completed, verified, withdrawn, rejected or superseded task) stays, as the record of what bound it when it ran'
+  consumer:
+  - cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+  - seldon/core/decisions.py
+  - seldon/commands/verify.py
+  - tests/test_sel058_hazbrief_filings.py
+  - cc_tasks/2026-11-28_SEL-063_recalls_selection_and_audit_configuration_that_names_one_machine_and_the_smaller_review_findings.md
+  - tests/test_sel063_part_a.py
+written_by: seldon decision 0.1.0
+provisional_id: 38c7ef97df71fd3c3b380b4e8f9e133bdc139a313e4f107f02d4064e4e6ec340
