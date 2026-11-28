@@ -654,15 +654,20 @@ def plan_launches(candidates: list, running: list, max_parallel: int, resources:
     writer preference, the second readers-writers problem (Courtois, Heymans and Parnas,
     CACM 1971).
 
-    **The coordination lane (SEL-054, AD-038-R40).** With `lane` given, a row marked `lane: True` (its name matches
-    the lane's pattern) takes one of `lane["slots"]` reserved slots and nothing else: it is not held by an exclusive
-    task, running or waiting, and it holds nothing, because what a lane task may change is declared and the merge
-    refuses the rest (R41). A full lane defers it as `lane_slots`. Running lane tasks take no `max_parallel` slot.
-    Without `lane` the flag is ignored and every row is planned as before.
+    **The coordination lane (SEL-054, AD-038-R40 as amended by ADDENDUM 17).** With `lane` given, a row marked
+    `lane: True` (its name matches the lane's pattern) takes one of `lane["slots"]` reserved slots and no `max_parallel`
+    slot, and is exempt from exclusive holds only: it is not held by an exclusive task, running or waiting, and holds
+    none back. For every other hold its declaration is its lane's `writes` (what the merge lets it change, R41): it
+    waits as `overlap` on a non-exclusive task, running or waiting, that touches them, and running or waiting it holds
+    them for the rest (REVIEW-001 F-10: it used to skip the overlap check and hold nothing). A full lane defers it as
+    `lane_slots`. Without `lane` the flag is ignored and every row is planned as before.
     """
     from seldon.core import lane as LN
+    lane_held: list = []
     if lane:
+        lane_decl = {"exclusive": False, "paths": list(lane["writes"]), "resources": []}
         lane_running = [r["task_id"] for r in running if r.get("lane")]
+        lane_held = [{"task_id": tid, "concurrency": lane_decl} for tid in lane_running]
         running = [r for r in running if not r.get("lane")]
     held = [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in running]
     slots = max_parallel - len(running)
@@ -670,12 +675,20 @@ def plan_launches(candidates: list, running: list, max_parallel: int, resources:
     for cand in candidates:
         c = cand["concurrency"]
         if lane and cand.get("lane"):
-            if len(lane_running) < lane["slots"]:
-                launch.append(cand["task_id"])
-                lane_running.append(cand["task_id"])
-            else:
+            hits = [(h["task_id"], touches_overlap(h["concurrency"], lane_decl, resources))
+                    for h in held + lane_held if not h["concurrency"]["exclusive"] and h["task_id"] != cand["task_id"]]
+            hits = [(tid, ov) for tid, ov in hits if ov]
+            if len(lane_running) >= lane["slots"]:
                 deferred[cand["task_id"]] = {"reason": LN.DEFERRED_LANE_SLOTS, "with": list(lane_running),
                                              "overlap": []}
+            elif hits:
+                deferred[cand["task_id"]] = {"reason": "overlap", "with": [tid for tid, _ in hits],
+                                             "overlap": list(dict.fromkeys(o for _, ov in hits for o in ov))}
+            else:
+                launch.append(cand["task_id"])
+                lane_running.append(cand["task_id"])
+            # Running or waiting, a lane task holds its lane's writes for the candidates after it.
+            lane_held.append({"task_id": cand["task_id"], "concurrency": lane_decl})
             continue
         if c["exclusive"]:
             if held:
@@ -692,7 +705,7 @@ def plan_launches(candidates: list, running: list, max_parallel: int, resources:
             deferred[cand["task_id"]] = {"reason": "exclusive", "with": excl, "overlap": []}
         else:
             hits = [(h["task_id"], touches_overlap(h["concurrency"], c, resources))
-                    for h in held]
+                    for h in held + lane_held]
             hits = [(tid, ov) for tid, ov in hits if ov]
             if hits:
                 deferred[cand["task_id"]] = {
@@ -755,10 +768,14 @@ STUCK_AFTER_PASSES_BY_CRITERION_DEFAULT = {"dirty_tree": 1, "api_key_present": 1
 #: a map that leaves out `dirty_tree` (an empty map, as several tests write) keeps the meaning it had.
 #: SEL-058 (AD-037-R23, hazbrief's 2026-11-24 filing item 3): a consumer's wait on a producer's lease rings once it has
 #: held one holding window for this many passes. A producer's merge window is normal and clears by itself, so the
-#: default is not the task streak's three. Basis: seldon's full gate took 2,408 s at `-n 6` (SEL-055's baseline), the
-#: longest window a producer holds in normal running; twelve passes at the standing `poll_interval_s: 300` is one hour,
-#: past that. hazbrief waited about 100 minutes on 2026-11-24 and nothing rang. Not measured as a distribution.
-ENVIRONMENT_WAIT_PASSES_DEFAULT = 12
+#: default is not the task streak's three.
+#: SEL-062 (AD-037 erratum 01, REVIEW-001 F-20): SEL-058's twelve (one hour) rested on one figure and rang inside normal
+#: windows. Measured 2026-11-28: seldon's full merge gates ran p50 4,854 s, max 5,788 s (n=5); consumers' first sightings
+#: of a held window ran to p90 8,158 s (hazbrief-mcp, n=35). A producer's normal window is bounded by the gate timeout it
+#: declares (seldon and hazbrief-mcp: 7,200 s), so the alarm rings on the first pass past that bound at the standing
+#: 300 s poll: 25 passes, 7,500 s. A project that names `environment_in_flight` keeps its own value.
+PRODUCER_WINDOW_BOUND_S = 7200
+ENVIRONMENT_WAIT_PASSES_DEFAULT = 25
 STUCK_AFTER_PASSES_BY_CRITERION_UNLESS_NAMED = {"api_key_present": 1,
                                                 "environment_in_flight": ENVIRONMENT_WAIT_PASSES_DEFAULT}
 #: SEL-052 (factory's 2026-11-24 filing "a hold that waits on a person tells nobody"): a task in `blocked` is not a

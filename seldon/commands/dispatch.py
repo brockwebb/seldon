@@ -220,30 +220,105 @@ def _claims_in_flight(driver, database) -> list:
         return [dict(r) for r in s.run(q)]
 
 
+def evaluate_queue(project_dir, cfg, driver, database, tree, claim, lease_body, *, view: str,
+                   running_ids: list | None = None, lane_running=(), tasks: list | None = None) -> tuple:
+    """AD-038-R46 (SEL-062, REVIEW-001 F-15): the one evaluation stage every pass (serial and parallel), the lane's
+    look and every status view runs, so a criterion added here reaches all of them. Returns `(band, rows)`.
+
+    The stage: the standing band, c13's premise holds, c15's launch holds, the union state, cross-project waits, the
+    OODA's waits, every task through `dispatch.evaluate`, FIFO with the lane first, and the lane's c6 on lane rows.
+    `view` names the caller (`pass`, `status` or `lane`); it changes nothing here and is what a reader of a trace, or a
+    test, sees. `running_ids` is the parallel pass's worktree tasks in flight (None in the serial views, where c6 is
+    the in-place claim); `lane_running` the lane tasks in flight; `tasks` the lane's look's own candidate list.
+
+    Before this, the serial pass, the parallel pass, the lane's look and the two status views each built the rows by
+    hand, and the parallel pass and both status views had drifted: no c13 or c15 in the parallel pass, no lane order or
+    lane c6 in either status view (F-13). Prior art: pipes and filters (Shaw and Garlan 1996); the launch policy is
+    the variable, the filters are shared."""
+    from seldon.commands import dispatch_lane as LANE
+    del view
+    lane = LANE.lane_of(cfg)
+    band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
+    tasks = _tasks(driver, database) if tasks is None else tasks
+    holds = _premise_holds(project_dir, driver, database)
+    launch_holds = _launch_holds(project_dir)
+    union = D.union_state(project_dir)
+    cross = _cross_waits(project_dir, tasks)
+    ooda = _ooda_waits(project_dir, cfg, tasks)
+    running = {} if running_ids is None else {"running": running_ids}
+    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
+                              launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda, **running)
+                   for t in tasks], lane)
+    LANE.mark_lane_rows(rows, list(lane_running), lane)
+    return band, rows
+
+
+def pass_alarms(project_dir, session_id, cfg, rows, tree, claim, driver, database, dry_run) -> None:
+    """AD-038-R46: the one alarm stage every pass runs over its evaluated rows: the last-pass record for `seldon go`,
+    the stuck streak, and SEL-052's held alarm (a blocked task is not a candidate, so only the held alarm rings for
+    it). REVIEW-001 F-07: the held alarm was called by the serial pass alone, so `held_alarm_after_s` never acted in
+    a parallel project."""
+    _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
+    _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
+    _held(project_dir, session_id, cfg, driver, database, dry_run)
+
+
+def review_launches(project_dir, config, driver, database, domain_config, session_id, cfg, rows: list, dry_run,
+                    *, want: int) -> tuple:
+    """AD-038-R46: station (a)'s premise review (AD-037-R6 (a)) over the rows a pass would launch, in order, until
+    `want` pass. Returns `(reviewed, stopped)`: the rows whose premises hold, each with its review, and whether a
+    sibling's lease on this project's environment stopped the review (it holds for every task here alike, so the pass
+    launches none of them). A row whose own premise is false is refused with its Issue and the next is reviewed."""
+    reviewed = []
+    for row in rows:
+        if len(reviewed) >= want:
+            break
+        review = _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row,
+                                 dry_run)
+        if review["ok"]:
+            row["premises"] = review
+            reviewed.append(row)
+            continue
+        if review["environment"]["outcome"] != "true":
+            return [], True
+    return reviewed, False
+
+
 def _survey(project_dir, config, driver, database):
     """Everything a pass needs to decide, gathered once. Shared by `once` and `status` so the
     two can never disagree about what the criteria said."""
     cfg = D.load_dispatch_config(project_dir, config)
-    band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
     if cfg["max_parallel"] > 1:
         # SEL-004: the parallel pass's own survey, plan included, so `status` shows why a
         # task waits beside the running ones exactly as the next pass would decide it.
         from seldon.commands import dispatch_worktree as W
-        survey = W.survey(project_dir, cfg, driver, database, band, lease_body)
-        return cfg, band, survey["tree"], lease_body, survey["claim"], survey["rows"]
+        survey = W.survey(project_dir, cfg, driver, database, lease_body)
+        return cfg, survey["band"], survey["tree"], lease_body, survey["claim"], survey["rows"]
+    from seldon.commands import dispatch_lane as LANE
     tree = D.tree_state(project_dir)
-    claim = _claim_in_flight(driver, database)
-    holds = _premise_holds(project_dir, driver, database)
-    launch_holds = _launch_holds(project_dir)
-    union = D.union_state(project_dir)
-    tasks = _tasks(driver, database)
-    cross = _cross_waits(project_dir, tasks)
-    ooda = _ooda_waits(project_dir, cfg, tasks)
-    rows = [D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                       launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda)
-            for t in tasks]
-    return cfg, band, tree, lease_body, claim, D.fifo(rows)
+    lane_running = []
+    if LANE.lane_of(cfg):
+        # SEL-062 (F-13): the serial pass's own view of the claim and the lane in flight, with no reap (status writes
+        # nothing; a dead lane supervisor is the pass's to mark).
+        lane_running, inplace = LANE.split_claims(project_dir, cfg, _claims_in_flight(driver, database))
+        claim = ({k: inplace[0].get(k) for k in ("artifact_id", "claimed_by", "claimed_at")} if inplace else None)
+    else:
+        claim = _claim_in_flight(driver, database)
+    band, rows = evaluate_queue(project_dir, cfg, driver, database, tree, claim, lease_body, view="status",
+                                lane_running=lane_running)
+    return cfg, band, tree, lease_body, claim, rows
+
+
+def _age(seconds) -> str:
+    return D.human_age(float(seconds or 0))
+
+
+def _full_gate_age(project_dir, cfg) -> dict:
+    """AD-034-R38 as amended (SEL-062, F-18): the newest full gate's age against the schedule, for `status`."""
+    from seldon.core import gate_plan as GP
+    from seldon.core.events import read_events
+    return GP.full_gate_age(read_events(project_dir), cfg.get(GP.CONFIG_KEY))
 
 
 def _emit(project_dir, session_id, event_type, payload):
@@ -611,6 +686,11 @@ def dispatch_status(as_json):
                # QC-002: station (a)'s outcome on the last pass that reviewed premises, and open huddles (d).
                "last_premise_review": _stations_mod().last_premise_review(project_dir, cfg),
                "open_huddles": _open_huddles(project_dir),
+               # SEL-062 (AD-034-R38 amended, F-18): the schedule's age is shown when no pass runs to act on it.
+               "full_gate": _full_gate_age(project_dir, cfg),
+               # SEL-062 (AD-037 erratum 01, F-20): the thresholds this project's alarms run on, defaults included.
+               "stuck_thresholds": {"default": cfg["stuck_after_passes"],
+                                    **cfg["stuck_after_passes_by_criterion"]},
                "tasks": rows}
     if as_json:
         click.echo(json.dumps(payload, indent=1, default=str))
@@ -649,6 +729,17 @@ def dispatch_status(as_json):
                 if wl["held"] else f"released {b.get('released_at')}")
         click.echo(f"  worktree     : {wl['stem']}  {b.get('worktree')} on {b.get('branch')}  "
                    f"lease {held}")
+    fg = payload["full_gate"]
+    if fg["state"] == "no_schedule":
+        click.echo("  full gate    : no schedule (no slices declared; every gate this project runs is full)")
+    elif fg["state"] == "never":
+        click.echo("  full gate    : NEVER on record (the next idle pass runs it; `seldon gate main` runs it now)")
+    else:
+        click.echo(f"  full gate    : {fg['anchor']} ({fg['outcome']}), {_age(fg['age_s'])} ago, {fg['state']}"
+                   f" (due after {_age(fg['full_every_s'])}, overdue after {_age(fg['full_overdue_s'])})")
+    th = payload["stuck_thresholds"]
+    click.echo(f"  alarms       : stuck after {th['default']} pass(es); "
+               + ", ".join(f"{k} {v}" for k, v in sorted(th.items()) if k != "default"))
     click.echo(f"  open tasks   : {len(rows)}  candidates: {payload['candidates']}  "
                f"eligible: {len(payload['eligible'])}")
     for cr in cadence_rows:
@@ -782,7 +873,10 @@ def dispatch_once(dry_run):
         try:
             # AD-038-R20: the pass reads the tree only while it holds the filing lock, so it never sees a task file
             # between its write and its registration; it releases the lock before it launches anything.
-            with _filing_guard(project_dir, config, dry_run) as filing:
+            # SEL-062 (F-17): the event store is parsed once per pass while it is unchanged, and an append is read as its
+            # tail (`events.pass_scope`).
+            from seldon.core.events import pass_scope
+            with _filing_guard(project_dir, config, dry_run) as filing, pass_scope():
                 if filing is not None and filing.get("skipped"):
                     click.echo(filing["skipped"])
                 else:
@@ -1487,7 +1581,6 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         from seldon.commands import dispatch_worktree as W
         return W.pass_parallel(project_dir, config, driver, database, domain_config,
                                session_id, cfg, lease, dry_run, filing=filing)
-    band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     # SEL-054 (AD-038-R40): with a coordination lane, a lane task running under its own supervisor is not the claim in
     # flight (c6 is the in-place claim's), and one whose supervisor died is blocked here as a worktree task's is.
     from seldon.commands import dispatch_lane as LANE
@@ -1535,22 +1628,13 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         # c7 names what the reconciler could not or may not commit, and why (FRICTION-001 Part A step 3).
         tree["unreconciled"] = _unreconciled(project_dir, config, driver, database, done)
     lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
-    holds = _premise_holds(project_dir, driver, database)
-    launch_holds = _launch_holds(project_dir)
-    union = D.union_state(project_dir)
-    tasks = _tasks(driver, database)
-    cross = _cross_waits(project_dir, tasks)
-    ooda = _ooda_waits(project_dir, cfg, tasks)
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, premise_holds=holds,
-                              launch_holds=launch_holds, union=union, cross_waits=cross, ooda=ooda)
-                   for t in tasks], lane)
-    LANE.mark_lane_rows(rows, lane_running, lane)
+    # AD-038-R46: the one evaluation stage and the one alarm stage, shared with the parallel pass and the status views.
+    band, rows = evaluate_queue(project_dir, cfg, driver, database, tree, claim, lease_body, view="pass",
+                                lane_running=lane_running)
     # The staleness alarm, before the eligible/ineligible split so a candidate that has been
     # refused for hours is heard about whether or not some OTHER task launched this pass.
-    _record_last_pass(project_dir, cfg, rows, tree, claim, dry_run)
-    _stuck(project_dir, session_id, cfg, rows, tree, claim, dry_run)
-    # SEL-052: a blocked task is not a candidate, so the stuck alarm never counts it; this rings for it.
-    _held(project_dir, session_id, cfg, driver, database, dry_run)
+    # SEL-052: a blocked task is not a candidate, so the stuck alarm never counts it; the held alarm rings for it.
+    pass_alarms(project_dir, session_id, cfg, rows, tree, claim, driver, database, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now. Nothing below reads the tree for candidacy.
     _release_filing(filing)
     if claim is None and not dry_run:
@@ -1558,14 +1642,16 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         _record_pending(project_dir, config, driver, database, session_id, cfg)
 
     eligible = [r for r in rows if r["eligible"]]
-    if claim is None and not dry_run:
+    if claim is None and not dry_run and not lane_running:
         # SEL-055 (AD-034-R38): the full suite runs on main on a schedule, here, under the pass lease with no session in
         # flight: on an idle pass once it is due, before a launch once it is overdue. A project with no slices has no
-        # schedule (every gate it runs is already full), so this is a no-op for it.
+        # schedule (every gate it runs is already full), so this is a no-op for it. SEL-062 (AD-038-R40 amended,
+        # REVIEW-001 F-11): a lane session in flight is a session in flight, as the parallel pass's `not running` says.
         from seldon.commands import dispatch_gate as GATE
         if GATE.maybe_run(project_dir, cfg, idle=not eligible, session_id=session_id, driver=driver,
                           database=database, domain_config=domain_config) is not None:
             _record_and_push(project_dir, config, cfg)
+    if claim is None and not dry_run:
         # SEL-058 (AD-033-R15): an imported register's new records reach this project's graph on the pass.
         from seldon.commands import dispatch_worktree as W
         if W.project_imports(project_dir, config, cfg, driver=driver, database=database,
@@ -1608,18 +1694,13 @@ def _pass(project_dir, config, driver, database, domain_config, session_id, cfg,
         if not dry_run:
             _push(project_dir, cfg)
         return
-    chosen = None
-    for row in eligible:
-        review = _premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row,
-                                 dry_run)
-        if review["ok"]:
-            chosen = row
-            chosen["premises"] = review
-            break
-        if not review["environment"]["outcome"] == "true":
-            if not dry_run:
-                _push(project_dir, cfg)
-            return
+    reviewed, stopped = review_launches(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                        eligible, dry_run, want=1)
+    if stopped:
+        if not dry_run:
+            _push(project_dir, cfg)
+        return
+    chosen = reviewed[0] if reviewed else None
     if chosen is None:
         click.echo("nothing launched: every eligible task has a false premise")
         if not dry_run:

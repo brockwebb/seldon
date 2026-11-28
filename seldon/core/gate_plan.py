@@ -414,6 +414,25 @@ def scheduled_due(events: list, gcfg: dict | None, *, idle: bool, now: datetime 
     return None
 
 
+def full_gate_age(events: list, gcfg: dict | None, *, now: datetime | None = None) -> dict:
+    """SEL-062 (AD-034-R38 as amended by ADDENDUM 15, REVIEW-001 F-18): the newest full gate's time and age against the
+    schedule's thresholds, for `seldon dispatch status`. The anchor is `scheduled_due`'s: the newer of the newest
+    scheduled run and the newest passing full gate. `state` is `no_schedule` (no slices), `never`, `ok`, `due` (past
+    `full_every_s`) or `overdue` (past `full_overdue_s`), by `scheduled_due`'s own comparisons."""
+    if not declared(gcfg):
+        return {"state": "no_schedule", "anchor": None, "age_s": None}
+    now = now or datetime.now(timezone.utc)
+    newest = [e for e in (last_scheduled(events), last_full_pass(events)) if e is not None and _ts(e) is not None]
+    out = {"full_every_s": gcfg["full_every_s"], "full_overdue_s": gcfg["full_overdue_s"]}
+    if not newest:
+        return {**out, "state": "never", "anchor": None, "age_s": None}
+    anchor = max(newest, key=_ts)
+    age = int((now - _ts(anchor)).total_seconds())
+    state = "overdue" if age > gcfg["full_overdue_s"] else ("due" if age > gcfg["full_every_s"] else "ok")
+    return {**out, "state": state, "anchor": anchor.get("timestamp"), "age_s": age,
+            "event_id": anchor.get("event_id"), "outcome": (anchor.get("payload") or {}).get("outcome")}
+
+
 def scheduled_plan(tree: Path, gcfg: dict, why: str, branch: str | None) -> dict:
     """The full plan of a scheduled run (R38): main's head in `tree`, every test file, the reason `scheduled: <why>`."""
     tree = Path(tree)

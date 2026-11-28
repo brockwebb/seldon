@@ -235,7 +235,6 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
     working in this checkout" ask it of the in-place claim only, because worktree sessions do
     not work here.
     """
-    band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
     running, inplace = _classify(project_dir, cfg, S._claims_in_flight(driver, database))
     if not dry_run:
         running = _reap_stale(project_dir, driver, database, domain_config, session_id, cfg,
@@ -261,23 +260,16 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                                 if u["path"] not in set(exclude)]
     lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
     ids = [r["task_id"] for r in running]
-    union = D.union_state(project_dir)
-    tasks = S._tasks(driver, database)
-    cross = S._cross_waits(project_dir, tasks)
-    ooda = S._ooda_waits(project_dir, cfg, tasks)
-    from seldon.commands import dispatch_lane as LANE
-    from seldon.core import lane as LN
-    lane = LANE.lane_of(cfg)
-    for r in running:
-        r["lane"] = LN.is_lane(r.get("name"), lane)
+    lane = _mark_running_lane(project_dir, cfg, running)
     if lane:
         # A live lane supervisor whose session moved its own task still holds its slot until its merge.
+        from seldon.commands import dispatch_lane as LANE
         running = running + LANE.unclaimed_lane_leases(project_dir, cfg, {r["task_id"] for r in running})
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, inplace_claim, lease_body,
-                              running=ids, union=union, cross_waits=cross, ooda=ooda) for t in tasks], lane)
-    LANE.mark_lane_rows(rows, [r for r in running if r["lane"]], lane)
-    S._record_last_pass(project_dir, cfg, rows, tree, inplace_claim, dry_run)
-    S._stuck(project_dir, session_id, cfg, rows, tree, inplace_claim, dry_run)
+    # AD-038-R46 (SEL-062, REVIEW-001 F-15): the serial pass's evaluation and alarm stages, so c13, c15 and the held
+    # alarm (F-07) act here as they do there.
+    band, rows = S.evaluate_queue(project_dir, cfg, driver, database, tree, inplace_claim, lease_body, view="pass",
+                                  running_ids=ids, lane_running=[r for r in running if r["lane"]])
+    S.pass_alarms(project_dir, session_id, cfg, rows, tree, inplace_claim, driver, database, dry_run)
     # AD-038-R20: the queue is evaluated; a filer may write now, before any launch.
     S._release_filing(filing)
     if inplace_claim is None and not dry_run:
@@ -296,17 +288,29 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         if project_imports(project_dir, config, cfg, driver=driver, database=database, domain_config=domain_config,
                            session_id=session_id) is not None:
             S._record_and_push(project_dir, config, cfg)
-    plan = D.plan_launches(
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in ready],
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": r["lane"]} for r in running],
-        cfg["max_parallel"], cfg["resources"], lane=lane)
-    _apply_plan(ready, plan)
+    plan = _plan(ready, running, cfg, lane)
     chosen = [r for r in ready if r["eligible"]]
     # SEL-054 (AD-038-R42, R45): the project's own conditions on any launch, before a claim.
     if chosen and not S._launch_gates(project_dir, config, session_id, cfg, dry_run):
         if not dry_run and inplace_claim is None:
             S._push(project_dir, cfg)
         return
+    if chosen:
+        # AD-038-R46 (SEL-062, REVIEW-001 F-15): station (a)'s premise review, as the serial pass runs it, over what
+        # this pass would launch. A task refused on its own premise is skipped (its Issue names it) and its slot waits
+        # for the next pass's plan; a sibling's lease on this project's environment stops every launch here.
+        reviewed, stopped = S.review_launches(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                              chosen, dry_run, want=len(chosen))
+        if stopped:
+            if not dry_run and inplace_claim is None:
+                S._push(project_dir, cfg)
+            return
+        if not reviewed:
+            click.echo("nothing launched: every task this pass would launch has a false premise")
+            if not dry_run and inplace_claim is None:
+                S._record_and_push(project_dir, config, cfg)
+            return
+        chosen = reviewed
 
     if not chosen:
         click.echo(f"nothing launched ({len(rows)} open, "
@@ -334,7 +338,8 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
         return
     for n, r in enumerate(chosen):
         if r["concurrency"]["exclusive"] and not r.get("lane"):
-            # `plan_launches` launches an exclusive task only when nothing runs, and alone.
+            # `plan_launches` launches an exclusive task only when no other non-lane task runs, and alone. A lane task
+            # may run beside it (AD-038-R40): its own supervisor, its own worktree, its lane's declared writes.
             S._launch_inplace(project_dir, config, driver, database, domain_config,
                               session_id, cfg, lease, r)
             continue
@@ -353,26 +358,45 @@ def pass_parallel(project_dir, config, driver, database, domain_config, session_
                          cfg, r)
 
 
-def survey(project_dir, cfg, driver, database, band, lease_body) -> dict:
+def survey(project_dir, cfg, driver, database, lease_body) -> dict:
     """What `status` shows under `max_parallel > 1`: the pass's evaluation and plan, with no
-    write, no reap and no launch. A dead supervisor is shown, not marked; marking is a pass's."""
+    write, no reap and no launch. A dead supervisor is shown, not marked; marking is a pass's.
+
+    SEL-062 (AD-038-R46, REVIEW-001 F-13): the pass's own stages, so the lane's order, its c6 and its plan are shown
+    as the next pass would apply them."""
     running, inplace = _classify(project_dir, cfg, S._claims_in_flight(driver, database))
     claim = inplace[0] if inplace else None
     tree = D.tree_state(project_dir, cfg["shared_paths"])
     ids = [r["task_id"] for r in running]
-    union = D.union_state(project_dir)
-    tasks = S._tasks(driver, database)
-    cross = S._cross_waits(project_dir, tasks)
-    ooda = S._ooda_waits(project_dir, cfg, tasks)
-    rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, claim, lease_body, running=ids,
-                              union=union, cross_waits=cross, ooda=ooda) for t in tasks])
+    lane = _mark_running_lane(project_dir, cfg, running)
+    if lane:
+        from seldon.commands import dispatch_lane as LANE
+        running = running + LANE.unclaimed_lane_leases(project_dir, cfg, {r["task_id"] for r in running})
+    band, rows = S.evaluate_queue(project_dir, cfg, driver, database, tree, claim, lease_body, view="status",
+                                  running_ids=ids, lane_running=[r for r in running if r["lane"]])
     ready = [r for r in rows if r["eligible"]]
+    plan = _plan(ready, running, cfg, lane)
+    return {"tree": tree, "claim": claim, "rows": rows, "running": running, "plan": plan, "band": band}
+
+
+def _mark_running_lane(project_dir, cfg, running: list):
+    """Mark each running row `lane` by the lane's pattern and return the lane (None without one)."""
+    from seldon.commands import dispatch_lane as LANE
+    from seldon.core import lane as LN
+    lane = LANE.lane_of(cfg)
+    for r in running:
+        r["lane"] = LN.is_lane(r.get("name"), lane)
+    return lane
+
+
+def _plan(ready: list, running: list, cfg: dict, lane) -> dict:
+    """The planner over the ready rows and what runs, with the lane, its deferrals written into each row's c6."""
     plan = D.plan_launches(
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in ready],
-        [{"task_id": r["task_id"], "concurrency": r["concurrency"]} for r in running],
-        cfg["max_parallel"], cfg["resources"])
+        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in ready],
+        [{"task_id": r["task_id"], "concurrency": r["concurrency"], "lane": bool(r.get("lane"))} for r in running],
+        cfg["max_parallel"], cfg["resources"], lane=lane)
     _apply_plan(ready, plan)
-    return {"tree": tree, "claim": claim, "rows": rows, "running": running, "plan": plan}
+    return plan
 
 
 def _apply_plan(ready: list, plan: dict) -> None:

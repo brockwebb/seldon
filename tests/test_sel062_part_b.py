@@ -43,7 +43,7 @@ def _set_dispatch(project, **values):
 
 def _parallel(project, monkeypatch):
     from seldon.core import qc
-    _set_dispatch(project, max_parallel=2)
+    _set_dispatch(project, max_parallel=2, gate_command="true")
     monkeypatch.setattr(qc, "parallel_opted_in", lambda project_dir, config: True)
 
 
@@ -259,12 +259,13 @@ def test_part_b_a_pass_parses_the_store_once(project, neo4j_driver, domain_confi
 
 def test_part_b_the_newest_full_gates_age_is_read_from_the_record():
     now = datetime(2026, 11, 28, 12, 0, tzinfo=timezone.utc)
-    gcfg = {"full_every_s": 86400, "full_overdue_s": 172800}
-    events = [{"event_type": GP.EVENT_GATE_RUN, "timestamp": "2026-11-27T12:00:00Z",
+    gcfg = {"full_every_s": 86400, "full_overdue_s": 172800, "slices": [{"name": "s", "paths": ["x/"]}]}
+    events = [{"event_type": GP.EVENT_GATE_RUN, "timestamp": "2026-11-27T11:00:00Z",
                "payload": {"call_site": GP.CALL_SITE_SCHEDULED, "tier": GP.TIER_FULL, "outcome": GP.OUTCOME_PASS}}]
     age = GP.full_gate_age(events, gcfg, now=now)
-    assert age["age_s"] == 86400 and age["anchor"] == "2026-11-27T12:00:00Z" and age["state"] == "due"
+    assert age["age_s"] == 90000 and age["anchor"] == "2026-11-27T11:00:00Z" and age["state"] == "due"
     assert GP.full_gate_age([], gcfg, now=now)["state"] == "never"
+    assert GP.full_gate_age(events, {}, now=now)["state"] == "no_schedule"
 
 
 @pytest.mark.usefixtures("clean_test_db")

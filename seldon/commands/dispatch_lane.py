@@ -95,32 +95,27 @@ def launch_beside(project_dir, config, driver, database, domain_config, session_
         # The inspection tick appends station records to the store; they are committed first, under this lease, so
         # c7 reads the tree a pass would.
         S._record_own_lines(project_dir, config, cfg)
-        band = D.resolve_standing_band(project_dir, cfg["standing_band_ref"])
         tree = D.tree_state(project_dir)
         lease_body = D.read_lease(D.config_path(project_dir, cfg["lease_file"]))
-        rows = D.fifo([D.evaluate(project_dir, t, cfg, band, tree, None, lease_body,
-                                  premise_holds=S._premise_holds(project_dir, driver, database),
-                                  launch_holds=S._launch_holds(project_dir), union=D.union_state(project_dir),
-                                  cross_waits=S._cross_waits(project_dir, tasks),
-                                  ooda=S._ooda_waits(project_dir, cfg, tasks)) for t in tasks], lane)
-        mark_lane_rows(rows, lane_running, lane)
+        # AD-038-R46 (SEL-062, REVIEW-001 F-15): the passes' evaluation stage over the lane's own tasks.
+        _band, rows = S.evaluate_queue(project_dir, cfg, driver, database, tree, None, lease_body, view="lane",
+                                       lane_running=lane_running, tasks=tasks)
         eligible = [r for r in rows if r["eligible"]]
         if not eligible:
             return {"launched": None, "why": "no eligible lane task",
                     "refused": {r["task_id"]: r.get("failed") for r in rows}}
         if not S._launch_gates(project_dir, config, session_id, cfg, dry_run=False):
             return {"launched": None, "why": "launch gates"}
-        for row in eligible:
-            review = S._premise_review(project_dir, config, driver, database, domain_config, session_id, cfg, row,
-                                       False)
-            if review["ok"]:
-                row["premises"] = review
-                click.echo(f"lane: launching {row['task_id'][:8]} beside {str(holder_task)[:8]} (AD-038-R40)")
-                launch(project_dir, config, driver, database, domain_config, session_id, cfg, row)
-                return {"launched": row["task_id"]}
-            if review["environment"]["outcome"] != "true":
-                return {"launched": None, "why": "environment_in_flight"}
-        return {"launched": None, "why": "every eligible lane task has a false premise"}
+        reviewed, stopped = S.review_launches(project_dir, config, driver, database, domain_config, session_id, cfg,
+                                              eligible, False, want=1)
+        if stopped:
+            return {"launched": None, "why": "environment_in_flight"}
+        if not reviewed:
+            return {"launched": None, "why": "every eligible lane task has a false premise"}
+        row = reviewed[0]
+        click.echo(f"lane: launching {row['task_id'][:8]} beside {str(holder_task)[:8]} (AD-038-R40)")
+        launch(project_dir, config, driver, database, domain_config, session_id, cfg, row)
+        return {"launched": row["task_id"]}
     finally:
         D.mark_phase(lease.path, D.PHASE_SESSION)
 

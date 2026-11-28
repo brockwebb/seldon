@@ -33,6 +33,9 @@ ACTOR = "dispatcher"
 NOTIFY_MAIN_RED, NOTIFY_MAIN_GREEN = "main_red", "main_green"
 #: The Issue type a red scheduled run opens (R39).
 ISSUE_MAIN_RED = "main_red"
+#: SEL-062 (AD-034-R38 amended, REVIEW-001 F-12): a scheduled run that raised something other than a busy checkout or a
+#: configuration error. Recorded once per failing pass with the reason it was due; the next pass asks again.
+EVENT_SCHEDULED_ERROR = "gate_scheduled_error"
 #: How many failed files a notification and an Issue name (the record holds them all).
 NAMED_FILES_CAP = 10
 
@@ -195,5 +198,14 @@ def maybe_run(project_dir: Path, cfg: dict, *, idle: bool, session_id: str | Non
                              domain_config=domain_config)
     except (ScheduledBusy, GP.GateConfigError) as exc:
         click.echo(f"scheduled gate: not run ({why}): {exc}", err=True)
+        return None
+    except Exception as exc:  # noqa: BLE001 -- recorded and printed, never swallowed: the pass goes on (R38)
+        # SEL-062 (AD-034-R38 as amended by ADDENDUM 15, REVIEW-001 F-12): the docstring's promise, kept. An OSError
+        # from the checkout or a bug in the run used to crash every pass that found the schedule due.
+        err = f"{type(exc).__name__}: {exc}"
+        click.echo(f"scheduled gate: FAILED to run ({why}): {err}", err=True)
+        from seldon.core.events import append_event, make_event
+        append_event(project_dir, make_event(EVENT_SCHEDULED_ERROR, ACTOR, "accepted",
+                                             {"why": why, "error": err[:500]}, session_id=session_id))
         return None
 
