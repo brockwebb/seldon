@@ -2,7 +2,9 @@
 
 **Date:** 2026-11-28. **Task:** 3dffb4f2. **Returns:** squiddy SQ-156 (52a7f4f8), which answered seldon's filings
 `c923eb5a` and `45b88039`. **Addenda read:** none exist (`ls cc_tasks | grep SEL-064` lists only the task file).
-**Spend:** zero model calls; agent tokens as `seldon dispatch part-complete` reports them. **Network:** none.
+**Spend:** zero model calls; 96,173 agent tokens at the Part A boundary (`seldon dispatch part-complete`, wall 850 s),
+against an estimate of 0.02M. The estimate assumed "nothing to run"; decision 1 added code, red-first tests and a
+36-file prior-art test run. **Network:** none.
 **Not done, per the dispatcher's launch instructions:** merge, push, `seldon cc complete`.
 
 Recall used: seldon:AD-036-R16, squiddy:R-306, squiddy:R-307
