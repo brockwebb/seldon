@@ -376,6 +376,23 @@ ResearchTask {
 - **Note:** PL-011 is reserved for AST-Based Code Graph Analysis (`docs/decisions/PL-011_ast_code_graph_analysis.md`)
 - **Reference:** `docs/design/2026-03-10_parallel_decomposition_via_graph.md`
 
+### PL-018: An OS-Enforced Deny for Dispatched Sessions (NEW 2026-11-28, SEL-062)
+
+- AD-038-R44's guard is a denylist of spellings, not complete mediation (Saltzer and Schroeder 1975), as amended by
+  AD-038 ADDENDUM 17 after REVIEW-001 F-06. The complete form has two parts:
+  - Claude Code's sandbox on every launch line (`sandbox.enabled`, `filesystem.denyRead` on the guarded paths,
+    `allowUnsandboxedCommands: false`, passed per session with `--settings`);
+  - `Read(//<path>/**)` deny rules for the file tools. The sandbox covers Bash only.
+- **What it changes:**
+  - Sandboxed Bash writes only the worktree, a temp directory and `allowWrite` paths. `part-complete` writes the
+    primary's event store (AD-038-R4) and `cc file` writes other repositories, so both need `allowWrite`.
+  - Network starts empty, so the sandbox would also be the first enforced form of the Network line (R45's untried
+    row).
+  - Every dispatched session on the machine runs under it.
+- **Trigger:** a sandboxed pilot dispatch (one stub task and one real task through a full finish) before any project
+  turns it on, filed as its own task. Not runnable from an exclusive in-repository session, which cannot launch one.
+- **Reference:** `docs/design/AD-038_ADDENDUM_17_a_limit_untried_is_tried_again_the_guard_reads_the_probes_spellings_and_every_pass_evaluates_through_one_stage.md` §4.
+
 ---
 
 ## 4. References

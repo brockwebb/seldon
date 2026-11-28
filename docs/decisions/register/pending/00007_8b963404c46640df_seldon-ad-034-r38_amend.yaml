@@ -1,0 +1,22 @@
+event: amend
+id: seldon:AD-034-R38
+date: '2026-11-28'
+decided_by: cc:67146282
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_15_a_presence_check_is_no_evidence_a_scoped_record_does_not_end_a_red_main_and_r41_guards_the_transition.md:106: AD-034-R38'
+- cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+reason: 'SEL-062 (REVIEW-001 F-18, F-12): status shows the newest full gate''s age; the pass''s call never raises'
+changes:
+  statement: 'Where a project declares slices, its full suite runs on main on a schedule, not on a task''s change: the dispatcher''s pass runs `dispatch.gate_command` in a detached checkout of main''s head (call site `scheduled`, one `gate_run` record) when `dispatch.gate.full_every_s` has passed since the newest full gate on record, on a pass with no session in flight and nothing eligible to launch, and before a launch once `dispatch.gate.full_overdue_s` has passed; `seldon gate main` runs it by hand; `seldon dispatch status` shows the newest full gate''s time and age against both thresholds; the pass''s call never raises, and an error other than a busy checkout or a configuration error is recorded as `gate_scheduled_error` and printed. The cadence never promotes a task''s gate'
+  consumer:
+  - cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+  - seldon/core/gate_plan.py
+  - seldon/commands/dispatch_gate.py
+  - seldon/commands/dispatch.py
+  - seldon/commands/gate.py
+  - tests/test_sel055_scheduled_gate.py
+  - cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+  - tests/test_sel062_part_b.py
+written_by: seldon decision 0.1.0
+provisional_id: 8b963404c46640dfa977567604a8a30d0f10d250ce7def9c6bfbf27cfcfb1ee5

@@ -1,0 +1,22 @@
+event: amend
+id: seldon:AD-034-R41
+date: '2026-11-28'
+decided_by: cc:67146282
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_15_a_presence_check_is_no_evidence_a_scoped_record_does_not_end_a_red_main_and_r41_guards_the_transition.md:110: AD-034-R41'
+- cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+reason: 'SEL-062 (REVIEW-001 F-16, F-21): R41 is a guard on the transition into completed, and the branch must be on main'
+changes:
+  statement: 'A ResearchTask the dispatcher blocked (blocked now, or blocked after its newest launch) moves into `completed` only through a guard on that transition, met by every path (`seldon cc complete` and the MCP `seldon_cc_complete`, `seldon task close` and `seldon_task_close`, `seldon task update`, any walk): it passes on a passing, clean, full `gate_run` record of the tree the dispatch branch holds at that moment (a scheduled run, `seldon gate main`, or a full `seldon gate run` there) when the task''s own dispatch branch on record has every commit''s patch on that branch (`git cherry`), and records that record''s id on the task as `completion_gate`; otherwise it refuses as `blocked_ungated` (no evidence) or `branch_not_on_main` (naming the branch and its unmerged commits) and writes nothing. The dispatcher''s own completion after a merge passes with that merge''s R26 evidence. The operator''s `seldon cc complete --ungated "<reason>"` completes it anyway and records the reason on the task as `completed_ungated`. A project with no dispatch block has no gate to require'
+  consumer:
+  - cc_tasks/2026-11-27_SEL-058_three_open_filings_from_hazbrief_and_factory_are_answered.md
+  - seldon/core/gate_plan.py
+  - seldon/commands/cc.py
+  - seldon/domain/research.yaml
+  - tests/test_sel058_hazbrief_filings.py
+  - cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+  - seldon/core/artifacts.py
+  - tests/test_sel062_part_c.py
+written_by: seldon decision 0.1.0
+provisional_id: c624f0c1912357fd6b6c3f6c47c24b2e0f90c5f9ae68f0e01328e2e9bb933a60

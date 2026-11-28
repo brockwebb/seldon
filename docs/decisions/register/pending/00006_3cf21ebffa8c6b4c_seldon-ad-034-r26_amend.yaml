@@ -1,0 +1,24 @@
+event: amend
+id: seldon:AD-034-R26
+date: '2026-11-28'
+decided_by: cc:67146282
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_15_a_presence_check_is_no_evidence_a_scoped_record_does_not_end_a_red_main_and_r41_guards_the_transition.md:102: AD-034-R26'
+- cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+reason: 'SEL-062 (REVIEW-001 F-08): a presence check of the task''s own RESULT is not evidence'
+changes:
+  statement: A branch shall merge only on recorded evidence that a gate passed for its tip (a declared pass record, the round's re-gate, a kept branch's regate, or a Stop gate that ran a check other than a test that the task's own RESULT exists, which the finish already requires); with none the round shall run the project's gate command, and with no gate command the task shall be blocked ungated
+  consumer:
+  - cc_tasks/2026-11-21_SEL-042_a_stopped_session_is_never_merged_or_completed_the_merge_round_cannot_refuse_itself_and_verify_reads_pending_records.md
+  - seldon/commands/dispatch_worktree.py
+  - seldon/commands/dispatch.py
+  - seldon/core/dispatch.py
+  - seldon/commands/dispatch_stations.py
+  - tests/test_sel042_stopped_session_never_merges.py
+  - tests/dispatch_scaffold.py
+  - cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+  - seldon/core/returns.py
+  - tests/test_sel062_part_c.py
+written_by: seldon decision 0.1.0
+provisional_id: 3cf21ebffa8c6b4cf0b6b45356c1af7dcf7a5be1f7e8a7b657bcc023eeda7fe8

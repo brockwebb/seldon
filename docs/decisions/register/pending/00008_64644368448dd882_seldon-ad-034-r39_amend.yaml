@@ -1,0 +1,21 @@
+event: amend
+id: seldon:AD-034-R39
+date: '2026-11-28'
+decided_by: cc:67146282
+operator_stated: false
+receipts:
+- 'docs/design/AD-034_ADDENDUM_15_a_presence_check_is_no_evidence_a_scoped_record_does_not_end_a_red_main_and_r41_guards_the_transition.md:108: AD-034-R39'
+- cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+reason: 'SEL-062 (REVIEW-001 F-19): a pass record scoped by tree_paths neither stands under the closure nor ends it'
+changes:
+  statement: 'While the newest scheduled run is red, the project''s merges are closed to every change that can change a test''s outcome, and the dispatcher says so: the red run rings `dispatch.notify` once and opens one Issue (`main_red`). Under closure the merge round''s plans (re-gate and evidence gate) also run the test files the red run failed, and a red run that named none (a timeout, unparsed output) makes them full; a plan that selects nothing, because every changed path matched a slice declared `tests: none`, is not closed. Evidence that skipped the closure is not evidence under R26 while it holds, and a declared pass record scoped by `tree_paths` is such evidence. The closure ends when a later scheduled run passes, or when a branch merges on a passing full gate of its tip, of which a pass record counts only when it covers the whole tree; after any merge under closure the scheduled run is due on the next pass'
+  consumer:
+  - cc_tasks/2026-11-27_SEL-055_the_gate_runs_what_a_change_can_break_and_no_queue_waits_an_hour_for_a_one_line_change.md
+  - seldon/core/gate_plan.py
+  - seldon/commands/dispatch_gate.py
+  - seldon/commands/dispatch_worktree.py
+  - tests/test_sel055_scheduled_gate.py
+  - cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+  - tests/test_sel062_part_c.py
+written_by: seldon decision 0.1.0
+provisional_id: 64644368448dd88288b7debb66445d0499b0edd0487a5660a5bcb59ac2b1de4b

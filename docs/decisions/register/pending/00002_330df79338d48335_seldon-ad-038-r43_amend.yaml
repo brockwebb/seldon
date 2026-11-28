@@ -1,0 +1,21 @@
+event: amend
+id: seldon:AD-038-R43
+date: '2026-11-28'
+decided_by: cc:67146282
+operator_stated: false
+receipts:
+- 'docs/design/AD-038_ADDENDUM_17_a_limit_untried_is_tried_again_the_guard_reads_the_probes_spellings_and_every_pass_evaluates_through_one_stage.md:134: AD-038-R43'
+- cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+reason: 'SEL-062 (REVIEW-001 F-22): a failed mint''s stderr text never reaches the committed record'
+changes:
+  statement: With `dispatch.hive.mint_command`, the dispatcher (the pass in place, the supervisor for a worktree task) runs it once per launch, outside the session, and puts the token it prints only in the session's environment as `HIVE_TOKEN` with `HIVE_PROJECT` and `HIVE_TASK`; `session_identity` records the identity's name and a 12-character sha256 prefix of the token, never the token; a failed mint is recorded by its exit and its stderr's length and 12-character sha256 prefix, never the stderr's text, which goes to the dispatcher's own stderr only; the session launches without a token; `dispatch.hive.notices_hook` is placed on every launch line as a PostToolUse hook; an inherited `HIVE_TOKEN` never reaches a session
+  consumer:
+  - cc_tasks/2026-11-27_SEL-054_four_things_the_factory_needs_from_the_dispatcher_are_built.md
+  - seldon/core/hive.py
+  - seldon/commands/dispatch.py
+  - seldon/commands/dispatch_worktree.py
+  - tests/test_sel054_identity_and_controls.py
+  - cc_tasks/2026-11-28_SEL-062_the_dispatchers_limits_passes_and_merge_evidence_hold_what_their_rulings_say.md
+  - tests/test_sel062_part_a.py
+written_by: seldon decision 0.1.0
+provisional_id: 330df79338d48335b0a6739ab9e51546f82ced1855a12e7cf2b15b1e4e811531
