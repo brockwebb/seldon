@@ -622,3 +622,39 @@ recall:
     rrf_k: 60
     # Repository name -> its governed graph directory, relative to that repository's root.
     graphs: {seldon: governed, squiddy: governed, arnold: governed}
+  # SEL-060 Part B (AD-031 ADDENDUM 01, R4 to R6): which hits a session is handed. `lexical` is RECALL-001's
+  # selection; `touch` chooses by what the task cites and will touch before shared words. A block without
+  # `selection:` keeps `lexical`. Basis for every value: SEL-060 Part A (docs/evidence/sel060/), 2,264 hits handed
+  # to 286 sessions in four repositories, 15.4% ever opened.
+  selection:
+    mode: touch
+    # Paths every task's commits change, so a shared one says nothing about a task: the event store, the task
+    # files and RESULTs, the register's records and rendering, handoffs, logs, the gate record's ledger.
+    noise_paths: [seldon_events.jsonl, 'cc_tasks/*', 'docs/decisions/register/*', docs/decisions/REGISTER.md,
+                  'handoffs/*', 'logs/*', 'docs/evidence/gate_runs/*']
+    # A task code or decision id cited by more than this share of the repository's task files is the template's
+    # (`DN-005` in every header, `AD-037-R6` in every stop condition), not a reason. Part A: cited hits were opened
+    # 53% at a share up to 0.02 (n 189), 42% to 0.05 (n 192), 36% to 0.10 (n 14); the old selection hardly ever
+    # handed one above (n 1). seldon's DN-005 is at 0.47 and AD-037-R6 at 0.33. Part C's replay (60 tasks) moved it
+    # from 0.10 to 0.30: factory's OODA template cites F-044 in a quarter of its tasks and its sessions open it.
+    max_citing_share: 0.30
+    # A file more tasks than this changed (seldon.yaml, the CLI's command modules) names no particular history.
+    # Untuned first value: about one task in twenty of seldon's 2026-11 month; Part C's replay is its evidence.
+    max_tasks_per_file: 12
+    # At most this many hits from stage 2 (tasks that changed the same files) and stage 3 (Issues naming them).
+    # Part C's replay: at 4 and 3, stage 2 handed seldon 63 hits its sessions opened once and factory 93 opened 4
+    # times, and stage 3 handed 71 opened twice; at 1 and 0 the sessions opened more of fewer hits (seldon 53 of
+    # 233 against 43 of 214; factory 21 of 189 against 15 of 193). docs/evidence/sel060/replay_sweep.md.
+    max_file_hits: 1
+    max_issue_hits: 0
+    # "A blocked or re-filed task of the same kind in the last thirty days" (the task's own words).
+    dead_end_days: 30
+    # Lexical hits only above these shared-term counts, per kind; null: no lexical hit of that kind. Part A:
+    # uncited RESULTs were opened 2 to 4% and used 2 to 6% at every shared-term band (n 1,518), so none; Issues
+    # rose to 63% opened at 8 to 11 shared terms and 84% at 12 or more (n 100), so 8; uncited decisions were used
+    # 15 to 33% from 4 terms on (n 129), so 4; dead ends are stage 4's.
+    lexical_min_shared_terms: {result: null, issue: 8, decision: 4, catch: 4, worktree_kept: null, superseded: null}
+  # SEL-060 Part A: `seldon qc recall-audit` reads every registered repository's dispatch logs, from the ONE list of
+  # them (factory's `portfolio.repositories`, the `prior_art.internal_roots_from` reference).
+  audit:
+    repositories_from: ../factory/seldon.yaml#portfolio.repositories

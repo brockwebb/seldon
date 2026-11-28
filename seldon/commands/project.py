@@ -151,6 +151,8 @@ def project_new(path, project_name, template_name, database, force_init, graph, 
                                  ["seldon.yaml"]))
         else:
             steps.append(PN.Step("decisions", "ok", "decision register declared"))
+        # 4b'. recall (AD-031-R6, SEL-060): by reference to the kit's block, so a project registers with its history
+        steps.append(PN.recall_step(project_dir, cfg, kit_dir))
         # 4c. the `verifies` pytest marker (AD-013-R5, SEL-035): a test declares the requirements it verifies
         steps.append(PN.marker_step(project_dir))
         # 4d. the systems-engineering projections (AD-013-R2, SEL-057): declared, and their files rendered from the

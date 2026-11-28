@@ -420,6 +420,51 @@ def prior_art_step(project_dir: Path, cfg: dict, kit_dir: Path) -> Step:
     return Step("prior_art", "changed", f"{' + '.join(wrote)}", wrote)
 
 
+RECALL_COMMENT = (
+    "RECALL-001 / AD-031-R5: `seldon cc register` hands each task the hits from this repository's history (and its\n"
+    "`decisions.repositories` siblings') it has reason to open, by REFERENCE to seldon's one block (AD-031-R6); a key\n"
+    "written here overrides the referenced one. The served arm is off: the kit's `served.graphs` names the kit's\n"
+    "siblings, and the `touch` selection does not run it. Written by `seldon project new` (SEL-060).")
+
+#: AD-031-R6: what overrides the kit's `served:` in a written block (the four keys `settings` requires).
+RECALL_SERVED_OFF = {"enabled": False, "k": 20, "rrf_k": 60, "graphs": {}}
+
+
+def recall_step(project_dir: Path, cfg: dict, kit_dir: Path) -> Step:
+    """AD-031-R6: `recall: {ref: <the kit's seldon.yaml>#recall, served: {enabled: false, ...}}` when the project has
+    no `recall:` key; a project with one (its own values or a reference) is left alone. The written block is resolved
+    and validated before anything is written.
+
+    Skipped when the kit has no `recall:` block.
+
+    Raises:
+        ProjectNewError: the kit's block is itself a reference, or the block written would not resolve.
+    """
+    from seldon.core import recall as RC
+
+    text, config = _load(project_dir)
+    if "recall" in config:
+        return Step("recall", "ok", "recall block present")
+    kit_block = cfg["_kit"].get("recall")
+    if kit_block is None:
+        # A kit that has not turned recall on offers nothing to reference; the project stays as it is (RECALL-001: no
+        # block, no recall), and the step says so rather than refusing every other step's convergence.
+        return Step("recall", "skipped", f"the kit's {Path(kit_dir) / 'seldon.yaml'} has no `recall:` block")
+    if not isinstance(kit_block, dict) or RC.REF_KEY in kit_block:
+        raise ProjectNewError(f"the kit's {Path(kit_dir) / 'seldon.yaml'} `recall:` block is not a definition to "
+                              f"reference (AD-031-R6)")
+    ref = A.rerooted_ref("seldon.yaml#recall", kit_dir, repository_dir(project_dir))
+    block = {"recall": {RC.REF_KEY: ref, "served": dict(RECALL_SERVED_OFF)}}
+    new = (text.rstrip("\n") + "\n\n" + "\n".join(f"# {c}" for c in RECALL_COMMENT.splitlines()) + "\n"
+           + "\n".join(_block_lines(block, "", {})) + "\n")
+    try:
+        RC.settings(yaml.safe_load(new) or {}, project_dir)
+    except (yaml.YAMLError, RC.RecallError) as exc:
+        raise ProjectNewError(f"the recall block would not resolve; nothing written: {exc}") from exc
+    (project_dir / "seldon.yaml").write_text(new, encoding="utf-8")
+    return Step("recall", "changed", f"seldon.yaml + recall.ref {ref}", ["seldon.yaml"])
+
+
 #: Keys of a kit `project_new.projections` entry that are the kit's, not `docs.projections`': the file's title and
 #: the documents whose requirements its first blocks show (default: the file itself).
 PROJECTION_KIT_KEYS = ("title", "documents")

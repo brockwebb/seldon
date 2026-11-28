@@ -105,10 +105,54 @@ class Settings:
     served_k: int
     rrf_k: int
     served_graphs: dict
+    #: SEL-060: `recall.selection`, validated by :func:`selection_of`; None keeps RECALL-001's lexical selection.
+    selection: Optional[dict] = None
 
 
-def settings(config: dict) -> Optional[Settings]:
+#: SEL-060: a `recall:` block may name another file's block, `ref: <file>#<dotted.key>` (the `prior_art` form,
+#: AD-036 ADDENDUM 03), relative to the PRIMARY checkout; its own keys override the referenced block's, key by key.
+REF_KEY = "ref"
+
+
+def resolve_block(block: dict, project_dir: Optional[Path]) -> dict:
+    """The `recall:` block with its `ref:` read and this project's own keys laid over it.
+
+    Raises:
+        RecallError: A malformed reference, a missing file or key, or a referenced value that is not a mapping.
+    """
+    if not isinstance(block, dict) or REF_KEY not in block:
+        return block
+    from seldon.core import worktree as WT
+
+    ref = block[REF_KEY]
+    if not isinstance(ref, str) or "#" not in ref:
+        raise RecallError(f"seldon.yaml recall.ref {ref!r} is not a reference: expected `<file>#<dotted.key>`")
+    base = Path(project_dir or Path.cwd()).resolve()
+    try:
+        base = WT.primary_checkout(base)
+    except WT.WorktreeError:
+        pass
+    rel, dotted = ref.split("#", 1)
+    written = Path(os.path.expanduser(rel))
+    target = (written if written.is_absolute() else Path(base) / written).resolve()
+    if not target.is_file():
+        raise RecallError(f"seldon.yaml recall.ref {ref!r} names {target}, which does not exist")
+    node = yaml.safe_load(target.read_text(encoding="utf-8"))
+    for part in dotted.split("."):
+        if not isinstance(node, dict) or part not in node:
+            raise RecallError(f"seldon.yaml recall.ref {ref!r}: {target} has no {dotted!r}")
+        node = node[part]
+    if not isinstance(node, dict) or REF_KEY in node:
+        raise RecallError(f"seldon.yaml recall.ref {ref!r} must name a `recall:` mapping that is not itself a reference")
+    return {**node, **{k: v for k, v in block.items() if k != REF_KEY}}
+
+
+def settings(config: dict, project_dir: Optional[Path] = None) -> Optional[Settings]:
     """The `recall:` block of seldon.yaml, validated, or None when the project has not turned recall on.
+
+    Args:
+        config: The parsed seldon.yaml.
+        project_dir: Where a `ref:` is resolved from (its primary checkout); the working directory when omitted.
 
     Raises:
         RecallError: The block is present and a key is missing or malformed.
@@ -118,6 +162,7 @@ def settings(config: dict) -> Optional[Settings]:
         return None
     if not isinstance(block, dict):
         raise RecallError("seldon.yaml recall: must be a mapping")
+    block = resolve_block(block, project_dir)
     missing = [k for k in _REQUIRED if k not in block]
     if missing:
         raise RecallError(f"seldon.yaml recall: block missing {missing}")
@@ -131,12 +176,56 @@ def settings(config: dict) -> Optional[Settings]:
                      result_globs=tuple(block["result_globs"]), failure_terms=tuple(block["failure_terms"]),
                      k1=float(block["bm25"]["k1"]), b=float(block["bm25"]["b"]),
                      served_enabled=bool(served["enabled"]), served_k=int(served["k"]),
-                     rrf_k=int(served["rrf_k"]), served_graphs=dict(served["graphs"] or {}))
+                     rrf_k=int(served["rrf_k"]), served_graphs=dict(served["graphs"] or {}),
+                     selection=selection_of(block.get("selection")))
     except (TypeError, ValueError, KeyError) as exc:
         raise RecallError(f"seldon.yaml recall: block is malformed: {exc}") from exc
     if s.top_n < 1 or s.min_shared_terms < 1:
         raise RecallError("seldon.yaml recall.top_n and recall.min_shared_terms must be at least 1")
     return s
+
+
+#: SEL-060: the `recall.selection` keys a `mode: touch` block must set. No defaults: each value's basis is in the
+#: seldon.yaml comment beside it.
+_SELECTION_REQUIRED = ("mode", "noise_paths", "max_citing_share", "max_tasks_per_file", "max_file_hits",
+                       "max_issue_hits", "dead_end_days", "lexical_min_shared_terms")
+SELECTION_MODES = ("lexical", "touch")
+
+
+def selection_of(block) -> Optional[dict]:
+    """`recall.selection`, validated; None when absent (RECALL-001's lexical selection, unchanged).
+
+    Raises:
+        RecallError: A missing key, an unknown mode, or a value of the wrong type.
+    """
+    if block is None:
+        return None
+    if not isinstance(block, dict):
+        raise RecallError("seldon.yaml recall.selection must be a mapping")
+    mode = block.get("mode")
+    if mode not in SELECTION_MODES:
+        raise RecallError(f"seldon.yaml recall.selection.mode must be one of {SELECTION_MODES}, got {mode!r}")
+    if mode == "lexical":
+        return {"mode": "lexical"}
+    missing = [k for k in _SELECTION_REQUIRED if k not in block]
+    if missing:
+        raise RecallError(f"seldon.yaml recall.selection (mode touch) is missing {missing}")
+    lex = block["lexical_min_shared_terms"]
+    if not isinstance(lex, dict) or any(k not in KINDS for k in lex) or any(
+            v is not None and (isinstance(v, bool) or not isinstance(v, int) or v < 1) for v in lex.values()):
+        raise RecallError("seldon.yaml recall.selection.lexical_min_shared_terms must map hit kinds "
+                          f"({', '.join(KINDS)}) to a whole number of at least 1, or null for no lexical hit")
+    for k in ("max_tasks_per_file", "max_file_hits", "max_issue_hits", "dead_end_days"):
+        v = block[k]
+        if isinstance(v, bool) or not isinstance(v, int) or v < 0:
+            raise RecallError(f"seldon.yaml recall.selection.{k} must be a whole number, got {v!r}")
+    share = block["max_citing_share"]
+    if isinstance(share, bool) or not isinstance(share, (int, float)) or not 0 < share <= 1:
+        raise RecallError(f"seldon.yaml recall.selection.max_citing_share must be a share in (0, 1], got {share!r}")
+    if not isinstance(block["noise_paths"], list) or not all(isinstance(x, str) for x in block["noise_paths"]):
+        raise RecallError("seldon.yaml recall.selection.noise_paths must be a list of globs")
+    return {**{k: block[k] for k in _SELECTION_REQUIRED}, "noise_paths": tuple(block["noise_paths"]),
+            "lexical_min_shared_terms": {k: lex.get(k) for k in KINDS}}
 
 
 # ================================================================================================ the query
@@ -189,13 +278,18 @@ class Hit:
     score: float
     shared_terms: list
     arms: list
+    #: SEL-060: why this hit was chosen, one line (`the task cites SEL-055`, `changed seldon/core/recall.py`).
+    why: str = ""
 
     def line(self) -> str:
-        """One line: kind, id, date, headline (the task's Part A step 2)."""
+        """Kind, id, date, headline (RECALL-001 Part A step 2); under it, when the selection gave one, why it was
+        chosen (SEL-060 Part B). The second line is indented past the hit marker, so a reader of the first is
+        unchanged."""
         kind = f"{self.kind} DEAD END" if self.dead_end else self.kind
         status = f" [{self.status}]" if self.status and self.kind in ("issue", "decision", "catch",
                                                                        "worktree_kept", "superseded") else ""
-        return f"  - {kind}{status}  {self.id}  {self.date or '?'}  {self.headline}"
+        first = f"  - {kind}{status}  {self.id}  {self.date or '?'}  {self.headline}"
+        return f"{first}\n      why: {self.why}" if self.why else first
 
 
 @dataclass
@@ -475,9 +569,16 @@ def _excluded(c: Candidate, stem: str, task_id: Optional[str]) -> bool:
     return bool(stem) and name.startswith(stem)
 
 
+def _before(c: Candidate, as_of: Optional[str]) -> bool:
+    """A candidate the record held on `as_of` (a replay's registration date); every candidate when None. A candidate
+    with no date is kept: an undated record cannot be placed, and dropping it would hide it from every replay."""
+    return as_of is None or not c.date or c.date[:10] <= as_of
+
+
 def recall(project_dir: Path, config: dict, task_text: str, *, task_stem: str = "",
-           task_id: Optional[str] = None, use_served: Optional[bool] = None) -> Recall:
-    """Retrieve, rank and return the task's history (Part A step 1).
+           task_id: Optional[str] = None, use_served: Optional[bool] = None, as_of: Optional[str] = None,
+           selection: Optional[dict] = None, pool: Optional[list] = None) -> Recall:
+    """Retrieve, rank and return the task's history (RECALL-001 Part A step 1; SEL-060 Part B).
 
     Args:
         project_dir: The registering repository.
@@ -486,19 +587,39 @@ def recall(project_dir: Path, config: dict, task_text: str, *, task_stem: str = 
         task_stem: The task file's stem; its own files are excluded.
         task_id: The task's artifact id, when it has one; its own records are excluded.
         use_served: Override `recall.served.enabled` (the CLI's `--no-served`).
+        as_of: `YYYY-MM-DD`: only what the record held that day (a replay, SEL-060 Part C); None for now.
+        selection: Override `recall.selection` (a replay of one selection on a project configured for another).
+        pool: The candidates, already read (a replay reads them once for many tasks); read here when None.
 
     Raises:
         RecallError: The project has no `recall:` block, or it is malformed.
     """
-    s = settings(config)
+    s = settings(config, project_dir)
     if s is None:
         raise RecallError("seldon.yaml has no `recall:` block (RECALL-001)")
     if use_served is not None:
         s = Settings(**{**asdict(s), "served_enabled": bool(use_served)})
+    sel = selection_of(selection) if selection is not None else s.selection
     repos = repositories(project_dir, config)
     notes: list[str] = []
     query = query_of(task_text)
-    cands = [c for c in candidates(repos, s, notes) if not _excluded(c, task_stem, task_id)]
+    pool = candidates(repos, s, notes) if pool is None else pool
+    cands = [c for c in pool if not _excluded(c, task_stem, task_id) and _before(c, as_of)]
+    if sel is None or sel["mode"] == "lexical":
+        hits = _lexical_hits(query, repos, cands, s, notes)
+    else:
+        hits = _touch_hits(Path(project_dir), next(iter(repos)), task_text, task_stem, query, cands, s, sel, notes,
+                           as_of)
+    return Recall(query=query, hits=hits, notes=notes, repositories=repos)
+
+
+def _hit(c: Candidate, score: float, shared: list, arms: list, why: str = "") -> Hit:
+    return Hit(kind=c.kind, id=c.id, date=c.date, headline=c.headline, repo=c.repo, path=c.path, status=c.status,
+               dead_end=c.dead_end, score=round(score, 6), shared_terms=list(shared)[:12], arms=arms, why=why)
+
+
+def _lexical_hits(query: str, repos: dict, cands: list, s: Settings, notes: list) -> list:
+    """RECALL-001's selection: BM25 above `min_shared_terms`, fused with the served arm by RRF."""
     lexical = bm25(tokens(query), cands, s)
     lex_rank = {i: (r, score, shared) for r, (i, score, shared) in enumerate(lexical, 1)
                 if len(shared) >= s.min_shared_terms}
@@ -513,10 +634,241 @@ def recall(project_dir: Path, config: dict, task_text: str, *, task_stem: str = 
         arms.setdefault(i, []).append("served")
     shared_of = {i: sh for i, _sc, sh in lexical}
     order = sorted(fused, key=lambda i: (-fused[i], cands[i].id))[: s.top_n]
-    hits = [Hit(kind=cands[i].kind, id=cands[i].id, date=cands[i].date, headline=cands[i].headline,
-                repo=cands[i].repo, path=cands[i].path, status=cands[i].status, dead_end=cands[i].dead_end,
-                score=round(fused[i], 6), shared_terms=shared_of.get(i, [])[:12], arms=arms[i]) for i in order]
-    return Recall(query=query, hits=hits, notes=notes, repositories=repos)
+    return [_hit(cands[i], fused[i], shared_of.get(i, []), arms[i]) for i in order]
+
+
+# ====================================================================== SEL-060: hits a session has reason to open
+
+#: A task file's stem carries its code after the date: `2026-11-27_SEL-055_...` -> `SEL-055`, `..._SQ-050R_...`.
+TASK_CODE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}_([A-Za-z][A-Za-z0-9]*-\d+[A-Za-z]?)_")
+#: What a task text cites: a task code or a decision id (`SEL-055`, `RECALL-002R`, `AD-031`, `AD-031-R3`, `R-266`).
+CITE_RE = re.compile(r"(?<![\w-])([A-Z][A-Z0-9]*-\d+[A-Za-z]?(?:-R\d+)?)(?![\w-])")
+#: A repository-relative file a task text names: at least one directory and an extension, or a bare file name with
+#: an extension (resolved only when one tracked file has that name).
+PATH_RE = re.compile(r"(?<![\w./@:-])((?:[\w.-]+/)*[\w-][\w.-]*\.[A-Za-z][A-Za-z0-9]{0,6})(?![\w/-])")
+#: A note's base file is `<ID>_<slug>.md`; these mark its addenda and errata, which a citation of the note alone
+#: does not name.
+_NOT_BASE_NOTE_RE = re.compile(r"(?i)_(addendum|erratum)_")
+
+
+def task_code(stem: str) -> Optional[str]:
+    m = TASK_CODE_RE.match(stem or "")
+    return m.group(1) if m else None
+
+
+def cited(task_text: str) -> list[str]:
+    """Every task code and decision id the text names, in order of first mention."""
+    seen, out = set(), []
+    for m in CITE_RE.finditer(task_text or ""):
+        if m.group(1) not in seen:
+            seen.add(m.group(1))
+            out.append(m.group(1))
+    return out
+
+
+def citing_share(root: Path, as_of: Optional[str]) -> dict:
+    """`{id: share of this repository's task files that cite it}`, over task files dated on or before `as_of`.
+
+    A citation most tasks carry (a header's `DN-005`, the stop condition's `AD-037-R6`) is the template's, not the
+    task's, and says nothing about what it will touch: the IDF argument (Sparck Jones 1972) applied to citations.
+    """
+    files = [p for p in (Path(root) / "cc_tasks").glob("*.md")
+             if "_result" not in p.name.lower() and (as_of is None or _date_of(p.name) <= as_of)]
+    df: Counter = Counter()
+    for p in files:
+        df.update(set(cited(p.read_text(encoding="utf-8", errors="replace"))))
+    n = len(files) or 1
+    return {k: v / n for k, v in df.items()}
+
+
+def _git_lines(root: Path, *args: str) -> list[str]:
+    import subprocess
+
+    r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RecallError(f"git {' '.join(args[:2])} failed in {root}: {r.stderr.strip()[:200]}")
+    # Not `splitlines()`: it also splits at \x1c-\x1e, and the log's record separator is \x1e.
+    return r.stdout.split("\n")
+
+
+def _noise(path: str, globs: tuple) -> bool:
+    import fnmatch
+
+    return any(fnmatch.fnmatchcase(path, g) for g in globs)
+
+
+def changes_by_task(root: Path, codes: set, noise: tuple, as_of: Optional[str]) -> dict:
+    """`{task code: {repository-relative file}}`: what each task's commits changed, from `git log` of HEAD.
+
+    A commit belongs to the first known task code in its subject (`SEL-055 Part C: ...`, `feat(SEL-054): ...`):
+    the repository's convention, and how a dispatched task's commits reach main. Paths matching `noise` (the event
+    store, task files, register records, handoffs) are changed by every task and say nothing about this one.
+    """
+    args = ["log", "HEAD", "--format=%x1e%s", "--name-only", "--no-renames"]
+    if as_of:
+        args.append(f"--until={as_of} 23:59:59")
+    out: dict = {}
+    current = None
+    for line in _git_lines(root, *args):
+        if line.startswith("\x1e"):
+            current = next((m.group(1) for m in CITE_RE.finditer(line[1:]) if m.group(1) in codes), None)
+            continue
+        line = line.strip()
+        if current and line and not _noise(line, noise):
+            out.setdefault(current, set()).add(line)
+    return out
+
+
+def touched(root: Path, task_text: str, cites: list, decision_paths: dict) -> dict:
+    """`{repository-relative file: why}`: the files the task names, the base note of each note it cites
+    (`AD-038` -> `docs/design/AD-038_*.md`), and the note holding each decision record it cites."""
+    tracked = [ln for ln in _git_lines(root, "ls-files") if ln]
+    tracked_set = set(tracked)
+    by_name: dict = {}
+    for f in tracked:
+        by_name.setdefault(f.rsplit("/", 1)[-1], []).append(f)
+    out: dict = {}
+    for m in PATH_RE.finditer(task_text or ""):
+        tok = m.group(1).lstrip("./")
+        if tok in tracked_set:
+            out.setdefault(tok, f"the task names {tok}")
+        elif "/" not in tok and len(by_name.get(tok, [])) == 1:
+            out.setdefault(by_name[tok][0], f"the task names {tok}")
+    for c in cites:
+        if c in decision_paths and decision_paths[c] in tracked_set:
+            out.setdefault(decision_paths[c], f"the task cites {c}")
+            continue
+        for f in tracked:
+            name = f.rsplit("/", 1)[-1]
+            if name.startswith(f"{c}_") and name.endswith(".md") and not _NOT_BASE_NOTE_RE.search(name):
+                out.setdefault(f, f"the task cites {c}")
+    return out
+
+
+def _clip_list(items: list, n: int = 2) -> str:
+    return ", ".join(items[:n]) + (f" (+{len(items) - n} more)" if len(items) > n else "")
+
+
+def _touch_hits(root: Path, own_repo: str, task_text: str, task_stem: str, query: str, cands: list, s: Settings,
+                sel: dict, notes: list, as_of: Optional[str]) -> list:
+    """SEL-060 Part B: hits chosen by what the task will touch and what it cites, before shared words.
+
+    In order, each stage adding only what the earlier ones did not: (1) the RESULTs, dead ends and decision records
+    the task cites; (2) the RESULTs of earlier tasks whose commits changed a file the task names or a note it cites,
+    a file changed by more than `max_tasks_per_file` tasks saying nothing (the event store, the CLI's hub); (3) Issues
+    whose text names such a file or a cited id; (4) a kept or superseded task of the same code prefix in the last
+    `dead_end_days`, with its reason, when it shares a file or `lexical_min_shared_terms` of its kind; (5) lexical
+    hits, only of kinds whose threshold is set and only above it. Fewer when few are strong; none is allowed.
+    """
+    own_code = task_code(task_stem)
+    share = citing_share(root, as_of)
+    boiler = sorted(c for c in cited(task_text) if share.get(c, 0.0) > sel["max_citing_share"])
+    if boiler:
+        notes.append(f"cited by more than {sel['max_citing_share']:.0%} of this repository's tasks, so not a reason: "
+                     f"{', '.join(boiler)}")
+    cites = [c for c in cited(task_text) if c != own_code and c not in boiler]
+    code_of = {i: task_code(Path(c.path).stem if c.path else c.id.split(":", 1)[-1]) for i, c in enumerate(cands)}
+    by_code: dict = {}
+    for i, code in code_of.items():
+        if code and cands[i].kind in ("result", "worktree_kept", "superseded"):
+            by_code.setdefault(code, []).append(i)
+    for v in by_code.values():
+        v.sort(key=lambda i: (cands[i].kind != "result", cands[i].id))
+    decision_by_local = {}
+    for i, c in enumerate(cands):
+        if c.kind in ("decision", "catch"):
+            decision_by_local.setdefault(c.id.split(":", 1)[-1], []).append(i)
+    lexical = {i: shared for i, _score, shared in bm25(tokens(query), cands, s)}
+    chosen: dict = {}
+
+    def take(i: int, score: float, arm: str, why: str):
+        if i not in chosen and len(chosen) < s.top_n:
+            chosen[i] = _hit(cands[i], score, lexical.get(i, []), [arm], why)
+
+    # (1) what the task cites
+    decision_paths = {}
+    for c in cites:
+        for i in by_code.get(c, [])[:1]:
+            take(i, 1.0, "cited", f"the task cites {c}")
+        for i in decision_by_local.get(c, []):
+            take(i, 1.0, "cited", f"the task cites {c}")
+            if cands[i].path and cands[i].repo == own_repo:
+                decision_paths[c] = cands[i].path
+    # (2) earlier tasks that changed the same files
+    try:
+        touch = touched(root, task_text, cites, decision_paths)
+        changes = changes_by_task(root, set(by_code), tuple(sel["noise_paths"]), as_of) if touch else {}
+    except RecallError as exc:
+        notes.append(f"file history not read: {exc}")
+        touch, changes = {}, {}
+    n_tasks = len(changes) or 1
+    per_file: dict = {}
+    for code, files in changes.items():
+        for f in files:
+            per_file.setdefault(f, set()).add(code)
+    specific = {f for f in touch if 0 < len(per_file.get(f, ())) <= sel["max_tasks_per_file"]}
+    scored = []
+    for code, files in changes.items():
+        if code == own_code or code not in by_code:
+            continue
+        shared = sorted(files & specific, key=lambda f: len(per_file[f]))
+        if shared:
+            score = sum(math.log(1.0 + n_tasks / len(per_file[f])) for f in shared)
+            scored.append((score, cands[by_code[code][0]].date, code, shared))
+    # Most specific first; the newer of two equal ones (a later task supersedes an earlier reading of the file).
+    scored.sort(key=lambda r: (-r[0], "".join(chr(0x10FFFF - ord(ch)) for ch in (r[1] or "")), r[2]))
+    taken = 0
+    for score, _date, code, shared in scored:
+        if taken >= sel["max_file_hits"]:
+            break
+        i = by_code[code][0]
+        if i in chosen:
+            continue
+        take(i, score, "files", f"{code} changed {_clip_list(shared)}")
+        taken += 1
+    # (3) Issues that name those files or the cited ids
+    # A cited note (`AD-038`) is not a needle: dozens of Issues name a governing note in passing. A cited task or
+    # record is: an Issue naming it was raised about it.
+    names = [(f, f) for f in specific] + [(c, c) for c in cites if c in by_code or c in decision_by_local]
+    issue_rows = []
+    for i, c in enumerate(cands):
+        if c.kind != "issue":
+            continue
+        found = [label for needle, label in names if needle in c.text]
+        if found:
+            issue_rows.append((len(found), c.date, i, found))
+    # Most names first, then newest.
+    issue_rows.sort(key=lambda r: (r[0], r[1] or "", -r[2]), reverse=True)
+    for _n, _date, i, found in issue_rows[: sel["max_issue_hits"]]:
+        take(i, float(_n), "issue_names", f"names {_clip_list(found)}")
+    # (4) a recent dead end of the same kind of task
+    if own_code:
+        prefix = own_code.split("-", 1)[0]
+        floor = _days_before(as_of, sel["dead_end_days"])
+        for i, c in enumerate(cands):
+            if c.kind not in DEAD_END_KINDS or not c.date or c.date[:10] < floor:
+                continue
+            code = code_of.get(i)
+            if not code or code.split("-", 1)[0] != prefix:
+                continue
+            shares_file = bool(changes.get(code, set()) & specific) or any(f in c.text for f in specific)
+            need = sel["lexical_min_shared_terms"].get("issue")
+            if shares_file or (need and len(lexical.get(i, [])) >= need):
+                what = "was kept" if c.kind == "worktree_kept" else "was superseded"
+                take(i, 1.0, "dead_end", f"{code} {what} on {c.date}: {_clip(c.reason or 'no reason recorded', 80)}")
+    # (5) lexical, above each kind's threshold
+    for i, shared in sorted(lexical.items(), key=lambda kv: (-len(kv[1]), cands[kv[0]].id)):
+        need = sel["lexical_min_shared_terms"].get(cands[i].kind)
+        if need and len(shared) >= need:
+            take(i, float(len(shared)), "lexical", f"shares {len(shared)} terms with the task: {', '.join(shared[:4])}")
+    return list(chosen.values())
+
+
+def _days_before(as_of: Optional[str], days: int) -> str:
+    from datetime import date, timedelta
+
+    day = date.fromisoformat(as_of) if as_of else date.today()
+    return (day - timedelta(days=days)).isoformat()
 
 
 # ============================================================================================ the outputs

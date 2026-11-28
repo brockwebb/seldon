@@ -1526,7 +1526,7 @@ def register_task_file(
     # RECALL-001: a malformed `recall:` block refuses BEFORE anything is created; no block means recall is off.
     from seldon.core import recall as recall_mod
     try:
-        recall_on = recall_mod.settings(config) is not None
+        recall_on = recall_mod.settings(config, project_dir) is not None
     except recall_mod.RecallError as exc:
         raise ValueError(f"{exc} File: {rel_path}")
 

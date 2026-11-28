@@ -55,7 +55,7 @@ def _recall(project_dir: Path, config: dict):
 
     def hits(text: str, stem: str, task_id: str) -> tuple:
         try:
-            if RC.settings(config) is None:
+            if RC.settings(config, Path(project_dir)) is None:
                 return [], "recall is off in this project (no `recall:` block)"
             r = RC.recall(Path(project_dir), config, text, task_stem=stem, task_id=task_id)
         except RC.RecallError as exc:
