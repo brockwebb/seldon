@@ -2,8 +2,8 @@
 # Never edit by hand. Intent is in registry.yaml; this file is what the newest CLI's
 # own alias resolver served, one probe per family, with the evidence file named below.
 schema: 1
-resolved_on: '2026-11-27'
-resolved_at: '2026-11-27T00:41:05.876714Z'
+resolved_on: '2026-11-28'
+resolved_at: '2026-11-28T00:05:12.544900Z'
 cli:
   version: 2.1.332
   path: /Users/brock/.local/share/seldon/claude-cli/2.1.332/node_modules/.bin/claude
@@ -41,9 +41,9 @@ documented_default_effort:
       effort: medium
       documented_for: claude-sonnet-5-5
       current: true
-evidence: docs/evidence/model001/refresh_2026-11-27.json
+evidence: docs/evidence/model001/refresh_2026-11-28.json
 models:
   claude-opus-4-8:
     served: claude-opus-4-8
     available: true
-    evidence: docs/evidence/model001/refresh_2026-11-27.json
+    evidence: docs/evidence/model001/refresh_2026-11-28.json
