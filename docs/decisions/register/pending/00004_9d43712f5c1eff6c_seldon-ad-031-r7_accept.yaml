@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-031-R7
+date: '2026-11-27'
+decided_by: cc:4bf74fa6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-060_recall_is_measured_and_a_session_starts_with_what_the_record_says_about_the_files_it_will_touch.md
+reason: 'SEL-060 Part B: recall measured by Part A and replayed by Part C; evidence in AD-031 ADDENDUM 01 section 1'
+kind: decision
+status: accepted
+statement: 'A change to the selection is replayed before it is adopted: `seldon qc recall-replay` re-runs registration for a repository''s latest dispatched tasks, as of each launch, under the recorded (or replayed lexical) list and the configured selection, and reports for each how many hits each gives, how many the session opened and which earlier RESULTs it consulted; one checkpoint row per task, so the same command resumes'
+source:
+  path: docs/design/AD-031_ADDENDUM_01_recall_is_chosen_by_what_the_task_cites_and_touches_and_its_use_is_counted_from_the_log.md
+  lines:
+  - 112
+  - 115
+  sha256: 74c651058638eb1d03269b24df6b8f480aa96c4f04a097515ffbacef61bab916
+  text: |-
+    - **AD-031-R7. A change to the selection is replayed before it is adopted: `seldon qc recall-replay` re-runs registration for a repository's latest dispatched tasks, as of each launch, under the recorded (or replayed lexical) list and the configured selection, and reports for each how many hits each gives, how many the session opened and which earlier RESULTs it consulted; one checkpoint row per task, so the same command resumes.**
+      Only what had landed in the checkout before the launch is a candidate (a RESULT's modification time), so a
+      same-day RESULT written later is not "found". The Part A count is re-run one week after the selection reaches
+      main, by a task filed with that date in its premise, to read R5 on hits sessions were actually handed.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-031_ADDENDUM_01_recall_is_chosen_by_what_the_task_cites_and_touches_and_its_use_is_counted_from_the_log.md
+  anchor: AD-031-R7
+consumer:
+- cc_tasks/2026-11-27_SEL-060_recall_is_measured_and_a_session_starts_with_what_the_record_says_about_the_files_it_will_touch.md
+- seldon/core/recall_audit.py
+- seldon/commands/qc.py
+- tests/test_sel060_recall_audit.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 9d43712f5c1eff6cd2ee20c7b58799236a3a308f8da2ffc7e46bb26834b693c9

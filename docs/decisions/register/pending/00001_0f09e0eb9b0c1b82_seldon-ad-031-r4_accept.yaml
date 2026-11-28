@@ -1,0 +1,35 @@
+event: accept
+id: seldon:AD-031-R4
+date: '2026-11-27'
+decided_by: cc:4bf74fa6
+operator_stated: false
+receipts:
+- cc_tasks/2026-11-27_SEL-060_recall_is_measured_and_a_session_starts_with_what_the_record_says_about_the_files_it_will_touch.md
+reason: 'SEL-060 Part B: recall measured by Part A and replayed by Part C; evidence in AD-031 ADDENDUM 01 section 1'
+kind: decision
+status: accepted
+statement: 'Recall''s use is counted from the dispatched sessions'' own logs: for every registered repository (`recall.audit.repositories_from`, the portfolio''s one list) since its first `recall_listed`, `seldon qc recall-audit` reports the hits each launch header handed, the hits a tool call opened and the hits the RESULT''s `Recall used:` line names, by repository, kind, rank, shared terms, arm and whether the task file cites the hit'
+source:
+  path: docs/design/AD-031_ADDENDUM_01_recall_is_chosen_by_what_the_task_cites_and_touches_and_its_use_is_counted_from_the_log.md
+  lines:
+  - 100
+  - 103
+  sha256: 74c651058638eb1d03269b24df6b8f480aa96c4f04a097515ffbacef61bab916
+  text: |-
+    - **AD-031-R4. Recall's use is counted from the dispatched sessions' own logs: for every registered repository (`recall.audit.repositories_from`, the portfolio's one list) since its first `recall_listed`, `seldon qc recall-audit` reports the hits each launch header handed, the hits a tool call opened and the hits the RESULT's `Recall used:` line names, by repository, kind, rank, shared terms, arm and whether the task file cites the hit.**
+      A tool call opens a hit when its input names it: a task or RESULT file by name or by a glob keeping seven literal
+      characters and matching at most three task files; an Issue by its id prefix; a record by its id or register file.
+      A Write or Edit is not a read. A design note being read is counted apart. Zero model calls.
+scope:
+- seldon
+rationale:
+  path: docs/design/AD-031_ADDENDUM_01_recall_is_chosen_by_what_the_task_cites_and_touches_and_its_use_is_counted_from_the_log.md
+  anchor: AD-031-R4
+consumer:
+- cc_tasks/2026-11-27_SEL-060_recall_is_measured_and_a_session_starts_with_what_the_record_says_about_the_files_it_will_touch.md
+- seldon/core/recall_audit.py
+- seldon/commands/qc.py
+- tests/test_sel060_recall_audit.py
+review_only: none
+written_by: seldon decision 0.1.0
+provisional_id: 0f09e0eb9b0c1b8214c21ddb3414216dd150d179402865020ecd4ac04262231b
