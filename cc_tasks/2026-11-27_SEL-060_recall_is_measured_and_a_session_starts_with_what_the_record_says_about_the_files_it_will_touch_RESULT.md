@@ -102,6 +102,14 @@ repositories come from factory's `portfolio.repositories`. Evidence: `docs/evide
    - A pointer file at the name the check reads holds a `## For the consumer` heading that sends the reader here.
    - This RESULT is the task's.
 
+### The suite
+
+- **Full suite at `9ced980` plus the evidence commits** (`python -m dotenv -f .env run -- python -m pytest tests/
+  -n 6`): 3,722 passed, 8 skipped and 1 failed, in 46 minutes, EXIT=1.
+- **The failure:** `tests/test_dispatch_parallel.py::test_union_merge_of_two_event_appends_is_valid` (`merge_blocked`
+  with `main_kept_moving` after 3 attempts). It is the load-sensitive failure SEL-049 recorded. It touches nothing
+  this task changed, and it passes alone (1 passed, 38 s).
+
 ### Not done or not verified
 
 - The register records are pending. The dispatcher numbers them at the merge.
